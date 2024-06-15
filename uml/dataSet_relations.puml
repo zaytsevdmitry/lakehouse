@@ -1,0 +1,31 @@
+@startuml
+!pragma layout smetana
+
+interface Project
+
+interface DataEndPoint{
+    getProject Project
+}
+Project --o DataEndPoint
+abstract class DataEndPointImpl{}
+DataEndPoint <|-- DataEndPointImpl
+
+interface Task
+abstract class TaskImpl
+Task <|--TaskImpl
+
+interface Scenario{
+getDataEndPoint:DataEndPoint
+getTaskList List<Task>
+' mb recursive List<List<Task>> ?
+}
+Scenario --o Task
+abstract class ScenarioImpl
+{
+  getDataEndPoint:DataEndPoint
+}
+
+Scenario <|--ScenarioImpl
+DataEndPoint --o Scenario
+
+@enduml

@@ -1,0 +1,104 @@
+@startuml
+'https://plantuml.com/class-diagram
+/'class DataStoreManipulatorConfiguration{
+
+}
+class transformModelConfiguration
+class configuration'/
+/'interface Pipeline
+interface PipeLineStep'/
+abstract DataSetProperties{
+   - location
+}
+class ReadDataSetProperties{
+
+  - query
+  - propertyMap
+}
+DataSetProperties <|-- ReadDataSetProperties
+class WriteDataSetProperties{
+  - location
+  - partitionBy
+}
+DataSetProperties <|-- WriteDataSetProperties
+interface DataStoreManipulator{
+  -DataStoreManipulatorConfiguration
+  +read(readDataSetProperties)
+  +write(writeDataSetProperties)
+  +truncate(location)
+  +exchangePartitions(locationFrom,locationTo)
+  +removeConstraints(location)
+  +addConstraints(location, locationOrigin)
+  +compact(location, locationBuff)
+}
+
+DataStoreManipulatorConfiguration o-- DataStoreManipulator
+DataStoreManipulator o-- ReadDataSetProperties
+DataStoreManipulator o-- WriteDataSetProperties
+interface Operator
+interface DataOperator
+interface DataQualityOperator
+class ApplicationMain
+ApplicationMain o-- Operator
+interface TransformationDataOperator
+abstract TransformationDataOperator{
+  - transformation
+}
+
+TransformationDataOperator o-- Transformation
+
+interface CompactDataOperator
+interface MergeDataOperator
+interface CommitDataOperator
+interface Transformation
+
+abstract ModelTransformation{
+    - dataStoreManipulator
+}
+
+DataStoreManipulator o-- ModelTransformation
+
+class SparkModelTransformation
+class JDBCModelTransformation
+class UserDefinedExampleTransformation
+
+interface MergeTargetTransformation
+
+Operator <|-- DataOperator
+Operator <|-- DataQualityOperator
+DataOperator <|-- TransformationDataOperator
+TransformationDataOperator <|-- MergeDataOperator
+DataOperator <|-- CompactDataOperator
+DataOperator <|-- CommitDataOperator
+Transformation <|-- ModelTransformation
+ModelTransformation <|-- SparkModelTransformation
+ModelTransformation <|-- JDBCModelTransformation
+ModelTransformation <|-- UserDefinedExampleTransformation
+Transformation <|-- MergeTargetTransformation
+MergeDataOperator o-- MergeTargetTransformation
+
+
+'abstract class AbstractList
+'abstract AbstractCollection
+/'interface List
+interface CollectionCollection
+
+List <|-- AbstractList
+Collection <|-- AbstractCollection
+
+Collection <|- List
+AbstractCollection <|- AbstractList
+AbstractList <|-- ArrayList
+
+class ArrayList {
+Object[] elementData
+size()
+}
+
+enum TimeUnit {
+DAYS
+HOURS
+MINUTES
+}'/
+
+@enduml
