@@ -11,7 +11,9 @@ import java.util.Properties;
 
 
 record Project(int projectId, String projectName){}
-record DataEndPoint (int dataEndPointId, String dataEndPointName, String dataStoreId, Project project ){}
 record DataStore (String dataStoreId, Properties properties, String dataStoreAdapterId ){}
-
-record Scenario(DataEndPoint dataEndPoint, List<Task> taskList ){}
+record DataEndPoint (int dataEndPointId, String dataEndPointName, DataStore dataStore, Project project ){}
+record DagEdge(Task from, Task to){}
+record Scenario(DataEndPoint dataEndPoint, List<Task> taskList, List<DagEdge> dagEdges){}
+record TaskExecutorGroup(String taskExecutorGroupName){}
+record Schedule(String scheduleName, String scheduleExpr,List<Scenario> scenarios,TaskExecutorGroup taskExecutorGroup){}

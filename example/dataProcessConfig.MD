@@ -1,32 +1,51 @@
-# Project - hight level definition
+# Entities
+
+```plantuml
+!pragma layout smetana
+
+Project --|{ DataEndPoint
+DataStoreEndPoint --|{ DataEndPoint
+DataEndPoint --|{ Schedule
+Scenario --|{ Schedule
+DataEndPoint }|-- DataEndPoint
+
+```
+
+# Project is a hight level definition. Main namespace
 
 ```yaml
 configtype: project
-name:myfirstproject
+name: myfirstproject
 comment: 
 ```
 ```yaml
 configtype: project
-name:mysecondproject
+name: mysecondproject
+comment: 
 ```
 # data stores - database, file/object storage or else some things
+```yaml
+configtype: dataStoreEndpoint
+name: mydb
+interfaceType: jdbc
+vendor: postgres
+properties:
+  url: jdbc:postgres:@localhost
+  user: user1
+  password: "****"
+comment: 
 ```
-
-configtype: dataStoreEndpoints
-  mydb
-    interfaceType:jdbc
-    vendor:postgres
-    url:jdbc:postgres:@localhost
-    user:user1
-    password:****
-  someelsedb
-    interfaceType:file #http/jdbc/file etc
-    vendor:s3
-    url:s3//somepath
-    user:user1
-    password:${token}
+```yaml
+configtype: dataStoreEndpoint
+name: someelsedb
+interfaceType: file #http/jdbc/file etc
+vendor: s3
+properties:
+  url: s3://somepath
+  user: user1
+  password: ${token}
 ```
-# public endpoints = user table
+# Public endpoints = user table declaration
 
 ```yaml
 configtype: dataEndPoint
@@ -39,7 +58,7 @@ project: myfirstproject
 configtype: dataEndPoint
 name: anotherTable
 catalogSchema: mytabs
-dataStoreEndpointKey: mydb
+dataStoreEndpoint: mydb
 endPoint: mytabs.anotherTable
 project: myfirstproject
 ```
@@ -54,17 +73,43 @@ project: myfirstproject
 ```yaml
 configtype: dataEndPoint
 name: mytableDataEndPoint
-dataStoreEndpointKey: mydb
+dataStoreEndpoint: mydb
 endPoint: mytabs.mytable
 project: mysecondproject
 dependencies:
  - name: otherTable
  - name: anotherTable
+description: "my first example mart"
+columnSchema: 
+  - name: id
+    type: bigint
+    nullable: true
+    comment:  
+  - name: tab_value
+    type: string
+    nullable: true
+    comment:
+keys:
+  - name: mytable_pk
+    type: primary
+    runtimeLevelCheck: false
+    constructLevelCheck: true
 ```
-# A single dataset configured as dataEndPoint can be served by multiple scenarios.
+# increment query
+```sql
+select id, o.tab_value
+  from otherTable o
+  join anotherTable a
+       using(id)
+```
+
+# Scenario is a combination of dataendpoint, tasks and their execution dag
+## 
+## A single dataset configured as dataEndPoint can be served by multiple scenarios.
 ```yaml
 configtype: scenario
-dataEndPoint: mytableDataEndPoint
+scenarioType: dateEndPointScenario
+
 name: scenario1
     # private  endpoint = temporary tables 
 internalEndPoints:
@@ -74,7 +119,7 @@ internalEndPoints:
   - name: mergeareaEndpoint
     dataStoreEndpointKey: mydb
     endPoint: mytabs.mytable_merge
-scheduleExpr: "*8***"
+
 tasks:
   - name: ${dataEndPoint.name}_transformation
     sources: ${mytableDataEndPoint.dependencies}
@@ -90,21 +135,21 @@ tasks:
     sources: ${mergeareaEndpoint}
     endPoint: mergeareaEndpoint
     importance: critical
-    class: MergeDataFrameTask #inherited Task
+    class: DataQualityCheckTask #inherited Task
   - name: ${dataEndPoint.name}_apply
     sources: ${stageEndpoint}
     endPoint: mergeareaEndpoint
     importance: critical
-    class: MergeDataFrameTask #inherited Task
+    class: ApplyTask #inherited Task
   - name: ${dataEndPoint.name}_dataQualityCheckAfterCritical
     sources: ${stageEndpoint}
     endPoint: mergeareaEndpoint
-    class: MergeDataFrameTask #inherited Task
+    class: DataQualityCheckTask #inherited Task
     importance: critical
   - name: ${dataEndPoint.name}_dataQualityCheckAfterWarn
     sources: ${stageEndpoint}
     endPoint: mergeareaEndpoint
-    class: MergeDataFrameTask #inherited Task
+    class: DataQualityCheckTask #inherited Task
     importance: warn # pass when error
   - name: ${dataEndPoint.name}_finally
     sources: ${stageEndpoint}
@@ -119,8 +164,6 @@ dag:
   - ${dataEndPoint.name}_apply: ${dataEndPoint.name}_dataQualityCheckAfterWarn
   - ${dataEndPoint.name}_dataQualityCheckAfterCritical: ${dataEndPoint.name}_finally
   - ${dataEndPoint.name}_dataQualityCheckAfterWarn: ${dataEndPoint.name}_finally
-
-
 
 ```
 ```
@@ -153,7 +196,17 @@ scenario1 ---
               /
 scenario2 ---                
 ```
+# Scenario scenarioType Group
 
 
+```yaml
+configtype: schedule
+name: mytableRegularSchedule
+dataEndPoint: mytableDataEndPoint
+scheduleExpr: "*8***"
+scenario: scenario1
+dependencyIntervalType: Daily #montly/hourly/minutely/
+keepDependencyInterval: true #false
+```
 
-
+# fileset
