@@ -1,4 +1,4 @@
-# Entities
+# Entities design
 
 ```plantuml
 !pragma layout smetana
@@ -7,8 +7,10 @@ Project --|{ DataEndPoint
 DataStoreEndPoint --|{ DataEndPoint
 DataEndPoint --|{ Schedule
 Scenario --|{ Schedule
+Scenario --|{ Task
 DataEndPoint }|-- DataEndPoint
-
+taskExecutionServiceGroup  --|{ Scenario
+taskExecutionServiceGroup --|{ TaskExecutorService 
 ```
 
 # Project is a hight level definition. Main namespace
@@ -126,15 +128,18 @@ tasks:
     endPoint: stageEndpoint
     class: SQLTransformationDataFrameTask #inherited Task
     importance: critical # abort when error
+    taskExecutionServiceGroup: HeavyTransformGroup
   - name: ${dataEndPoint.name}_merge
     sources: ${stageEndpoint}
     endPoint: mergeareaEndpoint
     class: MergeDataFrameTask #inherited Task
+    taskExecutionServiceGroup: HeavyGroup
     importance: critical
   - name: ${dataEndPoint.name}_dataQualityCheckBefore
     sources: ${mergeareaEndpoint}
     endPoint: mergeareaEndpoint
     importance: critical
+    taskExecutionServiceGroup: QualityGroup
     class: DataQualityCheckTask #inherited Task
   - name: ${dataEndPoint.name}_apply
     sources: ${stageEndpoint}
@@ -145,16 +150,19 @@ tasks:
     sources: ${stageEndpoint}
     endPoint: mergeareaEndpoint
     class: DataQualityCheckTask #inherited Task
+    taskExecutionServiceGroup: QualityGroup
     importance: critical
   - name: ${dataEndPoint.name}_dataQualityCheckAfterWarn
     sources: ${stageEndpoint}
     endPoint: mergeareaEndpoint
+    taskExecutionServiceGroup: UtilityGroup
     class: DataQualityCheckTask #inherited Task
     importance: warn # pass when error
   - name: ${dataEndPoint.name}_finally
     sources: ${stageEndpoint}
     endPoint: mergeareaEndpoint
-    class: MergeDataFrameTask #inherited Task
+    taskExecutionServiceGroup: UtilityGroup
+    class: FinallyTask #inherited Task
     importance: warn # pass when error
 dag:
   - ${dataEndPoint.name}_transformation: ${dataEndPoint.name}_merge
@@ -190,13 +198,13 @@ Scenario DAG
 ```
 
 ```
-scenario1 ---
-              \
-               |-- dataEndPoint
-              /
-scenario2 ---                
+scenarioRegular ---
+                    \
+                     >-- dataEndPoint
+                    /
+scenarioInintial ---                
 ```
-# Scenario scenarioType Group
+# Schedule
 
 
 ```yaml
@@ -207,6 +215,45 @@ scheduleExpr: "*8***"
 scenario: scenario1
 dependencyIntervalType: Daily #montly/hourly/minutely/
 keepDependencyInterval: true #false
+
 ```
 
-# fileset
+# fileset example
+## system-repo
+```
+
+    dataStoreEndpoints
+        |--mydb.yml
+        |--someelsedb.yml
+    projects
+        |--mysecondproject.yml
+        |--myfirstproject.yml     
+    scenarios 
+        |--default-scenario.yml
+    taskExecutionServiceGroups
+        |--UtilityGroup.yml
+        |--QualityGroup.yml
+        |--HeavyGroup.yml
+        |--SuperHeavyGroup.yml
+        |--HeavyTransformGroup.yml
+        |--DeafaultGroup.yml
+```  
+## user-project-repo-myfirstproject
+``` 
+
+    dataStoreEndpoints
+      |--otherTable.yml
+      |--anotherTable.yml
+    schedules
+       
+``` 
+## user-project-repo-mysecondproject
+``` 
+user-project-repo-mysecondproject
+    dataStoreEndpoint
+      |--mytableDataEndPoint.yml
+    schedules
+      |--mytableRegularSchedule.yaml
+
+
+```
