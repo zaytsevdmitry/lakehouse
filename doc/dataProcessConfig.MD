@@ -13,6 +13,47 @@ taskExecutionServiceGroup  --|{ Scenario
 taskExecutionServiceGroup --|{ TaskExecutorService 
 ```
 
+# Configuration files example
+## system-repo
+```
+
+    dataStoreEndpoints
+        |--mydb.yml
+        |--someelsedb.yml
+    projects
+        |--mysecondproject.yml
+        |--myfirstproject.yml     
+    scenarios 
+        |--default-scenario.yml
+    taskExecutionServiceGroups
+        |--UtilityGroup.yml
+        |--QualityGroup.yml
+        |--HeavyGroup.yml
+        |--SuperHeavyGroup.yml
+        |--HeavyTransformGroup.yml
+        |--DeafaultGroup.yml
+```  
+## user-project-repo-myfirstproject
+``` 
+
+    dataStoreEndpoints
+      |--otherTable.yml
+      |--anotherTable.yml
+    schedules
+       
+``` 
+## user-project-repo-mysecondproject
+``` 
+user-project-repo-mysecondproject
+    dataStoreEndpoint
+      |--mytableDataEndPoint.yml
+    schedules
+      |--mytableRegularSchedule.yaml
+
+
+```
+
+
 # Project is a hight level definition. Main namespace
 
 ```yaml
@@ -218,42 +259,3 @@ keepDependencyInterval: true #false
 
 ```
 
-# fileset example
-## system-repo
-```
-
-    dataStoreEndpoints
-        |--mydb.yml
-        |--someelsedb.yml
-    projects
-        |--mysecondproject.yml
-        |--myfirstproject.yml     
-    scenarios 
-        |--default-scenario.yml
-    taskExecutionServiceGroups
-        |--UtilityGroup.yml
-        |--QualityGroup.yml
-        |--HeavyGroup.yml
-        |--SuperHeavyGroup.yml
-        |--HeavyTransformGroup.yml
-        |--DeafaultGroup.yml
-```  
-## user-project-repo-myfirstproject
-``` 
-
-    dataStoreEndpoints
-      |--otherTable.yml
-      |--anotherTable.yml
-    schedules
-       
-``` 
-## user-project-repo-mysecondproject
-``` 
-user-project-repo-mysecondproject
-    dataStoreEndpoint
-      |--mytableDataEndPoint.yml
-    schedules
-      |--mytableRegularSchedule.yaml
-
-
-```
