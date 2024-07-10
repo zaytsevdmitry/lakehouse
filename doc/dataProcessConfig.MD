@@ -82,6 +82,8 @@ user-project-repo-mysecondproject
       |--mytableDataEndPoint.yml
     schedules
       |--mytableRegularSchedule.yaml
+    scenarios 
+      |--mynew-scenario.yml
 
 
 ```
