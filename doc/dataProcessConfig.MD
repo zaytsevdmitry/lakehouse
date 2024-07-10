@@ -1,3 +1,36 @@
+
+# Compatible keywords
+Domain Driven Design (DDD)
+Data mesh
+Data vault
+Data governance
+Scheduling
+Custom code
+SQL 
+Data engineer tool
+United namespace
+# System design
+
+```plantuml
+@startuml
+!pragma layout smetana
+database workshopDB
+
+:ui-svc: as uisvc
+:api-svc:  as apisvc
+:task-coordinator-svc:  as taskcoordinatorsvc
+:task-executor-svc:  as taskexecutorsvc
+:task-scheduller-svc: as taskschedullersvc
+:cli: as cli
+taskcoordinatorsvc -> apisvc
+taskschedullersvc-->apisvc
+uisvc-->apisvc
+cli-->apisvc
+apisvc-->workshopDB
+taskexecutorsvc-->taskcoordinatorsvc:any one instance of task-executor take 1 task at onece
+(sparkexecutors)<-->taskexecutorsvc:task-executorsvc is a spark  driver
+@enduml
+```
 # Entities design
 
 ```plantuml

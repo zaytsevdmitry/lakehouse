@@ -1,26 +1,18 @@
 @startuml
 !pragma layout smetana
-':user: --> (Use case 1)
-':user: -> (Use case 2)
-
-'User << Human >>
-':Main Database: as MySql << Application >>
-'(Start) << One Shot >>
-'(Use the application) as (Use) << Main >>
-
-'User -> (Start)
-'User --> (Use)
-
-'MySql --> (Use)
-
 database workshopDB
 
 :ui-svc: as uisvc
+:api-svc:  as apisvc
 :task-coordinator-svc:  as taskcoordinatorsvc
 :task-executor-svc:  as taskexecutorsvc
-
-uisvc-->taskcoordinatorsvc
-taskcoordinatorsvc-->workshopDB
+:task-scheduller-svc: as taskschedullersvc
+:cli: as cli
+taskcoordinatorsvc -> apisvc
+taskschedullersvc-->apisvc
+uisvc-->apisvc
+cli-->apisvc
+apisvc-->workshopDB
 taskexecutorsvc-->taskcoordinatorsvc:any one instance of task-executor take 1 task at onece
 (sparkexecutors)<-->taskexecutorsvc:task-executorsvc is a spark  driver
 @enduml

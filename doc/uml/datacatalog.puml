@@ -1,0 +1,42 @@
+@startuml
+'https://plantuml.com/use-case-diagram
+!pragma layout smetana
+
+database datawarehouses
+database sources
+
+de ---->   [config]
+[config] --> (lakehouse-app)
+
+(lakehouse-app) --> sources
+(lakehouse-app) --> datawarehouses: refreshData
+(lakehouse-app) --> datawarehouses: DataQuality
+(lakehouse-app) --> sources: DataQuality
+
+
+
+datawarehouses --> (bi)
+sources -> datawarehouses
+:Main Admin: as Admin
+(Use the application) as (Use)
+
+dataUser ---> (lakehouse-app):what's my data
+dataUser ---> datawarehouses:where i see it
+dataUser ---> bi:where i see it
+
+User -> (Start)
+User --> (Use)
+
+Admin ---> (Use)
+
+note right of Admin : This is an example.
+
+note right of (Use)
+A note can also
+be on several lines
+end note
+
+note "This note is connected\nto several objects." as N2
+(Start) .. N2
+N2 .. (Use)
+@enduml
