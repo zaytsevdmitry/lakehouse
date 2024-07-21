@@ -7,7 +7,4 @@ public class ScenarioTemplate extends KeyEntityAbstract {
 
     public ScenarioTemplate() {}
 
-    public ScenarioTemplate(String key, String comment) {
-        super(key, comment);
-    }
 }

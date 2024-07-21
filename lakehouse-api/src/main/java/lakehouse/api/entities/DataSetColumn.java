@@ -5,22 +5,31 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 public class DataSetColumn {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
-
     private String name;
     private String dataType;
     private boolean nullable;
     private String comment;
     @ManyToOne
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private DataSet dataSet;
 
     public DataSetColumn() {}
 
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getName() {
         return name;
@@ -54,13 +63,6 @@ public class DataSetColumn {
         this.comment = comment;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public DataSet getDataSet() {
         return dataSet;

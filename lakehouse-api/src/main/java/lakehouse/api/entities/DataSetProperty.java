@@ -1,22 +1,20 @@
 package lakehouse.api.entities;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"data_set_name", "key"}))
 public class DataSetProperty extends KeyValueAbstract{
     @ManyToOne
-    @JoinColumn(name = "data_set_key", referencedColumnName = "key")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private DataSet dataSet;
 
     public DataSetProperty() {}
-
-
-    public DataSetProperty(String key, String value, DataSet dataSet) {
-        super(key, value);
-        this.dataSet = dataSet;
-    }
 
     public DataSet getDataSet() {
         return dataSet;

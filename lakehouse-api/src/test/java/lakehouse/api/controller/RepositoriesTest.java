@@ -18,8 +18,8 @@ public class RepositoriesTest {
             ScenarioTemplateRepository scenarioTemplateRepository
     ) throws Exception {
         ScenarioTemplate scenarioTemplate = new ScenarioTemplate();
-        scenarioTemplate.setKey("testscenario");
-        scenarioTemplate.setComment("comment");
+        scenarioTemplate.setName("testscenario");
+        scenarioTemplate.setDescription("comment");
 
     }
 }

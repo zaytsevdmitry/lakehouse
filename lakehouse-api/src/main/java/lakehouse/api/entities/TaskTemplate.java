@@ -1,7 +1,7 @@
 package lakehouse.api.entities;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 
 
@@ -12,11 +12,9 @@ public class TaskTemplate extends KeyEntityAbstract {
     private String executionModule;
 
     private String importance;
-    @ManyToOne
-    @JoinColumn(name = "scenario_key", referencedColumnName = "key")
+    @ManyToOne(cascade = CascadeType.REMOVE)
     private ScenarioTemplate scenarioTemplate;
-    @ManyToOne
-    @JoinColumn(name = "task_execution_service_group_key", referencedColumnName = "key")
+    @ManyToOne(cascade = CascadeType.DETACH)
     private TaskExecutionServiceGroup taskExecutionServiceGroup;
 
     public TaskTemplate(){}
@@ -43,5 +41,13 @@ public class TaskTemplate extends KeyEntityAbstract {
 
     public void setTaskExecutionServiceGroup(TaskExecutionServiceGroup taskExecutionServiceGroup) {
         this.taskExecutionServiceGroup = taskExecutionServiceGroup;
+    }
+
+    public ScenarioTemplate getScenarioTemplate() {
+        return scenarioTemplate;
+    }
+
+    public void setScenarioTemplate(ScenarioTemplate scenarioTemplate) {
+        this.scenarioTemplate = scenarioTemplate;
     }
 }

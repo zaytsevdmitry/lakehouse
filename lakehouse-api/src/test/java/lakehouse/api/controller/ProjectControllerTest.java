@@ -28,7 +28,9 @@ public class ProjectControllerTest {
     }
     @Test
     void shouldTestProject () throws Exception {
-        Project testProject = new Project("TEST", "Test project","Project for test");
+        Project testProject = new Project();
+        testProject.setName("TEST");
+        testProject.setDescription("Project for test");
         this.mockMvc.perform( post("/projects")
                 .content(asJsonString(testProject))
                 .contentType(MediaType.APPLICATION_JSON)
@@ -41,7 +43,7 @@ public class ProjectControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(result -> result.equals(testProject));
 
-        this.mockMvc.perform( delete("/projects/{key}", testProject.getKey() ))
+        this.mockMvc.perform(delete("/projects/{key}", testProject.getName()))
                 .andExpect(status().isAccepted());
     }
 

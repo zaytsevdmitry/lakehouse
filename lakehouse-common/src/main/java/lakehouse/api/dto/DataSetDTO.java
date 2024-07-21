@@ -5,22 +5,22 @@ import java.util.List;
 import java.util.Map;
 
 public class DataSetDTO implements Serializable {
-    private String key;
+    private String name;
     private String project;
     private String dataStore;
-    private List<String> sources;
+    private List<DataSetSourceDTO> sources;
     private List<ColumnDTO> columnSchema;
     private Map<String,String> properties;
-    private String comment;
+    private String description;
     public DataSetDTO() {
     }
 
-    public String getKey() {
-        return key;
+    public String getName() {
+        return name;
     }
 
-    public void setKey(String key) {
-        this.key = key;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getProject() {
@@ -39,11 +39,11 @@ public class DataSetDTO implements Serializable {
         this.dataStore = dataStore;
     }
 
-    public List<String> getSources() {
+    public List<DataSetSourceDTO> getSources() {
         return sources;
     }
 
-    public void setSources(List<String> sources) {
+    public void setSources(List<DataSetSourceDTO> sources) {
         this.sources = sources;
     }
 
@@ -63,11 +63,11 @@ public class DataSetDTO implements Serializable {
         this.properties = properties;
     }
 
-    public String getComment() {
-        return comment;
+    public String getDescription() {
+        return description;
     }
 
-    public void setComment(String comment) {
-        this.comment = comment;
+    public void setDescription(String description) {
+        this.description = description;
     }
 }

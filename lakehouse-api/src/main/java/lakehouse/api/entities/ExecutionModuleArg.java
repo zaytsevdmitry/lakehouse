@@ -5,13 +5,13 @@ import jakarta.persistence.ManyToOne;
 
 
 @Entity
-public class TaskTemplateProperty extends KeyValueAbstract {
+public class ExecutionModuleArg extends KeyValueAbstract {
 
     @ManyToOne
  //   @JoinColumn(name = "task_template_key", referencedColumnName = "key")
     private TaskTemplate taskTemplate;
 
-    public TaskTemplateProperty() {
+    public ExecutionModuleArg() {
     }
 
     public TaskTemplate getTaskTemplate() {

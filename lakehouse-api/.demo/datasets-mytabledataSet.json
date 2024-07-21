@@ -1,0 +1,43 @@
+{
+  "name": "mytabledataSet",
+  "project": "DEMO",
+  "dataStore": "mydb",
+  "sources": [
+    {
+      "name": "anotherTable",
+      "properties": {
+        "optimize.query.fast:)": "true"
+      }
+    },
+    {
+      "name": "otherTable",
+      "properties": {
+        "optimize.query.fast:)": "true"
+      }
+    }
+  ],
+  "columnSchema": [
+    {
+      "name": "one",
+      "description": "",
+      "dataType": "int",
+      "nullable": false
+    },
+    {
+      "name": "two",
+      "description": "",
+      "dataType": "int",
+      "nullable": false
+    },
+    {
+      "name": "three",
+      "description": "",
+      "dataType": "int",
+      "nullable": false
+    }
+  ],
+  "properties": {
+    "data-end-point": "/mytabs/mytable"
+  },
+  "description": "Local target dataset"
+}

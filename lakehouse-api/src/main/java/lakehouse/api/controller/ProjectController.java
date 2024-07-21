@@ -1,9 +1,7 @@
 package lakehouse.api.controller;
 
 import lakehouse.api.dto.ProjectDTO;
-import lakehouse.api.repository.ProjectRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lakehouse.api.service.ProjectService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,41 +15,31 @@ import java.util.List;
 
 @RestController
 public class ProjectController {
-    private final Logger logger =  LoggerFactory.getLogger(this.getClass());
-    private final ProjectRepository repository;
+    private final ProjectService projectService;
 
-
-    public ProjectController(ProjectRepository repository) {
-        this.repository = repository;
+    public ProjectController(ProjectService projectService) {
+        this.projectService = projectService;
     }
 
-
     @GetMapping("/projects")
-    List<ProjectDTO> all() {
-        return repository.findAll().stream().map(project -> (ProjectDTO) project).toList();
+    List<ProjectDTO> findAll() {
+        return projectService.getFindAll();
     }
 
     @PostMapping("/projects")
     @ResponseStatus(HttpStatus.CREATED)
-    ProjectDTO newProject(@RequestBody ProjectDTO project ) {
-     
-        return repository.save(project);
+    ProjectDTO put(@RequestBody ProjectDTO projectDTO) {
+        return projectService.save(projectDTO);
     }
 
-    @GetMapping("/projects/{key}")
-    ProjectDTO one(@PathVariable String key) {
-
-        return (ProjectDTO) repository
-                .findById(key)
-                .orElseThrow(()-> {
-            logger.info("Can't get key: %s", key);
-            return new RuntimeException("Can't get key");});
+    @GetMapping("/projects/{name}")
+    ProjectDTO get(@PathVariable String name) {
+        return projectService.findByName(name);
     }
 
-
-    @DeleteMapping("/projects/{key}")
+    @DeleteMapping("/projects/{name}")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    void deleteProject(@PathVariable String key) {
-        repository.deleteById(key);
+    void deleteById(@PathVariable String name) {
+        projectService.deleteById(name);
     }
 }

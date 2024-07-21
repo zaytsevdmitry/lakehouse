@@ -1,14 +1,14 @@
 package lakehouse.api.entities;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 @Entity
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"data_store_name", "key"}))
 public class DataStoreProperty extends KeyValueAbstract{
-    @ManyToOne (cascade = CascadeType.REMOVE)
-    @JoinColumn(name = "data_store_key", referencedColumnName = "key")
+    @ManyToOne
     private DataStore dataStore;
 
     public DataStoreProperty() {

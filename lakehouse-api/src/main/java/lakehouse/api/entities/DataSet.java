@@ -1,11 +1,7 @@
 package lakehouse.api.entities;
 
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-
-import java.util.List;
 
 /*configtype: dataSet
 key: mytabledataSet
@@ -35,15 +31,10 @@ keys:
 public class DataSet extends KeyEntityAbstract {
 
     @ManyToOne
-    @JoinColumn(name = "project_key", referencedColumnName = "key")
     private Project project;
 
     @ManyToOne
-    @JoinColumn(name = "data_store_key", referencedColumnName = "key")
     private DataStore dataStore;
-
-    @ElementCollection
-    private List<String> sources;
 
     public DataSet() {}
 
@@ -63,12 +54,6 @@ public class DataSet extends KeyEntityAbstract {
         this.dataStore = dataStore;
     }
 
-    public List<String> getSources() {
-        return sources;
-    }
 
-    public void setSources(List<String> sources) {
-        this.sources = sources;
-    }
 
 }
