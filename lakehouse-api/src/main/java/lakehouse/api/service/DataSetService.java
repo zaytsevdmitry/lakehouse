@@ -4,19 +4,9 @@ import jakarta.transaction.Transactional;
 import lakehouse.api.dto.ColumnDTO;
 import lakehouse.api.dto.DataSetDTO;
 import lakehouse.api.dto.DataSetSourceDTO;
-import lakehouse.api.entities.DataSet;
-import lakehouse.api.entities.DataSetColumn;
-import lakehouse.api.entities.DataSetProperty;
-import lakehouse.api.entities.DataSetSource;
-import lakehouse.api.entities.DataSetSourceProperty;
+import lakehouse.api.entities.*;
 import lakehouse.api.exception.DataSetNotFoundException;
-import lakehouse.api.repository.DataSetColumnRepository;
-import lakehouse.api.repository.DataSetPropertyRepository;
-import lakehouse.api.repository.DataSetRepository;
-import lakehouse.api.repository.DataSetSourcePropertyRepository;
-import lakehouse.api.repository.DataSetSourceRepository;
-import lakehouse.api.repository.DataStoreRepository;
-import lakehouse.api.repository.ProjectRepository;
+import lakehouse.api.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -24,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class DataSetService {
@@ -76,7 +67,7 @@ public class DataSetService {
 
         Map<String, String> properties = new HashMap<>();
         dataSetPropertyRepository
-                .findByDataSet(dataSet.getName())
+                .findByDataSetName(dataSet.getName())
                 .forEach(dataStoreProperty -> properties.put(dataStoreProperty.getKey(), dataStoreProperty.getValue()));
         result.setProperties(properties);
         result.setColumnSchema(
@@ -101,7 +92,7 @@ public class DataSetService {
         return result;
     }
 
-    private List<DataSetColumn> getColumnEntities(DataSetDTO dataSetDTO) {
+    private List<DataSetColumn> mapColumnEntities(DataSetDTO dataSetDTO) {
         DataSet dataSet = mapDataSetToEntity(dataSetDTO);
         return dataSetDTO.getColumnSchema().stream().map(columnDTO -> {
             DataSetColumn column = new DataSetColumn();
@@ -114,7 +105,7 @@ public class DataSetService {
         }).toList();
     }
 
-    private List<DataSetProperty> getPropertyEntities(DataSetDTO dataSetDTO) {
+    private List<DataSetProperty> mapPropertyEntities(DataSetDTO dataSetDTO) {
         DataSet dataSet = mapDataSetToEntity(dataSetDTO);
         return dataSetDTO.getProperties().entrySet().stream().map(stringStringEntry -> {
             DataSetProperty dataSetProperty = new DataSetProperty();
@@ -130,7 +121,7 @@ public class DataSetService {
         return dataSetRepository
                 .findById(name)
                 .orElseThrow(() -> {
-                    logger.info("Can't get name: %s", name);
+                    logger.info("Can't get data set name: %s", name);
                     return new DataSetNotFoundException(name);
                 });
     }
@@ -138,19 +129,26 @@ public class DataSetService {
     public List<DataSetDTO> findAll() {
         return dataSetRepository.findAll().stream().map(this::mapDataSetToDTO).toList();
     }
-
     @Transactional
-    public DataSetDTO save(DataSetDTO dataSetDTO) {
-    /*dataSetColumnRepository.findBydataSetName(dataSetDTO.getName()).forEach(dataSetColumnRepository::delete);
-        dataSetPropertyRepository.findByDataSet(dataSetDTO.getName()).forEach(dataSetPropertyRepository::delete);
-        dataSetSourceRepository.findByDataSetName(dataSetDTO.getName()).forEach(dataSetSource -> {dataSetSourcePropertyRepository.de
-        });*/
-        // dataSetRepository.findById(dataSetDTO.getName()).isPresent()
-        dataSetRepository.deleteById(dataSetDTO.getName());
+    private DataSet saveDataSet(DataSetDTO dataSetDTO) {
+        Optional<DataSet> currentDataSet = dataSetRepository.findById(dataSetDTO.getName());
+        if (currentDataSet.isPresent()) {
+            // need merge
+            DataSetDTO currentDataSetDTO = mapDataSetToDTO(currentDataSet.get());
+
+            if (currentDataSetDTO.equals(dataSetDTO)) {
+                return currentDataSet.get();
+            } else {
+                dataSetColumnRepository.findBydataSetName(dataSetDTO.getName()).forEach(dataSetColumnRepository::delete);
+                dataSetPropertyRepository.findByDataSetName(dataSetDTO.getName()).forEach(dataSetPropertyRepository::delete);
+                dataSetSourceRepository.findByDataSetName(dataSetDTO.getName()).forEach(dataSetSourceRepository::delete);
+            }
+        }
+
         DataSet dataSet = dataSetRepository.save(mapDataSetToEntity(dataSetDTO));
 
-        getColumnEntities(dataSetDTO).forEach(dataSetColumnRepository::save);
-        getPropertyEntities(dataSetDTO).forEach(dataSetPropertyRepository::save);
+        mapColumnEntities(dataSetDTO).forEach(dataSetColumnRepository::save);
+        mapPropertyEntities(dataSetDTO).forEach(dataSetPropertyRepository::save);
 
         dataSetDTO.getSources().forEach(dataSetSourceDTO -> {
             DataSetSource dataSetSource = new DataSetSource();
@@ -169,6 +167,11 @@ public class DataSetService {
                 dataSetSourcePropertyRepository.save(dataSetSourceProperty);
             });
         });
+        return dataSet;
+    }
+
+    public DataSetDTO save(DataSetDTO dataSetDTO) {
+        DataSet dataSet = saveDataSet(dataSetDTO);
         return mapDataSetToDTO(dataSet);
     }
 

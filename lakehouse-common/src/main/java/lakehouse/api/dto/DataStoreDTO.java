@@ -1,6 +1,7 @@
 package lakehouse.api.dto;
 
 import java.util.Map;
+import java.util.Objects;
 
 public class DataStoreDTO {
     private String name;
@@ -49,5 +50,18 @@ public class DataStoreDTO {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        DataStoreDTO that = (DataStoreDTO) o;
+        return Objects.equals(getName(), that.getName()) && Objects.equals(getInterfaceType(), that.getInterfaceType()) && Objects.equals(getVendor(), that.getVendor()) && Objects.equals(getProperties(), that.getProperties()) && Objects.equals(getDescription(), that.getDescription());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getName(), getInterfaceType(), getVendor(), getProperties(), getDescription());
     }
 }

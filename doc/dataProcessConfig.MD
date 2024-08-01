@@ -9,7 +9,7 @@ SQL
 Data engineer tool
 United namespace
 # System design
-
+![localImage](./services.png)
 ```plantuml
 @startuml
 !pragma layout smetana
@@ -33,7 +33,7 @@ taskexecutorsvc-->taskcoordinatorsvc:any one instance of task-executor take 1 ta
 @enduml
 ```
 # Entities design
-
+![localImage](./entities.png)
 ```plantuml
 !pragma layout smetana
 
@@ -90,7 +90,7 @@ user-project-repo-mysecondproject
 ```
 
 
-# Project is a hight level definition. Main namespace
+# Project is a high level definition. Main namespace
 
 ```yaml
 configtype: project
@@ -125,7 +125,7 @@ properties:
   user: user1
   password: ${token}
 ```
-#  DataSetr declaration
+#  DataSet declaration
 
 ```yaml
 configtype: dataSet

@@ -2,6 +2,7 @@ package lakehouse.api.dto;
 
 
 import java.io.Serializable;
+import java.util.Objects;
 
 public class ProjectDTO implements Serializable {
     private String name;
@@ -25,5 +26,18 @@ public class ProjectDTO implements Serializable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ProjectDTO that = (ProjectDTO) o;
+        return Objects.equals(name, that.name) && Objects.equals(description, that.description);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, description);
     }
 }

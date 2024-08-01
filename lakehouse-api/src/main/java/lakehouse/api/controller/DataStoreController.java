@@ -1,15 +1,10 @@
 package lakehouse.api.controller;
 
+import lakehouse.api.constant.Endpoint;
 import lakehouse.api.dto.DataStoreDTO;
 import lakehouse.api.service.DataStoreService;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -21,23 +16,23 @@ public class DataStoreController {
         this.dataStoreService = dataStoreService;
     }
 
-    @GetMapping("/datastores")
+    @GetMapping(Endpoint.DATA_STORE)
     List<DataStoreDTO> all() {
         return dataStoreService.findAll();
     }
 
-    @PostMapping("/datastores")
+    @PostMapping(Endpoint.DATA_STORE)
     @ResponseStatus(HttpStatus.CREATED)
     DataStoreDTO put(@RequestBody DataStoreDTO dataStoreDTO) {
         return dataStoreService.save(dataStoreDTO);
     }
 
-    @GetMapping("/datastores/{name}")
+    @GetMapping(Endpoint.DATA_STORE_NAME)
     DataStoreDTO get(@PathVariable String name) {
         return dataStoreService.findById(name);
     }
 
-    @DeleteMapping("/datastores/{name}")
+    @DeleteMapping(Endpoint.DATA_STORE_NAME)
     @ResponseStatus(HttpStatus.ACCEPTED)
     void deleteById(@PathVariable String name) {
         dataStoreService.deleteById(name);

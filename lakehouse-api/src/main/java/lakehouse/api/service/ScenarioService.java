@@ -149,47 +149,4 @@ public class ScenarioService {
     public void deleteById(String name) {
         scenarioTemplateRepository.deleteById(name);
     }
-
-/*    private List<TaskTemplate> getTaskTemplateEntities(ScenarioDTO scenarioDTO) {
-        ScenarioTemplate scenarioTemplate = mapScenarioToEntity(scenarioDTO);
-
-        return scenarioDTO.getTasks().stream().map(taskDTO -> {
-
-            return mapTaskTemplateEntity(taskDTO,scenarioTemplate);
-        }).toList();
-    }*/
-/*    private TaskTemplate mapTaskTemplateEntity(
-            TaskDTO taskDTO,
-            ScenarioTemplate scenarioTemplate){
-
-        TaskTemplate taskTemplate = new TaskTemplate();
-        taskTemplate.setScenarioTemplate(scenarioTemplate);
-        taskTemplate.setName(taskDTO.getName());
-        taskTemplate.setImportance(taskDTO.getImportance());
-        taskTemplate.setExecutionModule(taskDTO.getExecutionModule());
-        taskTemplate.setTaskExecutionServiceGroup(
-                taskExecutionServiceGroupRepository
-                        .getReferenceById(taskDTO.getTaskExecutionServiceGroupname()));
-
-        taskTemplate.setComment(taskDTO.getComment());
-        return taskTemplate;
-    }*/
-
-    /*List<DagTaskEdge> getDagTaskEdges(
-            ScenarioTemplate scenarioTemplate,
-            List<DagEdgeDTO> dagEdgeDTOList,
-            List<TaskTemplate> taskTemplates){
-
-        Map<String,TaskTemplate> taskTemplateMap = new HashMap<>();
-        taskTemplates.forEach(taskTemplate -> taskTemplateMap.put(taskTemplate.getName(),taskTemplate));
-        return dagEdgeDTOList.stream().map(dagEdgeDTO -> {
-            DagTaskEdge dagTaskEdge = new DagTaskEdge();
-            dagTaskEdge.setFromTaskTemplate(taskTemplateMap.get(dagEdgeDTO.getFrom()));
-            dagTaskEdge.setToTaskTemplate(taskTemplateMap.get(dagEdgeDTO.getTo()));
-            dagTaskEdge.setScenarioTemplate(scenarioTemplate);
-            return dagTaskEdge;
-        }).toList();
-    }*/
-
-
 }

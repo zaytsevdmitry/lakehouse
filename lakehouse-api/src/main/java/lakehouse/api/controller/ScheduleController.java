@@ -1,15 +1,10 @@
 package lakehouse.api.controller;
 
+import lakehouse.api.constant.Endpoint;
 import lakehouse.api.dto.ScheduleDTO;
 import lakehouse.api.service.ScheduleService;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -22,24 +17,24 @@ public class ScheduleController {
     }
 
 
-    @GetMapping("/schedules")
+    @GetMapping(Endpoint.SCHEDULE)
     List<ScheduleDTO> findAll() {
         return scheduleService.findAll();
     }
 
-    @PostMapping("/schedules")
+    @PostMapping(Endpoint.SCHEDULE)
     @ResponseStatus(HttpStatus.CREATED)
     ScheduleDTO post(@RequestBody ScheduleDTO schedule) {
         return scheduleService.save(schedule);
     }
 
-    @GetMapping("/schedules/{name}")
+    @GetMapping(Endpoint.SCHEDULE_NAME)
     ScheduleDTO get(@PathVariable String name) {
         return scheduleService.findById(name);
     }
 
 
-    @DeleteMapping("/schedules/{name}")
+    @DeleteMapping(Endpoint.SCHEDULE_NAME)
     @ResponseStatus(HttpStatus.ACCEPTED)
     void deleteById(@PathVariable String name) {
         scheduleService.deleteById(name);

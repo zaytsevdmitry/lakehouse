@@ -1,6 +1,7 @@
 package lakehouse.api.dto;
 
 import java.util.List;
+import java.util.Objects;
 
 public class ScenarioDTO {
     private String name;
@@ -40,5 +41,21 @@ public class ScenarioDTO {
 
     public void setDagEdges(List<DagEdgeDTO> dagEdges) {
         this.dagEdges = dagEdges;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ScenarioDTO that = (ScenarioDTO) o;
+        return Objects.equals(name, that.name)
+                && Objects.equals(description, that.description)
+                && Objects.equals(tasks, that.tasks)
+                && Objects.equals(dagEdges, that.dagEdges);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, description, tasks, dagEdges);
     }
 }

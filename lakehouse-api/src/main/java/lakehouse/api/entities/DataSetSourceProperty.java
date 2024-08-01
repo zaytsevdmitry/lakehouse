@@ -1,14 +1,10 @@
 package lakehouse.api.entities;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+
+import java.util.Objects;
 
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = {"data_set_source_id", "name"}))
@@ -56,5 +52,18 @@ public class DataSetSourceProperty {
 
     public void setId(long id) {
         this.id = id;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        DataSetSourceProperty that = (DataSetSourceProperty) o;
+        return Objects.equals(getId(), that.getId()) && Objects.equals(getDataSetSource(), that.getDataSetSource()) && Objects.equals(getName(), that.getName()) && Objects.equals(getValue(), that.getValue());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId(), getDataSetSource(), getName(), getValue());
     }
 }

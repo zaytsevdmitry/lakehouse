@@ -1,15 +1,10 @@
 package lakehouse.api.controller;
 
+import lakehouse.api.constant.Endpoint;
 import lakehouse.api.dto.TaskExecutionServiceGroupDTO;
 import lakehouse.api.service.TaskExecutionServiceGroupService;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -21,23 +16,23 @@ public class TaskExecutionServiceGroupController {
         this.taskExecutionServiceGroupService = taskExecutionServiceGroupService;
     }
 
-    @GetMapping("/taskexecutionservicegroups")
+    @GetMapping(Endpoint.TASK_EXECUTION_SERVICE_GROUP)
     List<TaskExecutionServiceGroupDTO> findAll() {
         return taskExecutionServiceGroupService.findAll();
     }
 
-    @PostMapping("/taskexecutionservicegroups")
+    @PostMapping(Endpoint.TASK_EXECUTION_SERVICE_GROUP)
     @ResponseStatus(HttpStatus.CREATED)
     TaskExecutionServiceGroupDTO post(@RequestBody TaskExecutionServiceGroupDTO taskExecutionServiceGroup) {
         return taskExecutionServiceGroupService.save(taskExecutionServiceGroup);
     }
 
-    @GetMapping("/taskexecutionservicegroups/{name}")
+    @GetMapping(Endpoint.TASK_EXECUTION_SERVICE_GROUP + "/{name}")
     TaskExecutionServiceGroupDTO get(@PathVariable String name) {
         return taskExecutionServiceGroupService.findById(name);
     }
 
-    @DeleteMapping("/taskexecutionservicegroups/{name}")
+    @DeleteMapping(Endpoint.TASK_EXECUTION_SERVICE_GROUP + "/{name}")
     @ResponseStatus(HttpStatus.ACCEPTED)
     void deleteById(@PathVariable String name) {
         taskExecutionServiceGroupService.deleteById(name);

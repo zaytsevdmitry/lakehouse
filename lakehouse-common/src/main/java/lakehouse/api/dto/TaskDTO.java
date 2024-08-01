@@ -1,6 +1,7 @@
 package lakehouse.api.dto;
 
 import java.util.Map;
+import java.util.Objects;
 
 public class TaskDTO {
     private String name;
@@ -55,5 +56,23 @@ public class TaskDTO {
 
     public void setExecutionModuleArgs(Map<String, String> executionModuleArgs) {
         this.executionModuleArgs = executionModuleArgs;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TaskDTO taskDTO = (TaskDTO) o;
+        return Objects.equals(name, taskDTO.name)
+                && Objects.equals(taskExecutionServiceGroupName, taskDTO.taskExecutionServiceGroupName)
+                && Objects.equals(executionModule, taskDTO.executionModule)
+                && Objects.equals(importance, taskDTO.importance)
+                && Objects.equals(description, taskDTO.description)
+                && Objects.equals(executionModuleArgs, taskDTO.executionModuleArgs);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, taskExecutionServiceGroupName, executionModule, importance, description, executionModuleArgs);
     }
 }

@@ -3,29 +3,7 @@ package lakehouse.api.entities;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 
-/*configtype: dataSet
-key: mytabledataSet
-DataStore: mydb
-endPoint: mytabs.mytable
-project: mysecondproject
-dependencies:
- - name: otherTable
- - name: anotherTable
-description: "my first example mart"
-columnSchema:
-  - name: id
-    type: bigint
-    nullable: true
-    comment:
-  - name: tab_value
-    type: string
-    nullable: true
-    comment:
-keys:
-  - name: mytable_pk
-    type: primary
-    runtimeLevelCheck: false
-    constructLevelCheck: true*/
+import java.util.Objects;
 
 @Entity
 public class DataSet extends KeyEntityAbstract {
@@ -54,6 +32,17 @@ public class DataSet extends KeyEntityAbstract {
         this.dataStore = dataStore;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        DataSet dataSet = (DataSet) o;
+        return Objects.equals(getProject(), dataSet.getProject()) && Objects.equals(getDataStore(), dataSet.getDataStore());
+    }
 
-
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), getProject(), getDataStore());
+    }
 }

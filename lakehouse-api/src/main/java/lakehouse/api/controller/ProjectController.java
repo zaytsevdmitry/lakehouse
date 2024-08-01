@@ -1,15 +1,10 @@
 package lakehouse.api.controller;
 
+import lakehouse.api.constant.Endpoint;
 import lakehouse.api.dto.ProjectDTO;
 import lakehouse.api.service.ProjectService;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -21,23 +16,23 @@ public class ProjectController {
         this.projectService = projectService;
     }
 
-    @GetMapping("/projects")
+    @GetMapping(Endpoint.PROJECT)
     List<ProjectDTO> findAll() {
         return projectService.getFindAll();
     }
 
-    @PostMapping("/projects")
+    @PostMapping(Endpoint.PROJECT)
     @ResponseStatus(HttpStatus.CREATED)
     ProjectDTO put(@RequestBody ProjectDTO projectDTO) {
         return projectService.save(projectDTO);
     }
 
-    @GetMapping("/projects/{name}")
+    @GetMapping(Endpoint.PROJECT_NAME)
     ProjectDTO get(@PathVariable String name) {
         return projectService.findByName(name);
     }
 
-    @DeleteMapping("/projects/{name}")
+    @DeleteMapping(Endpoint.PROJECT_NAME)
     @ResponseStatus(HttpStatus.ACCEPTED)
     void deleteById(@PathVariable String name) {
         projectService.deleteById(name);

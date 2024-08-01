@@ -1,8 +1,11 @@
 package lakehouse.api.entities;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
+import java.util.Objects;
 
 
 @Entity
@@ -12,9 +15,10 @@ public class TaskTemplate extends KeyEntityAbstract {
     private String executionModule;
 
     private String importance;
-    @ManyToOne(cascade = CascadeType.REMOVE)
+    @ManyToOne
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private ScenarioTemplate scenarioTemplate;
-    @ManyToOne(cascade = CascadeType.DETACH)
+    @ManyToOne
     private TaskExecutionServiceGroup taskExecutionServiceGroup;
 
     public TaskTemplate(){}
@@ -49,5 +53,19 @@ public class TaskTemplate extends KeyEntityAbstract {
 
     public void setScenarioTemplate(ScenarioTemplate scenarioTemplate) {
         this.scenarioTemplate = scenarioTemplate;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        TaskTemplate that = (TaskTemplate) o;
+        return Objects.equals(getExecutionModule(), that.getExecutionModule()) && Objects.equals(getImportance(), that.getImportance()) && Objects.equals(getScenarioTemplate(), that.getScenarioTemplate()) && Objects.equals(getTaskExecutionServiceGroup(), that.getTaskExecutionServiceGroup());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), getExecutionModule(), getImportance(), getScenarioTemplate(), getTaskExecutionServiceGroup());
     }
 }

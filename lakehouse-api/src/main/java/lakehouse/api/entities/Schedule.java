@@ -4,6 +4,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 
 import java.sql.Timestamp;
+import java.util.Objects;
+
 @Entity
 public class Schedule extends KeyEntityAbstract {
 
@@ -75,5 +77,19 @@ public class Schedule extends KeyEntityAbstract {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        Schedule schedule = (Schedule) o;
+        return isEnabled() == schedule.isEnabled() && Objects.equals(getDataSet(), schedule.getDataSet()) && Objects.equals(getScenarioTemplate(), schedule.getScenarioTemplate()) && Objects.equals(getTaskExecutionServiceGroup(), schedule.getTaskExecutionServiceGroup()) && Objects.equals(getIntervalExpression(), schedule.getIntervalExpression()) && Objects.equals(getStartDateTime(), schedule.getStartDateTime()) && Objects.equals(getEndDateTime(), schedule.getEndDateTime());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), getDataSet(), getScenarioTemplate(), getTaskExecutionServiceGroup(), getIntervalExpression(), getStartDateTime(), getEndDateTime(), isEnabled());
     }
 }

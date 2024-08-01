@@ -6,13 +6,13 @@
     {
       "name": "anotherTable",
       "properties": {
-        "fetchSize": "10000"
+        "fetchSize": "30000"
       }
     },
     {
       "name": "otherTable",
       "properties": {
-        "fetchSize": "10000"
+        "fetchSize": "10001"
       }
     }
   ],
@@ -24,10 +24,10 @@
       "nullable": false
     },
     {
-      "name": "two",
+      "name": "four",
       "description": "",
-      "dataType": "int",
-      "nullable": false
+      "dataType": "string",
+      "nullable": true
     },
     {
       "name": "three",
@@ -37,7 +37,7 @@
     }
   ],
   "properties": {
-    "data-end-point": "/mytabs/mytable"
+    "data-end-point": "/mytabs/mytablev2"
   },
-  "description": "Local target dataset"
+  "description": "Local target dataset version2"
 }

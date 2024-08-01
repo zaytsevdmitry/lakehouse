@@ -1,0 +1,10 @@
+{
+  "name": "initial",
+  "description": "initial schedule for mytabledataSet",
+  "dataSet": "mytabledataSet",
+  "intervalExpression": "0 0 1 1 *",
+  "startDateTime": "1999-12-31T21:00:00.000+00:00",
+  "endDateTime": null,
+  "scenarioTemplate": "scenario1",
+  "enabled": false
+}

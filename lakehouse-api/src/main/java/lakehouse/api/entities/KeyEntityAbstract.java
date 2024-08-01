@@ -50,4 +50,8 @@ public abstract class KeyEntityAbstract{
     public int hashCode() {
         return Objects.hash(getName(), getDescription());
     }
+
+    public boolean equalsByName(KeyEntityAbstract that) {
+        return Objects.equals(this.getName(), that.getName());
+    }
 }

@@ -68,29 +68,40 @@ public class DataStoreService {
     @Transactional
     public DataStoreDTO save(DataStoreDTO dataStoreDTO) {
         DataStore dataStore = dataStoreRepository.save(mapDataStoreToEntity(dataStoreDTO));
-        dataStorePropertyRepository.findByDataStoreName(dataStore.getName()).forEach(dataStoreProperty -> {
+        List<DataStoreProperty> dataStorePropertiesBeforeChange =
+                dataStorePropertyRepository.findByDataStoreName(dataStore.getName());
+
+        dataStorePropertiesBeforeChange.forEach(dataStoreProperty -> {
             if (!dataStoreDTO.getProperties().containsKey(dataStoreProperty.getKey())) {
                 dataStorePropertyRepository.delete(dataStoreProperty);
             }
         });
-        dataStoreDTO.getProperties().entrySet().forEach(stringStringEntry -> {
-            Optional<DataStoreProperty> optionalDataStoreProperty = dataStorePropertyRepository
-                    .findByKeyAndDataStoreName(stringStringEntry.getKey(), dataStoreDTO.getName());
-            if (optionalDataStoreProperty.isPresent()) {
-                if (!optionalDataStoreProperty.get().getValue().equals(stringStringEntry.getValue())) {
-                    dataStorePropertyRepository.save(optionalDataStoreProperty.get());
-                } else {
-                    DataStoreProperty dataStoreProperty = optionalDataStoreProperty.get();
-                    dataStoreProperty.setValue(stringStringEntry.getValue());
-                    dataStorePropertyRepository.save(dataStoreProperty);
-                }
-            } else {
-                DataStoreProperty dataStoreProperty = new DataStoreProperty();
-                dataStoreProperty.setDataStore(dataStore);
-                dataStoreProperty.setKey(stringStringEntry.getKey());
-                dataStoreProperty.setValue(stringStringEntry.getValue());
-            }
-        });
+        dataStoreDTO
+                .getProperties()
+                .entrySet()
+                .stream()
+                .map(stringStringEntry -> {
+                    Optional<DataStoreProperty> optionalDataStoreProperty = dataStorePropertyRepository
+                            .findByKeyAndDataStoreName(stringStringEntry.getKey(), dataStoreDTO.getName());
+                    if (optionalDataStoreProperty.isPresent()) {
+                        if (!optionalDataStoreProperty.get().getValue().equals(stringStringEntry.getValue())) {
+                            return optionalDataStoreProperty.get(); //dataStorePropertyRepository.save(optionalDataStoreProperty.get());
+                        } else {
+                            DataStoreProperty dataStoreProperty = optionalDataStoreProperty.get();
+                            dataStoreProperty.setValue(stringStringEntry.getValue());
+                            //dataStorePropertyRepository.save(dataStoreProperty);
+                            return dataStoreProperty;
+                        }
+                    } else {
+                        DataStoreProperty dataStoreProperty = new DataStoreProperty();
+                        dataStoreProperty.setDataStore(dataStore);
+                        dataStoreProperty.setKey(stringStringEntry.getKey());
+                        dataStoreProperty.setValue(stringStringEntry.getValue());
+                        return dataStoreProperty;
+                    }
+                })
+                .toList()
+                .forEach(dataStorePropertyRepository::save);
         return mapDataStoreToDTO(dataStore);
     }
 

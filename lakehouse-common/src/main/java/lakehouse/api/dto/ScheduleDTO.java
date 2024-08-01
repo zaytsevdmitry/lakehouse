@@ -1,6 +1,7 @@
 package lakehouse.api.dto;
 
 import java.sql.Timestamp;
+import java.util.Objects;
 
 public class ScheduleDTO extends NameDescriptionAbstract
 {
@@ -58,5 +59,19 @@ public class ScheduleDTO extends NameDescriptionAbstract
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        ScheduleDTO that = (ScheduleDTO) o;
+        return isEnabled() == that.isEnabled() && Objects.equals(getDataSet(), that.getDataSet()) && Objects.equals(getIntervalExpression(), that.getIntervalExpression()) && Objects.equals(getStartDateTime(), that.getStartDateTime()) && Objects.equals(getEndDateTime(), that.getEndDateTime()) && Objects.equals(getScenarioTemplate(), that.getScenarioTemplate());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), getDataSet(), getIntervalExpression(), getStartDateTime(), getEndDateTime(), getScenarioTemplate(), isEnabled());
     }
 }

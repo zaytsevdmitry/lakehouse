@@ -7,6 +7,8 @@ import jakarta.persistence.UniqueConstraint;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+import java.util.Objects;
+
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = {"data_set_name", "key"}))
 public class DataSetProperty extends KeyValueAbstract{
@@ -22,5 +24,19 @@ public class DataSetProperty extends KeyValueAbstract{
 
     public void setDataSet(DataSet dataSet) {
         this.dataSet = dataSet;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        DataSetProperty that = (DataSetProperty) o;
+        return Objects.equals(getDataSet(), that.getDataSet());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), getDataSet());
     }
 }

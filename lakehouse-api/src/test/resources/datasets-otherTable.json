@@ -1,0 +1,11 @@
+{
+  "name": "otherTable",
+  "project": "DEMO",
+  "dataStore": "someelsedb",
+  "sources": [],
+  "columnSchema": [],
+  "properties": {
+    "data-end-point": "mytabs.otherTable"
+  },
+  "description": "remote dataset 1"
+}

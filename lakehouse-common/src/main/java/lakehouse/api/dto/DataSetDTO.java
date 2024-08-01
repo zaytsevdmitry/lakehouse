@@ -3,6 +3,7 @@ package lakehouse.api.dto;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class DataSetDTO implements Serializable {
     private String name;
@@ -69,5 +70,18 @@ public class DataSetDTO implements Serializable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        DataSetDTO that = (DataSetDTO) o;
+        return Objects.equals(getName(), that.getName()) && Objects.equals(getProject(), that.getProject()) && Objects.equals(getDataStore(), that.getDataStore()) && Objects.equals(getSources(), that.getSources()) && Objects.equals(getColumnSchema(), that.getColumnSchema()) && Objects.equals(getProperties(), that.getProperties()) && Objects.equals(getDescription(), that.getDescription());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getName(), getProject(), getDataStore(), getSources(), getColumnSchema(), getProperties(), getDescription());
     }
 }
