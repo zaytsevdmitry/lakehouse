@@ -142,7 +142,7 @@ DataStore: mydb
 endPoint: mytabs.anotherTable
 projectKey: myfirstproject
 ```
-
+![localImage](./dependency.png)
 ```plantuml
 !pragma layout smetana
 (otherTable) --> (mytabledataSet)
@@ -262,7 +262,7 @@ scenario1
          \ dagedges List<String,String> / name,name           
 ```
 ScenarioTemplate DAG
-
+![localImage](./taskpipline.png)
 ```plantuml
 !pragma layout smetana
 (transformation) --> (merge)
