@@ -263,7 +263,7 @@ scenario1
 ```
 ScenarioTemplate DAG
 
-![localImage](./taskpipline.png)
+![localImage](./taskpipeline.png)
 
 ```plantuml
 !pragma layout smetana
