@@ -10,11 +10,13 @@
         <module name="lakehouse-task-executor-svc" />
         <module name="lakehouse-ui-svc" />
         <module name="lakehouse-common" />
+        <module name="lakehouse-api" />
       </profile>
     </annotationProcessing>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="lakehouse-api" options="-parameters" />
       <module name="lakehouse-common" options="-parameters" />
       <module name="lakehouse-task-coordinator-svc" options="-parameters" />
       <module name="lakehouse-task-executor-svc" options="-parameters" />

@@ -1,4 +1,3 @@
-
 # Compatible keywords
 Domain Driven Design (DDD)
 Data mesh
@@ -10,7 +9,7 @@ SQL
 Data engineer tool
 United namespace
 # System design
-
+![localImage](./services.png)
 ```plantuml
 @startuml
 !pragma layout smetana
@@ -21,9 +20,11 @@ database workshopDB
 :task-coordinator-svc:  as taskcoordinatorsvc
 :task-executor-svc:  as taskexecutorsvc
 :task-scheduller-svc: as taskschedullersvc
+:cvs-svc: as cvssvc
 :cli: as cli
 taskcoordinatorsvc -> apisvc
 taskschedullersvc-->apisvc
+cvssvc -->apisvc
 uisvc-->apisvc
 cli-->apisvc
 apisvc-->workshopDB
@@ -32,17 +33,17 @@ taskexecutorsvc-->taskcoordinatorsvc:any one instance of task-executor take 1 ta
 @enduml
 ```
 # Entities design
-
+![localImage](./entities.png)
 ```plantuml
 !pragma layout smetana
 
-Project --|{ DataEndPoint
-DataStoreEndPoint --|{ DataEndPoint
-DataEndPoint --|{ Schedule
-Scenario --|{ Schedule
-Scenario --|{ Task
-DataEndPoint }|-- DataEndPoint
-taskExecutionServiceGroup  --|{ Scenario
+Project --|{ DataSet
+DataStore --|{ DataSet
+DataSet --|{ Schedule
+ScenarioTemplate --|{ Schedule
+ScenarioTemplate --|{ Task
+DataSet }|-- DataSet
+taskExecutionServiceGroup  --|{ Task
 taskExecutionServiceGroup --|{ TaskExecutorService 
 ```
 
@@ -50,7 +51,7 @@ taskExecutionServiceGroup --|{ TaskExecutorService
 ## system-repo
 ```
 
-    dataStoreEndpoints
+    DataStores
         |--mydb.yml
         |--someelsedb.yml
     projects
@@ -69,7 +70,7 @@ taskExecutionServiceGroup --|{ TaskExecutorService
 ## user-project-repo-myfirstproject
 ``` 
 
-    dataStoreEndpoints
+    datasets
       |--otherTable.yml
       |--anotherTable.yml
     schedules
@@ -78,8 +79,8 @@ taskExecutionServiceGroup --|{ TaskExecutorService
 ## user-project-repo-mysecondproject
 ``` 
 user-project-repo-mysecondproject
-    dataStoreEndpoint
-      |--mytableDataEndPoint.yml
+    datasets
+      |--mytabledataSet.yml
     schedules
       |--mytableRegularSchedule.yaml
     scenarios 
@@ -89,7 +90,7 @@ user-project-repo-mysecondproject
 ```
 
 
-# Project is a hight level definition. Main namespace
+# Project is a high level definition. Main namespace
 
 ```yaml
 configtype: project
@@ -103,8 +104,9 @@ comment:
 ```
 # data stores - database, file/object storage or else some things
 ```yaml
-configtype: dataStoreEndpoint
-name: mydb
+configtype: DataStore
+key: mydb
+name:
 interfaceType: jdbc
 vendor: postgres
 properties:
@@ -114,8 +116,8 @@ properties:
 comment: 
 ```
 ```yaml
-configtype: dataStoreEndpoint
-name: someelsedb
+configtype: DataStore
+key: someelsedb
 interfaceType: file #http/jdbc/file etc
 vendor: s3
 properties:
@@ -123,35 +125,35 @@ properties:
   user: user1
   password: ${token}
 ```
-# Public endpoints = user table declaration
+#  DataSet declaration
 
 ```yaml
-configtype: dataEndPoint
-name: otherTable
-dataStoreEndpointKey: mydb
+configtype: dataSet
+key: otherTable
+DataStoreKey: mydb
 endPoint: mytabs.otherTable
-project: myfirstproject
+projectKey: myfirstproject
 ```
 ```yaml
-configtype: dataEndPoint
-name: anotherTable
+configtype: dataSet
+key: anotherTable
 catalogSchema: mytabs
-dataStoreEndpoint: mydb
+DataStore: mydb
 endPoint: mytabs.anotherTable
-project: myfirstproject
+projectKey: myfirstproject
 ```
-
+![localImage](./dependency.png)
 ```plantuml
 !pragma layout smetana
-(otherTable) --> (mytableDataEndPoint)
-(anotherTable) --> (mytableDataEndPoint)
+(otherTable) --> (mytabledataSet)
+(anotherTable) --> (mytabledataSet)
 (myfirstproject)-->(mysecondproject)
 (mydb)-->(mydb)
 ```
 ```yaml
-configtype: dataEndPoint
-name: mytableDataEndPoint
-dataStoreEndpoint: mydb
+configtype: dataSet
+key: mytabledataSet
+DataStore: mydb
 endPoint: mytabs.mytable
 project: mysecondproject
 dependencies:
@@ -181,73 +183,72 @@ select id, o.tab_value
        using(id)
 ```
 
-# Scenario is a combination of dataendpoint, tasks and their execution dag
+# ScenarioTemplate is a combination of dataSet, tasks and their execution dag
 ## 
-## A single dataset configured as dataEndPoint can be served by multiple scenarios.
+## A single dataset configured as dataSet can be served by multiple scenarios.
 ```yaml
-configtype: scenario
-scenarioType: dateEndPointScenario
+configtype: scenarioTemplate
+scenarioType: dateEndPointScenarioTemplate
 
 name: scenario1
     # private  endpoint = temporary tables 
 internalEndPoints:
   - name: stageEndpoint
-    dataStoreEndpointKey: mydb
+    DataStoreKey: mydb
     endPoint: mytabs.mytable_stage
   - name: mergeareaEndpoint
-    dataStoreEndpointKey: mydb
+    DataStoreKey: mydb
     endPoint: mytabs.mytable_merge
-
 tasks:
-  - name: ${dataEndPoint.name}_transformation
-    sources: ${mytableDataEndPoint.dependencies}
+  - name: ${dataSet.name}_transformation
+    sources: ${mytabledataSet.dependencies}
     endPoint: stageEndpoint
-    class: SQLTransformationDataFrameTask #inherited Task
+    executionModule: SQLTransformationDataFrameTask #inherited Task
     importance: critical # abort when error
     taskExecutionServiceGroup: HeavyTransformGroup
-  - name: ${dataEndPoint.name}_merge
+  - name: ${dataSet.name}_merge
     sources: ${stageEndpoint}
     endPoint: mergeareaEndpoint
-    class: MergeDataFrameTask #inherited Task
+    executionModule: MergeDataFrameTask #inherited Task
     taskExecutionServiceGroup: HeavyGroup
     importance: critical
-  - name: ${dataEndPoint.name}_dataQualityCheckBefore
+  - name: ${dataSet.name}_dataQualityCheckBefore
     sources: ${mergeareaEndpoint}
     endPoint: mergeareaEndpoint
     importance: critical
     taskExecutionServiceGroup: QualityGroup
-    class: DataQualityCheckTask #inherited Task
-  - name: ${dataEndPoint.name}_apply
+    executionModule: DataQualityCheckTask #inherited Task
+  - name: ${dataSet.name}_apply
     sources: ${stageEndpoint}
     endPoint: mergeareaEndpoint
     importance: critical
-    class: ApplyTask #inherited Task
-  - name: ${dataEndPoint.name}_dataQualityCheckAfterCritical
+    executionModule: ApplyTask #inherited Task
+  - name: ${dataSet.name}_dataQualityCheckAfterCritical
     sources: ${stageEndpoint}
     endPoint: mergeareaEndpoint
-    class: DataQualityCheckTask #inherited Task
+    executionModule: DataQualityCheckTask #inherited Task
     taskExecutionServiceGroup: QualityGroup
     importance: critical
-  - name: ${dataEndPoint.name}_dataQualityCheckAfterWarn
+  - name: ${dataSet.name}_dataQualityCheckAfterWarn
     sources: ${stageEndpoint}
     endPoint: mergeareaEndpoint
     taskExecutionServiceGroup: UtilityGroup
-    class: DataQualityCheckTask #inherited Task
+    executionModule: DataQualityCheckTask #inherited Task
     importance: warn # pass when error
-  - name: ${dataEndPoint.name}_finally
+  - name: ${dataSet.name}_finally
     sources: ${stageEndpoint}
     endPoint: mergeareaEndpoint
     taskExecutionServiceGroup: UtilityGroup
-    class: FinallyTask #inherited Task
+    executionModule: FinallyTask #inherited Task
     importance: warn # pass when error
 dag:
-  - ${dataEndPoint.name}_transformation: ${dataEndPoint.name}_merge
-  - ${dataEndPoint.name}_merge: ${dataEndPoint.name}_dataQualityCheckBefore
-  - ${dataEndPoint.name}_dataQualityCheckBefore: ${dataEndPoint.name}_apply
-  - ${dataEndPoint.name}_apply: ${dataEndPoint.name}_dataQualityCheckAfterCritical
-  - ${dataEndPoint.name}_apply: ${dataEndPoint.name}_dataQualityCheckAfterWarn
-  - ${dataEndPoint.name}_dataQualityCheckAfterCritical: ${dataEndPoint.name}_finally
-  - ${dataEndPoint.name}_dataQualityCheckAfterWarn: ${dataEndPoint.name}_finally
+  - ${dataSet.name}_transformation: ${dataSet.name}_merge
+  - ${dataSet.name}_merge: ${dataSet.name}_dataQualityCheckBefore
+  - ${dataSet.name}_dataQualityCheckBefore: ${dataSet.name}_apply
+  - ${dataSet.name}_apply: ${dataSet.name}_dataQualityCheckAfterCritical
+  - ${dataSet.name}_apply: ${dataSet.name}_dataQualityCheckAfterWarn
+  - ${dataSet.name}_dataQualityCheckAfterCritical: ${dataSet.name}_finally
+  - ${dataSet.name}_dataQualityCheckAfterWarn: ${dataSet.name}_finally
 
 ```
 ```
@@ -260,7 +261,9 @@ scenario1
          | task3 
          \ dagedges List<String,String> / name,name           
 ```
-Scenario DAG
+ScenarioTemplate DAG
+
+![localImage](./taskpipeline.png)
 
 ```plantuml
 !pragma layout smetana
@@ -274,23 +277,17 @@ Scenario DAG
 ```
 
 ```
-scenarioRegular ---
-                    \
-                     >-- dataEndPoint
-                    /
-scenarioInintial ---                
+schedule1 --> scenarioRegular ------>---> dataSet
+                                   /
+schedule2 --> scenarioInintial ---/                
 ```
 # Schedule
-
-
 ```yaml
 configtype: schedule
 name: mytableRegularSchedule
-dataEndPoint: mytableDataEndPoint
+dataSet: mytabledataSet
 scheduleExpr: "*8***"
-scenario: scenario1
+scenarioTemplate: scenario1
 dependencyIntervalType: Daily #montly/hourly/minutely/
 keepDependencyInterval: true #false
-
 ```
-
