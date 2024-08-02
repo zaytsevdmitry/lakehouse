@@ -262,7 +262,9 @@ scenario1
          \ dagedges List<String,String> / name,name           
 ```
 ScenarioTemplate DAG
+
 ![localImage](./taskpipline.png)
+
 ```plantuml
 !pragma layout smetana
 (transformation) --> (merge)
