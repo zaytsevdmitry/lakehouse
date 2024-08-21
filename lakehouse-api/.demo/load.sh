@@ -2,43 +2,45 @@
 export url=$1
 pwd
 ls ./
-echo "server is 127.0.0.1:8080"
+echo "server is 127.0.0.1:8080/v1_0/configs"
 
-curl -i -X POST 127.0.0.1:8080/projects \
+curl -i -X POST 127.0.0.1:8080/v1_0/configs/projects \
   -H "Content-Type: application/json" \
-  --data-binary "@./projects-DEMO.json"
+  --data-binary "@./projects/demo.json"
 
 
-for s in "mydb" "someelsedb"
+for s in "processingdb" "lakehousestorage"
 do
-   curl -i -X POST 127.0.0.1:8080/datastores \
+   curl -i -X POST 127.0.0.1:8080/v1_0/configs/datastores \
      -H "Content-Type: application/json" \
-     --data-binary "@./datastores-$s.json"
+     --data-binary "@./datastores/$s.json"
 done
 
-for s in "anotherTable" "otherTable" "mytabledataSet"
+for s in "client_processing" "transaction_processing" "transaction_dds" "aggregation_pay_per_client_daily_mart" "aggregation_pay_per_client_total_mart"
 do
-   curl -i -X POST 127.0.0.1:8080/datasets \
+   curl -i -X POST 127.0.0.1:8080/v1_0/configs/datasets \
      -H "Content-Type: application/json" \
-     --data-binary "@./datasets-$s.json"
-done
-
-for s in "scenario1"
-do
-   curl -i -X POST 127.0.0.1:8080/scenarios \
-     -H "Content-Type: application/json" \
-      --data-binary "@./scenarios-$s.json"
+     --data-binary "@./datasets/$s.json"
 done
 
 for s in "default"
 do
-   curl -i -X POST 127.0.0.1:8080/taskexecutionservicegroups \
+   curl -i -X POST 127.0.0.1:8080/v1_0/configs/taskexecutionservicegroups \
      -H "Content-Type: application/json" \
-     --data-binary "@./taskexecutionservicegroups-$s.json"
+     --data-binary "@./taskexecutionservicegroups/$s.json"
 done
+
+for s in "default"
+do
+   curl -i -X POST 127.0.0.1:8080/v1_0/configs/scenarios \
+     -H "Content-Type: application/json" \
+      --data-binary "@./scenario-act-templates/$s.json"
+done
+
+
 for s in "regular" "initial"
 do
-   curl -i -X POST 127.0.0.1:8080/schedules \
+   curl -i -X POST 127.0.0.1:8080/v1_0/configs/schedules \
      -H "Content-Type: application/json" \
-     --data-binary "@./schedules-$s.json"
+     --data-binary "@./schedules/$s.json"
 done
