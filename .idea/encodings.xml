@@ -3,6 +3,8 @@
   <component name="Encoding">
     <file url="file://$PROJECT_DIR$/lakehouse-api/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/lakehouse-common/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/lakehouse-scheduller/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/lakehouse-scheduller/src/main/kotlin" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/lakehouse-task-coordinator-svc/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/lakehouse-task-executor-svc/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/lakehouse-ui-svc/src/main/java" charset="UTF-8" />

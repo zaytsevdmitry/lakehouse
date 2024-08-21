@@ -1,0 +1,35 @@
+{
+  "name": "initial",
+  "description": "initial schedule for client transactions",
+  "intervalExpression": "0 0 1 1 * *",
+  "startDateTime": "1999-12-31T21:00:00.000+00:00",
+  "stopDateTime": null,
+  "enabled": true,
+  "scenarioActs": [
+    {
+      "name": "transaction_dds",
+      "dataSet": "transaction_dds",
+      "scenarioActTemplate": "default"
+    },
+    {
+      "name": "aggregation_pay_per_client_daily_mart",
+      "dataSet": "aggregation_pay_per_client_daily_mart",
+      "scenarioActTemplate": "default"
+    },
+    {
+      "name": "aggregation_pay_per_client_total_mart",
+      "dataSet": "aggregation_pay_per_client_total_mart",
+      "scenarioActTemplate": "default"
+    }
+  ],
+  "scenarioActEdges": [
+    {
+      "from": "transaction_dds",
+      "to": "aggregation_pay_per_client_daily_mart"
+    },
+    {
+      "from": "transaction_dds",
+      "to": "aggregation_pay_per_client_total_mart"
+    }
+  ]
+}

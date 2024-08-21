@@ -1,0 +1,10 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+autonumber
+Scheduler --> ScheduleInstanceLast:registration
+Scheduler --> ScheduleInstance: build
+Scheduler --> ScheduleInstanceRunning: mark schedule as run
+Scheduler --> ScheduleTaskInstance: mark queued tasks ready to execute
+Executor --> ScheduleTaskInstance: take a task
+@enduml

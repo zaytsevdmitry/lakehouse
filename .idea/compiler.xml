@@ -7,6 +7,7 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="lakehouse-task-coordinator-svc" />
+        <module name="lakehouse-scheduller" />
         <module name="lakehouse-task-executor-svc" />
         <module name="lakehouse-ui-svc" />
         <module name="lakehouse-common" />
@@ -18,6 +19,7 @@
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="lakehouse-api" options="-parameters" />
       <module name="lakehouse-common" options="-parameters" />
+      <module name="lakehouse-scheduller" options="-parameters" />
       <module name="lakehouse-task-coordinator-svc" options="-parameters" />
       <module name="lakehouse-task-executor-svc" options="-parameters" />
       <module name="lakehouse-ui-svc" options="-parameters" />

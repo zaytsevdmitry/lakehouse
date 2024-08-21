@@ -33,19 +33,8 @@ taskexecutorsvc-->taskcoordinatorsvc:any one instance of task-executor take 1 ta
 @enduml
 ```
 # Entities design
-![localImage](./entities.png)
-```plantuml
-!pragma layout smetana
+![localImage](./Entities.png)
 
-Project --|{ DataSet
-DataStore --|{ DataSet
-DataSet --|{ Schedule
-ScenarioTemplate --|{ Schedule
-ScenarioTemplate --|{ Task
-DataSet }|-- DataSet
-taskExecutionServiceGroup  --|{ Task
-taskExecutionServiceGroup --|{ TaskExecutorService 
-```
 
 # Configuration files example
 ## system-repo
@@ -187,7 +176,7 @@ select id, o.tab_value
 ## 
 ## A single dataset configured as dataSet can be served by multiple scenarios.
 ```yaml
-configtype: scenarioTemplate
+configtype: scenarioActTemplate
 scenarioType: dateEndPointScenarioTemplate
 
 name: scenario1
@@ -287,7 +276,7 @@ configtype: schedule
 name: mytableRegularSchedule
 dataSet: mytabledataSet
 scheduleExpr: "*8***"
-scenarioTemplate: scenario1
+scenarioActTemplate: scenario1
 dependencyIntervalType: Daily #montly/hourly/minutely/
 keepDependencyInterval: true #false
 ```

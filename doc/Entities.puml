@@ -1,0 +1,60 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+Project --|{ DataSet
+DataStore --|{ DataSet
+
+ScenarioActTemplate --|{ TaskTemplate
+ScenarioActTemplate --|{ ScenarioAct
+DataSet --|{ ScenarioAct
+Schedule --|{ ScenarioAct
+Schedule --|{ ScenarioActDependency
+ScenarioAct --|{ ScenarioActDependency
+
+DataSet --|{ DataSetDependency
+DataSet --|{ DataSetDependency
+
+taskExecutionServiceGroup  --|{ TaskTemplate
+taskExecutionServiceGroup --|{ TaskExecutorService
+Schedule --{ ScheduleInstance
+Schedule --{ ScheduleInstanceLast
+Schedule --{ ScheduleInstanceRunning
+TaskTemplate ..{ ScheduleTaskInstance
+ScheduleInstance --{ ScheduleTaskInstance
+ScheduleInstance --{ ScheduleInstanceLast
+ScheduleInstance --{ ScheduleInstanceRunning
+ScheduleInstance ---{ ScheduleTaskInstanceDependency
+ScheduleTaskInstance---{ ScheduleTaskInstanceDependency
+
+class DataSetDTO{
+    private String name;
+    private String project;
+    private String dataStore;
+    private List<DataSetSourceDTO> sources;
+    private List<ColumnDTO> columnSchema;
+    private Map<String,String> properties;
+    private String description;
+
+}
+class ScheduleDTO{
+    private String dataSet;
+    private String intervalExpression;
+    private String startDateTime;
+    private String stopDateTime;
+    private String scenarioTemplate;
+    private boolean enabled;
+}
+
+class ScenarioActTemplateDTO{
+    private String name;
+    private String description;
+    private List<TaskDTO> tasks;
+    private List<DagEdgeDTO> dagEdges;
+}
+
+ProjectDTO --|{ DataSetDTO
+DataStoreDTO --|{ DataSetDTO
+DataSetDTO --|{ ScheduleDTO
+ScenarioActTemplateDTO --|{ ScheduleDTO
+TaskExecutionServiceGroupDTO  --|{ ScenarioActTemplateDTO
+@enduml

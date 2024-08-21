@@ -1,0 +1,95 @@
+{
+  "name": "default",
+  "description": "Default scenario",
+  "tasks": [
+    {
+      "name": "load",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "example.datamanipulation.Load",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "executionModuleArgs": {
+        "spark.executor.memory": "5gb",
+        "spark.driver.memory": "2gb"
+      }
+    },
+    {
+      "name": "merge",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "example.datamanipulation.Merge",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "executionModuleArgs": {}
+    },
+    {
+      "name": "dataQualityBefore",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "example.datamanipulation.DataQualityBefore",
+      "importance": "warn",
+      "description": "load from remote datastore",
+      "executionModuleArgs": {}
+    },
+    {
+      "name": "apply",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "example.datamanipulation.Apply",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "executionModuleArgs": {}
+    },
+    {
+      "name": "dataQualityAfterCritical",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "example.datamanipulation.DataQualityAfterCritical",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "executionModuleArgs": {}
+    },
+    {
+      "name": "dataQualityAfterWarn",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "example.datamanipulation.DataQualityAfterWarn",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "executionModuleArgs": {}
+    },
+    {
+      "name": "finally",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "example.datamanipulation.Finally",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "executionModuleArgs": {}
+    }
+  ],
+  "dagEdges": [
+    {
+      "from": "load",
+      "to": "merge"
+    },
+    {
+      "from": "merge",
+      "to": "dataQualityBefore"
+    },
+    {
+      "from": "dataQualityBefore",
+      "to": "apply"
+    },
+    {
+      "from": "apply",
+      "to": "dataQualityAfterCritical"
+    },
+    {
+      "from": "dataQualityAfterCritical",
+      "to": "finally"
+    },
+    {
+      "from": "apply",
+      "to": "dataQualityAfterWarn"
+    },
+    {
+      "from": "dataQualityAfterWarn",
+      "to": "finally"
+    }
+  ]
+}

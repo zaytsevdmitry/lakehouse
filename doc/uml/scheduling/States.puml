@@ -1,0 +1,38 @@
+@startuml
+'https://plantuml.com/state-diagram
+
+scale 350 width
+[*] --> ScheduleInstance:Registration/creation
+State ScheduleInstance{
+    [*] --> ScheduleInstance.NEW: Ready to tasks creation
+    NEW --> READY: waiting for a free executor
+    READY --> RUNNING: executor took the task
+    RUNNING --> SUCCESS: the executor completed the job
+    RUNNING --> FAIL: the executor failed the job
+}
+State TaskInstance{
+        ScheduleInstance.NEW --> NEW
+}
+
+/'
+
+state NotShooting {
+  [*] --> Idle
+  Idle --> Configuring : EvConfig
+  Configuring --> Idle : EvConfig
+}
+
+state Configuring {
+  [*] --> NewValueSelection
+  NewValueSelection --> NewValuePreview : EvNewValue
+  NewValuePreview --> NewValueSelection : EvNewValueRejected
+  NewValuePreview --> NewValueSelection : EvNewValueSaved
+
+  state NewValuePreview {
+     State1 -> State2
+  }
+
+}
+'/
+
+@enduml
