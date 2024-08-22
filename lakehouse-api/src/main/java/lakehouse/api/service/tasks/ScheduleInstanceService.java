@@ -133,8 +133,8 @@ public class ScheduleInstanceService {
                 .stream()
                 .map(scenarioActEdge ->
                              mapper.mapToScheduleScenarioActInstanceDependency(
-                                     actInstanceMap.get(scenarioActEdge.getFromScheduleScenarioAct().getName()),
-                                     actInstanceMap.get(scenarioActEdge.getToScheduleScenarioAct().getName())
+                                     actInstanceMap.get(scenarioActEdge.getFromScenarioAct().getName()),
+                                     actInstanceMap.get(scenarioActEdge.getToScenarioAct().getName())
                              ))
                 .toList();
 

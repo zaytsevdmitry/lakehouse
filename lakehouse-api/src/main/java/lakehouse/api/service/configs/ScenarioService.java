@@ -124,7 +124,7 @@ public class ScenarioService {
 
         scenarioActTemplateDTO.getDagEdges().forEach(dagEdgeDTO -> {
             TaskTemplateEdge taskTemplateEdge = new TaskTemplateEdge();
-            taskTemplateEdge.setScenarioTemplate(scenarioActTemplate);
+            taskTemplateEdge.setScenarioActTemplate(scenarioActTemplate);
             taskTemplateEdge.setFromTaskTemplate(taskTemplates.get(dagEdgeDTO.getFrom()));
             taskTemplateEdge.setToTaskTemplate(taskTemplates.get(dagEdgeDTO.getTo()));
             taskTemplateEdgeRepository.save(taskTemplateEdge);

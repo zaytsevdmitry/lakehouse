@@ -68,8 +68,8 @@ public class ScheduleService {
     }
     private DagEdgeDTO mapScenarioActEdgesToDTO(ScenarioActEdge scenarioActEdge){
         DagEdgeDTO result = new DagEdgeDTO();
-        result.setFrom(scenarioActEdge.getFromScheduleScenarioAct().getName());
-        result.setTo(scenarioActEdge.getToScheduleScenarioAct().getName());
+        result.setFrom(scenarioActEdge.getFromScenarioAct().getName());
+        result.setTo(scenarioActEdge.getToScenarioAct().getName());
         return result;
     }
 
@@ -115,10 +115,10 @@ public class ScheduleService {
         result.setSchedule(schedule);
         scenarioActRepository
                 .findByScheduleNameAndActName(schedule.getName(), dagEdgeDTO.getFrom())
-                .ifPresent(result::setFromScheduleScenarioAct);
+                .ifPresent(result::setFromScenarioAct);
         scenarioActRepository
                 .findByScheduleNameAndActName(schedule.getName(), dagEdgeDTO.getTo())
-                .ifPresent(result::setToScheduleScenarioAct);
+                .ifPresent(result::setToScenarioAct);
         return result;
 
     }
@@ -153,7 +153,7 @@ public class ScheduleService {
                 scheduleRepository
                         .findById(name)
                         .orElseThrow(() -> {
-                            logger.info("Can't get name: %s", name);
+                            logger.info("Can't get name: {}", name);
                             return new ScheduleNotFoundException(name);
                         })
         );
