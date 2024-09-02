@@ -18,6 +18,8 @@
         <module>lakehouse-task-executor-svc</module>
         <module>lakehouse-task-coordinator-svc</module>
         <module>lakehouse-api</module>
+        <module>lakehouse-scheduller</module>
+
     </modules>
     <properties>
         <lakehouse.version>0.0.1</lakehouse.version>
@@ -31,6 +33,14 @@
             <artifactId>postgresql</artifactId>
             <version>1.19.8</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
         </dependency>
     </dependencies>
 </project>
