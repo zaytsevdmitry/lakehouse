@@ -7,44 +7,39 @@ import java.util.Objects;
 @Entity
 public class DataStore extends KeyEntityAbstract {
 
-    private String interfaceType;
+	private String interfaceType;
 
-    private String vendor;
+	private String vendor;
 
+	public DataStore() {
+	}
 
-    public DataStore() {
-    }
+	public String getInterfaceType() {
+		return interfaceType;
+	}
 
+	public void setInterfaceType(String interfaceType) {
+		this.interfaceType = interfaceType;
+	}
 
-    public String getInterfaceType() {
-        return interfaceType;
-    }
+	public String getVendor() {
+		return vendor;
+	}
 
-    public void setInterfaceType(String interfaceType) {
-        this.interfaceType = interfaceType;
-    }
+	public void setVendor(String vendor) {
+		this.vendor = vendor;
+	}
 
-    public String getVendor() {
-        return vendor;
-    }
+	@Override
+	public boolean equals(Object o) {
 
-    public void setVendor(String vendor) {
-        this.vendor = vendor;
-    }
+		DataStore DataStore = (DataStore) o;
+		return super.equals(o) && Objects.equals(getInterfaceType(), DataStore.getInterfaceType())
+				&& Objects.equals(getVendor(), DataStore.getVendor());
+	}
 
-
-    @Override
-    public boolean equals(Object o) {
-
-        DataStore DataStore = (DataStore) o;
-        return super.equals(o)
-                && Objects.equals(getInterfaceType(), DataStore.getInterfaceType())
-                && Objects.equals(getVendor(), DataStore.getVendor());
-    }
-
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), getInterfaceType(), getVendor());
-    }
+	@Override
+	public int hashCode() {
+		return Objects.hash(super.hashCode(), getInterfaceType(), getVendor());
+	}
 }

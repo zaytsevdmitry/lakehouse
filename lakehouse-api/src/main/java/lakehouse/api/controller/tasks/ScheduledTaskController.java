@@ -9,13 +9,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class ScheduledTaskController {
 
-    @GetMapping(Endpoint.SCHEDULED_TASKS_TAKE)
-    ScheduledTaskDTO takeTask(@PathVariable String taskExecutionServiceGroupName, @PathVariable String serviceId){
+	@GetMapping(Endpoint.SCHEDULED_TASKS_TAKE)
+	ScheduledTaskDTO takeTask(@PathVariable String taskExecutionServiceGroupName, @PathVariable String serviceId) {
 
-        return null;
-    }
-
-
-
+		return null;
+	}
 
 }

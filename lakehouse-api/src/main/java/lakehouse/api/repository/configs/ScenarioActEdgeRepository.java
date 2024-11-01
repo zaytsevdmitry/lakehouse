@@ -7,13 +7,13 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 
-public interface ScenarioActEdgeRepository extends JpaRepository<ScenarioActEdge,Long> {
+public interface ScenarioActEdgeRepository extends JpaRepository<ScenarioActEdge, Long> {
 
-    @Query("select p from ScenarioActEdge p where p.schedule.name = ?1")
-    List<ScenarioActEdge> findByScheduleName(String scheduleName);
+	@Query("select p from ScenarioActEdge p where p.schedule.name = ?1")
+	List<ScenarioActEdge> findByScheduleName(String scheduleName);
 
-    @Modifying
-    @Query("delete  from ScenarioActEdge p where p.schedule.name = ?1")
-    void deleteByScheduleName(String scheduleName);
+	@Modifying
+	@Query("delete  from ScenarioActEdge p where p.schedule.name = ?1")
+	void deleteByScheduleName(String scheduleName);
 
 }

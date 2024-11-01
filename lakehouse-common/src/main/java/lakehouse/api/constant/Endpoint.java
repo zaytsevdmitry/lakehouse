@@ -27,6 +27,4 @@ public class Endpoint {
     public final static String SCHEDULED_TASKS = TASKS + "/scheduledtasks";
     public final static String SCHEDULED_TASKS_TAKE = SCHEDULED_TASKS + "/{servicegroup}/{serviceid}";
     public final static String SCHEDULED_TASKS_ID = SCHEDULED_TASKS + "/{id}";
-
-
 }

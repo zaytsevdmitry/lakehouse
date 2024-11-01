@@ -10,134 +10,135 @@ import java.time.OffsetDateTime;
 import java.util.Objects;
 
 @Entity
-@Table(uniqueConstraints =
-    @UniqueConstraint(
-            name = "schedule_task_instance_schedule_scenario_act_instance_id_name_uk" ,
-            columnNames = {"schedule_scenario_act_instance_id","name"}))
+@Table(uniqueConstraints = @UniqueConstraint(name = "schedule_task_instance_schedule_scenario_act_instance_id_name_uk", columnNames = {
+		"schedule_scenario_act_instance_id", "name" }))
 public class ScheduleTaskInstance {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "id", nullable = false)
+	private Long id;
 
-    @Column(nullable = false)
-    private String name;
+	@Column(nullable = false)
+	private String name;
 
-    @ManyToOne
-    @JoinColumn(nullable = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    private ScheduleScenarioActInstance scheduleScenarioActInstance;
+	@ManyToOne
+	@JoinColumn(nullable = false)
+	@OnDelete(action = OnDeleteAction.CASCADE)
+	private ScheduleScenarioActInstance scheduleScenarioActInstance;
 
-    @ManyToOne
-    @JoinColumn(nullable = true)
-    private TaskExecutionServiceGroup taskExecutionServiceGroup;
+	@ManyToOne
+	@JoinColumn(nullable = true)
+	private TaskExecutionServiceGroup taskExecutionServiceGroup;
 
-    @Column(nullable = true)
-    private String executionModule;
+	@Column(nullable = true)
+	private String executionModule;
 
-    private OffsetDateTime beginDateTime;
+	private OffsetDateTime beginDateTime;
 
-    private OffsetDateTime endDateTime;
+	private OffsetDateTime endDateTime;
 
-    @Column(nullable = false, columnDefinition = "varchar default 'NEW' CHECK (status IN ('NEW', 'SUCCESS', 'QUEUED', 'RUNNING'))")
-    private String status = Status.Task.NEW.label;
+	@Column(nullable = false, columnDefinition = "varchar default 'NEW' CHECK (status IN ('NEW', 'SUCCESS', 'QUEUED', 'RUNNING'))")
+	private String status = Status.Task.NEW.label;
 
-    @Column(nullable = false, columnDefinition = "int default 0")
-    private int reTryCount = 0;
+	@Column(nullable = false, columnDefinition = "int default 0")
+	private int reTryCount = 0;
 
+	public ScheduleTaskInstance() {
+	}
 
+	public Long getId() {
+		return id;
+	}
 
-    public ScheduleTaskInstance() {
-    }
+	public void setId(Long id) {
+		this.id = id;
+	}
 
-    public Long getId() {
-        return id;
-    }
+	public String getName() {
+		return name;
+	}
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+	public void setName(String name) {
+		this.name = name;
+	}
 
-    public String getName() {
-        return name;
-    }
+	public TaskExecutionServiceGroup getTaskExecutionServiceGroup() {
+		return taskExecutionServiceGroup;
+	}
 
-    public void setName(String name) {
-        this.name = name;
-    }
+	public void setTaskExecutionServiceGroup(TaskExecutionServiceGroup taskExecutionServiceGroup) {
+		this.taskExecutionServiceGroup = taskExecutionServiceGroup;
+	}
 
+	public String getExecutionModule() {
+		return executionModule;
+	}
 
-    public TaskExecutionServiceGroup getTaskExecutionServiceGroup() {
-        return taskExecutionServiceGroup;
-    }
+	public void setExecutionModule(String executionModule) {
+		this.executionModule = executionModule;
+	}
 
-    public void setTaskExecutionServiceGroup(TaskExecutionServiceGroup taskExecutionServiceGroup) {
-        this.taskExecutionServiceGroup = taskExecutionServiceGroup;
-    }
+	public OffsetDateTime getBeginDateTime() {
+		return beginDateTime;
+	}
 
-    public String getExecutionModule() {
-        return executionModule;
-    }
+	public void setBeginDateTime(OffsetDateTime beginDateTime) {
+		this.beginDateTime = beginDateTime;
+	}
 
-    public void setExecutionModule(String executionModule) {
-        this.executionModule = executionModule;
-    }
+	public OffsetDateTime getEndDateTime() {
+		return endDateTime;
+	}
 
-    public OffsetDateTime getBeginDateTime() {
-        return beginDateTime;
-    }
+	public void setEndDateTime(OffsetDateTime endDateTime) {
+		this.endDateTime = endDateTime;
+	}
 
-    public void setBeginDateTime(OffsetDateTime beginDateTime) {
-        this.beginDateTime = beginDateTime;
-    }
+	public String getStatus() {
+		return status;
+	}
 
-    public OffsetDateTime getEndDateTime() {
-        return endDateTime;
-    }
+	public void setStatus(String status) {
+		this.status = status;
+	}
 
-    public void setEndDateTime(OffsetDateTime endDateTime) {
-        this.endDateTime = endDateTime;
-    }
+	public int getReTryCount() {
+		return reTryCount;
+	}
 
-    public String getStatus() {
-        return status;
-    }
+	public void setReTryCount(int reTryCount) {
+		this.reTryCount = reTryCount;
+	}
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
+	public ScheduleScenarioActInstance getScheduleScenarioActInstance() {
+		return scheduleScenarioActInstance;
+	}
 
-    public int getReTryCount() {
-        return reTryCount;
-    }
+	public void setScheduleScenarioActInstance(ScheduleScenarioActInstance scheduleScenarioActInstance) {
+		this.scheduleScenarioActInstance = scheduleScenarioActInstance;
+	}
 
-    public void setReTryCount(int reTryCount) {
-        this.reTryCount = reTryCount;
-    }
+	@Override
+	public boolean equals(Object o) {
 
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
+		ScheduleTaskInstance that = (ScheduleTaskInstance) o;
+		return getReTryCount() == that.getReTryCount() && Objects.equals(getId(), that.getId())
+				&& Objects.equals(getName(), that.getName())
+				&& Objects.equals(getScheduleScenarioActInstance(), that.getScheduleScenarioActInstance())
+				&& Objects.equals(getTaskExecutionServiceGroup(), that.getTaskExecutionServiceGroup())
+				&& Objects.equals(getExecutionModule(), that.getExecutionModule())
+				&& Objects.equals(getBeginDateTime(), that.getBeginDateTime())
+				&& Objects.equals(getEndDateTime(), that.getEndDateTime())
+				&& Objects.equals(getStatus(), that.getStatus());
+	}
 
-
-    public ScheduleScenarioActInstance getScheduleScenarioActInstance() {
-        return scheduleScenarioActInstance;
-    }
-
-    public void setScheduleScenarioActInstance(
-            ScheduleScenarioActInstance scheduleScenarioActInstance) {
-        this.scheduleScenarioActInstance = scheduleScenarioActInstance;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ScheduleTaskInstance that = (ScheduleTaskInstance) o;
-        return getReTryCount() == that.getReTryCount()
-                && Objects.equals(getId(), that.getId()) && Objects.equals(getName(), that.getName()) && Objects.equals(getScheduleScenarioActInstance(), that.getScheduleScenarioActInstance()) && Objects.equals(getTaskExecutionServiceGroup(), that.getTaskExecutionServiceGroup()) && Objects.equals(getExecutionModule(), that.getExecutionModule()) && Objects.equals(getBeginDateTime(), that.getBeginDateTime()) && Objects.equals(getEndDateTime(), that.getEndDateTime()) && Objects.equals(getStatus(), that.getStatus());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(getId(), getName(), getScheduleScenarioActInstance(), getTaskExecutionServiceGroup(), getExecutionModule(), getBeginDateTime(), getEndDateTime(), getStatus(), getReTryCount());
-    }
+	@Override
+	public int hashCode() {
+		return Objects.hash(getId(), getName(), getScheduleScenarioActInstance(), getTaskExecutionServiceGroup(),
+				getExecutionModule(), getBeginDateTime(), getEndDateTime(), getStatus(), getReTryCount());
+	}
 }

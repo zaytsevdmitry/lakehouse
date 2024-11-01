@@ -10,7 +10,8 @@
     </parent>
 
     <artifactId>lakehouse-task-executor-svc</artifactId>
-
+	
+	
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
@@ -20,13 +21,23 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+        <dependency>
+        	<groupId>lakehouse</groupId>
+        	<artifactId>lakehouse-common</artifactId>
+        	<version>0.0.1</version>
+        </dependency>
+        <dependency>
+        	<groupId>lakehouse</groupId>
+        	<artifactId>lakehouse-api-rest-client</artifactId>
+        	<version>0.0.1</version>
+        </dependency>
+
     </dependencies>
     <build>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>3.2.5</version>
             </plugin>
         </plugins>
     </build>

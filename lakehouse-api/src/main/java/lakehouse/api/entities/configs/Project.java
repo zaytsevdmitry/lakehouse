@@ -6,8 +6,7 @@ import jakarta.persistence.Entity;
 
 public class Project extends KeyEntityAbstract {
 
-    public Project() {
-    }
-
+	public Project() {
+	}
 
 }

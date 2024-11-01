@@ -1,0 +1,7 @@
+@startuml
+!pragma layout smetana
+(otherTable) --> (mytabledataSet)
+(anotherTable) --> (mytabledataSet)
+(myfirstproject)-->(mysecondproject)
+(mydb)-->(mydb)
+@enduml
