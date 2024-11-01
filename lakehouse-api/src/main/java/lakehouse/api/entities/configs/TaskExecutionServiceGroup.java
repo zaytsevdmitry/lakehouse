@@ -4,6 +4,7 @@ import jakarta.persistence.Entity;
 
 @Entity
 public class TaskExecutionServiceGroup extends KeyEntityAbstract {
-    public TaskExecutionServiceGroup(){}
+	public TaskExecutionServiceGroup() {
+	}
 
 }

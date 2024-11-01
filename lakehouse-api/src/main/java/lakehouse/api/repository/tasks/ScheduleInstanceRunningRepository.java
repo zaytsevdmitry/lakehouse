@@ -7,14 +7,14 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.List;
 
 public interface ScheduleInstanceRunningRepository extends JpaRepository<ScheduleInstanceRunning, Long> {
-    @Query("select p from ScheduleInstanceLast p where p.schedule.name = ?1")
-    List<ScheduleInstanceRunning> findByScheduleName(String scheduleName);
+	@Query("select p from ScheduleInstanceLast p where p.schedule.name = ?1")
+	List<ScheduleInstanceRunning> findByScheduleName(String scheduleName);
 
-    @Query("""
-            select sir\s
-            from ScheduleInstanceRunning sir\s
-             join Schedule s on\s
-                           s.enabled and\s
-                           sir.schedule.name = s.name""")
-    List<ScheduleInstanceRunning> findByScheduleEnabled();
+	@Query("""
+			select sir\s
+			from ScheduleInstanceRunning sir\s
+			 join Schedule s on\s
+			               s.enabled and\s
+			               sir.schedule.name = s.name""")
+	List<ScheduleInstanceRunning> findByScheduleEnabled();
 }

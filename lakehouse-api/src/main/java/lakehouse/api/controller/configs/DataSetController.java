@@ -10,34 +10,31 @@ import java.util.List;
 
 @RestController
 public class DataSetController {
-    private final DataSetService dataSetService;
+	private final DataSetService dataSetService;
 
-    public DataSetController(DataSetService dataSetService) {
-        this.dataSetService = dataSetService;
-    }
+	public DataSetController(DataSetService dataSetService) {
+		this.dataSetService = dataSetService;
+	}
 
+	@GetMapping(Endpoint.DATA_SETS)
+	List<DataSetDTO> getAll() {
+		return dataSetService.findAll();
+	}
 
-    @GetMapping(Endpoint.DATA_SETS)
-    List<DataSetDTO> getAll() {
-        return dataSetService.findAll();
-    }
+	@PostMapping(Endpoint.DATA_SETS)
+	@ResponseStatus(HttpStatus.CREATED)
+	DataSetDTO post(@RequestBody DataSetDTO dataSetDTO) {
+		return dataSetService.save(dataSetDTO);
+	}
 
-    @PostMapping(Endpoint.DATA_SETS)
-    @ResponseStatus(HttpStatus.CREATED)
-    DataSetDTO post(@RequestBody DataSetDTO dataSetDTO) {
-        return dataSetService.save(dataSetDTO);
-    }
+	@GetMapping(Endpoint.DATA_SETS_NAME)
+	DataSetDTO get(@PathVariable String name) {
+		return dataSetService.findById(name);
+	}
 
-
-    @GetMapping(Endpoint.DATA_SETS_NAME)
-    DataSetDTO get(@PathVariable String name) {
-        return dataSetService.findById(name);
-    }
-
-
-    @DeleteMapping(Endpoint.DATA_SETS_NAME)
-    @ResponseStatus(HttpStatus.ACCEPTED)
-    void deleteById(@PathVariable String name) {
-        dataSetService.deleteById(name);
-    }
+	@DeleteMapping(Endpoint.DATA_SETS_NAME)
+	@ResponseStatus(HttpStatus.ACCEPTED)
+	void deleteById(@PathVariable String name) {
+		dataSetService.deleteById(name);
+	}
 }

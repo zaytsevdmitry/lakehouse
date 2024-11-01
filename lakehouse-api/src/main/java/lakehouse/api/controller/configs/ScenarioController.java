@@ -12,36 +12,33 @@ import java.util.List;
 
 @RestController
 public class ScenarioController {
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final ScenarioService scenarioService;
+	private final Logger logger = LoggerFactory.getLogger(this.getClass());
+	private final ScenarioService scenarioService;
 
-    public ScenarioController(ScenarioService scenarioService) {
-        this.scenarioService = scenarioService;
-    }
+	public ScenarioController(ScenarioService scenarioService) {
+		this.scenarioService = scenarioService;
+	}
 
+	@GetMapping(Endpoint.SCENARIOS)
+	List<ScenarioActTemplateDTO> findAll() {
+		return scenarioService.findAll();
+	}
 
-    @GetMapping(Endpoint.SCENARIOS)
-    List<ScenarioActTemplateDTO> findAll() {
-        return scenarioService.findAll();
-    }
+	@PostMapping(Endpoint.SCENARIOS)
+	@ResponseStatus(HttpStatus.CREATED)
+	ScenarioActTemplateDTO post(@RequestBody ScenarioActTemplateDTO scenarioActTemplateDTO) {
+		return scenarioService.save(scenarioActTemplateDTO);
+	}
 
-    @PostMapping(Endpoint.SCENARIOS)
-    @ResponseStatus(HttpStatus.CREATED)
-    ScenarioActTemplateDTO post(@RequestBody ScenarioActTemplateDTO scenarioActTemplateDTO) {
-        return scenarioService.save(scenarioActTemplateDTO);
-    }
+	@GetMapping(Endpoint.SCENARIOS_NAME)
+	ScenarioActTemplateDTO get(@PathVariable String name) {
+		return scenarioService.findById(name);
+	}
 
+	@DeleteMapping(Endpoint.SCENARIOS_NAME)
+	@ResponseStatus(HttpStatus.ACCEPTED)
+	void deleteById(@PathVariable String name) {
 
-    @GetMapping(Endpoint.SCENARIOS_NAME)
-    ScenarioActTemplateDTO get(@PathVariable String name) {
-        return scenarioService.findById(name);
-    }
-
-
-    @DeleteMapping(Endpoint.SCENARIOS_NAME)
-    @ResponseStatus(HttpStatus.ACCEPTED)
-    void deleteById(@PathVariable String name) {
-
-        scenarioService.deleteById(name);
-    }
+		scenarioService.deleteById(name);
+	}
 }

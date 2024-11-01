@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 
-public interface TaskTemplateRepository extends JpaRepository<TaskTemplate,Long> {
-    @Query("select p from TaskTemplate p where p.scenarioActTemplate.name = ?1")
-    List<TaskTemplate> findByScenarioTemplateName(String scenarioTemplateName);
+public interface TaskTemplateRepository extends JpaRepository<TaskTemplate, String> {
+	@Query("select p from TaskTemplate p where p.scenarioActTemplate.name = ?1")
+	List<TaskTemplate> findByScenarioTemplateName(String scenarioTemplateName);
 }

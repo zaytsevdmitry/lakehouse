@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableScheduling
 @EnableTransactionManagement
 public class LakehouseApiApp {
-    public static void main(String[] args) {
-        SpringApplication.run(LakehouseApiApp.class, args);
-    }
+	public static void main(String[] args) {
+		SpringApplication.run(LakehouseApiApp.class, args);
+	}
 }

@@ -6,4 +6,4 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
 public interface ScheduleScenarioActInstanceRepository extends JpaRepository<ScheduleScenarioActInstance, Long> {
-   }
+}

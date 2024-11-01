@@ -10,51 +10,36 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class SchedulerBuilder {
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
+	private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-    private final ScheduleInstanceService scheduleInstanceService;
-    private final ScheduleInstanceLastService scheduleInstanceLastService;
-    private final ScheduleInstanceRunnigService scheduleInstanceRunnigService;
+	private final ScheduleInstanceService scheduleInstanceService;
+	private final ScheduleInstanceLastService scheduleInstanceLastService;
+	private final ScheduleInstanceRunnigService scheduleInstanceRunnigService;
 
+	public SchedulerBuilder(ScheduleInstanceService scheduleInstanceService,
+			ScheduleInstanceLastService scheduleInstanceLastService,
+			ScheduleInstanceRunnigService scheduleInstanceRunnigService) {
 
+		this.scheduleInstanceService = scheduleInstanceService;
+		this.scheduleInstanceLastService = scheduleInstanceLastService;
+		this.scheduleInstanceRunnigService = scheduleInstanceRunnigService;
 
+	}
 
-    public SchedulerBuilder(ScheduleInstanceService scheduleInstanceService,
-                            ScheduleInstanceLastService scheduleInstanceLastService,
-                            ScheduleInstanceRunnigService scheduleInstanceRunnigService) {
+	@Scheduled(fixedDelayString = "${lakehouse.api.schedule.registration.delay-ms}", initialDelayString = "${lakehouse.api.schedule.registration.initial-delay-ms}")
+	public void findAndRegisterNewSchedules() {
+		scheduleInstanceLastService.findAndRegisterNewSchedules();
+		scheduleInstanceRunnigService.findAndRegisterNewSchedules();
+	}
 
-        this.scheduleInstanceService = scheduleInstanceService;
-        this.scheduleInstanceLastService = scheduleInstanceLastService;
-        this.scheduleInstanceRunnigService = scheduleInstanceRunnigService;
+	@Scheduled(fixedDelayString = "${lakehouse.api.schedule.build.delay-ms}", initialDelayString = "${lakehouse.api.schedule.build.initial-delay-ms}")
+	public void buildNewTasks() {
+		scheduleInstanceService.buildNewSchedules();
+	}
 
-    }
-
-
-    @Scheduled(
-            fixedDelayString = "${lakehouse.api.schedule.registration.delay-ms}" ,
-            initialDelayString = "${lakehouse.api.schedule.registration.initial-delay-ms}")
-    public void findAndRegisterNewSchedules() {
-        scheduleInstanceLastService.findAndRegisterNewSchedules();
-        scheduleInstanceRunnigService.findAndRegisterNewSchedules();
-    }
-
-    @Scheduled(
-            fixedDelayString = "${lakehouse.api.schedule.build.delay-ms}",
-            initialDelayString = "${lakehouse.api.schedule.build.initial-delay-ms}")
-    public void buildNewTasks() {
-        scheduleInstanceService.buildNewSchedules();
-    }
-
-
-    @Scheduled(
-            fixedDelayString = "${lakehouse.api.schedule.registration.delay-ms}" ,
-            initialDelayString = "${lakehouse.api.schedule.registration.initial-delay-ms}")
-    public void runSchedules() {
-        scheduleInstanceRunnigService.runSchedules();
-    }
-
-
+	@Scheduled(fixedDelayString = "${lakehouse.api.schedule.registration.delay-ms}", initialDelayString = "${lakehouse.api.schedule.registration.initial-delay-ms}")
+	public void runSchedules() {
+		scheduleInstanceRunnigService.runSchedules();
+	}
 
 }
-
-
