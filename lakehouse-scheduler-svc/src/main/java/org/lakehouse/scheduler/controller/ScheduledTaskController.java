@@ -1,0 +1,24 @@
+package org.lakehouse.scheduler.controller;
+
+import org.lakehouse.cli.api.constant.Endpoint;
+import org.lakehouse.cli.api.dto.tasks.ScheduledTaskDTO;
+
+import java.util.List;
+
+import org.lakehouse.scheduler.service.ScheduleTaskInstanceService;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class ScheduledTaskController {
+	private final ScheduleTaskInstanceService scheduleTaskInstanceService;
+	
+	public ScheduledTaskController(ScheduleTaskInstanceService scheduleTaskInstanceService) {
+		this.scheduleTaskInstanceService = scheduleTaskInstanceService;		
+	}
+	@GetMapping(Endpoint.SCHEDULED_TASKS)
+	List<ScheduledTaskDTO> getAll() {
+		return scheduleTaskInstanceService.findAll();
+	}
+	
+}

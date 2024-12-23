@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.3.4</version>
+		<version>3.3.6</version>
 	</parent>
 	<groupId>lakehouse</groupId>
 	<artifactId>lakehouse-parent</artifactId>
@@ -14,13 +14,17 @@
 	<packaging>pom</packaging>
 	<modules>
 		<module>lakehouse-common</module>
-		<module>lakehouse-ui-svc</module>
+		
+		<module>lakehouse-config-svc</module>
+		<module>lakehouse-config-rest-client</module>
+		<module>lakehouse-scheduler-rest-client</module>
+		<module>lakehouse-scheduler-svc</module>
 		<module>lakehouse-task-executor-svc</module>
 		<module>lakehouse-task-coordinator-svc</module>
-		<module>lakehouse-api</module>
-		<module>lakehouse-scheduller</module>
-		<module>lakehouse-api-rest-client</module>
-	</modules>
+		<module>lakehouse-ui-svc</module>
+        <module>lakehouse-cli</module>
+
+    </modules>
 	<properties>
 		<lakehouse.version>0.0.1</lakehouse.version>
 		<maven.compiler.source>17</maven.compiler.source>
@@ -40,11 +44,13 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
+
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
+			<version>4.13.2</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

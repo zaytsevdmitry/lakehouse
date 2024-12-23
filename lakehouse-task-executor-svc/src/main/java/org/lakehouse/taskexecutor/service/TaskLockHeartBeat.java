@@ -1,0 +1,40 @@
+package org.lakehouse.taskexecutor.service;
+
+import org.lakehouse.config.rest.client.service.ClientApi;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.client.HttpClientErrorException.NotFound;
+
+import org.lakehouse.cli.api.dto.service.TaskExecutionHeartBeatDTO;
+
+public class TaskLockHeartBeat implements Runnable{
+	private final Logger logger = LoggerFactory.getLogger(this.getClass());
+	private final ClientApi clientApi;
+	private final TaskExecutionHeartBeatDTO taskExecutionHeartBeatDTO;
+	private final Integer heartBeatIntervalMs;
+	private boolean exit;
+	
+	public TaskLockHeartBeat(
+			ClientApi clientApi, 
+			Integer heartBeatIntervalMs,
+			TaskExecutionHeartBeatDTO taskExecutionHeartBeatDTO ) {
+		this.clientApi = clientApi;
+		this.heartBeatIntervalMs = heartBeatIntervalMs;
+		this.taskExecutionHeartBeatDTO = taskExecutionHeartBeatDTO;
+	}
+	
+	@Override
+	public void run() {
+		while(!exit) {
+			try {
+				Thread.sleep(heartBeatIntervalMs);
+				clientApi.lockHeartBeat(taskExecutionHeartBeatDTO);
+				logger.info("hb lockid={} sended", taskExecutionHeartBeatDTO.getLockId());
+			} catch (NotFound | InterruptedException e) { 
+				logger.warn(e.getMessage());
+				exit = true;
+			}
+		}
+	}	
+
+}

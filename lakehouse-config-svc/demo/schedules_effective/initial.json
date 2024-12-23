@@ -1,0 +1,320 @@
+{
+  "name": "initial",
+  "description": "initial schedule for client transactions",
+  "intervalExpression": "0 0 1 1 * *",
+  "startDateTime": "1999-12-31T21:00:00Z",
+  "stopDateTime": null,
+  "scenarioActEdges": [
+    {
+      "from": "transaction_dds",
+      "to": "aggregation_pay_per_client_daily_mart"
+    },
+    {
+      "from": "transaction_dds",
+      "to": "aggregation_pay_per_client_total_mart"
+    }
+  ],
+  "enabled": true,
+  "scenarioActs": [
+    {
+      "name": "aggregation_pay_per_client_daily_mart",
+      "dataSet": "aggregation_pay_per_client_daily_mart",
+      "tasks": [
+        {
+          "name": "apply",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.ApplyProcessor",
+          "importance": "critical",
+          "description": "load from remote datastore",
+          "executionModuleArgs": {}
+        },
+        {
+          "name": "load",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.LoadProcessor",
+          "importance": "critical",
+          "description": "load from remote datastore",
+          "executionModuleArgs": {
+            "spark.executor.memory": "5gb",
+            "spark.driver.memory": "2gb"
+          }
+        },
+        {
+          "name": "merge",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.MergeProcessor",
+          "importance": "critical",
+          "description": "load from remote datastore",
+          "executionModuleArgs": {}
+        },
+        {
+          "name": "dataQualityAfterCritical",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.DataQualityAfterCriticalProcessor",
+          "importance": "critical",
+          "description": "load from remote datastore",
+          "executionModuleArgs": {}
+        },
+        {
+          "name": "dataQualityAfterWarn",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.DataQualityAfterWarnProcessor",
+          "importance": "critical",
+          "description": "load from remote datastore",
+          "executionModuleArgs": {}
+        },
+        {
+          "name": "finally",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.FinallyProcessor",
+          "importance": "critical",
+          "description": "load from remote datastore",
+          "executionModuleArgs": {}
+        },
+        {
+          "name": "dataQualityBefore",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.DataQualityBeforeProcessor",
+          "importance": "warn",
+          "description": "load from remote datastore",
+          "executionModuleArgs": {}
+        }
+      ],
+      "dagEdges": [
+        {
+          "from": "dataQualityAfterWarn",
+          "to": "finally"
+        },
+        {
+          "from": "dataQualityBefore",
+          "to": "apply"
+        },
+        {
+          "from": "apply",
+          "to": "dataQualityAfterCritical"
+        },
+        {
+          "from": "merge",
+          "to": "dataQualityBefore"
+        },
+        {
+          "from": "dataQualityAfterCritical",
+          "to": "finally"
+        },
+        {
+          "from": "load",
+          "to": "merge"
+        },
+        {
+          "from": "apply",
+          "to": "dataQualityAfterWarn"
+        }
+      ]
+    },
+    {
+      "name": "aggregation_pay_per_client_total_mart",
+      "dataSet": "aggregation_pay_per_client_total_mart",
+      "tasks": [
+        {
+          "name": "apply",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.ApplyProcessor",
+          "importance": "critical",
+          "description": "load from remote datastore",
+          "executionModuleArgs": {}
+        },
+        {
+          "name": "load",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.LoadProcessor",
+          "importance": "critical",
+          "description": "load from remote datastore",
+          "executionModuleArgs": {
+            "spark.executor.memory": "5gb",
+            "spark.driver.memory": "2gb"
+          }
+        },
+        {
+          "name": "merge",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.MergeProcessor",
+          "importance": "critical",
+          "description": "load from remote datastore",
+          "executionModuleArgs": {}
+        },
+        {
+          "name": "dataQualityAfterCritical",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.DataQualityAfterCriticalProcessor",
+          "importance": "critical",
+          "description": "load from remote datastore",
+          "executionModuleArgs": {}
+        },
+        {
+          "name": "dataQualityAfterWarn",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.DataQualityAfterWarnProcessor",
+          "importance": "critical",
+          "description": "load from remote datastore",
+          "executionModuleArgs": {}
+        },
+        {
+          "name": "finally",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.FinallyProcessor",
+          "importance": "critical",
+          "description": "load from remote datastore",
+          "executionModuleArgs": {}
+        },
+        {
+          "name": "dataQualityBefore",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.DataQualityBeforeProcessor",
+          "importance": "warn",
+          "description": "load from remote datastore",
+          "executionModuleArgs": {}
+        }
+      ],
+      "dagEdges": [
+        {
+          "from": "dataQualityAfterWarn",
+          "to": "finally"
+        },
+        {
+          "from": "dataQualityBefore",
+          "to": "apply"
+        },
+        {
+          "from": "apply",
+          "to": "dataQualityAfterCritical"
+        },
+        {
+          "from": "merge",
+          "to": "dataQualityBefore"
+        },
+        {
+          "from": "dataQualityAfterCritical",
+          "to": "finally"
+        },
+        {
+          "from": "load",
+          "to": "merge"
+        },
+        {
+          "from": "apply",
+          "to": "dataQualityAfterWarn"
+        }
+      ]
+    },
+    {
+      "name": "transaction_dds",
+      "dataSet": "transaction_dds",
+      "tasks": [
+        {
+          "name": "apply",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.ApplyProcessor",
+          "importance": "critical",
+          "description": "load from remote datastore",
+          "executionModuleArgs": {}
+        },
+        {
+          "name": "merge",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.MergeProcessor",
+          "importance": "critical",
+          "description": "load from remote datastore",
+          "executionModuleArgs": {}
+        },
+        {
+          "name": "dataQualityAfterCritical",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.DataQualityAfterCriticalProcessor",
+          "importance": "critical",
+          "description": "load from remote datastore",
+          "executionModuleArgs": {}
+        },
+        {
+          "name": "dataQualityAfterWarn",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.DataQualityAfterWarnProcessor",
+          "importance": "critical",
+          "description": "load from remote datastore",
+          "executionModuleArgs": {}
+        },
+        {
+          "name": "finally",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.FinallyProcessor",
+          "importance": "critical",
+          "description": "load from remote datastore",
+          "executionModuleArgs": {}
+        },
+        {
+          "name": "load",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "default",
+          "importance": "critical",
+          "description": "override load",
+          "executionModuleArgs": {
+            "spark.executor.memory": "5gb",
+            "spark.driver.memory": "2gb"
+          }
+        },
+        {
+          "name": "dataQualityBefore",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.DataQualityBeforeProcessor",
+          "importance": "warn",
+          "description": "load from remote datastore",
+          "executionModuleArgs": {}
+        },
+        {
+          "name": "extend",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "extend.example",
+          "importance": "critical",
+          "description": "",
+          "executionModuleArgs": {
+            "spark.executor.memory": "5gb",
+            "spark.driver.memory": "2gb"
+          }
+        }
+      ],
+      "dagEdges": [
+        {
+          "from": "finally",
+          "to": "extend"
+        },
+        {
+          "from": "dataQualityAfterWarn",
+          "to": "finally"
+        },
+        {
+          "from": "dataQualityBefore",
+          "to": "apply"
+        },
+        {
+          "from": "apply",
+          "to": "dataQualityAfterCritical"
+        },
+        {
+          "from": "merge",
+          "to": "dataQualityBefore"
+        },
+        {
+          "from": "dataQualityAfterCritical",
+          "to": "finally"
+        },
+        {
+          "from": "load",
+          "to": "merge"
+        },
+        {
+          "from": "apply",
+          "to": "dataQualityAfterWarn"
+        }
+      ]
+    }
+  ]
+}

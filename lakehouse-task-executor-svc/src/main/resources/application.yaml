@@ -1,0 +1,18 @@
+server:
+  port: 8081
+lakehouse:
+  api:
+    client:
+      server:
+        path: http://127.0.0.1:8080
+  taskexecutor:
+    schedule:
+      lockTask:
+        delay-ms: 1000
+        initial-delay-ms: 1000
+      heardBeatTask:
+        delay-ms: 1000
+        initial-delay-ms: 1000
+    service:
+     groupName: default
+     id: first

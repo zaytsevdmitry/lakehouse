@@ -28,7 +28,7 @@
         </dependency>
         <dependency>
         	<groupId>lakehouse</groupId>
-        	<artifactId>lakehouse-api-rest-client</artifactId>
+        	<artifactId>lakehouse-config-rest-client</artifactId>
         	<version>0.0.1</version>
         </dependency>
 

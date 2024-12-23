@@ -7,5 +7,5 @@ docker run \
     -e POSTGRES_PASSWORD=postgresPW \
     -e POSTGRES_DB=postgresDB \
     -d postgres
-    docker exec -it 425adfca8d67 /bin/bash
+docker exec -it 425adfca8d67 /bin/bash
 psql -h localhost -p 5432 -U postgresUser  -W postgresDB
