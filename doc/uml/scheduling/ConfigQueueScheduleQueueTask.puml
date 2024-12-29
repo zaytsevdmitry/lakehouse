@@ -1,0 +1,12 @@
+@startuml
+
+queue schedulesQ
+queue tasksQ
+database schedulerDB
+
+(config-service)-> (schedulesQ)
+ (schedulesQ) -> (scheduller-service)
+ (scheduller-service)--> (schedulerDB)
+(scheduler-service)-> (tasksQ)
+(tasksQ) -> (task-executor)
+@enduml
