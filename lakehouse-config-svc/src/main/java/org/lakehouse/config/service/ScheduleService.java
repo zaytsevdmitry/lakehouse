@@ -1,9 +1,9 @@
 package org.lakehouse.config.service;
 
 import jakarta.transaction.Transactional;
-import org.lakehouse.cli.api.dto.configs.*;
-import org.lakehouse.cli.api.utils.Coalesce;
-import org.lakehouse.cli.api.utils.DateTimeUtils;
+import org.lakehouse.client.api.dto.configs.*;
+import org.lakehouse.client.api.utils.Coalesce;
+import org.lakehouse.client.api.utils.DateTimeUtils;
 
 import org.lakehouse.config.entities.scenario.ScenarioAct;
 import org.lakehouse.config.entities.scenario.ScenarioActEdge;
@@ -16,8 +16,6 @@ import org.lakehouse.config.mapper.Mapper;
 import org.lakehouse.config.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
@@ -73,7 +71,8 @@ public class ScheduleService {
 		ScheduleScenarioActDTO result = new ScheduleScenarioActDTO();
 		result.setName(scenarioAct.getName());
 		result.setDataSet(scenarioAct.getDataSet().getName());
-		result.setScenarioActTemplate(scenarioAct.getScenarioActTemplate().getName());
+		if (scenarioAct.getScenarioActTemplate()!=null)
+			result.setScenarioActTemplate(scenarioAct.getScenarioActTemplate().getName());
 	    result.setTasks(scenarioActTaskRepository
 	    		.findByScenarioActId(scenarioAct.getId())
 	    		.stream()
@@ -142,15 +141,16 @@ public class ScheduleService {
 
 	}
 
-	private Schedule mapScheduleToEntity(ScheduleDTO scheduleDTO) {
-		Schedule result = new Schedule();
-		result.setName(scheduleDTO.getName());
-		result.setDescription(scheduleDTO.getDescription());
-		result.setIntervalExpression(scheduleDTO.getIntervalExpression());
-		result.setStartDateTime(DateTimeUtils.parceDateTimeFormatWithTZ(scheduleDTO.getStartDateTime()));
-		result.setEnabled(scheduleDTO.isEnabled());
-		result.setLastChangedDateTime(DateTimeUtils.now());
-		return result;
+	private Schedule mapScheduleToEntity(Schedule schedule, ScheduleDTO scheduleDTO) {
+
+		schedule.setName(scheduleDTO.getName());
+		schedule.setDescription(scheduleDTO.getDescription());
+		schedule.setIntervalExpression(scheduleDTO.getIntervalExpression());
+		schedule.setStartDateTime(DateTimeUtils.parceDateTimeFormatWithTZ(scheduleDTO.getStartDateTime()));
+		schedule.setEnabled(scheduleDTO.isEnabled());
+		schedule.setLastChangedDateTime(DateTimeUtils.now());
+		schedule.setLastChangeNumber(schedule.getLastChangeNumber() +1);
+		return schedule;
 	}
 
 	private ScenarioActEdge mapScheduleScenarioActEdgeToEntity(Schedule schedule, DagEdgeDTO dagEdgeDTO) {
@@ -170,7 +170,22 @@ public class ScheduleService {
 
 	@Transactional
 	public ScheduleDTO save(ScheduleDTO scheduleDTO) {
-		Schedule schedule = scheduleRepository.save(mapScheduleToEntity(scheduleDTO));
+
+		Schedule currentScheduleVersion =
+				scheduleRepository
+						.findById(scheduleDTO.getName())
+						.orElse(new Schedule());
+
+		if (scheduleDTO.equals(mapScheduleToDTO(currentScheduleVersion))) {
+			logger.info("Schedule configs equals");
+			return scheduleDTO;
+		}
+
+		Schedule schedule = scheduleRepository
+				.save(
+						mapScheduleToEntity(
+								currentScheduleVersion,
+								scheduleDTO));
 
 		scenarioActRepository.deleteByScheduleName(schedule.getName());
 
@@ -179,9 +194,9 @@ public class ScheduleService {
 		scenarioActRepository.saveAll(scheduleDTO.getScenarioActs().stream()
 				.map(scheduleScenarioActDTO -> mapScheduleScenarioActToEntity(schedule, scheduleScenarioActDTO))
 				.toList()).forEach(sa -> scenarioActMap.put(sa.getName(), sa));
-		;
 
 		scenarioActEdgeRepository.deleteByScheduleName(schedule.getName());
+
 		scheduleDTO.getScenarioActEdges().stream()
 				.map(dagEdgeDTO -> mapScheduleScenarioActEdgeToEntity(schedule, dagEdgeDTO))
 				.forEach(scenarioActEdgeRepository::save);
@@ -233,11 +248,14 @@ public class ScheduleService {
 		return result;
 	}
 
-	public ScheduleDTO findById(String name) {
-		return mapScheduleToDTO(scheduleRepository.findById(name).orElseThrow(() -> {
+	public ScheduleDTO findDtoById(String name) {
+		return mapScheduleToDTO(findById(name));
+	}
+	public Schedule findById(String name) {
+		return scheduleRepository.findById(name).orElseThrow(() -> {
 			logger.info("Can't get name: {}", name);
 			return new ScheduleNotFoundException(name);
-		}));
+		});
 	}
 
 	@Transactional
@@ -250,7 +268,7 @@ public class ScheduleService {
 		try {
 
 			return mapScheduleDTOAndResolveTemplate(
-					this.findById(name),
+					this.findDtoById(name),
 					scenarioActTemplateService.findAllAsMap());
 		}catch (Exception  e){
 			throw new RuntimeException(e);
@@ -277,6 +295,7 @@ public class ScheduleService {
 			Map<String,ScenarioActTemplateDTO> actTemplateDTOMap
 			) throws Exception {
 		ScheduleEffectiveDTO result = new ScheduleEffectiveDTO();
+		Schedule schedule = findById(scheduleDTO.getName());
 		result.setEnabled(scheduleDTO.isEnabled());
 		result.setName(scheduleDTO.getName());
 		result.setIntervalExpression(scheduleDTO.getIntervalExpression());
@@ -284,6 +303,8 @@ public class ScheduleService {
 		result.setStopDateTime(scheduleDTO.getStopDateTime());
 		result.setScenarioActEdges(scheduleDTO.getScenarioActEdges());
 		result.setDescription(scheduleDTO.getDescription());
+		result.setLastChangedDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(schedule.getLastChangedDateTime()));
+		result.setLastChangeNumber(schedule.getLastChangeNumber());
 		result.setScenarioActs(
 			scheduleDTO.getScenarioActs().stream().map(sa-> {
 				ScheduleScenarioActEffectiveDTO resultAct = new ScheduleScenarioActEffectiveDTO();

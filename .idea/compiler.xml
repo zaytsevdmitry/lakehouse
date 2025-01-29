@@ -6,6 +6,7 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="lakehouse-common-test" />
         <module name="lakehouse-config-rest-client" />
         <module name="lakehouse-common" />
         <module name="lakehouse-cli" />
@@ -29,6 +30,7 @@
       <module name="lakehouse-api-rest-client" options="-parameters" />
       <module name="lakehouse-cli" options="-parameters" />
       <module name="lakehouse-common" options="-parameters" />
+      <module name="lakehouse-common-test" options="-parameters" />
       <module name="lakehouse-config-rest-client" options="-parameters" />
       <module name="lakehouse-config-svc" options="-parameters" />
       <module name="lakehouse-scheduler-rest-client" options="-parameters" />

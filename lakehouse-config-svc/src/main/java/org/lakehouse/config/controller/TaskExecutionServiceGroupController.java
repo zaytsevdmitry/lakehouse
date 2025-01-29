@@ -1,7 +1,7 @@
 package org.lakehouse.config.controller;
 
-import org.lakehouse.cli.api.constant.Endpoint;
-import org.lakehouse.cli.api.dto.configs.TaskExecutionServiceGroupDTO;
+import org.lakehouse.client.api.constant.Endpoint;
+import org.lakehouse.client.api.dto.configs.TaskExecutionServiceGroupDTO;
 
 import org.lakehouse.config.service.TaskExecutionServiceGroupService;
 import org.springframework.http.HttpStatus;

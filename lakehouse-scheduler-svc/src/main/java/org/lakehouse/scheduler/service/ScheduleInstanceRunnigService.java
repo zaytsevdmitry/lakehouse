@@ -1,11 +1,11 @@
 package org.lakehouse.scheduler.service;
 
 import jakarta.transaction.Transactional;
-import org.lakehouse.cli.api.constant.Status;
-import org.lakehouse.cli.api.dto.configs.ScheduleDTO;
-import org.lakehouse.cli.api.exception.CronParceErrorException;
-import org.lakehouse.cli.api.utils.DateTimeUtils;
-import org.lakehouse.config.rest.client.service.ClientApi;
+import org.lakehouse.client.api.constant.Status;
+import org.lakehouse.client.api.dto.configs.ScheduleDTO;
+import org.lakehouse.client.api.exception.CronParceErrorException;
+import org.lakehouse.client.api.utils.DateTimeUtils;
+import org.lakehouse.client.rest.config.component.ConfigRestClientApi;
 import org.lakehouse.scheduler.entities.ScheduleInstance;
 import org.lakehouse.scheduler.entities.ScheduleInstanceRunning;
 import org.lakehouse.scheduler.repository.ScheduleInstanceLastBuildRepository;
@@ -24,15 +24,15 @@ public class ScheduleInstanceRunnigService {
 	private final ScheduleInstanceRunningRepository scheduleInstanceRunningRepository;
 	private final ScheduleInstanceLastBuildRepository scheduleInstanceLastBuildRepository;
 	private final ScheduleInstanceRepository scheduleInstanceRepository;
-	private final ClientApi clientApi;
+	private final ConfigRestClientApi configRestClientApi;
 	public ScheduleInstanceRunnigService(ScheduleInstanceRunningRepository scheduleInstanceRunningRepository,
                                          ScheduleInstanceLastBuildRepository scheduleInstanceLastBuildRepository,
                                          ScheduleInstanceRepository scheduleInstanceRepository,
-                                         ScheduleTaskInstanceService scheduleTaskInstanceService, ClientApi clientApi) {
+                                         ScheduleTaskInstanceService scheduleTaskInstanceService, ConfigRestClientApi configRestClientApi) {
 		this.scheduleInstanceRunningRepository = scheduleInstanceRunningRepository;
 		this.scheduleInstanceLastBuildRepository = scheduleInstanceLastBuildRepository;
 		this.scheduleInstanceRepository = scheduleInstanceRepository;
-        this.clientApi = clientApi;
+        this.configRestClientApi = configRestClientApi;
     }
 
 	private Optional<ScheduleInstance> getLastScheduleInstance(String scheduleName) {
@@ -47,7 +47,10 @@ public class ScheduleInstanceRunnigService {
 
 	@Transactional
 	public void findAndRegisterNewSchedules() {
-		scheduleInstanceLastBuildRepository.findByScheduleEnabledNotRunning().stream().map(scheduleInstanceLast -> {
+		scheduleInstanceLastBuildRepository
+				.findByScheduleEnabledNotRunning()
+				.stream()
+				.map(scheduleInstanceLast -> {
 			ScheduleInstanceRunning result = new ScheduleInstanceRunning();
 			result.setConfigScheduleKeyName(scheduleInstanceLast.getConfigScheduleKeyName());
 			return result;
@@ -81,7 +84,7 @@ public class ScheduleInstanceRunnigService {
 		if (scheduleInstanceRunning.getScheduleInstance() != null
 			&&	sir.getScheduleInstance().getStatus().equals(Status.Schedule.SUCCESS.label)) {
 			try {
-				ScheduleDTO scheduleDTO = clientApi.getScheduleDTO(sir.getConfigScheduleKeyName());
+				ScheduleDTO scheduleDTO = configRestClientApi.getScheduleDTO(sir.getConfigScheduleKeyName());
 				OffsetDateTime next = DateTimeUtils.getNextTargetExecutionDateTime(
 						scheduleDTO.getIntervalExpression(),
 						sir.getScheduleInstance().getTargetExecutionDateTime());

@@ -1,9 +1,9 @@
 package org.lakehouse.config.service;
 
 import jakarta.transaction.Transactional;
-import org.lakehouse.cli.api.dto.configs.ColumnDTO;
-import org.lakehouse.cli.api.dto.configs.DataSetDTO;
-import org.lakehouse.cli.api.dto.configs.DataSetSourceDTO;
+import org.lakehouse.client.api.dto.configs.ColumnDTO;
+import org.lakehouse.client.api.dto.configs.DataSetDTO;
+import org.lakehouse.client.api.dto.configs.DataSetSourceDTO;
 
 import org.lakehouse.config.entities.*;
 import org.lakehouse.config.exception.DataSetNotFoundException;

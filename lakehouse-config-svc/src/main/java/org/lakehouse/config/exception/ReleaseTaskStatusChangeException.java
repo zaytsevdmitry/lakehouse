@@ -3,7 +3,7 @@ package org.lakehouse.config.exception;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-import org.lakehouse.cli.api.constant.Status;
+import org.lakehouse.client.api.constant.Status;
 
 @ResponseStatus(value = HttpStatus.BAD_REQUEST)
 public class ReleaseTaskStatusChangeException extends RuntimeException{

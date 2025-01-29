@@ -4,6 +4,7 @@
     <file url="file://$PROJECT_DIR$/lakehouse-api-rest-client/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/lakehouse-api/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/lakehouse-cli/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/lakehouse-common-test/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/lakehouse-common/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/lakehouse-config-rest-client/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/lakehouse-config-svc/src/main/java" charset="UTF-8" />

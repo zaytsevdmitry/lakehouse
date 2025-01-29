@@ -10,7 +10,7 @@ import java.util.Objects;
 
 @Entity
 @Table(uniqueConstraints = {
-		@UniqueConstraint(name = "schedule_instance_last_build__schedule_name_uk", columnNames = {"schedule_name" }),
+		@UniqueConstraint(name = "schedule_instance_last_build__schedule_name_uk", columnNames = {"config_schedule_key_name" }),
 		@UniqueConstraint(name = "schedule_instance_last_build__si_id_uk", columnNames = {"schedule_instance_id" })
 		}
 )
@@ -29,8 +29,15 @@ public class ScheduleInstanceLastBuild {
 
 	@Column(nullable = false)
 	private boolean enabled;
+
 	@Column(nullable = false)
 	private OffsetDateTime lastUpdateDateTime;
+
+	@Column(nullable = false)
+	private Long lastChangeNumber;
+
+	@Column(nullable = false)
+	private OffsetDateTime lastChangedDateTime;
 
 	public ScheduleInstanceLastBuild() {
 	}
@@ -74,6 +81,22 @@ public class ScheduleInstanceLastBuild {
 	public void setLastUpdateDateTime(OffsetDateTime lastUpdateDateTime) {
 		this.lastUpdateDateTime = lastUpdateDateTime;
 	}
+	public void setLastChangeNumber(Long lastChangeNumber) {
+		this.lastChangeNumber = lastChangeNumber;
+	}
+
+
+	public Long getLastChangeNumber() {
+		return lastChangeNumber;
+	}
+
+	public OffsetDateTime getLastChangedDateTime() {
+		return lastChangedDateTime;
+	}
+
+	public void setLastChangedDateTime(OffsetDateTime lastChangedDateTime) {
+		this.lastChangedDateTime = lastChangedDateTime;
+	}
 
 	@Override
 	public boolean equals(Object o) {
@@ -84,7 +107,9 @@ public class ScheduleInstanceLastBuild {
 				&& Objects.equals(getId(), that.getId())
 				&& Objects.equals(getConfigScheduleKeyName(), that.getConfigScheduleKeyName())
 				&& Objects.equals(getLastUpdateDateTime(), that.getLastUpdateDateTime())
-				&& Objects.equals(getScheduleInstance(), that.getScheduleInstance());
+				&& Objects.equals(getScheduleInstance(), that.getScheduleInstance())
+				&& Objects.equals(getLastChangedDateTime(), that.getLastChangedDateTime())
+				&& Objects.equals(getLastChangeNumber(), that.getLastChangeNumber());
 	}
 
 	@Override

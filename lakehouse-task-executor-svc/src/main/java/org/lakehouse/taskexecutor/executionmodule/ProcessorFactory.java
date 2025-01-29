@@ -4,7 +4,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
-import org.lakehouse.cli.api.dto.tasks.ScheduledTaskDTO;
+import org.lakehouse.client.api.dto.tasks.ScheduledTaskDTO;
 
 public class ProcessorFactory {
 	public TaskProcessor buildProcessor(ScheduledTaskDTO scheduledTaskDTO)

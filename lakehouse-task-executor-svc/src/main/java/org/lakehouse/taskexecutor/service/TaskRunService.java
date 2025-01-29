@@ -1,6 +1,6 @@
 package org.lakehouse.taskexecutor.service;
 
-import org.lakehouse.config.rest.client.service.ClientApi;
+import org.lakehouse.client.rest.config.component.ConfigRestClientApiImpl;
 import org.lakehouse.taskexecutor.executionmodule.ProcessorFactory;
 import org.lakehouse.taskexecutor.executionmodule.TaskProcessor;
 import org.slf4j.Logger;
@@ -13,10 +13,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException.NotFound;
 import org.springframework.web.client.ResourceAccessException;
 
-import org.lakehouse.cli.api.constant.Status;
-import org.lakehouse.cli.api.dto.service.ScheduledTaskLockDTO;
-import org.lakehouse.cli.api.dto.service.TaskExecutionHeartBeatDTO;
-import org.lakehouse.cli.api.dto.service.TaskInstanceReleaseDTO;
+import org.lakehouse.client.api.constant.Status;
+import org.lakehouse.client.api.dto.service.ScheduledTaskLockDTO;
+import org.lakehouse.client.api.dto.service.TaskExecutionHeartBeatDTO;
+import org.lakehouse.client.api.dto.service.TaskInstanceReleaseDTO;
 
 @Service
 @EnableConfigurationProperties
@@ -24,16 +24,16 @@ import org.lakehouse.cli.api.dto.service.TaskInstanceReleaseDTO;
 		"org.lakehouse.api.rest.client.configuration" })
 public class TaskRunService {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
-	private final ClientApi clientApi;
+	private final ConfigRestClientApiImpl clientApi;
 	private final ProcessorFactory processorFactory;
 	private final String serviceId;
 	private final String groupName;
 	//private final ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
-	public TaskRunService(ClientApi clientApi, ProcessorFactory processorFactory,
-			@Value("${lakehouse.taskexecutor.service.id}") String serviceId,
-			@Value("${lakehouse.taskexecutor.service.groupName}") String groupName //,
-			//ThreadPoolTaskExecutor threadPoolTaskExecutor
+	public TaskRunService(ConfigRestClientApiImpl clientApi, ProcessorFactory processorFactory,
+                          @Value("${lakehouse.taskexecutor.service.id}") String serviceId,
+                          @Value("${lakehouse.taskexecutor.service.groupName}") String groupName //,
+                          //ThreadPoolTaskExecutor threadPoolTaskExecutor
 			) {
 		this.clientApi = clientApi;
 		this.processorFactory = processorFactory;

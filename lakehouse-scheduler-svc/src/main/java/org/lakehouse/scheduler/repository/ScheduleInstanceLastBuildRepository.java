@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ScheduleInstanceLastBuildRepository extends JpaRepository<ScheduleInstanceLastBuild, Long> {
 
@@ -21,4 +22,5 @@ public interface ScheduleInstanceLastBuildRepository extends JpaRepository<Sched
 			)""")
 	List<ScheduleInstanceLastBuild> findByScheduleEnabledNotRunning();
 	List<ScheduleInstanceLastBuild> findByEnabled(boolean enabled);
+	Optional<ScheduleInstanceLastBuild> findByConfigScheduleKeyName(String configScheduleKeyName);
 }

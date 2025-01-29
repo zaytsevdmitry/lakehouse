@@ -1,21 +1,12 @@
 package org.lakehouse.scheduler.service;
 
 
-import org.lakehouse.cli.api.dto.configs.ScheduleDTO;
-import org.lakehouse.cli.api.dto.configs.ScheduleEffectiveDTO;
-import org.lakehouse.cli.api.utils.DateTimeUtils;
-import org.lakehouse.config.rest.client.service.ClientApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.time.OffsetDateTime;
-import java.util.List;
-
 @Component
-@Profile("prod")
 public class InternalSchedulerService {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	private final ScheduleInstanceBuildService scheduleInstanceService;
@@ -23,36 +14,29 @@ public class InternalSchedulerService {
 	private final ScheduleInstanceRunnigService scheduleInstanceRunnigService;
 	private final ScheduleTaskInstanceService scheduleTaskInstanceService;
 	private final ScheduleScenarioActInstanceManageStateService scheduleScenarioActInstanceManageStateService;
-	private final ClientApi clientApi;
+
 	public InternalSchedulerService(ScheduleInstanceBuildService scheduleInstanceService,
                                     ScheduleInstanceLastBuildService scheduleInstanceLastBuildService,
                                     ScheduleInstanceRunnigService scheduleInstanceRunnigService,
                                     ScheduleTaskInstanceService scheduleTaskInstanceService,
-                                    ScheduleScenarioActInstanceManageStateService scheduleScenarioActInstanceManageStateService,
-									ClientApi clientApi) {
+                                    ScheduleScenarioActInstanceManageStateService scheduleScenarioActInstanceManageStateService) {
 
 		this.scheduleInstanceService = scheduleInstanceService;
 		this.scheduleInstanceLastBuildService = scheduleInstanceLastBuildService;
 		this.scheduleInstanceRunnigService = scheduleInstanceRunnigService;
 		this.scheduleTaskInstanceService = scheduleTaskInstanceService;
 		this.scheduleScenarioActInstanceManageStateService = scheduleScenarioActInstanceManageStateService;
-
-        this.clientApi = clientApi;
     }
 /**
  * Make schedule objects with status  NEW
  * */
 	@Scheduled(
-			fixedDelayString = "${lakehouse.api.schedule.registration.delay-ms}",
-			initialDelayString = "${lakehouse.api.schedule.registration.initial-delay-ms}")
+			fixedDelayString = "${lakehouse.scheduler.registration.delay-ms}",
+			initialDelayString = "${lakehouse.scheduler.registration.initial-delay-ms}")
 	public void findAndRegisterNewSchedules() {
-		DateTimeUtils.now().minus()
-		List<ScheduleEffectiveDTO> scheduleDTOs = clientApi.getScheduleEffectiveDTOList();
-
-		scheduleInstanceLastBuildService.findAndRegisterNewSchedules(scheduleDTOs);
 		scheduleInstanceRunnigService.findAndRegisterNewSchedules();
 		logger.info("findAndRegisterNewSchedules");
-		scheduleInstanceService.buildNewSchedules(scheduleDTOs);
+		scheduleInstanceService.buildNewSchedules();
 		logger.info("buildNewTasks");
 	}
 
@@ -60,8 +44,8 @@ public class InternalSchedulerService {
 	 * Make schedule objects with status  NEW
 	 * */
 	@Scheduled(
-			fixedDelayString = "${lakehouse.api.schedule.run.delay-ms}", 
-			initialDelayString = "${lakehouse.api.schedule.run.initial-delay-ms}")
+			fixedDelayString = "${lakehouse.scheduler.run.delay-ms}", 
+			initialDelayString = "${lakehouse.scheduler.run.initial-delay-ms}")
 	public void runSchedules() {
 		int rows;
 		rows = scheduleInstanceRunnigService.sucsessSchedules();
@@ -80,8 +64,8 @@ public class InternalSchedulerService {
 
 	
 	@Scheduled(
-			fixedDelayString = "${lakehouse.api.schedule.resolvedeps.delay-ms}", 
-			initialDelayString = "${lakehouse.api.schedule.resolvedeps.initial-delay-ms}")
+			fixedDelayString = "${lakehouse.scheduler.resolvedeps.delay-ms}", 
+			initialDelayString = "${lakehouse.scheduler.resolvedeps.initial-delay-ms}")
 	public void resolveDependency() {
 		int rows = scheduleScenarioActInstanceManageStateService.runSucsessScenariosActs();
 		logger.info("resolveScenarioActDependency {}", rows);
@@ -93,8 +77,8 @@ public class InternalSchedulerService {
 
 	
 	@Scheduled(
-			fixedDelayString = "${lakehouse.api.schedule.task.retry.delay-ms}", 
-			initialDelayString = "${lakehouse.api.schedule.task.retry.initial-delay-ms}")
+			fixedDelayString = "${lakehouse.scheduler.task.retry.delay-ms}", 
+			initialDelayString = "${lakehouse.scheduler.task.retry.initial-delay-ms}")
 	public void reTryFilTasked() {
 		int rows;
 		

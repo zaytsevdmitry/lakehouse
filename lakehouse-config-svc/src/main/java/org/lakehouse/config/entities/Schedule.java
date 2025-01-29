@@ -20,7 +20,11 @@ public class Schedule extends KeyEntityAbstract {
 	@Column(nullable = false)
 	private boolean enabled;
 
+	@Column(nullable = false)
 	private OffsetDateTime lastChangedDateTime;
+
+	@Column(nullable = false)
+	private Long lastChangeNumber = 0L;
 
 	public Schedule() {
 	}
@@ -65,6 +69,14 @@ public class Schedule extends KeyEntityAbstract {
 		this.lastChangedDateTime = lastChangedDateTime;
 	}
 
+	public Long getLastChangeNumber() {
+		return lastChangeNumber;
+	}
+
+	public void setLastChangeNumber(Long lastChangeNumber) {
+		this.lastChangeNumber = lastChangeNumber;
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o)
@@ -78,12 +90,13 @@ public class Schedule extends KeyEntityAbstract {
 				&& Objects.equals(getIntervalExpression(), schedule.getIntervalExpression())
 				&& Objects.equals(getStartDateTime(), schedule.getStartDateTime())
 				&& Objects.equals(getLastChangedDateTime(), schedule.getLastChangedDateTime())
-				&& Objects.equals(getEndDateTime(), schedule.getEndDateTime());
+				&& Objects.equals(getEndDateTime(), schedule.getEndDateTime())
+				&& Objects.equals(getLastChangeNumber(), schedule.getLastChangeNumber());
 	}
 
 	@Override
 	public int hashCode() {
 		return Objects.hash(super.hashCode(), getIntervalExpression(), getStartDateTime(), getEndDateTime(),
-				isEnabled(),getLastChangedDateTime());
+				isEnabled(),getLastChangedDateTime(),getLastChangeNumber());
 	}
 }

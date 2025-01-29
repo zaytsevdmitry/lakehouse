@@ -1,11 +1,9 @@
 package org.lakehouse.config;
 
-import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.NewTopic;
-import org.lakehouse.cli.api.constant.Endpoint;
-import org.lakehouse.cli.api.dto.configs.*;
-import org.lakehouse.cli.api.utils.DateTimeUtils;
-import org.lakehouse.cli.api.utils.ObjectMapping;
+import org.lakehouse.client.api.constant.Endpoint;
+import org.lakehouse.client.api.dto.configs.*;
+import org.lakehouse.client.api.utils.DateTimeUtils;
+import org.lakehouse.client.api.utils.ObjectMapping;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -15,8 +13,8 @@ import org.lakehouse.config.entities.scenario.ScenarioAct;
 //import org.lakehouse.config.entities.tasks.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
-import org.lakehouse.config.configurationtest.FileLoader;
-import org.lakehouse.config.configurationtest.RestManipulator;
+import org.lakehouse.test.config.configuration.FileLoader;
+import org.lakehouse.config.test.configutation.RestManipulator;
 import org.lakehouse.config.entities.Schedule;
 import org.lakehouse.config.repository.DataSetRepository;
 import org.lakehouse.config.repository.ScenarioActRepository;
@@ -29,11 +27,9 @@ import org.lakehouse.config.service.tasks.ScheduleTaskInstanceService;*/
 import org.lakehouse.config.service.ScenarioActTemplateService;
 import org.lakehouse.config.service.ScheduleService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.kafka.core.KafkaAdmin;
@@ -45,16 +41,13 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
 
-import java.lang.reflect.Array;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @AutoConfigureMockMvc
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Import({ FileLoader.class, RestManipulator.class })
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-@ComponentScan
 @EnableJpaRepositories
 public class TestWithPostgres {
 //services
@@ -227,6 +220,7 @@ public class TestWithPostgres {
 	}
 
 	@Test
+	@Order(6)
 	void scenarioActRepositoryFindByScheduleName() throws Exception{
 		Schedule schedule = new Schedule();
 		ScenarioAct sa = new ScenarioAct();
@@ -240,6 +234,8 @@ public class TestWithPostgres {
 		schedule.setIntervalExpression("********");
 		schedule.setStartDateTime(DateTimeUtils.now());
 		schedule.setEndDateTime(DateTimeUtils.now());
+		schedule.setLastChangedDateTime(DateTimeUtils.now());
+		schedule.setLastChangeNumber(1L);
 		Schedule resultSchedule =  scheduleRepository.save(schedule);
 		sa.setSchedule(resultSchedule);
 		sa.setDataSet(dataSetRepository.findAll().get(0));
@@ -247,8 +243,14 @@ public class TestWithPostgres {
 		scenarioActRepository.save(sa);
 		
 		assert(	scenarioActRepository.findByScheduleName(schedule.getName()).size() ==1);
-	
-		
+		// test up config version number
+		ScheduleDTO scheduleDTO = scheduleService.findDtoById(schedule.getName());
+		scheduleDTO.setScenarioActs(new ArrayList<>());
+		scheduleDTO.setScenarioActEdges(new ArrayList<>());
+		scheduleDTO.setIntervalExpression("*****");
+		ScheduleDTO resultscheduleDTO = scheduleService.save(scheduleDTO);
+		assert (scheduleService.findById(resultscheduleDTO.getName()).getLastChangeNumber() == (schedule.getLastChangeNumber()+1));
+
 		scheduleRepository.delete(resultSchedule);;
 		restManipulator.deleteDTO(dto.getName(), Endpoint.DATA_SETS_NAME);
 		restManipulator.deleteDTO(dataStoreDTO.getName(), Endpoint.DATA_STORES_NAME);
@@ -259,7 +261,7 @@ public class TestWithPostgres {
 
 
 	@Test
-	@Order(6)
+	@Order(7)
 	void shouldTestAllDTO() throws Exception {
 
 	//	kafkaAdmin.createOrModifyTopics(new NewTopic("jopa", 1, (short) 1));
@@ -311,8 +313,8 @@ public class TestWithPostgres {
 						.toList()
 						.size())
 				.sum() == 1);
-
-		scheduleService.findEffectiveScheduleDTOById(initialScheduleDTO.getName()).getScenarioActs().stream()
+		ScheduleEffectiveDTO sef = scheduleService.findEffectiveScheduleDTOById(initialScheduleDTO.getName());
+		sef.getScenarioActs().stream()
 				.forEach(s -> {
 					s.getTasks().forEach(taskDTO -> {
 						System.out.printf("Scenario Act name %s Task name %s%n", s.getName(), taskDTO.getName());
@@ -323,7 +325,12 @@ public class TestWithPostgres {
 
 				});
 
-
+		assert (sef.getLastChangeNumber() !=null);
+		assert (sef.getLastChangedDateTime() !=null);
+		assert (sef.getScenarioActs() !=null);
+		assert (sef.getIntervalExpression() !=null);
+		assert (sef.getStartDateTime() !=null);
+		assert (sef.getScenarioActEdges() != null);
 		//------------------------------------
 
 		//ScenarioActTemplateDTO expectScenarioActTemplateDTO = loadScenarioActTemplateDTO();

@@ -20,7 +20,6 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
-
 		</dependency>
 
 
@@ -29,7 +28,11 @@
 			<artifactId>lakehouse-common</artifactId>
 			<version>0.0.1</version>
 		</dependency>
-
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
 
 		<dependency>
 			<groupId>org.mockito</groupId>
@@ -45,6 +48,12 @@
 			<groupId>org.javatuples</groupId>
 			<artifactId>javatuples</artifactId>
 			<version>1.2</version>
+		</dependency>
+		<dependency>
+			<groupId>lakehouse</groupId>
+			<artifactId>lakehouse-common-test</artifactId>
+			<version>0.0.1</version>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 </project>

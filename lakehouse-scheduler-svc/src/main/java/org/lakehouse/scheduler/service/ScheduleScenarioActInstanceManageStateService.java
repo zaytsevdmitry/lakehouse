@@ -1,6 +1,6 @@
 package org.lakehouse.scheduler.service;
 
-import org.lakehouse.cli.api.constant.Status;
+import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.scheduler.entities.ScheduleScenarioActInstance;
 import org.lakehouse.scheduler.entities.ScheduleScenarioActInstanceDependency;
 import org.lakehouse.scheduler.repository.ScheduleInstanceRepository;

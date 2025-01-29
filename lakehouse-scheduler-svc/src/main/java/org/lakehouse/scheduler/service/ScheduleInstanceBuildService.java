@@ -1,14 +1,13 @@
 package org.lakehouse.scheduler.service;
 
-import org.lakehouse.cli.api.constant.Status;
-import org.lakehouse.cli.api.dto.configs.ScheduleEffectiveDTO;
-import org.lakehouse.cli.api.dto.configs.ScheduleScenarioActDTO;
-import org.lakehouse.cli.api.dto.configs.ScheduleScenarioActEffectiveDTO;
-import org.lakehouse.cli.api.dto.configs.TaskDTO;
-import org.lakehouse.cli.api.exception.CronParceErrorException;
-import org.lakehouse.cli.api.utils.DateTimeUtils;
+import org.lakehouse.client.api.constant.Status;
+import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
+import org.lakehouse.client.api.dto.configs.ScheduleScenarioActEffectiveDTO;
+import org.lakehouse.client.api.dto.configs.TaskDTO;
+import org.lakehouse.client.api.exception.CronParceErrorException;
+import org.lakehouse.client.api.utils.DateTimeUtils;
 
-import org.lakehouse.config.rest.client.service.ClientApi;
+import org.lakehouse.client.rest.config.component.ConfigRestClientApi;
 import org.lakehouse.scheduler.entities.ScheduleInstance;
 import org.lakehouse.scheduler.entities.ScheduleInstanceLastBuild;
 import org.lakehouse.scheduler.entities.ScheduleScenarioActInstance;
@@ -30,7 +29,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.OffsetDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -44,7 +42,7 @@ public class ScheduleInstanceBuildService {
 	private final ScheduleTaskInstanceDependencyRepository scheduleTaskInstanceDependencyRepository;
 	private final ScheduleScenarioActInstanceRepository scheduleScenarioActInstanceRepository;
 	private final ScheduleScenarioActInstanceDependencyRepository scheduleScenarioActInstanceDependencyRepository;
-	private final ClientApi clientApi;
+	private final ConfigRestClientApi configRestClientApi;
 	@Autowired
 	private TransactionTemplate transactionTemplate;
 
@@ -55,7 +53,7 @@ public class ScheduleInstanceBuildService {
             ScheduleTaskInstanceDependencyRepository scheduleTaskInstanceDependencyRepository,
             ScheduleScenarioActInstanceRepository scheduleScenarioActInstanceRepository,
             ScheduleScenarioActInstanceDependencyRepository scheduleScenarioActInstanceDependencyRepository,
-			ClientApi clientApi) {
+			ConfigRestClientApi configRestClientApi) {
 		this.scheduleInstanceLastBuildRepository = scheduleInstanceLastBuildRepository;
 		this.scheduleInstanceRepository = scheduledTaskRepository;
 		this.scheduleTaskInstanceRepository = scheduleTaskInstanceRepository;
@@ -64,7 +62,7 @@ public class ScheduleInstanceBuildService {
 
 		this.scheduleScenarioActInstanceRepository = scheduleScenarioActInstanceRepository;
 		this.scheduleScenarioActInstanceDependencyRepository = scheduleScenarioActInstanceDependencyRepository;
-        this.clientApi = clientApi;
+        this.configRestClientApi = configRestClientApi;
     }
 
 	private ScheduleInstance newScheduleInstance(
@@ -151,6 +149,7 @@ public class ScheduleInstanceBuildService {
 				});
 			return ssai;
 		}).collect(Collectors.toMap(ScheduleScenarioActInstance::getName,ssai -> ssai));
+
 		scheduleEffectiveDTO.getScenarioActEdges().forEach(dagEdgeDTO -> {
 			ScheduleScenarioActInstanceDependency ssaid = new ScheduleScenarioActInstanceDependency();
 			ssaid.setFrom(actInstanceMap.get(dagEdgeDTO.getFrom()));
@@ -160,21 +159,17 @@ public class ScheduleInstanceBuildService {
 	}
 
 
-	public void buildNewSchedules(List<ScheduleEffectiveDTO> scheduleDTOs) {
-		Map<String, ScheduleEffectiveDTO> scheduleDTOMap =
-				scheduleDTOs
-						.stream()
-						.filter(ScheduleEffectiveDTO::isEnabled)
-						.collect(Collectors.toMap(ScheduleEffectiveDTO::getName, dto -> dto));
+
+	public void buildNewSchedules() {
 
 		scheduleInstanceLastBuildRepository
 				.findByEnabled(true)
 				.stream()
-				.filter(v-> scheduleDTOMap.containsKey(v.getConfigScheduleKeyName()))
 				.forEach(scheduleInstanceLastBuild -> {
 					try {
 						save(scheduleInstanceLastBuild,
-								scheduleDTOMap.get(scheduleInstanceLastBuild.getConfigScheduleKeyName()));
+								configRestClientApi.getScheduleEffectiveDTO(
+										scheduleInstanceLastBuild.getConfigScheduleKeyName()));
 					} catch (Exception e) {
 						logger.warn(e.getMessage());
 						throw new RuntimeException(e);
