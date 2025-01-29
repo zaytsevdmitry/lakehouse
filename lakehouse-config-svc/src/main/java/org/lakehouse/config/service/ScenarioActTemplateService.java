@@ -1,8 +1,8 @@
 package org.lakehouse.config.service;
 
 import jakarta.transaction.Transactional;
-import org.lakehouse.cli.api.dto.configs.DagEdgeDTO;
-import org.lakehouse.cli.api.dto.configs.ScenarioActTemplateDTO;
+import org.lakehouse.client.api.dto.configs.DagEdgeDTO;
+import org.lakehouse.client.api.dto.configs.ScenarioActTemplateDTO;
 
 import org.lakehouse.config.entities.templates.ScenarioActTemplate;
 import org.lakehouse.config.entities.templates.TaskTemplate;

@@ -1,6 +1,6 @@
 package org.lakehouse.config.mapper;
 
-import org.lakehouse.cli.api.dto.configs.TaskDTO;
+import org.lakehouse.client.api.dto.configs.TaskDTO;
 
 import java.util.Map;
 

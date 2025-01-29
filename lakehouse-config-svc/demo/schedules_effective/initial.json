@@ -4,6 +4,8 @@
   "intervalExpression": "0 0 1 1 * *",
   "startDateTime": "1999-12-31T21:00:00Z",
   "stopDateTime": null,
+  "lastChangeNumber": "1",
+  "lastChangedDateTime": "2025-01-25T21:00:00Z",
   "scenarioActEdges": [
     {
       "from": "transaction_dds",

@@ -1,7 +1,7 @@
 package org.lakehouse.config.service;
 
 import jakarta.transaction.Transactional;
-import org.lakehouse.cli.api.dto.configs.TaskExecutionServiceGroupDTO;
+import org.lakehouse.client.api.dto.configs.TaskExecutionServiceGroupDTO;
 
 import org.lakehouse.config.entities.TaskExecutionServiceGroup;
 import org.lakehouse.config.exception.TaskExecutionServiceGroupNotFoundException;

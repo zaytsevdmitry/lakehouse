@@ -1,10 +1,10 @@
 package org.lakehouse.config.controller;
 
-import org.lakehouse.cli.api.constant.Endpoint;
-import org.lakehouse.cli.api.dto.configs.ScheduleDTO;
+import org.lakehouse.client.api.constant.Endpoint;
+import org.lakehouse.client.api.dto.configs.ScheduleDTO;
 
-import org.lakehouse.cli.api.dto.configs.ScheduleEffectiveDTO;
-import org.lakehouse.cli.api.utils.DateTimeUtils;
+import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
+import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.config.service.ScheduleService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -32,7 +32,7 @@ public class ScheduleController {
 
 	@GetMapping(Endpoint.SCHEDULES_NAME)
 	ScheduleDTO get(@PathVariable String name) {
-		return scheduleService.findById(name);
+		return scheduleService.findDtoById(name);
 	}
 
 	@DeleteMapping(Endpoint.SCHEDULES_NAME)

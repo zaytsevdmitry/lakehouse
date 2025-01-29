@@ -9,10 +9,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import org.lakehouse.cli.api.constant.Endpoint;
-import org.lakehouse.cli.api.dto.service.ScheduledTaskLockDTO;
-import org.lakehouse.cli.api.dto.service.TaskExecutionHeartBeatDTO;
-import org.lakehouse.cli.api.dto.service.TaskInstanceReleaseDTO;
+import org.lakehouse.client.api.constant.Endpoint;
+import org.lakehouse.client.api.dto.service.ScheduledTaskLockDTO;
+import org.lakehouse.client.api.dto.service.TaskExecutionHeartBeatDTO;
+import org.lakehouse.client.api.dto.service.TaskInstanceReleaseDTO;
 
 @RestController
 public class ScheduledTaskLockController {

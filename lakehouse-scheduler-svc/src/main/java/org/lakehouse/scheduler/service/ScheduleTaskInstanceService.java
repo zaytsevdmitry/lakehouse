@@ -1,11 +1,11 @@
 package org.lakehouse.scheduler.service;
 
-import org.lakehouse.cli.api.constant.Status;
-import org.lakehouse.cli.api.dto.service.ScheduledTaskLockDTO;
-import org.lakehouse.cli.api.dto.service.TaskExecutionHeartBeatDTO;
-import org.lakehouse.cli.api.dto.service.TaskInstanceReleaseDTO;
-import org.lakehouse.cli.api.dto.tasks.ScheduledTaskDTO;
-import org.lakehouse.cli.api.utils.DateTimeUtils;
+import org.lakehouse.client.api.constant.Status;
+import org.lakehouse.client.api.dto.service.ScheduledTaskLockDTO;
+import org.lakehouse.client.api.dto.service.TaskExecutionHeartBeatDTO;
+import org.lakehouse.client.api.dto.service.TaskInstanceReleaseDTO;
+import org.lakehouse.client.api.dto.tasks.ScheduledTaskDTO;
+import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.scheduler.entities.ScheduleTaskInstance;
 import org.lakehouse.scheduler.entities.ScheduleTaskInstanceDependency;
 import org.lakehouse.scheduler.entities.ScheduleTaskInstanceExecutionLock;

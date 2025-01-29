@@ -1,7 +1,7 @@
 package org.lakehouse.config.service;
 
 import jakarta.transaction.Transactional;
-import org.lakehouse.cli.api.dto.configs.DataStoreDTO;
+import org.lakehouse.client.api.dto.configs.DataStoreDTO;
 
 import org.lakehouse.config.entities.DataStore;
 import org.lakehouse.config.entities.DataStoreProperty;

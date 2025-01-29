@@ -1,7 +1,7 @@
 package org.lakehouse.config.service;
 
 import jakarta.transaction.Transactional;
-import org.lakehouse.cli.api.dto.configs.ProjectDTO;
+import org.lakehouse.client.api.dto.configs.ProjectDTO;
 
 import org.lakehouse.config.entities.Project;
 import org.lakehouse.config.exception.ProjectNotFoundException;

@@ -1,6 +1,6 @@
 package org.lakehouse.scheduler.exception;
 
-import org.lakehouse.cli.api.constant.Status;
+import org.lakehouse.client.api.constant.Status;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 

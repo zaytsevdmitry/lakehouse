@@ -2,9 +2,8 @@ package org.lakehouse.scheduler.service;
 
 import jakarta.transaction.Transactional;
 
-import org.lakehouse.cli.api.dto.configs.ScheduleDTO;
-import org.lakehouse.cli.api.dto.configs.ScheduleEffectiveDTO;
-import org.lakehouse.config.rest.client.service.ClientApi;
+import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
+import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.scheduler.entities.ScheduleInstance;
 import org.lakehouse.scheduler.entities.ScheduleInstanceLastBuild;
 import org.lakehouse.scheduler.repository.ScheduleInstanceLastBuildRepository;
@@ -22,15 +21,12 @@ import java.util.stream.Collectors;
 
 @Service
 public class ScheduleInstanceLastBuildService {
-	private final ClientApi clientApi;
 	private final ScheduleInstanceLastBuildRepository scheduleInstanceLastBuildRepository;
 	private final ScheduleInstanceRepository scheduleInstanceRepository;
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	public ScheduleInstanceLastBuildService(
-			ClientApi clientApi,
 			ScheduleInstanceLastBuildRepository scheduleInstanceLastBuildRepository,
 			ScheduleInstanceRepository scheduleInstanceRepository) {
-        this.clientApi = clientApi;
         this.scheduleInstanceLastBuildRepository = scheduleInstanceLastBuildRepository;
 		this.scheduleInstanceRepository = scheduleInstanceRepository;
 	}
@@ -43,6 +39,37 @@ public class ScheduleInstanceLastBuildService {
 			return Optional.ofNullable(scheduleInstanceList.get(0));
 		}
 		return Optional.empty();
+	}
+
+	private ScheduleInstanceLastBuild mapDTOToScheduleInstanceLastBuild(
+			ScheduleInstanceLastBuild instanceLastBuild,
+			ScheduleEffectiveDTO scheduleEffectiveDTO){
+
+		ScheduleInstanceLastBuild result = instanceLastBuild;
+
+		result.setConfigScheduleKeyName(scheduleEffectiveDTO.getName());
+		result.setEnabled(scheduleEffectiveDTO.isEnabled());
+		result.setLastChangeNumber(scheduleEffectiveDTO.getLastChangeNumber());
+		result.setLastChangedDateTime(DateTimeUtils.parceDateTimeFormatWithTZ(scheduleEffectiveDTO.getLastChangedDateTime()));
+		// check if already scheduled but not present in Last
+		getLastScheduleInstance(scheduleEffectiveDTO.getName()).ifPresent(result::setScheduleInstance);
+		result.setLastUpdateDateTime(DateTimeUtils.now());
+
+		return result;
+	}
+
+	@Transactional
+	public void findAndRegisterNewSchedule(ScheduleEffectiveDTO scheduleDTO) {
+		scheduleInstanceLastBuildRepository.findByConfigScheduleKeyName(scheduleDTO.getName())
+				.ifPresentOrElse(
+						scheduleInstanceLastBuild -> {
+							if (scheduleInstanceLastBuild.getLastChangeNumber() < scheduleDTO.getLastChangeNumber())
+								scheduleInstanceLastBuildRepository.save(
+										mapDTOToScheduleInstanceLastBuild(scheduleInstanceLastBuild, scheduleDTO));
+						},
+						() -> scheduleInstanceLastBuildRepository.save(
+								mapDTOToScheduleInstanceLastBuild(new ScheduleInstanceLastBuild(), scheduleDTO))
+				);
 	}
 
 	@Transactional
@@ -70,7 +97,7 @@ public class ScheduleInstanceLastBuildService {
 				.stream()
 				.filter(scheduleDTO -> !silMap.containsKey(scheduleDTO.getName()))
 				.map(scheduleDTO -> {
-					ScheduleInstanceLastBuild result = new ScheduleInstanceLastBuild();
+						ScheduleInstanceLastBuild result = new ScheduleInstanceLastBuild();
 					result.setConfigScheduleKeyName(scheduleDTO.getName());
 						// check if already scheduled but not present in Last
 					getLastScheduleInstance(scheduleDTO.getName()).ifPresent(result::setScheduleInstance);

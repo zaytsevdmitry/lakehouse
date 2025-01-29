@@ -9,4 +9,5 @@ import java.util.List;
 
 public interface ScheduleRepository extends JpaRepository<Schedule, String> {
     List<Schedule> findByLastChangedDateTimeGreaterThan(OffsetDateTime lastChangedDateTime);
+
 }

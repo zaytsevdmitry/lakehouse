@@ -27,30 +27,32 @@ spring:
           create-database-schemas: true
       hibernate:
         default_schema: lakehouse_scheduler
-  kafka:
-    consumer:
-      bootstrap-servers: localhost:9092
-      group-id: group_id
-      auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-
 lakehouse:
-  config:
-    client:
-      server:
-        url=http://127:0:0:1:8080
-    schedule:
-      registration:
-        delay-ms: 20000
-        initial-delay-ms: 5000
-      run:
+  client:
+    rest:
+      config:
+        server:
+          url: http://localhost:8080
+  scheduler:
+    config:
+      schedule:
+        kafka:
+          consumer:
+            concurrency: 1
+            bootstrap-servers: localhost:9092
+            group-id: test
+            auto-offset-reset: earliest
+            topics: schedule_changes
+    registration:
+      delay-ms: 20000
+      initial-delay-ms: 5000
+    run:
+      delay-ms: 30000
+      initial-delay-ms: 3000
+    resolvedeps:
+      delay-ms: 10000
+      initial-delay-ms: 10000
+    task:
+      retry:
         delay-ms: 30000
-        initial-delay-ms: 3000
-      resolvedeps:
-        delay-ms: 10000
-        initial-delay-ms: 10000
-      task: 
-        retry:
-          delay-ms: 30000
-          initial-delay-ms: 30000
+        initial-delay-ms: 30000

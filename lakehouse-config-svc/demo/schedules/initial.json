@@ -14,7 +14,7 @@
 	    {
 	      "name": "load",
 	      "taskExecutionServiceGroupName": "default",
-	      "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.LoadProcessorOveride",
+	      "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.LoadProcessorOverid",
 	      "importance": "critical",
 	      "description": "override load",
 	      "executionModuleArgs": {
