@@ -36,7 +36,8 @@ public class ConfigRestClientHelperTest {
 	@Autowired MockRestServiceServer server;
 
 	@Autowired private ObjectMapper objectMapper;
-	  
+
+
 	FileLoader fileLoader = new FileLoader();
 
 	@Test

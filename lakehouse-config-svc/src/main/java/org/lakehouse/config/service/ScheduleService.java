@@ -67,7 +67,7 @@ public class ScheduleService {
 	}
 
 	private ScheduleScenarioActDTO mapScheduleScenarioActToDTO(ScenarioAct scenarioAct) {
-		logger.info("mapScheduleScenarioActToDTO: {0}", scenarioAct.getName());
+		logger.info("mapScheduleScenarioActToDTO: {}", scenarioAct.getName());
 		ScheduleScenarioActDTO result = new ScheduleScenarioActDTO();
 		result.setName(scenarioAct.getName());
 		result.setDataSet(scenarioAct.getDataSet().getName());

@@ -12,6 +12,7 @@
     <artifactId>lakehouse-cli</artifactId>
 
     <properties>
+        <start-class>org.lakehouse.client.CommandLineClient</start-class>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -29,4 +30,40 @@
             <version>0.0.1</version>
         </dependency>
     </dependencies>
+
+    <build>
+       <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+       <!--         <filtering>true</filtering>
+                <excludes>
+                    <exclude>*.properties</exclude>
+                    <exclude>*.yaml</exclude>
+                </excludes>
+-->            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                    <archive>
+                        <manifest>
+                            <mainClass>${start-class}</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

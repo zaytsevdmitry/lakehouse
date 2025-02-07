@@ -121,23 +121,14 @@ public class DataSetService {
 	}
 
 	@Transactional
-	private DataSet saveDataSet(DataSetDTO dataSetDTO) {
-		Optional<DataSet> currentDataSet = dataSetRepository.findById(dataSetDTO.getName());
-		if (currentDataSet.isPresent()) {
-			// need merge
-			DataSetDTO currentDataSetDTO = mapDataSetToDTO(currentDataSet.get());
+	private DataSetDTO saveDataSet(DataSetDTO dataSetDTO) {
 
-			if (currentDataSetDTO.equals(dataSetDTO)) {
-				return currentDataSet.get();
-			} else {
-				dataSetColumnRepository.findBydataSetName(dataSetDTO.getName())
-						.forEach(dataSetColumnRepository::delete);
-				dataSetPropertyRepository.findByDataSetName(dataSetDTO.getName())
-						.forEach(dataSetPropertyRepository::delete);
-				dataSetSourceRepository.findByDataSetName(dataSetDTO.getName())
-						.forEach(dataSetSourceRepository::delete);
-			}
-		}
+		dataSetColumnRepository.findBydataSetName(dataSetDTO.getName())
+				.forEach(dataSetColumnRepository::delete);
+		dataSetPropertyRepository.findByDataSetName(dataSetDTO.getName())
+				.forEach(dataSetPropertyRepository::delete);
+		dataSetSourceRepository.findByDataSetName(dataSetDTO.getName())
+				.forEach(dataSetSourceRepository::delete);
 
 		DataSet dataSet = dataSetRepository.save(mapDataSetToEntity(dataSetDTO));
 
@@ -159,12 +150,11 @@ public class DataSetService {
 				dataSetSourcePropertyRepository.save(dataSetSourceProperty);
 			});
 		});
-		return dataSet;
+		return mapDataSetToDTO(dataSet);
 	}
 
 	public DataSetDTO save(DataSetDTO dataSetDTO) {
-		DataSet dataSet = saveDataSet(dataSetDTO);
-		return mapDataSetToDTO(dataSet);
+		return saveDataSet(dataSetDTO);
 	}
 
 	public DataSetDTO findById(String name) {

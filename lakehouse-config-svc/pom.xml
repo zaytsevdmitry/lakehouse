@@ -79,11 +79,11 @@
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
-                <filtering>true</filtering>
+            <!--    <filtering>true</filtering>
                 <excludes>
                     <exclude>*.properties</exclude>
-                    <exclude>*.yaml</exclude>
-                </excludes>
+                    <exclude>*.yml</exclude>
+                </excludes>-->
             </resource>
         </resources>
         <plugins>
