@@ -20,9 +20,6 @@ import org.lakehouse.client.api.dto.service.TaskExecutionHeartBeatDTO;
 import org.lakehouse.client.api.dto.service.TaskInstanceReleaseDTO;
 
 @Service
-@EnableConfigurationProperties
-@ComponentScan(basePackages = { "org.lakehouse.api.rest.client.service",
-		"org.lakehouse.api.rest.client.configuration" })
 public class TaskRunService {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	private final SchedulerRestClientApi clientApi;
@@ -44,8 +41,9 @@ public class TaskRunService {
 
 	}
 
-	@Scheduled(fixedDelayString = "${lakehouse.taskexecutor.schedule.lockTask.delay-ms}", initialDelayString = "${lakehouse.taskexecutor.schedule.lockTask.initial-delay-ms}")
-
+	@Scheduled(
+			fixedDelayString = "${lakehouse.taskexecutor.schedule.lockTask.delay-ms}",
+			initialDelayString = "${lakehouse.taskexecutor.schedule.lockTask.initial-delay-ms}")
 	public void takeAndRunTask() {
 
 		try {

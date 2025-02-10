@@ -4,6 +4,7 @@ import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.api.dto.configs.ScheduleDTO;
 
 import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
+import org.lakehouse.client.api.dto.configs.TaskDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.config.service.ScheduleService;
 import org.springframework.http.HttpStatus;
@@ -51,4 +52,12 @@ public class ScheduleController {
 		return scheduleService.findEffectiveScheduleDTOById(name);
 	}
 
+	@GetMapping(Endpoint.EFFECTIVE_SCHEDULE_SCENARIOACT_TASK)
+	TaskDTO getEffectiveTaskDTO(
+			@PathVariable String schedule,
+			@PathVariable String scenarioAct,
+			@PathVariable String task
+	){
+		return scheduleService.getEffectiveTaskDTO(schedule,scenarioAct,task);
+	}
 }

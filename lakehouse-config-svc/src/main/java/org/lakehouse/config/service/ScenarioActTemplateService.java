@@ -4,10 +4,13 @@ import jakarta.transaction.Transactional;
 import org.lakehouse.client.api.dto.configs.DagEdgeDTO;
 import org.lakehouse.client.api.dto.configs.ScenarioActTemplateDTO;
 
+import org.lakehouse.client.api.dto.configs.TaskDTO;
+import org.lakehouse.config.entities.TaskAbstract;
 import org.lakehouse.config.entities.templates.ScenarioActTemplate;
 import org.lakehouse.config.entities.templates.TaskTemplate;
 import org.lakehouse.config.entities.templates.TaskTemplateEdge;
 import org.lakehouse.config.entities.templates.TaskTemplateExecutionModuleArg;
+import org.lakehouse.config.exception.TaskTemplateNotFoundException;
 import org.lakehouse.config.mapper.Mapper;
 import org.lakehouse.config.repository.*;
 import org.springframework.stereotype.Service;
@@ -15,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,19 +44,32 @@ public class ScenarioActTemplateService {
 		this.mapper = mapper;
 	}
 
+	public TaskDTO findTaskByScenarioActTemplateAndTaskName(
+			String scenarioActTemplateName,
+			String taskName
+	){
+
+		Optional<TaskTemplate> taskTemplate =  taskTemplateRepository.findByScenarioActTemplateNameAndName(scenarioActTemplateName,taskName);
+		if (taskTemplate.isPresent()) {
+
+			TaskTemplate t = taskTemplate.orElseThrow();
+			Map<String,String> args = getTaskTemplateExecutionModuleArgsByTaskTemplateId(t.getId());
+			return mapper.mapTaskToDTO(t, args );
+		}
+		return null;
+	}
+
 	private ScenarioActTemplateDTO mapScenarioToDTO(ScenarioActTemplate scenarioActTemplate) {
 		ScenarioActTemplateDTO result = new ScenarioActTemplateDTO();
 		result.setName(scenarioActTemplate.getName());
 		result.setDescription(scenarioActTemplate.getDescription());
 		result.setTasks(taskTemplateRepository.findByScenarioTemplateName(scenarioActTemplate.getName()).stream()
-				.map(taskTemplate -> {
-					Map<String, String> executionModuleArgs = new HashMap<>();
-					executionModuleArgRepository.findByTaskTemplateName(taskTemplate.getName())
-							.forEach(taskTemplateProperty -> executionModuleArgs.put(taskTemplateProperty.getKey(),
-									taskTemplateProperty.getValue()));
+				.map(taskTemplate -> mapper
+							 .mapTaskToDTO(
+									 taskTemplate,
+									 getTaskTemplateExecutionModuleArgsByTaskTemplateId(taskTemplate.getId()))
+				).toList());
 
-					return mapper.mapTaskToDTO(taskTemplate, executionModuleArgs);
-				}).toList());
 		result.setDagEdges(taskTemplateEdgeRepository.findByScenarioTemplateName(scenarioActTemplate.getName()).stream()
 				.map(taskTemplateEdge -> {
 					DagEdgeDTO dagEdgeDTO = new DagEdgeDTO();
@@ -131,4 +148,33 @@ public class ScenarioActTemplateService {
 	public void deleteById(String name) {
 		scenarioActTemplateRepository.deleteById(name);
 	}
+
+	public Optional<TaskTemplate> findTaskTemplateByScenarioAndName(String scenarioActTemplateName, String taskTemplateName){
+		return taskTemplateRepository.findByScenarioActTemplateNameAndName(scenarioActTemplateName,taskTemplateName);
+		//		.orElseThrow(() -> new TaskTemplateNotFoundException(scenarioActTemplateName,taskTemplateName));
+	}
+
+	/*
+	public List<TaskTemplateExecutionModuleArg> getTaskTemplateExecutionModuleArgsByTaskTemplateId(Long id){
+		return executionModuleArgRepository.findByTaskTemplateId(id);
+	}
+	*/
+
+	public Map<String,String> getTaskTemplateExecutionModuleArgsByTaskTemplateId(Long taskTemplateId){
+		return executionModuleArgRepository.findByTaskTemplateId(taskTemplateId)
+				.stream()
+				.collect(
+						Collectors
+								.toMap(
+										TaskTemplateExecutionModuleArg::getKey,
+										TaskTemplateExecutionModuleArg::getValue));
+	}
+
+
+			/*public List<TaskTemplateExecutionModuleArg> getTaskTemplateExecutionModuleArgsByTemplateAndTask(
+			String scenarioActTemplateName,
+			String taskTemplateName){
+		return executionModuleArgRepository
+				.findByScenarioTemplateNameAndTaskTemplateName(scenarioActTemplateName,taskTemplateName);
+	*/
 }

@@ -1,10 +1,15 @@
 server:
-  port: 8081
+  port: 8082
+
 lakehouse:
-  api:
-    client:
-      server:
-        path: http://127.0.0.1:8080
+  client:
+    rest:
+      scheduler:
+        server:
+          url: http://127.0.0.1:8081
+      config:
+        server:
+          url: http://127.0.0.1:8080
   taskexecutor:
     schedule:
       lockTask:

@@ -23,7 +23,7 @@
         </dependency>
         <dependency>
         	<groupId>lakehouse</groupId>
-        	<artifactId>lakehouse-common</artifactId>
+        	<artifactId>lakehouse-scheduler-rest-client</artifactId>
         	<version>0.0.1</version>
         </dependency>
         <dependency>

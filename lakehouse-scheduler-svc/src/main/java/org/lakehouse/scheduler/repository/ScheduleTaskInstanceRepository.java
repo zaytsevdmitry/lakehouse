@@ -31,7 +31,7 @@ public interface ScheduleTaskInstanceRepository extends JpaRepository<ScheduleTa
                 join ScheduleInstanceLastBuild sil on sir.configScheduleKeyName = sil.configScheduleKeyName and sil.enabled\s
                 join ScheduleInstance si               on si.id = sir.scheduleInstance.id              and si.status   = 'RUNNING'\s
                 join ScheduleScenarioActInstance ssai  on ssai.scheduleInstance.id  = si.id            and ssai.status = 'RUNNING'\s
-                join ScheduleTaskInstance sti          on sti.scheduleScenarioActInstance.id = ssai.id and sti.status  = 'NEW'\s
+                join ScheduleTaskInstance sti          on sti.scheduleScenarioActInstance.id = ssai.id \s
                 where sti.status= ?1
                      and sti.confTaskExecutionServiceGroupKeyName = ?2""")
 	List<ScheduleTaskInstance> findByStatusAndTaskExecutionGroup(String statusName, String taskExecutionServiceGroup, Limit limit);

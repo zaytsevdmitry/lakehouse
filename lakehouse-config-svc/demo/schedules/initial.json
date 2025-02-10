@@ -18,8 +18,8 @@
 	      "importance": "critical",
 	      "description": "override load",
 	      "executionModuleArgs": {
-	        "spark.executor.memory": "5gb",
-	        "spark.driver.memory": "2gb"
+	        "spark.executor.memory": "1gb",
+            "spark.executor.cores": "2"
 	      }
         },
 		{
@@ -27,7 +27,7 @@
 		  "taskExecutionServiceGroupName": "default",
 		  "executionModule": "extend.example",
 		  "importance": "critical",
-		  "description": "",
+		  "description": "Not exists in template",
 		  "executionModuleArgs": {
             "spark.executor.memory": "5gb",
             "spark.driver.memory": "2gb"

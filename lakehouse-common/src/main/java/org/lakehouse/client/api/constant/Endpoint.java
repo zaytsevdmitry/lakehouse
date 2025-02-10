@@ -21,6 +21,8 @@ public class Endpoint {
     public final static String EFFECTIVE_SCHEDULES_ROOT = CONFIGS +  "/effective/schedules";
     public final static String EFFECTIVE_SCHEDULES_FROM_DT = EFFECTIVE_SCHEDULES_ROOT  +  "/fromdt/{dt}";
     public final static String EFFECTIVE_SCHEDULES_NAME = EFFECTIVE_SCHEDULES_ROOT + "/name/{name}";
+    public final static String EFFECTIVE_SCHEDULE_SCENARIOACT_TASK = EFFECTIVE_SCHEDULES_ROOT
+            + "/schedule/{schedule}/scenarioact/{scenarioact}/task/{task}";
 
     public final static String SCENARIOS = CONFIGS + "/scenarios";
     public final static String SCENARIOS_NAME = SCENARIOS + "/{name}";

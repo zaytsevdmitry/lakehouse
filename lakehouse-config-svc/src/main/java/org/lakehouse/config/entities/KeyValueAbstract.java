@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import java.util.Objects;
 
 @MappedSuperclass
-public abstract class KeyValueAbstract {
+public abstract class 	KeyValueAbstract {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -19,7 +19,11 @@
       "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.MergeProcessor",
       "importance": "critical",
       "description": "load from remote datastore",
-      "executionModuleArgs": {}
+      "executionModuleArgs": {
+        "spark.executor.memory": "5gb",
+        "spark.driver.memory": "2gb",
+        "spark.driver.cores": "3"
+      }
     },
     {
       "name": "dataQualityBefore",

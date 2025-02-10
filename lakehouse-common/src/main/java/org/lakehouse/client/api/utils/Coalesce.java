@@ -8,15 +8,20 @@ public class Coalesce {
         if (s1 == null || s1.trim().isBlank()) return s2;
         else return s1;
     }
+
+    /**
+     * <p>
+     *     merge two map by priority
+     * </p>
+     * @param ms1 the priority map of strings
+     * @param ms2 the secondary map of strings
+     * @return the prority
+     * @since 0.0.1
+     */
     public static Map<String,String> applyStringMap(Map<String,String> ms1, Map<String,String> ms2){
         Map<String,String> result = new HashMap<>();
-        result.putAll(ms1);
-
-        ms2.keySet().forEach(k -> {
-            if( !result.containsKey(k) ){
-                result.put(k, ms2.get(k));
-            }
-        });
+        result.putAll(ms2);
+        result.putAll(ms1); // rewrite and append
         return result;
     }
 

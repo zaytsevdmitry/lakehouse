@@ -42,7 +42,9 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @AutoConfigureMockMvc
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -258,6 +260,10 @@ public class TestWithPostgres {
 	
 	}
 
+    void loadAll(){
+
+	}
+
 
 
 	@Test
@@ -425,6 +431,76 @@ public class TestWithPostgres {
 		restManipulator.deleteDTO(mydbDataStoreDTO.getName(), Endpoint.DATA_STORES_NAME);
 		restManipulator.deleteDTO(someelsedbDataStoreDTO.getName(), Endpoint.DATA_STORES_NAME);
 		restManipulator.deleteDTO(projectDTO.getName(), Endpoint.PROJECTS_NAME);
+
+	}
+
+	@Order(8)
+	@Test
+	void shouldTestEffectiveTask() throws Exception {
+		ProjectDTO projectDTO = putProjectDTO();
+		// datastores
+		DataStoreDTO someelsedbDataStoreDTO = putDataStoreDTO("processingdb");
+		DataStoreDTO mydbDataStoreDTO = putDataStoreDTO("lakehousestorage");
+		// datasets
+		DataSetDTO clientProcessingDTO = putDataSetDTO("client_processing");
+		DataSetDTO transactionProcessingDTO = putDataSetDTO("transaction_processing");
+		DataSetDTO resultTransactionddsDTO = putDataSetDTO("transaction_dds");
+		TaskExecutionServiceGroupDTO defaultTaskExecutionServiceGroupDTO = putTaskExecutionServiceGroupDTO();
+		DataSetDTO resultAggdaily = putDataSetDTO("aggregation_pay_per_client_daily_mart");
+		DataSetDTO resultAggTotal = putDataSetDTO("aggregation_pay_per_client_total_mart");
+
+		ScenarioActTemplateDTO scenarioActTemplateDTO = putScenarioDTO();
+		ScheduleDTO initialScheduleDTO = putScheduleDTO("initial");
+
+		TaskDTO loadTaskDTOExpected = new TaskDTO();
+		Map<String,String> loadExpectArgs = new HashMap<>();
+		loadExpectArgs.put("spark.executor.memory", "1gb");
+		loadExpectArgs.put( "spark.executor.cores", "2");
+		loadExpectArgs.put( "spark.driver.memory", "2gb");
+
+		loadTaskDTOExpected.setExecutionModuleArgs(loadExpectArgs);
+		loadTaskDTOExpected.setName("load");
+		loadTaskDTOExpected.setTaskExecutionServiceGroupName("default");
+		loadTaskDTOExpected.setExecutionModule("org.lakehouse.taskexecutor.executionmodule.datamanipulation.LoadProcessorOverid");
+		loadTaskDTOExpected.setImportance("critical");
+		loadTaskDTOExpected.setDescription("override load");
+
+		// override template
+		TaskDTO loadTaskDTO   = scheduleService.getEffectiveTaskDTO(initialScheduleDTO.getName(), "transaction_dds", "load");
+		assert (loadTaskDTO.equals(loadTaskDTOExpected));
+
+		TaskDTO extendTaskDTOExpected = new TaskDTO();
+
+		Map<String,String> extendTaskDTOExpectedArgs = new HashMap<>();
+		extendTaskDTOExpectedArgs.put("spark.executor.memory","5gb");
+		extendTaskDTOExpectedArgs.put("spark.driver.memory","2gb");
+		extendTaskDTOExpected.setExecutionModuleArgs(extendTaskDTOExpectedArgs);
+		extendTaskDTOExpected.setName("extend");
+		extendTaskDTOExpected.setTaskExecutionServiceGroupName("default");
+		extendTaskDTOExpected.setExecutionModule("extend.example");
+		extendTaskDTOExpected.setImportance("critical");
+		extendTaskDTOExpected.setDescription("Not exists in template");
+
+		// not exists in template
+		TaskDTO extendTaskDTO = scheduleService.getEffectiveTaskDTO(initialScheduleDTO.getName(), "transaction_dds", "extend");
+		assert (extendTaskDTO.equals(extendTaskDTOExpected));
+
+
+		// exists only in template
+		TaskDTO mergeTaskDTOExpected = new TaskDTO();
+		Map<String,String> mergeTaskDTOExpectedArgs = new HashMap<>();
+		mergeTaskDTOExpectedArgs.put("spark.executor.memory", "5gb");
+		mergeTaskDTOExpectedArgs.put("spark.driver.memory", "2gb");
+		mergeTaskDTOExpectedArgs.put("spark.driver.cores", "3");
+		mergeTaskDTOExpected.setExecutionModuleArgs(mergeTaskDTOExpectedArgs);
+		mergeTaskDTOExpected.setName("merge");
+		mergeTaskDTOExpected.setTaskExecutionServiceGroupName("default");
+		mergeTaskDTOExpected.setExecutionModule("org.lakehouse.taskexecutor.executionmodule.datamanipulation.MergeProcessor");
+		mergeTaskDTOExpected.setImportance("critical");
+		mergeTaskDTOExpected.setDescription("load from remote datastore");
+		TaskDTO mergeTaskDTO  = scheduleService.getEffectiveTaskDTO(initialScheduleDTO.getName(), "transaction_dds", "merge");
+		assert (mergeTaskDTO.equals(mergeTaskDTOExpected));
+
 
 	}
 

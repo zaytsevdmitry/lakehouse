@@ -11,6 +11,10 @@ import org.lakehouse.config.entities.scenario.ScenarioActTask;
 import org.lakehouse.config.entities.scenario.ScenarioActTaskEdge;
 import org.lakehouse.config.entities.scenario.ScenarioActTaskExecutionModuleArg;
 import org.lakehouse.config.entities.Schedule;
+import org.lakehouse.config.entities.templates.TaskTemplate;
+import org.lakehouse.config.entities.templates.TaskTemplateExecutionModuleArg;
+import org.lakehouse.config.exception.ScenarioActNotFoundException;
+import org.lakehouse.config.exception.ScenarioActTaskNotFoundException;
 import org.lakehouse.config.exception.ScheduleNotFoundException;
 import org.lakehouse.config.mapper.Mapper;
 import org.lakehouse.config.repository.*;
@@ -32,11 +36,10 @@ public class ScheduleService {
 	private final ScenarioActEdgeRepository scenarioActEdgeRepository;
 	private final ScenarioActTaskRepository scenarioActTaskRepository;
 	private final ScenarioActTaskEdgeRepository scenarioActTaskEdgeRepository;
-	private final ScenarioActTaskExecutionModuleArgRepository scenarioActTaskExecutionModuleArgRepository;
 	private final TaskExecutionServiceGroupRepository taskExecutionServiceGroupRepository;
 	private final ScenarioActTemplateService scenarioActTemplateService;
 	private final ScheduleProducerService scheduleProducerService;
-
+	private final ScenarioActTaskExecutionModuleArgRepository scenarioActTaskExecutionModuleArgRepository;
 	private final Mapper mapper;
 
 	public ScheduleService(
@@ -47,9 +50,10 @@ public class ScheduleService {
             ScenarioActEdgeRepository scenarioActEdgeRepository,
             ScenarioActTaskRepository scenarioActTaskRepository,
             ScenarioActTaskEdgeRepository scenarioActTaskEdgeRepository,
-            ScenarioActTaskExecutionModuleArgRepository scenarioActTaskExecutionModuleArgRepository,
             TaskExecutionServiceGroupRepository taskExecutionServiceGroupRepository,
-            ScenarioActTemplateService scenarioActTemplateService, ScheduleProducerService scheduleProducerService,
+            ScenarioActTemplateService scenarioActTemplateService,
+			ScheduleProducerService scheduleProducerService,
+			ScenarioActTaskExecutionModuleArgRepository scenarioActTaskExecutionModuleArgRepository,
             Mapper mapper) {
 		this.scheduleRepository = scheduleRepository;
 		this.dataSetRepository = dataSetRepository;
@@ -58,10 +62,10 @@ public class ScheduleService {
 		this.scenarioActEdgeRepository = scenarioActEdgeRepository;
 		this.scenarioActTaskRepository = scenarioActTaskRepository;
 		this.scenarioActTaskEdgeRepository = scenarioActTaskEdgeRepository;
-		this.scenarioActTaskExecutionModuleArgRepository = scenarioActTaskExecutionModuleArgRepository;
 		this.taskExecutionServiceGroupRepository = taskExecutionServiceGroupRepository;
         this.scenarioActTemplateService = scenarioActTemplateService;
         this.scheduleProducerService = scheduleProducerService;
+        this.scenarioActTaskExecutionModuleArgRepository = scenarioActTaskExecutionModuleArgRepository;
 
         this.mapper = mapper;
 	}
@@ -76,13 +80,9 @@ public class ScheduleService {
 	    result.setTasks(scenarioActTaskRepository
 	    		.findByScenarioActId(scenarioAct.getId())
 	    		.stream()
-	    		.map(sat-> {
-	    			Map<String,String> executionModuleArgs = new HashMap<String, String>();
-	    			scenarioActTaskExecutionModuleArgRepository
-	    				.findByScenarioActTaskId(sat.getId())
-	    				.forEach(ema -> executionModuleArgs.put(ema.getKey(), ema.getValue()));
-	    			return mapper.mapTaskToDTO(sat, executionModuleArgs);
-	    		}).toList()
+	    		.map(sat-> mapper
+						.mapTaskToDTO(sat, getScenarioActTaskExecutionModuleArgsByScenarioActTask(sat.getId())))
+				.toList()
 	    );
 	    result.setDagEdges(
 		    scenarioActTaskEdgeRepository
@@ -142,7 +142,6 @@ public class ScheduleService {
 	}
 
 	private Schedule mapScheduleToEntity(Schedule schedule, ScheduleDTO scheduleDTO) {
-
 		schedule.setName(scheduleDTO.getName());
 		schedule.setDescription(scheduleDTO.getDescription());
 		schedule.setIntervalExpression(scheduleDTO.getIntervalExpression());
@@ -274,6 +273,71 @@ public class ScheduleService {
 			throw new RuntimeException(e);
 		}
 	}
+
+
+	private Map<String,String> getScenarioActTaskExecutionModuleArgsByScenarioActTask(Long scenarioActTaskId){
+		return scenarioActTaskExecutionModuleArgRepository
+				.findByScenarioActTaskId(scenarioActTaskId)
+				.stream()
+				.collect(
+						Collectors
+								.toMap(
+										ScenarioActTaskExecutionModuleArg::getKey,
+										ScenarioActTaskExecutionModuleArg::getValue));
+
+	}
+
+	private TaskDTO matchTaskWithTemplate (
+			TaskDTO taskDTO,
+			TaskDTO taskTemplate) {
+
+		if (taskDTO == null && taskTemplate == null)
+			logger.warn("Internal error both arguments are null");
+
+		if (taskTemplate == null)
+			return taskDTO;
+
+		if(taskDTO == null)
+		   return taskTemplate;
+
+		TaskDTO result = new TaskDTO();
+		result.setName(Coalesce.apply(taskDTO.getName(), taskTemplate.getName()));
+		result.setDescription(Coalesce.apply(taskDTO.getDescription(), taskTemplate.getDescription()));
+		result.setImportance(Coalesce.apply(taskDTO.getImportance() , taskTemplate.getImportance()));
+		result.setExecutionModuleArgs(Coalesce.applyStringMap(taskDTO.getExecutionModuleArgs() , taskTemplate.getExecutionModuleArgs()));
+		result.setExecutionModule(Coalesce.apply(taskDTO.getExecutionModule(),taskTemplate.getExecutionModule()));
+		result.setTaskExecutionServiceGroupName(Coalesce.apply(taskDTO.getTaskExecutionServiceGroupName(), taskTemplate.getTaskExecutionServiceGroupName()));
+		return result;
+	}
+
+
+	public TaskDTO getEffectiveTaskDTO(String scheduleName, String scenarioActName, String taskName)  {
+
+		ScenarioAct scenarioAct = scenarioActRepository.findByScheduleNameAndActName(scheduleName,scenarioActName)
+				.orElseThrow(() -> new ScenarioActNotFoundException(scheduleName,scenarioActName));
+
+		Optional<ScenarioActTask> scenarioActTask = scenarioActTaskRepository
+					.findByScenarioActIdAndName(scenarioAct.getId(), taskName);
+
+
+		TaskDTO taskDTO = null;
+
+		if(scenarioActTask.isPresent())
+        	taskDTO = mapper
+            	.mapTaskToDTO(
+                    scenarioActTask.get(),
+                    getScenarioActTaskExecutionModuleArgsByScenarioActTask(scenarioActTask.get().getId()));
+
+		TaskDTO  taskTemplate = null;
+		if (scenarioAct.getScenarioActTemplate() != null)
+			taskTemplate = scenarioActTemplateService
+				.findTaskByScenarioActTemplateAndTaskName(
+						scenarioAct.getScenarioActTemplate().getName(),
+						taskName);
+
+		return matchTaskWithTemplate(taskDTO, taskTemplate);
+	}
+
 	public List<ScheduleEffectiveDTO> findScheduleEffectiveDTOSByChangeDateTime(OffsetDateTime dateTime){
 		Map<String,ScenarioActTemplateDTO> actTemplateMap = scenarioActTemplateService.findAllAsMap();
 		return  scheduleRepository
@@ -324,12 +388,7 @@ public class ScheduleService {
 									.filter(task -> task.getName().equals(taskTmplt.getName()))
 									.toList();
 					if(taskDTOmap.containsKey(taskTmplt.getName()) ){
-						TaskDTO scenarioTask = taskDTOList.get(0);
-						scenarioTask.setDescription(Coalesce.apply(scenarioTask.getDescription(), taskTmplt.getDescription()));
-						scenarioTask.setImportance(Coalesce.apply(scenarioTask.getImportance() , taskTmplt.getImportance()));
-						scenarioTask.setExecutionModuleArgs(Coalesce.applyStringMap(scenarioTask.getExecutionModuleArgs() , taskTmplt.getExecutionModuleArgs()));
-						scenarioTask.setExecutionModule(Coalesce.apply(scenarioTask.getTaskExecutionServiceGroupName() , taskTmplt.getTaskExecutionServiceGroupName()));
-						return scenarioTask;
+						return matchTaskWithTemplate(taskDTOList.get(0),taskTmplt);
 					}else{
 						return taskTmplt;
 					}
