@@ -9,9 +9,7 @@ import org.lakehouse.client.api.utils.DateTimeUtils;
 
 import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.api.dto.service.ScheduledTaskLockDTO;
-import org.lakehouse.client.api.dto.service.TaskExecutionHeartBeatDTO;
-import org.lakehouse.client.api.dto.service.TaskInstanceReleaseDTO;
-import org.lakehouse.client.api.dto.tasks.ScheduledTaskDTO;
+import org.lakehouse.client.api.dto.tasks.ScheduledTaskMsgDTO;
 
 
 public class ConfigRestClientApiImpl implements ConfigRestClientApi {
@@ -47,12 +45,21 @@ public class ConfigRestClientApiImpl implements ConfigRestClientApi {
 		return restClientHelper.getDtoOne(name,  Endpoint.EFFECTIVE_SCHEDULES_NAME, ScheduleEffectiveDTO.class);
 	}
 
+	@Override
+	public TaskDTO getEffectiveTaskDTO(String schedule, String scenarioact, String task) {
+		return restClientHelper.getRestClient()
+				.get()
+				.uri(Endpoint.EFFECTIVE_SCHEDULE_SCENARIOACT_TASK, schedule,scenarioact,task)
+				.retrieve()
+				.body(TaskDTO.class);
+	}
+
 	public TaskExecutionServiceGroupDTO  getTaskExecutionServiceGroupDTO(String name) {
 		return restClientHelper.getDtoOne(name,  Endpoint.TASK_EXECUTION_SERVICE_GROUPS_NAME, TaskExecutionServiceGroupDTO.class);
 	}
 
-	public ScheduledTaskDTO  getScheduledTaskDTO(String name) {
-		return restClientHelper.getDtoOne(name,  Endpoint.SCHEDULED_TASKS_ID, ScheduledTaskDTO.class);
+	public ScheduledTaskMsgDTO getScheduledTaskDTO(String name) {
+		return restClientHelper.getDtoOne(name,  Endpoint.SCHEDULED_TASKS_ID, ScheduledTaskMsgDTO.class);
 	}
 
 	public ScheduledTaskLockDTO  getScheduledTaskLockDTO(String id) {

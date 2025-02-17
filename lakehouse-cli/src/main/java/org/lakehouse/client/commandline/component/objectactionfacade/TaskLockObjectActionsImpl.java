@@ -30,32 +30,18 @@ public class TaskLockObjectActionsImpl implements TaskLockObjectActions{
 				new String[]{
 						"lockId",
 						"serviceId",
-						"lastHeartBeatDateTime",
-						"scheduleName",
-						"scheduleTargetTimestamp",
-						"scenarioActName",
-						"name", 
-						"status",
-						"executionModule", 
-						"taskExecutionServiceGroupName"}, 
+						"lastHeartBeatDateTime"},
 				l.stream().map(o -> new String[]{
 						o.getLockId().toString(),
 						o.getServiceId(),
 						o.getLastHeartBeatDateTime(),
-						o.getScheduledTaskDTO().getScheduleName(),
-						o.getScheduledTaskDTO().getScheduleTargetTimestamp(),
-						o.getScheduledTaskDTO().getScenarioActName(),
-						o.getScheduledTaskDTO().getName(), 
-						o.getScheduledTaskDTO().getStatus(),
-						o.getScheduledTaskDTO().getExecutionModule(),
-						o.getScheduledTaskDTO().getTaskExecutionServiceGroupName()
 				}).toList());
 	}
 
 
 	@Override
 	public CommandResult lockNew(String[] args) {
-		return ObjectActionsHelper.getObjectJSONResult( schedulerRestClientApi.lockTask(args[2],args[3]));
+		return ObjectActionsHelper.getObjectJSONResult( schedulerRestClientApi.lockTaskById(Long.valueOf(args[2]),args[3]));
 	}
 	@Override
 	public CommandResult lockHeartBeat(String[] args) {

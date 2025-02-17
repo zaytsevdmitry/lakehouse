@@ -1,3 +1,4 @@
+debug: enabled
 server:
   port: 8081
 logging:
@@ -34,15 +35,23 @@ lakehouse:
         server:
           url: http://localhost:8080
   scheduler:
+    schedule:
+      task:
+        kafka:
+          producer:
+            topic: scheduled_task_msg
+            properties:
+              bootstrap.servers: localhost:9092
     config:
       schedule:
         kafka:
           consumer:
-            concurrency: 1
-            bootstrap-servers: localhost:9092
-            group-id: test
-            auto-offset-reset: earliest
+            properties:
+              bootstrap.servers: localhost:9092
+              group.id: scheduler
+              auto.offset.reset: earliest
             topics: schedule_changes
+            concurrency: 1
     registration:
       delay-ms: 20000
       initial-delay-ms: 5000

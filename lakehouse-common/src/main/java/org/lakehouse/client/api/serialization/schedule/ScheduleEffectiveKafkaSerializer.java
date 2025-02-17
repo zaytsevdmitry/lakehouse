@@ -1,4 +1,4 @@
-package org.lakehouse.client.api.serialization;
+package org.lakehouse.client.api.serialization.schedule;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.common.serialization.Serializer;

@@ -1,4 +1,4 @@
-package org.lakehouse.client.api.serialization;
+package org.lakehouse.client.api.serialization.schedule;
 
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Deserializer;

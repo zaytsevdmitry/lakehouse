@@ -23,6 +23,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.lakehouse.client.api.constant.Endpoint;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {ConfigRestClientConfiguration.class})
 @RestClientTest(properties = {
@@ -92,4 +95,33 @@ public class ConfigRestClientHelperTest {
 		assert (expect.equals(result));
 	}
 
+	@Test
+	public void MakesCorrectCallScheduleEffectiveTaskDTO() throws Exception {
+		TaskDTO mergeTaskDTOExpected = new TaskDTO();
+		Map<String,String> mergeTaskDTOExpectedArgs = new HashMap<>();
+		mergeTaskDTOExpectedArgs.put("spark.executor.memory", "5gb");
+		mergeTaskDTOExpectedArgs.put("spark.driver.memory", "2gb");
+		mergeTaskDTOExpectedArgs.put("spark.driver.cores", "3");
+		mergeTaskDTOExpected.setExecutionModuleArgs(mergeTaskDTOExpectedArgs);
+		mergeTaskDTOExpected.setName("merge");
+		mergeTaskDTOExpected.setTaskExecutionServiceGroupName("default");
+		mergeTaskDTOExpected.setExecutionModule("org.lakehouse.taskexecutor.executionmodule.datamanipulation.MergeProcessor");
+		mergeTaskDTOExpected.setImportance("critical");
+		mergeTaskDTOExpected.setDescription("load from remote datastore");
+
+		server.expect(ExpectedCount.manyTimes(),
+						requestTo( Endpoint.EFFECTIVE_SCHEDULE_SCENARIOACT_TASK
+												.replaceAll("\\{schedule}", "initial")
+												.replaceAll("\\{scenarioact}","transaction_dds" )
+												.replaceAll("\\{task}","merge")
+
+										))
+				.andRespond(withSuccess(objectMapper.writeValueAsString(mergeTaskDTOExpected), MediaType.APPLICATION_JSON));
+		System.out.println("Schedule effective is loaded");
+
+		TaskDTO result = client.getEffectiveTaskDTO("initial",
+				"transaction_dds",
+				"merge");
+		assert (mergeTaskDTOExpected.equals(result));
+	}
 }

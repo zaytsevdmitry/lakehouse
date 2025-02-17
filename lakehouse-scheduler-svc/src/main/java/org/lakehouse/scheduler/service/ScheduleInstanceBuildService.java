@@ -107,8 +107,6 @@ public class ScheduleInstanceBuildService {
 			TaskDTO taskDTO,
 			ScheduleScenarioActInstance scheduleScenarioActInstance) {
 		ScheduleTaskInstance result = new ScheduleTaskInstance();
-		result.setConfTaskExecutionServiceGroupKeyName(taskDTO.getTaskExecutionServiceGroupName());
-		result.setExecutionModule(taskDTO.getExecutionModule());
 		result.setName(taskDTO.getName());
 		result.setScheduleScenarioActInstance(scheduleScenarioActInstance);
 		result.setStatus(Status.Task.NEW.label);

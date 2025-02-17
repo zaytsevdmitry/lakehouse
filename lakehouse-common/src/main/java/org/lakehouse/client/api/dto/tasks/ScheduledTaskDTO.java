@@ -3,7 +3,7 @@ package org.lakehouse.client.api.dto.tasks;
 import java.util.Map;
 
 public class ScheduledTaskDTO {
-	private Long id;
+    private Long id;
     private String name;
     private String taskExecutionServiceGroupName;
     private String executionModule;
@@ -49,43 +49,43 @@ public class ScheduledTaskDTO {
         this.executionModuleArgs = executionModuleArgs;
     }
 
-	public Long getId() {
-		return id;
-	}
+    public Long getId() {
+        return id;
+    }
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public String getScenarioActName() {
-		return scenarioActName;
-	}
+    public String getScenarioActName() {
+        return scenarioActName;
+    }
 
-	public void setScenarioActName(String scenarioActName) {
-		this.scenarioActName = scenarioActName;
-	}
+    public void setScenarioActName(String scenarioActName) {
+        this.scenarioActName = scenarioActName;
+    }
 
-	public String getScheduleName() {
-		return scheduleName;
-	}
+    public String getScheduleName() {
+        return scheduleName;
+    }
 
-	public void setScheduleName(String scheduleName) {
-		this.scheduleName = scheduleName;
-	}
+    public void setScheduleName(String scheduleName) {
+        this.scheduleName = scheduleName;
+    }
 
-	public String getScheduleTargetTimestamp() {
-		return scheduleTargetTimestamp;
-	}
+    public String getScheduleTargetTimestamp() {
+        return scheduleTargetTimestamp;
+    }
 
-	public void setScheduleTargetTimestamp(String scheduleTargetTimestamp) {
-		this.scheduleTargetTimestamp = scheduleTargetTimestamp;
-	}
+    public void setScheduleTargetTimestamp(String scheduleTargetTimestamp) {
+        this.scheduleTargetTimestamp = scheduleTargetTimestamp;
+    }
 
-	public String getStatus() {
-		return status;
-	}
+    public String getStatus() {
+        return status;
+    }
 
-	public void setStatus(String status) {
-		this.status = status;
-	}
+    public void setStatus(String status) {
+        this.status = status;
+    }
 }

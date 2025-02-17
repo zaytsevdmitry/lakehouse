@@ -2,6 +2,7 @@ package org.lakehouse.scheduler.controller;
 
 import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.api.dto.tasks.ScheduledTaskDTO;
+import org.lakehouse.client.api.dto.tasks.ScheduledTaskMsgDTO;
 
 import java.util.List;
 

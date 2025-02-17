@@ -9,7 +9,7 @@ public interface TaskLockObjectActions extends ObjectActions{
 	 * ------------------------+----
 	 * lock          		   | 0
 	 * new                     | 1
-	 * <taskExecutorGroup>     | 2 
+	 * taskId                  | 2
 	 * <taskExecutorServiceId> | 3
 	 * */
 	

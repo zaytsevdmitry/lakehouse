@@ -25,9 +25,9 @@ public class ScheduledTaskLockController {
 	ScheduledTaskLockDTO getOne(@PathVariable String id) {
 		return scheduleTaskInstanceService.getScheduledTaskLockDTO(id);
 	}
-	@GetMapping(Endpoint.SCHEDULED_TASKS_LOCK)
-	ScheduledTaskLockDTO lockTask(@PathVariable String taskExecutionServiceGroupName, @PathVariable String serviceId) {
-		return scheduleTaskInstanceService.lockTask(taskExecutionServiceGroupName,serviceId);		
+	@GetMapping(Endpoint.SCHEDULED_TASKS_LOCK_BY_ID)
+	ScheduledTaskLockDTO lockTaskById(@PathVariable Long id, @PathVariable String serviceId) {
+		return scheduleTaskInstanceService.lockTaskById(id,serviceId);
 	}
 	@PutMapping(Endpoint.SCHEDULED_TASKS_LOCK_HEARTBEAT)
 	void taskExecutionHeartBeat(@RequestBody TaskExecutionHeartBeatDTO taskExecutionHeartBeat) {

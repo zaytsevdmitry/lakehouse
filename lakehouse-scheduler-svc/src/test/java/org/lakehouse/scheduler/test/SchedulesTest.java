@@ -6,14 +6,18 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.*;
 import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
-import org.lakehouse.client.api.serialization.ScheduleEffectiveKafkaSerializer;
+import org.lakehouse.client.api.serialization.schedule.ScheduleEffectiveKafkaSerializer;
+import org.lakehouse.scheduler.configuration.ScheduleConfigConsumerKafkaConfigurationProperties;
 import org.lakehouse.scheduler.entities.ScheduleInstanceLastBuild;
-import org.lakehouse.scheduler.repository.ScheduleInstanceLastBuildRepository;
+import org.lakehouse.scheduler.repository.*;
+import org.lakehouse.scheduler.service.InternalSchedulerService;
 import org.lakehouse.scheduler.service.ScheduleInstanceBuildService;
 import org.lakehouse.scheduler.service.ScheduleInstanceLastBuildService;
+import org.lakehouse.scheduler.service.ScheduleTaskInstanceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.test.context.ActiveProfiles;
@@ -24,19 +28,28 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import org.lakehouse.test.config.configuration.FileLoader;
 import org.testcontainers.utility.DockerImageName;
-
+/*
+    @Value("${lakehouse.scheduler.config.schedule.kafka.consumer.bootstrap-servers}" )
+    private String bootstrapServers;
+    @Value("${lakehouse.scheduler.config.schedule.kafka.consumer.group-id}" )
+    private String consumerGroup;
+    @Value("${lakehouse.scheduler.config.schedule.kafka.consumer.auto-offset-reset}" )
+    private String autoOffsetReset;
+*/
 @SpringBootTest(properties = {
         "lakehouse.client.rest.config.server.url=",
+        "lakehouse.scheduler.config.schedule.kafka.consumer.properties.group.id=getTestScheduleConfGroup",
+        "lakehouse.scheduler.config.schedule.kafka.consumer.properties.auto.offset.reset=earliest",
+        "lakehouse.scheduler.schedule.task.kafka.producer.topic=test_send_scheduled_task_topic",
 })
+@EnableConfigurationProperties(value = ScheduleConfigConsumerKafkaConfigurationProperties.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @ActiveProfiles("test")
 public class SchedulesTest {
@@ -46,6 +59,8 @@ public class SchedulesTest {
     @Autowired
     ScheduleInstanceBuildService scheduleInstanceBuildService;
 
+    @Autowired
+    InternalSchedulerService internalSchedulerService;
 
     FileLoader fileLoader = new FileLoader();
 
@@ -53,6 +68,15 @@ public class SchedulesTest {
 
     @Autowired
     ScheduleInstanceLastBuildRepository scheduleInstanceLastBuildRepository;
+
+    @Autowired
+    ScheduleTaskInstanceRepository scheduleTaskInstanceRepository;
+    @Autowired
+    ScheduleTaskInstanceExecutionLockRepository scheduleTaskInstanceExecutionLockRepository;
+    @Autowired
+    ScheduleScenarioActInstanceRepository scheduleScenarioActInstanceRepository;
+    @Autowired
+    ScheduleInstanceRepository scheduleInstanceRepository;
 
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine").withDatabaseName("test")
@@ -66,6 +90,8 @@ public class SchedulesTest {
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
         registry.add("spring.kafka.bootstrap-servers", kafka::getBootstrapServers);
+        registry.add("lakehouse.scheduler.config.schedule.kafka.consumer.properties.bootstrap.servers", kafka::getBootstrapServers);
+        registry.add("lakehouse.scheduler.schedule.task.kafka.producer.properties.bootstrap.servers", kafka::getBootstrapServers);
     }
     @Container
     static final KafkaContainer kafka = new KafkaContainer(
@@ -94,13 +120,26 @@ public class SchedulesTest {
         return new DefaultKafkaProducerFactory<String,ScheduleEffectiveDTO>(props).createProducer();
     }
 
+    void cleanAll(){
+        scheduleInstanceRepository.deleteAll();
+    }
+
     @Test
     @Order(1)
     public void registration() throws IOException {
+        cleanAll();
+        scheduleInstanceLastBuildRepository.findAll().forEach(instanceLastBuild -> log.info("Schedules -=> {}", instanceLastBuild.getConfigScheduleKeyName()));
+
         ScheduleEffectiveDTO sef = fileLoader.loadScheduleEffectiveDTO() ;
         Producer<String, ScheduleEffectiveDTO> producer = getKafkaProducer();
         producer.send(new ProducerRecord<String,ScheduleEffectiveDTO>("testtopic",sef.getName(),sef));
         producer.flush();
+
+        scheduleInstanceLastBuildRepository.findAll()
+                .forEach(instanceLastBuild ->
+                        log.info("Schedules -=> {}",
+                                instanceLastBuild.getConfigScheduleKeyName()));
+
 
         scheduleInstanceLastBuildService.findAndRegisterNewSchedule(sef);
 
@@ -108,44 +147,14 @@ public class SchedulesTest {
                 .findByConfigScheduleKeyName(sef.getName())
                 .orElseThrow();
         assert (Objects.equals(sil.getLastChangeNumber(), sef.getLastChangeNumber()));
-
+        scheduleInstanceLastBuildRepository.findAll().forEach(instanceLastBuild -> log.info("Schedules -=> {}", instanceLastBuild.getConfigScheduleKeyName()));
         scheduleInstanceBuildService.buildNewSchedules();
+        internalSchedulerService.findAndRegisterNewSchedules();
+        internalSchedulerService.runSchedules();
+
+
+
     }
 
-    @Test
-    @Order(2)
-    public void buildTasks(){
-
-    }
-
-
-   /* @Test
-    public void fullpipeline() throws Exception {
-
-        List<ScheduleEffectiveDTO> scheduleDTOsExpect = new ArrayList<>();
-        scheduleDTOsExpect.add(fileLoader.loadScheduleEffectiveDTO());
-        OffsetDateTime scheduleChangeDateTimeStr = DateTimeUtils.now();
-
-
-        server.expect(ExpectedCount.manyTimes(),
-                        requestTo(String.format("%s/%s", Endpoint.EFFECTIVE_SCHEDULES_FROM_DT, scheduleChangeDateTimeStr)))
-                .andRespond(withSuccess(objectMapper.writeValueAsString(scheduleDTOsExpect), MediaType.APPLICATION_JSON));
-        System.out.println("scenario is loaded");
-
-
-        List<ScheduleEffectiveDTO> scheduleEffectiveDTOS =
-                clientApi.getScheduleEffectiveDTOList(scheduleChangeDateTimeStr);
-
-        ScenarioActTemplateDTO scenarioActTemplateDTO = fileLoader.loadScenarioActTemplateDTO();
-
-        server.expect(ExpectedCount.manyTimes(),
-                        requestTo(String.format("%s/%s", Endpoint.SCENARIOS, scenarioActTemplateDTO.getName())))
-                .andRespond(withSuccess(objectMapper.writeValueAsString(scenarioActTemplateDTO), MediaType.APPLICATION_JSON));
-
-        System.out.println("scenario is loaded");
-
-        scheduleInstanceLastBuildService.findAndRegisterNewSchedules(scheduleEffectiveDTOS);
-        assert (scheduleInstanceLastBuildRepository.findAll().size() ==1);
-    }*/
 
 }

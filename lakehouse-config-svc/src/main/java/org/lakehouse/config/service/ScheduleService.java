@@ -11,10 +11,7 @@ import org.lakehouse.config.entities.scenario.ScenarioActTask;
 import org.lakehouse.config.entities.scenario.ScenarioActTaskEdge;
 import org.lakehouse.config.entities.scenario.ScenarioActTaskExecutionModuleArg;
 import org.lakehouse.config.entities.Schedule;
-import org.lakehouse.config.entities.templates.TaskTemplate;
-import org.lakehouse.config.entities.templates.TaskTemplateExecutionModuleArg;
 import org.lakehouse.config.exception.ScenarioActNotFoundException;
-import org.lakehouse.config.exception.ScenarioActTaskNotFoundException;
 import org.lakehouse.config.exception.ScheduleNotFoundException;
 import org.lakehouse.config.mapper.Mapper;
 import org.lakehouse.config.repository.*;
@@ -38,7 +35,7 @@ public class ScheduleService {
 	private final ScenarioActTaskEdgeRepository scenarioActTaskEdgeRepository;
 	private final TaskExecutionServiceGroupRepository taskExecutionServiceGroupRepository;
 	private final ScenarioActTemplateService scenarioActTemplateService;
-	private final ScheduleProducerService scheduleProducerService;
+	private final ScheduleConfigProducerService scheduleConfigProducerService;
 	private final ScenarioActTaskExecutionModuleArgRepository scenarioActTaskExecutionModuleArgRepository;
 	private final Mapper mapper;
 
@@ -52,7 +49,7 @@ public class ScheduleService {
             ScenarioActTaskEdgeRepository scenarioActTaskEdgeRepository,
             TaskExecutionServiceGroupRepository taskExecutionServiceGroupRepository,
             ScenarioActTemplateService scenarioActTemplateService,
-			ScheduleProducerService scheduleProducerService,
+			ScheduleConfigProducerService scheduleConfigProducerService,
 			ScenarioActTaskExecutionModuleArgRepository scenarioActTaskExecutionModuleArgRepository,
             Mapper mapper) {
 		this.scheduleRepository = scheduleRepository;
@@ -64,7 +61,7 @@ public class ScheduleService {
 		this.scenarioActTaskEdgeRepository = scenarioActTaskEdgeRepository;
 		this.taskExecutionServiceGroupRepository = taskExecutionServiceGroupRepository;
         this.scenarioActTemplateService = scenarioActTemplateService;
-        this.scheduleProducerService = scheduleProducerService;
+        this.scheduleConfigProducerService = scheduleConfigProducerService;
         this.scenarioActTaskExecutionModuleArgRepository = scenarioActTaskExecutionModuleArgRepository;
 
         this.mapper = mapper;
@@ -151,7 +148,7 @@ public class ScheduleService {
 		schedule.setLastChangeNumber(schedule.getLastChangeNumber() +1);
 		return schedule;
 	}
-
+//todo mb move to factory?
 	private ScenarioActEdge mapScheduleScenarioActEdgeToEntity(Schedule schedule, DagEdgeDTO dagEdgeDTO) {
 		ScenarioActEdge result = new ScenarioActEdge();
 		result.setSchedule(schedule);
@@ -243,7 +240,7 @@ public class ScheduleService {
 		});
 		// -------------------------
 		ScheduleDTO result = mapScheduleToDTO(schedule);
-		scheduleProducerService.send(findEffectiveScheduleDTOById(result.getName()) );
+		scheduleConfigProducerService.send(findEffectiveScheduleDTOById(result.getName()) );
 		return result;
 	}
 

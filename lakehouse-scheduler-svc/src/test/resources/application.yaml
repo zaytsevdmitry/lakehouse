@@ -1,3 +1,4 @@
+debug: enabled
 server:
   port=8081
 logging:
@@ -27,6 +28,7 @@ spring:
           create-database-schemas: true
       hibernate:
         default_schema: lakehouse_scheduler
+
 lakehouse:
   scheduler:
     config:
@@ -36,11 +38,12 @@ lakehouse:
       schedule:
         kafka:
           consumer:
-            concurrency: 1
-            bootstrap-servers: localhost:9092
-            group-id: test
-            auto-offset-reset: earliest
+            properties:
+              bootstrap.servers: localhost:9092
+              group.id: test
+              auto-offset-reset: earliest
             topics: test_topic
+            concurrency: 1
     registration:
         delay-ms: 20000
         initial-delay-ms: 5000

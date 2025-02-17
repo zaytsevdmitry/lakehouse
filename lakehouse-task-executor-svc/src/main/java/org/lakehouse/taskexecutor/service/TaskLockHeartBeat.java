@@ -23,14 +23,17 @@ public class TaskLockHeartBeat implements Runnable{
 		this.heartBeatIntervalMs = heartBeatIntervalMs;
 		this.taskExecutionHeartBeatDTO = taskExecutionHeartBeatDTO;
 	}
-	
+	public void setExit(){
+		exit = true;
+	}
+
 	@Override
 	public void run() {
 		while(!exit) {
 			try {
 				Thread.sleep(heartBeatIntervalMs);
 				clientApi.lockHeartBeat(taskExecutionHeartBeatDTO);
-				logger.info("hb lockid={} sended", taskExecutionHeartBeatDTO.getLockId());
+				logger.info("Heart beat lockid={} sended", taskExecutionHeartBeatDTO.getLockId());
 			} catch (NotFound | InterruptedException e) { 
 				logger.warn(e.getMessage());
 				exit = true;

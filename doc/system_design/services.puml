@@ -1,33 +1,20 @@
 @startuml
 !pragma layout smetana
-database workshopDB
-queue scheduleConf
-queue tasks
-queue status
-:ui-svc: as uisvc
+':ui-svc: as uisvc
 :config-svc:  as confsvc
 :status-svc:  as statussvc
 :task-executor-svc:  as taskexecutorsvc
 :scheduler-svc: as schedulersvc
 :cvs-svc: as cvssvc
-:conf-cli: as confcli
-'taskcoordinatorsvc -> confsvc
-:service-executor-svc: as serviceexecutor
-cvssvc -> confsvc
-uisvc --> confsvc
-uisvc --> schedulersvc
-confcli --> confsvc
-confsvc --> workshopDB
-schedulersvc --> workshopDB
-statussvc --> workshopDB
-confsvc-> scheduleConf
-scheduleConf -> schedulersvc
-schedulersvc -> tasks
-tasks -> taskexecutorsvc
-taskexecutorsvc -> status
-status -> statussvc
-serviceexecutor -> status
-serviceexecutor <-- confsvc
-'taskexecutorsvc --> taskcoordinatorsvc:any one instance of task-executor take 1 task at onece
-taskexecutorsvc -->(sparkexecutors):task-executorsvc may be a spark  driver
+':cmd-cli: as cmdcli
+cvssvc ---> confsvc
+schedulersvc -> confsvc
+'uisvc --> confsvc
+'uisvc ---> schedulersvc
+'cmdcli --> confsvc
+'cmdcli --> schedulersvc
+schedulersvc <-- taskexecutorsvc
+taskexecutorsvc --> statussvc
+taskexecutorsvc --> confsvc
+taskexecutorsvc --->(sparkexecutors):task-executorsvc may be a spark  driver
 @enduml

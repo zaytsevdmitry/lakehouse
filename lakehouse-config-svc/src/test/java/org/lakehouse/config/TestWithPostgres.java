@@ -437,6 +437,7 @@ public class TestWithPostgres {
 	@Order(8)
 	@Test
 	void shouldTestEffectiveTask() throws Exception {
+		//prepare
 		ProjectDTO projectDTO = putProjectDTO();
 		// datastores
 		DataStoreDTO someelsedbDataStoreDTO = putDataStoreDTO("processingdb");
@@ -452,25 +453,23 @@ public class TestWithPostgres {
 		ScenarioActTemplateDTO scenarioActTemplateDTO = putScenarioDTO();
 		ScheduleDTO initialScheduleDTO = putScheduleDTO("initial");
 
+		// override template
 		TaskDTO loadTaskDTOExpected = new TaskDTO();
 		Map<String,String> loadExpectArgs = new HashMap<>();
 		loadExpectArgs.put("spark.executor.memory", "1gb");
 		loadExpectArgs.put( "spark.executor.cores", "2");
 		loadExpectArgs.put( "spark.driver.memory", "2gb");
-
 		loadTaskDTOExpected.setExecutionModuleArgs(loadExpectArgs);
 		loadTaskDTOExpected.setName("load");
 		loadTaskDTOExpected.setTaskExecutionServiceGroupName("default");
 		loadTaskDTOExpected.setExecutionModule("org.lakehouse.taskexecutor.executionmodule.datamanipulation.LoadProcessorOverid");
 		loadTaskDTOExpected.setImportance("critical");
 		loadTaskDTOExpected.setDescription("override load");
-
-		// override template
 		TaskDTO loadTaskDTO   = scheduleService.getEffectiveTaskDTO(initialScheduleDTO.getName(), "transaction_dds", "load");
 		assert (loadTaskDTO.equals(loadTaskDTOExpected));
 
+		// not exists in template
 		TaskDTO extendTaskDTOExpected = new TaskDTO();
-
 		Map<String,String> extendTaskDTOExpectedArgs = new HashMap<>();
 		extendTaskDTOExpectedArgs.put("spark.executor.memory","5gb");
 		extendTaskDTOExpectedArgs.put("spark.driver.memory","2gb");
@@ -480,8 +479,6 @@ public class TestWithPostgres {
 		extendTaskDTOExpected.setExecutionModule("extend.example");
 		extendTaskDTOExpected.setImportance("critical");
 		extendTaskDTOExpected.setDescription("Not exists in template");
-
-		// not exists in template
 		TaskDTO extendTaskDTO = scheduleService.getEffectiveTaskDTO(initialScheduleDTO.getName(), "transaction_dds", "extend");
 		assert (extendTaskDTO.equals(extendTaskDTOExpected));
 
@@ -501,6 +498,19 @@ public class TestWithPostgres {
 		TaskDTO mergeTaskDTO  = scheduleService.getEffectiveTaskDTO(initialScheduleDTO.getName(), "transaction_dds", "merge");
 		assert (mergeTaskDTO.equals(mergeTaskDTOExpected));
 
+		// delete
+		restManipulator.deleteDTO(initialScheduleDTO.getName(), Endpoint.SCHEDULES_NAME);
+		restManipulator.deleteDTO(resultAggdaily.getName(), Endpoint.DATA_SETS_NAME);
+		restManipulator.deleteDTO(resultAggTotal.getName(), Endpoint.DATA_SETS_NAME);
+		restManipulator.deleteDTO(resultTransactionddsDTO.getName(), Endpoint.DATA_SETS_NAME);
+		restManipulator.deleteDTO(transactionProcessingDTO.getName(), Endpoint.DATA_SETS_NAME);
+		restManipulator.deleteDTO(clientProcessingDTO.getName(), Endpoint.DATA_SETS_NAME);
+		restManipulator.deleteDTO(scenarioActTemplateDTO.getName(), Endpoint.SCENARIOS_NAME);
+		restManipulator.deleteDTO(defaultTaskExecutionServiceGroupDTO.getName(),
+				Endpoint.TASK_EXECUTION_SERVICE_GROUPS_NAME);
+		restManipulator.deleteDTO(mydbDataStoreDTO.getName(), Endpoint.DATA_STORES_NAME);
+		restManipulator.deleteDTO(someelsedbDataStoreDTO.getName(), Endpoint.DATA_STORES_NAME);
+		restManipulator.deleteDTO(projectDTO.getName(), Endpoint.PROJECTS_NAME);
 
 	}
 

@@ -30,7 +30,7 @@ public class Endpoint {
 
     public final static String TASKS = ROOT_API_V1_0 + "/tasks";
     public final static String SCHEDULED_TASKS = TASKS + "/scheduledtasks";
-    public final static String SCHEDULED_TASKS_LOCK = SCHEDULED_TASKS + "/lock/{taskExecutionServiceGroupName}/{serviceId}";
+    public final static String SCHEDULED_TASKS_LOCK_BY_ID = SCHEDULED_TASKS + "/lock/taskId/{id}/service/{serviceId}";
     public final static String SCHEDULED_TASKS_LOCK_ID = SCHEDULED_TASKS + "/lock/{id}";
     public final static String SCHEDULED_TASKS_LOCKS = SCHEDULED_TASKS + "/locks";
     public final static String SCHEDULED_TASKS_RELEASE = SCHEDULED_TASKS + "/release";

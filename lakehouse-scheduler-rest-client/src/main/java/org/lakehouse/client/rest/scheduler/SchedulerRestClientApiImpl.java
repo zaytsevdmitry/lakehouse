@@ -5,6 +5,7 @@ import org.lakehouse.client.api.dto.service.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.service.TaskExecutionHeartBeatDTO;
 import org.lakehouse.client.api.dto.service.TaskInstanceReleaseDTO;
 import org.lakehouse.client.api.dto.tasks.ScheduledTaskDTO;
+import org.lakehouse.client.api.dto.tasks.ScheduledTaskMsgDTO;
 import org.lakehouse.client.rest.RestClientHelper;
 
 import java.util.Arrays;
@@ -35,17 +36,18 @@ public class SchedulerRestClientApiImpl implements SchedulerRestClientApi {
 				.body(ScheduledTaskLockDTO[].class));
 	}
 
-@Override
-	public int  postScheduledTaskDTO(ScheduledTaskDTO o) {
+	@Override
+	public int  postScheduledTaskDTO(ScheduledTaskMsgDTO o) {
 		return restClientHelper.postDTO(o,  Endpoint.SCHEDULED_TASKS_ID);
 	}
+
 	@Override
-	public ScheduledTaskLockDTO lockTask(String taskExecutionServiceGroupName, String serviceId) {
+	public ScheduledTaskLockDTO lockTaskById(Long id, String serviceId) {
 		return restClientHelper.getRestClient()
 				.get()
-				.uri(Endpoint.SCHEDULED_TASKS_LOCK, taskExecutionServiceGroupName, serviceId)
+				.uri(Endpoint.SCHEDULED_TASKS_LOCK_BY_ID, id, serviceId)
 				.retrieve()
-				.body(ScheduledTaskLockDTO.class);	
+				.body(ScheduledTaskLockDTO.class);
 	}
 	@Override
 	public int lockHeartBeat (TaskExecutionHeartBeatDTO taskExecutionHeartBeat) {
@@ -57,8 +59,8 @@ public class SchedulerRestClientApiImpl implements SchedulerRestClientApi {
 	}
 
 	@Override
-	public ScheduledTaskDTO getScheduledTaskDTO(String name) {
-		return restClientHelper.getDtoOne(name,Endpoint.SCHEDULED_TASKS_ID,ScheduledTaskDTO.class);
+	public ScheduledTaskMsgDTO getScheduledTaskDTO(String name) {
+		return restClientHelper.getDtoOne(name,Endpoint.SCHEDULED_TASKS_ID, ScheduledTaskMsgDTO.class);
 	}
 
 	@Override

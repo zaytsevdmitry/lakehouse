@@ -17,16 +17,16 @@ public class ScheduleConfigConsumerService {
         this.scheduleInstanceLastBuildService = scheduleInstanceLastBuildService;
     }
 
-    @KafkaListener(
+
+
+   @KafkaListener(
             topics = "#{'${lakehouse.scheduler.config.schedule.kafka.consumer.topics}'.split(',')}",
             concurrency = "#{'${lakehouse.scheduler.config.schedule.kafka.consumer.concurrency}'}",
-            containerFactory = "containerFactory"
-    )
+            containerFactory = "containerFactory")
     public void listen(ScheduleEffectiveDTO scheduleEffectiveDTO)
     {
         logger.info("New schedule config change: " + scheduleEffectiveDTO.getName());
         scheduleInstanceLastBuildService.findAndRegisterNewSchedule(scheduleEffectiveDTO);
         logger.info("findAndRegisterNewSchedules");
     }
-
 }

@@ -55,9 +55,9 @@ public class ScheduleController {
 	@GetMapping(Endpoint.EFFECTIVE_SCHEDULE_SCENARIOACT_TASK)
 	TaskDTO getEffectiveTaskDTO(
 			@PathVariable String schedule,
-			@PathVariable String scenarioAct,
+			@PathVariable String scenarioact,
 			@PathVariable String task
 	){
-		return scheduleService.getEffectiveTaskDTO(schedule,scenarioAct,task);
+		return scheduleService.getEffectiveTaskDTO(schedule,scenarioact,task);
 	}
 }

@@ -5,6 +5,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.api.dto.tasks.ScheduledTaskDTO;
+import org.lakehouse.client.api.dto.tasks.ScheduledTaskMsgDTO;
 import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
 import org.lakehouse.client.rest.scheduler.configuration.SchedulerRestClientConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;

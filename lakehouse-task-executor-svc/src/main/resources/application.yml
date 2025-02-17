@@ -7,10 +7,20 @@ lakehouse:
       scheduler:
         server:
           url: http://127.0.0.1:8081
-      config:
-        server:
-          url: http://127.0.0.1:8080
-  taskexecutor:
+  task-executor:
+    service:
+      groupName: default
+      id: first
+    scheduled:
+      task:
+        kafka:
+          consumer:
+            concurrency: 1
+            properties:
+              bootstrap.servers: localhost:9092
+              group.id: task-executor
+              auto.offset.reset: earliest
+            topics: scheduled_task_msg
     schedule:
       lockTask:
         delay-ms: 1000
@@ -18,6 +28,3 @@ lakehouse:
       heardBeatTask:
         delay-ms: 1000
         initial-delay-ms: 1000
-    service:
-     groupName: default
-     id: first

@@ -24,12 +24,6 @@ public class ScheduleTaskInstance {
 	@OnDelete(action = OnDeleteAction.CASCADE)
 	private ScheduleScenarioActInstance scheduleScenarioActInstance;
 
-	@Column(nullable = false)
-	private String confTaskExecutionServiceGroupKeyName;
-
-	@Column(nullable = true)
-	private String executionModule;
-	
 	@Column(nullable = true)
 	private OffsetDateTime beginDateTime;
 	
@@ -59,22 +53,6 @@ public class ScheduleTaskInstance {
 
 	public void setName(String name) {
 		this.name = name;
-	}
-
-	public String getConfTaskExecutionServiceGroupKeyName() {
-		return confTaskExecutionServiceGroupKeyName;
-	}
-
-	public void setConfTaskExecutionServiceGroupKeyName(String confTaskExecutionServiceGroupKeyName) {
-		this.confTaskExecutionServiceGroupKeyName = confTaskExecutionServiceGroupKeyName;
-	}
-
-	public String getExecutionModule() {
-		return executionModule;
-	}
-
-	public void setExecutionModule(String executionModule) {
-		this.executionModule = executionModule;
 	}
 
 	public OffsetDateTime getBeginDateTime() {
@@ -128,8 +106,6 @@ public class ScheduleTaskInstance {
 		return getReTryCount() == that.getReTryCount() && Objects.equals(getId(), that.getId())
 				&& Objects.equals(getName(), that.getName())
 				&& Objects.equals(getScheduleScenarioActInstance(), that.getScheduleScenarioActInstance())
-				&& Objects.equals(getConfTaskExecutionServiceGroupKeyName(), that.getConfTaskExecutionServiceGroupKeyName())
-				&& Objects.equals(getExecutionModule(), that.getExecutionModule())
 				&& Objects.equals(getBeginDateTime(), that.getBeginDateTime())
 				&& Objects.equals(getEndDateTime(), that.getEndDateTime())
 				&& Objects.equals(getStatus(), that.getStatus());
@@ -137,7 +113,7 @@ public class ScheduleTaskInstance {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(getId(), getName(), getScheduleScenarioActInstance(), getConfTaskExecutionServiceGroupKeyName(),
-				getExecutionModule(), getBeginDateTime(), getEndDateTime(), getStatus(), getReTryCount());
+		return Objects.hash(getId(), getName(), getScheduleScenarioActInstance(), getBeginDateTime(),
+				getEndDateTime(), getStatus(), getReTryCount());
 	}
 }

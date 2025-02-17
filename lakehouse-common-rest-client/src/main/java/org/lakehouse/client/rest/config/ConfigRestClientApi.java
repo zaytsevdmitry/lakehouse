@@ -1,10 +1,6 @@
 package org.lakehouse.client.rest.config;
 
 import org.lakehouse.client.api.dto.configs.*;
-import org.lakehouse.client.api.dto.service.ScheduledTaskLockDTO;
-import org.lakehouse.client.api.dto.service.TaskExecutionHeartBeatDTO;
-import org.lakehouse.client.api.dto.service.TaskInstanceReleaseDTO;
-import org.lakehouse.client.api.dto.tasks.ScheduledTaskDTO;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -21,7 +17,7 @@ public interface ConfigRestClientApi {
 	
 	public ScheduleDTO getScheduleDTO(String name);
 	public ScheduleEffectiveDTO getScheduleEffectiveDTO(String name);
-
+	public TaskDTO getEffectiveTaskDTO(String schedule, String scenarioAct, String task);
 	public TaskExecutionServiceGroupDTO  getTaskExecutionServiceGroupDTO(String name);
 
 	public List<ProjectDTO> getProjectDTOList();
