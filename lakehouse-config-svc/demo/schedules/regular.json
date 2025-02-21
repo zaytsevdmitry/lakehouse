@@ -7,6 +7,44 @@
   "enabled": true,
   "scenarioActs": [
     {
+      "name": "transaction_processing",
+      "dataSet": "transaction_processing",
+      "scenarioActTemplate": null,
+      "tasks": [
+        {
+          "name": "load",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.LoadProcessorOverid",
+          "importance": "critical",
+          "description": "override load",
+          "executionModuleArgs": {
+            "spark.executor.memory": "1gb",
+            "spark.executor.cores": "2"
+          }
+        }
+      ]
+
+    },
+    {
+      "name": "client_processing",
+      "dataSet": "client_processing",
+      "scenarioActTemplate": null,
+      "tasks": [
+        {
+          "name": "load",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.LoadProcessorOverid",
+          "importance": "critical",
+          "description": "override load",
+          "executionModuleArgs": {
+            "spark.executor.memory": "1gb",
+            "spark.executor.cores": "2"
+          }
+        }
+      ]
+
+    },
+    {
       "name": "transaction_dds",
       "dataSet": "transaction_dds",
       "scenarioActTemplate": "default"
@@ -23,6 +61,14 @@
     }
   ],
   "scenarioActEdges": [
+    {
+      "from": "transaction_processing",
+      "to": "transaction_dds"
+    },
+    {
+      "from": "client_processing",
+      "to": "transaction_dds"
+    },
     {
       "from": "transaction_dds",
       "to": "aggregation_pay_per_client_daily_mart"

@@ -134,6 +134,8 @@ public class ScheduleTaskInstanceService {
 										.getScheduleInstance()
 										.getTargetExecutionDateTime()));
 
+		result.setDataSetKeyName(l.getScheduleTaskInstance().getScheduleScenarioActInstance().getConfDataSetKeyName());
+
 		if (l.getLastHeartBeatDateTime() != null)
 			result.setLastHeartBeatDateTime(DateTimeUtils.formatDateTimeFormatWithTZ( l.getLastHeartBeatDateTime()));
 		return result;

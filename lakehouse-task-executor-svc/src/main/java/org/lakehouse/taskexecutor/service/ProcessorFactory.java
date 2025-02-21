@@ -1,13 +1,14 @@
-package org.lakehouse.taskexecutor.executionmodule;
+package org.lakehouse.taskexecutor.service;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
 import org.lakehouse.client.api.dto.configs.TaskDTO;
-import org.lakehouse.client.api.dto.service.ScheduledTaskLockDTO;
-import org.lakehouse.client.api.dto.tasks.ScheduledTaskMsgDTO;
+import org.lakehouse.taskexecutor.entity.TaskProcessor;
+import org.springframework.stereotype.Service;
 
+@Service
 public class ProcessorFactory {
 	public TaskProcessor buildProcessor(TaskDTO taskDTO)
 			throws InstantiationException, IllegalAccessException, ClassNotFoundException, NoSuchMethodException, IllegalArgumentException, InvocationTargetException {

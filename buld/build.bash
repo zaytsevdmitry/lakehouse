@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 cd ../
-#mvn clean package
+mvn clean package
 rm -rf distr
 mkdir distr
 mkdir ./distr/lakehouse-cli

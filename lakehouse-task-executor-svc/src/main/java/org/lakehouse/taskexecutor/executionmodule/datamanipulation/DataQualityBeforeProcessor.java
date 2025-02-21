@@ -2,12 +2,13 @@ package org.lakehouse.taskexecutor.executionmodule.datamanipulation;
 
 import java.util.Map;
 
+import org.lakehouse.taskexecutor.entity.TaskProcessorConfig;
 import org.lakehouse.taskexecutor.executionmodule.AbstractTaskProcessor;
 
 public class DataQualityBeforeProcessor extends AbstractTaskProcessor{
 
-	public DataQualityBeforeProcessor(Map<String, String> executionModuleArgs) {
-		super(executionModuleArgs);
+	public DataQualityBeforeProcessor(TaskProcessorConfig taskProcessorConfig) {
+		super(taskProcessorConfig);
 		// TODO Auto-generated constructor stub
 	}
 

@@ -2,6 +2,10 @@
   "name": "aggregation_pay_per_client_daily_mart",
   "project": "DEMO",
   "dataStore": "lakehousestorage",
+  "scripts": [
+    {
+      "key": "aggregation_pay_per_client_daily_mart.sql"
+    }],
   "sources": [
     {
       "name": "transaction_dds"

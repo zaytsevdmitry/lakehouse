@@ -15,10 +15,7 @@ import org.lakehouse.config.mapper.Mapper;
 import org.lakehouse.config.repository.*;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -96,6 +93,20 @@ public class ScenarioActTemplateService {
 		return findAll().stream().collect(Collectors.toMap(ScenarioActTemplateDTO::getName,scenarioActTemplateDTO -> scenarioActTemplateDTO));
 	}
 
+	public List<TaskDTO> getTaskDTOListNullSafe(ScenarioActTemplateDTO scenarioActTemplateDTO){
+		if ( scenarioActTemplateDTO != null)
+			return scenarioActTemplateDTO.getTasks();
+		else
+			return new ArrayList<>();
+	}
+
+
+	public List<DagEdgeDTO> getDagEdgeDTOListNullSafe(ScenarioActTemplateDTO scenarioActTemplateDTO){
+		if ( scenarioActTemplateDTO != null)
+			return scenarioActTemplateDTO.getDagEdges();
+		else
+			return new ArrayList<>();
+	}
 	@Transactional
 	public ScenarioActTemplateDTO save(ScenarioActTemplateDTO scenarioActTemplateDTO) {
 		ScenarioActTemplate scenarioActTemplate = mapScenarioToEntity(scenarioActTemplateDTO);

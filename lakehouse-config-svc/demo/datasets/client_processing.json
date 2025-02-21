@@ -2,6 +2,10 @@
   "name": "client_processing",
   "project": "DEMO",
   "dataStore": "processingdb",
+  "scripts": [
+    {
+      "key": "client_processing.sql"
+    }],
   "sources": [],
   "columnSchema": [
     {
@@ -23,6 +27,26 @@
     "nullable": false
     }
   ],
+  "constraints":[
+    {
+      "name": "client_processing_pk",
+      "type": "primary",
+      "columns": "id",
+      "enabled": "true",
+      "runtimeLevelCheck": false,
+      "constructLevelCheck": true
+    },
+    {
+      "name": "client_processing_pk",
+      "type": "unique",
+      "columns": "name",
+      "enabled": "true",
+      "runtimeLevelCheck": false,
+      "constructLevelCheck": true
+    }
+
+  ],
+
   "properties": {
     "data-end-point": "proc.client"
   },

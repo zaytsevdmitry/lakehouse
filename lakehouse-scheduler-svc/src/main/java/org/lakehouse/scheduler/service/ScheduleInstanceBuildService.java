@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.OffsetDateTime;
 import java.util.Map;
@@ -44,8 +43,6 @@ public class ScheduleInstanceBuildService {
 	private final ScheduleScenarioActInstanceDependencyRepository scheduleScenarioActInstanceDependencyRepository;
 	private final ConfigRestClientApi configRestClientApi;
 	@Autowired
-	private TransactionTemplate transactionTemplate;
-
 	public ScheduleInstanceBuildService(
             ScheduleInstanceLastBuildRepository scheduleInstanceLastBuildRepository,
             ScheduleInstanceRepository scheduledTaskRepository,
@@ -169,7 +166,7 @@ public class ScheduleInstanceBuildService {
 								configRestClientApi.getScheduleEffectiveDTO(
 										scheduleInstanceLastBuild.getConfigScheduleKeyName()));
 					} catch (Exception e) {
-						logger.warn(e.getMessage());
+						logger.warn("Error when build schedule",e);
 						throw new RuntimeException(e);
 					}
 				});

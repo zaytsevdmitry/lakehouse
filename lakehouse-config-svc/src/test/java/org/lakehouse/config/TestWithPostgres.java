@@ -10,23 +10,21 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.lakehouse.config.entities.scenario.ScenarioAct;
-//import org.lakehouse.config.entities.tasks.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.lakehouse.config.repository.ScriptRepository;
 import org.lakehouse.test.config.configuration.FileLoader;
 import org.lakehouse.config.test.configutation.RestManipulator;
 import org.lakehouse.config.entities.Schedule;
 import org.lakehouse.config.repository.DataSetRepository;
 import org.lakehouse.config.repository.ScenarioActRepository;
-import org.lakehouse.config.repository.ScheduleRepository;/*
-import org.lakehouse.config.service.tasks.ScheduleInstanceLastService;
-import org.lakehouse.config.service.tasks.ScheduleInstanceRunnigService;
-import org.lakehouse.config.service.tasks.ScheduleInstanceService;
-import org.lakehouse.config.service.tasks.ScheduleScenarioActInstanceService;
-import org.lakehouse.config.service.tasks.ScheduleTaskInstanceService;*/
+import org.lakehouse.config.repository.ScheduleRepository;
 import org.lakehouse.config.service.ScenarioActTemplateService;
 import org.lakehouse.config.service.ScheduleService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -41,10 +39,9 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.*;
 
 @AutoConfigureMockMvc
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -52,7 +49,9 @@ import java.util.Map;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @EnableJpaRepositories
 public class TestWithPostgres {
-//services
+	private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+	//services
 	@Autowired ScheduleService scheduleService;
 	@Autowired
 	ScenarioActTemplateService scenarioActTemplateService;
@@ -61,6 +60,9 @@ public class TestWithPostgres {
 	@Autowired
 	DataSetRepository dataSetRepository;
 	@Autowired KafkaAdmin kafkaAdmin;
+
+	@Autowired
+	ScriptRepository scriptRepository;
 
 	/*	@Autowired
 	ScheduleInstanceService scheduleInstanceService;
@@ -124,6 +126,7 @@ public class TestWithPostgres {
 		registry.add("spring.datasource.url", postgres::getJdbcUrl);
 		registry.add("spring.datasource.username", postgres::getUsername);
 		registry.add("spring.datasource.password", postgres::getPassword);
+
 	}
 
 	private ProjectDTO putProjectDTO() throws Exception {
@@ -194,7 +197,41 @@ public class TestWithPostgres {
 		assert (resultDTO.equals(dto));
 	}
 
+
+	private String loadScript(String name, String fileExt) throws Exception {
+		return restManipulator.writeAndReadTextTestByKey(
+				name,
+				fileExt,
+				fileLoader.loadModelScript(name),
+				Endpoint.SCRIPT_BY_KEY,
+				Endpoint.SCRIPT_BY_KEY);
+
+	}
+
+
+	@Test()
+	@Order(5)
+	void ShouldTestScriptConfig() throws Exception {
+		String name = "client_processing";
+		String estimate	 = fileLoader.loadModelScript(name);
+		String result =
+				restManipulator.writeAndReadTextTestByKey(
+						name,
+						"sql",
+						fileLoader.loadModelScript(name),
+						Endpoint.SCRIPT_BY_KEY,
+						Endpoint.SCRIPT_BY_KEY);
+
+		assert (estimate.equals(result));
+	}
 	private DataSetDTO putDataSetDTO(String name) throws Exception {
+		String sqlFileExt = "sql";
+		try {
+			loadScript(name, sqlFileExt);
+		}catch (FileNotFoundException e){
+			logger.warn("File {}.{} not found",name,sqlFileExt);
+		}
+
 		DataSetDTO dto = fileLoader.loadDataSetDTO(name);
 		return ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getName(),
 				ObjectMapping.asJsonString(dto), Endpoint.DATA_SETS, Endpoint.DATA_SETS_NAME), DataSetDTO.class);
@@ -203,9 +240,13 @@ public class TestWithPostgres {
 	@Test
 	@Order(5)
 	void shouldTestDataSetDTO() throws Exception {
+		String name = "client_processing";
+
+
 		DataStoreDTO dataStoreDTO = putDataStoreDTO("processingdb");
+
 		ProjectDTO projectDTO = putProjectDTO();
-		DataSetDTO dto = putDataSetDTO("client_processing");
+		DataSetDTO dto = putDataSetDTO(name);
 
 		DataSetDTO resultDTO = ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getName(),
 				ObjectMapping.asJsonString(dto), Endpoint.DATA_SETS, Endpoint.DATA_SETS_NAME), DataSetDTO.class);
@@ -260,17 +301,50 @@ public class TestWithPostgres {
 	
 	}
 
-    void loadAll(){
+
+	private ColumnDTO buildColumnDTO(
+			String name,
+			String description ,
+			String dataType,
+			boolean nullable,
+			Integer order,
+			boolean sequence){
+		ColumnDTO result = new ColumnDTO();
+		result.setName(name);
+		result.setDescription ( description);
+		result.setDataType( dataType);
+		result.setNullable( nullable);
+		result.setOrder( order);
+		result.setSequence(sequence);
+		return result;
 
 	}
 
-
-
-	@Test
+	@Test()
 	@Order(7)
+	void shouldTestColumnOrdering(){
+		DataSetDTO dataSetDTO = new DataSetDTO();
+		ArrayList<ColumnDTO> columnDTOListEstimate = new ArrayList<>();
+		columnDTOListEstimate.add(buildColumnDTO("first", "","",true,1,true));
+		columnDTOListEstimate.add(buildColumnDTO("second", "","",true,2,true));
+		columnDTOListEstimate.add(buildColumnDTO("Y but third by order", "","",true,3,true));
+		columnDTOListEstimate.add(buildColumnDTO("A", "","",true,null,true));
+		columnDTOListEstimate.add(buildColumnDTO("B", "","",true,null,true));
+		columnDTOListEstimate.add(buildColumnDTO("C", "","",true,null,true));
+		columnDTOListEstimate.add(buildColumnDTO("D", "","",true,null,true));
+		columnDTOListEstimate.add(buildColumnDTO("E", "","",true,null,true));
+
+        List<ColumnDTO> passList = new ArrayList<>(columnDTOListEstimate);
+		Collections.reverse(passList);
+
+		dataSetDTO.setColumnSchema(passList);
+		assert (columnDTOListEstimate.equals(dataSetDTO.getColumnSchema()));
+	}
+	@Test
+	@Order(8)
 	void shouldTestAllDTO() throws Exception {
 
-	//	kafkaAdmin.createOrModifyTopics(new NewTopic("jopa", 1, (short) 1));
+        logger.info("{} {} {}",postgres.getJdbcUrl(),postgres.getUsername(), postgres.getPassword());
 
 		ProjectDTO projectDTO = putProjectDTO();
 		// datastores
@@ -287,10 +361,10 @@ public class TestWithPostgres {
 		DataSetDTO sourceAggdaily = fileLoader.loadDataSetDTO("aggregation_pay_per_client_daily_mart");
 		DataSetDTO resultAggTotal = putDataSetDTO("aggregation_pay_per_client_total_mart");
 		DataSetDTO sourceAggTotal = fileLoader.loadDataSetDTO("aggregation_pay_per_client_total_mart");
-		assert (resultAggdaily.equals(sourceAggdaily));
-		assert (resultAggTotal.equals(sourceAggTotal));
-		assert (resultTransactionddsDTO.equals(sourceTransactionddsDTO));
-		assert (resultTransactionddsDTOV2.equals(sourceTransactionddsDTOV2));
+		assert(resultAggdaily.equals(sourceAggdaily));
+		assert(resultAggTotal.equals(sourceAggTotal));
+		assert(resultTransactionddsDTO.equals(sourceTransactionddsDTO));
+		assert(resultTransactionddsDTOV2.equals(sourceTransactionddsDTOV2));
 
 		TaskExecutionServiceGroupDTO defaultTaskExecutionServiceGroupDTO = putTaskExecutionServiceGroupDTO();
 		ScenarioActTemplateDTO scenarioActTemplateDTO = putScenarioDTO();
@@ -302,7 +376,8 @@ public class TestWithPostgres {
 		assert (resultInitialScheduleDTO.equals(initialScheduleDTO));
 		assert (resultRegularScheduleDTO.equals(regularScheduleDTO));
 
-		ScheduleEffectiveDTO scheduleEffectiveDTO = scheduleService.findEffectiveScheduleDTOById(initialScheduleDTO.getName());
+		ScheduleEffectiveDTO scheduleEffectiveDTO = scheduleService
+				.findEffectiveScheduleDTOById(initialScheduleDTO.getName());
 		assert ( //  sum total of merge template with direct tasks
 				scheduleEffectiveDTO
 				.getScenarioActs()
@@ -434,7 +509,7 @@ public class TestWithPostgres {
 
 	}
 
-	@Order(8)
+	@Order(9)
 	@Test
 	void shouldTestEffectiveTask() throws Exception {
 		//prepare

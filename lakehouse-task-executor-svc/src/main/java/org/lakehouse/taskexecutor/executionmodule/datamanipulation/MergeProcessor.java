@@ -2,12 +2,13 @@ package org.lakehouse.taskexecutor.executionmodule.datamanipulation;
 
 import java.util.Map;
 
+import org.lakehouse.taskexecutor.entity.TaskProcessorConfig;
 import org.lakehouse.taskexecutor.executionmodule.AbstractTaskProcessor;
 
 public class MergeProcessor extends AbstractTaskProcessor{
 
-	public MergeProcessor(Map<String, String> executionModuleArgs) {
-		super(executionModuleArgs);
+	public MergeProcessor(TaskProcessorConfig taskProcessorConfig) {
+		super(taskProcessorConfig);
 		// TODO Auto-generated constructor stub
 	}
 

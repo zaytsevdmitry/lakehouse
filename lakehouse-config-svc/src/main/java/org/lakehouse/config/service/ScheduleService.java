@@ -11,6 +11,7 @@ import org.lakehouse.config.entities.scenario.ScenarioActTask;
 import org.lakehouse.config.entities.scenario.ScenarioActTaskEdge;
 import org.lakehouse.config.entities.scenario.ScenarioActTaskExecutionModuleArg;
 import org.lakehouse.config.entities.Schedule;
+import org.lakehouse.config.entities.templates.ScenarioActTemplate;
 import org.lakehouse.config.exception.ScenarioActNotFoundException;
 import org.lakehouse.config.exception.ScheduleNotFoundException;
 import org.lakehouse.config.mapper.Mapper;
@@ -107,7 +108,8 @@ public class ScheduleService {
 				dataSetRepository.findById(scheduleScenarioActDTO.getDataSet()).orElseThrow(() -> new RuntimeException(
 						String.format("Data set name %s not found", scheduleScenarioActDTO.getDataSet()))));
 
-		result.setScenarioActTemplate(
+		if (scheduleScenarioActDTO.getScenarioActTemplate() != null)
+			result.setScenarioActTemplate(
 				scenarioActTemplateRepository.findById(scheduleScenarioActDTO.getScenarioActTemplate())
 						.orElseThrow(() -> new RuntimeException(String.format("Scenario template name %s not found",
 								scheduleScenarioActDTO.getScenarioActTemplate()))));
@@ -368,49 +370,41 @@ public class ScheduleService {
 		result.setLastChangeNumber(schedule.getLastChangeNumber());
 		result.setScenarioActs(
 			scheduleDTO.getScenarioActs().stream().map(sa-> {
+
 				ScheduleScenarioActEffectiveDTO resultAct = new ScheduleScenarioActEffectiveDTO();
 				resultAct.setName(sa.getName());
 				resultAct.setDataSet(sa.getDataSet());
-				ScenarioActTemplateDTO sat = actTemplateDTOMap.get(sa.getScenarioActTemplate());
+				// edges
+				Set<DagEdgeDTO> edgeDTOSet = new HashSet<>(sa.getDagEdges());
+				edgeDTOSet.addAll(
+						scenarioActTemplateService
+								.getDagEdgeDTOListNullSafe(
+										actTemplateDTOMap.get(sa.getScenarioActTemplate())));
+				resultAct.setDagEdges(edgeDTOSet.stream().toList());
 
+				//vertices
 				Map<String, TaskDTO> taskDTOmap =
 						sa.getTasks()
 								.stream().collect(Collectors.toMap(TaskDTO::getName,taskDTO -> taskDTO));
 
-				List<TaskDTO> tasksAll = new ArrayList<>();
-				List<TaskDTO> tasksMergeFromTmpl =  sat.getTasks().stream().map(taskTmplt-> {
-					List<TaskDTO> taskDTOList =
-							sa.getTasks()
-									.stream()
-									.filter(task -> task.getName().equals(taskTmplt.getName()))
-									.toList();
-					if(taskDTOmap.containsKey(taskTmplt.getName()) ){
-						return matchTaskWithTemplate(taskDTOList.get(0),taskTmplt);
-					}else{
-						return taskTmplt;
-					}
+				Map<String,TaskDTO> taskDTOTemplatesMap =
+						scenarioActTemplateService
+								.getTaskDTOListNullSafe(
+										actTemplateDTOMap
+												.get(sa.getScenarioActTemplate()))
+								.stream()
+								.collect(Collectors.toMap(TaskDTO::getName,taskDTO -> taskDTO));
+
+				Set<String> taskNames = new HashSet<>();
+				taskNames.addAll(taskDTOmap.keySet());
+				taskNames.addAll(taskDTOTemplatesMap.keySet());
 
 
-				}).toList();
-
-				List<TaskDTO> tasksNotExistsInTemplate = taskDTOmap.values()
+				resultAct.setTasks(taskNames
 						.stream()
-						.filter(taskDTO ->
-								sat.getTasks()
-										.stream()
-										.filter(tt -> tt.getName().equals(taskDTO.getName()))
-										.toList()
-										.isEmpty())
-						.toList();
+						.map(string -> matchTaskWithTemplate(taskDTOmap.get(string), taskDTOTemplatesMap.get(string)))
+						.toList());
 
-				tasksAll.addAll(tasksMergeFromTmpl);
-				tasksAll.addAll(tasksNotExistsInTemplate);
-				resultAct.setTasks(tasksAll);
-
-				Set<DagEdgeDTO> edgeDTOSet = new HashSet<>(sa.getDagEdges());
-				edgeDTOSet.addAll(sat.getDagEdges());
-
-				resultAct.setDagEdges(edgeDTOSet.stream().toList());
 				return resultAct;
 			}).toList()
 		);

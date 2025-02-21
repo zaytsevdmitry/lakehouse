@@ -11,6 +11,14 @@ public class ScheduledTaskLockDTO {
 	private String scheduleConfKeyName;
 	private String scenarioActConfKeyName;
 	private String scheduleTargetDateTime;
+	private String dataSetKeyName;
+	public void setDataSetKeyName(String dataSetKeyName) {
+		this.dataSetKeyName = dataSetKeyName;
+	}
+
+	public String getDataSetKeyName() {
+		return dataSetKeyName;
+	}
 	public ScheduledTaskLockDTO() {
 		
 	}

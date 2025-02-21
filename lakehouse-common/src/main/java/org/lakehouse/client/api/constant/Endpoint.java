@@ -10,6 +10,10 @@ public class Endpoint {
     public final static String TASK_EXECUTION_SERVICE_GROUPS =  CONFIGS + "/taskexecutionservicegroups";
     public final static String TASK_EXECUTION_SERVICE_GROUPS_NAME = TASK_EXECUTION_SERVICE_GROUPS + "/{name}";
 
+
+    public final static String SCRIPTS = CONFIGS + "/scripts";
+    public final static String SCRIPT_BY_KEY= CONFIGS + "/scripts/{key}";
+
     public final static String DATA_SETS = CONFIGS + "/datasets";
     public final static String DATA_SETS_NAME = CONFIGS +  "/datasets" + "/{name}";
 

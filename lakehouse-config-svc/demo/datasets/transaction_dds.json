@@ -2,6 +2,9 @@
   "name": "transaction_dds",
   "project": "DEMO",
   "dataStore": "lakehousestorage",
+  "scripts": [{
+    "key": "transaction_dds.sql"
+  }],
   "sources": [
     {
       "name": "client_processing",
@@ -27,7 +30,8 @@
       "name": "id",
       "description": "tx id",
       "dataType": "bigint",
-      "nullable": false
+      "nullable": false,
+      "order": 0
     },
     {
       "name": "reg_date_time",

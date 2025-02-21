@@ -11,7 +11,9 @@ public class DataSetDTO implements Serializable {
     private List<DataSetSourceDTO> sources = new ArrayList<>();
     private List<ColumnDTO> columnSchema = new ArrayList<>();
     private Map<String,String> properties = new HashMap<>();
+    private List<DataSetScriptDTO> scripts = new ArrayList<>();
     private String description;
+    private List<DataSetConstraintDTO> constraints = new ArrayList<>();
     public DataSetDTO() {
     }
 
@@ -52,12 +54,19 @@ public class DataSetDTO implements Serializable {
     }
 
     public void setColumnSchema(List<ColumnDTO> columnSchema) {
+        List<ColumnDTO> result = new ArrayList<>();
 
-
-        this.columnSchema = columnSchema
+        columnSchema
                 .stream()
-                .sorted(Comparator.comparing(NameDescriptionAbstract::getName))
-                .toList();
+                .filter(columnDTO -> columnDTO.getOrder() != null)
+                .sorted(Comparator.comparing(ColumnDTO::getOrder))
+                .forEach(result::add);
+        columnSchema
+                .stream()
+                .filter(columnDTO -> columnDTO.getOrder()==null)
+                .sorted(Comparator.comparing(ColumnDTO::getName))
+                .forEach(result::add);
+        this.columnSchema = result;
     }
 
     public Map<String, String> getProperties() {
@@ -76,27 +85,40 @@ public class DataSetDTO implements Serializable {
         this.description = description;
     }
 
+    public List<DataSetScriptDTO> getScripts() {
+        return scripts;
+    }
+
+    public void setScripts(List<DataSetScriptDTO> scripts) {
+        this.scripts = scripts;
+    }
+
+    public List<DataSetConstraintDTO> getConstraints() {
+        return constraints;
+    }
+
+    public void setConstraints(List<DataSetConstraintDTO> constraints) {
+        this.constraints = constraints;
+    }
+
     @Override
     public boolean equals(Object o) {
-        boolean result;
-        if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DataSetDTO that = (DataSetDTO) o;
-        result =  Objects.equals(getColumnSchema(), that.getColumnSchema());
-        result = result  &&  Objects.equals(getName(), that.getName());
-
-        result = result  && Objects.equals(getProject(), that.getProject());
-        result = result && Objects.equals(getDataStore(), that.getDataStore());
-        result = result  && Objects.equals(getSources(), that.getSources());
-
-        result = result  && Objects.equals(getProperties(), that.getProperties());
-        result = result  && Objects.equals(getDescription(), that.getDescription());
-
-        return result;
+        return Objects.equals(getName(), that.getName())
+                && Objects.equals(getProject(), that.getProject())
+                && Objects.equals(getDataStore(), that.getDataStore())
+                && Objects.equals(getSources(), that.getSources())
+                && Objects.equals(getColumnSchema(), that.getColumnSchema())
+                && Objects.equals(getProperties(), that.getProperties())
+                && Objects.equals(getScripts(), that.getScripts())
+                && Objects.equals(getDescription(), that.getDescription())
+                && Objects.equals(getConstraints(), that.getConstraints());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getName(), getProject(), getDataStore(), getSources(), getColumnSchema(), getProperties(), getDescription());
+        return Objects.hash(getName(), getProject(), getDataStore(), getSources(), getColumnSchema(),
+                getProperties(), getScripts(), getDescription(), getConstraints());
     }
 }

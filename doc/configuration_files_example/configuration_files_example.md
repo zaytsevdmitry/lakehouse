@@ -109,11 +109,15 @@ dependencies:
  - name: otherTable
  - name: anotherTable
 description: "my first example mart"
-columnSchema: 
+columnSchema:  # columnSchema will be sorted. 
+  # The first time fileds wil be sorted  with  not empty order . 
+  # Secondary added  other felleds sorted by name 
   - name: id
     type: bigint
     nullable: true
-    comment:  
+    comment:  #optional
+    order:  #optional 
+    sequence: true
   - name: tab_value
     type: string
     nullable: true
@@ -121,9 +125,16 @@ columnSchema:
 keys:
   - name: mytable_pk
     type: primary
+    columns: id
+    enabled: true,
     runtimeLevelCheck: false
     constructLevelCheck: true
+script: "increment.sql" 
 ```
+*columnSchema*  will be sorted.
+ The first time fields wil be sorted  with  not empty order.
+ Secondary added  other fields sorted by name
+
 # increment query
 ```sql
 select id, o.tab_value
@@ -132,9 +143,10 @@ select id, o.tab_value
        using(id)
 ```
 
-# ScenarioTemplate is a combination of dataSet, tasks and their execution dag
+# ScenarioTemplate
+is a combination of dataSet, tasks and their execution dag
 ## 
-## A single dataset configured as dataSet can be served by multiple scenarios.
+## A one dataset configured as dataSet can be served by multiple scenarios.
 ```yaml
 configtype: scenarioActTemplate
 scenarioType: dateEndPointScenarioTemplate

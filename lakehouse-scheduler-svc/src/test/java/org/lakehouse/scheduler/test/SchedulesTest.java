@@ -7,22 +7,30 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.*;
 import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
 import org.lakehouse.client.api.serialization.schedule.ScheduleEffectiveKafkaSerializer;
+import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.scheduler.configuration.ScheduleConfigConsumerKafkaConfigurationProperties;
 import org.lakehouse.scheduler.entities.ScheduleInstanceLastBuild;
-import org.lakehouse.scheduler.repository.*;
+import org.lakehouse.scheduler.repository.ScheduleInstanceLastBuildRepository;
+import org.lakehouse.scheduler.repository.ScheduleInstanceRepository;
+import org.lakehouse.scheduler.repository.ScheduleScenarioActInstanceRepository;
+import org.lakehouse.scheduler.repository.ScheduleTaskInstanceExecutionLockRepository;
+import org.lakehouse.scheduler.repository.ScheduleTaskInstanceRepository;
 import org.lakehouse.scheduler.service.InternalSchedulerService;
 import org.lakehouse.scheduler.service.ScheduleInstanceBuildService;
 import org.lakehouse.scheduler.service.ScheduleInstanceLastBuildService;
-import org.lakehouse.scheduler.service.ScheduleTaskInstanceService;
+import org.lakehouse.scheduler.test.configuration.ClientApiConfigurationTest;
+import org.lakehouse.scheduler.test.configuration.ConfigRestClientApiTest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.*;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -30,29 +38,29 @@ import org.testcontainers.junit.jupiter.Container;
 import java.io.IOException;
 import java.util.*;
 
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
-
 import org.lakehouse.test.config.configuration.FileLoader;
 import org.testcontainers.utility.DockerImageName;
-/*
-    @Value("${lakehouse.scheduler.config.schedule.kafka.consumer.bootstrap-servers}" )
-    private String bootstrapServers;
-    @Value("${lakehouse.scheduler.config.schedule.kafka.consumer.group-id}" )
-    private String consumerGroup;
-    @Value("${lakehouse.scheduler.config.schedule.kafka.consumer.auto-offset-reset}" )
-    private String autoOffsetReset;
-*/
-@SpringBootTest(properties = {
-        "lakehouse.client.rest.config.server.url=",
+
+@SpringBootTest(
+        properties = {"spring.main.allow-bean-definition-overriding=true",
         "lakehouse.scheduler.config.schedule.kafka.consumer.properties.group.id=getTestScheduleConfGroup",
         "lakehouse.scheduler.config.schedule.kafka.consumer.properties.auto.offset.reset=earliest",
         "lakehouse.scheduler.schedule.task.kafka.producer.topic=test_send_scheduled_task_topic",
 })
 @EnableConfigurationProperties(value = ScheduleConfigConsumerKafkaConfigurationProperties.class)
+@ComponentScan(basePackages = { "org.lakehouse.scheduler" })
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @ActiveProfiles("test")
 public class SchedulesTest {
+    // override bean
+    @Configuration
+    static class ContextConfiguration {
+        @Bean
+        @Primary //may omit this if this is the only SomeBean defined/visible
+        ConfigRestClientApi getConfigRestClientApi() throws IOException {
+            return new ConfigRestClientApiTest();
+        }
+    }
     private static final Logger log = LoggerFactory.getLogger(SchedulesTest.class);
     //services
     @Autowired ScheduleInstanceLastBuildService scheduleInstanceLastBuildService;
@@ -81,8 +89,6 @@ public class SchedulesTest {
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine").withDatabaseName("test")
             .withUsername("name").withPassword("password");
-
-
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
@@ -128,7 +134,8 @@ public class SchedulesTest {
     @Order(1)
     public void registration() throws IOException {
         cleanAll();
-        scheduleInstanceLastBuildRepository.findAll().forEach(instanceLastBuild -> log.info("Schedules -=> {}", instanceLastBuild.getConfigScheduleKeyName()));
+        scheduleInstanceLastBuildRepository.findAll().forEach(instanceLastBuild ->
+                log.info("Schedules -=> {}", instanceLastBuild.getConfigScheduleKeyName()));
 
         ScheduleEffectiveDTO sef = fileLoader.loadScheduleEffectiveDTO() ;
         Producer<String, ScheduleEffectiveDTO> producer = getKafkaProducer();

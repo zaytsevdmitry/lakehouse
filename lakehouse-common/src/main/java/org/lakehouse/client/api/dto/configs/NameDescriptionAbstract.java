@@ -11,6 +11,7 @@ public abstract class NameDescriptionAbstract implements Serializable {
     public NameDescriptionAbstract() {
     }
 
+
     public String getName() {
         return name;
     }

@@ -1,9 +1,7 @@
 package org.lakehouse.config.service;
 
 import jakarta.transaction.Transactional;
-import org.lakehouse.client.api.dto.configs.ColumnDTO;
-import org.lakehouse.client.api.dto.configs.DataSetDTO;
-import org.lakehouse.client.api.dto.configs.DataSetSourceDTO;
+import org.lakehouse.client.api.dto.configs.*;
 
 import org.lakehouse.config.entities.*;
 import org.lakehouse.config.exception.DataSetNotFoundException;
@@ -11,11 +9,11 @@ import org.lakehouse.config.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.TransactionStatus;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @Service
 public class DataSetService {
@@ -27,12 +25,21 @@ public class DataSetService {
 	private final DataSetColumnRepository dataSetColumnRepository;
 	private final ProjectRepository projectRepository;
 	private final DataStoreRepository dataStoreRepository;
+	private final ScriptRepository scriptRepository;
+	private final DataSetConstraintRepository dataSetConstraintRepository;
+	private final DataSetScriptRepository dataSetScriptRepository;
+	private final ScriptService scriptService;
+	private final DataSetScriptService dataSetScriptService;
 
-	public DataSetService(DataSetRepository dataSetRepository, DataSetPropertyRepository dataSetPropertyRepository,
-			DataSetSourceRepository dataSetSourceRepository,
-			DataSetSourcePropertyRepository dataSetSourcePropertyRepository,
-			DataSetColumnRepository dataSetColumnRepository, ProjectRepository projectRepository,
-			DataStoreRepository dataStoreRepository) {
+	public DataSetService(
+            DataSetRepository dataSetRepository,
+            DataSetPropertyRepository dataSetPropertyRepository,
+            DataSetSourceRepository dataSetSourceRepository,
+            DataSetSourcePropertyRepository dataSetSourcePropertyRepository,
+            DataSetColumnRepository dataSetColumnRepository,
+            ProjectRepository projectRepository,
+            DataStoreRepository dataStoreRepository,
+            ScriptRepository scriptRepository, DataSetConstraintRepository dataSetConstraintRepository, DataSetScriptRepository dataSetScriptRepository, ScriptService scriptService, DataSetScriptService dataSetScriptService) {
 		this.dataSetRepository = dataSetRepository;
 		this.dataSetPropertyRepository = dataSetPropertyRepository;
 		this.dataSetSourceRepository = dataSetSourceRepository;
@@ -40,7 +47,12 @@ public class DataSetService {
 		this.dataSetColumnRepository = dataSetColumnRepository;
 		this.projectRepository = projectRepository;
 		this.dataStoreRepository = dataStoreRepository;
-	}
+		this.scriptRepository = scriptRepository;
+        this.dataSetConstraintRepository = dataSetConstraintRepository;
+        this.dataSetScriptRepository = dataSetScriptRepository;
+        this.scriptService = scriptService;
+        this.dataSetScriptService = dataSetScriptService;
+    }
 
 	private DataSetDTO mapDataSetToDTO(DataSet dataSet) {
 		DataSetDTO result = new DataSetDTO();
@@ -49,6 +61,18 @@ public class DataSetService {
 		result.setDataStore(dataSet.getDataStore().getName());
 		result.setProject(dataSet.getProject().getName());
 
+
+		result.setScripts(dataSetScriptService.findDataSetScriptDTOListByDataSetName(dataSet.getName()));
+		result.setConstraints(dataSetConstraintRepository.findByDataSetName(dataSet.getName()).stream().map(dataSetConstraint -> {
+			DataSetConstraintDTO dataSetConstraintDTO = new DataSetConstraintDTO();
+			dataSetConstraintDTO.setColumns(dataSetConstraint.getColumns());
+			dataSetConstraintDTO.setType(dataSetConstraint.getType());
+			dataSetConstraintDTO.setName(dataSetConstraint.getName());
+			dataSetConstraintDTO.setEnabled(dataSetConstraint.isEnabled());
+			dataSetConstraintDTO.setRuntimeLevelCheck(dataSetConstraint.isRuntimeLevelCheck());
+			dataSetConstraintDTO.setConstructLevelCheck(dataSetConstraint.isConstructLevelCheck());
+			return dataSetConstraintDTO;
+		}).toList());
 		result.setSources(dataSetSourceRepository.findByDataSetName(dataSet.getName()).stream().map(dataSetSource -> {
 			DataSetSourceDTO dataSetSourceDTO = new DataSetSourceDTO();
 			dataSetSourceDTO.setName(dataSetSource.getSource().getName());
@@ -63,6 +87,7 @@ public class DataSetService {
 		dataSetPropertyRepository.findByDataSetName(dataSet.getName())
 				.forEach(dataStoreProperty -> properties.put(dataStoreProperty.getKey(), dataStoreProperty.getValue()));
 		result.setProperties(properties);
+		logger.info("");
 		result.setColumnSchema(
 				dataSetColumnRepository.findBydataSetName(dataSet.getName()).stream().map(dataSetColumn -> {
 					ColumnDTO columnDTO = new ColumnDTO();
@@ -70,6 +95,7 @@ public class DataSetService {
 					columnDTO.setDataType(dataSetColumn.getDataType());
 					columnDTO.setNullable(dataSetColumn.isNullable());
 					columnDTO.setDescription(dataSetColumn.getComment());
+					columnDTO.setOrder(dataSetColumn.getColumnOrder());
 					return columnDTO;
 				}).toList());
 		return result;
@@ -93,6 +119,7 @@ public class DataSetService {
 			column.setDataType(columnDTO.getDataType());
 			column.setName(columnDTO.getName());
 			column.setComment(columnDTO.getDescription());
+			column.setColumnOrder(columnDTO.getOrder());
 			return column;
 		}).toList();
 	}
@@ -111,7 +138,7 @@ public class DataSetService {
 
 	private DataSet findByName(String name) {
 		return dataSetRepository.findById(name).orElseThrow(() -> {
-			logger.info("Can't get data set name: %s", name);
+			logger.info("Can't get data set name: {}", name);
 			return new DataSetNotFoundException(name);
 		});
 	}
@@ -122,6 +149,7 @@ public class DataSetService {
 
 	@Transactional
 	private DataSetDTO saveDataSet(DataSetDTO dataSetDTO) {
+		logger.info("Saving dataSetDTO={}: cleanUp",dataSetDTO.getName());
 
 		dataSetColumnRepository.findBydataSetName(dataSetDTO.getName())
 				.forEach(dataSetColumnRepository::delete);
@@ -129,12 +157,21 @@ public class DataSetService {
 				.forEach(dataSetPropertyRepository::delete);
 		dataSetSourceRepository.findByDataSetName(dataSetDTO.getName())
 				.forEach(dataSetSourceRepository::delete);
+		dataSetScriptService.findDataSetScriptListByDataSetName(dataSetDTO.getName())
+				.forEach(dataSetScriptRepository::delete);
+		dataSetConstraintRepository.findByDataSetName(dataSetDTO.getName())
+				.forEach(dataSetConstraintRepository::delete);
 
+		logger.info("Saving dataSetDTO={}",dataSetDTO.getName());
 		DataSet dataSet = dataSetRepository.save(mapDataSetToEntity(dataSetDTO));
 
+		logger.info("Saving dataSetDTO={} columns",dataSetDTO.getName());
 		mapColumnEntities(dataSetDTO).forEach(dataSetColumnRepository::save);
+
+		logger.info("Saving dataSetDTO={} properties",dataSetDTO.getName());
 		mapPropertyEntities(dataSetDTO).forEach(dataSetPropertyRepository::save);
 
+		logger.info("Saving dataSetDTO={} sources",dataSetDTO.getName());
 		dataSetDTO.getSources().forEach(dataSetSourceDTO -> {
 			DataSetSource dataSetSource = new DataSetSource();
 			dataSetSource.setSource(dataSetRepository.findById(dataSetSourceDTO.getName()).orElseThrow(
@@ -150,6 +187,30 @@ public class DataSetService {
 				dataSetSourcePropertyRepository.save(dataSetSourceProperty);
 			});
 		});
+
+		logger.info("Saving dataSetDTO={} scripts",dataSetDTO.getName());
+		dataSetDTO.getScripts().stream().map(dataSetScriptDTO -> {
+			DataSetScript dataSetScript = new DataSetScript();
+			dataSetScript.setDataSet(dataSet);
+			dataSetScript.setScript(scriptService.findScriptByKey(dataSetScriptDTO.getKey()));
+			dataSetScript.setScriptOrder(dataSetScriptDTO.getOrder());
+			return dataSetScript;
+		}).forEach(dataSetScriptRepository::save);
+
+		logger.info("Saving dataSetDTO={} constraints",dataSetDTO.getName());
+		dataSetDTO.getConstraints().stream().map(dataSetConstraintDTO -> {
+			DataSetConstraint dataSetConstraint = new DataSetConstraint();
+			dataSetConstraint.setDataSet(dataSet);
+			dataSetConstraint.setColumns(dataSetConstraintDTO.getColumns());
+			dataSetConstraint.setType(dataSetConstraintDTO.getType());
+			dataSetConstraint.setName(dataSetConstraintDTO.getName());
+			dataSetConstraint.setEnabled(dataSetConstraintDTO.isEnabled());
+			dataSetConstraint.setConstructLevelCheck(dataSetConstraintDTO.isConstructLevelCheck());
+			dataSetConstraint.setRuntimeLevelCheck(dataSetConstraintDTO.isRuntimeLevelCheck());
+			return dataSetConstraint;
+		}).forEach(dataSetConstraintRepository::save);
+
+		logger.info("Saving dataSetDTO={} reload",dataSetDTO.getName());
 		return mapDataSetToDTO(dataSet);
 	}
 

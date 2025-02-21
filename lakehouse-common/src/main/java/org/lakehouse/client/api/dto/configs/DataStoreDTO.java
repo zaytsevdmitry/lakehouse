@@ -9,7 +9,9 @@ public class DataStoreDTO {
     private String interfaceType;
     private String vendor;
     private Map<String,String> properties = new HashMap<>();
+    private String driverClassName;
     private String description;
+    private String url;
 
     public DataStoreDTO(){}
 
@@ -53,16 +55,39 @@ public class DataStoreDTO {
         this.description = description;
     }
 
+    public String getDriverClassName() {
+        return driverClassName;
+    }
+
+    public void setDriverClassName(String driverClassName) {
+        this.driverClassName = driverClassName;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DataStoreDTO that = (DataStoreDTO) o;
-        return Objects.equals(getName(), that.getName()) && Objects.equals(getInterfaceType(), that.getInterfaceType()) && Objects.equals(getVendor(), that.getVendor()) && Objects.equals(getProperties(), that.getProperties()) && Objects.equals(getDescription(), that.getDescription());
+        return Objects.equals(getName(), that.getName())
+                && Objects.equals(getInterfaceType(), that.getInterfaceType())
+                && Objects.equals(getDriverClassName(), that.getDriverClassName())
+                && Objects.equals(getVendor(), that.getVendor())
+                && Objects.equals(getProperties(), that.getProperties())
+                && Objects.equals(getUrl(), that.getUrl())
+                && Objects.equals(getDescription(), that.getDescription());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getName(), getInterfaceType(), getVendor(), getProperties(), getDescription());
+        return Objects.hash(getName(), getInterfaceType(), getVendor(), getProperties(), getDriverClassName(),
+                getUrl(),getDescription());
     }
 }

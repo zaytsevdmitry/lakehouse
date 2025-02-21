@@ -3,8 +3,7 @@ package org.lakehouse.test.config.configuration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.lakehouse.client.api.dto.configs.*;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 
 
 public class FileLoader {
@@ -51,4 +50,19 @@ public class FileLoader {
 		return objectMapper.readValue(new File(rootPath.concat("/schedules_effective/initial.json")), ScheduleEffectiveDTO.class);
 	}
 
+	public String loadModelScript(String name) throws IOException {
+		String result = null;
+		File file = new File(String.format(rootPath.concat("/models/%s.sql"), name));
+
+
+		DataInputStream reader = new DataInputStream(new FileInputStream(file));
+		int nBytesToRead = reader.available();
+		if(nBytesToRead > 0) {
+			byte[] bytes = new byte[nBytesToRead];
+			reader.read(bytes);
+			result = new String(bytes);
+		}
+
+		return result;
+	}
 }

@@ -3,9 +3,9 @@
   "interfaceType": "jdbc",
   "vendor": "postgres",
   "properties": {
-    "password": "${very-secret-password}",
-    "user": "lakehauseplatform",
-    "url": "jdbc:mysql:processingdb.com"
+    "password": "postgresPW",
+    "user": "postgresUser",
+    "url": "jdbc:postgresql://localhost:5432/postgresDB"
   },
   "description": "Remote datastore processingdb"
 }

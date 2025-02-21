@@ -2,13 +2,19 @@
   "name": "transaction_processing",
   "project": "DEMO",
   "dataStore": "processingdb",
+  "scripts": [{
+    "key": "transaction_processing.sql",
+    "order": 1
+  }],
   "sources": [],
   "columnSchema": [
     {
       "name": "id",
       "description": "tx id",
       "dataType": "bigint",
-      "nullable": false
+      "nullable": false,
+      "order": 0,
+      "sequence": true
     },
     {
       "name": "reg_date_time",
@@ -40,6 +46,15 @@
       "description": "Commission due to us",
       "dataType": "string",
       "nullable": false
+    }
+  ],
+  "constraints":[
+    {
+      "name": "transaction_processing_pk",
+      "type": "primary",
+      "columns": "id",
+      "runtimeLevelCheck": false,
+      "constructLevelCheck": true
     }
   ],
   "properties": {
