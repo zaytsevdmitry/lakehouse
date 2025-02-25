@@ -20,6 +20,7 @@ public interface ConfigRestClientApi {
 	public TaskDTO getEffectiveTaskDTO(String schedule, String scenarioAct, String task);
 	public TaskExecutionServiceGroupDTO  getTaskExecutionServiceGroupDTO(String name);
 
+	public String getScript(String key);
 	public List<ProjectDTO> getProjectDTOList();
 	public List<DataStoreDTO> getDataStoreDTOList();
 	

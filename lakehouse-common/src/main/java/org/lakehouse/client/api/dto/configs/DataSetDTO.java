@@ -8,6 +8,7 @@ public class DataSetDTO implements Serializable {
 	private String name;
     private String project;
     private String dataStore;
+    private String fullTableName;
     private List<DataSetSourceDTO> sources = new ArrayList<>();
     private List<ColumnDTO> columnSchema = new ArrayList<>();
     private Map<String,String> properties = new HashMap<>();
@@ -101,6 +102,14 @@ public class DataSetDTO implements Serializable {
         this.constraints = constraints;
     }
 
+    public String getFullTableName() {
+        return fullTableName;
+    }
+
+    public void setFullTableName(String fullTableName) {
+        this.fullTableName = fullTableName;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
@@ -108,6 +117,7 @@ public class DataSetDTO implements Serializable {
         return Objects.equals(getName(), that.getName())
                 && Objects.equals(getProject(), that.getProject())
                 && Objects.equals(getDataStore(), that.getDataStore())
+                && Objects.equals(getFullTableName(), that.getFullTableName())
                 && Objects.equals(getSources(), that.getSources())
                 && Objects.equals(getColumnSchema(), that.getColumnSchema())
                 && Objects.equals(getProperties(), that.getProperties())
@@ -118,7 +128,7 @@ public class DataSetDTO implements Serializable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(getName(), getProject(), getDataStore(), getSources(), getColumnSchema(),
+        return Objects.hash(getName(), getProject(), getDataStore(), getFullTableName(), getSources(), getColumnSchema(),
                 getProperties(), getScripts(), getDescription(), getConstraints());
     }
 }

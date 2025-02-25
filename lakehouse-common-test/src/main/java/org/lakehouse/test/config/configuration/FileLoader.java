@@ -4,6 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.lakehouse.client.api.dto.configs.*;
 
 import java.io.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 
 public class FileLoader {
@@ -63,6 +68,18 @@ public class FileLoader {
 			result = new String(bytes);
 		}
 
+		return result;
+	}
+	public Map<String,String> loadAllModelScripts() throws IOException{
+		Map<String,String> result= new HashMap<>();
+		for(String name : Arrays
+				.stream(Objects.requireNonNull(new File(rootPath.concat("/models")).listFiles()))
+				.map(File::getName)
+				.map(fullName -> fullName.replaceAll(".sql",""))
+				.toList()
+		){
+			result.put(name,loadModelScript(name));
+		}
 		return result;
 	}
 }

@@ -2,6 +2,7 @@
   "name": "transaction_dds",
   "project": "DEMO",
   "dataStore": "lakehousestorage",
+  "fullTableName": "transaction_dds",
   "scripts": [{
     "key": "transaction_dds.sql"
   }],
@@ -65,6 +66,7 @@
     }
   ],
   "properties": {
+    "full-table-name": "transaction_dds",
     "data-end-point": "/mytabs/transaction_dds"
   },
   "description": "Details"

@@ -2,10 +2,10 @@
   "name": "processingdb",
   "interfaceType": "jdbc",
   "vendor": "postgres",
+  "url": "jdbc:postgresql://localhost:5432/postgresDB",
   "properties": {
     "password": "postgresPW",
-    "user": "postgresUser",
-    "url": "jdbc:postgresql://localhost:5432/postgresDB"
+    "user": "postgresUser"
   },
   "description": "Remote datastore processingdb"
 }

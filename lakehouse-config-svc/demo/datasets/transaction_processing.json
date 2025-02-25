@@ -2,6 +2,7 @@
   "name": "transaction_processing",
   "project": "DEMO",
   "dataStore": "processingdb",
+  "fullTableName": "proc.transactions",
   "scripts": [{
     "key": "transaction_processing.sql",
     "order": 1
@@ -11,7 +12,7 @@
     {
       "name": "id",
       "description": "tx id",
-      "dataType": "bigint",
+      "dataType": "serial",
       "nullable": false,
       "order": 0,
       "sequence": true
@@ -25,14 +26,14 @@
     {
       "name": "client_id",
       "description": "from client",
-      "dataType": "string",
+      "dataType": "integer",
       "nullable": false
     },
 
     {
       "name": "provider_id",
       "description": "To provider",
-      "dataType": "string",
+      "dataType": "integer",
       "nullable": false
     },
     {
@@ -44,7 +45,7 @@
     {
       "name": "commission",
       "description": "Commission due to us",
-      "dataType": "string",
+      "dataType": "decimal",
       "nullable": false
     }
   ],
@@ -58,7 +59,7 @@
     }
   ],
   "properties": {
-    "data-end-point": "proc.transactions"
+
   },
   "description": "remote transactions table placed  in db schema proc"
 }

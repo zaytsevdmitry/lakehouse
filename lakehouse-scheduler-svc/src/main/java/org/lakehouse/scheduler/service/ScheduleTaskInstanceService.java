@@ -62,6 +62,13 @@ public class ScheduleTaskInstanceService {
 					sti.getName());
 			TaskDTO t = null;
 			try {
+				logger.info("Get effective taskDTO for schedule={} scenarioAct={} task={}",
+						sti.getScheduleScenarioActInstance()
+								.getScheduleInstance()
+								.getConfigScheduleKeyName(),
+						sti.getScheduleScenarioActInstance().getConfDataSetKeyName(),
+						sti.getName());
+
 			  t =	configRestClientApi.getEffectiveTaskDTO(
 						sti.getScheduleScenarioActInstance()
 								.getScheduleInstance()
@@ -69,12 +76,19 @@ public class ScheduleTaskInstanceService {
 						sti.getScheduleScenarioActInstance().getConfDataSetKeyName(),
 						sti.getName());
 				scheduledTaskMsgDTO.setTaskExecutionServiceGroupName(t.getTaskExecutionServiceGroupName());
-			}catch (RuntimeException e){
-				logger.error(e.fillInStackTrace().toString());
-			}
 
-			scheduledTaskDTOProducerService.send(scheduledTaskMsgDTO);
+				logger.info(
+						"Send scheduledTaskMsgDTO=(id={}  taskExecutionServiceGroupName={})",
+						scheduledTaskMsgDTO.getId(),
+						scheduledTaskMsgDTO.getTaskExecutionServiceGroupName());
+				scheduledTaskDTOProducerService.send(scheduledTaskMsgDTO);
+
+			}catch (RuntimeException e){
+				logger.error("Error when getting EffectiveTaskDTO", e);
+				sti.setStatus(Status.Task.CONF_ERROR.label);
+			}
 			repository.saveAndFlush(sti);
+
 			});
 	}
 	

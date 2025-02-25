@@ -3,9 +3,8 @@ package org.lakehouse.client.api.dto.configs;
 import java.util.Objects;
 
 public class DataSetScriptDTO {
-    String key;
-    Integer order;
-
+    private String key;
+    private Integer order;
     public DataSetScriptDTO() {
     }
 
@@ -21,6 +20,10 @@ public class DataSetScriptDTO {
         return order;
     }
 
+    public void setOrder(Integer order) {
+        this.order = order;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
@@ -31,9 +34,5 @@ public class DataSetScriptDTO {
     @Override
     public int hashCode() {
         return Objects.hash(getKey(), getOrder());
-    }
-
-    public void setOrder(Integer order) {
-        this.order = order;
     }
 }

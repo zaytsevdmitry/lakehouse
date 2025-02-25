@@ -37,6 +37,9 @@ import org.testcontainers.junit.jupiter.Container;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.lakehouse.test.config.configuration.FileLoader;
 import org.testcontainers.utility.DockerImageName;
@@ -163,5 +166,53 @@ public class SchedulesTest {
 
     }
 
+   /* private List<String> getMatched(String regex, String input, int group ){
+        List<String> result = new ArrayList<>();
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(input);
 
+        while (matcher.find()){
+            result.add(matcher.group(group));
+
+        }
+        return result;
+    }
+    @Test
+    void testscript() throws IOException {
+
+
+        ConfigRestClientApiTest configRestClientApiTest = new ConfigRestClientApiTest();
+        String regex = "\\$\\{.*?\\}";
+        List<String> keys =getMatched(regex,configRestClientApiTest.getScript("transaction_dds"),0);
+
+
+
+        Map<String,String> dataSources = new HashMap<>();
+
+        for (String key:keys.stream()
+                .filter(string -> string.contains("${source(")).toList()){
+            List<String> sourceKeys = getMatched(
+                    "\\$\\{source\\((.*?)\\)\\}",
+                    key,1);
+            if(sourceKeys.isEmpty()){
+                throw new Exception();
+            }
+            else {
+
+            }
+        }
+
+
+
+                .collect(Collectors.toMap(
+                        key-> key,
+                        key-> .get(0) ));
+
+        dataSources.forEach((string, string2) -> System.out.println(string + "-> " + string2));
+
+
+       // System.out.println(getMatched("\\$\\{source\\((.*?)\\)\\}", "${source(transaction_dds)}",1).get(0));
+
+    }
+*/
 }

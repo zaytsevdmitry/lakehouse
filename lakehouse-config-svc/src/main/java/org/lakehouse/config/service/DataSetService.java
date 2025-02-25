@@ -25,7 +25,6 @@ public class DataSetService {
 	private final DataSetColumnRepository dataSetColumnRepository;
 	private final ProjectRepository projectRepository;
 	private final DataStoreRepository dataStoreRepository;
-	private final ScriptRepository scriptRepository;
 	private final DataSetConstraintRepository dataSetConstraintRepository;
 	private final DataSetScriptRepository dataSetScriptRepository;
 	private final ScriptService scriptService;
@@ -47,7 +46,6 @@ public class DataSetService {
 		this.dataSetColumnRepository = dataSetColumnRepository;
 		this.projectRepository = projectRepository;
 		this.dataStoreRepository = dataStoreRepository;
-		this.scriptRepository = scriptRepository;
         this.dataSetConstraintRepository = dataSetConstraintRepository;
         this.dataSetScriptRepository = dataSetScriptRepository;
         this.scriptService = scriptService;
@@ -60,7 +58,7 @@ public class DataSetService {
 		result.setDescription(dataSet.getDescription());
 		result.setDataStore(dataSet.getDataStore().getName());
 		result.setProject(dataSet.getProject().getName());
-
+		result.setFullTableName(dataSet.getTableFullName());
 
 		result.setScripts(dataSetScriptService.findDataSetScriptDTOListByDataSetName(dataSet.getName()));
 		result.setConstraints(dataSetConstraintRepository.findByDataSetName(dataSet.getName()).stream().map(dataSetConstraint -> {
@@ -107,6 +105,7 @@ public class DataSetService {
 		result.setDescription(dataSetDTO.getDescription());
 		result.setProject(projectRepository.getReferenceById(dataSetDTO.getProject()));
 		result.setDataStore(dataStoreRepository.getReferenceById(dataSetDTO.getDataStore()));
+		result.setTableFullName(dataSetDTO.getFullTableName());
 		return result;
 	}
 

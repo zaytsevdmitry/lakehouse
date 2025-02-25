@@ -12,6 +12,8 @@ public class TaskProcessorConfig {
     private  Map<String, DataSetDTO> sources;
     private  DataSetDTO targetDataSet;
     private  Map<String, DataStoreDTO> dataStores;
+    private  Map<String, String> KeyBind;
+
     public TaskProcessorConfig(){}
 
     public void setExecutionModuleArgs(Map<String, String> executionModuleArgs) {
@@ -52,5 +54,13 @@ public class TaskProcessorConfig {
 
     public Map<String, DataStoreDTO> getDataStores() {
         return dataStores;
+    }
+
+    public Map<String, String> getKeyBind() {
+        return KeyBind;
+    }
+
+    public void setKeyBind(Map<String, String> keyBind) {
+        KeyBind = keyBind;
     }
 }

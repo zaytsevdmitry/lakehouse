@@ -2,6 +2,7 @@
   "name": "aggregation_pay_per_client_daily_mart",
   "project": "DEMO",
   "dataStore": "lakehousestorage",
+  "fullTableName": "aggregation_pay_per_client_daily_mart",
   "scripts": [
     {
       "key": "aggregation_pay_per_client_daily_mart.sql"

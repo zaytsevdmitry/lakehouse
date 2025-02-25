@@ -14,7 +14,7 @@
         {
           "name": "load",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.LoadProcessorOverid",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.JdbcTaskProcessor",
           "importance": "critical",
           "description": "override load",
           "executionModuleArgs": {
@@ -33,7 +33,7 @@
         {
           "name": "load",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.LoadProcessorOverid",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.JdbcTaskProcessor",
           "importance": "critical",
           "description": "override load",
           "executionModuleArgs": {

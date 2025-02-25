@@ -20,7 +20,8 @@ public class Status {
         QUEUED("QUEUED"),
         RUNNING("RUNNING"),
         SUCCESS("SUCCESS"),
-        FAILED("FAILED");
+        FAILED("FAILED"),
+        CONF_ERROR("CONF_ERROR");
 
         public final String label;
 

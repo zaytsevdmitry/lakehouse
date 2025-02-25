@@ -36,7 +36,7 @@ public class DataStoreService {
 		result.setDescription(dataStore.getDescription());
 		result.setInterfaceType(dataStore.getInterfaceType());
 		result.setVendor(dataStore.getVendor());
-
+		result.setUrl(dataStore.getUrl());
 		Map<String, String> properties = new HashMap<>();
 		dataStorePropertyRepository.findByDataStoreName(dataStore.getName())
 				.forEach(dataStoreProperty -> properties.put(dataStoreProperty.getKey(), dataStoreProperty.getValue()));
@@ -50,6 +50,7 @@ public class DataStoreService {
 		result.setDescription(dataStore.getDescription());
 		result.setVendor(dataStore.getVendor());
 		result.setInterfaceType(dataStore.getInterfaceType());
+		result.setUrl(dataStore.getUrl());
 		return result;
 	}
 

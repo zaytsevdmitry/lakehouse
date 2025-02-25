@@ -21,16 +21,23 @@ public class ScheduledTaskKafkaConsumerService  {
     private final SchedulerRestClientApi schedulerRestClientApi;
     private final String serviceId;
     private final String groupName;
+    private final Integer maxLockRetries;
+    private final Integer maxLockRetriesDuration;
 
     public ScheduledTaskKafkaConsumerService(
             ExecuteService executeService,
             SchedulerRestClientApi schedulerRestClientApi,
             @Value("${lakehouse.task-executor.service.id}") String serviceId,
-            @Value("${lakehouse.task-executor.service.groupName}") String groupName){
+            @Value("${lakehouse.task-executor.service.groupName}") String groupName,
+            @Value("${lakehouse.task-executor.service.max-lock-retries}") Integer maxLockRetries,
+            @Value("${lakehouse.task-executor.service.max-lock-retries-duration-ms}") Integer maxLockRetriesDuration
+            ){
         this.executeService = executeService;
         this.schedulerRestClientApi = schedulerRestClientApi;
         this.serviceId = serviceId;
         this.groupName = groupName;
+        this.maxLockRetries = maxLockRetries;
+        this.maxLockRetriesDuration = maxLockRetriesDuration;
     }
 
     @KafkaListener(
@@ -51,8 +58,9 @@ public class ScheduledTaskKafkaConsumerService  {
                     groupName);
             acknowledgment.acknowledge();
         }else {
+            ScheduledTaskLockDTO taskInstanceLockDTO = null;
             try {
-                ScheduledTaskLockDTO taskInstanceLockDTO = schedulerRestClientApi.lockTaskById(scheduledTaskMsgDTO.getId(), serviceId);
+                taskInstanceLockDTO = schedulerRestClientApi.lockTaskById(scheduledTaskMsgDTO.getId(), serviceId);
 
                 logger.info("Lock taken lockid={}, task={}, scheduleName={}, scheduleTargetTimestamp={}, scenarioActName={}",
                         taskInstanceLockDTO.getLockId(),
@@ -62,7 +70,7 @@ public class ScheduledTaskKafkaConsumerService  {
                         taskInstanceLockDTO.getScenarioActConfKeyName());
 
                 acknowledgment.acknowledge();
-                executeService.takeAndRunTask(scheduledTaskMsgDTO, taskInstanceLockDTO);
+
             }catch (HttpClientErrorException.NotFound nfe) {
                logger.info("Already resolved");
                 acknowledgment.acknowledge();
@@ -74,6 +82,8 @@ public class ScheduledTaskKafkaConsumerService  {
                 logger.error(e.fillInStackTrace().toString());
                 throw new Exception(e.getCause());
             }
+            if( taskInstanceLockDTO != null)
+              executeService.takeAndRunTask(scheduledTaskMsgDTO, taskInstanceLockDTO);
 
 
         }

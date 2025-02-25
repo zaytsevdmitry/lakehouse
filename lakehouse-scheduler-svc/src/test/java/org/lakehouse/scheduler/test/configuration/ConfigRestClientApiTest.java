@@ -15,8 +15,10 @@ import java.util.Map;
 public class ConfigRestClientApiTest implements ConfigRestClientApi {
     private final FileLoader fileLoader = new FileLoader();
     private final Map<String, TaskDTO> taskDTOEffectiveMap = new HashMap<>();
+    private final Map<String,String> scriptMap;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     public ConfigRestClientApiTest() throws IOException {
+        scriptMap = fileLoader.loadAllModelScripts();
         ScheduleEffectiveDTO sef = fileLoader.loadScheduleEffectiveDTO();
         sef.getScenarioActs().forEach(scheduleScenarioActEffectiveDTO -> {
             scheduleScenarioActEffectiveDTO.getTasks().forEach(taskDTO -> {
@@ -78,6 +80,11 @@ public class ConfigRestClientApiTest implements ConfigRestClientApi {
     @Override
     public TaskExecutionServiceGroupDTO getTaskExecutionServiceGroupDTO(String name) {
         return null;
+    }
+
+    @Override
+    public String getScript(String key) {
+        return scriptMap.get(key);
     }
 
     @Override

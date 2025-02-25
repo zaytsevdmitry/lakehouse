@@ -7,11 +7,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 @Configuration
 public class beans {
-	@Bean
-	ProcessorFactory processorFactory(){
-		return new ProcessorFactory();
-	
-	}
+
 	
 	@Bean
 	ThreadPoolTaskExecutor threadPoolTaskExecutor() {

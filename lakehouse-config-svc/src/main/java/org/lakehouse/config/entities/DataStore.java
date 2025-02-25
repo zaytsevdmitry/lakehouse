@@ -11,6 +11,7 @@ public class DataStore extends KeyEntityAbstract {
 
 	private String vendor;
 
+	private String url;
 	public DataStore() {
 	}
 
@@ -30,16 +31,25 @@ public class DataStore extends KeyEntityAbstract {
 		this.vendor = vendor;
 	}
 
+	public String getUrl() {
+		return url;
+	}
+
+	public void setUrl(String url) {
+		this.url = url;
+	}
+
 	@Override
 	public boolean equals(Object o) {
 
 		DataStore DataStore = (DataStore) o;
 		return super.equals(o) && Objects.equals(getInterfaceType(), DataStore.getInterfaceType())
-				&& Objects.equals(getVendor(), DataStore.getVendor());
+				&& Objects.equals(getVendor(), DataStore.getVendor())
+				&& Objects.equals(getUrl(), DataStore.getUrl());
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(super.hashCode(), getInterfaceType(), getVendor());
+		return Objects.hash(super.hashCode(), getInterfaceType(), getVendor(),getUrl());
 	}
 }

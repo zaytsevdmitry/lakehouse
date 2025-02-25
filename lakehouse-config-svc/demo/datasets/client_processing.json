@@ -2,6 +2,7 @@
   "name": "client_processing",
   "project": "DEMO",
   "dataStore": "processingdb",
+  "fullTableName": "proc.client",
   "scripts": [
     {
       "key": "client_processing.sql"
@@ -11,19 +12,19 @@
     {
     "name": "id",
     "description": "Client id",
-    "dataType": "bigint",
+    "dataType": "integer",
     "nullable": false
     },
     {
     "name": "name",
     "description": "Client name",
-    "dataType": "string",
+    "dataType": "varchar(255)",
     "nullable": false
     },
     {
     "name": "reg_date_time",
     "description": "Client registration",
-    "dataType": "string",
+    "dataType": "timestamp",
     "nullable": false
     }
   ],
@@ -48,6 +49,7 @@
   ],
 
   "properties": {
+
     "data-end-point": "proc.client"
   },
   "description": "remote dataset with clients"

@@ -1,9 +1,6 @@
 package org.lakehouse.config.entities;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.ForeignKey;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 
 import java.util.Objects;
 
@@ -17,6 +14,9 @@ public class DataSet extends KeyEntityAbstract {
 	@ManyToOne(optional = false)
 	@JoinColumn(foreignKey = @ForeignKey(name = "data_set__data_store_fk"))
 	private DataStore dataStore;
+
+	@Column(nullable = false)
+	private String tableFullName;
 
 	public DataSet() {
 	}
@@ -37,6 +37,14 @@ public class DataSet extends KeyEntityAbstract {
 		this.dataStore = dataStore;
 	}
 
+	public String getTableFullName() {
+		return tableFullName;
+	}
+
+	public void setTableFullName(String tableFullName) {
+		this.tableFullName = tableFullName;
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o)
@@ -47,11 +55,12 @@ public class DataSet extends KeyEntityAbstract {
 			return false;
 		DataSet dataSet = (DataSet) o;
 		return Objects.equals(getProject(), dataSet.getProject())
-				&& Objects.equals(getDataStore(), dataSet.getDataStore());
+				&& Objects.equals(getDataStore(), dataSet.getDataStore())
+				&& Objects.equals(getTableFullName(),dataSet.getTableFullName());
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(super.hashCode(), getProject(), getDataStore());
+		return Objects.hash(super.hashCode(), getProject(), getDataStore(),getTableFullName());
 	}
 }

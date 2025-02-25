@@ -14,6 +14,7 @@ import org.lakehouse.config.entities.Schedule;
 import org.lakehouse.config.entities.templates.ScenarioActTemplate;
 import org.lakehouse.config.exception.ScenarioActNotFoundException;
 import org.lakehouse.config.exception.ScheduleNotFoundException;
+import org.lakehouse.config.exception.TaskEffectiveNotFoundException;
 import org.lakehouse.config.mapper.Mapper;
 import org.lakehouse.config.repository.*;
 import org.slf4j.Logger;
@@ -334,7 +335,10 @@ public class ScheduleService {
 						scenarioAct.getScenarioActTemplate().getName(),
 						taskName);
 
-		return matchTaskWithTemplate(taskDTO, taskTemplate);
+		TaskDTO result = matchTaskWithTemplate(taskDTO, taskTemplate);
+		if (result ==null)
+		   throw new TaskEffectiveNotFoundException(scheduleName, scenarioActName, taskName);
+		return result;
 	}
 
 	public List<ScheduleEffectiveDTO> findScheduleEffectiveDTOSByChangeDateTime(OffsetDateTime dateTime){

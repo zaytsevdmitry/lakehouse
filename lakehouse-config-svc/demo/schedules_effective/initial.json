@@ -4,8 +4,6 @@
   "intervalExpression": "0 0 1 1 * *",
   "startDateTime": "1999-12-31T21:00:00Z",
   "stopDateTime": null,
-  "lastChangeNumber": "1",
-  "lastChangedDateTime": "2025-01-25T21:00:00Z",
   "scenarioActEdges": [
     {
       "from": "transaction_dds",
@@ -17,11 +15,25 @@
     }
   ],
   "enabled": true,
+  "lastChangeNumber": 1,
+  "lastChangedDateTime": "2025-02-22T07:44:22.054475Z",
   "scenarioActs": [
     {
       "name": "aggregation_pay_per_client_daily_mart",
       "dataSet": "aggregation_pay_per_client_daily_mart",
       "tasks": [
+        {
+          "name": "merge",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.MergeProcessor",
+          "importance": "critical",
+          "description": "load from remote datastore",
+          "executionModuleArgs": {
+            "spark.executor.memory": "5gb",
+            "spark.driver.memory": "2gb",
+            "spark.driver.cores": "3"
+          }
+        },
         {
           "name": "apply",
           "taskExecutionServiceGroupName": "default",
@@ -40,14 +52,6 @@
             "spark.executor.memory": "5gb",
             "spark.driver.memory": "2gb"
           }
-        },
-        {
-          "name": "merge",
-          "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.MergeProcessor",
-          "importance": "critical",
-          "description": "load from remote datastore",
-          "executionModuleArgs": {}
         },
         {
           "name": "dataQualityAfterCritical",
@@ -118,6 +122,18 @@
       "dataSet": "aggregation_pay_per_client_total_mart",
       "tasks": [
         {
+          "name": "merge",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.MergeProcessor",
+          "importance": "critical",
+          "description": "load from remote datastore",
+          "executionModuleArgs": {
+            "spark.executor.memory": "5gb",
+            "spark.driver.memory": "2gb",
+            "spark.driver.cores": "3"
+          }
+        },
+        {
           "name": "apply",
           "taskExecutionServiceGroupName": "default",
           "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.ApplyProcessor",
@@ -135,14 +151,6 @@
             "spark.executor.memory": "5gb",
             "spark.driver.memory": "2gb"
           }
-        },
-        {
-          "name": "merge",
-          "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.MergeProcessor",
-          "importance": "critical",
-          "description": "load from remote datastore",
-          "executionModuleArgs": {}
         },
         {
           "name": "dataQualityAfterCritical",
@@ -213,6 +221,18 @@
       "dataSet": "transaction_dds",
       "tasks": [
         {
+          "name": "merge",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.MergeProcessor",
+          "importance": "critical",
+          "description": "load from remote datastore",
+          "executionModuleArgs": {
+            "spark.executor.memory": "5gb",
+            "spark.driver.memory": "2gb",
+            "spark.driver.cores": "3"
+          }
+        },
+        {
           "name": "apply",
           "taskExecutionServiceGroupName": "default",
           "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.ApplyProcessor",
@@ -221,12 +241,15 @@
           "executionModuleArgs": {}
         },
         {
-          "name": "merge",
+          "name": "extend",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.MergeProcessor",
+          "executionModule": "extend.example",
           "importance": "critical",
-          "description": "load from remote datastore",
-          "executionModuleArgs": {}
+          "description": "Not exists in template",
+          "executionModuleArgs": {
+            "spark.executor.memory": "5gb",
+            "spark.driver.memory": "2gb"
+          }
         },
         {
           "name": "dataQualityAfterCritical",
@@ -253,17 +276,6 @@
           "executionModuleArgs": {}
         },
         {
-          "name": "load",
-          "taskExecutionServiceGroupName": "default",
-          "executionModule": "default",
-          "importance": "critical",
-          "description": "override load",
-          "executionModuleArgs": {
-            "spark.executor.memory": "5gb",
-            "spark.driver.memory": "2gb"
-          }
-        },
-        {
           "name": "dataQualityBefore",
           "taskExecutionServiceGroupName": "default",
           "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.DataQualityBeforeProcessor",
@@ -272,14 +284,15 @@
           "executionModuleArgs": {}
         },
         {
-          "name": "extend",
+          "name": "load",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "extend.example",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.LoadProcessor",
           "importance": "critical",
-          "description": "",
+          "description": "override load",
           "executionModuleArgs": {
-            "spark.executor.memory": "5gb",
-            "spark.driver.memory": "2gb"
+            "spark.executor.memory": "1gb",
+            "spark.driver.memory": "2gb",
+            "spark.executor.cores": "2"
           }
         }
       ],

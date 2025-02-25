@@ -2,6 +2,7 @@
   "name": "aggregation_pay_per_client_total_mart",
   "project": "DEMO",
   "dataStore": "lakehousestorage",
+  "fullTableName": "ggregation_pay_per_client_total_mart",
   "scripts": [
     {
       "key": "aggregation_pay_per_client_total_mart.sql"
@@ -32,6 +33,7 @@
     }
   ],
   "properties": {
+
     "data-end-point": "/demo/datamarts/aggregation_pay_per_client_total_mart"
   },
   "description": "We want to know who our most profitable clients are"

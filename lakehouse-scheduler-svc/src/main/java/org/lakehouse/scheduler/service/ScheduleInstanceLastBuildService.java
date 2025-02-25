@@ -91,7 +91,7 @@ public class ScheduleInstanceLastBuildService {
 				})
 				.toList();
 
-		logger.info("Schedules disabled by config %d", disabledByConfig.size());
+		logger.info("Schedules disabled by config {}", disabledByConfig.size());
 
 		List<ScheduleInstanceLastBuild> newInConfig = scheduleDTOs
 				.stream()
@@ -104,7 +104,7 @@ public class ScheduleInstanceLastBuildService {
 					return result;})
 				.toList();
 
-		logger.info("Schedules new in config %d", newInConfig.size());
+		logger.info("Schedules new in config {}", newInConfig.size());
 
 		Map<String,ScheduleEffectiveDTO> scheduleDTOMap = scheduleDTOs
 				.stream()
@@ -117,14 +117,14 @@ public class ScheduleInstanceLastBuildService {
 				.peek(scheduleInstanceLastBuild -> scheduleInstanceLastBuild.setEnabled(false))
 				.toList();
 
-		logger.info("Schedules remooved from config %d", removedFromConfig.size());
+		logger.info("Schedules remooved from config {}", removedFromConfig.size());
 
 		List<ScheduleInstanceLastBuild> changes = new ArrayList<>();
 		changes.addAll(disabledByConfig);
 		changes.addAll(newInConfig);
 		changes.addAll(removedFromConfig);
 
-		logger.info("Schedules total changes %d", changes.size());
+		logger.info("Schedules total changes {}", changes.size());
 
 		changes.forEach(scheduleInstanceLastBuildRepository::save);
 

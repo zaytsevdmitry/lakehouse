@@ -66,6 +66,9 @@ public class ConfigRestClientApiImpl implements ConfigRestClientApi {
 		return restClientHelper.getDtoOne(id,  Endpoint.SCHEDULED_TASKS_LOCK_ID, ScheduledTaskLockDTO.class);
 	}
 
+	public String getScript(String key){
+		return restClientHelper.getDtoOne(key,  Endpoint.SCRIPT_BY_KEY, String.class);
+	}
 	public List<ProjectDTO> getProjectDTOList(){
 		return Arrays.asList( restClientHelper.getRestClient()
 				.get()

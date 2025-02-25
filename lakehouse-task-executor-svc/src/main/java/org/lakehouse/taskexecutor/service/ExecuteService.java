@@ -57,6 +57,7 @@ public class ExecuteService {
                     taskInstanceLockDTO.getScheduleTargetDateTime(),
                     taskInstanceLockDTO.getScenarioActConfKeyName());
 */
+
             TaskInstanceReleaseDTO taskInstanceReleaseDTO = new TaskInstanceReleaseDTO();
             taskInstanceReleaseDTO.setLockId(scheduledTaskLockDTO.getLockId());
 
@@ -66,14 +67,14 @@ public class ExecuteService {
             TaskLockHeartBeat taskLockHeartBeat = new TaskLockHeartBeat(schedulerRestClientApi, 10000, taskExecutionHeartBeatDTO);
 
             try {
-                TaskProcessor p = processorFactory.buildProcessor(scheduledTaskLockDTO.getScheduledTaskEffectiveDTO());
+                TaskProcessor p = processorFactory.buildProcessor(scheduledTaskLockDTO);
                 hb = new Thread(taskLockHeartBeat);
                 hb.start();
                 p.run();
                 taskInstanceReleaseDTO.setStatus(Status.Task.SUCCESS.label);
-            }catch (Exception e) {
+            }catch (Exception e ) {
                 logger.error(e.getMessage());
-                logger.error("Error when executing task processor", e.fillInStackTrace());
+                logger.error("Error when executing task processor", e);
                 taskInstanceReleaseDTO.setStatus(Status.Task.FAILED.label);
             } finally {
                 taskLockHeartBeat.setExit();

@@ -16,6 +16,14 @@ do
      --data-binary "@./datastores/$s.json"
 done
 
+
+for s in "client_processing" "transaction_processing" "transaction_dds" "aggregation_pay_per_client_daily_mart" "aggregation_pay_per_client_total_mart"
+do
+   curl -i -X POST 127.0.0.1:8080/v1_0/configs/scripts/"$s.sql" \
+     -H "Content-Type: text/plain" \
+     --data-binary "@./dataset-sql-model/$s.sql"
+done
+
 for s in "client_processing" "transaction_processing" "transaction_dds" "aggregation_pay_per_client_daily_mart" "aggregation_pay_per_client_total_mart"
 do
    curl -i -X POST 127.0.0.1:8080/v1_0/configs/datasets \

@@ -16,7 +16,7 @@ import org.lakehouse.client.rest.config.configuration.ConfigRestClientConfigurat
 @ComponentScan(
         basePackages = "org.lakehouse.taskexecutor",
         basePackageClasses = {
-        //ConfigRestClientConfiguration.class,
+        ConfigRestClientConfiguration.class,
         SchedulerRestClientConfiguration.class })
 public class TaskExecutorApplication {
 

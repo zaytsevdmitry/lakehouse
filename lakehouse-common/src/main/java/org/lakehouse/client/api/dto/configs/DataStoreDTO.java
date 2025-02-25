@@ -9,7 +9,7 @@ public class DataStoreDTO {
     private String interfaceType;
     private String vendor;
     private Map<String,String> properties = new HashMap<>();
-    private String driverClassName;
+    private String driverClassName; //todo check for remove
     private String description;
     private String url;
 

@@ -537,7 +537,7 @@ public class TestWithPostgres {
 		loadTaskDTOExpected.setExecutionModuleArgs(loadExpectArgs);
 		loadTaskDTOExpected.setName("load");
 		loadTaskDTOExpected.setTaskExecutionServiceGroupName("default");
-		loadTaskDTOExpected.setExecutionModule("org.lakehouse.taskexecutor.executionmodule.datamanipulation.LoadProcessorOverid");
+		loadTaskDTOExpected.setExecutionModule("org.lakehouse.taskexecutor.executionmodule.datamanipulation.LoadProcessor");
 		loadTaskDTOExpected.setImportance("critical");
 		loadTaskDTOExpected.setDescription("override load");
 		TaskDTO loadTaskDTO   = scheduleService.getEffectiveTaskDTO(initialScheduleDTO.getName(), "transaction_dds", "load");
@@ -551,7 +551,7 @@ public class TestWithPostgres {
 		extendTaskDTOExpected.setExecutionModuleArgs(extendTaskDTOExpectedArgs);
 		extendTaskDTOExpected.setName("extend");
 		extendTaskDTOExpected.setTaskExecutionServiceGroupName("default");
-		extendTaskDTOExpected.setExecutionModule("extend.example");
+		extendTaskDTOExpected.setExecutionModule("org.lakehouse.taskexecutor.executionmodule.JdbcTaskProcessor");
 		extendTaskDTOExpected.setImportance("critical");
 		extendTaskDTOExpected.setDescription("Not exists in template");
 		TaskDTO extendTaskDTO = scheduleService.getEffectiveTaskDTO(initialScheduleDTO.getName(), "transaction_dds", "extend");
