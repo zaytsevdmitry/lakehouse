@@ -1,11 +1,9 @@
 {
   "name": "lakehousestorage",
   "interfaceType": "filesystem",
-  "vendor": "s3",
+  "vendor": "localfs",
+  "url": "file:///tmp/lakehouse",
   "properties": {
-    "tokenName": "lakehauseplatform",
-    "url": "s3://somepath",
-    "token": "${token}"
   },
   "description": "Local datastore"
 }

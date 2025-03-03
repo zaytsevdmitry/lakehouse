@@ -22,7 +22,7 @@
   ],
   "columnSchema": [
     {
-      "name": "name",
+      "name": "client_name",
       "description": "Client name",
       "dataType": "string",
       "nullable": false
@@ -65,9 +65,18 @@
       "nullable": false
     }
   ],
+  "constraints":[
+    {
+      "name": "transaction_dds_pk",
+      "type": "primary",
+      "columns": "id",
+      "runtimeLevelCheck": false,
+      "constructLevelCheck": true
+    }
+  ],
   "properties": {
-    "full-table-name": "transaction_dds",
-    "data-end-point": "/mytabs/transaction_dds"
+    "location": "/mytabs/transaction_dds",
+    "using": "iceberg"
   },
   "description": "Details"
 }

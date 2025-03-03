@@ -6,6 +6,14 @@
   "stopDateTime": null,
   "scenarioActEdges": [
     {
+      "from": "transaction_processing",
+      "to": "transaction_dds"
+    },
+    {
+      "from": "client_processing",
+      "to": "transaction_dds"
+    },
+    {
       "from": "transaction_dds",
       "to": "aggregation_pay_per_client_daily_mart"
     },
@@ -18,6 +26,42 @@
   "lastChangeNumber": 1,
   "lastChangedDateTime": "2025-02-22T07:44:22.054475Z",
   "scenarioActs": [
+    {
+      "name": "transaction_processing",
+      "dataSet": "transaction_processing",
+      "tasks": [
+        {
+          "name": "load",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.JdbcTaskProcessor",
+          "importance": "critical",
+          "description": "override load",
+          "executionModuleArgs": {
+            "spark.executor.memory": "1gb",
+            "spark.executor.cores": "2"
+          }
+        }
+      ]
+
+    },
+    {
+      "name": "client_processing",
+      "dataSet": "client_processing",
+      "tasks": [
+        {
+          "name": "load",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.JdbcTaskProcessor",
+          "importance": "critical",
+          "description": "override load",
+          "executionModuleArgs": {
+            "spark.executor.memory": "1gb",
+            "spark.executor.cores": "2"
+          }
+        }
+      ]
+
+    },
     {
       "name": "aggregation_pay_per_client_daily_mart",
       "dataSet": "aggregation_pay_per_client_daily_mart",
@@ -45,7 +89,7 @@
         {
           "name": "load",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.LoadProcessor",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.SparkTaskProcessor",
           "importance": "critical",
           "description": "load from remote datastore",
           "executionModuleArgs": {
@@ -286,7 +330,7 @@
         {
           "name": "load",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.LoadProcessor",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.SparkTaskProcessor",
           "importance": "critical",
           "description": "override load",
           "executionModuleArgs": {

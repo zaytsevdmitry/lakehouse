@@ -53,15 +53,15 @@ lakehouse:
             topics: schedule_changes
             concurrency: 1
     registration:
-      delay-ms: 20000
+      delay-ms: 60000
       initial-delay-ms: 5000
     run:
-      delay-ms: 30000
+      delay-ms: 12000
       initial-delay-ms: 3000
     resolvedeps:
-      delay-ms: 10000
+      delay-ms: 15000
       initial-delay-ms: 10000
     task:
       retry:
-        delay-ms: 30000
-        initial-delay-ms: 30000
+        delay-ms: 14000
+        initial-delay-ms: 10000

@@ -5,6 +5,7 @@ import org.lakehouse.client.api.dto.configs.DataSetScriptDTO;
 import org.lakehouse.client.api.dto.configs.DataStoreDTO;
 import org.lakehouse.client.api.dto.service.ScheduledTaskLockDTO;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
+import org.lakehouse.taskexecutor.entity.TableDefinition;
 import org.lakehouse.taskexecutor.entity.TaskProcessorConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,22 +14,24 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 public class TaskProcessorConfigFactory  {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
         private final ConfigRestClientApi configRestClientApi;
+        private final TableDefinitionFactory tableDefinitionFactory;
 
 
-
-    public TaskProcessorConfigFactory(ConfigRestClientApi configRestClientApi) {
+    public TaskProcessorConfigFactory(ConfigRestClientApi configRestClientApi, TableDefinitionFactory tableDefinitionFactory) {
         this.configRestClientApi = configRestClientApi;
+        this.tableDefinitionFactory = tableDefinitionFactory;
     }
 
     public TaskProcessorConfig buildTaskProcessorConfig(ScheduledTaskLockDTO scheduledTaskLockDTO){
         TaskProcessorConfig result = new TaskProcessorConfig();
+
+
         result.setTargetDataSet(
                 configRestClientApi.getDataSetDTO(
                 scheduledTaskLockDTO.getDataSetKeyName()));
@@ -44,6 +47,7 @@ public class TaskProcessorConfigFactory  {
 
 
         result.setDataStores(getDataStores(result.getTargetDataSet(),result.getSources().values()));
+
         result.setScripts(result.getTargetDataSet()
                 .getScripts()
                 .stream()
@@ -52,33 +56,33 @@ public class TaskProcessorConfigFactory  {
                 .map(configRestClientApi::getScript)
                 .toList());
 
-        result.setKeyBind(getKeyBind(
-                scheduledTaskLockDTO,
-                result.getTargetDataSet(),
-                result.getSources(),
-                result.getDataStores()
-        ));
+        Set<DataSetDTO> dataSets = collapseDataSetDTOs(result.getTargetDataSet(),result.getSources());
 
+        result.setDataSetDTOSet(dataSets);
+
+        result.setKeyBind(getKeyBind(scheduledTaskLockDTO));
+
+        result.setTableDefinitions(getTableDefinitionMap(dataSets,result.getDataStores()));
         return result;
     }
 
 
+    private Set<DataSetDTO> collapseDataSetDTOs(DataSetDTO dataSetDTO,
+                                                Map<String,DataSetDTO> sources){
+
+        Set<DataSetDTO> result = new HashSet<>();
+        result.addAll(sources.values());
+        result.add(dataSetDTO);
+        return result;
+    }
+
     private Map<String,String> getKeyBind(
-            ScheduledTaskLockDTO scheduledTaskLockDTO,
-            DataSetDTO dataSetDTO,
-            Map<String,DataSetDTO> sources,
-            Map<String,DataStoreDTO> dataStores){
+            ScheduledTaskLockDTO scheduledTaskLockDTO){
         Map<String,String> result = new HashMap<>();
         result.put("${target-timestamp-tz}",scheduledTaskLockDTO.getScheduleTargetDateTime());
-        result.put("${data-set.name}", dataSetDTO.getName());
 
 
-        List<DataSetDTO> srcAll = new ArrayList<>();
-        srcAll.addAll(sources.values());
-        srcAll.add(dataSetDTO);
-        srcAll.forEach(src -> {
-            result.put(String.format("${source(%s)}", dataSetDTO.getName()), dataSetDTO.getFullTableName());
-        });
+
         result.entrySet().forEach(stringStringEntry ->
                 logger.info("key -> {} | valuee -> {}",stringStringEntry.getKey(),stringStringEntry.getValue())
         );
@@ -99,5 +103,22 @@ public class TaskProcessorConfigFactory  {
                 .stream()
                 .map(configRestClientApi::getDataStoreDTO)
                 .collect(Collectors.toMap(DataStoreDTO::getName, Function.identity()));
+    }
+
+    private Map<String, TableDefinition> getTableDefinitionMap(
+            Set<DataSetDTO> dataSetDTOS,
+            Map<String,DataStoreDTO> dataStoreDTOMap){
+        return dataSetDTOS
+                .stream()
+                .collect(
+                        Collectors.toMap(
+                                DataSetDTO::getName,
+                                dataSetDTO -> tableDefinitionFactory
+                                        .buildTableDefinition(
+                                                dataSetDTO,
+                                                dataStoreDTOMap.get(
+                                                        dataSetDTO.getDataStore()))));
+
+
     }
 }

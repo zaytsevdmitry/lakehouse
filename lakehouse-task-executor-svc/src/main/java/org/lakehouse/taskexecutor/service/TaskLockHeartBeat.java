@@ -11,12 +11,12 @@ public class TaskLockHeartBeat implements Runnable{
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	private final SchedulerRestClientApi schedulerRestClientApi;
 	private final TaskExecutionHeartBeatDTO taskExecutionHeartBeatDTO;
-	private final Integer heartBeatIntervalMs;
+	private final Long heartBeatIntervalMs;
 	private boolean exit;
 	
 	public TaskLockHeartBeat(
 			SchedulerRestClientApi schedulerRestClientApi,
-			Integer heartBeatIntervalMs,
+			Long heartBeatIntervalMs,
 			TaskExecutionHeartBeatDTO taskExecutionHeartBeatDTO ) {
 		this.schedulerRestClientApi = schedulerRestClientApi;
 		this.heartBeatIntervalMs = heartBeatIntervalMs;

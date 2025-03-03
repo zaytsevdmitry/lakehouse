@@ -59,7 +59,8 @@ public class ScheduledTaskKafkaConsumerService  {
             acknowledgment.acknowledge();
         }else {
             ScheduledTaskLockDTO taskInstanceLockDTO = null;
-            try {
+            try {//todo Caused by: java.net.ConnectException: Connection refused
+                logger.info("Tring to lock task id={}", scheduledTaskMsgDTO.getId());
                 taskInstanceLockDTO = schedulerRestClientApi.lockTaskById(scheduledTaskMsgDTO.getId(), serviceId);
 
                 logger.info("Lock taken lockid={}, task={}, scheduleName={}, scheduleTargetTimestamp={}, scenarioActName={}",

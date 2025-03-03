@@ -1,6 +1,7 @@
 package org.lakehouse.config.service;
 
 import jakarta.transaction.Transactional;
+import org.lakehouse.client.api.constant.Constraint;
 import org.lakehouse.client.api.dto.configs.*;
 
 import org.lakehouse.config.entities.*;

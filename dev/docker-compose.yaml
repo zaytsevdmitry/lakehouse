@@ -37,6 +37,16 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_NUM_PARTITIONS: 100
+  #docker run -d -p 9083:9083 --env SERVICE_NAME=metastore --name metastore-standalone apache/hive:${HIVE_VERSION}
+
+  hms:
+    image: apache/hive:3.1.3
+    container_name: hms
+    ports:
+      - "9083:9083"
+    environment:
+      SERVICE_NAME: metastore
+
 
   minio:
     image: minio/minio

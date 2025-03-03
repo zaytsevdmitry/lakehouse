@@ -5,7 +5,7 @@
     {
       "name": "load",
       "taskExecutionServiceGroupName": "default",
-      "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.LoadProcessor",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.SparkTaskProcessor",
       "importance": "critical",
       "description": "load from remote datastore",
       "executionModuleArgs": {

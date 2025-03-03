@@ -14,6 +14,8 @@ import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.HttpClientErrorException.NotFound;
 
+import java.lang.reflect.InvocationTargetException;
+
 @Service
 public class ExecuteService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -21,42 +23,25 @@ public class ExecuteService {
     private final SchedulerRestClientApi schedulerRestClientApi;
     private final String serviceId;
     private final String groupName;
+    private final long heartBeatIntervalMs;
     private final ProcessorFactory processorFactory;
     public ExecuteService(
            // ConfigRestClientApi configRestClientApi,
             SchedulerRestClientApi schedulerRestClientApi,
             @Value("${lakehouse.task-executor.service.id}") String serviceId,
             @Value("${lakehouse.task-executor.service.groupName}") String groupName,
+            @Value("${lakehouse.task-executor.service.heart-beat-interval-ms}") long heartBeatIntervalMs,
             ProcessorFactory processorFactory) {
      //   this.configRestClientApi = configRestClientApi;
         this.schedulerRestClientApi = schedulerRestClientApi;
         this.serviceId = serviceId;
         this.groupName = groupName;
+        this.heartBeatIntervalMs = heartBeatIntervalMs;
         this.processorFactory = processorFactory;
         logger.info("Started executor with serviceId={} and groupName={}", serviceId, groupName);
     }
 
     public void takeAndRunTask(ScheduledTaskMsgDTO scheduledTaskMsgDTO, ScheduledTaskLockDTO scheduledTaskLockDTO) {
-
-     /*   if (!scheduledTaskMsgDTO.getTaskExecutionServiceGroupName().equals(groupName)){
-            logger.info(
-                    "TaskId={} skipped because taskGroup {} not equals {}",
-                    scheduledTaskMsgDTO.getId(),
-                    scheduledTaskMsgDTO.getTaskExecutionServiceGroupName(),
-                    groupName);
-            return;
-        }
-*/
-        try {
-           /* ScheduledTaskLockDTO taskInstanceLockDTO = schedulerRestClientApi.lockTaskById(scheduledTaskMsgDTO.getId(), serviceId);
-
-            logger.info("Lock lockid={}, task={}, scheduleName={}, scheduleTargetTimestamp={}, scenarioActName={}",
-                    taskInstanceLockDTO.getLockId(),
-                    taskInstanceLockDTO.getScheduledTaskEffectiveDTO().getName(),
-                    taskInstanceLockDTO.getScheduleConfKeyName(),
-                    taskInstanceLockDTO.getScheduleTargetDateTime(),
-                    taskInstanceLockDTO.getScenarioActConfKeyName());
-*/
 
             TaskInstanceReleaseDTO taskInstanceReleaseDTO = new TaskInstanceReleaseDTO();
             taskInstanceReleaseDTO.setLockId(scheduledTaskLockDTO.getLockId());
@@ -64,18 +49,19 @@ public class ExecuteService {
             TaskExecutionHeartBeatDTO taskExecutionHeartBeatDTO = new TaskExecutionHeartBeatDTO();
             taskExecutionHeartBeatDTO.setLockId(scheduledTaskLockDTO.getLockId());
             Thread hb = null;
-            TaskLockHeartBeat taskLockHeartBeat = new TaskLockHeartBeat(schedulerRestClientApi, 10000, taskExecutionHeartBeatDTO);
+            TaskLockHeartBeat taskLockHeartBeat = new TaskLockHeartBeat(schedulerRestClientApi, heartBeatIntervalMs, taskExecutionHeartBeatDTO);
 
             try {
                 TaskProcessor p = processorFactory.buildProcessor(scheduledTaskLockDTO);
                 hb = new Thread(taskLockHeartBeat);
                 hb.start();
-                p.run();
-                taskInstanceReleaseDTO.setStatus(Status.Task.SUCCESS.label);
-            }catch (Exception e ) {
-                logger.error(e.getMessage());
-                logger.error("Error when executing task processor", e);
+                taskInstanceReleaseDTO.setStatus(p.runTask().label);
+                logger.info("Status {}",taskInstanceReleaseDTO.getStatus());
+            } catch (ClassNotFoundException | InvocationTargetException | InstantiationException |
+                     IllegalAccessException | NoSuchMethodException e) {
+                logger.error("Task execution error ", e);
                 taskInstanceReleaseDTO.setStatus(Status.Task.FAILED.label);
+                logger.info("Status {}",taskInstanceReleaseDTO.getStatus());
             } finally {
                 taskLockHeartBeat.setExit();
                 if (hb != null && hb.isAlive() && !hb.isInterrupted())
@@ -84,19 +70,20 @@ public class ExecuteService {
 
 
                 logger.info(
-                        "Release lockid={}, task={}, scheduleName={}, scheduleTargetTimestamp={}, scenarioActName={}",
+                        "Release lockid={}, task={}, scheduleName={}, scheduleTargetTimestamp={}, scenarioActName={}, status={}",
                         scheduledTaskLockDTO.getLockId(),
                         scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getName(),
                         scheduledTaskLockDTO.getScheduleConfKeyName(),
                         scheduledTaskLockDTO.getScheduleTargetDateTime(),
-                        scheduledTaskLockDTO.getScenarioActConfKeyName());
+                        scheduledTaskLockDTO.getScenarioActConfKeyName(),
+                        taskInstanceReleaseDTO.getStatus());
 
                 schedulerRestClientApi.lockRelease(taskInstanceReleaseDTO);
 
             }
-        } catch (NotFound | ResourceAccessException e) {
-            logger.warn(e.getMessage());
-        }
+      //  } catch (NotFound | ResourceAccessException e) {
+       //     logger.warn(e.getMessage());
+      //  }
     }
 
 }

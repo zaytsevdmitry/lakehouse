@@ -1,115 +1,122 @@
 package org.lakehouse.taskexecutor.executionmodule;
 
+import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.configs.ColumnDTO;
+import org.lakehouse.client.api.dto.configs.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.DataStoreDTO;
 import org.lakehouse.taskexecutor.entity.TaskProcessorConfig;
+import org.lakehouse.taskexecutor.service.TableDefinitionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
-public class JdbcTaskProcessor extends AbstractTaskProcessor{
+public  class JdbcTaskProcessor extends AbstractTaskProcessor{
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
+	private final TaskProcessorConfig taskProcessorConfig;
 	public JdbcTaskProcessor(
 			TaskProcessorConfig taskProcessorConfig) {
 		super(taskProcessorConfig);
+		this.taskProcessorConfig = taskProcessorConfig;
 	}
 
 
 	@Override
-	public void run() {
-
-
+	public Status.Task runTask() {
+		Map<String,String> keyBind = new HashMap<>();
+		keyBind.putAll(taskProcessorConfig.getKeyBind());
+		keyBind.putAll(
+				taskProcessorConfig.getDataSetDTOSet().stream()
+				.collect(Collectors.toMap(dataSetDTO -> 
+						String.format("${source(%s)}", dataSetDTO.getName()),
+                        DataSetDTO::getFullTableName))
+		);
+		taskProcessorConfig.setKeyBind(keyBind);
+		
+	try{
 		logger.info("JdbcTaskProcessor.run >> dataSet={}, dataStore={}",
-				getTaskProcessorConfig().getTargetDataSet().getName(),
-				getTaskProcessorConfig().getTargetDataSet().getDataStore()
+				taskProcessorConfig.getTargetDataSet().getName(),
+				taskProcessorConfig.getTargetDataSet().getDataStore()
 				)
 		;
-		DataStoreDTO ds = getTaskProcessorConfig()
+		DataStoreDTO ds = taskProcessorConfig
 				.getDataStores()
-				.get(getTaskProcessorConfig()
+				.get(taskProcessorConfig
 						.getTargetDataSet()
 						.getDataStore());
 
 		Properties properties = new Properties();
 	    properties.putAll(ds.getProperties());
 		logger.info("Registering JDBC driver...key driver");
-	/*	if (ds.getDriverClassName() ==null){
-			logger.error("The property driverClassName must be present");
-			throw new RuntimeException();
-		}
-*/
+		logger.info("Connecting to database...");
+		try(
+				Connection connection = DriverManager.getConnection(ds.getUrl(),properties);
+				Statement statement = connection.createStatement()) {
 
- /*       try {*/
-           // Class.forName(ds.getDriverClassName());
-
-			logger.info("Connecting to database...");
-			try(
-					Connection connection = DriverManager.getConnection(ds.getUrl(),properties);
-					Statement statement = connection.createStatement()) {
-
-				logger.info("Feel script");
+				logger.info("Take script");
 				//todo MVP take only one script
-				String unfeeledSQL = getTaskProcessorConfig().getScripts().get(0);
-				/*for (String unfeeledSQL: getTaskProcessorConfig().getScripts() ) {
+				String unfeeledSQL = taskProcessorConfig.getScripts().get(0);
+				/*for (String unfeeledSQL: taskProcessorConfig.getScripts() ) {
 				*/
 				logger.info("resolve table changes");
 				resolveTable(connection);
 
 
 				logger.info("Feel script");
-				String sql = feelScripts(unfeeledSQL);
 
+
+			String columns =
+			taskProcessorConfig
+					.getTargetDataSet()
+					.getColumnSchema()
+					.stream()
+					.filter(columnDTO -> !columnDTO.getDataType().equalsIgnoreCase("serial"))
+					.map(ColumnDTO::getName)
+					.collect(Collectors.joining(", "));
+
+			String sql = String.format(
+					"insert into %s (%s)\n select %s\n from (\n%s\n)",
+					taskProcessorConfig.getTargetDataSet().getFullTableName(),
+					columns,
+					columns,
+					feelScripts(unfeeledSQL));
 				logger.info("Creating statement...{}", sql);
 				Boolean isRetrieved = statement.execute(sql);
-				logger.info("Script execution is done: {}", isRetrieved);
+				logger.info("Script execution is done");
 
 
-					/*}*/
+
 			}
 			catch (SQLException e) {
 				logger.error(e.getMessage());
 				throw new RuntimeException(e);
 			}
 
-		/*} catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }*/
+		}catch (Exception e){
+			logger.error("Error task execution",e);
+			return Status.Task.FAILED;
+		}
+		return Status.Task.SUCCESS;
     }
-	private String feelScripts(String script){
+
+	public String feelScripts(String script){
 		String result = new String(script);
 
-		for(Map.Entry<String,String> sse: getTaskProcessorConfig ()
+		for(Map.Entry<String,String> sse: taskProcessorConfig
 				.getKeyBind()
 				.entrySet()){
 			logger.info("Replace {} to {}",sse.getKey(),sse.getValue());
 			result = result.replace(sse.getKey(), sse.getValue());
 		}
-		StringJoiner columns = new StringJoiner(",");
-
-		getTaskProcessorConfig()
-				.getTargetDataSet()
-				.getColumnSchema()
-				.stream()
-				.filter(columnDTO -> !columnDTO.getDataType().equalsIgnoreCase("serial"))
-				.map(ColumnDTO::getName)
-				.forEach(columns::add);
-
-		result = String.format(
-				"insert into %s (%s)\n select %s\n from (\n%s\n)",
-				getTaskProcessorConfig().getTargetDataSet().getFullTableName(),
-				columns.toString(),
-				columns.toString(),
-				result);
 		logger.info("Prepared query looks as {}", result);
 		return result;
 	}
 
-
 	private void resolveTable(Connection connection) throws SQLException {
-		String[] table = getTaskProcessorConfig().getTargetDataSet().getFullTableName().split("\\.");
+		String[] table = taskProcessorConfig.getTargetDataSet().getFullTableName().split("\\.");
 
 		String checkSQLSchema = String.format(
 				"select exists (select * from pg_catalog.pg_namespace where nspname = '%s')",
@@ -151,12 +158,12 @@ public class JdbcTaskProcessor extends AbstractTaskProcessor{
 		logger.info("Create table");
 		StringJoiner columns = new StringJoiner(",");
 
-		getTaskProcessorConfig().getTargetDataSet().getColumnSchema().stream().map(columnDTO ->
+		taskProcessorConfig.getTargetDataSet().getColumnSchema().stream().map(columnDTO ->
 				String.format("%s %s", columnDTO.getName(), columnDTO.getDataType())).forEach(columns::add);
 
 		String createTable = String.format(
 				"create table %s (%s)",
-				getTaskProcessorConfig().getTargetDataSet().getFullTableName(),
+				taskProcessorConfig.getTargetDataSet().getFullTableName(),
 				columns.toString()
 				// todo storage parameters ?
 				// todo constraints
@@ -187,7 +194,7 @@ public class JdbcTaskProcessor extends AbstractTaskProcessor{
 
 
 	private boolean isTableExists(Connection connection)  {
-		String tableName = getTaskProcessorConfig().getTargetDataSet().getFullTableName();
+		String tableName = taskProcessorConfig.getTargetDataSet().getFullTableName();
 
 		logger.info("Check table {} exits ", tableName);
 		return isObjectExists(connection, String.format("select * from %s where 1=2", tableName));

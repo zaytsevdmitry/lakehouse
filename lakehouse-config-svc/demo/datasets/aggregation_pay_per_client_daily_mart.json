@@ -37,8 +37,18 @@
       "nullable": false
     }
   ],
+  "constraints":[
+    {
+      "name": "aggregation_pay_per_client_daily_mart_pk",
+      "type": "primary",
+      "columns": "client_name,reg_date",
+      "runtimeLevelCheck": false,
+      "constructLevelCheck": true
+    }
+  ],
   "properties": {
-    "data-end-point": "/demo/datamarts/aggregation_pay_per_client_daily_mart"
+    "location": "/demo/datamarts/aggregation_pay_per_client_daily_mart",
+    "using": "iceberg"
   },
   "description": "We want to know who our most profitable clients are"
 }
