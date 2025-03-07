@@ -13,8 +13,16 @@ public interface ScheduleInstanceRunningRepository extends JpaRepository<Schedul
 	@Query("""
 			select sir\s
 			from ScheduleInstanceRunning sir\s
-			join ScheduleInstanceLastBuild sil on sir.configScheduleKeyName = sil.configScheduleKeyName and sil.enabled\s""")
-	List<ScheduleInstanceRunning> findByScheduleEnabled();
+			join ScheduleInstanceLastBuild sil on sir.configScheduleKeyName = sil.configScheduleKeyName and sil.enabled\s
+			where sir.scheduleInstance is null""")
+	List<ScheduleInstanceRunning> findScheduleInstanceNull();
+
+	@Query("""
+			select sir\s
+			from ScheduleInstanceRunning sir\s
+			join ScheduleInstanceLastBuild sil on sir.configScheduleKeyName = sil.configScheduleKeyName and sil.enabled
+			where sir.scheduleInstance.status  in ('SUCCESS', 'FAILED')\s""")
+	List<ScheduleInstanceRunning> findByScheduleEnabledAndStatusSuccessAndStatusFAiled();
 
 	@Query("""
             select  sir\s

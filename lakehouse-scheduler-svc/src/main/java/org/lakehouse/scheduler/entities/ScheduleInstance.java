@@ -7,7 +7,7 @@ import java.util.Objects;
 
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(name = "schedule_instance_uk_name_targetdt_uk", columnNames = {
-		"schedule_name", "target_execution_date_time" }))
+		"config_schedule_key_name", "target_execution_date_time" }))
 public class ScheduleInstance {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

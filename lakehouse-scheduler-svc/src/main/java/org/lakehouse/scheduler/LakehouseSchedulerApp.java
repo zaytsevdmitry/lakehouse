@@ -9,7 +9,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication(scanBasePackages= {
 				"org.lakehouse.scheduler",
 				"org.lakehouse.client.rest.config"})
-@EnableScheduling
+
 @EnableConfigurationProperties(value = ScheduleConfigConsumerKafkaConfigurationProperties.class)
 public class LakehouseSchedulerApp {
     public static void main(String[] args) {

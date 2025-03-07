@@ -5,21 +5,21 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.*;
+import org.lakehouse.client.api.constant.Status;
+import org.lakehouse.client.api.utils.DateTimeUtils;
+import org.lakehouse.scheduler.entities.ScheduleInstance;
+import org.lakehouse.scheduler.entities.ScheduleInstanceRunning;
+import org.lakehouse.scheduler.entities.ScheduleTaskInstance;
+import org.lakehouse.scheduler.repository.*;
+import org.lakehouse.scheduler.service.BuildService;
+import org.lakehouse.scheduler.service.ManageStateService;
+import org.lakehouse.test.config.api.ConfigRestClientApiTest;
 import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
 import org.lakehouse.client.api.serialization.schedule.ScheduleEffectiveKafkaSerializer;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.scheduler.configuration.ScheduleConfigConsumerKafkaConfigurationProperties;
 import org.lakehouse.scheduler.entities.ScheduleInstanceLastBuild;
-import org.lakehouse.scheduler.repository.ScheduleInstanceLastBuildRepository;
-import org.lakehouse.scheduler.repository.ScheduleInstanceRepository;
-import org.lakehouse.scheduler.repository.ScheduleScenarioActInstanceRepository;
-import org.lakehouse.scheduler.repository.ScheduleTaskInstanceExecutionLockRepository;
-import org.lakehouse.scheduler.repository.ScheduleTaskInstanceRepository;
 import org.lakehouse.scheduler.service.InternalSchedulerService;
-import org.lakehouse.scheduler.service.ScheduleInstanceBuildService;
-import org.lakehouse.scheduler.service.ScheduleInstanceLastBuildService;
-import org.lakehouse.scheduler.test.configuration.ClientApiConfigurationTest;
-import org.lakehouse.scheduler.test.configuration.ConfigRestClientApiTest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,16 +30,12 @@ import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.lakehouse.test.config.configuration.FileLoader;
 import org.testcontainers.utility.DockerImageName;
@@ -55,6 +51,8 @@ import org.testcontainers.utility.DockerImageName;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @ActiveProfiles("test")
 public class SchedulesTest {
+    private static final Logger log = LoggerFactory.getLogger(SchedulesTest.class);
+
     // override bean
     @Configuration
     static class ContextConfiguration {
@@ -64,11 +62,12 @@ public class SchedulesTest {
             return new ConfigRestClientApiTest();
         }
     }
-    private static final Logger log = LoggerFactory.getLogger(SchedulesTest.class);
+
+    @Autowired ConfigRestClientApi configRestClientApi;
+
     //services
-    @Autowired ScheduleInstanceLastBuildService scheduleInstanceLastBuildService;
     @Autowired
-    ScheduleInstanceBuildService scheduleInstanceBuildService;
+    BuildService buildService;
 
     @Autowired
     InternalSchedulerService internalSchedulerService;
@@ -89,6 +88,11 @@ public class SchedulesTest {
     @Autowired
     ScheduleInstanceRepository scheduleInstanceRepository;
 
+    @Autowired
+    ManageStateService manageStateService;
+
+    @Autowired
+    ScheduleInstanceRunningRepository scheduleInstanceRunningRepository;
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine").withDatabaseName("test")
             .withUsername("name").withPassword("password");
@@ -151,18 +155,62 @@ public class SchedulesTest {
                                 instanceLastBuild.getConfigScheduleKeyName()));
 
 
-        scheduleInstanceLastBuildService.findAndRegisterNewSchedule(sef);
+        buildService.registration(sef);
+        // check duplicates
+        List<ScheduleInstanceLastBuild> sibList = scheduleInstanceLastBuildRepository.findAll();
+        assert (sibList.size() == 1);
 
         ScheduleInstanceLastBuild sil =  scheduleInstanceLastBuildRepository
                 .findByConfigScheduleKeyName(sef.getName())
                 .orElseThrow();
         assert (Objects.equals(sil.getLastChangeNumber(), sef.getLastChangeNumber()));
-        scheduleInstanceLastBuildRepository.findAll().forEach(instanceLastBuild -> log.info("Schedules -=> {}", instanceLastBuild.getConfigScheduleKeyName()));
-        scheduleInstanceBuildService.buildNewSchedules();
-        internalSchedulerService.findAndRegisterNewSchedules();
-        internalSchedulerService.runSchedules();
+        scheduleInstanceLastBuildRepository.findAll().forEach(
+                instanceLastBuild -> log.info("Schedules -=> {}", instanceLastBuild.getConfigScheduleKeyName()));
+        buildService.buildAll();
 
 
+        // check duplicates
+/*        List<ScheduleInstanceLastBuild> sibList = scheduleInstanceLastBuildRepository.findAll();
+        assert (sibList.size() == 1);*/
+        List<ScheduleInstance> siList = scheduleInstanceRepository.findAll();
+        assert (siList.size() == 1);
+        List<ScheduleTaskInstance> stiList = scheduleTaskInstanceRepository.findByStatus(Status.Task.QUEUED.label);
+        assert (stiList.size() == 1);
+
+
+
+    }
+
+    @Test
+    @Order(1)
+    public void lockUnLock() throws IOException {
+        cleanAll();
+
+        // 1)  load schedule config
+        ScheduleEffectiveDTO sef = fileLoader.loadScheduleEffectiveDTO();
+        sef.setStartDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(DateTimeUtils.now().minusDays(1L)));
+        sef.setIntervalExpression("0 0 0 * * *"); // every day
+        // 2) registration schedule
+        buildService.registration(sef);
+
+        // 3) Build schedule
+
+        internalSchedulerService.build(); // create schedule
+        internalSchedulerService.build(); // expect ignore
+        internalSchedulerService.build(); // expect ignore
+        assert (scheduleInstanceLastBuildRepository.findAll().size() ==1);
+
+        internalSchedulerService.run(); // expect run
+        internalSchedulerService.run(); // expect ignore
+        internalSchedulerService.run(); // expect ignore
+        scheduleInstanceRepository.findAll().forEach( a ->  System.out.println(a.getConfigScheduleKeyName() + " --> " + a.getTargetExecutionDateTime() + " --> " + a.getStatus()));
+
+        scheduleScenarioActInstanceRepository.findAll().forEach( a ->  System.out.println(a.getName() + " --> " + a.getStatus()));
+        scheduleTaskInstanceRepository.findAll().forEach(t -> System.out.println( t.getName() + " --> " + t.getStatus()));
+        assert (scheduleInstanceRunningRepository.findAll().size() == 1);
+        List<ScheduleInstanceRunning>  list =  scheduleInstanceRunningRepository.findAll();
+        List<ScheduleTaskInstance> stilq = scheduleTaskInstanceRepository.findByStatus(Status.Task.QUEUED.label);
+        assert (stilq.size() == 1);
 
     }
 

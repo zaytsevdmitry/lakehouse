@@ -2,6 +2,10 @@
   "name": "transaction_dds",
   "project": "DEMO",
   "dataStore": "lakehousestorage",
+  "fullTableName": "transaction_dds",
+  "scripts": [{
+    "key": "transaction_dds.sql"
+  }],
   "sources": [
     {
       "name": "client_processing",
@@ -18,16 +22,17 @@
   ],
   "columnSchema": [
     {
-      "name": "name",
+      "name": "client_name",
       "description": "Client name",
       "dataType": "string",
       "nullable": false
     },
-   {
+    {
       "name": "id",
       "description": "tx id",
       "dataType": "bigint",
-      "nullable": false
+      "nullable": false,
+      "order": 0
     },
     {
       "name": "reg_date_time",
@@ -42,7 +47,7 @@
       "nullable": false
     },
     {
-      "name": "provider_name",
+      "name": "provider_id",
       "description": "To provider",
       "dataType": "string",
       "nullable": false
@@ -60,8 +65,18 @@
       "nullable": false
     }
   ],
+  "constraints":[
+    {
+      "name": "transaction_dds_pk",
+      "type": "primary",
+      "columns": "id",
+      "runtimeLevelCheck": false,
+      "constructLevelCheck": true
+    }
+  ],
   "properties": {
-    "data-end-point": "/mytabs/transaction_dds"
+    "location": "/mytabs/transaction_dds",
+    "using": "iceberg"
   },
   "description": "Details"
 }

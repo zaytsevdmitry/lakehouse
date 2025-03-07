@@ -5,7 +5,8 @@ public class Status {
         NEW("NEW"),
         RUNNING("RUNNING"),
         FAILED("FAILED"),
-        SUCCESS("SUCCESS");
+        SUCCESS("SUCCESS"),
+        CONF_ERROR("CONF_ERROR");
 
         public final String label;
 

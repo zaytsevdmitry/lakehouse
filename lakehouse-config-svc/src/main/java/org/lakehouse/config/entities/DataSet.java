@@ -16,7 +16,7 @@ public class DataSet extends KeyEntityAbstract {
 	private DataStore dataStore;
 
 	@Column(nullable = false)
-	private String tableFullName;
+	private String fullTableName;
 
 	public DataSet() {
 	}
@@ -37,12 +37,12 @@ public class DataSet extends KeyEntityAbstract {
 		this.dataStore = dataStore;
 	}
 
-	public String getTableFullName() {
-		return tableFullName;
+	public String getFullTableName() {
+		return fullTableName;
 	}
 
-	public void setTableFullName(String tableFullName) {
-		this.tableFullName = tableFullName;
+	public void setFullTableName(String fullTableName) {
+		this.fullTableName = fullTableName;
 	}
 
 	@Override
@@ -56,11 +56,11 @@ public class DataSet extends KeyEntityAbstract {
 		DataSet dataSet = (DataSet) o;
 		return Objects.equals(getProject(), dataSet.getProject())
 				&& Objects.equals(getDataStore(), dataSet.getDataStore())
-				&& Objects.equals(getTableFullName(),dataSet.getTableFullName());
+				&& Objects.equals(getFullTableName(),dataSet.getFullTableName());
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(super.hashCode(), getProject(), getDataStore(),getTableFullName());
+		return Objects.hash(super.hashCode(), getProject(), getDataStore(), getFullTableName());
 	}
 }

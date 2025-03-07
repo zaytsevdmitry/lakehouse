@@ -1,5 +1,6 @@
 package org.lakehouse.taskexecutor.test;
 
+import org.apache.http.HttpStatus;
 import org.lakehouse.client.api.dto.configs.*;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.test.config.configuration.FileLoader;
@@ -131,63 +132,63 @@ this.dataStoreDTOMap = fileLoader.loadAllDataStores();
 
     @Override
     public int deleteProjectDTO(String ProjectName) {
-        return 0;
+         return HttpStatus.SC_NOT_IMPLEMENTED;  
     }
 
     @Override
     public int deleteDataStoreDTO(String name) {
-        return 0;
+         return HttpStatus.SC_NOT_IMPLEMENTED;  
     }
 
     @Override
     public int deleteDataSetDTO(String name) {
-        return 0;
+         return HttpStatus.SC_NOT_IMPLEMENTED;  
     }
 
     @Override
     public int deleteScenarioActTemplateDTO(String name) {
-        return 0;
+         return HttpStatus.SC_NOT_IMPLEMENTED;  
     }
 
     @Override
     public int deleteScheduleDTO(String name) {
-        return 0;
+         return HttpStatus.SC_NOT_IMPLEMENTED;  
     }
 
     @Override
     public int deleteTaskExecutionServiceGroupDTO(String name) {
-        return 0;
+         return HttpStatus.SC_NOT_IMPLEMENTED;  
     }
 
     @Override
     public int postProjectDTO(ProjectDTO o) {
-        return 0;
+         return HttpStatus.SC_NOT_IMPLEMENTED;  
     }
 
     @Override
     public int postDataStoreDTO(DataStoreDTO dataStoreDTO) {
         dataStoreDTOMap.put(dataStoreDTO.getName(), dataStoreDTO);
-        return 1;
+        return 200;
     }
 
     @Override
     public int postDataSetDTO(DataSetDTO o) {
-        return 0;
+         return HttpStatus.SC_NOT_IMPLEMENTED;  
     }
 
     @Override
     public int postScenarioActTemplateDTO(ScenarioActTemplateDTO o) {
-        return 0;
+         return HttpStatus.SC_NOT_IMPLEMENTED;  
     }
 
     @Override
     public int postScheduleDTO(ScheduleDTO o) {
-        return 0;
+         return HttpStatus.SC_NOT_IMPLEMENTED;  
     }
 
     @Override
     public int postTaskExecutionServiceGroupDTO(TaskExecutionServiceGroupDTO o) {
-        return 0;
+         return HttpStatus.SC_NOT_IMPLEMENTED;  
     }
 
 

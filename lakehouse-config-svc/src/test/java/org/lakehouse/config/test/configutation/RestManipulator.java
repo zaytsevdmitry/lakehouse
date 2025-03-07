@@ -22,7 +22,7 @@ public class RestManipulator {
 
 	public String writeAndReadDTOTest(String keyName, String jsonString, String urlTemplate, String urlTemplateName)
 			throws Exception {
-
+		logger.info("writeAndReadDTOTest keyName={}",keyName);
 		logger.info("Mock urlTemplate={}",urlTemplate);
 		this.mockMvc
 				.perform(post(urlTemplate)

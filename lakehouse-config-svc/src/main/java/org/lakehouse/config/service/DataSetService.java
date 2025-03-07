@@ -1,7 +1,6 @@
 package org.lakehouse.config.service;
 
 import jakarta.transaction.Transactional;
-import org.lakehouse.client.api.constant.Constraint;
 import org.lakehouse.client.api.dto.configs.*;
 
 import org.lakehouse.config.entities.*;
@@ -10,7 +9,6 @@ import org.lakehouse.config.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.TransactionStatus;
 
 import java.util.HashMap;
 import java.util.List;
@@ -59,7 +57,7 @@ public class DataSetService {
 		result.setDescription(dataSet.getDescription());
 		result.setDataStore(dataSet.getDataStore().getName());
 		result.setProject(dataSet.getProject().getName());
-		result.setFullTableName(dataSet.getTableFullName());
+		result.setFullTableName(dataSet.getFullTableName());
 
 		result.setScripts(dataSetScriptService.findDataSetScriptDTOListByDataSetName(dataSet.getName()));
 		result.setConstraints(dataSetConstraintRepository.findByDataSetName(dataSet.getName()).stream().map(dataSetConstraint -> {
@@ -106,7 +104,7 @@ public class DataSetService {
 		result.setDescription(dataSetDTO.getDescription());
 		result.setProject(projectRepository.getReferenceById(dataSetDTO.getProject()));
 		result.setDataStore(dataStoreRepository.getReferenceById(dataSetDTO.getDataStore()));
-		result.setTableFullName(dataSetDTO.getFullTableName());
+		result.setFullTableName(dataSetDTO.getFullTableName());
 		return result;
 	}
 

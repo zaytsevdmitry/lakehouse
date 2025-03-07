@@ -10,11 +10,11 @@ import org.springframework.stereotype.Service;
 public class ScheduleConfigConsumerService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private final ScheduleInstanceLastBuildService scheduleInstanceLastBuildService;
+    private final BuildService buildService;
 
     public ScheduleConfigConsumerService(
-            ScheduleInstanceLastBuildService scheduleInstanceLastBuildService) {
-        this.scheduleInstanceLastBuildService = scheduleInstanceLastBuildService;
+            BuildService buildService) {
+        this.buildService = buildService;
     }
 
 
@@ -26,7 +26,7 @@ public class ScheduleConfigConsumerService {
     public void listen(ScheduleEffectiveDTO scheduleEffectiveDTO)
     {
         logger.info("New schedule config change: " + scheduleEffectiveDTO.getName());
-        scheduleInstanceLastBuildService.findAndRegisterNewSchedule(scheduleEffectiveDTO);
+        buildService.registration(scheduleEffectiveDTO);
         logger.info("findAndRegisterNewSchedules");
     }
 }
