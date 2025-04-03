@@ -16,11 +16,12 @@ InternalSchedulerService.resolveDependency --->ScheduleTaskInstanceService.succe
 
 'InternalSchedulerService.java -> BuildService
 
-InternalSchedulerService.runAll -->		ManageStateService.sucsessSchedules
+InternalSchedulerService.runAll -->		ManageStateService.successSchedules
 
 InternalSchedulerService.runAll -->		ManageStateService.runSchedules
 InternalSchedulerService.runAll -->		ManageStateService.runNewScenariosActs
-InternalSchedulerService.runAll --->		ScheduleTaskInstanceService.addTaskToQueue
+InternalSchedulerService.runAll --->	ScheduleTaskInstanceService.addTaskToQueue
+InternalSchedulerService.runAll ---> ScheduleTaskInstanceService.produceScheduledTasks
 
 InternalSchedulerService.reTryFailedTasks ---> ScheduleTaskInstanceService.heartBeatLimitExceeded
 InternalSchedulerService.reTryFailedTasks ---> ScheduleTaskInstanceService.reTryFailedTasks

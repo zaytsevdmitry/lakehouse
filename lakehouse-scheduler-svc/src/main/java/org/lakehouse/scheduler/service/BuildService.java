@@ -1,6 +1,6 @@
 package org.lakehouse.scheduler.service;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
@@ -91,14 +91,11 @@ public class BuildService {
                 );
 
     }
-
+// todo @Transactional cant work. change to transaction manager
     @Transactional
     private void save(
             ScheduleInstanceLastBuild scheduleInstanceLastBuild,
             ScheduleEffectiveDTO scheduleEffectiveDTO)  {
-
-        scheduleInstanceRepository.findAll().forEach(scheduleInstance ->
-                System.out.println(scheduleInstance.getConfigScheduleKeyName()+" == "+ scheduleInstance.getTargetExecutionDateTime().toString()));
 
         ScheduleInstance scheduleInstance =
                 scheduleInstanceRepository

@@ -1,29 +1,34 @@
-package org.lakehouse.scheduler.service;
+package org.lakehouse.scheduler.component;
 
 
+import org.lakehouse.scheduler.service.BuildService;
+import org.lakehouse.scheduler.service.ManageStateService;
+import org.lakehouse.scheduler.service.ScheduleTaskInstanceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-@EnableScheduling
 @Component
-public class InternalSchedulerService {
+@EnableScheduling
+@ConditionalOnProperty(value = "scheduling.enabled", havingValue = "true", matchIfMissing = true)
+public class InternalScheduler {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	private final BuildService buildService;
     private final ManageStateService manageStateService;
 	private final ScheduleTaskInstanceService scheduleTaskInstanceService;
 
-	public InternalSchedulerService(BuildService buildService,
-                                    ManageStateService manageStateService,
-                                    ScheduleTaskInstanceService scheduleTaskInstanceService) {
+	public InternalScheduler(BuildService buildService,
+							 ManageStateService manageStateService,
+							 ScheduleTaskInstanceService scheduleTaskInstanceService) {
 
 		this.buildService = buildService;
         this.manageStateService = manageStateService;
 		this.scheduleTaskInstanceService = scheduleTaskInstanceService;
     }
 /**
- * Make schedule objects with status  NEW
+ * Made schedule objects with status  NEW
  * */
 	@Scheduled(
 			fixedDelayString = "${lakehouse.scheduler.registration.delay-ms}",
@@ -52,6 +57,10 @@ public class InternalSchedulerService {
 
 		rows = scheduleTaskInstanceService.addTaskToQueue();
 		logger.info("queueTasks {}", rows );
+
+		rows = scheduleTaskInstanceService.produceScheduledTasks();
+		logger.info("produceScheduledTasks {}", rows );
+
 
 		rows = manageStateService.successSchedules();
 		logger.info("Success schedules {}", rows );

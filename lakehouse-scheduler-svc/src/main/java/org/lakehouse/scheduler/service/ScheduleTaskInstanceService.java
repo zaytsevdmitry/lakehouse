@@ -1,5 +1,6 @@
 package org.lakehouse.scheduler.service;
 
+import org.apache.kafka.common.KafkaException;
 import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.configs.TaskDTO;
 import org.lakehouse.client.api.dto.service.ScheduledTaskLockDTO;
@@ -11,6 +12,7 @@ import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.scheduler.entities.ScheduleTaskInstance;
 import org.lakehouse.scheduler.entities.ScheduleTaskInstanceDependency;
 import org.lakehouse.scheduler.entities.ScheduleTaskInstanceExecutionLock;
+import org.lakehouse.scheduler.entities.ScheduledTaskForProducerMessage;
 import org.lakehouse.scheduler.exception.ReleaseTaskStatusChangeException;
 import org.lakehouse.scheduler.exception.ScheduledTaskInstanceLockNotFoundException;
 import org.lakehouse.scheduler.exception.ScheduledTaskNotFoundException;
@@ -18,9 +20,9 @@ import org.lakehouse.scheduler.repository.ScheduleTaskInstanceDependencyReposito
 import org.lakehouse.scheduler.repository.ScheduleTaskInstanceExecutionLockRepository;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.scheduler.repository.ScheduleTaskInstanceRepository;
+import org.lakehouse.scheduler.repository.ScheduledTaskForProducerMessagesRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +35,7 @@ public class ScheduleTaskInstanceService {
 	private final ScheduleTaskInstanceRepository repository;
 	private final ScheduleTaskInstanceDependencyRepository dependencyRepository;
 	private final ScheduleTaskInstanceExecutionLockRepository executionLockRepository;
+	private final ScheduledTaskForProducerMessagesRepository scheduledTaskForProducerMessagesRepository;
 	private final ScheduledTaskDTOProducerService scheduledTaskDTOProducerService;
 	private final ConfigRestClientApi configRestClientApi;
 	public ScheduleTaskInstanceService(
@@ -40,54 +43,27 @@ public class ScheduleTaskInstanceService {
             ScheduleTaskInstanceExecutionLockRepository executionLockRepository,
             ScheduleTaskInstanceDependencyRepository dependencyRepository,
             ScheduledTaskDTOProducerService scheduledTaskDTOProducerService,
-			ConfigRestClientApi configRestClientApi
+            ScheduledTaskForProducerMessagesRepository scheduledTaskForProducerMessagesRepository,
+            ConfigRestClientApi configRestClientApi
     ) {
 		this.repository = repository;
 		this.dependencyRepository = dependencyRepository;
 		this.executionLockRepository = executionLockRepository;
-        this.scheduledTaskDTOProducerService = scheduledTaskDTOProducerService;
+        this.scheduledTaskForProducerMessagesRepository = scheduledTaskForProducerMessagesRepository;
         this.configRestClientApi = configRestClientApi;
+		this.scheduledTaskDTOProducerService = scheduledTaskDTOProducerService;
     }
 	
 	
 	private void putToQueue(List<ScheduleTaskInstance> list) {
 		list.forEach(sti -> {
 			sti.setStatus(Status.Task.QUEUED.label);
-			ScheduledTaskMsgDTO scheduledTaskMsgDTO = new ScheduledTaskMsgDTO();
-			scheduledTaskMsgDTO.setId(sti.getId());
-			logger.info("schedule {} scenarioact {} task {}",sti.getScheduleScenarioActInstance()
-							.getScheduleInstance()
-							.getConfigScheduleKeyName(),
-					sti.getScheduleScenarioActInstance().getConfDataSetKeyName(),
-					sti.getName());
-			TaskDTO t = null;
-			try {
-				logger.info("Get effective taskDTO for schedule={} scenarioAct={} task={}",
-						sti.getScheduleScenarioActInstance()
-								.getScheduleInstance()
-								.getConfigScheduleKeyName(),
-						sti.getScheduleScenarioActInstance().getConfDataSetKeyName(),
-						sti.getName());
 
-			  t =	configRestClientApi.getEffectiveTaskDTO(
-						sti.getScheduleScenarioActInstance()
-								.getScheduleInstance()
-								.getConfigScheduleKeyName(),
-						sti.getScheduleScenarioActInstance().getConfDataSetKeyName(),
-						sti.getName());
-				scheduledTaskMsgDTO.setTaskExecutionServiceGroupName(t.getTaskExecutionServiceGroupName());
-
-				logger.info(
-						"Send scheduledTaskMsgDTO=(id={}  taskExecutionServiceGroupName={})",
-						scheduledTaskMsgDTO.getId(),
-						scheduledTaskMsgDTO.getTaskExecutionServiceGroupName());
-				scheduledTaskDTOProducerService.send(scheduledTaskMsgDTO);
-
-			}catch (RuntimeException e){
-				logger.error("Error when getting EffectiveTaskDTO", e);
-				sti.setStatus(Status.Task.CONF_ERROR.label);
-			}
+			ScheduledTaskForProducerMessage message = new ScheduledTaskForProducerMessage();
+			message.setScheduleTaskInstance(sti);
+			scheduledTaskForProducerMessagesRepository.save(message);
 			repository.saveAndFlush(sti);
+
 
 			});
 	}
@@ -97,6 +73,58 @@ public class ScheduleTaskInstanceService {
 				.findReadyToQueue();
 		putToQueue(l);
 		return l.size();
+	}
+	public Integer produceScheduledTasks(){
+		Integer result = 0;
+		for (ScheduledTaskForProducerMessage message : scheduledTaskForProducerMessagesRepository.findAll()) {
+
+			ScheduledTaskMsgDTO scheduledTaskMsgDTO = new ScheduledTaskMsgDTO();
+			scheduledTaskMsgDTO.setId(message.getScheduleTaskInstance().getId());
+			logger.info("schedule {} scenarioact {} task {}",message.getScheduleTaskInstance().getScheduleScenarioActInstance()
+							.getScheduleInstance()
+							.getConfigScheduleKeyName(),
+					message.getScheduleTaskInstance().getScheduleScenarioActInstance().getConfDataSetKeyName(),
+					message.getScheduleTaskInstance().getName());
+			TaskDTO t = null;
+
+				logger.info("Get effective taskDTO for schedule={} scenarioAct={} task={}",
+						message.getScheduleTaskInstance().getScheduleScenarioActInstance()
+								.getScheduleInstance()
+								.getConfigScheduleKeyName(),
+						message.getScheduleTaskInstance().getScheduleScenarioActInstance().getConfDataSetKeyName(),
+						message.getScheduleTaskInstance().getName());
+			try {
+				t =	configRestClientApi.getEffectiveTaskDTO(
+						message.getScheduleTaskInstance().getScheduleScenarioActInstance()
+								.getScheduleInstance()
+								.getConfigScheduleKeyName(),
+						message.getScheduleTaskInstance().getScheduleScenarioActInstance().getConfDataSetKeyName(),
+						message.getScheduleTaskInstance().getName());
+				scheduledTaskMsgDTO.setTaskExecutionServiceGroupName(t.getTaskExecutionServiceGroupName());
+			}
+
+			catch (RuntimeException e){
+				logger.error("Error when getting EffectiveTaskDTO", e);
+				message.getScheduleTaskInstance().setStatus(Status.Task.CONF_ERROR.label);
+				repository.save(message.getScheduleTaskInstance());
+				scheduledTaskForProducerMessagesRepository.delete(message);
+			}
+			if (t != null){
+
+				try {
+					logger.info(
+							"Send scheduledTaskMsgDTO=(id={}  taskExecutionServiceGroupName={})",
+							scheduledTaskMsgDTO.getId(),
+							scheduledTaskMsgDTO.getTaskExecutionServiceGroupName());
+					scheduledTaskDTOProducerService.send(scheduledTaskMsgDTO);
+					result++;
+				}
+				catch (KafkaException ke){
+						logger.error(ke.getLocalizedMessage(),ke);
+				}
+			}
+		}
+		return result;
 	}
 	private ScheduledTaskDTO mapScheduledTaskToDTO(ScheduleTaskInstance sti) {
 		ScheduledTaskDTO result = new ScheduledTaskDTO();

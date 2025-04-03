@@ -36,7 +36,7 @@ public class ConfigRestClientApiTest implements ConfigRestClientApi {
         });
 
         this.dataSetDTOMap = fileLoader.loadAllDataSets();
-this.dataStoreDTOMap = fileLoader.loadAllDataStores();
+        this.dataStoreDTOMap = fileLoader.loadAllDataStores();
 
     }
 
