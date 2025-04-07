@@ -3,6 +3,7 @@ package org.lakehouse.scheduler.service;
 import jakarta.transaction.Transactional;
 import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
+import org.lakehouse.client.api.exception.CronParceErrorException;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.scheduler.entities.ScheduleInstance;
 import org.lakehouse.scheduler.entities.ScheduleInstanceRunning;
@@ -104,64 +105,99 @@ public class ManageStateService {
         return sir;
     }
 */
-    private OffsetDateTime resolveLastDate(ScheduleInstance scheduleInstance,ScheduleEffectiveDTO scheduleEffectiveDTO){
+    private OffsetDateTime resolveNextDate(
+            ScheduleInstance scheduleInstance,
+            ScheduleEffectiveDTO scheduleEffectiveDTO) {
+
+        OffsetDateTime result = null;
+
+        OffsetDateTime lastOffsetDateTime = null;
+
+
         if(scheduleInstance != null)
-            return scheduleInstance.getTargetExecutionDateTime();
-        else
-            return DateTimeUtils
+            lastOffsetDateTime =  scheduleInstance.getTargetExecutionDateTime();
+        else {
+            lastOffsetDateTime = DateTimeUtils
                     .parceDateTimeFormatWithTZ(scheduleEffectiveDTO.getStartDateTime());
+        }
+
+        try {
+
+
+            result = DateTimeUtils
+                    .getNextTargetExecutionDateTime(
+                            scheduleEffectiveDTO
+                                    .getIntervalExpression(),
+                            lastOffsetDateTime);
+        } catch (CronParceErrorException e) {
+                logger.warn(e.getMessage(),e);
+        }
+
+        return result;
     }
 
-    @Transactional
-    public int runAll() {
+@Transactional
+    public int  runAll() {
         AtomicInteger result = new AtomicInteger();
         List<ScheduleInstanceRunning> sirList = new ArrayList<>();
-        sirList.addAll(
-        scheduleInstanceRunningRepository
+        sirList.addAll( // new
+            scheduleInstanceRunningRepository
                 .findScheduleInstanceNull());
-        sirList.addAll(scheduleInstanceRunningRepository.findByScheduleEnabledAndStatusSuccessAndStatusFAiled());
+
+        sirList.addAll( // exists
+                scheduleInstanceRunningRepository.findByScheduleEnabledAndStatusSuccessAndStatusFAiled());
 
         sirList.forEach(sir -> {
+            ScheduleEffectiveDTO scheduleEffectiveDTO =
+                    scheduleEffectiveService
+                            .getScheduleEffectiveDTO(sir.getConfigScheduleKeyName());
 
-                    ScheduleEffectiveDTO scheduleEffectiveDTO =
-                            scheduleEffectiveService
-                                    .getScheduleEffectiveDTO(sir.getConfigScheduleKeyName());
+            ScheduleInstance scheduleInstance = findNextScheduleInstanceOrNull(sir,scheduleEffectiveDTO);
+            if (scheduleInstance != null
+                    && scheduleInstance.getStatus().equals(Status.Schedule.NEW.label)){
 
-                    OffsetDateTime lastTargetDateTime = resolveLastDate(sir.getScheduleInstance(), scheduleEffectiveDTO);
+                scheduleInstance.setStatus(Status.Schedule.RUNNING.label);
+                sir.setScheduleInstance(scheduleInstance);
 
-                    //if time to run
-                    if(scheduleEffectiveService
-                            .isBefore(
-                                    scheduleEffectiveDTO
-                                            .getIntervalExpression(),
-                                                lastTargetDateTime)) {
-
-                        ScheduleInstance scheduleInstance = null;
-                        try {
-                            scheduleInstance = scheduleInstanceRepository
-                                    .findByScheduleNameAndTargetDateTime(
-                                            sir.getConfigScheduleKeyName(),
-                                            DateTimeUtils.getNextTargetExecutionDateTime(
-                                                    scheduleEffectiveDTO.getIntervalExpression(),
-                                                    lastTargetDateTime))
-                                    .orElseThrow(() ->
-                                            new ScheduledNotFoundException(
-                                                    sir.getConfigScheduleKeyName(),
-                                                    lastTargetDateTime));
-
-                            scheduleInstance.setStatus(Status.Schedule.RUNNING.label);
-                            sir.setScheduleInstance(scheduleInstance);
-
-                            //scheduleInstanceRepository.save(scheduleInstance);
-                            scheduleInstanceRunningRepository.save(sir);
-                            result.addAndGet(1);
-                        } catch (Throwable e) {
-                            logger.error(e.getMessage(),e);
-                            throw new RuntimeException(e);
-                        }
-                    }
-                });
+                scheduleInstanceRepository.save(scheduleInstance);
+                scheduleInstanceRunningRepository.save(sir);
+                result.addAndGet(1);
+            }
+        });
         return result.get();
+    }
+
+    private ScheduleInstance findNextScheduleInstanceOrNull(
+            ScheduleInstanceRunning scheduleInstanceRunning,
+            ScheduleEffectiveDTO scheduleEffectiveDTO
+    ){
+        ScheduleInstance result = null;
+
+        OffsetDateTime nextTargetDateTime = resolveNextDate(
+                scheduleInstanceRunning.getScheduleInstance(),
+                scheduleEffectiveDTO);
+
+        if(scheduleEffectiveService
+                .isBefore(
+                        scheduleEffectiveDTO
+                                .getIntervalExpression(),
+                        nextTargetDateTime)) {
+            try {
+                result = scheduleInstanceRepository
+                        .findByScheduleNameAndTargetDateTime(
+                                scheduleInstanceRunning
+                                        .getConfigScheduleKeyName(),
+                                nextTargetDateTime)
+                        .orElseThrow(() ->
+                                new ScheduledNotFoundException(
+                                        scheduleInstanceRunning.getConfigScheduleKeyName(),
+                                        nextTargetDateTime));
+            } catch (Throwable e) {
+                logger.warn(e.getMessage());
+                throw new RuntimeException(e);
+            }
+        }
+        return result;
     }
 
     @Transactional
@@ -169,8 +205,6 @@ public class ManageStateService {
         ScheduleInstance si = sir.getScheduleInstance();
         si.setStatus(Status.Schedule.SUCCESS.label);
         scheduleInstanceRepository.save(si);
-        sir.setScheduleInstance(null);
-        scheduleInstanceRunningRepository.save(sir);
     }
 
     public int successSchedules() {

@@ -9,7 +9,7 @@ logging:
           interceptor: ERROR
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/postgresDB
+    url: jdbc:postgresql://localhost:5432/postgresDB?ApplicationName=SchedulerSVC
     username: postgresUser
     password: postgresPW
     driver-class-name: org.postgresql.Driver

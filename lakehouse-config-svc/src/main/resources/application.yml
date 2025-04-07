@@ -6,7 +6,7 @@ logging:
           interceptor: ERROR
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/postgresDB
+    url: jdbc:postgresql://localhost:5432/postgresDB?ApplicationName=ConfigSVC
     username: postgresUser
     password: postgresPW
     driver-class-name: org.postgresql.Driver
@@ -25,6 +25,7 @@ spring:
           create-database-schemas: true
       hibernate:
         default_schema: lakehouse_config
+
 lakehouse:
   config:
     schedule:
@@ -37,4 +38,3 @@ lakehouse:
               topic: schedule_deletes
           bootstrap-servers: localhost:9092
           topic: schedules_effective
-      

@@ -141,6 +141,8 @@ public class SchedulesTest {
 
     void cleanAll(){
         scheduleInstanceRepository.deleteAll();
+        scheduleInstanceLastBuildRepository.deleteAll();
+        scheduleInstanceRunningRepository.deleteAll();
     }
 
     @Test

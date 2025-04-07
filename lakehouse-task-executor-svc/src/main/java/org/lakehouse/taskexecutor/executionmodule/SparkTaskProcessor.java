@@ -49,7 +49,7 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
         conf.put("spark.sql.catalog.spark_catalog.type","hadoop");
         conf.put("spark.sql.catalog.spark_catalog.warehouse",location);
       //  conf.put("spark.hive.metastore.uris","thrift://localhost:9083");
-        //conf.put("spark.sql.catalogImplementation","hive");
+        // conf.put("spark.sql.catalogImplementation","hive");
        // conf.put("spark.sql.hive.metastore.version","3.1.3");
         return SparkSession
                 .builder()

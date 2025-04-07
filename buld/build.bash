@@ -1,16 +1,22 @@
 #!/usr/bin/env bash
+export VERSION=0.0.1
 cd ../
-mvn clean package
+#mvn clean package
 rm -rf distr
-mkdir distr
-mkdir ./distr/lakehouse-cli
-mkdir ./distr/lakehouse-scheduler-svc
-mkdir ./distr/lakehouse-config-svc
+mkdir -p distr/opt
 
-cp ./lakehouse-scheduler-svc/target/lakehouse-scheduler-svc-0.0.1-jar-with-dependencies.jar ./distr/lakehouse-scheduler-svc/
-cp ./lakehouse-cli/target/lakehouse-cli-0.0.1-jar-with-dependencies.jar ./distr/lakehouse-cli/
-cp ./lakehouse-config-svc/target/lakehouse-config-svc-0.0.1-jar-with-dependencies.jar ./distr/lakehouse-config-svc/
+mkdir ./distr/opt/lakehouse-cli
+mkdir ./distr/opt/lakehouse-scheduler-svc
+mkdir ./distr/opt/lakehouse-config-svc
+mkdir ./distr/opt/lakehouse-task-executor-svc
 
-cp ./lakehouse-cli/src/main/resources/application.properties ./distr/lakehouse-cli/
-cp ./lakehouse-config-svc/src/main/resources/application.yml ./distr/lakehouse-config-svc/
-cp ./lakehouse-scheduler-svc/src/main/resources/application.yml ./distr/lakehouse-scheduler-svc/
+cp ./buld/entrypoint.bash ./distr/opt/
+cp ./lakehouse-scheduler-svc/target/lakehouse-scheduler-svc-$VERSION-jar-with-dependencies.jar ./distr/opt/lakehouse-scheduler-svc/
+cp ./lakehouse-cli/target/lakehouse-cli-$VERSION-jar-with-dependencies.jar ./distr/opt/lakehouse-cli/
+cp ./lakehouse-config-svc/target/lakehouse-config-svc-$VERSION-jar-with-dependencies.jar ./distr/opt/lakehouse-config-svc/
+cp ./lakehouse-task-executor-svc/target/lakehouse-task-executor-svc-$VERSION.jar ./distr/opt/lakehouse-task-executor-svc/
+
+cp ./lakehouse-cli/src/main/resources/application.properties ./distr/opt/lakehouse-cli/
+cp ./lakehouse-config-svc/src/main/resources/application.yml ./distr/opt/lakehouse-config-svc/
+cp ./lakehouse-scheduler-svc/src/main/resources/application.yml ./distr/opt/lakehouse-scheduler-svc/
+cp ./lakehouse-task-executor-svc/src/main/resources/application.yml  ./distr/opt/lakehouse-task-executor-svc/

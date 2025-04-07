@@ -25,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 
 
@@ -78,7 +77,7 @@ public class ScheduleTaskInstanceService {
 		Integer result = 0;
 		for (ScheduledTaskForProducerMessage message : scheduledTaskForProducerMessagesRepository.findAll()) {
 
-			ScheduledTaskMsgDTO scheduledTaskMsgDTO = new ScheduledTaskMsgDTO();
+ 				ScheduledTaskMsgDTO scheduledTaskMsgDTO = new ScheduledTaskMsgDTO();
 			scheduledTaskMsgDTO.setId(message.getScheduleTaskInstance().getId());
 			logger.info("schedule {} scenarioact {} task {}",message.getScheduleTaskInstance().getScheduleScenarioActInstance()
 							.getScheduleInstance()
@@ -117,6 +116,8 @@ public class ScheduleTaskInstanceService {
 							scheduledTaskMsgDTO.getId(),
 							scheduledTaskMsgDTO.getTaskExecutionServiceGroupName());
 					scheduledTaskDTOProducerService.send(scheduledTaskMsgDTO);
+					scheduledTaskForProducerMessagesRepository.delete(message);
+
 					result++;
 				}
 				catch (KafkaException ke){
