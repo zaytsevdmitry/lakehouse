@@ -1,12 +1,15 @@
 package org.lakehouse.client.component;
 
 import org.javatuples.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
 public class Parcer {
+	final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-	
+
 	public Pair<String, String> parceEntry(String s){
 		if (s.length() < 2) new Pair<>("", "");
 		try {
@@ -23,7 +26,7 @@ public class Parcer {
 			}
 			else return new Pair<>(sb.toString(), "");
 		}catch (Exception e) {
-			e.printStackTrace();
+			logger.error(e.getMessage(), e);
 			return new Pair<>("", "");
 		}
 	}

@@ -28,7 +28,7 @@ public  class ObjectMapping {
         return objectMapper.readValue(file, clazz);
     }
     
-    public static void objectTofile(String filePath, Object o) throws StreamWriteException, DatabindException, IOException {
+    public static void objectTofile(String filePath, Object o) throws IOException {
     	objectMapper
     		.writerWithDefaultPrettyPrinter()
     		.writeValue(new File(filePath),o);

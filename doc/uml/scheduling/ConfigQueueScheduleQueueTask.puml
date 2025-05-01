@@ -5,8 +5,8 @@ queue tasksQ
 database schedulerDB
 
 (config-service)-> (schedulesQ)
- (schedulesQ) -> (scheduller-service)
- (scheduller-service)--> (schedulerDB)
+ (schedulesQ) -> (scheduler-service)
+ (scheduler-service)--> (schedulerDB)
 (scheduler-service)-> (tasksQ)
 (tasksQ) -> (task-executor)
 @enduml

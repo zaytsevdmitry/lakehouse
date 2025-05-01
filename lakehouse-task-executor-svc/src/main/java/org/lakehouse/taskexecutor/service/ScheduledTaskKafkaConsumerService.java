@@ -1,6 +1,5 @@
 package org.lakehouse.taskexecutor.service;
 
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.lakehouse.client.api.dto.service.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.tasks.ScheduledTaskMsgDTO;
 import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
@@ -8,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.listener.AcknowledgingMessageListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;

@@ -11,10 +11,6 @@ public class ScheduleEffectiveKafkaDeserializer implements Deserializer<Schedule
 
 
     @Override
-    public void configure(Map<String, ?> configs, boolean isKey) {
-    }
-
-    @Override
     public ScheduleEffectiveDTO deserialize(String topic, byte[] data) {
         try {
             if (data == null){
@@ -28,7 +24,4 @@ public class ScheduleEffectiveKafkaDeserializer implements Deserializer<Schedule
         }
     }
 
-    @Override
-    public void close() {
-    }
 }

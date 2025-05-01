@@ -11,6 +11,7 @@
 
     <artifactId>lakehouse-config-svc</artifactId>
     <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <start-class>org.lakehouse.config.LakehouseConfigApplication</start-class>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
@@ -79,11 +80,6 @@
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
-            <!--    <filtering>true</filtering>
-                <excludes>
-                    <exclude>*.properties</exclude>
-                    <exclude>*.yml</exclude>
-                </excludes>-->
             </resource>
         </resources>
         <plugins>

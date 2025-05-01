@@ -2,7 +2,6 @@ package org.lakehouse.scheduler.factory;
 
 import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
-import org.lakehouse.scheduler.entities.ScheduleInstance;
 import org.lakehouse.scheduler.entities.ScheduleInstanceLastBuild;
 
 public  class ScheduleInstanceLastBuildFactory {

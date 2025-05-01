@@ -41,7 +41,7 @@ public class ConfigRestClientHelperTest {
 	@Autowired private ObjectMapper objectMapper;
 
 
-	FileLoader fileLoader = new FileLoader();
+	private final FileLoader fileLoader = new FileLoader();
 
 	@Test
 	public void MakesCorrectCallProjectDTO() throws Exception {

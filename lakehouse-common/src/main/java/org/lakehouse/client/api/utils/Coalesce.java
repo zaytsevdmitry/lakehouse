@@ -15,7 +15,7 @@ public class Coalesce {
      * </p>
      * @param ms1 the priority map of strings
      * @param ms2 the secondary map of strings
-     * @return the prority
+     * @return the priority
      * @since 0.0.1
      */
     public static Map<String,String> applyStringMap(Map<String,String> ms1, Map<String,String> ms2){

@@ -2,7 +2,6 @@ package org.lakehouse.client.api.serialization.task;
 
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Deserializer;
-import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
 import org.lakehouse.client.api.dto.tasks.ScheduledTaskMsgDTO;
 import org.lakehouse.client.api.utils.ObjectMapping;
 
@@ -10,10 +9,6 @@ import java.util.Map;
 
 public class ScheduledTaskMsgKafkaDeserializer implements Deserializer<ScheduledTaskMsgDTO> {
 
-
-    @Override
-    public void configure(Map<String, ?> configs, boolean isKey) {
-    }
 
     @Override
     public ScheduledTaskMsgDTO deserialize(String topic, byte[] data) {
@@ -29,7 +24,4 @@ public class ScheduledTaskMsgKafkaDeserializer implements Deserializer<Scheduled
         }
     }
 
-    @Override
-    public void close() {
-    }
 }

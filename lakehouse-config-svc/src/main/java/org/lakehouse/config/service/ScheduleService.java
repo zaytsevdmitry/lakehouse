@@ -11,7 +11,6 @@ import org.lakehouse.config.entities.scenario.ScenarioActTask;
 import org.lakehouse.config.entities.scenario.ScenarioActTaskEdge;
 import org.lakehouse.config.entities.scenario.ScenarioActTaskExecutionModuleArg;
 import org.lakehouse.config.entities.Schedule;
-import org.lakehouse.config.entities.templates.ScenarioActTemplate;
 import org.lakehouse.config.exception.ScenarioActNotFoundException;
 import org.lakehouse.config.exception.ScheduleNotFoundException;
 import org.lakehouse.config.exception.TaskEffectiveNotFoundException;

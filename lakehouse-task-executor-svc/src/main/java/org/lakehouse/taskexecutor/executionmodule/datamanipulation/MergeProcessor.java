@@ -1,12 +1,13 @@
 package org.lakehouse.taskexecutor.executionmodule.datamanipulation;
 
-import java.util.Map;
-
 import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.taskexecutor.entity.TaskProcessorConfig;
 import org.lakehouse.taskexecutor.executionmodule.AbstractTaskProcessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MergeProcessor extends AbstractTaskProcessor{
+	final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	public MergeProcessor(TaskProcessorConfig taskProcessorConfig) {
 		super(taskProcessorConfig);
@@ -19,7 +20,7 @@ public class MergeProcessor extends AbstractTaskProcessor{
 			Thread.sleep(10000);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error(e.getMessage(), e);
 		} catch (Exception e){
 		return Status.Task.FAILED;
 	}

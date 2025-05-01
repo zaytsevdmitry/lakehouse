@@ -24,7 +24,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ManageStateService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final ScheduleInstanceRunningRepository scheduleInstanceRunningRepository;
-    private final ScheduleInstanceLastBuildRepository scheduleInstanceLastBuildRepository;
     private final ScheduleInstanceRepository scheduleInstanceRepository;
     private final ScheduleScenarioActInstanceRepository scheduleScenarioActInstanceRepository;
     private final ScheduleEffectiveService scheduleEffectiveService;
@@ -32,79 +31,16 @@ public class ManageStateService {
 
     public ManageStateService(
             ScheduleInstanceRunningRepository scheduleInstanceRunningRepository,
-            ScheduleInstanceLastBuildRepository scheduleInstanceLastBuildRepository,
             ScheduleInstanceRepository scheduleInstanceRepository,
             ScheduleScenarioActInstanceRepository scheduleScenarioActInstanceRepository,
             ScheduleEffectiveService scheduleEffectiveService,
             ScheduleScenarioActInstanceDependencyRepository scenarioActInstanceDependencyRepository) {
         this.scheduleInstanceRunningRepository = scheduleInstanceRunningRepository;
-        this.scheduleInstanceLastBuildRepository = scheduleInstanceLastBuildRepository;
         this.scheduleInstanceRepository = scheduleInstanceRepository;
         this.scheduleScenarioActInstanceRepository = scheduleScenarioActInstanceRepository;
         this.scheduleEffectiveService = scheduleEffectiveService;
         this.scenarioActInstanceDependencyRepository = scenarioActInstanceDependencyRepository;
     }
-/*
-    private Optional<ScheduleInstance> getLastScheduleInstance(String scheduleName) {
-        List<ScheduleInstance> scheduleInstanceList = scheduleInstanceRepository
-                .findByScheduleNameOrderByTargetExecutionDateTimeDesc(scheduleName, Limit.of(1));
-
-        if (!scheduleInstanceList.isEmpty()) {
-            return Optional.ofNullable(scheduleInstanceList.get(0));
-        }
-        return Optional.empty();
-    }
-
-
-
-    private void runSchedule(ScheduleInstanceRunning scheduleInstanceRunning) {
-
-        scheduleInstanceRunning.getScheduleInstance().setStatus(Status.Schedule.RUNNING.label);
-        scheduleInstanceRepository.save(scheduleInstanceRunning.getScheduleInstance());
-        scheduleInstanceRunningRepository.save(scheduleInstanceRunning);
-    }
-
-    private ScheduleInstanceRunning resolveScheduleInstance(ScheduleInstanceRunning scheduleInstanceRunning) {
-        ScheduleInstanceRunning sir = new ScheduleInstanceRunning();
-        sir.setId(scheduleInstanceRunning.getId());
-        sir.setConfigScheduleKeyName(scheduleInstanceRunning.getConfigScheduleKeyName());
-        sir.setScheduleInstance(scheduleInstanceRunning.getScheduleInstance());
-
-        //new schedule
-        if (scheduleInstanceRunning.getScheduleInstance() == null) {
-            List<ScheduleInstance> instanceList = scheduleInstanceRepository
-                    .findByScheduleNameNotSuccessOrderByTargetExecutionDateTimeAsc(
-                            scheduleInstanceRunning.getConfigScheduleKeyName(), Limit.of(1));
-            if (!instanceList.isEmpty()) {
-                ScheduleInstance si = instanceList.get(0);
-                scheduleInstanceRunning.setScheduleInstance(si);
-                sir.setScheduleInstance(si);
-            }
-
-        }
-        // not new
-        if (scheduleInstanceRunning.getScheduleInstance() != null
-                &&	sir.getScheduleInstance().getStatus().equals(Status.Schedule.SUCCESS.label)) {
-            try {
-                ScheduleEffectiveDTO scheduleDTO = scheduleEffectiveService.getScheduleEffectiveDTO(sir.getConfigScheduleKeyName());
-                OffsetDateTime next = DateTimeUtils.getNextTargetExecutionDateTime(
-                        scheduleDTO.getIntervalExpression(),
-                        sir.getScheduleInstance().getTargetExecutionDateTime());
-
-                if (OffsetDateTime.now().isAfter(next)) {
-                    scheduleInstanceRepository
-                            .findByScheduleNameAndTargetDateTime(sir.getConfigScheduleKeyName(), next)
-                            .ifPresent(sir::setScheduleInstance);
-
-                }
-
-            } catch (CronParceErrorException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return sir;
-    }
-*/
     private OffsetDateTime resolveNextDate(
             ScheduleInstance scheduleInstance,
             ScheduleEffectiveDTO scheduleEffectiveDTO) {

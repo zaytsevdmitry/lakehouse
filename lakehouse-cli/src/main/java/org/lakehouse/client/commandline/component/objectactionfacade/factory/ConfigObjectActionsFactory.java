@@ -25,7 +25,6 @@ public class ConfigObjectActionsFactory {
 			ScenarioActTemplateObjectActions scenarioActTemplateObjectActions,
 			ScheduleObjectActions scheduleObjectActions,
 			TaskExecutionServiceGroupObjectActions taskExecutionServiceGroupObjectActions
-			//ScheduledTaskObjectActions scheduledTaskObjectActions
 			) {
 		Map<String, ConfigObjectActions> mapObjectActions = new HashMap<String, ConfigObjectActions>();
 		mapObjectActions.put("project", projectObjectActions);
@@ -33,8 +32,7 @@ public class ConfigObjectActionsFactory {
 		mapObjectActions.put("dataset", dataSetObjectActions);
 		mapObjectActions.put("scenarioactemplate", scenarioActTemplateObjectActions);
 		mapObjectActions.put("schedule", scheduleObjectActions);
-		mapObjectActions.put("taskexecutionservicegroup", taskExecutionServiceGroupObjectActions);
-		//mapObjectActions.put("scheduledtask", scheduledTaskObjectActions);
+		mapObjectActions.put("taskexecutionservicegroup", taskExecutionServiceGroupObjectActions);//mapObjectActions.put("scheduledtask", scheduledTaskObjectActions);
 		
 		
 		this.mapObjectActions = new HashMap<String, ConfigObjectActions>();

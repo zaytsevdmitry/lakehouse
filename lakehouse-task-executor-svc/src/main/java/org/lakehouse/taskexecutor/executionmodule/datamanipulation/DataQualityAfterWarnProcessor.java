@@ -1,6 +1,5 @@
 package org.lakehouse.taskexecutor.executionmodule.datamanipulation;
 
-import java.util.Map;
 
 import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.taskexecutor.entity.TaskProcessorConfig;
@@ -10,7 +9,6 @@ public class DataQualityAfterWarnProcessor extends AbstractTaskProcessor{
 
 	public DataQualityAfterWarnProcessor(TaskProcessorConfig taskProcessorConfig) {
 		super(taskProcessorConfig);
-		// TODO Auto-generated constructor stub
 	}
 
 

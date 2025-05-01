@@ -13,7 +13,7 @@ United namespace
 
 [Entities design](./doc/entities_design/entities_design.md)
 
-[Command line](./lakehouse-api-rest-client/doc/commandline.MD)
+[Command line](./lakehouse-cli/doc/commandline.MD)
 
 +-- doc
 |   +-- system_design

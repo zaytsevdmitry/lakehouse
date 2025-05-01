@@ -2,10 +2,8 @@ package org.lakehouse.taskexecutor.test;
 
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.*;
-import org.lakehouse.client.api.constant.Constraint;
 import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.configs.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.DataStoreDTO;
@@ -13,21 +11,17 @@ import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
 import org.lakehouse.client.api.dto.configs.TaskDTO;
 import org.lakehouse.client.api.dto.service.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.tasks.ScheduledTaskMsgDTO;
-import org.lakehouse.client.api.serialization.schedule.ScheduleEffectiveKafkaSerializer;
 import org.lakehouse.client.api.serialization.task.ScheduledTaskMsgKafkaDeserializer;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
-import org.lakehouse.taskexecutor.configuration.ScheduledTaskKafkaConfigurationProperties;
 import org.lakehouse.taskexecutor.entity.TaskProcessor;
 import org.lakehouse.taskexecutor.service.ProcessorFactory;
 import org.lakehouse.taskexecutor.service.TableDefinitionFactory;
 import org.lakehouse.taskexecutor.service.TaskProcessorConfigFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
@@ -67,11 +61,7 @@ import java.util.Map;
                 "lakehouse.task-executor.scheduled.task.kafka.consumer.properties.auto.offset.reset=earliest",
                 "lakehouse.task-executor.scheduled.task.kafka.consumer.topics=test_send_scheduled_task_topic",
         })
-//@EnableConfigurationProperties(value = ScheduledTaskKafkaConfigurationProperties.class)
-/*@ComponentScan(basePackages = {
-        "org.lakehouse.taskexecutor.configuration",
 
-})*/
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @ActiveProfiles("test")
 public class TaskExecutorTest {
@@ -127,27 +117,13 @@ public class TaskExecutorTest {
         return new DefaultKafkaProducerFactory<String,ScheduledTaskMsgDTO>(props).createProducer();
     }
 
-/*
-    @Autowired
-    SchedulerRestClientApi schedulerRestClientApi;
-    @Test
-    @Order(1)
-    void testLock(){
-        ScheduledTaskMsgDTO scheduledTaskMsgDTO = new ScheduledTaskMsgDTO();
-        scheduledTaskMsgDTO.setId(1L);
-        scheduledTaskMsgDTO.setTaskExecutionServiceGroupName("test");
-        Producer<String, ScheduledTaskMsgDTO> producer = getKafkaProducer();
-        producer.send(new ProducerRecord<>(topic,scheduledTaskMsgDTO));
-    }
-*/
 
     @Configuration
     static class ContextConfiguration {
         @Bean
         @Primary
-            //may omit this if this is the only SomeBean defined/visible
         ConfigRestClientApi getConfigRestClientApi() throws IOException {
-            return new ConfigRestClientApiTest();
+            return new ConfigRestClientApiTest(); //stub
         }
     }
 
@@ -159,11 +135,6 @@ public class TaskExecutorTest {
             String dataSetKeyName)
             throws ClassNotFoundException, InvocationTargetException, InstantiationException, IllegalAccessException, NoSuchMethodException {
         ScheduledTaskLockDTO t = new ScheduledTaskLockDTO();
-       /* TaskDTO eff = ;
-        eff.setExecutionModuleArgs(new HashMap<>());
-        eff.setExecutionModule("org.lakehouse.taskexecutor.executionmodule.SparkTaskProcessor");
-        eff.setName("transaction_dds");
-       */
         t.setDataSetKeyName(dataSetKeyName);
         t.setLockId(1L);
         t.setScheduledTaskEffectiveDTO(taskDTO);

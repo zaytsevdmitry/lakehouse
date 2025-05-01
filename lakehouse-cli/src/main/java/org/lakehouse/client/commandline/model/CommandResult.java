@@ -32,7 +32,7 @@ public class CommandResult {
 		this.resultSrtingList = resultSrtingList;
 	}
 	
-	public void setResultSrtingList(List<String> resultSrtingList) {
+	public void setResultStringList(List<String> resultSrtingList) {
 		this.resultSrtingList = resultSrtingList;
 	}
 	

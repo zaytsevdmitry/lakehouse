@@ -3,7 +3,6 @@ package org.lakehouse.scheduler.configuration;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.lakehouse.client.api.dto.tasks.ScheduledTaskMsgDTO;
-import org.lakehouse.client.api.serialization.schedule.ScheduleEffectiveKafkaSerializer;
 import org.lakehouse.client.api.serialization.task.ScheduledTaskMsgKafkaSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

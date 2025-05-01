@@ -3,7 +3,6 @@ package org.lakehouse.scheduler.repository;
 import java.util.List;
 
 import org.lakehouse.scheduler.entities.ScheduleTaskInstance;
-import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 

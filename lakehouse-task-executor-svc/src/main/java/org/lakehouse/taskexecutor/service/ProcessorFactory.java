@@ -2,9 +2,6 @@ package org.lakehouse.taskexecutor.service;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Map;
-
-import org.lakehouse.client.api.dto.configs.TaskDTO;
 import org.lakehouse.client.api.dto.service.ScheduledTaskLockDTO;
 import org.lakehouse.taskexecutor.entity.TaskProcessor;
 import org.lakehouse.taskexecutor.entity.TaskProcessorConfig;
@@ -39,8 +36,8 @@ public class ProcessorFactory {
 		logger.info("Config ready");
 
 		logger.info("Making  processor class");
-		TaskProcessor p = (TaskProcessor) constructor.newInstance(tc);
-		return p;
+		return  (TaskProcessor) constructor.newInstance(tc);
+
 	}
 
 }

@@ -17,8 +17,10 @@ import java.util.Map;
 
 @Configuration
 public class ScheduleEffectiveDTOKafkaProducerConfiguration {
+
     @Value("${lakehouse.config.schedule.kafka.producer.bootstrap-servers}" )
     private String bootstrapServers;
+
     @Bean
     public ProducerFactory<String, ScheduleEffectiveDTO> producerFactory() {
         return new DefaultKafkaProducerFactory<>(producerConfigs());
@@ -30,13 +32,11 @@ public class ScheduleEffectiveDTOKafkaProducerConfiguration {
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ScheduleEffectiveKafkaSerializer.class);
-        // See https://kafka.apache.org/documentation/#producerconfigs for more properties
         return props;
     }
     @Bean
     public KafkaTemplate<String, ScheduleEffectiveDTO> ScheduleEffectiveDTOKafkaTemplate() {
         Producer<String, ScheduleEffectiveDTO> p = producerFactory().createProducer();
-
         return new KafkaTemplate<String, ScheduleEffectiveDTO>(producerFactory());
     }
 

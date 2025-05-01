@@ -24,10 +24,10 @@ public class ScheduleTaskInstance {
 	@OnDelete(action = OnDeleteAction.CASCADE)
 	private ScheduleScenarioActInstance scheduleScenarioActInstance;
 
-	@Column(nullable = true)
+	@Column()
 	private OffsetDateTime beginDateTime;
 	
-	@Column(nullable = true)
+	@Column()
 	private OffsetDateTime endDateTime;
 
 	@Column(nullable = false)

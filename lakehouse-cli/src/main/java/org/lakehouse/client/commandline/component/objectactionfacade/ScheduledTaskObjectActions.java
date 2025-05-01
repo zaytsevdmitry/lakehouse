@@ -7,7 +7,6 @@ import org.lakehouse.client.commandline.model.CommandResult;
 import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
 import org.springframework.stereotype.Component;
 
-import org.lakehouse.client.api.dto.tasks.ScheduledTaskMsgDTO;
 @Component
 public class ScheduledTaskObjectActions implements ObjectActions{
 	private final SchedulerRestClientApi schedulerRestClientApi;

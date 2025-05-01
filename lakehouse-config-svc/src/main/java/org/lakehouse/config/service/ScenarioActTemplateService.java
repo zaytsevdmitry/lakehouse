@@ -5,12 +5,10 @@ import org.lakehouse.client.api.dto.configs.DagEdgeDTO;
 import org.lakehouse.client.api.dto.configs.ScenarioActTemplateDTO;
 
 import org.lakehouse.client.api.dto.configs.TaskDTO;
-import org.lakehouse.config.entities.TaskAbstract;
 import org.lakehouse.config.entities.templates.ScenarioActTemplate;
 import org.lakehouse.config.entities.templates.TaskTemplate;
 import org.lakehouse.config.entities.templates.TaskTemplateEdge;
 import org.lakehouse.config.entities.templates.TaskTemplateExecutionModuleArg;
-import org.lakehouse.config.exception.TaskTemplateNotFoundException;
 import org.lakehouse.config.mapper.Mapper;
 import org.lakehouse.config.repository.*;
 import org.springframework.stereotype.Service;
@@ -162,14 +160,8 @@ public class ScenarioActTemplateService {
 
 	public Optional<TaskTemplate> findTaskTemplateByScenarioAndName(String scenarioActTemplateName, String taskTemplateName){
 		return taskTemplateRepository.findByScenarioActTemplateNameAndName(scenarioActTemplateName,taskTemplateName);
-		//		.orElseThrow(() -> new TaskTemplateNotFoundException(scenarioActTemplateName,taskTemplateName));
 	}
 
-	/*
-	public List<TaskTemplateExecutionModuleArg> getTaskTemplateExecutionModuleArgsByTaskTemplateId(Long id){
-		return executionModuleArgRepository.findByTaskTemplateId(id);
-	}
-	*/
 
 	public Map<String,String> getTaskTemplateExecutionModuleArgsByTaskTemplateId(Long taskTemplateId){
 		return executionModuleArgRepository.findByTaskTemplateId(taskTemplateId)
@@ -181,11 +173,4 @@ public class ScenarioActTemplateService {
 										TaskTemplateExecutionModuleArg::getValue));
 	}
 
-
-			/*public List<TaskTemplateExecutionModuleArg> getTaskTemplateExecutionModuleArgsByTemplateAndTask(
-			String scenarioActTemplateName,
-			String taskTemplateName){
-		return executionModuleArgRepository
-				.findByScenarioTemplateNameAndTaskTemplateName(scenarioActTemplateName,taskTemplateName);
-	*/
 }

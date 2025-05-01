@@ -9,21 +9,6 @@ import java.util.Optional;
 
 public interface ScheduleInstanceLastBuildRepository extends JpaRepository<ScheduleInstanceLastBuild, Long> {
 
-/*
-
-
-	@Query("""
-			select sil\s
-			from ScheduleInstanceLastBuild sil\s
-			 where sil.enabled 
-			 and sil.scheduleInstance.id is null\s
-			)""")
-	List<ScheduleInstanceLastBuild> findByScheduleEnabledNotBuilt();
-
-*/
-
-
-
 	@Query("""
 			select sil\s
 			from ScheduleInstanceLastBuild sil\s

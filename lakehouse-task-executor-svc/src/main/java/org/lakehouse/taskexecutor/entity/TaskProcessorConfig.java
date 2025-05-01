@@ -16,7 +16,7 @@ public class TaskProcessorConfig {
     private  Map<String, DataStoreDTO> dataStores;
     private  Map<String, String> KeyBind;
     private  Map<String, TableDefinition> tableDefinitions;
-    private Set<DataSetDTO> dataSetDTOSet;
+    private  Set<DataSetDTO> dataSetDTOSet;
 
     public TaskProcessorConfig(){}
 

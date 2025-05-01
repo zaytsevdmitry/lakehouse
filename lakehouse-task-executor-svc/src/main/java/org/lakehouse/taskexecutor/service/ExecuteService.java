@@ -11,15 +11,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
-import org.springframework.web.client.ResourceAccessException;
-import org.springframework.web.client.HttpClientErrorException.NotFound;
 
 import java.lang.reflect.InvocationTargetException;
 
 @Service
 public class ExecuteService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-  //  private final ConfigRestClientApi configRestClientApi;
     private final SchedulerRestClientApi schedulerRestClientApi;
     private final String serviceId;
     private final String groupName;
@@ -56,13 +53,12 @@ public class ExecuteService {
                 hb = new Thread(taskLockHeartBeat);
                 hb.start();
                 taskInstanceReleaseDTO.setStatus(p.runTask().label);
-                logger.info("Status {}",taskInstanceReleaseDTO.getStatus());
             } catch (ClassNotFoundException | InvocationTargetException | InstantiationException |
                      IllegalAccessException | NoSuchMethodException e) {
                 logger.error("Task execution error ", e);
                 taskInstanceReleaseDTO.setStatus(Status.Task.FAILED.label);
-                logger.info("Status {}",taskInstanceReleaseDTO.getStatus());
             } finally {
+                logger.info("Status {}",taskInstanceReleaseDTO.getStatus());
                 taskLockHeartBeat.setExit();
                 if (hb != null && hb.isAlive() && !hb.isInterrupted())
                     hb.interrupt();

@@ -28,9 +28,8 @@ show - print requested data
 	one - print json of requested object
 
 	all - print list of objects by requested type
-	
 
-<objectType> - posible value is one of: 
+    <objectType> - possible value is one of: 
 		project 
 		datastore 
 		dataset 
@@ -38,9 +37,8 @@ show - print requested data
 		taskexecutionservicegroup
 		scheduledtask
 		
+    <name|id> - key identifier for requested object
 
-<name|id> - key identifier for requested object
 
-
-<filePath> - full path for file 
+    <filePath> - full path for file 
 

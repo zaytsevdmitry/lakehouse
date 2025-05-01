@@ -24,7 +24,6 @@ import org.lakehouse.config.service.ScheduleService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -40,7 +39,6 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
 
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.*;
 
 @AutoConfigureMockMvc
@@ -64,17 +62,7 @@ public class TestWithPostgres {
 	@Autowired
 	ScriptRepository scriptRepository;
 
-	/*	@Autowired
-	ScheduleInstanceService scheduleInstanceService;
-	@Autowired
-	ScheduleInstanceLastService scheduleInstanceLastService;
-	@Autowired
-	ScheduleTaskInstanceService scheduleTaskInstanceService ;
-	@Autowired
-	ScheduleInstanceRunnigService scheduleInstanceRunnigService;
-	@Autowired 
-	ScheduleScenarioActInstanceService scheduleScenarioActInstanceService;*/
-//repository
+	//repository
 	@Autowired
 	ScenarioActRepository scenarioActRepository;
 
@@ -83,6 +71,7 @@ public class TestWithPostgres {
 	FileLoader fileLoader;
 	@Autowired
 	RestManipulator restManipulator;
+
 	@SuppressWarnings("resource")
 	@Container
 	static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine").withDatabaseName("test")
@@ -95,10 +84,6 @@ public class TestWithPostgres {
 
 	@Autowired
 	private KafkaTemplate<String, ScheduleEffectiveDTO> kafkaTemplate;
-
-
-
-
 
 	@LocalServerPort
 	private Integer port;
@@ -415,9 +400,6 @@ public class TestWithPostgres {
 		assert (sef.getScenarioActEdges() != null);
 		//------------------------------------
 
-		//ScenarioActTemplateDTO expectScenarioActTemplateDTO = loadScenarioActTemplateDTO();
-
-
 		//all task in source schedule present in effective version
 		initialScheduleDTO.getScenarioActs().forEach( sae -> {
 			List<String> taskNamesExp = sae.getTasks().stream().map(TaskDTO::getName).toList();
@@ -434,63 +416,6 @@ public class TestWithPostgres {
 		});
 
 		//------------------------------------
-
-/*
-		// tasks
-		try {
-			// make tasks
-			scheduleInstanceLastService.findAndRegisterNewSchedules();
-			scheduleInstanceRunnigService.findAndRegisterNewSchedules();
-			scheduleInstanceService.buildNewSchedules();
-			//show 
-			List<ScheduledTaskDTO> tasksAll = scheduleTaskInstanceService
-					.findAll();
-			System.out.printf("tasks all = %s\n",tasksAll.size());
-			tasksAll.forEach(t -> System.out.printf(" %-30s |  %-20s \n"  ,t.getName() , t.getStatus()));
-			assert(scheduleTaskInstanceService.findAll().size()==42);
-			
-			// Run tasks
-			scheduleInstanceRunnigService.runSchedules();
-			scheduleScenarioActInstanceService.runNewScenariosActs();
-			
-			scheduleTaskInstanceService.addTaskToQueue();
-			
-			List<ScheduledTaskDTO> tasksQueued = scheduleTaskInstanceService
-					.findAll()
-					.stream()
-					.filter(v -> v.getStatus().equals(Status.Task.QUEUED.label))
-					.toList();
-			tasksQueued.forEach(t -> System.out.printf(" %-30s |  %-20s \n"  ,t.getName() , t.getStatus()));
-			assert(tasksQueued
-					.size()==2);
-			
-			String serviceId = "test";
-			scheduleTaskInstanceService.lockTask(defaultTaskExecutionServiceGroupDTO.getName(), serviceId);
-			scheduleTaskInstanceService.getScheduledTaskLockDTOs().forEach(l -> System.out.printf(" %5s |  %-20s \n",l.getLockId(), l.getLastHeartBeatDateTime().toString()));
-			assert(scheduleTaskInstanceService.getScheduledTaskLockDTOs().size() == 1);
-			ScheduledTaskLockDTO lock = scheduleTaskInstanceService.getScheduledTaskLockDTOs().get(0);
-			TaskExecutionHeartBeatDTO hbDTO = new TaskExecutionHeartBeatDTO();
-			hbDTO.setLockId(lock.getLockId());
-			
-			assert(scheduleTaskInstanceService
-					.heartBeat(hbDTO)
-					.getLastHeartBeatDateTime().isAfter(
-							DateTimeUtils.parceDateTimeFormatWithTZ(  lock.getLastHeartBeatDateTime())));
-			
-		//	scheduleTaskInstanceService.toString()
-			
-			TaskInstanceReleaseDTO releaseLockDto = new TaskInstanceReleaseDTO();
-			releaseLockDto.setLockId(lock.getLockId());
-			releaseLockDto.setStatus(Status.Task.SUCCESS.label);
-			scheduleTaskInstanceService.releaseTask(releaseLockDto);
-			assert(scheduleTaskInstanceService.getScheduledTaskLockDTOs().size() == 0);
-			
-			scheduleTaskInstanceService.findAll().forEach(t -> System.out.printf(" %-30s |  %-20s \n"  ,t.getName() , t.getStatus()));
-			scheduleTaskInstanceService.getScheduledTaskLockDTOs().forEach(l -> System.out.printf(" %5s |  %-20s \n",l.getLockId(), l.getLastHeartBeatDateTime().toString()));
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}*/
 		// delete
 		restManipulator.deleteDTO(resultInitialScheduleDTO.getName(), Endpoint.SCHEDULES_NAME);
 		restManipulator.deleteDTO(resultRegularScheduleDTO.getName(), Endpoint.SCHEDULES_NAME);

@@ -1,0 +1,9 @@
+{
+  "name": "lakehousestorage",
+  "interfaceType": "filesystem",
+  "vendor": "localfs",
+  "url": "file:///tmp/lakehouse",
+  "properties": {
+  },
+  "description": "Local datastore"
+}

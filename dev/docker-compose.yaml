@@ -4,7 +4,7 @@ services:
 
   db:
     image: postgres
-    container_name: db
+    container_name: db-dev
     restart: always
     # set shared memory limit when using docker-compose
     shm_size: 128mb
@@ -22,7 +22,7 @@ services:
       POSTGRES_DB: postgresDB
   broker:
     image: apache/kafka:latest
-    container_name: broker
+    container_name: broker-dev
     ports:
       - 9092:9092
     environment:
@@ -50,7 +50,7 @@ services:
 #      SERVICE_NAME: metastore
 
 
-  minio:
+  minio-dev:
     image: minio/minio
     ports:
       - "9000:9000"
@@ -61,41 +61,6 @@ services:
       MINIO_ROOT_USER: masoud
       MINIO_ROOT_PASSWORD: Strong#Pass#2022
     command: server --console-address ":9001" /data
-
-#  conf-svc:
-#    image: lakehouse
-#    container_name: conf-svc
-#    restart: always
-#    ports:
-#      - "8080:8080"
-#    command: >
-#      bash -c "java
-#      -Dspring.datasource.url=jdbc:postgresql://db:5432/postgresDB
-#      -Dlakehouse.config.schedule.kafka.producer.bootstrap-servers=broker:9092
-#      -jar /opt/lakehouse-config-svc/lakehouse-config-svc-0.0.1-jar-with-dependencies.jar"
-#    depends_on:
-#      - minio
-#      - db
-#      - broker
-#      - hms
-
-#  scheduller-svc:
-#    image: lakehouse
-#    container_name: scheduller-svc
-#    restart: always
-#    ports:
-#      - "8081:8081"
-#    command: >
-#      bash -c "java
-#      -Dspring.datasource.url=jdbc:postgresql://db:5432/postgresDB
-#      -Dlakehouse.scheduler.schedule.task.kafka.producer.properties.bootstrap.servers=broker:9092
-#      -Dlakehouse.scheduler.config.schedule.kafka.consumer.properties.bootstrap.servers=broker:9092
-#      -Dlakehouse.client.rest.config.server.url=http://conf-svc:8080
-#      -jar /opt/lakehouse-scheduler-svc/lakehouse-scheduler-svc-0.0.1-jar-with-dependencies.jar"
-#    depends_on:
-#      - db
-#      - broker
-#      - conf-svc
 
 volumes:
   minio_storage: {}

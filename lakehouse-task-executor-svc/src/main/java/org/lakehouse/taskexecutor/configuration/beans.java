@@ -1,6 +1,5 @@
 package org.lakehouse.taskexecutor.configuration;
 
-import org.lakehouse.taskexecutor.service.ProcessorFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;

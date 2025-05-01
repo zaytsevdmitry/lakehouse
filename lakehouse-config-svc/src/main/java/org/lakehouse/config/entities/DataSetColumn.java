@@ -25,7 +25,6 @@ public class DataSetColumn {
 
 	private String comment;
 
-	@Column(nullable = true)
 	private Integer columnOrder ;
 
 	@ManyToOne(optional = false)

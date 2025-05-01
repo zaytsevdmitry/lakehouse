@@ -32,36 +32,4 @@ public class SchedulerRestClientConfiguration {
 								.uriBuilderFactory(defaultUriBuilderFactory)
 								.build()));
 	}
-
-
-/*@Bean(name = "schedulerRestClient")
-	SchedulerRestClientApi getSchedulerRestClient(
-    		@Value("${lakehouse.client.rest.scheduler.server.url}") String baseURI) {
-
-		logger.info("rest scheduler baseURI:{}", baseURI);
-		System.out.println();
-
-		DefaultUriBuilderFactory defaultUriBuilderFactory = new DefaultUriBuilderFactory(baseURI);
-
-		defaultUriBuilderFactory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.NONE);
-
-		return new SchedulerRestClientApiImpl(
-				new RestClientHelper(
-						RestClient
-								.builder()
-								.uriBuilderFactory(defaultUriBuilderFactory)
-								.build()));
-	}
-
-	@Bean(name="schedulerRestClientHelper")
-	RestClientHelper getSchedulerRestClientHelper(RestClient schedulerRestClient){
-		return new RestClientHelper(schedulerRestClient);
-	}
-	@Bean
-	SchedulerRestClientApi getSchedulerRestClientApi(RestClientHelper schedulerRestClientHelper){
-		return new SchedulerRestClientApiImpl(schedulerRestClientHelper);
-	}
-*/
-    
-
 }

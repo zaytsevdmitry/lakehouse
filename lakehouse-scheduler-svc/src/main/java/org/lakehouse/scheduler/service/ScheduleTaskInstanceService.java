@@ -290,7 +290,7 @@ public class ScheduleTaskInstanceService {
 				t.setStatus(Status.Task.NEW.label);
 				repository.save(t);
 				
-			});;
+			});
 		
 		return l.size();
 	}

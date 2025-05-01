@@ -9,7 +9,7 @@ import org.lakehouse.config.entities.templates.ScenarioActTemplate;
 
 import java.util.Objects;
 /**
- * Описывает один из графов операций над датасетом
+ * Описывает один из графов операций над датасетом.
  * Связывает датасет и расписание
  * */
 @Entity

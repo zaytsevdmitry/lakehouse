@@ -43,8 +43,7 @@ public class ScheduleEffectiveService {
             OffsetDateTime now = OffsetDateTime.now();
             OffsetDateTime next =DateTimeUtils.getNextTargetExecutionDateTime(intervalExpression, lastOffsetDateTime);
             logger.info("interval is {}\nlastOffsetDateTime={}\n              next={}\n               now={}\n",intervalExpression,lastOffsetDateTime,next,now);
-            boolean result = next.isBefore(OffsetDateTime.now());
-        return result;
+            return next.isBefore(OffsetDateTime.now());
         } catch (CronParceErrorException e) {
             logger.error("Error when parsing cron statement in intervalExpression {}",intervalExpression,e);
             return false;

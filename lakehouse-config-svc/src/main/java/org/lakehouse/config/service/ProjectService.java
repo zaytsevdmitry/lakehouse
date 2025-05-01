@@ -46,7 +46,7 @@ public class ProjectService {
 
 	public ProjectDTO findByName(String name) {
 		return mapToDTO(projectRepository.findById(name).orElseThrow(() -> {
-			logger.info("Can't get name: %s", name);
+			logger.info("Can't get name: {}", name);
 			return new ProjectNotFoundException(name);
 		}));
 	}

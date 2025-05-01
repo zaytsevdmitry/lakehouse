@@ -1,7 +1,6 @@
 package org.lakehouse.client.api.dto.service;
 
 import org.lakehouse.client.api.dto.configs.TaskDTO;
-import org.lakehouse.client.api.dto.tasks.ScheduledTaskMsgDTO;
 
 public class ScheduledTaskLockDTO {
 	private Long lockId;

@@ -22,8 +22,11 @@ public class CommandLineClient implements CommandLineRunner {
 
 	
 	@Autowired 
-    private static Logger LOG = LoggerFactory
+    final private static Logger staticLogger = LoggerFactory
       .getLogger(CommandLineClient.class);
+
+	final private  Logger logger = LoggerFactory.getLogger(this.getClass());
+
 
 	private final RootCommandExecutorFactory rootCommandExecutorFactory;
 
@@ -33,14 +36,14 @@ public class CommandLineClient implements CommandLineRunner {
 	}
 	
     public static void main(String[] args) {
-        LOG.info("STARTING THE APPLICATION");
+        staticLogger.info("STARTING THE APPLICATION");
         SpringApplication.run(CommandLineClient.class, args);
-        LOG.info("APPLICATION FINISHED");
+        staticLogger.info("APPLICATION FINISHED");
     }
  
     @Override
     public void run(String... args) {
-        LOG.info("EXECUTING : command line runner");
+        staticLogger.info("EXECUTING : command line runner");
  
         System.out.println("Provide the Java Scanner char input: "); 
         try (Scanner charScanner = new Scanner(System.in)) {
@@ -78,7 +81,7 @@ public class CommandLineClient implements CommandLineRunner {
 						 
 					} catch (Exception e) {
 						System.out.println(e.getLocalizedMessage());
-						e.printStackTrace();
+						logger.error(e.getMessage(), e);
 					}
 				  }
 				  sb.delete(0,sb.length());

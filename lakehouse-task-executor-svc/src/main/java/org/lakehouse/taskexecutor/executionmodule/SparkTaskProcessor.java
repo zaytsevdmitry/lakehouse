@@ -4,8 +4,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.spark.sql.SparkSession;
-//import org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions;
-import org.apache.spark.sql.types.StructType;
+
 import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.configs.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.DataStoreDTO;
@@ -18,7 +17,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-//todo this is demo
+//todo this is demo. ad-hoc experimental  code
 public class SparkTaskProcessor extends AbstractTaskProcessor{
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final TaskProcessorConfig taskProcessorConfig;
@@ -29,7 +28,9 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
     }
 
     SparkSession getSparkSession(String location){
-        /*spark-shell --packages org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.8.1\
+        /*
+
+        spark-shell --packages org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.8.1\
 >         --conf spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions \
 >         --conf spark.sql.catalog.spark_catalog=org.apache.iceberg.spark.SparkSessionCatalog \
 >         --conf spark.sql.catalog.spark_catalog.type=hive \
@@ -37,13 +38,13 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
 >         --conf spark.sql.catalog.local.type=hadoop \
 >         --conf spark.sql.catalog.local.warehouse=$PWD/warehouse
 **/
+
         Map<String,Object> conf = new HashMap<>();
         conf.putAll(taskProcessorConfig.getExecutionModuleArgs()
                 .entrySet()
                 .stream()
                 .filter(sse -> sse.getValue().startsWith("spark."))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
-        conf.put("spark.driver.host", "127.0.0.1");
         conf.put("spark.sql.extensions","org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions");
         conf.put("spark.sql.catalog.spark_catalog","org.apache.iceberg.spark.SparkSessionCatalog");
         conf.put("spark.sql.catalog.spark_catalog.type","hadoop");
@@ -51,10 +52,11 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
       //  conf.put("spark.hive.metastore.uris","thrift://localhost:9083");
         // conf.put("spark.sql.catalogImplementation","hive");
        // conf.put("spark.sql.hive.metastore.version","3.1.3");
+        conf.forEach((string, o) -> logger.info("Spark configuration changes {} -> {}",string,o));
         return SparkSession
                 .builder()
                 .config(conf)
-                .master("local[*]") // todo only for demo
+                .master("local[1]") // todo only for demo
               //  .enableHiveSupport()
                 .getOrCreate();
 
@@ -137,7 +139,12 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
             }else
             {
                 logger.info("Shutdown spark");
-                sparkSession.stop();
+               // sparkSession.stop();
+            }
+            if (!SparkSession.getActiveSession().isEmpty()){
+                SparkSession s = SparkSession.getActiveSession().get();
+                if (s != null)
+                    s.close();
             }
 
         }
@@ -178,14 +185,16 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
            // sparkSession.sql("show tables").show();
             DataStoreDTO dataStoreDTO = dataStoreDTOMap.get(dataSetDTO.getDataStore());
                 if(dataStoreDTO.getInterfaceType().equals("jdbc")){
+                    Properties properties = new Properties();
+                    properties.putAll(dataStoreDTO.getProperties());
                     sparkSession
                             .read()
-                            .format("jdbc")
-                            .options(dataStoreDTO.getProperties())
+                            .jdbc(dataStoreDTO.getUrl(),dataSetDTO.getFullTableName(),properties)
+                            /*.options(dataStoreDTO.getProperties())
                             .option("url", dataStoreDTO.getUrl())
                             .option("dbtable", dataSetDTO.getFullTableName())
                             .load()
-                            .createOrReplaceTempView(dataSetDTO.getName());
+                            */.createOrReplaceTempView(dataSetDTO.getName());
 
                 }else{
                     //todo just for demo

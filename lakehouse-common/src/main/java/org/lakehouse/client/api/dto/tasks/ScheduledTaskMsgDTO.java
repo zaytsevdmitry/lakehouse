@@ -1,7 +1,5 @@
 package org.lakehouse.client.api.dto.tasks;
 
-import org.lakehouse.client.api.dto.configs.TaskDTO;
-
 public class ScheduledTaskMsgDTO  {
 	private Long id;
 	private String taskExecutionServiceGroupName;

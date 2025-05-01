@@ -1,0 +1,86 @@
+{
+  "name": "transaction_dds",
+  "project": "DEMO",
+  "dataStore": "lakehousestorage",
+  "fullTableName": "transaction_dds",
+  "scripts": [{
+    "key": "transaction_dds.sql"
+  }],
+  "sources": [
+    {
+      "name": "client_processing",
+      "properties": {
+        "fetchSize": "10"
+      }
+    },
+    {
+      "name": "transaction_processing",
+      "properties": {
+        "fetchSize": "10000"
+      }
+    }
+  ],
+  "columnSchema": [
+    {
+      "name": "client_name",
+      "description": "Client name",
+      "dataType": "string",
+      "nullable": false
+    },
+    {
+      "name": "id",
+      "description": "tx id",
+      "dataType": "bigint",
+      "nullable": false,
+      "order": 0
+    },
+    {
+      "name": "reg_date_time",
+      "description": "Transaction registration",
+      "dataType": "timestamp",
+      "nullable": false
+    },
+    {
+      "name": "client_id",
+      "description": "from client",
+      "dataType": "string",
+      "nullable": false
+    },
+    {
+      "name": "provider_id",
+      "description": "To provider",
+      "dataType": "string",
+      "nullable": false
+    },
+    {
+      "name": "amount",
+      "description": "Amount paid by the client",
+      "dataType": "decimal",
+      "nullable": false
+    },
+    {
+      "name": "commission",
+      "description": "Commission due to us",
+      "dataType": "string",
+      "nullable": false
+    }
+  ],
+  "constraints":[
+    {
+      "name": "transaction_dds_pk",
+      "type": "primary",
+      "columns": "id",
+      "runtimeLevelCheck": false,
+      "constructLevelCheck": true
+    }
+  ],
+  "properties": {
+    "location": "/mytabs/transaction_dds",
+    "using": "iceberg"
+  },
+  "description": "Details"
+}
+
+
+
+

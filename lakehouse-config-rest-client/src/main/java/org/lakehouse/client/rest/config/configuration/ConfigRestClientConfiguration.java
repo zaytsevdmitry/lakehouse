@@ -30,26 +30,4 @@ public class ConfigRestClientConfiguration {
 										.uriBuilderFactory(defaultUriBuilderFactory)
 										.build()));
 	}
-
-
-	/*@Bean(name = "configRestClient")
-	RestClient getRestClient(RestClient.Builder builder,
-							 @Value("${lakehouse.client.rest.config.server.url}") String baseURI){
-
-		logger.info("rest config baseURI:{}", baseURI);
-		DefaultUriBuilderFactory defaultUriBuilderFactory = new DefaultUriBuilderFactory(baseURI);
-		defaultUriBuilderFactory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.NONE);
-		return builder.uriBuilderFactory(defaultUriBuilderFactory)
-				.build();
-	}
-	@Bean(name = "configRestClientHelper")
-	RestClientHelper getRestClientApiConfigRestClient(RestClient configRestClient){
-		return new RestClientHelper(configRestClient);
-	}
-	@Bean
-	ConfigRestClientApi getConfigRestClientApi(RestClientHelper configRestClientHelper) {
-
-		return new ConfigRestClientApiImpl(configRestClientHelper);
-	}
-*/
 }

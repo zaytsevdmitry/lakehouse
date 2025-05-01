@@ -7,7 +7,7 @@ import org.lakehouse.config.entities.TaskAbstract;
 
 import java.util.Objects;
 /**
- * Используется для указания задач
+ * Используется для указания задач.
  * Расширяет и переопределяет заданный шаблон задач
  * */
 @Entity

@@ -5,7 +5,6 @@ import org.lakehouse.client.api.dto.configs.ColumnDTO;
 import org.lakehouse.client.api.dto.configs.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.DataStoreDTO;
 import org.lakehouse.taskexecutor.entity.TaskProcessorConfig;
-import org.lakehouse.taskexecutor.service.TableDefinitionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,7 +12,7 @@ import java.sql.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-
+//todo this is Demo
 public  class JdbcTaskProcessor extends AbstractTaskProcessor{
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	private final TaskProcessorConfig taskProcessorConfig;
@@ -50,8 +49,8 @@ public  class JdbcTaskProcessor extends AbstractTaskProcessor{
 
 		Properties properties = new Properties();
 	    properties.putAll(ds.getProperties());
-		logger.info("Registering JDBC driver...key driver");
-		logger.info("Connecting to database...");
+
+		logger.info("Connecting to database {}...",ds.getUrl());
 		try(
 				Connection connection = DriverManager.getConnection(ds.getUrl(),properties);
 				Statement statement = connection.createStatement()) {
@@ -59,8 +58,7 @@ public  class JdbcTaskProcessor extends AbstractTaskProcessor{
 				logger.info("Take script");
 				//todo MVP take only one script
 				String unfeeledSQL = taskProcessorConfig.getScripts().get(0);
-				/*for (String unfeeledSQL: taskProcessorConfig.getScripts() ) {
-				*/
+
 				logger.info("resolve table changes");
 				resolveTable(connection);
 
@@ -178,7 +176,7 @@ public  class JdbcTaskProcessor extends AbstractTaskProcessor{
 
 
 		try (Statement statement = connection.createStatement();
-				ResultSet rs = statement.executeQuery(checkSQL);){
+				ResultSet rs = statement.executeQuery(checkSQL)){
 
 			while (rs.next()) {
 				result = rs.getBoolean(1);
@@ -198,22 +196,6 @@ public  class JdbcTaskProcessor extends AbstractTaskProcessor{
 
 		logger.info("Check table {} exits ", tableName);
 		return isObjectExists(connection, String.format("select * from %s where 1=2", tableName));
-		//Statement statement = null;
 
-		/*try {
-			statement = connection.createStatement();
-		} catch (SQLException e) {
-            logger.warn("Can't create statement");
-            logger.warn(e.fillInStackTrace().toString());
-			return false;
-        }
-       try {
-            assert statement != null;
-            return statement.execute(String.format("select * from %s where 1=2", tableName));
-		} catch (SQLException e) {
-			logger.warn(e.fillInStackTrace().toString());
-			return false;
-
-		}*/
     }
 }
