@@ -16,7 +16,7 @@ mkdir ./distr/opt/lakehouse-task-executor-svc
 cp ./lakehouse-scheduler-svc/target/lakehouse-scheduler-svc-$VERSION-jar-with-dependencies.jar ./distr/opt/lakehouse-scheduler-svc/
 cp ./lakehouse-cli/target/lakehouse-cli-$VERSION-jar-with-dependencies.jar ./distr/opt/lakehouse-cli/
 cp ./lakehouse-config-svc/target/lakehouse-config-svc-$VERSION-jar-with-dependencies.jar ./distr/opt/lakehouse-config-svc/
-cp ./lakehouse-task-executor-svc/target/lakehouse-task-executor-svc-$VERSION-jar-with-dependencies.jar ./distr/opt/lakehouse-task-executor-svc/
+cp ./lakehouse-task-executor-svc/target/lakehouse-task-executor-svc-$VERSION.jar ./distr/opt/lakehouse-task-executor-svc/lakehouse-task-executor-svc-$VERSION-jar-with-dependencies.jar
 
 cp ./lakehouse-cli/src/main/resources/application.properties ./distr/opt/lakehouse-cli/
 cp ./lakehouse-config-svc/src/main/resources/application.yml ./distr/opt/lakehouse-config-svc/

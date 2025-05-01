@@ -101,7 +101,7 @@ public  class JdbcTaskProcessor extends AbstractTaskProcessor{
     }
 
 	public String feelScripts(String script){
-		String result = new String(script);
+		String result = script;
 
 		for(Map.Entry<String,String> sse: taskProcessorConfig
 				.getKeyBind()
@@ -162,7 +162,7 @@ public  class JdbcTaskProcessor extends AbstractTaskProcessor{
 		String createTable = String.format(
 				"create table %s (%s)",
 				taskProcessorConfig.getTargetDataSet().getFullTableName(),
-				columns.toString()
+                columns
 				// todo storage parameters ?
 				// todo constraints
 		);

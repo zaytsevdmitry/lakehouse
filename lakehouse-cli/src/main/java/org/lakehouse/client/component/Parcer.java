@@ -21,7 +21,7 @@ public class Parcer {
 				Pair<String, String> result = new Pair<>(
 					first,
 					sb.substring(commandDelimiterPos).trim());
-				System.out.println(String.format("first %s second %s",result.getValue0(),result.getValue1()));
+				logger.info("first {} second {}",result.getValue0(),result.getValue1());
 				return result;
 			}
 			else return new Pair<>(sb.toString(), "");

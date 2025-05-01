@@ -279,8 +279,8 @@ public class TestWithPostgres {
 		ScheduleDTO resultscheduleDTO = scheduleService.save(scheduleDTO);
 		assert (scheduleService.findById(resultscheduleDTO.getName()).getLastChangeNumber() == (schedule.getLastChangeNumber()+1));
 
-		scheduleRepository.delete(resultSchedule);;
-		restManipulator.deleteDTO(dto.getName(), Endpoint.DATA_SETS_NAME);
+		scheduleRepository.delete(resultSchedule);
+        restManipulator.deleteDTO(dto.getName(), Endpoint.DATA_SETS_NAME);
 		restManipulator.deleteDTO(dataStoreDTO.getName(), Endpoint.DATA_STORES_NAME);
 		restManipulator.deleteDTO(projectDTO.getName(), Endpoint.PROJECTS_NAME);
 	
