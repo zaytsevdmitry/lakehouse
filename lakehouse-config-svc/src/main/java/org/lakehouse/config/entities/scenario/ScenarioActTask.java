@@ -13,9 +13,9 @@ import java.util.Objects;
 @Entity
 @Table(uniqueConstraints = 
 	@UniqueConstraint(
-			name = "scenario_act_name__name_uk", 
+			name = "scenario_act_id__name_uk",
 			columnNames = {
-					"scenario_act_name", 
+					"scenario_act_id",
 					"name" }))
 public class ScenarioActTask extends TaskAbstract {
 

@@ -8,7 +8,7 @@ import java.util.Objects;
 
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(name = "data_set_script_data_set_name_source_name_uk", columnNames = {
-		"data_set_name", "source_name" }))
+		"data_set_name", "script_key" }))
 public class DataSetScript {
 
 	@ManyToOne(optional = false)

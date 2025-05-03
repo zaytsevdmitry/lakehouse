@@ -69,7 +69,7 @@ public class TableDefinitionFactory {
         //todo aliases of table queryed in merge - t it's target q is a model script
         return columns
                 .stream()
-                .map(col -> String.format("q.%s", col.getName(),col.getName()))
+                .map(col -> String.format("q.%s", col.getName()))
                 .collect(Collectors.joining(", "));
     }
     private Set<String> getPrimaryKeys(List<DataSetConstraintDTO> constraints){

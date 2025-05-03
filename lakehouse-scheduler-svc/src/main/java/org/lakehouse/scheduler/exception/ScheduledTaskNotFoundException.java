@@ -15,6 +15,6 @@ public class ScheduledTaskNotFoundException extends RuntimeException {
 		super(String.format("Scheduled task with taskExecutionServiceGroup %s and status %s not found" , taskExecutionServiceGroup, status));
 	}
 	public ScheduledTaskNotFoundException(Long taskId , String status) {
-		super(String.format("Scheduled task with id %s not found" , taskId, status));
+		super(String.format("Scheduled task with id %s and status %s not found" , taskId, status));
 	}
 }

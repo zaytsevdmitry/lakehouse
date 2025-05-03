@@ -100,13 +100,10 @@ public class TestWithPostgres {
 		kafka.stop();
 		postgres.stop();
 	}
-//	@Value("${lakehouse.config.schedule.kafka.producer.topic}")
-	//private final  String topic ;
 
 	@DynamicPropertySource
 	static void configureProperties(DynamicPropertyRegistry registry) {
 		registry.add("spring.kafka.bootstrap-servers", kafka::getBootstrapServers);
-		//registry.add("lakehouse.config.schedule.kafka.producer.topic", topic);
 		registry.add("lakehouse.config.schedule.kafka.producer.bootstrap-servers", kafka::getBootstrapServers);
 		registry.add("spring.datasource.url", postgres::getJdbcUrl);
 		registry.add("spring.datasource.username", postgres::getUsername);

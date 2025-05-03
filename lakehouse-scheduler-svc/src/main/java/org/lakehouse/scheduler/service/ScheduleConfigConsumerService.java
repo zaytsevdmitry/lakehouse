@@ -25,7 +25,7 @@ public class ScheduleConfigConsumerService {
             containerFactory = "containerFactory")
     public void listen(ScheduleEffectiveDTO scheduleEffectiveDTO)
     {
-        logger.info("New schedule config change: " + scheduleEffectiveDTO.getName());
+        logger.info("New schedule config change: {}", scheduleEffectiveDTO.getName());
         buildService.registration(scheduleEffectiveDTO);
         logger.info("findAndRegisterNewSchedules");
     }

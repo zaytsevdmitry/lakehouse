@@ -9,7 +9,7 @@ import java.util.Objects;
 
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(name = "schedule_instance_running_schedule_name_uk", columnNames = {
-		"schedule_name" }))
+		"config_schedule_key_name" }))
 public class ScheduleInstanceRunning {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

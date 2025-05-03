@@ -49,15 +49,11 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
         conf.put("spark.sql.catalog.spark_catalog","org.apache.iceberg.spark.SparkSessionCatalog");
         conf.put("spark.sql.catalog.spark_catalog.type","hadoop");
         conf.put("spark.sql.catalog.spark_catalog.warehouse",location);
-      //  conf.put("spark.hive.metastore.uris","thrift://localhost:9083");
-        // conf.put("spark.sql.catalogImplementation","hive");
-       // conf.put("spark.sql.hive.metastore.version","3.1.3");
         conf.forEach((string, o) -> logger.info("Spark configuration changes {} -> {}",string,o));
         return SparkSession
                 .builder()
                 .config(conf)
                 .master("local[1]") // todo only for demo
-              //  .enableHiveSupport()
                 .getOrCreate();
 
 
@@ -162,19 +158,7 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
         logger.info("Prepared query looks as {}", result);
         return result;
     }
-    /*private void resolveTable(SparkSession sparkSession, TableDefinition tableDefinition){
-        if (sparkSession
-                    .sql("show tables")
-                    .filter(String.format(
-                            "(namespace = '%s' or '%s' =='') and tableName='%s'",
-                            tableDefinition.getSchemaName(),
-                            tableDefinition.getSchemaName(),
-                            tableDefinition.getFullTableName()
-                    )).count() < 1)
-        {
-            sparkSession.sql(tableDefinition.getTableDDL());
-        }
-    }*/
+
 
     private void prepareSources(
             SparkSession sparkSession,

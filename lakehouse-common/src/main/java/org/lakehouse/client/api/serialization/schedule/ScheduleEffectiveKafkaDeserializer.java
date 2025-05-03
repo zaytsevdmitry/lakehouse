@@ -5,8 +5,6 @@ import org.apache.kafka.common.serialization.Deserializer;
 import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
 import org.lakehouse.client.api.utils.ObjectMapping;
 
-import java.util.Map;
-
 public class ScheduleEffectiveKafkaDeserializer implements Deserializer<ScheduleEffectiveDTO> {
 
 
