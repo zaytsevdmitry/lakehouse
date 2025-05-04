@@ -10,11 +10,10 @@
 	</parent>
 	<groupId>lakehouse</groupId>
 	<artifactId>lakehouse-parent</artifactId>
-	<version>0.0.1</version>
+	<version>0.1.1</version>
 	<packaging>pom</packaging>
 	<modules>
 		<module>lakehouse-common</module>
-		
 		<module>lakehouse-config-svc</module>
 		<module>lakehouse-config-rest-client</module>
 		<module>lakehouse-scheduler-rest-client</module>
@@ -28,7 +27,6 @@
 
     </modules>
 	<properties>
-		<lakehouse.version>0.0.1</lakehouse.version>
 		<maven.compiler.source>17</maven.compiler.source>
 		<maven.compiler.target>17</maven.compiler.target>
 		<maven.compiler.release>17</maven.compiler.release>

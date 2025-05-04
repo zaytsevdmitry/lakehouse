@@ -8,8 +8,10 @@ import org.lakehouse.config.entities.TaskAbstract;
 import java.util.Objects;
 
 @Entity
-@Table(uniqueConstraints = @UniqueConstraint(name = "task_template_scenario_act_template_name_name_uk", columnNames = {
-		"scenario_act_template_name", "name" }))
+@Table(uniqueConstraints =
+	@UniqueConstraint(
+			name = "task_template_scenario_act_template_name_name_uk",
+			columnNames = {"scenario_act_template_name", "name" }))
 public class TaskTemplate extends TaskAbstract {
 
 

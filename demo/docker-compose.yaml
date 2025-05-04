@@ -71,7 +71,7 @@ services:
       bash -c "java
       -Dspring.datasource.url=jdbc:postgresql://db:5432/postgresDB
       -Dlakehouse.config.schedule.kafka.producer.bootstrap-servers=broker:9092
-      -jar /opt/lakehouse-config-svc/lakehouse-config-svc-0.0.1-jar-with-dependencies.jar"
+      -jar /opt/lakehouse-config-svc/lakehouse-config-svc-0.1.1-jar-with-dependencies.jar"
     depends_on:
 #      - minio
       - db
@@ -92,7 +92,7 @@ services:
       -Dlakehouse.scheduler.run.delay-ms=5000 
       -Dlakehouse.scheduler.resolvedeps.delay-ms=5000 
       -Dlakehouse.client.rest.config.server.url=http://conf-svc:8080 
-      -jar /opt/lakehouse-scheduler-svc/lakehouse-scheduler-svc-0.0.1-jar-with-dependencies.jar"
+      -jar /opt/lakehouse-scheduler-svc/lakehouse-scheduler-svc-0.1.1-jar-with-dependencies.jar"
     depends_on:
       - db
       - broker
@@ -120,7 +120,7 @@ services:
       -Dlakehouse.task-executor.service.id=first1
       -Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1
       -Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=broker:9092
-      -jar /opt/lakehouse-task-executor-svc/lakehouse-task-executor-svc-0.0.1-jar-with-dependencies.jar"
+      -jar /opt/lakehouse-task-executor-svc/lakehouse-task-executor-svc-0.1.1-jar-with-dependencies.jar"
     depends_on:
 #     - minio
       - broker
@@ -149,7 +149,7 @@ services:
       -Dlakehouse.task-executor.service.id=second
       -Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1
       -Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=broker:9092
-      -jar /opt/lakehouse-task-executor-svc/lakehouse-task-executor-svc-0.0.1-jar-with-dependencies.jar"
+      -jar /opt/lakehouse-task-executor-svc/lakehouse-task-executor-svc-0.1.1-jar-with-dependencies.jar"
     depends_on:
 #      - minio
       - broker

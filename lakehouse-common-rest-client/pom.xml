@@ -6,7 +6,7 @@
     <parent>
         <groupId>lakehouse</groupId>
         <artifactId>lakehouse-parent</artifactId>
-        <version>0.0.1</version>
+        <version>0.1.1</version>
     </parent>
 
     <artifactId>lakehouse-common-rest-client</artifactId>
@@ -26,7 +26,7 @@
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-common</artifactId>
-            <version>0.0.1</version>
+            <version>0.1.1</version>
         </dependency>
     </dependencies>
 </project>

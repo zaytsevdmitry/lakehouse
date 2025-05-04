@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -e
-export VERSION=0.0.1
+export VERSION=0.1.1
 cd  ../
 pwd
 mvn clean package

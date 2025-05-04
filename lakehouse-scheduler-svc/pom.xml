@@ -6,7 +6,7 @@
     <parent>
         <groupId>lakehouse</groupId>
         <artifactId>lakehouse-parent</artifactId>
-        <version>0.0.1</version>
+        <version>0.1.1</version>
     </parent>
 
     <artifactId>lakehouse-scheduler-svc</artifactId>
@@ -21,12 +21,12 @@
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-common</artifactId>
-            <version>0.0.1</version>
+            <version>0.1.1</version>
         </dependency>
         <dependency>
         	<groupId>lakehouse</groupId>
         	<artifactId>lakehouse-config-rest-client</artifactId>
-        	<version>0.0.1</version>
+        	<version>0.1.1</version>
 	   </dependency>
              <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-web -->
         <dependency>
@@ -73,7 +73,7 @@
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-common-test</artifactId>
-            <version>0.0.1</version>
+            <version>0.1.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>

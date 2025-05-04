@@ -11,6 +11,8 @@ import org.lakehouse.config.entities.templates.TaskTemplateEdge;
 import org.lakehouse.config.entities.templates.TaskTemplateExecutionModuleArg;
 import org.lakehouse.config.mapper.Mapper;
 import org.lakehouse.config.repository.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -18,6 +20,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class ScenarioActTemplateService {
+	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	private final ScenarioActTemplateRepository scenarioActTemplateRepository;
 	private final TaskTemplateRepository taskTemplateRepository;
 	private final TaskTemplateExecutionModuleArgRepository executionModuleArgRepository;
@@ -110,28 +113,37 @@ public class ScenarioActTemplateService {
 		ScenarioActTemplate scenarioActTemplate = mapScenarioToEntity(scenarioActTemplateDTO);
 		taskTemplateRepository.findByScenarioTemplateName(scenarioActTemplate.getName()).forEach(taskTemplateRepository::delete);
 		taskTemplateEdgeRepository.findByScenarioTemplateName(scenarioActTemplate.getName()).forEach(taskTemplateEdgeRepository::delete);
+		logger.info("Save ScenarioActTemplate.name={}",scenarioActTemplateDTO.getName());
 		ScenarioActTemplate result = scenarioActTemplateRepository.save(scenarioActTemplate);
 
 		Map<String, TaskTemplate> taskTemplates = new HashMap<>();
 
 		scenarioActTemplateDTO.getTasks().forEach(taskDTO -> {
 
-			TaskTemplate taskTemplate = new TaskTemplate();
-			taskTemplate.setScenarioTemplate(scenarioActTemplate);
-			taskTemplate.setName(taskDTO.getName());
-			taskTemplate.setImportance(taskDTO.getImportance());
-			taskTemplate.setExecutionModule(taskDTO.getExecutionModule());
-			taskTemplate.setTaskExecutionServiceGroup(
+			TaskTemplate taskTemplateBefore = new TaskTemplate();
+			taskTemplateBefore.setScenarioTemplate(scenarioActTemplate);
+			taskTemplateBefore.setName(taskDTO.getName());
+			taskTemplateBefore.setImportance(taskDTO.getImportance());
+			taskTemplateBefore.setExecutionModule(taskDTO.getExecutionModule());
+			taskTemplateBefore.setTaskExecutionServiceGroup(
 					taskExecutionServiceGroupRepository.getReferenceById(taskDTO.getTaskExecutionServiceGroupName()));
 
-			taskTemplate.setDescription(taskDTO.getDescription());
-			taskTemplateRepository.save(taskTemplate);
+			taskTemplateBefore.setDescription(taskDTO.getDescription());
 
-			taskTemplates.put(taskTemplate.getName(), taskTemplate);
+			logger.info("Save ScenarioActTemplate.name={}, taskTemplate.name={}",scenarioActTemplateDTO.getName(),taskTemplateBefore.getName());
+
+			TaskTemplate taskTemplateAfter = taskTemplateRepository.save(taskTemplateBefore);
+
+			taskTemplates.put(taskTemplateBefore.getName(), taskTemplateBefore);
 
 			taskDTO.getExecutionModuleArgs().forEach((k, v) -> {
+
+				logger.info("Save ScenarioActTemplate.name={}, taskTemplate.name={}, argKey={}" ,
+						scenarioActTemplateDTO.getName(),
+						taskTemplateAfter.getName(),
+						k);
 				TaskTemplateExecutionModuleArg executionModuleArg = new TaskTemplateExecutionModuleArg();
-				executionModuleArg.setTaskTemplate(taskTemplate);
+				executionModuleArg.setTaskTemplate(taskTemplateAfter);
 				executionModuleArg.setKey(k);
 				executionModuleArg.setValue(v);
 				executionModuleArgRepository.save(executionModuleArg);

@@ -10,8 +10,8 @@ import java.util.Objects;
 @Entity
 @Table(uniqueConstraints =
 	@UniqueConstraint(
-			name = "scenario_act_task_execution_module_arg__scenario_act_task_id__name__uk", 
-			columnNames = {"scenario_act_task_id", "name" }))
+			name = "scenario_act_task_execution_module_arg__scenario_act_task_id__key__uk",
+			columnNames = {"scenario_act_task_id", "key" }))
 public class ScenarioActTaskExecutionModuleArg extends KeyValueAbstract {
 
 	@ManyToOne

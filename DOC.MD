@@ -11,9 +11,14 @@ United namespace
 # links
 [System design](./doc/system_design/system_design.md)
 
+
+
 [Entities design](./doc/entities_design/entities_design.md)
 
 [Command line](./lakehouse-cli/doc/commandline.MD)
 
 +-- doc
 |   +-- system_design
+
+
+[Демо](./demo/README.md)

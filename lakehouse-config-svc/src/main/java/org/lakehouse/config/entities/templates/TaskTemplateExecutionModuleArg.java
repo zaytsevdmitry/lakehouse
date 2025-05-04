@@ -8,8 +8,8 @@ import org.lakehouse.config.entities.KeyValueAbstract;
 import java.util.Objects;
 
 @Entity
-@Table(uniqueConstraints = @UniqueConstraint(name = "task_template_execution_module_arg_task_template_name_name_uk", columnNames = {
-		"task_template_name", "name" }))
+@Table(uniqueConstraints = @UniqueConstraint(name = "task_template_execution_module_arg_task_template_id_key_uk", columnNames = {
+		"task_template_id", "key" }))
 public class TaskTemplateExecutionModuleArg extends KeyValueAbstract {
 
 	@ManyToOne

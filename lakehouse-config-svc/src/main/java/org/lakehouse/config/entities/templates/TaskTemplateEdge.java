@@ -8,9 +8,8 @@ import java.util.Objects;
 
 @Entity
 @Table(uniqueConstraints = {
-		@UniqueConstraint(name = "task_template_edge_data_set_name_name_uk", columnNames = { "data_set_name", "name" }),
 		@UniqueConstraint(name = "task_template_edge_from_to_uk", columnNames = { "scenario_act_template_name",
-				"from_task_template_name", "to_task_template_name" }) })
+				"from_task_template_id", "to_task_template_id" }) })
 public class TaskTemplateEdge {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

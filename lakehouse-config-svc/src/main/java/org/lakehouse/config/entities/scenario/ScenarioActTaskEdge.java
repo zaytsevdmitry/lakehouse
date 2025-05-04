@@ -7,17 +7,12 @@ import org.hibernate.annotations.OnDeleteAction;
 import java.util.Objects;
 
 @Entity
-/*
- * @Table(uniqueConstraints = {
- * 
- * @UniqueConstraint( name =
- * "scenario_act_task_edge__scenario_act_id__from_scenario_act_task_id__uk",
- * columnNames = { "scenario_act_id", "from_scenario_act_task_id" }),
- * 
- * @UniqueConstraint( name =
- * "scenario_act_task_edge__scenario_act_id__to_scenario_act_task_id__uk",
- * columnNames = { "scenario_act_id", "to_scenario_act_task_id" }) })
- */
+  @Table(uniqueConstraints = {
+		  @UniqueConstraint(
+				  name = "scenario_act_task_edge__scenario_act_id__from_scenario_act_task_id__uk",
+				  columnNames = { "scenario_act_id", "from_scenario_act_task" }),
+		  @UniqueConstraint( name = "scenario_act_task_edge__scenario_act_id__to_scenario_act_task_id__uk",
+				  columnNames = { "scenario_act_id", "to_scenario_act_task" }) })
 public class ScenarioActTaskEdge {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

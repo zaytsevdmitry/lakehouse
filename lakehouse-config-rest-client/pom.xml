@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>lakehouse</groupId>
 		<artifactId>lakehouse-parent</artifactId>
-		<version>0.0.1</version>
+		<version>0.1.1</version>
 	</parent>
 	<artifactId>lakehouse-config-rest-client</artifactId>
 
@@ -19,7 +19,7 @@
 		<dependency>
 			<groupId>lakehouse</groupId>
 			<artifactId>lakehouse-common-rest-client</artifactId>
-			<version>0.0.1</version>
+			<version>0.1.1</version>
 		</dependency>
 
 		<!--Test-->
@@ -50,7 +50,7 @@
 		<dependency>
 			<groupId>lakehouse</groupId>
 			<artifactId>lakehouse-common-test</artifactId>
-			<version>0.0.1</version>
+			<version>0.1.1</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
