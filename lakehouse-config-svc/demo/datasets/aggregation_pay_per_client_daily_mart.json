@@ -1,0 +1,54 @@
+{
+  "name": "aggregation_pay_per_client_daily_mart",
+  "project": "DEMO",
+  "dataStore": "lakehousestorage",
+  "fullTableName": "aggregation_pay_per_client_daily_mart",
+  "scripts": [
+    {
+      "key": "aggregation_pay_per_client_daily_mart.sql"
+    }],
+  "sources": [
+    {
+      "name": "transaction_dds"
+    }
+  ],
+  "columnSchema": [
+    {
+      "name": "reg_date",
+      "description": "Truncated reg date time for daily aggregation",
+      "dataType": "date",
+      "nullable": false
+    },    {
+      "name": "client_name",
+      "description": "Name of client",
+      "dataType": "string",
+      "nullable": false
+    },
+    {
+      "name": "sum_amount",
+      "description": "Sum by client",
+      "dataType": "decimal",
+      "nullable": false
+    },
+    {
+      "name": "sum_commission",
+      "description": "Our profit)",
+      "dataType": "decimal",
+      "nullable": false
+    }
+  ],
+  "constraints":[
+    {
+      "name": "aggregation_pay_per_client_daily_mart_pk",
+      "type": "primary",
+      "columns": "client_name,reg_date",
+      "runtimeLevelCheck": false,
+      "constructLevelCheck": true
+    }
+  ],
+  "properties": {
+    "location": "/demo/datamarts/aggregation_pay_per_client_daily_mart",
+    "using": "iceberg"
+  },
+  "description": "We want to know who our most profitable clients are"
+}

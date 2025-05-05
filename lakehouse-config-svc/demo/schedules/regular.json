@@ -1,0 +1,81 @@
+{
+  "name": "regular",
+  "description": "regular schedule for client transactions",
+  "intervalExpression": "0 0 * * * *",
+  "startDateTime": "2024-07-29T21:26:19.183+00:00",
+  "stopDateTime": null,
+  "enabled": true,
+  "scenarioActs": [
+    {
+      "name": "transaction_processing",
+      "dataSet": "transaction_processing",
+      "scenarioActTemplate": null,
+      "tasks": [
+        {
+          "name": "load",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.JdbcTaskProcessor",
+          "importance": "critical",
+          "description": "override load",
+          "executionModuleArgs": {
+            "spark.executor.memory": "1gb",
+            "spark.executor.cores": "2"
+          }
+        }
+      ]
+
+    },
+    {
+      "name": "client_processing",
+      "dataSet": "client_processing",
+      "scenarioActTemplate": null,
+      "tasks": [
+        {
+          "name": "load",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.JdbcTaskProcessor",
+          "importance": "critical",
+          "description": "override load",
+          "executionModuleArgs": {
+            "spark.executor.memory": "1gb",
+            "spark.executor.cores": "2"
+          }
+        }
+      ]
+
+    },
+    {
+      "name": "transaction_dds",
+      "dataSet": "transaction_dds",
+      "scenarioActTemplate": "default"
+    },
+    {
+      "name": "aggregation_pay_per_client_daily_mart",
+      "dataSet": "aggregation_pay_per_client_daily_mart",
+      "scenarioActTemplate": "default"
+    },
+    {
+      "name": "aggregation_pay_per_client_total_mart",
+      "dataSet": "aggregation_pay_per_client_total_mart",
+      "scenarioActTemplate": "default"
+    }
+  ],
+  "scenarioActEdges": [
+    {
+      "from": "transaction_processing",
+      "to": "transaction_dds"
+    },
+    {
+      "from": "client_processing",
+      "to": "transaction_dds"
+    },
+    {
+      "from": "transaction_dds",
+      "to": "aggregation_pay_per_client_daily_mart"
+    },
+    {
+      "from": "transaction_dds",
+      "to": "aggregation_pay_per_client_total_mart"
+    }
+  ]
+}

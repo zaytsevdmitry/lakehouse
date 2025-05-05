@@ -1,0 +1,107 @@
+{
+  "name": "initial",
+  "description": "initial schedule for client transactions",
+  "intervalExpression": "0 0 1 1 * *",
+  "startDateTime": "2020-12-31T21:00:00.000+00:00",
+  "stopDateTime": null,
+  "enabled": true,
+  "scenarioActs": [
+    {
+      "name": "transaction_processing",
+      "dataSet": "transaction_processing",
+      "scenarioActTemplate": null,
+      "tasks": [
+        {
+          "name": "load",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.JdbcTaskProcessor",
+          "importance": "critical",
+          "description": "override load",
+          "executionModuleArgs": {
+            "spark.executor.memory": "1gb",
+            "spark.executor.cores": "2"
+          }
+        }
+      ]
+
+    },
+    {
+      "name": "client_processing",
+      "dataSet": "client_processing",
+      "scenarioActTemplate": null,
+      "tasks": [
+        {
+          "name": "load",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.JdbcTaskProcessor",
+          "importance": "critical",
+          "description": "override load",
+          "executionModuleArgs": {
+            "spark.executor.memory": "1gb",
+            "spark.executor.cores": "2"
+          }
+        }
+      ]
+
+    },
+    {
+      "name": "transaction_dds",
+      "dataSet": "transaction_dds",
+      "scenarioActTemplate": "default",
+      "tasks": [
+        {
+          "name": "extend",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.SparkTaskProcessor",
+          "importance": "critical",
+          "description": "Not exists in template",
+          "executionModuleArgs": {
+            "spark.executor.memory": "5gb",
+            "spark.driver.memory": "2gb"
+          }
+        },
+        {
+          "name": "load",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.SparkTaskProcessor",
+          "importance": "critical",
+          "description": "override load",
+          "executionModuleArgs": {
+            "spark.executor.memory": "1gb",
+            "spark.driver.memory": "2gb",
+            "spark.executor.cores": "2"
+          }
+        }
+      ]
+    },
+    {
+      "name": "aggregation_pay_per_client_daily_mart",
+      "dataSet": "aggregation_pay_per_client_daily_mart",
+      "scenarioActTemplate": "default"
+    },
+    {
+      "name": "aggregation_pay_per_client_total_mart",
+      "dataSet": "aggregation_pay_per_client_total_mart",
+      "scenarioActTemplate": "default"
+    }
+  ],
+  "scenarioActEdges": [
+    {
+      "from": "transaction_processing",
+      "to": "transaction_dds"
+    },
+    {
+      "from": "client_processing",
+      "to": "transaction_dds"
+    },
+    {
+      "from": "transaction_dds",
+      "to": "aggregation_pay_per_client_daily_mart"
+    },
+    {
+      "from": "transaction_dds",
+      "to": "aggregation_pay_per_client_total_mart"
+    }
+  ]
+}
+

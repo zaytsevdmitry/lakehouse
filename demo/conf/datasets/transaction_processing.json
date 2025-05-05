@@ -1,0 +1,65 @@
+{
+  "name": "transaction_processing",
+  "project": "DEMO",
+  "dataStore": "processingdb",
+  "fullTableName": "proc.transactions",
+  "scripts": [{
+    "key": "transaction_processing.sql",
+    "order": 1
+  }],
+  "sources": [],
+  "columnSchema": [
+    {
+      "name": "id",
+      "description": "tx id",
+      "dataType": "serial",
+      "nullable": false,
+      "order": 0,
+      "sequence": true
+    },
+    {
+      "name": "reg_date_time",
+      "description": "Transaction registration",
+      "dataType": "timestamp",
+      "nullable": false
+    },
+    {
+      "name": "client_id",
+      "description": "from client",
+      "dataType": "integer",
+      "nullable": false
+    },
+
+    {
+      "name": "provider_id",
+      "description": "To provider",
+      "dataType": "integer",
+      "nullable": false
+    },
+    {
+      "name": "amount",
+      "description": "Amount paid by the client",
+      "dataType": "decimal",
+      "nullable": false
+    },
+    {
+      "name": "commission",
+      "description": "Commission due to us",
+      "dataType": "decimal",
+      "nullable": false
+    }
+  ],
+  "constraints":[
+    {
+      "name": "transaction_processing_pk",
+      "type": "primary",
+      "columns": "id",
+      "runtimeLevelCheck": false,
+      "constructLevelCheck": true
+    }
+  ],
+  "properties": {
+
+  },
+  "description": "remote transactions table placed  in db schema proc"
+}

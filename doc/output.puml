@@ -1,0 +1,197 @@
+
+@startuml
+skinparam classAttributeIconSize 0
+class ColumnDTO{
+- {static} serialVersionUID : long
+- dataType : String
+- nullable : boolean
++ ColumnDTO()
++ getDataType() : String
++ setDataType(dataType : String) : void
++ isNullable() : boolean
++ setNullable(nullable : boolean) : void
++ equals(o : Object) : boolean
++ hashCode() : int
+}
+ColumnDTO --|> NameDescriptionAbstract
+class DataStoreDTO{
+- name : String
+- interfaceType : String
+- vendor : String
+- properties : Map<String,String>
+- description : String
++ DataStoreDTO()
++ getName() : String
++ setName(name : String) : void
++ getInterfaceType() : String
++ setInterfaceType(interfaceType : String) : void
++ getVendor() : String
++ setVendor(vendor : String) : void
++ getProperties() : Map<String,String>
++ setProperties(properties : Map<String,String>) : void
++ getDescription() : String
++ setDescription(description : String) : void
++ equals(o : Object) : boolean
++ hashCode() : int
+}
+class DataSetDTO{
+- {static} serialVersionUID : long
+- name : String
+- project : String
+- dataStore : String
+- sources : List<DataSetSourceDTO>
+- columnSchema : List<ColumnDTO>
+- properties : Map<String,String>
+- description : String
++ DataSetDTO()
++ getName() : String
++ setName(name : String) : void
++ getProject() : String
++ setProject(project : String) : void
++ getDataStore() : String
++ setDataStore(dataStore : String) : void
++ getSources() : List<DataSetSourceDTO>
++ setSources(sources : List<DataSetSourceDTO>) : void
++ getColumnSchema() : List<ColumnDTO>
++ setColumnSchema(columnSchema : List<ColumnDTO>) : void
++ getProperties() : Map<String,String>
++ setProperties(properties : Map<String,String>) : void
++ getDescription() : String
++ setDescription(description : String) : void
++ equals(o : Object) : boolean
++ hashCode() : int
+}
+DataSetDTO ..|> Serializable
+class ScheduleScenarioActDTO{
+- name : String
+- dataSet : String
+- scenarioActTemplate : String
++ ScheduleScenarioActDTO()
++ getName() : String
++ setName(name : String) : void
++ getDataSet() : String
++ setDataSet(dataSet : String) : void
++ getScenarioActTemplate() : String
++ setScenarioActTemplate(scenarioActTemplate : String) : void
++ equals(o : Object) : boolean
++ hashCode() : int
+}
+class TaskDTO{
+- name : String
+- taskExecutionServiceGroupName : String
+- executionModule : String
+- importance : String
+- description : String
+- executionModuleArgs : Map<String,String>
++ getName() : String
++ setName(name : String) : void
++ getTaskExecutionServiceGroupName() : String
++ setTaskExecutionServiceGroupName(taskExecutionServiceGroupkey : String) : void
++ getExecutionModule() : String
++ setExecutionModule(executionModule : String) : void
++ getImportance() : String
++ setImportance(importance : String) : void
++ getDescription() : String
++ setDescription(description : String) : void
++ getExecutionModuleArgs() : Map<String,String>
++ setExecutionModuleArgs(executionModuleArgs : Map<String,String>) : void
++ equals(o : Object) : boolean
++ hashCode() : int
+}
+class NameDescriptionAbstract{
+- {static} serialVersionUID : long
+- name : String
+- description : String
++ NameDescriptionAbstract()
++ getName() : String
++ setName(name : String) : void
++ getDescription() : String
++ setDescription(description : String) : void
++ equals(o : Object) : boolean
++ hashCode() : int
+}
+NameDescriptionAbstract ..|> Serializable
+class TaskExecutionServiceGroupDTO{
+- {static} serialVersionUID : long
+}
+TaskExecutionServiceGroupDTO --|> NameDescriptionAbstract
+class DataSetSourceDTO{
+- {static} serialVersionUID : long
+- name : String
+- properties : Map<String,String>
++ DataSetSourceDTO()
++ getName() : String
++ setName(name : String) : void
++ getProperties() : Map<String,String>
++ setProperties(properties : Map<String,String>) : void
++ equals(o : Object) : boolean
++ hashCode() : int
+}
+DataSetSourceDTO ..|> Serializable
+class ProjectDTO{
+- {static} serialVersionUID : long
+- name : String
+- description : String
++ ProjectDTO()
++ getName() : String
++ setName(name : String) : void
++ getDescription() : String
++ setDescription(description : String) : void
++ equals(o : Object) : boolean
++ hashCode() : int
+}
+ProjectDTO ..|> Serializable
+class DagEdgeDTO{
+- from : String
+- to : String
++ DagEdgeDTO()
++ getFrom() : String
++ setFrom(from : String) : void
++ getTo() : String
++ setTo(to : String) : void
++ equals(o : Object) : boolean
++ hashCode() : int
+}
+class ScenarioActTemplateDTO{
+- name : String
+- description : String
+- tasks : List<TaskDTO>
+- dagEdges : List<DagEdgeDTO>
++ ScenarioActTemplateDTO()
++ getName() : String
++ setName(name : String) : void
++ getDescription() : String
++ setDescription(description : String) : void
++ getTasks() : List<TaskDTO>
++ setTasks(tasks : List<TaskDTO>) : void
++ getDagEdges() : List<DagEdgeDTO>
++ setDagEdges(dagEdges : List<DagEdgeDTO>) : void
++ equals(o : Object) : boolean
++ hashCode() : int
+}
+class ScheduleDTO{
+- {static} serialVersionUID : long
+- intervalExpression : String
+- startDateTime : String
+- stopDateTime : String
+- scenarioActs : List<ScheduleScenarioActDTO>
+- scenarioActEdges : List<DagEdgeDTO>
+- enabled : boolean
++ ScheduleDTO()
++ getIntervalExpression() : String
++ setIntervalExpression(intervalExpression : String) : void
++ getStartDateTime() : String
++ setStartDateTime(startDateTime : String) : void
++ getStopDateTime() : String
++ setStopDateTime(stopDateTime : String) : void
++ getScenarioActs() : List<ScheduleScenarioActDTO>
++ setScenarioActs(scenarioActs : List<ScheduleScenarioActDTO>) : void
++ isEnabled() : boolean
++ setEnabled(enabled : boolean) : void
++ getScenarioActEdges() : List<DagEdgeDTO>
++ setScenarioActEdges(scenarioActEdges : List<DagEdgeDTO>) : void
++ equals(o : Object) : boolean
++ hashCode() : int
+}
+ScheduleDTO --|> NameDescriptionAbstract
+@enduml

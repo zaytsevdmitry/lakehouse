@@ -36,7 +36,13 @@ class DataSetDTO{
     private String description;
 
 }
-
+class ScheduleScenarioActDTO{
+    private String name;
+    private String dataSet;
+    private String scenarioActTemplate;
+    private List<TaskDTO> tasks;
+    private List<DagEdgeDTO> dagEdges;    
+}
 class ScheduleDTO{
     private String intervalExpression;
     private String startDateTime;
@@ -53,9 +59,22 @@ class ScenarioActTemplateDTO{
     private List<DagEdgeDTO> dagEdges;
 }
 
+class ScheduledTaskDto{
+    private String name;
+    private String taskExecutionServiceGroupName;
+    private String executionModule;
+    private String importance;
+    private String description;
+    private Map<String,String> executionModuleArgs;
+}
+
 ProjectDTO --|{ DataSetDTO
 DataStoreDTO --|{ DataSetDTO
-DataSetDTO --|{ ScheduleDTO
-ScenarioActTemplateDTO --|{ ScheduleDTO
-TaskExecutionServiceGroupDTO  --|{ ScenarioActTemplateDTO
+
+ScheduleScenarioActDTO --|{ ScheduleDTO
+ScenarioActTemplateDTO --|{ ScheduleScenarioActDTO
+TaskExecutionServiceGroupDTO  --|{ TaskDTO
+TaskDTO--|{ ScheduleScenarioActDTO
+TaskDTO--|{ ScenarioActTemplateDTO
+DataSetDTO --|{ ScheduleScenarioActDTO
 @enduml

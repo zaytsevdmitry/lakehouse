@@ -1,4 +1,6 @@
+spark-warehouse
 target
+distr
 .idea
 .project
 .classpath

@@ -1,0 +1,99 @@
+{
+  "name": "default",
+  "description": "Default scenario",
+  "tasks": [
+    {
+      "name": "load",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.SparkTaskProcessor",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "executionModuleArgs": {
+        "spark.executor.memory": "1gb",
+        "spark.driver.memory": "1gb"
+      }
+    },
+    {
+      "name": "merge",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.MergeProcessor",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "executionModuleArgs": {
+        "spark.executor.memory": "1gb",
+        "spark.driver.memory": "1gb",
+        "spark.driver.cores": "1"
+      }
+    },
+    {
+      "name": "dataQualityBefore",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.DataQualityBeforeProcessor",
+      "importance": "warn",
+      "description": "load from remote datastore",
+      "executionModuleArgs": {}
+    },
+    {
+      "name": "apply",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.ApplyProcessor",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "executionModuleArgs": {}
+    },
+    {
+      "name": "dataQualityAfterCritical",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.DataQualityAfterCriticalProcessor",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "executionModuleArgs": {}
+    },
+    {
+      "name": "dataQualityAfterWarn",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.DataQualityAfterWarnProcessor",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "executionModuleArgs": {}
+    },
+    {
+      "name": "finally",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.FinallyProcessor",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "executionModuleArgs": {}
+    }
+  ],
+  "dagEdges": [
+    {
+      "from": "load",
+      "to": "merge"
+    },
+    {
+      "from": "merge",
+      "to": "dataQualityBefore"
+    },
+    {
+      "from": "dataQualityBefore",
+      "to": "apply"
+    },
+    {
+      "from": "apply",
+      "to": "dataQualityAfterCritical"
+    },
+    {
+      "from": "dataQualityAfterCritical",
+      "to": "finally"
+    },
+    {
+      "from": "apply",
+      "to": "dataQualityAfterWarn"
+    },
+    {
+      "from": "dataQualityAfterWarn",
+      "to": "finally"
+    }
+  ]
+}

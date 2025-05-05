@@ -1,0 +1,40 @@
+logging:
+  level: 
+    org:
+      springframework:
+        transaction:
+          interceptor: ERROR
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgresDB?ApplicationName=ConfigSVC
+    username: postgresUser
+    password: postgresPW
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    generate-ddl: true
+    ddl-auto: update
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+    hibernate:
+      transaction:
+        jta:
+          platform: org.hibernate.service.jta.platform.internal.JBossStandAloneJtaPlatform
+    properties:
+      jakarta:
+        persistence:
+          create-database-schemas: true
+      hibernate:
+        default_schema: lakehouse_config
+
+lakehouse:
+  config:
+    schedule:
+      kafka:
+        producer:
+          schedule:
+            send:
+              topic: schedule_changes
+            delete:
+              topic: schedule_deletes
+          bootstrap-servers: localhost:9092
+          topic: schedules_effective

@@ -1,0 +1,38 @@
+server:
+  port: 8082
+spark:
+  master: local
+
+lakehouse:
+  client:
+    rest:
+      config:
+        server:
+          url: http://127.0.0.1:8080
+      scheduler:
+        server:
+          url: http://127.0.0.1:8081
+  task-executor:
+    service:
+      heart-beat-interval-ms: 5000 # must be lower than lakehouse.scheduler.task.retry.delay-ms
+      max-lock-retries: 5
+      max-lock-retries-duration-ms: 5
+      groupName: default
+      id: first1
+    scheduled:
+      task:
+        kafka:
+          consumer:
+            concurrency: 1
+            properties:
+              bootstrap.servers: localhost:9092
+              group.id: task-executor
+              auto.offset.reset: earliest
+            topics: scheduled_task_msg
+#    schedule:
+#      lockTask:
+#        delay-ms: 1000
+#        initial-delay-ms: 1000
+#      heardBeatTask:
+#        delay-ms: 1000
+#        initial-delay-ms: 1000

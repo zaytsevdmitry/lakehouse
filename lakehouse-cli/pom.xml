@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>lakehouse</groupId>
+        <artifactId>lakehouse-parent</artifactId>
+        <version>0.1.1</version>
+    </parent>
+
+    <artifactId>lakehouse-cli</artifactId>
+
+    <properties>
+        <start-class>org.lakehouse.client.CommandLineClient</start-class>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+    <dependencies>
+
+        <dependency>
+            <groupId>lakehouse</groupId>
+            <artifactId>lakehouse-config-rest-client</artifactId>
+            <version>0.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>lakehouse</groupId>
+            <artifactId>lakehouse-scheduler-rest-client</artifactId>
+            <version>0.1.1</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+       <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+       <!--         <filtering>true</filtering>
+                <excludes>
+                    <exclude>*.properties</exclude>
+                    <exclude>*.yaml</exclude>
+                </excludes>
+-->            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                    <archive>
+                        <manifest>
+                            <mainClass>${start-class}</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

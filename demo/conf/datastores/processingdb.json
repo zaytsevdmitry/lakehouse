@@ -1,0 +1,11 @@
+{
+  "name": "processingdb",
+  "interfaceType": "jdbc",
+  "vendor": "postgres",
+  "url": "jdbc:postgresql://db:5432/postgresDB",
+  "properties": {
+    "password": "postgresPW",
+    "user": "postgresUser"
+  },
+  "description": "Remote datastore processingdb"
+}

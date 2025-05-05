@@ -1,0 +1,11 @@
+@startuml
+interface TaskProcessor extends Runnable
+class AbstractTaskProcessor implements TaskProcessor
+class SparkTaskProcessor extends AbstractTaskProcessor 
+class JDBCTaskProcessor extends AbstractTaskProcessor 
+class HTTPTaskProcessor extends AbstractTaskProcessor 
+class ShellTaskProcessor extends AbstractTaskProcessor 
+
+ 
+'{} <- AbstractTaskProcessor{}
+@enduml 

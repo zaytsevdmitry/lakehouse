@@ -1,0 +1,68 @@
+debug: enabled
+server:
+  port: 8081
+logging:
+  level: 
+    org:
+      springframework:
+        transaction:
+          interceptor: ERROR
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgresDB?ApplicationName=SchedulerSVC
+    username: postgresUser
+    password: postgresPW
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    generate-ddl: true
+    ddl-auto: update
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+    hibernate:
+      transaction:
+        jta:
+          platform: org.hibernate.service.jta.platform.internal.JBossStandAloneJtaPlatform
+    properties:
+      jakarta:
+        persistence:
+          create-database-schemas: true
+      hibernate:
+        default_schema: lakehouse_scheduler
+lakehouse:
+  client:
+    rest:
+      config:
+        server:
+          url: http://localhost:8080
+  scheduler:
+    schedule:
+      task:
+        kafka:
+          producer:
+            topic: scheduled_task_msg
+            properties:
+              bootstrap.servers: localhost:9092
+    config:
+      schedule:
+        kafka:
+          consumer:
+            properties:
+              bootstrap.servers: localhost:9092
+              group.id: scheduler
+              auto.offset.reset: earliest
+            topics: schedule_changes
+            concurrency: 1
+    registration:
+      delay-ms: 60000
+      initial-delay-ms: 5000
+    run:
+      delay-ms: 12000
+      initial-delay-ms: 3000
+    resolvedeps:
+      delay-ms: 15000
+      initial-delay-ms: 10000
+    task:
+      retry:
+        delay-ms: 14000
+        initial-delay-ms: 10000
+
