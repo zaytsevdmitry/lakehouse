@@ -2,5 +2,6 @@ spark-warehouse
 target
 distr
 .idea
+.gigaide
 .project
 .classpath
