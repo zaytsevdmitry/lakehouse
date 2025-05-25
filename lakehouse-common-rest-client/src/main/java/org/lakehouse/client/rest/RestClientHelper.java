@@ -3,6 +3,7 @@ package org.lakehouse.client.rest;
 import org.springframework.http.MediaType;
 import org.springframework.web.client.RestClient;
 
+import java.util.Map;
 import java.util.Objects;
 
 public  class RestClientHelper {
@@ -21,6 +22,13 @@ public  class RestClientHelper {
         return restClient
                 .get()
                 .uri(urn, dtoName)
+                .retrieve()
+                .body(clazz);
+    }
+    public  <T> T getDtoOne(Map<String,?> params, String urn, Class<T> clazz) {
+        return restClient
+                .get()
+                .uri(urn, params)
                 .retrieve()
                 .body(clazz);
     }

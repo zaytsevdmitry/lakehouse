@@ -52,7 +52,6 @@ import org.testcontainers.utility.DockerImageName;
 @ComponentScan(basePackages = {
         "org.lakehouse.scheduler"
     }
-//        , excludeFilters={@ComponentScan.Filter(type = FilterType.ANNOTATION, value= EnableScheduling.class)}
 )
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @ActiveProfiles("test")

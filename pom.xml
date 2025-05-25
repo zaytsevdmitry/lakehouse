@@ -18,12 +18,14 @@
 		<module>lakehouse-config-rest-client</module>
 		<module>lakehouse-scheduler-rest-client</module>
 		<module>lakehouse-scheduler-svc</module>
+		<module>lakehouse-dataSetState-rest-client</module>
 		<module>lakehouse-task-executor-svc</module>
 		<module>lakehouse-task-coordinator-svc</module>
 		<module>lakehouse-ui-svc</module>
         <module>lakehouse-cli</module>
         <module>lakehouse-common-test</module>
         <module>lakehouse-common-rest-client</module>
+        <module>lakehouse-dataSetState-svc</module>
 
     </modules>
 	<properties>
