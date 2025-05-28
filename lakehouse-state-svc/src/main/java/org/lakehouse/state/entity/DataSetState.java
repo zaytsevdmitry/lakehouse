@@ -89,4 +89,15 @@ public class DataSetState {
                 ", status='" + status + '\'' +
                 '}';
     }
+
+
+    public DataSetState copy() throws CloneNotSupportedException {
+        DataSetState result = new DataSetState();
+        result.setId(getId());
+        result.setDataSetKeyName(getDataSetKeyName());
+        result.setIntervalStartDateTime(getIntervalStartDateTime());
+        result.setIntervalEndDateTime(getIntervalEndDateTime());
+        result.setStatus(getStatus());
+        return result;
+    }
 }
