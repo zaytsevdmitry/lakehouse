@@ -4,12 +4,15 @@
   <component name="MavenProjectsManager">
     <option name="originalFiles">
       <list>
+        <option value="$PROJECT_DIR$/lakehouse-cli/pom.xml" />
+        <option value="$PROJECT_DIR$/lakehouse-common/pom.xml" />
+        <option value="$PROJECT_DIR$/lakehouse-common-rest-client/pom.xml" />
+        <option value="$PROJECT_DIR$/lakehouse-common-test/pom.xml" />
         <option value="$PROJECT_DIR$/pom.xml" />
-        <option value="$PROJECT_DIR$/lakehouse-scheduller/pom.xml" />
+        <option value="$PROJECT_DIR$/lakehouse-state-svc/pom.xml" />
+        <option value="$PROJECT_DIR$/lakehouse-state-rest-client/pom.xml" />
       </list>
     </option>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_17" default="true" project-jdk-name="temurin-17" project-jdk-type="JavaSDK">
-    <output url="file://$PROJECT_DIR$/out" />
-  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_22" project-jdk-name="temurin-17" project-jdk-type="JavaSDK" />
 </project>

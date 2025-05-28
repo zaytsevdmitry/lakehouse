@@ -13,4 +13,13 @@ public  class StateMapper {
          dataSetState.setIntervalEndDateTime(DateTimeUtils.parceDateTimeFormatWithTZ(dataSetStateDTO.getIntervalEndDateTime()));
          return dataSetState;
     }
+    public static DataSetStateDTO getDataSetStateDTO(DataSetState dataSetState){
+         DataSetStateDTO result = new DataSetStateDTO();
+         result.setDataSetKeyName(dataSetState.getDataSetKeyName());
+         result.setStatus(dataSetState.getStatus());
+         result.setIntervalStartDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(dataSetState.getIntervalStartDateTime()));
+         result.setIntervalEndDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(dataSetState.getIntervalEndDateTime()));
+         return result;
+
+    }
 }
