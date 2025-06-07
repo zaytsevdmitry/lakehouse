@@ -1,23 +1,14 @@
 package org.lakehouse.client.api.dto.service;
 
-import org.lakehouse.client.api.dto.configs.TaskDTO;
+import org.lakehouse.client.api.dto.tasks.ScheduledTaskDTO;
 
 public class ScheduledTaskLockDTO {
 	private Long lockId;
-	private TaskDTO scheduledTaskEffectiveDTO;
+	private ScheduledTaskDTO scheduledTaskEffectiveDTO;
 	private String lastHeartBeatDateTime;
 	private String serviceId;
-	private String scheduleConfKeyName;
-	private String scenarioActConfKeyName;
-	private String scheduleTargetDateTime;
-	private String dataSetKeyName;
-	public void setDataSetKeyName(String dataSetKeyName) {
-		this.dataSetKeyName = dataSetKeyName;
-	}
 
-	public String getDataSetKeyName() {
-		return dataSetKeyName;
-	}
+
 	public ScheduledTaskLockDTO() {
 		
 	}
@@ -30,11 +21,11 @@ public class ScheduledTaskLockDTO {
 		this.lockId = lockId;
 	}
 
-	public TaskDTO getScheduledTaskEffectiveDTO() {
+	public ScheduledTaskDTO getScheduledTaskEffectiveDTO() {
 		return scheduledTaskEffectiveDTO;
 	}
 
-	public void setScheduledTaskEffectiveDTO(TaskDTO scheduledTaskEffectiveDTO) {
+	public void setScheduledTaskEffectiveDTO(ScheduledTaskDTO scheduledTaskEffectiveDTO) {
 		this.scheduledTaskEffectiveDTO = scheduledTaskEffectiveDTO;
 	}
 
@@ -54,27 +45,5 @@ public class ScheduledTaskLockDTO {
 		this.serviceId = serviceId;
 	}
 
-	public String getScheduleConfKeyName() {
-		return scheduleConfKeyName;
-	}
 
-	public void setScheduleConfKeyName(String scheduleConfKeyName) {
-		this.scheduleConfKeyName = scheduleConfKeyName;
-	}
-
-	public String getScenarioActConfKeyName() {
-		return scenarioActConfKeyName;
-	}
-
-	public void setScenarioActConfKeyName(String scenarioActConfKeyName) {
-		this.scenarioActConfKeyName = scenarioActConfKeyName;
-	}
-
-	public String getScheduleTargetDateTime() {
-		return scheduleTargetDateTime;
-	}
-
-	public void setScheduleTargetDateTime(String scheduleTargetDateTime) {
-		this.scheduleTargetDateTime = scheduleTargetDateTime;
-	}
 }

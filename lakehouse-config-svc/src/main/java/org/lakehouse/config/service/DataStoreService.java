@@ -2,7 +2,6 @@ package org.lakehouse.config.service;
 
 import jakarta.transaction.Transactional;
 import org.lakehouse.client.api.dto.configs.DataStoreDTO;
-
 import org.lakehouse.config.entities.DataStore;
 import org.lakehouse.config.entities.DataStoreProperty;
 import org.lakehouse.config.exception.DataStoreNotFoundException;

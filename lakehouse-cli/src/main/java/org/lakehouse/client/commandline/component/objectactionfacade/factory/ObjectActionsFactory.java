@@ -1,19 +1,11 @@
 package org.lakehouse.client.commandline.component.objectactionfacade.factory;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.lakehouse.client.commandline.component.objectactionfacade.DataSetObjectActions;
-import org.lakehouse.client.commandline.component.objectactionfacade.DataStoreObjectActions;
-import org.lakehouse.client.commandline.component.objectactionfacade.ObjectActions;
-import org.lakehouse.client.commandline.component.objectactionfacade.ProjectObjectActions;
-import org.lakehouse.client.commandline.component.objectactionfacade.ScenarioActTemplateObjectActions;
-import org.lakehouse.client.commandline.component.objectactionfacade.ScheduleObjectActions;
-import org.lakehouse.client.commandline.component.objectactionfacade.ScheduledTaskObjectActions;
-import org.lakehouse.client.commandline.component.objectactionfacade.TaskExecutionServiceGroupObjectActions;
-import org.lakehouse.client.commandline.component.objectactionfacade.TaskLockObjectActionsImpl;
+import org.lakehouse.client.commandline.component.objectactionfacade.*;
 import org.lakehouse.client.exception.UnknownObjectTypeInCommandCombination;
 import org.springframework.stereotype.Component;
+
+import java.util.HashMap;
+import java.util.Map;
 @Component
 public class ObjectActionsFactory {
 	

@@ -2,7 +2,6 @@ package org.lakehouse.config.controller;
 
 import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.api.dto.configs.ScheduleDTO;
-
 import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
 import org.lakehouse.client.api.dto.configs.TaskDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;

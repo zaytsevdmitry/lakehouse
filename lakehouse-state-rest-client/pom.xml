@@ -9,7 +9,7 @@
 		<artifactId>lakehouse-parent</artifactId>
 		<version>0.1.1</version>
 	</parent>
-	<artifactId>lakehouse-dataSetState-rest-client</artifactId>
+	<artifactId>lakehouse-state-rest-client</artifactId>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

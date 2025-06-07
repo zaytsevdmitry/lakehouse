@@ -3,7 +3,10 @@ package org.lakehouse.test.config.configuration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.lakehouse.client.api.dto.configs.*;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -77,7 +80,7 @@ public class FileLoader {
 				.collect(
 						Collectors
 								.toMap(
-										DataSetDTO::getName,
+										DataSetDTO::getKeyName,
 										dataSetDTO -> dataSetDTO));
 	}
 

@@ -14,5 +14,7 @@ public abstract class AbstractTaskProcessor implements TaskProcessor {
 		this.taskProcessorConfig = taskProcessorConfig;
     }
 
-
+	public TaskProcessorConfig getTaskProcessorConfig() {
+		return taskProcessorConfig;
+	}
 }

@@ -1,8 +1,7 @@
 package org.lakehouse.config.entities.templates;
 
-import org.lakehouse.config.entities.KeyEntityAbstract;
-
 import jakarta.persistence.Entity;
+import org.lakehouse.config.entities.KeyEntityAbstract;
 
 @Entity
 public class ScenarioActTemplate extends KeyEntityAbstract {

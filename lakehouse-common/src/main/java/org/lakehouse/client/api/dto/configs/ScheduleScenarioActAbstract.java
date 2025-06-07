@@ -10,7 +10,8 @@ public class ScheduleScenarioActAbstract {
     private String dataSet;
     private List<TaskDTO> tasks = new ArrayList<>();
     private List<DagEdgeDTO> dagEdges = new ArrayList<>();
-
+    private String intervalStart;
+    private String intervalEnd;
     public ScheduleScenarioActAbstract() {
     }
 
@@ -51,21 +52,37 @@ public class ScheduleScenarioActAbstract {
                 .sorted(Comparator.comparing(DagEdgeDTO::hashCode))
                 .toList();
     }
+    public String getIntervalStart() {
+        return intervalStart;
+    }
+
+    public void setIntervalStart(String intervalStart) {
+        this.intervalStart = intervalStart;
+    }
+
+    public String getIntervalEnd() {
+        return intervalEnd;
+    }
+
+    public void setIntervalEnd(String intervalEnd) {
+        this.intervalEnd = intervalEnd;
+    }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ScheduleScenarioActAbstract that = (ScheduleScenarioActAbstract) o;
-        return Objects.equals(getName(), that.getName()) 
-        		&& Objects.equals(getDataSet(), that.getDataSet()) 
-
-        		&& Objects.equals(this.getTasks(), that.getTasks())
-                && Objects.equals(getDagEdges(), that.getDagEdges());
+        return Objects.equals(getName(), that.getName())
+                && Objects.equals(getDataSet(), that.getDataSet())
+                && Objects.equals(getTasks(), that.getTasks())
+                && Objects.equals(getDagEdges(), that.getDagEdges())
+                && Objects.equals(getIntervalStart(), that.getIntervalStart())
+                && Objects.equals(getIntervalEnd(), that.getIntervalEnd());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getName(), getDataSet());
+        return Objects.hash(getName(), getDataSet(), getTasks(), getDagEdges(), getIntervalStart(), getIntervalEnd());
     }
 }

@@ -9,7 +9,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 //todo this is Demo
@@ -30,22 +33,22 @@ public  class JdbcTaskProcessor extends AbstractTaskProcessor{
 		keyBind.putAll(
 				taskProcessorConfig.getDataSetDTOSet().stream()
 				.collect(Collectors.toMap(dataSetDTO -> 
-						String.format("${source(%s)}", dataSetDTO.getName()),
+						String.format("${source(%s)}", dataSetDTO.getKeyName()),
                         DataSetDTO::getFullTableName))
 		);
 		taskProcessorConfig.setKeyBind(keyBind);
 		
 	try{
 		logger.info("JdbcTaskProcessor.run >> dataSet={}, dataStore={}",
-				taskProcessorConfig.getTargetDataSet().getName(),
-				taskProcessorConfig.getTargetDataSet().getDataStore()
+				taskProcessorConfig.getTargetDataSet().getKeyName(),
+				taskProcessorConfig.getTargetDataSet().getDataStoreKeyName()
 				)
 		;
 		DataStoreDTO ds = taskProcessorConfig
 				.getDataStores()
 				.get(taskProcessorConfig
 						.getTargetDataSet()
-						.getDataStore());
+						.getDataStoreKeyName());
 
 		Properties properties = new Properties();
 	    properties.putAll(ds.getProperties());

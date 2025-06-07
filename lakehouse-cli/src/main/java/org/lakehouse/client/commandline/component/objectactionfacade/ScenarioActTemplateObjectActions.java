@@ -1,15 +1,14 @@
 package org.lakehouse.client.commandline.component.objectactionfacade;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-
+import org.lakehouse.client.api.dto.configs.ScenarioActTemplateDTO;
+import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.client.commandline.model.CommandResult;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.springframework.stereotype.Component;
 
-import org.lakehouse.client.api.dto.configs.ScenarioActTemplateDTO;
-import org.lakehouse.client.api.utils.ObjectMapping;
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
 @Component
 public class ScenarioActTemplateObjectActions implements ConfigObjectActions{
 	private final ConfigRestClientApi configRestClientApi;

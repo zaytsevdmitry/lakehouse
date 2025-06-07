@@ -1,13 +1,16 @@
 package org.lakehouse.state.controller;
 
 import org.lakehouse.client.api.constant.Endpoint;
+import org.lakehouse.client.api.dto.state.DataSetIntervalDTO;
 import org.lakehouse.client.api.dto.state.DataSetStateDTO;
+import org.lakehouse.client.api.dto.state.DataSetStateResponseDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.state.mapper.StateMapper;
 import org.lakehouse.state.service.StateService;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class StateController {
@@ -17,15 +20,19 @@ public class StateController {
         this.stateService = stateService;
     }
 
-    @GetMapping(Endpoint.STATE_DATASET_GET)
-    List<DataSetStateDTO> get(
-            @PathVariable String dataSetKeyName,
+    @GetMapping(Endpoint.STATE_DATASET)
+    DataSetStateResponseDTO getStateByInterval(
+            @RequestBody DataSetIntervalDTO dataSetIntervalDTO
+            /*@PathVariable String dataSetKeyName,
             @PathVariable String intervalStartDateTime,
-            @PathVariable String intervalEndDateTime) {
-        return stateService.get(
-                dataSetKeyName,
+            @PathVariable String intervalEndDateTime*/) {
+        return stateService.getStateByInterval(
+                /*dataSetKeyName,
                 DateTimeUtils.parceDateTimeFormatWithTZ(intervalStartDateTime),
-                DateTimeUtils.parceDateTimeFormatWithTZ(intervalEndDateTime)).stream().map(StateMapper::getDataSetStateDTO).toList();
+                DateTimeUtils.parceDateTimeFormatWithTZ(intervalEndDateTime)*/
+                dataSetIntervalDTO.getDataSetKeyName(),
+                DateTimeUtils.parceDateTimeFormatWithTZ(dataSetIntervalDTO.getIntervalStartDateTime()),
+                DateTimeUtils.parceDateTimeFormatWithTZ(dataSetIntervalDTO.getIntervalEndDateTime()));
     }
     @PutMapping(Endpoint.SCHEDULED_TASKS_LOCK_HEARTBEAT)
     void setState(@RequestBody  DataSetStateDTO dataSetStateDTO) {

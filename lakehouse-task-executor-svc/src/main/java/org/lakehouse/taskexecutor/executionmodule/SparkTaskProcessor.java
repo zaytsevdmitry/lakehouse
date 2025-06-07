@@ -4,7 +4,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.spark.sql.SparkSession;
-
 import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.configs.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.DataStoreDTO;
@@ -14,7 +13,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 //todo this is demo. ad-hoc experimental  code
@@ -66,8 +68,8 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
         keyBind.putAll(
                 taskProcessorConfig.getDataSetDTOSet().stream()
                         .collect(Collectors.toMap(dataSetDTO ->
-                                        String.format("${source(%s)}", dataSetDTO.getName()),
-                                DataSetDTO::getName))
+                                        String.format("${source(%s)}", dataSetDTO.getKeyName()),
+                                DataSetDTO::getKeyName))
         );
         taskProcessorConfig.setKeyBind(keyBind);
 
@@ -90,7 +92,7 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
                             .getDataStores()
                             .get(taskProcessorConfig
                                     .getTargetDataSet()
-                                    .getDataStore()).getUrl());
+                                    .getDataStoreKeyName()).getUrl());
             sparkSession.catalog().listCatalogs().show();
 
 
@@ -98,7 +100,7 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
             prepareSources(sparkSession, taskProcessorConfig.getDataSetDTOSet(),taskProcessorConfig.getDataStores());
 
             TableDefinition currentTableDefinition =
-            taskProcessorConfig.getTableDefinitions().get(taskProcessorConfig.getTargetDataSet().getName());
+            taskProcessorConfig.getTableDefinitions().get(taskProcessorConfig.getTargetDataSet().getKeyName());
 
             logger.info("Creating statement...{}", sql);
             String  merge = String.format(
@@ -109,7 +111,7 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
                             "WHEN MATCHED  THEN UPDATE SET " +
                             "%s\n" +
                             "WHEN NOT MATCHED THEN INSERT  (%s) VALUES (%s)",
-                    taskProcessorConfig.getTargetDataSet().getName(),
+                    taskProcessorConfig.getTargetDataSet().getKeyName(),
                     sql,
                     currentTableDefinition.getColumnsMergeOn(),
                     currentTableDefinition.getColumnsUpdateSet(),
@@ -123,7 +125,7 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
             logger.info(merge);
             sparkSession.sql(merge);
             logger.info("Script execution is done");
-            sparkSession.sql(String.format("select * from %s",taskProcessorConfig.getTargetDataSet().getName())).show();
+            sparkSession.sql(String.format("select * from %s",taskProcessorConfig.getTargetDataSet().getKeyName())).show();
             result = Status.Task.SUCCESS;
         }catch (Exception e){
             logger.error("Error task execution",e);
@@ -167,7 +169,7 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
        /// sparkSession.sql("show tables").show();
         for(DataSetDTO dataSetDTO:datasets){
            // sparkSession.sql("show tables").show();
-            DataStoreDTO dataStoreDTO = dataStoreDTOMap.get(dataSetDTO.getDataStore());
+            DataStoreDTO dataStoreDTO = dataStoreDTOMap.get(dataSetDTO.getDataStoreKeyName());
                 if(dataStoreDTO.getInterfaceType().equals("jdbc")){
                     Properties properties = new Properties();
                     properties.putAll(dataStoreDTO.getProperties());
@@ -178,11 +180,11 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
                             .option("url", dataStoreDTO.getUrl())
                             .option("dbtable", dataSetDTO.getFullTableName())
                             .load()
-                            */.createOrReplaceTempView(dataSetDTO.getName());
+                            */.createOrReplaceTempView(dataSetDTO.getKeyName());
 
                 }else{
                     //todo just for demo
-                    TableDefinition td = taskProcessorConfig.getTableDefinitions().get(dataSetDTO.getName());
+                    TableDefinition td = taskProcessorConfig.getTableDefinitions().get(dataSetDTO.getKeyName());
                   //  sparkSession.sqlContext().tables().show();
                    /* sparkSession.sqlContext().createExternalTable(
                             dataSetDTO.getName(),
@@ -199,7 +201,7 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
                             .createOrReplaceTempView(dataSetDTO.getName());*/
 
                 String ddl = String.format("create  external table\n if not exists\n %s(%s)\n using  iceberg\n",
-                        dataSetDTO.getName(),
+                        dataSetDTO.getKeyName(),
                         td.getColumnsDDL()
                       //  dataStoreDTO.getUrl().concat(dataSetDTO.getProperties().get("location"))
                         );
@@ -207,8 +209,8 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
                 sparkSession.sql(ddl);
                 }
 
-            logger.info(dataSetDTO.getName());
-            sparkSession.sql(String.format("select * from %s",dataSetDTO.getName())).show();
+            logger.info(dataSetDTO.getKeyName());
+            sparkSession.sql(String.format("select * from %s",dataSetDTO.getKeyName())).show();
         }
 
         /*

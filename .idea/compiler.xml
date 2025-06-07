@@ -22,6 +22,7 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="lakehouse-jinjava-cusom" target="17" />
       <module name="lakehouse-state-rest-client" target="17" />
       <module name="lakehouse-state-svc" target="17" />
     </bytecodeTargetLevel>
@@ -36,6 +37,7 @@
       <module name="lakehouse-config-svc" options="-parameters" />
       <module name="lakehouse-dataSetState-rest-client" options="-parameters" />
       <module name="lakehouse-dataSetState-svc" options="-parameters" />
+      <module name="lakehouse-jinjava-cusom" options="-parameters" />
       <module name="lakehouse-scheduler-rest-client" options="-parameters" />
       <module name="lakehouse-scheduler-svc" options="-parameters" />
       <module name="lakehouse-state-rest-client" options="-parameters" />

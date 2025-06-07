@@ -1,7 +1,5 @@
 package org.lakehouse.client;
 
-import java.util.Scanner;
-
 import org.lakehouse.client.commandline.component.objectactionfacade.factory.RootCommandExecutorFactory;
 import org.lakehouse.client.commandline.model.CommandResult;
 import org.lakehouse.client.rest.config.configuration.ConfigRestClientConfiguration;
@@ -12,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+import java.util.Scanner;
 
 @SpringBootApplication
 		(scanBasePackages = "org.lakehouse.client",

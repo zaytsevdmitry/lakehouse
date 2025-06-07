@@ -9,7 +9,7 @@
         <version>0.1.1</version>
     </parent>
 
-    <artifactId>lakehouse-dataSetState-svc</artifactId>
+    <artifactId>lakehouse-state-svc</artifactId>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>

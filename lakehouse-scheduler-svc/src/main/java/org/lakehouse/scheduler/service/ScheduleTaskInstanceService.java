@@ -9,6 +9,7 @@ import org.lakehouse.client.api.dto.service.TaskInstanceReleaseDTO;
 import org.lakehouse.client.api.dto.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.tasks.ScheduledTaskMsgDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
+import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.scheduler.entities.ScheduleTaskInstance;
 import org.lakehouse.scheduler.entities.ScheduleTaskInstanceDependency;
 import org.lakehouse.scheduler.entities.ScheduleTaskInstanceExecutionLock;
@@ -16,15 +17,16 @@ import org.lakehouse.scheduler.entities.ScheduledTaskForProducerMessage;
 import org.lakehouse.scheduler.exception.ReleaseTaskStatusChangeException;
 import org.lakehouse.scheduler.exception.ScheduledTaskInstanceLockNotFoundException;
 import org.lakehouse.scheduler.exception.ScheduledTaskNotFoundException;
+import org.lakehouse.scheduler.factory.ScheduleTaskInstanceFactory;
 import org.lakehouse.scheduler.repository.ScheduleTaskInstanceDependencyRepository;
 import org.lakehouse.scheduler.repository.ScheduleTaskInstanceExecutionLockRepository;
-import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.scheduler.repository.ScheduleTaskInstanceRepository;
 import org.lakehouse.scheduler.repository.ScheduledTaskForProducerMessagesRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 
@@ -37,13 +39,15 @@ public class ScheduleTaskInstanceService {
 	private final ScheduledTaskForProducerMessagesRepository scheduledTaskForProducerMessagesRepository;
 	private final ScheduledTaskDTOProducerService scheduledTaskDTOProducerService;
 	private final ConfigRestClientApi configRestClientApi;
+	private final ScheduleEffectiveService scheduleEffectiveService;
+	private final ScheduleTaskInstanceFactory scheduleTaskInstanceFactory;
 	public ScheduleTaskInstanceService(
             ScheduleTaskInstanceRepository repository,
             ScheduleTaskInstanceExecutionLockRepository executionLockRepository,
             ScheduleTaskInstanceDependencyRepository dependencyRepository,
             ScheduledTaskDTOProducerService scheduledTaskDTOProducerService,
             ScheduledTaskForProducerMessagesRepository scheduledTaskForProducerMessagesRepository,
-            ConfigRestClientApi configRestClientApi
+            ConfigRestClientApi configRestClientApi, ScheduleEffectiveService scheduleEffectiveService, ScheduleTaskInstanceFactory scheduleTaskInstanceFactory
     ) {
 		this.repository = repository;
 		this.dependencyRepository = dependencyRepository;
@@ -51,6 +55,8 @@ public class ScheduleTaskInstanceService {
         this.scheduledTaskForProducerMessagesRepository = scheduledTaskForProducerMessagesRepository;
         this.configRestClientApi = configRestClientApi;
 		this.scheduledTaskDTOProducerService = scheduledTaskDTOProducerService;
+        this.scheduleEffectiveService = scheduleEffectiveService;
+        this.scheduleTaskInstanceFactory = scheduleTaskInstanceFactory;
     }
 	
 	
@@ -127,27 +133,7 @@ public class ScheduleTaskInstanceService {
 		}
 		return result;
 	}
-	private ScheduledTaskDTO mapScheduledTaskToDTO(ScheduleTaskInstance sti) {
-		ScheduledTaskDTO result = new ScheduledTaskDTO();
-		result.setId(sti.getId());
-		result.setScenarioActName(sti.getScheduleScenarioActInstance().getName());
-		result.setScheduleName(sti.getScheduleScenarioActInstance().getScheduleInstance().getConfigScheduleKeyName());
-		result.setScheduleTargetTimestamp(
-				DateTimeUtils.formatDateTimeFormatWithTZ(
-						sti.getScheduleScenarioActInstance()
-								.getScheduleInstance()
-								.getTargetExecutionDateTime()));
 
-
-		TaskDTO taskDTO = configRestClientApi.getEffectiveTaskDTO(result.getScheduleName(),result.getScenarioActName(),result.getName());
-
-		result.setExecutionModule(taskDTO.getExecutionModule());
-		result.setExecutionModuleArgs(taskDTO.getExecutionModuleArgs());
-		result.setName(sti.getName());
-		result.setStatus(sti.getStatus());
-		result.setTaskExecutionServiceGroupName(taskDTO.getTaskExecutionServiceGroupName());
-		return result;
-	}
 	private ScheduledTaskMsgDTO mapScheduledTaskToMsgDTO(ScheduleTaskInstance sti) {
 		ScheduledTaskMsgDTO result = new ScheduledTaskMsgDTO();
 		result.setId(sti.getId());
@@ -159,26 +145,9 @@ public class ScheduleTaskInstanceService {
 		ScheduledTaskLockDTO result = new ScheduledTaskLockDTO();
 		result.setLockId(l.getId());
 
-		result.setScheduledTaskEffectiveDTO(
-				configRestClientApi.getEffectiveTaskDTO(
-						l.getScheduleTaskInstance().getScheduleScenarioActInstance().getScheduleInstance().getConfigScheduleKeyName(),
-						l.getScheduleTaskInstance().getScheduleScenarioActInstance().getName(),
-						l.getScheduleTaskInstance().getName()
-				));
+		result.setScheduledTaskEffectiveDTO( scheduleTaskInstanceFactory.mapScheduledTaskToDTO(l.getScheduleTaskInstance()));
 
-		result.setScheduleConfKeyName(l.getScheduleTaskInstance().getScheduleScenarioActInstance().getScheduleInstance().getConfigScheduleKeyName());
-		result.setScenarioActConfKeyName(l.getScheduleTaskInstance().getScheduleScenarioActInstance().getName());
 		result.setServiceId(l.getServiceId());
-		result.setScheduleTargetDateTime(
-				DateTimeUtils
-						.formatDateTimeFormatWithTZ(
-								l.getScheduleTaskInstance()
-										.getScheduleScenarioActInstance()
-										.getScheduleInstance()
-										.getTargetExecutionDateTime()));
-
-		result.setDataSetKeyName(l.getScheduleTaskInstance().getScheduleScenarioActInstance().getConfDataSetKeyName());
-
 		if (l.getLastHeartBeatDateTime() != null)
 			result.setLastHeartBeatDateTime(DateTimeUtils.formatDateTimeFormatWithTZ( l.getLastHeartBeatDateTime()));
 		return result;
@@ -248,7 +217,7 @@ public class ScheduleTaskInstanceService {
 	public List<ScheduledTaskDTO> findAll() {
 		return repository
 				.findAll()
-				.stream().map(sti-> mapScheduledTaskToDTO(sti))
+				.stream().map(scheduleTaskInstanceFactory::mapScheduledTaskToDTO)
 				.toList();
 	}	
 	

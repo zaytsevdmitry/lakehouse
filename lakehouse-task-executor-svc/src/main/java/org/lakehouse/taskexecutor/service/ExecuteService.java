@@ -5,12 +5,12 @@ import org.lakehouse.client.api.dto.service.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.service.TaskExecutionHeartBeatDTO;
 import org.lakehouse.client.api.dto.service.TaskInstanceReleaseDTO;
 import org.lakehouse.client.api.dto.tasks.ScheduledTaskMsgDTO;
+import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
 import org.lakehouse.taskexecutor.entity.TaskProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -69,9 +69,9 @@ public class ExecuteService {
                         "Release lockid={}, task={}, scheduleName={}, scheduleTargetTimestamp={}, scenarioActName={}, status={}",
                         scheduledTaskLockDTO.getLockId(),
                         scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getName(),
-                        scheduledTaskLockDTO.getScheduleConfKeyName(),
-                        scheduledTaskLockDTO.getScheduleTargetDateTime(),
-                        scheduledTaskLockDTO.getScenarioActConfKeyName(),
+                        scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getScheduleKeyName(),
+                        scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getTargetDateTime(),
+                        scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getScenarioActKeyName(),
                         taskInstanceReleaseDTO.getStatus());
 
                 schedulerRestClientApi.lockRelease(taskInstanceReleaseDTO);

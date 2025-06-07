@@ -1,30 +1,26 @@
 package org.lakehouse.client.rest.config.test;
 
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
-
-import org.junit.runner.RunWith;
-import org.lakehouse.client.api.dto.configs.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
-
+import org.junit.runner.RunWith;
+import org.lakehouse.client.api.constant.Endpoint;
+import org.lakehouse.client.api.dto.configs.*;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.client.rest.config.configuration.ConfigRestClientConfiguration;
 import org.lakehouse.test.config.configuration.FileLoader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
 import org.springframework.http.MediaType;
-
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import org.lakehouse.client.api.constant.Endpoint;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {ConfigRestClientConfiguration.class})

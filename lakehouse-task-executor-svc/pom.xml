@@ -32,7 +32,10 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
         <dependency>
             <groupId>lakehouse</groupId>
@@ -45,6 +48,11 @@
             <version>0.1.1</version>
         </dependency>
         <dependency>
+            <groupId>lakehouse</groupId>
+            <artifactId>lakehouse-state-rest-client</artifactId>
+            <version>0.1.1</version>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.kafka</groupId>
             <artifactId>spring-kafka</artifactId>
         </dependency>
@@ -53,6 +61,7 @@
             <artifactId>httpcore</artifactId>
             <version>4.4.16</version>
         </dependency>
+
         <!-- >>Spark -->
         <!--<dependency>
             <groupId>org.apache.hadoop</groupId>
@@ -146,6 +155,11 @@
             <groupId>org.apache.iceberg</groupId>
             <artifactId>iceberg-spark-runtime-3.5_2.12</artifactId>
             <version>${iceberg-spark.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.hubspot.jinjava</groupId>
+            <artifactId>jinjava</artifactId>
+            <version>2.7.4</version>
         </dependency>
         <!--
                 &lt;!&ndash; https://mvnrepository.com/artifact/org.apache.iceberg/iceberg-spark3-extensions &ndash;&gt;
