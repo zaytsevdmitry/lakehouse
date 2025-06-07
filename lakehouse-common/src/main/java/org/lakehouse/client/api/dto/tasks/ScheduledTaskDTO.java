@@ -1,53 +1,23 @@
 package org.lakehouse.client.api.dto.tasks;
 
+import org.lakehouse.client.api.dto.configs.TaskDTO;
+
 import java.util.Map;
 
-public class ScheduledTaskDTO {
+public class ScheduledTaskDTO extends TaskDTO {
     private Long id;
-    private String name;
-    private String taskExecutionServiceGroupName;
-    private String executionModule;
     private Map<String,String> executionModuleArgs;
-    private String scenarioActName;
-    private String scheduleName;
-    private String scheduleTargetTimestamp;
+    private String scenarioActKeyName;
+    private String scheduleKeyName;
     private String status;
+    private String targetDateTime;
+    private String intervalStartDateTime;
+    private String intervalEndDateTime;
+    private String dataSetKeyName;
 
     public ScheduledTaskDTO() {
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getTaskExecutionServiceGroupName() {
-        return taskExecutionServiceGroupName;
-    }
-
-    public void setTaskExecutionServiceGroupName(String taskExecutionServiceGroupName) {
-        this.taskExecutionServiceGroupName = taskExecutionServiceGroupName;
-    }
-
-    public String getExecutionModule() {
-        return executionModule;
-    }
-
-    public void setExecutionModule(String executionModule) {
-        this.executionModule = executionModule;
-    }
-
-
-    public Map<String, String> getExecutionModuleArgs() {
-        return executionModuleArgs;
-    }
-
-    public void setExecutionModuleArgs(Map<String, String> executionModuleArgs) {
-        this.executionModuleArgs = executionModuleArgs;
-    }
 
     public Long getId() {
         return id;
@@ -57,28 +27,54 @@ public class ScheduledTaskDTO {
         this.id = id;
     }
 
-    public String getScenarioActName() {
-        return scenarioActName;
+    public String getScenarioActKeyName() {
+        return scenarioActKeyName;
     }
 
-    public void setScenarioActName(String scenarioActName) {
-        this.scenarioActName = scenarioActName;
+    public void setScenarioActKeyName(String scenarioActKeyName) {
+        this.scenarioActKeyName = scenarioActKeyName;
     }
 
-    public String getScheduleName() {
-        return scheduleName;
+    public String getScheduleKeyName() {
+        return scheduleKeyName;
     }
 
-    public void setScheduleName(String scheduleName) {
-        this.scheduleName = scheduleName;
+    public void setScheduleKeyName(String scheduleKeyName) {
+        this.scheduleKeyName = scheduleKeyName;
     }
 
-    public String getScheduleTargetTimestamp() {
-        return scheduleTargetTimestamp;
+    public String getIntervalStartDateTime() {
+        return intervalStartDateTime;
     }
 
-    public void setScheduleTargetTimestamp(String scheduleTargetTimestamp) {
-        this.scheduleTargetTimestamp = scheduleTargetTimestamp;
+    @Override
+    public Map<String, String> getExecutionModuleArgs() {
+        return executionModuleArgs;
+    }
+
+    @Override
+    public void setExecutionModuleArgs(Map<String, String> executionModuleArgs) {
+        this.executionModuleArgs = executionModuleArgs;
+    }
+
+    public String getTargetDateTime() {
+        return targetDateTime;
+    }
+
+    public void setTargetDateTime(String targetDateTime) {
+        this.targetDateTime = targetDateTime;
+    }
+
+    public void setIntervalStartDateTime(String intervalStartDateTime) {
+        this.intervalStartDateTime = intervalStartDateTime;
+    }
+
+    public String getIntervalEndDateTime() {
+        return intervalEndDateTime;
+    }
+
+    public void setIntervalEndDateTime(String intervalEndDateTime) {
+        this.intervalEndDateTime = intervalEndDateTime;
     }
 
     public String getStatus() {
@@ -89,5 +85,11 @@ public class ScheduledTaskDTO {
         this.status = status;
     }
 
+    public String getDataSetKeyName() {
+        return dataSetKeyName;
+    }
 
+    public void setDataSetKeyName(String dataSetKeyName) {
+        this.dataSetKeyName = dataSetKeyName;
+    }
 }

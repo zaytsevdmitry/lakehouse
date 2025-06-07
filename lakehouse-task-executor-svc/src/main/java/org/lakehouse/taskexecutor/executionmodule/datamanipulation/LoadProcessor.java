@@ -1,14 +1,15 @@
 package org.lakehouse.taskexecutor.executionmodule.datamanipulation;
 
 
+import com.hubspot.jinjava.Jinjava;
 import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.taskexecutor.entity.TaskProcessorConfig;
 import org.lakehouse.taskexecutor.executionmodule.AbstractTaskProcessor;
 
 public class LoadProcessor extends AbstractTaskProcessor{
 
-	public LoadProcessor(TaskProcessorConfig taskProcessorConfig) {
-		super(taskProcessorConfig);
+	public LoadProcessor(TaskProcessorConfig taskProcessorConfig, Jinjava jinjava) {
+		super(taskProcessorConfig, jinjava);
 		// TODO Auto-generated constructor stub
 	}
 

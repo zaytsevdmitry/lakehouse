@@ -4,7 +4,6 @@ import org.lakehouse.client.api.dto.service.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.tasks.ScheduledTaskMsgDTO;
 import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
 import org.lakehouse.taskexecutor.exception.TaskLockTryExcessedException;
-import org.lakehouse.taskexecutor.exception.TaskLockNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -65,7 +64,7 @@ public class ScheduledTaskKafkaConsumerService  {
         acknowledgment.acknowledge();
 
         if (taskInstanceLockDTO != null)
-            executeService.takeAndRunTask(scheduledTaskMsgDTO, taskInstanceLockDTO);
+            executeService.takeAndRunTask(taskInstanceLockDTO);
 
         logger.info("Iteration is done");
     }
@@ -89,9 +88,9 @@ public class ScheduledTaskKafkaConsumerService  {
             logger.info("Lock taken lockId={}, task={}, scheduleName={}, scheduleTargetTimestamp={}, scenarioActName={}",
                         taskInstanceLockDTO.getLockId(),
                         taskInstanceLockDTO.getScheduledTaskEffectiveDTO().getName(),
-                        taskInstanceLockDTO.getScheduleConfKeyName(),
-                        taskInstanceLockDTO.getScheduleTargetDateTime(),
-                        taskInstanceLockDTO.getScenarioActConfKeyName());
+                        taskInstanceLockDTO.getScheduledTaskEffectiveDTO().getScheduleKeyName(),
+                        taskInstanceLockDTO.getScheduledTaskEffectiveDTO().getTargetDateTime(),
+                        taskInstanceLockDTO.getScheduledTaskEffectiveDTO().getScenarioActKeyName());
 
 
         } catch (HttpClientErrorException.NotFound nfe) {
@@ -110,9 +109,9 @@ public class ScheduledTaskKafkaConsumerService  {
                     tryNum,
                     taskInstanceLockDTO.getLockId(),
                     taskInstanceLockDTO.getScheduledTaskEffectiveDTO().getName(),
-                    taskInstanceLockDTO.getScheduleConfKeyName(),
-                    taskInstanceLockDTO.getScheduleTargetDateTime(),
-                    taskInstanceLockDTO.getScenarioActConfKeyName());
+                    taskInstanceLockDTO.getScheduledTaskEffectiveDTO().getScheduleKeyName(),
+                    taskInstanceLockDTO.getScheduledTaskEffectiveDTO().getTargetDateTime(),
+                    taskInstanceLockDTO.getScheduledTaskEffectiveDTO().getScenarioActKeyName());
             taskInstanceLockDTO = takeLockWithReTries(scheduledTaskMsgDTO, tryNum);
         }
         return taskInstanceLockDTO;

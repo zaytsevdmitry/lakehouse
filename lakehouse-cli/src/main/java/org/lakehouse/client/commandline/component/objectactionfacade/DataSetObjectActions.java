@@ -1,14 +1,13 @@
 package org.lakehouse.client.commandline.component.objectactionfacade;
 
-import java.io.File;
-import java.util.List;
-
+import org.lakehouse.client.api.dto.configs.DataSetDTO;
+import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.client.commandline.model.CommandResult;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.springframework.stereotype.Component;
 
-import org.lakehouse.client.api.dto.configs.DataSetDTO;
-import org.lakehouse.client.api.utils.ObjectMapping;
+import java.io.File;
+import java.util.List;
 @Component
 public class DataSetObjectActions implements ConfigObjectActions{
 	private final ConfigRestClientApi configRestClientApi;
@@ -29,7 +28,7 @@ public class DataSetObjectActions implements ConfigObjectActions{
 		return ObjectActionsHelper.table(
 				new String[]{"name", "description", "project"}, 
 				l.stream().map(o -> new String[]{
-						o.getName(), 
+						o.getKeyName(),
 						o.getDescription(),
 						o.getProject()}).toList());
 	}

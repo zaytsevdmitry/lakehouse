@@ -4,13 +4,8 @@ import jakarta.transaction.Transactional;
 import org.lakehouse.client.api.dto.configs.*;
 import org.lakehouse.client.api.utils.Coalesce;
 import org.lakehouse.client.api.utils.DateTimeUtils;
-
-import org.lakehouse.config.entities.scenario.ScenarioAct;
-import org.lakehouse.config.entities.scenario.ScenarioActEdge;
-import org.lakehouse.config.entities.scenario.ScenarioActTask;
-import org.lakehouse.config.entities.scenario.ScenarioActTaskEdge;
-import org.lakehouse.config.entities.scenario.ScenarioActTaskExecutionModuleArg;
 import org.lakehouse.config.entities.Schedule;
+import org.lakehouse.config.entities.scenario.*;
 import org.lakehouse.config.exception.ScenarioActNotFoundException;
 import org.lakehouse.config.exception.ScheduleNotFoundException;
 import org.lakehouse.config.exception.TaskEffectiveNotFoundException;
@@ -67,12 +62,13 @@ public class ScheduleService {
 
         this.mapper = mapper;
 	}
-
 	private ScheduleScenarioActDTO mapScheduleScenarioActToDTO(ScenarioAct scenarioAct) {
 		logger.info("mapScheduleScenarioActToDTO: {}", scenarioAct.getName());
 		ScheduleScenarioActDTO result = new ScheduleScenarioActDTO();
 		result.setName(scenarioAct.getName());
 		result.setDataSet(scenarioAct.getDataSet().getName());
+		result.setIntervalStart(scenarioAct.getIntervalStart());
+		result.setIntervalEnd(scenarioAct.getIntervalEnd());
 		if (scenarioAct.getScenarioActTemplate()!=null)
 			result.setScenarioActTemplate(scenarioAct.getScenarioActTemplate().getName());
 	    result.setTasks(scenarioActTaskRepository
@@ -98,6 +94,7 @@ public class ScheduleService {
 		return result;
 	}
 
+
 	private ScenarioAct mapScheduleScenarioActToEntity(Schedule schedule,
 			ScheduleScenarioActDTO scheduleScenarioActDTO) {
 
@@ -113,7 +110,8 @@ public class ScheduleService {
 				scenarioActTemplateRepository.findById(scheduleScenarioActDTO.getScenarioActTemplate())
 						.orElseThrow(() -> new RuntimeException(String.format("Scenario template name %s not found",
 								scheduleScenarioActDTO.getScenarioActTemplate()))));
-
+		result.setIntervalStart(scheduleScenarioActDTO.getIntervalStart());
+		result.setIntervalEnd(scheduleScenarioActDTO.getIntervalEnd());
 		return result;
 	}
 
@@ -129,7 +127,6 @@ public class ScheduleService {
 		result.setName(schedule.getName());
 		result.setDescription(schedule.getDescription());
 		result.setIntervalExpression(schedule.getIntervalExpression());
-		List<ScenarioAct> s =  scenarioActRepository.findByScheduleName(schedule.getName());
 		result.setStartDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(schedule.getStartDateTime()));
 		result.setEnabled(schedule.isEnabled());
 		result.setScenarioActs(scenarioActRepository.findByScheduleName(schedule.getName()).stream()
@@ -144,7 +141,7 @@ public class ScheduleService {
 		schedule.setName(scheduleDTO.getName());
 		schedule.setDescription(scheduleDTO.getDescription());
 		schedule.setIntervalExpression(scheduleDTO.getIntervalExpression());
-		schedule.setStartDateTime(DateTimeUtils.parceDateTimeFormatWithTZ(scheduleDTO.getStartDateTime()));
+		schedule.setStartDateTime(DateTimeUtils.parseDateTimeFormatWithTZ(scheduleDTO.getStartDateTime()));
 		schedule.setEnabled(scheduleDTO.isEnabled());
 		schedule.setLastChangedDateTime(DateTimeUtils.now());
 		schedule.setLastChangeNumber(schedule.getLastChangeNumber() +1);
@@ -187,7 +184,7 @@ public class ScheduleService {
 
 		scenarioActRepository.deleteByScheduleName(schedule.getName());
 
-		Map<String, ScenarioAct> scenarioActMap = new HashMap<String, ScenarioAct>();
+		Map<String, ScenarioAct> scenarioActMap = new HashMap<>();
 
 		scenarioActRepository.saveAll(scheduleDTO.getScenarioActs().stream()
 				.map(scheduleScenarioActDTO -> mapScheduleScenarioActToEntity(schedule, scheduleScenarioActDTO))
@@ -359,7 +356,7 @@ public class ScheduleService {
 	private ScheduleEffectiveDTO mapScheduleDTOAndResolveTemplate(
 			ScheduleDTO scheduleDTO,
 			Map<String,ScenarioActTemplateDTO> actTemplateDTOMap
-			) throws Exception {
+			)  {
 		ScheduleEffectiveDTO result = new ScheduleEffectiveDTO();
 		Schedule schedule = findById(scheduleDTO.getName());
 		result.setEnabled(scheduleDTO.isEnabled());
@@ -377,6 +374,8 @@ public class ScheduleService {
 				ScheduleScenarioActEffectiveDTO resultAct = new ScheduleScenarioActEffectiveDTO();
 				resultAct.setName(sa.getName());
 				resultAct.setDataSet(sa.getDataSet());
+				resultAct.setIntervalStart(sa.getIntervalStart());
+				resultAct.setIntervalEnd(sa.getIntervalEnd());
 				// edges
 				Set<DagEdgeDTO> edgeDTOSet = new HashSet<>(sa.getDagEdges());
 				edgeDTOSet.addAll(

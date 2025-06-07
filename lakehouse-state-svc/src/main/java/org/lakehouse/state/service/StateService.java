@@ -1,6 +1,7 @@
 package org.lakehouse.state.service;
 
-import org.lakehouse.client.api.dto.state.DataSetStateDTO;
+import org.lakehouse.client.api.constant.Status;
+import org.lakehouse.client.api.dto.state.DataSetStateResponseDTO;
 import org.lakehouse.state.entity.DataSetState;
 import org.lakehouse.state.factory.MergeResult;
 import org.lakehouse.state.factory.StateFactory;
@@ -23,8 +24,6 @@ public class StateService {
         this.dataSetStateRepository = dataSetStateRepository;
         this.stateFactory = stateFactory;
     }
-
-
 
     @Transactional
     public void save(DataSetState newState) throws Exception {
@@ -49,21 +48,29 @@ public class StateService {
             dataSetStateRepository.saveAll(mergeResult.getAfterChange());
         }
     }
-    public List<DataSetState> get(
+    public DataSetStateResponseDTO getStateByInterval(
             String dataSetKeyName,
             OffsetDateTime intervalStartDateTime,
-            OffsetDateTime intervalEndDateTime
-    ){
-        List<DataSetState> current =
-                dataSetStateRepository
-                        .findIntersection(
-                                dataSetKeyName,
+            OffsetDateTime intervalEndDateTime){
+
+        DataSetStateResponseDTO result = new DataSetStateResponseDTO();
+
+        result.setWrongStates(
+                stateFactory.feelGaps(
+                        stateFactory.leftRightPad(
+                                dataSetStateRepository
+                                        .findIntersection(
+                                                dataSetKeyName,
+                                                intervalStartDateTime,
+                                                intervalEndDateTime),
                                 intervalStartDateTime,
-                                intervalEndDateTime);
-
-
-
-        return current;
+                                intervalEndDateTime
+                        )
+                )
+                .stream()
+                .filter(state -> state.getStatus()==null || !state.getStatus().equals(Status.DataSet.SUCCESS.label))
+                .map(StateMapper::getDataSetStateDTO)
+                .toList());
+        return result;
     }
-
 }

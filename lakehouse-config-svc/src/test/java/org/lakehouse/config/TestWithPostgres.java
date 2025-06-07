@@ -1,26 +1,20 @@
 package org.lakehouse.config;
 
+import org.junit.jupiter.api.*;
 import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.api.dto.configs.*;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.api.utils.ObjectMapping;
-
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
-import org.lakehouse.config.entities.scenario.ScenarioAct;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
-import org.lakehouse.config.repository.ScriptRepository;
-import org.lakehouse.test.config.configuration.FileLoader;
-import org.lakehouse.config.test.configutation.RestManipulator;
 import org.lakehouse.config.entities.Schedule;
+import org.lakehouse.config.entities.scenario.ScenarioAct;
 import org.lakehouse.config.repository.DataSetRepository;
 import org.lakehouse.config.repository.ScenarioActRepository;
 import org.lakehouse.config.repository.ScheduleRepository;
+import org.lakehouse.config.repository.ScriptRepository;
 import org.lakehouse.config.service.ScenarioActTemplateService;
 import org.lakehouse.config.service.ScheduleService;
+import org.lakehouse.config.test.configutation.RestManipulator;
+import org.lakehouse.test.config.configuration.FileLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -215,7 +209,7 @@ public class TestWithPostgres {
 		}
 
 		DataSetDTO dto = fileLoader.loadDataSetDTO(name);
-		return ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getName(),
+		return ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getKeyName(),
 				ObjectMapping.asJsonString(dto), Endpoint.DATA_SETS, Endpoint.DATA_SETS_NAME), DataSetDTO.class);
 	}
 
@@ -230,9 +224,9 @@ public class TestWithPostgres {
 		ProjectDTO projectDTO = putProjectDTO();
 		DataSetDTO dto = putDataSetDTO(name);
 
-		DataSetDTO resultDTO = ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getName(),
+		DataSetDTO resultDTO = ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getKeyName(),
 				ObjectMapping.asJsonString(dto), Endpoint.DATA_SETS, Endpoint.DATA_SETS_NAME), DataSetDTO.class);
-		restManipulator.deleteDTO(dto.getName(), Endpoint.DATA_SETS_NAME);
+		restManipulator.deleteDTO(dto.getKeyName(), Endpoint.DATA_SETS_NAME);
 		restManipulator.deleteDTO(dataStoreDTO.getName(), Endpoint.DATA_STORES_NAME);
 		restManipulator.deleteDTO(projectDTO.getName(), Endpoint.PROJECTS_NAME);
 		assert (resultDTO.equals(dto));
@@ -265,6 +259,8 @@ public class TestWithPostgres {
 		sa.setSchedule(resultSchedule);
 		sa.setDataSet(dataSetRepository.findAll().get(0));
 		sa.setName("testScenarioAct");
+		sa.setIntervalStart("");
+		sa.setIntervalEnd("");
 		scenarioActRepository.save(sa);
 		
 		assert(	scenarioActRepository.findByScheduleName(schedule.getName()).size() ==1);
@@ -277,7 +273,7 @@ public class TestWithPostgres {
 		assert (scheduleService.findById(resultscheduleDTO.getName()).getLastChangeNumber() == (schedule.getLastChangeNumber()+1));
 
 		scheduleRepository.delete(resultSchedule);
-        restManipulator.deleteDTO(dto.getName(), Endpoint.DATA_SETS_NAME);
+        restManipulator.deleteDTO(dto.getKeyName(), Endpoint.DATA_SETS_NAME);
 		restManipulator.deleteDTO(dataStoreDTO.getName(), Endpoint.DATA_STORES_NAME);
 		restManipulator.deleteDTO(projectDTO.getName(), Endpoint.PROJECTS_NAME);
 	
@@ -336,7 +332,7 @@ public class TestWithPostgres {
 		DataSetDTO clientProcessingDTO = putDataSetDTO("client_processing");
 		DataSetDTO transactionProcessingDTO = putDataSetDTO("transaction_processing");
 		DataSetDTO resultTransactionddsDTO = putDataSetDTO("transaction_dds");
-		DataSetDTO sourceTransactionddsDTO = fileLoader.loadDataSetDTO(resultTransactionddsDTO.getName());
+		DataSetDTO sourceTransactionddsDTO = fileLoader.loadDataSetDTO(resultTransactionddsDTO.getKeyName());
 		DataSetDTO resultTransactionddsDTOV2 = putDataSetDTO("transaction_dds_v2");
 		DataSetDTO sourceTransactionddsDTOV2 = fileLoader.loadDataSetDTO("transaction_dds_v2");
 		DataSetDTO resultAggdaily = putDataSetDTO("aggregation_pay_per_client_daily_mart");
@@ -417,11 +413,11 @@ public class TestWithPostgres {
 		restManipulator.deleteDTO(resultInitialScheduleDTO.getName(), Endpoint.SCHEDULES_NAME);
 		restManipulator.deleteDTO(resultRegularScheduleDTO.getName(), Endpoint.SCHEDULES_NAME);
 
-		restManipulator.deleteDTO(resultAggdaily.getName(), Endpoint.DATA_SETS_NAME);
-		restManipulator.deleteDTO(resultAggTotal.getName(), Endpoint.DATA_SETS_NAME);
-		restManipulator.deleteDTO(resultTransactionddsDTO.getName(), Endpoint.DATA_SETS_NAME);
-		restManipulator.deleteDTO(transactionProcessingDTO.getName(), Endpoint.DATA_SETS_NAME);
-		restManipulator.deleteDTO(clientProcessingDTO.getName(), Endpoint.DATA_SETS_NAME);
+		restManipulator.deleteDTO(resultAggdaily.getKeyName(), Endpoint.DATA_SETS_NAME);
+		restManipulator.deleteDTO(resultAggTotal.getKeyName(), Endpoint.DATA_SETS_NAME);
+		restManipulator.deleteDTO(resultTransactionddsDTO.getKeyName(), Endpoint.DATA_SETS_NAME);
+		restManipulator.deleteDTO(transactionProcessingDTO.getKeyName(), Endpoint.DATA_SETS_NAME);
+		restManipulator.deleteDTO(clientProcessingDTO.getKeyName(), Endpoint.DATA_SETS_NAME);
 
 		restManipulator.deleteDTO(scenarioActTemplateDTO.getName(), Endpoint.SCENARIOS_NAME);
 		restManipulator.deleteDTO(defaultTaskExecutionServiceGroupDTO.getName(),
@@ -498,11 +494,11 @@ public class TestWithPostgres {
 
 		// delete
 		restManipulator.deleteDTO(initialScheduleDTO.getName(), Endpoint.SCHEDULES_NAME);
-		restManipulator.deleteDTO(resultAggdaily.getName(), Endpoint.DATA_SETS_NAME);
-		restManipulator.deleteDTO(resultAggTotal.getName(), Endpoint.DATA_SETS_NAME);
-		restManipulator.deleteDTO(resultTransactionddsDTO.getName(), Endpoint.DATA_SETS_NAME);
-		restManipulator.deleteDTO(transactionProcessingDTO.getName(), Endpoint.DATA_SETS_NAME);
-		restManipulator.deleteDTO(clientProcessingDTO.getName(), Endpoint.DATA_SETS_NAME);
+		restManipulator.deleteDTO(resultAggdaily.getKeyName(), Endpoint.DATA_SETS_NAME);
+		restManipulator.deleteDTO(resultAggTotal.getKeyName(), Endpoint.DATA_SETS_NAME);
+		restManipulator.deleteDTO(resultTransactionddsDTO.getKeyName(), Endpoint.DATA_SETS_NAME);
+		restManipulator.deleteDTO(transactionProcessingDTO.getKeyName(), Endpoint.DATA_SETS_NAME);
+		restManipulator.deleteDTO(clientProcessingDTO.getKeyName(), Endpoint.DATA_SETS_NAME);
 		restManipulator.deleteDTO(scenarioActTemplateDTO.getName(), Endpoint.SCENARIOS_NAME);
 		restManipulator.deleteDTO(defaultTaskExecutionServiceGroupDTO.getName(),
 				Endpoint.TASK_EXECUTION_SERVICE_GROUPS_NAME);

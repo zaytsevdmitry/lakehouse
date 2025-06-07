@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.*;
 import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.state.DataSetStateDTO;
+import org.lakehouse.client.api.dto.state.DataSetStateResponseDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.state.entity.DataSetState;
 import org.lakehouse.state.factory.StateFactory;
@@ -26,7 +27,8 @@ import org.testcontainers.utility.DockerImageName;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -114,8 +116,8 @@ public class DataSetStateTest {
 		prepareHistorySet();
 		DataSetState newState = new DataSetState();
 		newState.setDataSetKeyName("test1");
-		newState.setIntervalStartDateTime(DateTimeUtils.parceDateTimeFormatWithTZ("2025-01-10T00:00Z"));
-		newState.setIntervalEndDateTime(DateTimeUtils.parceDateTimeFormatWithTZ("2025-01-11T00:00Z"));
+		newState.setIntervalStartDateTime(DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-10T00:00Z"));
+		newState.setIntervalEndDateTime(DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-11T00:00Z"));
 		newState.setStatus(Status.DataSet.RUNNING.label);
 
 		int count = dataSetStateRepository.findAll().size();
@@ -133,8 +135,8 @@ public class DataSetStateTest {
 		prepareHistorySet();
 		DataSetState newState = new DataSetState();
 		newState.setDataSetKeyName("test1");
-		newState.setIntervalStartDateTime(DateTimeUtils.parceDateTimeFormatWithTZ("2025-01-08T00:00Z"));
-		newState.setIntervalEndDateTime(DateTimeUtils.parceDateTimeFormatWithTZ("2025-01-09T00:00Z"));
+		newState.setIntervalStartDateTime(DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-08T00:00Z"));
+		newState.setIntervalEndDateTime(DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-09T00:00Z"));
 		newState.setStatus(Status.DataSet.RUNNING.label);
 
 		int count = dataSetStateRepository.findAll().size();
@@ -152,8 +154,8 @@ public class DataSetStateTest {
 		prepareHistorySet();
 		DataSetState newState = new DataSetState();
 		newState.setDataSetKeyName("test1");
-		newState.setIntervalStartDateTime(DateTimeUtils.parceDateTimeFormatWithTZ("2025-01-08T00:00Z"));
-		newState.setIntervalEndDateTime(DateTimeUtils.parceDateTimeFormatWithTZ("2025-01-08T01:00Z"));
+		newState.setIntervalStartDateTime(DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-08T00:00Z"));
+		newState.setIntervalEndDateTime(DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-08T01:00Z"));
 		newState.setStatus(Status.DataSet.RUNNING.label);
 
 		int count = dataSetStateRepository.findAll().size();
@@ -173,8 +175,8 @@ public class DataSetStateTest {
 		prepareHistorySet();
 		DataSetState newState = new DataSetState();
 		newState.setDataSetKeyName("test1");
-		newState.setIntervalStartDateTime(DateTimeUtils.parceDateTimeFormatWithTZ("2025-01-08T17:00Z"));
-		newState.setIntervalEndDateTime(DateTimeUtils.parceDateTimeFormatWithTZ("2025-01-09T00:00Z"));
+		newState.setIntervalStartDateTime(DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-08T17:00Z"));
+		newState.setIntervalEndDateTime(DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-09T00:00Z"));
 		newState.setStatus(Status.DataSet.RUNNING.label);
 
 		int count = dataSetStateRepository.findAll().size();
@@ -195,8 +197,8 @@ public class DataSetStateTest {
 		prepareHistorySet();
 		DataSetState newState = new DataSetState();
 		newState.setDataSetKeyName("test1");
-		newState.setIntervalStartDateTime(DateTimeUtils.parceDateTimeFormatWithTZ("2025-01-01T00:00Z"));
-		newState.setIntervalEndDateTime(DateTimeUtils.parceDateTimeFormatWithTZ("2025-01-31T00:00Z"));
+		newState.setIntervalStartDateTime(DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-01T00:00Z"));
+		newState.setIntervalEndDateTime(DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-31T00:00Z"));
 		newState.setStatus(Status.DataSet.RUNNING.label);
 
 
@@ -218,8 +220,8 @@ public class DataSetStateTest {
 		prepareHistorySet();
 		DataSetState newState = new DataSetState();
 		newState.setDataSetKeyName("test1");
-		newState.setIntervalStartDateTime(DateTimeUtils.parceDateTimeFormatWithTZ("2025-01-02T08:00Z"));
-		newState.setIntervalEndDateTime(DateTimeUtils.parceDateTimeFormatWithTZ("2025-01-02T16:00Z"));
+		newState.setIntervalStartDateTime(DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-02T08:00Z"));
+		newState.setIntervalEndDateTime(DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-02T16:00Z"));
 		newState.setStatus(Status.DataSet.RUNNING.label);
 
 		int count = dataSetStateRepository.findAll().size();
@@ -235,71 +237,85 @@ public class DataSetStateTest {
 
 
 
-	private List<DataSetState> feelGaps(List<DataSetState> dataSetStates){
-		List<DataSetState> result = new ArrayList<>();
-		List<DataSetState> dataSetStatesSorted = stateFactory.sortStates(dataSetStates);
-		for (int i=0; i < dataSetStatesSorted.size(); i++){
-			DataSetState curr = dataSetStates.get(i);
-			if (i > 0){
-				DataSetState prev = dataSetStatesSorted.get(i-1);
-
-				if(prev.getIntervalEndDateTime().isBefore(curr.getIntervalStartDateTime())){
-					DataSetState gap = new DataSetState();
-					gap.setIntervalStartDateTime(prev.getIntervalEndDateTime());
-					gap.setIntervalEndDateTime(curr.getIntervalStartDateTime());
-					gap.setStatus(null);
-					gap.setDataSetKeyName(null);
-					result.add(gap);
-				}
-				result.add(curr);
-			}
-			else result.add(curr);
-		}
-		return result;
-	}
 
 
 	@Test
 	@Order(6)
 	void getState() throws Exception {
 		prepareHistorySet();
+
 		String dataSetKeyName = "test1";
-		OffsetDateTime intervalStartDateTime = DateTimeUtils.parceDateTimeFormatWithTZ("2025-01-04T01:00Z");
-		OffsetDateTime intervalEndDateTime   = DateTimeUtils.parceDateTimeFormatWithTZ("2025-01-08T02:00Z");
+		OffsetDateTime intervalStartDateTime = DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-03T00:00Z");
+		OffsetDateTime intervalFailedStateStartDateTime   = intervalStartDateTime.plusDays(1);
+		OffsetDateTime intervalMiddleRowStateStartDateTime   = intervalStartDateTime.plusDays(2);
+		OffsetDateTime intervalEndDateTime   = intervalStartDateTime.plusDays(5);
 
-		List<DataSetState> current = stateFactory.sortStates(
-				dataSetStateRepository
-						.findIntersection(
-								dataSetKeyName,
-								intervalStartDateTime,
-								intervalEndDateTime));
-
-		dataSetStateRepository.delete(current.get(0));
-		dataSetStateRepository.delete(current.get(current.size()-3));
-		dataSetStateRepository.delete(current.get(current.size()-1));
+		DataSetState failedState = new DataSetState();
+		failedState.setDataSetKeyName(dataSetKeyName);
+		failedState.setStatus(Status.DataSet.FAILED.label);
+		failedState.setIntervalStartDateTime(intervalFailedStateStartDateTime);
+		failedState.setIntervalEndDateTime(intervalFailedStateStartDateTime.plusDays(1));
+		// change status one interval to failed
+		stateService.save(failedState);
 
 
-		if (intervalEndDateTime.isAfter(current.get(current.size()-1).getIntervalStartDateTime())){
-			DataSetState gap = new DataSetState();
-			gap.setDataSetKeyName(dataSetKeyName);
-			gap.setIntervalStartDateTime(current.get(current.size()-1).getIntervalEndDateTime());
-			gap.setIntervalEndDateTime(intervalEndDateTime);
-			gap.setStatus(null);
-			current.add(gap);
-		}
+		List<DataSetState> dataSetStates = dataSetStateRepository.findAll().stream().filter(state -> state.getDataSetKeyName().equals(dataSetKeyName)).toList();
+		//delete first interval for test first interval gap
+		dataSetStateRepository.delete(dataSetStates.stream().filter(state -> state.getIntervalStartDateTime().isEqual(intervalStartDateTime)).toList().get(0));
+		//delete last interval for test last interval gap
+		dataSetStateRepository.delete(dataSetStates.stream().filter(state -> state.getIntervalEndDateTime().isEqual(intervalEndDateTime)).toList().get(0));
 
-		if (intervalStartDateTime.isBefore(current.get(0).getIntervalStartDateTime())){
-			DataSetState gap = new DataSetState();
-			gap.setDataSetKeyName(dataSetKeyName);
-			gap.setIntervalStartDateTime(intervalStartDateTime);
-			gap.setIntervalEndDateTime(current.get(0).getIntervalEndDateTime());
-			gap.setStatus(null);
-			current.add(gap);
-		}
+		// delete one of middle intervals for test gap in middle
+		dataSetStateRepository.delete(dataSetStates.stream().filter(state -> state.getIntervalStartDateTime().isEqual(intervalMiddleRowStateStartDateTime)).toList().get(0));
 
-		current = feelGaps(current);
+		dataSetStateRepository.findIntersection(dataSetKeyName, intervalStartDateTime, intervalEndDateTime).forEach(state -> System.out.println("intersection " + state.toString()));
 
-		current.forEach(state -> logger.info(">>---> \n{}",state));
+		DataSetStateResponseDTO dataSetStateResponseDTO = stateService.getStateByInterval(dataSetKeyName,intervalStartDateTime,intervalEndDateTime);
+		dataSetStateResponseDTO
+				.getWrongStates()
+				.stream()
+				.forEach(state -> System.out.println("wrongStates " + state.toString()));
 
+		assert (dataSetStateResponseDTO
+				.getWrongStates()
+				.size() == 4
+		);
+
+		assert (dataSetStateResponseDTO
+				.getWrongStates()
+				.stream()
+				.filter(i ->
+						DateTimeUtils.parseDateTimeFormatWithTZ(i.getIntervalStartDateTime()).isEqual(failedState.getIntervalStartDateTime()) &&
+						DateTimeUtils.parseDateTimeFormatWithTZ(i.getIntervalEndDateTime()).isEqual(failedState.getIntervalEndDateTime()) &&
+						i.getStatus().equals(failedState.getStatus())
+						).toList().size() == 1
+				 );
+		assert (dataSetStateResponseDTO
+				.getWrongStates()
+				.stream()
+				.filter(i ->
+						DateTimeUtils.parseDateTimeFormatWithTZ(i.getIntervalStartDateTime()).isEqual(intervalStartDateTime) &&
+								DateTimeUtils.parseDateTimeFormatWithTZ(i.getIntervalEndDateTime()).isEqual(intervalStartDateTime.plusDays(1)) &&
+								i.getStatus() == null
+				).toList().size() == 1
+		);
+		assert (dataSetStateResponseDTO
+				.getWrongStates()
+				.stream()
+				.filter(i ->
+						DateTimeUtils.parseDateTimeFormatWithTZ(i.getIntervalStartDateTime()).isEqual(intervalMiddleRowStateStartDateTime) &&
+								DateTimeUtils.parseDateTimeFormatWithTZ(i.getIntervalEndDateTime()).isEqual(intervalMiddleRowStateStartDateTime.plusDays(1)) &&
+								i.getStatus() == null
+				).toList().size() == 1
+		);
+		assert (dataSetStateResponseDTO
+				.getWrongStates()
+				.stream()
+				.filter(i ->
+						DateTimeUtils.parseDateTimeFormatWithTZ(i.getIntervalStartDateTime()).isEqual(intervalEndDateTime.minusDays(1)) &&
+								DateTimeUtils.parseDateTimeFormatWithTZ(i.getIntervalEndDateTime()).isEqual(intervalEndDateTime) &&
+								i.getStatus() == null
+				).toList().size() == 1
+		);
 	}
 }

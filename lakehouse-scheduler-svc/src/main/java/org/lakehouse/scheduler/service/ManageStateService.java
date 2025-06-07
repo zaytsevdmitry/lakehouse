@@ -10,7 +10,10 @@ import org.lakehouse.scheduler.entities.ScheduleInstanceRunning;
 import org.lakehouse.scheduler.entities.ScheduleScenarioActInstance;
 import org.lakehouse.scheduler.entities.ScheduleScenarioActInstanceDependency;
 import org.lakehouse.scheduler.exception.ScheduledNotFoundException;
-import org.lakehouse.scheduler.repository.*;
+import org.lakehouse.scheduler.repository.ScheduleInstanceRepository;
+import org.lakehouse.scheduler.repository.ScheduleInstanceRunningRepository;
+import org.lakehouse.scheduler.repository.ScheduleScenarioActInstanceDependencyRepository;
+import org.lakehouse.scheduler.repository.ScheduleScenarioActInstanceRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -54,7 +57,7 @@ public class ManageStateService {
             lastOffsetDateTime =  scheduleInstance.getTargetExecutionDateTime();
         else {
             lastOffsetDateTime = DateTimeUtils
-                    .parceDateTimeFormatWithTZ(scheduleEffectiveDTO.getStartDateTime());
+                    .parseDateTimeFormatWithTZ(scheduleEffectiveDTO.getStartDateTime());
         }
 
         try {
@@ -72,7 +75,7 @@ public class ManageStateService {
         return result;
     }
 
-@Transactional
+    @Transactional
     public int  runAll() {
         AtomicInteger result = new AtomicInteger();
         List<ScheduleInstanceRunning> sirList = new ArrayList<>();

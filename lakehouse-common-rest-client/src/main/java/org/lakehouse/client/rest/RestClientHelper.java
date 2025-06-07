@@ -32,6 +32,14 @@ public  class RestClientHelper {
                 .retrieve()
                 .body(clazz);
     }
+    public  <T> T getDtoOne(Object o, String urn, Class<T> clazz) {
+        return restClient
+                .post()
+                .uri(urn)
+                .body(o)
+                .retrieve()
+                .body(clazz);
+    }
     public int putDTO(Object o, String urn) {
         return restClient.put()
                 .uri(urn)

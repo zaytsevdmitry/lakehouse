@@ -1,9 +1,12 @@
 package org.lakehouse.taskexecutor.service;
 
+import com.hubspot.jinjava.Jinjava;
+import org.lakehouse.client.api.constant.SystemVarKeys;
 import org.lakehouse.client.api.dto.configs.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.DataSetScriptDTO;
 import org.lakehouse.client.api.dto.configs.DataStoreDTO;
 import org.lakehouse.client.api.dto.service.ScheduledTaskLockDTO;
+import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.api.utils.LogPasswdRespectively;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.taskexecutor.entity.TableDefinition;
@@ -12,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -20,14 +24,15 @@ import java.util.stream.Collectors;
 public class TaskProcessorConfigFactory  {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-        private final ConfigRestClientApi configRestClientApi;
-        private final TableDefinitionFactory tableDefinitionFactory;
-
+    private final ConfigRestClientApi configRestClientApi;
+    private final TableDefinitionFactory tableDefinitionFactory;
+    private final Jinjava jinjava;
     public TaskProcessorConfigFactory(
             ConfigRestClientApi configRestClientApi,
-            TableDefinitionFactory tableDefinitionFactory) {
+            TableDefinitionFactory tableDefinitionFactory, Jinjava jinjava) {
         this.configRestClientApi = configRestClientApi;
         this.tableDefinitionFactory = tableDefinitionFactory;
+        this.jinjava = jinjava;
     }
 
     public TaskProcessorConfig buildTaskProcessorConfig(ScheduledTaskLockDTO scheduledTaskLockDTO){
@@ -35,7 +40,7 @@ public class TaskProcessorConfigFactory  {
 
         result.setTargetDataSet(
                 configRestClientApi.getDataSetDTO(
-                scheduledTaskLockDTO.getDataSetKeyName()));
+                scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getDataSetKeyName()));
         result.setExecutionModuleArgs(scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getExecutionModuleArgs());
         result.setSources(
                 result.getTargetDataSet().getSources().stream()
@@ -43,7 +48,7 @@ public class TaskProcessorConfigFactory  {
                             DataSetDTO srcds = configRestClientApi.getDataSetDTO(dataSetSourceDTO.getName());
                             srcds.getProperties().putAll(dataSetSourceDTO.getProperties());
                             return srcds;
-                        }).collect(Collectors.toMap(DataSetDTO::getName, Function.identity())));
+                        }).collect(Collectors.toMap(DataSetDTO::getKeyName, Function.identity())));
 
         result.setDataStores(getDataStores(result.getTargetDataSet(),result.getSources().values()));
 
@@ -62,10 +67,23 @@ public class TaskProcessorConfigFactory  {
         result.setKeyBind(getKeyBind(scheduledTaskLockDTO));
 
         result.setTableDefinitions(getTableDefinitionMap(dataSets,result.getDataStores()));
+        Map<String,String> jinjaContext = new HashMap<>();
+        result.getKeyBind().forEach((s, s2) -> jinjaContext.put(s.replace("${","").replace("}",""), s2));
+        result.setIntervalStartDateTime(
+                renderJinjaDateTime(
+                        scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getIntervalStartDateTime(),
+                        jinjaContext));
+
+        result.setIntervalEndDateTime(
+                renderJinjaDateTime(
+                        scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getIntervalEndDateTime(),
+                        jinjaContext));
         return result;
     }
 
-
+    private OffsetDateTime renderJinjaDateTime(String template, Map<String,String> context){
+        return  DateTimeUtils.parseDateTimeFormatWithTZ(jinjava.render(template, context));
+    }
     private Set<DataSetDTO> collapseDataSetDTOs(
             DataSetDTO dataSetDTO,
             Map<String,DataSetDTO> sources){
@@ -79,23 +97,38 @@ public class TaskProcessorConfigFactory  {
     private Map<String,String> getKeyBind(
             ScheduledTaskLockDTO scheduledTaskLockDTO){
         Map<String,String> result = new HashMap<>();
-        Map<String,String> entries = new HashMap<>();
-        entries.putAll(System.getenv());
-        entries.put("target-timestamp-tz", scheduledTaskLockDTO.getScheduleTargetDateTime());
-        entries.forEach((key, value) -> result.put(String.format("${%s}", key), value));
+        result.putAll(System.getenv());
+        result.put(
+                SystemVarKeys.TARGET_DATE_TIME_TZ_KEY,
+                scheduledTaskLockDTO
+                        .getScheduledTaskEffectiveDTO()
+                        .getTargetDateTime());
+        result.forEach((key, value) -> result.put( key, value));
 
+        result.put(
+                SystemVarKeys.TARGET_INTERVAL_START_TZ_KEY,
+                jinjava.render(
+                        scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getIntervalStartDateTime(),
+                        result));
+        result.put(
+                SystemVarKeys.TARGET_INTERVAL_END_TZ_KEY,
+                jinjava.render(
+                        scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getIntervalEndDateTime(),
+                        result));
         result.entrySet().forEach(stringEntry  ->
-                logger.info("key -> {} | value -> {}", stringEntry.getKey(), LogPasswdRespectively.hidePasswords(stringEntry)));
-
+                logger.info(
+                        "key -> {} | value -> {}",
+                        stringEntry.getKey(),
+                        LogPasswdRespectively.hidePasswords(stringEntry)));
         return result;
     }
 
     private Map<String, DataStoreDTO> getDataStores(DataSetDTO targetDataSet, Collection<DataSetDTO> sourceDatasets){
         Set<String> dataStoreNames = new HashSet<>();
-        dataStoreNames.add(targetDataSet.getDataStore());
+        dataStoreNames.add(targetDataSet.getDataStoreKeyName());
         dataStoreNames.addAll( sourceDatasets
                         .stream()
-                        .map(DataSetDTO::getDataStore)
+                        .map(DataSetDTO::getDataStoreKeyName)
                         .collect(Collectors.toSet())
         );
 
@@ -112,11 +145,11 @@ public class TaskProcessorConfigFactory  {
                 .stream()
                 .collect(
                         Collectors.toMap(
-                                DataSetDTO::getName,
+                                DataSetDTO::getKeyName,
                                 dataSetDTO -> tableDefinitionFactory
                                         .buildTableDefinition(
                                                 dataSetDTO,
                                                 dataStoreDTOMap.get(
-                                                        dataSetDTO.getDataStore()))));
+                                                        dataSetDTO.getDataStoreKeyName()))));
     }
 }

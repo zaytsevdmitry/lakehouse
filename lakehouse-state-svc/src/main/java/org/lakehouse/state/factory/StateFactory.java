@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -82,8 +83,9 @@ public class StateFactory {
                                     post.setIntervalStartDateTime(newState.getIntervalEndDateTime());
                                     result.add(post);
                                 }
-                            else
-                                throw new Exception("Unexpected case");
+                            else {
+                                    throw new Exception("Unexpected case");
+                                }
 
             }
         }
@@ -109,6 +111,58 @@ public class StateFactory {
     private List<DataSetState> getForRemove(List<DataSetState> beforeChange, List<DataSetState> afterChange){
         Set<Long> afterChangeIds =  afterChange.stream().map(DataSetState::getId).filter(Objects::nonNull).collect(Collectors.toSet());
         return beforeChange.stream().filter(state -> !afterChangeIds.contains(state.getId())).toList();
+    }
+
+    public List<DataSetState> leftRightPad( List<DataSetState> dataSetStates,
+            OffsetDateTime intervalStartDateTime,
+            OffsetDateTime intervalEndDateTime
+    ){
+        List<DataSetState>  result =  sortStates(dataSetStates);
+        DataSetState lastState = result.get(result.size()-1);
+        DataSetState  firstState = result.get(0);
+
+        if (intervalEndDateTime.isAfter(lastState.getIntervalEndDateTime())){
+            DataSetState gap = new DataSetState();
+            gap.setDataSetKeyName(lastState.getDataSetKeyName());
+            gap.setIntervalStartDateTime(result.get(result.size()-1).getIntervalEndDateTime());
+            gap.setIntervalEndDateTime(intervalEndDateTime);
+            gap.setStatus(null);
+            result.add(gap);
+        }
+
+        if (intervalStartDateTime.isBefore(firstState.getIntervalStartDateTime())){
+            DataSetState gap = new DataSetState();
+            gap.setDataSetKeyName(firstState.getDataSetKeyName());
+            gap.setIntervalStartDateTime(intervalStartDateTime);
+            gap.setIntervalEndDateTime(firstState.getIntervalStartDateTime());
+            gap.setStatus(null);
+            result.add(gap);
+        }
+        return result;
+    }
+
+    public  List<DataSetState> feelGaps(List<DataSetState> dataSetStates){
+        List<DataSetState> result = new ArrayList<>();
+        List<DataSetState> dataSetStatesSorted = sortStates(dataSetStates);
+
+        for (int i=0; i < dataSetStatesSorted.size(); i++){
+            DataSetState curr = dataSetStatesSorted.get(i);
+            if (i > 0){
+                DataSetState prev = dataSetStatesSorted.get(i-1);
+
+                if(prev.getIntervalEndDateTime().isBefore(curr.getIntervalStartDateTime())){
+                    DataSetState gap = new DataSetState();
+                    gap.setIntervalStartDateTime(prev.getIntervalEndDateTime());
+                    gap.setIntervalEndDateTime(curr.getIntervalStartDateTime());
+                    gap.setStatus(null);
+                    gap.setDataSetKeyName(prev.getDataSetKeyName());
+                    result.add(gap);
+                }
+                result.add(curr);
+            }
+            else result.add(curr);
+        }
+        return result;
     }
 
 }

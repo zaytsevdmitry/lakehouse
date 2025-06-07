@@ -64,16 +64,11 @@ public class TaskDTO {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TaskDTO taskDTO = (TaskDTO) o;
-        return Objects.equals(name, taskDTO.name)
-                && Objects.equals(taskExecutionServiceGroupName, taskDTO.taskExecutionServiceGroupName)
-                && Objects.equals(executionModule, taskDTO.executionModule)
-                && Objects.equals(importance, taskDTO.importance)
-                && Objects.equals(description, taskDTO.description)
-                && Objects.equals(executionModuleArgs, taskDTO.executionModuleArgs);
+        return Objects.equals(getName(), taskDTO.getName()) && Objects.equals(getTaskExecutionServiceGroupName(), taskDTO.getTaskExecutionServiceGroupName()) && Objects.equals(getExecutionModule(), taskDTO.getExecutionModule()) && Objects.equals(getImportance(), taskDTO.getImportance()) && Objects.equals(getDescription(), taskDTO.getDescription()) && Objects.equals(getExecutionModuleArgs(), taskDTO.getExecutionModuleArgs());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, taskExecutionServiceGroupName, executionModule, importance, description, executionModuleArgs);
+        return Objects.hash(getName(), getTaskExecutionServiceGroupName(), getExecutionModule(), getImportance(), getDescription(), getExecutionModuleArgs());
     }
 }

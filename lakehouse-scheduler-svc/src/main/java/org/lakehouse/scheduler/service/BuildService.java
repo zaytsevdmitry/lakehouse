@@ -1,6 +1,5 @@
 package org.lakehouse.scheduler.service;
 
-import org.springframework.transaction.annotation.Transactional;
 import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
@@ -14,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.Arrays;
@@ -159,7 +159,7 @@ public class BuildService {
                             scheduleEffectiveService
                                     .getScheduleEffectiveDTO(lastBuild.getConfigScheduleKeyName());
                     if( lastBuild.getScheduleInstance() == null){
-                        lastOffsetDateTime = DateTimeUtils.parceDateTimeFormatWithTZ(
+                        lastOffsetDateTime = DateTimeUtils.parseDateTimeFormatWithTZ(
                                 scheduleEffectiveDTO.getStartDateTime());
                     }else {
                         lastOffsetDateTime = lastBuild.getScheduleInstance().getTargetExecutionDateTime();

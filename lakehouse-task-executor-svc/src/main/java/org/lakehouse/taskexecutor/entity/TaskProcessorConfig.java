@@ -3,6 +3,7 @@ package org.lakehouse.taskexecutor.entity;
 import org.lakehouse.client.api.dto.configs.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.DataStoreDTO;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -17,6 +18,8 @@ public class TaskProcessorConfig {
     private  Map<String, String> KeyBind;
     private  Map<String, TableDefinition> tableDefinitions;
     private  Set<DataSetDTO> dataSetDTOSet;
+    private OffsetDateTime intervalStartDateTime;
+    private OffsetDateTime intervalEndDateTime;
 
     public TaskProcessorConfig(){}
 
@@ -84,15 +87,32 @@ public class TaskProcessorConfig {
         this.dataSetDTOSet = dataSetDTOSet;
     }
 
+    public OffsetDateTime getIntervalStartDateTime() {
+        return intervalStartDateTime;
+    }
+
+    public void setIntervalStartDateTime(OffsetDateTime intervalStartDateTime) {
+        this.intervalStartDateTime = intervalStartDateTime;
+    }
+
+    public OffsetDateTime getIntervalEndDateTime() {
+        return intervalEndDateTime;
+    }
+
+    public void setIntervalEndDateTime(OffsetDateTime intervalEndDateTime) {
+        this.intervalEndDateTime = intervalEndDateTime;
+    }
+
     @Override
     public boolean equals(Object o) {
+        if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TaskProcessorConfig that = (TaskProcessorConfig) o;
-        return Objects.equals(getExecutionModuleArgs(), that.getExecutionModuleArgs()) && Objects.equals(getScripts(), that.getScripts()) && Objects.equals(getSources(), that.getSources()) && Objects.equals(getTargetDataSet(), that.getTargetDataSet()) && Objects.equals(getDataStores(), that.getDataStores()) && Objects.equals(getKeyBind(), that.getKeyBind()) && Objects.equals(getTableDefinitions(), that.getTableDefinitions()) && Objects.equals(getDataSetDTOSet(), that.getDataSetDTOSet());
+        return Objects.equals(getExecutionModuleArgs(), that.getExecutionModuleArgs()) && Objects.equals(getScripts(), that.getScripts()) && Objects.equals(getSources(), that.getSources()) && Objects.equals(getTargetDataSet(), that.getTargetDataSet()) && Objects.equals(getDataStores(), that.getDataStores()) && Objects.equals(getKeyBind(), that.getKeyBind()) && Objects.equals(getTableDefinitions(), that.getTableDefinitions()) && Objects.equals(getDataSetDTOSet(), that.getDataSetDTOSet()) && Objects.equals(getIntervalStartDateTime(), that.getIntervalStartDateTime()) && Objects.equals(getIntervalEndDateTime(), that.getIntervalEndDateTime());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getExecutionModuleArgs(), getScripts(), getSources(), getTargetDataSet(), getDataStores(), getKeyBind(), getTableDefinitions(), getDataSetDTOSet());
+        return Objects.hash(getExecutionModuleArgs(), getScripts(), getSources(), getTargetDataSet(), getDataStores(), getKeyBind(), getTableDefinitions(), getDataSetDTOSet(), getIntervalStartDateTime(), getIntervalEndDateTime());
     }
 }

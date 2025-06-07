@@ -1,6 +1,7 @@
 package org.lakehouse.scheduler.configuration;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+
 import java.util.Map;
 
 

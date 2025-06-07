@@ -21,7 +21,7 @@ public class DateTimeUtils {
     }
 
 
-    public static OffsetDateTime parceDateTimeFormatWithTZ(String s){
+    public static OffsetDateTime parseDateTimeFormatWithTZ(String s){
         if (s == null)
             return null;
         else

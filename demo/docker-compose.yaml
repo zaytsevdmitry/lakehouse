@@ -104,7 +104,7 @@ services:
     hostname: task-executor-svc-1
   #  restart: always
     ports:
-      - "8082:8082"
+      - "8082:8091"
       - "4040:4040"
     environment:
       SPARK_DRIVER_HOST: task-executor-svc-1
@@ -113,7 +113,7 @@ services:
       bash -c "java
       --add-exports java.base/sun.nio.ch=ALL-UNNAMED 
       --add-opens=java.base/java.nio=ALL-UNNAMED 
-      -Dserver.port=8082
+      -Dserver.port=8091
       -Dlakehouse.client.rest.config.server.url=http://conf-svc:8080
       -Dlakehouse.client.rest.scheduler.server.url=http://scheduler-svc:8081
       -Dlakehouse.task-executor.service.groupName=default
@@ -133,7 +133,7 @@ services:
     hostname: task-executor-svc-2
     #  restart: always
     ports:
-      - "8083:8083"
+      - "8083:8092"
       - "4042:4042"
     environment:
       SPARK_DRIVER_HOST: task-executor-svc-2

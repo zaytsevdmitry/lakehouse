@@ -9,6 +9,8 @@
     {
       "name": "transaction_processing",
       "dataSet": "transaction_processing",
+      "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
+      "intervalEnd": "targetDateTimeTZ",
       "scenarioActTemplate": null,
       "tasks": [
         {
@@ -29,6 +31,9 @@
       "name": "client_processing",
       "dataSet": "client_processing",
       "scenarioActTemplate": null,
+      "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
+      "intervalEnd": "targetDateTimeTZ",
+
       "tasks": [
         {
           "name": "load",
@@ -48,6 +53,8 @@
       "name": "transaction_dds",
       "dataSet": "transaction_dds",
       "scenarioActTemplate": "default",
+      "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
+      "intervalEnd": "targetDateTimeTZ",
       "tasks": [
         {
           "name": "extend",
@@ -77,12 +84,16 @@
     {
       "name": "aggregation_pay_per_client_daily_mart",
       "dataSet": "aggregation_pay_per_client_daily_mart",
-      "scenarioActTemplate": "default"
+      "scenarioActTemplate": "default",
+      "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
+      "intervalEnd": "targetDateTimeTZ"
     },
     {
       "name": "aggregation_pay_per_client_total_mart",
       "dataSet": "aggregation_pay_per_client_total_mart",
-      "scenarioActTemplate": "default"
+      "scenarioActTemplate": "default",
+      "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
+      "intervalEnd": "targetDateTimeTZ"
     }
   ],
   "scenarioActEdges": [

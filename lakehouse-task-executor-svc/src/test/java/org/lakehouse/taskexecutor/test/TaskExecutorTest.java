@@ -1,19 +1,27 @@
 package org.lakehouse.taskexecutor.test;
 
+import com.hubspot.jinjava.Jinjava;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.*;
 import org.lakehouse.client.api.constant.Status;
+import org.lakehouse.client.api.constant.SystemVarKeys;
 import org.lakehouse.client.api.dto.configs.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.DataStoreDTO;
 import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
 import org.lakehouse.client.api.dto.configs.TaskDTO;
 import org.lakehouse.client.api.dto.service.ScheduledTaskLockDTO;
+import org.lakehouse.client.api.dto.state.DataSetIntervalDTO;
+import org.lakehouse.client.api.dto.state.DataSetStateDTO;
+import org.lakehouse.client.api.dto.state.DataSetStateResponseDTO;
+import org.lakehouse.client.api.dto.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.tasks.ScheduledTaskMsgDTO;
 import org.lakehouse.client.api.serialization.task.ScheduledTaskMsgKafkaDeserializer;
+import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
+import org.lakehouse.client.rest.state.StateRestClientApi;
 import org.lakehouse.taskexecutor.entity.TaskProcessor;
 import org.lakehouse.taskexecutor.service.ProcessorFactory;
 import org.lakehouse.taskexecutor.service.TableDefinitionFactory;
@@ -60,6 +68,7 @@ import java.util.Map;
                 "lakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id=getTestScheduleConfGroup",
                 "lakehouse.task-executor.scheduled.task.kafka.consumer.properties.auto.offset.reset=earliest",
                 "lakehouse.task-executor.scheduled.task.kafka.consumer.topics=test_send_scheduled_task_topic",
+                "lakehouse.client.rest.state=http://state.test.lakehouse.org:12345",
         })
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -74,6 +83,7 @@ public class TaskExecutorTest {
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine").withDatabaseName("test")
             .withUsername("name").withPassword("password");
+
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
@@ -129,37 +139,62 @@ public class TaskExecutorTest {
 
     @Autowired
     ConfigRestClientApi configRestClientApi;
-
     private TaskProcessor buildTaskProcessor(
-            TaskDTO taskDTO,
-            String dataSetKeyName)
+            ScheduledTaskDTO scheduledTaskDTO,
+            Jinjava jinjava)
             throws ClassNotFoundException, InvocationTargetException, InstantiationException, IllegalAccessException, NoSuchMethodException {
         ScheduledTaskLockDTO t = new ScheduledTaskLockDTO();
-        t.setDataSetKeyName(dataSetKeyName);
         t.setLockId(1L);
-        t.setScheduledTaskEffectiveDTO(taskDTO);
-        t.setScheduleTargetDateTime("2025-01-01 00:00:00.0Z");
+        t.setScheduledTaskEffectiveDTO(scheduledTaskDTO);
         TableDefinitionFactory tdf = new TableDefinitionFactory();
-        TaskProcessorConfigFactory pcf = new TaskProcessorConfigFactory(configRestClientApi, tdf);
-        ProcessorFactory pf = new ProcessorFactory(pcf);
+        TaskProcessorConfigFactory pcf = new TaskProcessorConfigFactory(configRestClientApi, tdf, jinjava);
+        ProcessorFactory pf = new ProcessorFactory(pcf, new StateRestClientApi() {
+            @Override
+            public int setDataSetStateDTO(DataSetStateDTO dataSetStateDTO) {
+                return 0;
+            }
+
+            @Override
+            public DataSetStateResponseDTO getDataSetStateResponseDTO(DataSetIntervalDTO dataSetIntervalDTO) {
+                return null;
+            }
+        });
         return pf.buildProcessor(t);
     }
 
-    private TaskDTO getLoadTaskByDatasetName(ScheduleEffectiveDTO scheduleEffectiveDTO,String dataSetKeyName){
-        return scheduleEffectiveDTO
+    private ScheduledTaskDTO getLoadTaskByDatasetName(
+            ScheduleEffectiveDTO scheduleEffectiveDTO,
+            String dataSetKeyName){
+        TaskDTO taskDTO = scheduleEffectiveDTO
                 .getScenarioActs()
                 .stream()
                 .filter(s -> s.getDataSet().equals(dataSetKeyName))
                 .flatMap(s -> s.getTasks().stream().filter(t-> t.getName().equals("load")))
                 .toList().get(0);
-
+        ScheduledTaskDTO result = new ScheduledTaskDTO();
+        result.setTargetDateTime(DateTimeUtils.nowStr());
+        result.setIntervalStartDateTime("{{ " + SystemVarKeys.TARGET_DATE_TIME_TZ_KEY + " }}");
+        result.setIntervalEndDateTime("{{ adddays(" + SystemVarKeys.TARGET_DATE_TIME_TZ_KEY + "}, -1)}");
+        result.setName(taskDTO.getName());
+        result.setDataSetKeyName(dataSetKeyName);
+        result.setExecutionModuleArgs(taskDTO.getExecutionModuleArgs());
+        result.setExecutionModule(taskDTO.getExecutionModule());
+        result.setScheduleKeyName(scheduleEffectiveDTO.getName());
+        result.setScenarioActKeyName("");
+        return result;
     }
     @Test
     @Order(1)
-    void testExecutionModules() throws ClassNotFoundException, InvocationTargetException, InstantiationException, IllegalAccessException, NoSuchMethodException {
+    void testExecutionModules()
+            throws
+            ClassNotFoundException,
+            InvocationTargetException,
+            InstantiationException,
+            IllegalAccessException,
+            NoSuchMethodException {
         ScheduleEffectiveDTO scheduleEffectiveDTO = configRestClientApi.getScheduleEffectiveDTO(null);
         DataSetDTO ds = configRestClientApi.getDataSetDTO("client_processing");
-        DataStoreDTO pgDs = configRestClientApi.getDataStoreDTO(ds.getDataStore());
+        DataStoreDTO pgDs = configRestClientApi.getDataStoreDTO(ds.getDataStoreKeyName());
         Map<String,String> testProperties = new HashMap<>();
         testProperties.put("user", pgUser);
         testProperties.put("password", pgPwd);
@@ -168,20 +203,21 @@ public class TaskExecutorTest {
         configRestClientApi.postDataStoreDTO(pgDs);
 
         //first postgres
-        TaskProcessor clientProcessingTaskProcessor = buildTaskProcessor(
-                getLoadTaskByDatasetName(scheduleEffectiveDTO,"client_processing"), "client_processing");
+        TaskProcessor clientProcessingTaskProcessor =
+                buildTaskProcessor(
+                    getLoadTaskByDatasetName(scheduleEffectiveDTO,"client_processing"), new Jinjava());
 
         assert (clientProcessingTaskProcessor.runTask().equals(Status.Task.SUCCESS));
 
         //second postgres
         TaskProcessor transactionsProcessingTaskProcessor = buildTaskProcessor(
-                getLoadTaskByDatasetName(scheduleEffectiveDTO,"transaction_processing"), "transaction_processing");
+                getLoadTaskByDatasetName(scheduleEffectiveDTO,"transaction_processing"), new Jinjava());
         assert (transactionsProcessingTaskProcessor.runTask().equals(Status.Task.SUCCESS));
 
 
         //third spark join two postgres tables outside from db
         TaskProcessor transactionDDSTaskProcessor = buildTaskProcessor(
-                getLoadTaskByDatasetName(scheduleEffectiveDTO,"transaction_dds"), "transaction_dds");
+                getLoadTaskByDatasetName(scheduleEffectiveDTO,"transaction_dds"), new Jinjava());
         assert (transactionDDSTaskProcessor.runTask().equals(Status.Task.SUCCESS));
     }
 

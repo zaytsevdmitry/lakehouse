@@ -1,13 +1,10 @@
 package org.lakehouse.client.rest.state;
 
-import org.lakehouse.client.api.dto.state.DataSetStateDTO;
-import org.lakehouse.client.rest.RestClientHelper;
-
 import org.lakehouse.client.api.constant.Endpoint;
-import org.lakehouse.client.rest.state.StateRestClientApi;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.lakehouse.client.api.dto.state.DataSetIntervalDTO;
+import org.lakehouse.client.api.dto.state.DataSetStateDTO;
+import org.lakehouse.client.api.dto.state.DataSetStateResponseDTO;
+import org.lakehouse.client.rest.RestClientHelper;
 
 
 public class StateRestClientApiImpl implements StateRestClientApi {
@@ -25,14 +22,15 @@ public class StateRestClientApiImpl implements StateRestClientApi {
 	}
 
 	@Override
-	public DataSetStateDTO getDataSetStateDTO(DataSetStateDTO dataSetStateDTO) {
+	public DataSetStateResponseDTO getDataSetStateResponseDTO(DataSetIntervalDTO dataSetIntervalDTO) {
 		return restClientHelper.getDtoOne(
-				Map.of(
-						"dataSetKeyName",dataSetStateDTO.getDataSetKeyName(),
-						"intervalStartDateTime", dataSetStateDTO.getIntervalStartDateTime(),
-						"intervalEndDateTime", dataSetStateDTO.getIntervalEndDateTime()
-				),
-				Endpoint.STATE_DATASET_GET,
-				DataSetStateDTO.class);
+				dataSetIntervalDTO,
+				/*Map.of(
+						"dataSetKeyName",dataSetIntervalDTO.getDataSetKeyName(),
+						"intervalStartDateTime", dataSetIntervalDTO.getIntervalStartDateTime(),
+						"intervalEndDateTime", dataSetIntervalDTO.getIntervalEndDateTime()
+				),*/
+				Endpoint.STATE_DATASET,
+				DataSetStateResponseDTO.class);
 	}
 }

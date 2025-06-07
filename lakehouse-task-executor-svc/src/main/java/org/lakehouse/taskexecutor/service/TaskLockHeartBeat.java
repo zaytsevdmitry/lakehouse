@@ -1,11 +1,10 @@
 package org.lakehouse.taskexecutor.service;
 
+import org.lakehouse.client.api.dto.service.TaskExecutionHeartBeatDTO;
 import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.client.HttpClientErrorException.NotFound;
-
-import org.lakehouse.client.api.dto.service.TaskExecutionHeartBeatDTO;
 
 public class TaskLockHeartBeat implements Runnable{
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());

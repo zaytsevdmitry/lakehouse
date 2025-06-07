@@ -72,8 +72,8 @@ public class ScheduleAbstract extends NameDescriptionAbstract
         return isEnabled() == that.isEnabled()
                 && Objects.equals(getIntervalExpression(), that.getIntervalExpression())
                 && Objects.equals(//todo resolve what is this
-                        DateTimeUtils.parceDateTimeFormatWithTZ(getStartDateTime()),
-                        DateTimeUtils.parceDateTimeFormatWithTZ(that.getStartDateTime()))
+                        DateTimeUtils.parseDateTimeFormatWithTZ(getStartDateTime()),
+                        DateTimeUtils.parseDateTimeFormatWithTZ(that.getStartDateTime()))
                 && Objects.equals(getStopDateTime(), that.getStopDateTime())
 
                 && Objects.equals(getScenarioActEdges(), that.getScenarioActEdges());

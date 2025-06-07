@@ -1,7 +1,7 @@
 {
-  "name": "aggregation_pay_per_client_total_mart",
+  "keyName": "aggregation_pay_per_client_total_mart",
   "project": "DEMO",
-  "dataStore": "lakehousestorage",
+  "dataStoreKeyName": "lakehousestorage",
   "fullTableName": "ggregation_pay_per_client_total_mart",
   "scripts": [
     {

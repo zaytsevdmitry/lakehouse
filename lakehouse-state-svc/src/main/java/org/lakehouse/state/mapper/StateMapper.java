@@ -9,8 +9,8 @@ public  class StateMapper {
          DataSetState dataSetState = new DataSetState();
          dataSetState.setDataSetKeyName(dataSetStateDTO.getDataSetKeyName());
          dataSetState.setStatus(dataSetStateDTO.getStatus());
-         dataSetState.setIntervalStartDateTime(DateTimeUtils.parceDateTimeFormatWithTZ(dataSetStateDTO.getIntervalStartDateTime()));
-         dataSetState.setIntervalEndDateTime(DateTimeUtils.parceDateTimeFormatWithTZ(dataSetStateDTO.getIntervalEndDateTime()));
+         dataSetState.setIntervalStartDateTime(DateTimeUtils.parseDateTimeFormatWithTZ(dataSetStateDTO.getIntervalStartDateTime()));
+         dataSetState.setIntervalEndDateTime(DateTimeUtils.parseDateTimeFormatWithTZ(dataSetStateDTO.getIntervalEndDateTime()));
          return dataSetState;
     }
     public static DataSetStateDTO getDataSetStateDTO(DataSetState dataSetState){

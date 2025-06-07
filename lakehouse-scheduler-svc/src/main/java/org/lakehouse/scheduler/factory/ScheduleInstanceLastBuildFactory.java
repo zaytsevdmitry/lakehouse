@@ -16,7 +16,7 @@ public  class ScheduleInstanceLastBuildFactory {
         result.setConfigScheduleKeyName(scheduleEffectiveDTO.getName());
         result.setEnabled(scheduleEffectiveDTO.isEnabled());
         result.setLastChangeNumber(scheduleEffectiveDTO.getLastChangeNumber());
-        result.setLastChangedDateTime(DateTimeUtils.parceDateTimeFormatWithTZ(scheduleEffectiveDTO.getLastChangedDateTime()));
+        result.setLastChangedDateTime(DateTimeUtils.parseDateTimeFormatWithTZ(scheduleEffectiveDTO.getLastChangedDateTime()));
         result.setLastUpdateDateTime(DateTimeUtils.now());
         return result;
     }

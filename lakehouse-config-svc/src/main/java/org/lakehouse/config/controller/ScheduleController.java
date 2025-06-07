@@ -2,7 +2,6 @@ package org.lakehouse.config.controller;
 
 import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.api.dto.configs.ScheduleDTO;
-
 import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
 import org.lakehouse.client.api.dto.configs.TaskDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
@@ -44,7 +43,7 @@ public class ScheduleController {
 
 	@GetMapping(Endpoint.EFFECTIVE_SCHEDULES_FROM_DT)
 	List<ScheduleEffectiveDTO> getLastFromDate(@PathVariable String fromdt) {
-		return scheduleService.findScheduleEffectiveDTOSByChangeDateTime(DateTimeUtils.parceDateTimeFormatWithTZ(fromdt));
+		return scheduleService.findScheduleEffectiveDTOSByChangeDateTime(DateTimeUtils.parseDateTimeFormatWithTZ(fromdt));
 	}
 
 	@GetMapping(Endpoint.EFFECTIVE_SCHEDULES_NAME)

@@ -26,6 +26,7 @@ public class ScheduleEffectiveService {
             scheduleEffectiveDTOMap.put(name, configRestClientApi.getScheduleEffectiveDTO(name));
 
         return scheduleEffectiveDTOMap.get(name);
+
     }
 
     public ScheduleEffectiveDTO setScheduleEffectiveDTO(ScheduleEffectiveDTO scheduleEffectiveDTO){

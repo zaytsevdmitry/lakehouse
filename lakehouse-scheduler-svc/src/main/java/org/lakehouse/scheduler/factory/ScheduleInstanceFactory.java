@@ -23,7 +23,7 @@ public class ScheduleInstanceFactory {
         OffsetDateTime lastTargetExecutionDate;
 
         if (scheduleInstanceLast.getScheduleInstance() == null) {
-            lastTargetExecutionDate =  DateTimeUtils.parceDateTimeFormatWithTZ( scheduleEffectiveDTO.getStartDateTime()); //scheduleInstanceLast.getSchedule().getStartDateTime();
+            lastTargetExecutionDate =  DateTimeUtils.parseDateTimeFormatWithTZ( scheduleEffectiveDTO.getStartDateTime()); //scheduleInstanceLast.getSchedule().getStartDateTime();
         } else {
             lastTargetExecutionDate = scheduleInstanceLast.getScheduleInstance().getTargetExecutionDateTime();
         }

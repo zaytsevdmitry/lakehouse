@@ -1,8 +1,8 @@
 package org.lakehouse.client.rest.state.configuration;
 
 import org.lakehouse.client.rest.RestClientHelper;
-import org.lakehouse.client.rest.state.StateRestClientApiImpl;
 import org.lakehouse.client.rest.state.StateRestClientApi;
+import org.lakehouse.client.rest.state.StateRestClientApiImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;

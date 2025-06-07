@@ -1,5 +1,6 @@
 package org.lakehouse.taskexecutor.executionmodule.datamanipulation;
 
+import com.hubspot.jinjava.Jinjava;
 import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.taskexecutor.entity.TaskProcessorConfig;
 import org.lakehouse.taskexecutor.executionmodule.AbstractTaskProcessor;
@@ -9,8 +10,8 @@ import org.slf4j.LoggerFactory;
 public class MergeProcessor extends AbstractTaskProcessor{
 	final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-	public MergeProcessor(TaskProcessorConfig taskProcessorConfig) {
-		super(taskProcessorConfig);
+	public MergeProcessor(TaskProcessorConfig taskProcessorConfig, Jinjava jinjava) {
+		super(taskProcessorConfig, jinjava);
 		// TODO Auto-generated constructor stub
 	}
 

@@ -1,11 +1,10 @@
 package org.lakehouse.config.mapper;
 
 import org.lakehouse.client.api.dto.configs.TaskDTO;
-
-import java.util.Map;
-
 import org.lakehouse.config.entities.TaskAbstract;
 import org.springframework.stereotype.Component;
+
+import java.util.Map;
 
 @Component
 public class Mapper {

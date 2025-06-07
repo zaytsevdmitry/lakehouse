@@ -1,7 +1,7 @@
 {
-  "name": "transaction_dds",
+  "keyName": "transaction_dds",
   "project": "DEMO",
-  "dataStore": "lakehousestorage",
+  "dataStoreKeyName": "lakehousestorage",
   "fullTableName": "transaction_dds",
   "scripts": [{
     "key": "transaction_dds.sql"
