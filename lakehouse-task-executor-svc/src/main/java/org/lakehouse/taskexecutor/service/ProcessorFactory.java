@@ -23,7 +23,8 @@ public class ProcessorFactory {
 	private final Jinjava jinjava;
     public ProcessorFactory(
             TaskProcessorConfigFactory taskProcessorConfigFactory,
-            StateRestClientApi stateRestClientApi, Jinjava jinjava) {
+            StateRestClientApi stateRestClientApi,
+			Jinjava jinjava) {
         this.taskProcessorConfigFactory = taskProcessorConfigFactory;
 
         this.stateRestClientApi = stateRestClientApi;

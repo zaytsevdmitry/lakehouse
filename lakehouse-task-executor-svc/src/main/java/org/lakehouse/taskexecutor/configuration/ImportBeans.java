@@ -8,17 +8,17 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 @Configuration
-public class beans {
+public class ImportBeans {
 
 	
 	@Bean
-	ThreadPoolTaskExecutor threadPoolTaskExecutor() {
+	public ThreadPoolTaskExecutor threadPoolTaskExecutor() {
 		ThreadPoolTaskExecutor result = new  ThreadPoolTaskExecutor();
 		result.setMaxPoolSize(1);
 		return result;
 	}
 	@Bean(name = "jinjava")
-	Jinjava Jiinjava(){
+	public Jinjava Jiinjava(){
 		Jinjava jinjava = new Jinjava();
 		jinjava.getGlobalContext().registerFunction(
 				new ELFunctionDefinition(

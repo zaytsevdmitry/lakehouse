@@ -22,16 +22,16 @@ import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
 import org.lakehouse.client.rest.state.StateRestClientApi;
+import org.lakehouse.taskexecutor.configuration.ImportBeans;
 import org.lakehouse.taskexecutor.entity.TaskProcessor;
 import org.lakehouse.taskexecutor.service.ProcessorFactory;
 import org.lakehouse.taskexecutor.service.TableDefinitionFactory;
 import org.lakehouse.taskexecutor.service.TaskProcessorConfigFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.*;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -63,6 +63,7 @@ import java.util.Map;
  * --add-opens=java.base/sun.util.calendar=ALL-UNNAMED
  * --add-opens=java.security.jgss/sun.security.krb5=ALL-UNNAMED
  * */
+
 @SpringBootTest(
         properties = {"spring.main.allow-bean-definition-overriding=true",
                 "lakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id=getTestScheduleConfGroup",
@@ -72,8 +73,9 @@ import java.util.Map;
         })
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-@ActiveProfiles("test")
+
 public class TaskExecutorTest {
+
     @Value("${lakehouse.task-executor.scheduled.task.kafka.consumer.topics}") String topic;
     @Bean
     SchedulerRestClientApi getSchedulerRestClientApi(){
@@ -136,12 +138,13 @@ public class TaskExecutorTest {
             return new ConfigRestClientApiTest(); //stub
         }
     }
-
     @Autowired
     ConfigRestClientApi configRestClientApi;
+
+    Jinjava jinjava  = new ImportBeans().Jiinjava();
+
     private TaskProcessor buildTaskProcessor(
-            ScheduledTaskDTO scheduledTaskDTO,
-            Jinjava jinjava)
+            ScheduledTaskDTO scheduledTaskDTO)
             throws ClassNotFoundException, InvocationTargetException, InstantiationException, IllegalAccessException, NoSuchMethodException {
         ScheduledTaskLockDTO t = new ScheduledTaskLockDTO();
         t.setLockId(1L);
@@ -158,7 +161,7 @@ public class TaskExecutorTest {
             public DataSetStateResponseDTO getDataSetStateResponseDTO(DataSetIntervalDTO dataSetIntervalDTO) {
                 return null;
             }
-        });
+        },jinjava);
         return pf.buildProcessor(t);
     }
 
@@ -205,19 +208,19 @@ public class TaskExecutorTest {
         //first postgres
         TaskProcessor clientProcessingTaskProcessor =
                 buildTaskProcessor(
-                    getLoadTaskByDatasetName(scheduleEffectiveDTO,"client_processing"), new Jinjava());
+                    getLoadTaskByDatasetName(scheduleEffectiveDTO,"client_processing"));
 
         assert (clientProcessingTaskProcessor.runTask().equals(Status.Task.SUCCESS));
 
         //second postgres
         TaskProcessor transactionsProcessingTaskProcessor = buildTaskProcessor(
-                getLoadTaskByDatasetName(scheduleEffectiveDTO,"transaction_processing"), new Jinjava());
+                getLoadTaskByDatasetName(scheduleEffectiveDTO,"transaction_processing"));
         assert (transactionsProcessingTaskProcessor.runTask().equals(Status.Task.SUCCESS));
 
 
         //third spark join two postgres tables outside from db
         TaskProcessor transactionDDSTaskProcessor = buildTaskProcessor(
-                getLoadTaskByDatasetName(scheduleEffectiveDTO,"transaction_dds"), new Jinjava());
+                getLoadTaskByDatasetName(scheduleEffectiveDTO,"transaction_dds"));
         assert (transactionDDSTaskProcessor.runTask().equals(Status.Task.SUCCESS));
     }
 
