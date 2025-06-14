@@ -1,4 +1,4 @@
-package org.lakehouse.client.api.dto.tasks;
+package org.lakehouse.client.api.dto.scheduler.tasks;
 
 public class ScheduledTaskMsgDTO  {
 	private Long id;

@@ -1,6 +1,7 @@
 package org.lakehouse.scheduler.service;
 
 import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
+import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -12,9 +13,11 @@ public class ScheduleConfigConsumerService {
 
     private final BuildService buildService;
 
+    private final ConfigRestClientApi configRestClientApi;
     public ScheduleConfigConsumerService(
-            BuildService buildService) {
+            BuildService buildService, ConfigRestClientApi configRestClientApi) {
         this.buildService = buildService;
+        this.configRestClientApi = configRestClientApi;
     }
 
 

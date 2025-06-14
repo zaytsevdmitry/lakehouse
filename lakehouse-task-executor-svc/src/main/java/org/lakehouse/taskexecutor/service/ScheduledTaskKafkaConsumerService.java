@@ -1,7 +1,7 @@
 package org.lakehouse.taskexecutor.service;
 
-import org.lakehouse.client.api.dto.service.ScheduledTaskLockDTO;
-import org.lakehouse.client.api.dto.tasks.ScheduledTaskMsgDTO;
+import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
+import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskMsgDTO;
 import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
 import org.lakehouse.taskexecutor.exception.TaskLockTryExcessedException;
 import org.slf4j.Logger;

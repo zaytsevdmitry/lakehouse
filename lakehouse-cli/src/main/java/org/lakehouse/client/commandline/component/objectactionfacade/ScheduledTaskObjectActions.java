@@ -1,6 +1,6 @@
 package org.lakehouse.client.commandline.component.objectactionfacade;
 
-import org.lakehouse.client.api.dto.tasks.ScheduledTaskDTO;
+import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.commandline.model.CommandResult;
 import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
 import org.springframework.stereotype.Component;

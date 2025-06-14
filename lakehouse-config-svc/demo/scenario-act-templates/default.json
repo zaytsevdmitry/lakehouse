@@ -3,6 +3,20 @@
   "description": "Default scenario",
   "tasks": [
     {
+      "name": "check",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.DependencyCheckTaskProcessor",
+      "importance": "critical",
+      "description": "Dependency check"
+    },
+    {
+      "name": "success",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.SuccessTaskProcessor",
+      "importance": "critical",
+      "description": "DataSet success"
+    },
+    {
       "name": "load",
       "taskExecutionServiceGroupName": "default",
       "executionModule": "org.lakehouse.taskexecutor.executionmodule.SparkTaskProcessor",
@@ -67,6 +81,9 @@
     }
   ],
   "dagEdges": [
+    { "from": "check",
+      "to": "load"
+    },
     {
       "from": "load",
       "to": "merge"
@@ -85,6 +102,10 @@
     },
     {
       "from": "dataQualityAfterCritical",
+      "to": "success"
+    },
+    {
+      "from": "success",
       "to": "finally"
     },
     {

@@ -23,11 +23,10 @@ import java.util.stream.Collectors;
 //todo this is demo. ad-hoc experimental  code
 public class SparkTaskProcessor extends AbstractTaskProcessor{
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final TaskProcessorConfig taskProcessorConfig;
+   
     public SparkTaskProcessor(
             TaskProcessorConfig taskProcessorConfig, Jinjava jinjava) {
         super(taskProcessorConfig, jinjava);
-        this.taskProcessorConfig = taskProcessorConfig;
     }
 
     SparkSession getSparkSession(String location){
@@ -43,7 +42,7 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
 **/
 
         Map<String,Object> conf = new HashMap<>();
-        conf.putAll(taskProcessorConfig.getExecutionModuleArgs()
+        conf.putAll(getTaskProcessorConfig().getExecutionModuleArgs()
                 .entrySet()
                 .stream()
                 .filter(sse -> sse.getValue().startsWith("spark."))
@@ -65,14 +64,14 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
     @Override
     public Status.Task runTask() {
         Map<String,String> keyBind = new HashMap<>();
-        keyBind.putAll(taskProcessorConfig.getKeyBind());
+        keyBind.putAll(getTaskProcessorConfig().getKeyBind());
         keyBind.putAll(
-                taskProcessorConfig.getDataSetDTOSet().stream()
+                getTaskProcessorConfig().getDataSetDTOSet().stream()
                         .collect(Collectors.toMap(dataSetDTO ->
                                         String.format("${source(%s)}", dataSetDTO.getKeyName()),
                                 DataSetDTO::getKeyName))
         );
-        taskProcessorConfig.setKeyBind(keyBind);
+        getTaskProcessorConfig().setKeyBind(keyBind);
 
         
         SparkSession sparkSession = null;
@@ -83,28 +82,34 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
 
             logger.info("Take script");
             //todo MVP take only one script
-            String unfeeledSQL = taskProcessorConfig.getScripts().get(0);
+            String unfeeledSQL = getJinjava()
+                    .render(
+                            getTaskProcessorConfig().getScripts().get(0),
+                            getTaskProcessorConfig().getKeyBind());
+
 
             logger.info("Feel script");
             String sql = feelScripts(unfeeledSQL);
 
             sparkSession = getSparkSession(
-                    taskProcessorConfig
+                    getTaskProcessorConfig()
                             .getDataStores()
-                            .get(taskProcessorConfig
+                            .get(getTaskProcessorConfig()
                                     .getTargetDataSet()
                                     .getDataStoreKeyName()).getUrl());
             sparkSession.catalog().listCatalogs().show();
 
 
             logger.info("Prepare sources");
-            prepareSources(sparkSession, taskProcessorConfig.getDataSetDTOSet(),taskProcessorConfig.getDataStores());
+            prepareSources(sparkSession, getTaskProcessorConfig().getDataSetDTOSet(),getTaskProcessorConfig().getDataStores());
 
             TableDefinition currentTableDefinition =
-            taskProcessorConfig.getTableDefinitions().get(taskProcessorConfig.getTargetDataSet().getKeyName());
+            getTaskProcessorConfig().getTableDefinitions().get(getTaskProcessorConfig().getTargetDataSet().getKeyName());
+
+
 
             logger.info("Creating statement...{}", sql);
-            String  merge = String.format(
+                String  merge = String.format(
                     "MERGE INTO %s t   -- a target table\n" +
                             "USING ( %s) q          -- the source updates\n" +
                             "ON %s                -- condition to find updates for target rows\n" +
@@ -112,7 +117,7 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
                             "WHEN MATCHED  THEN UPDATE SET " +
                             "%s\n" +
                             "WHEN NOT MATCHED THEN INSERT  (%s) VALUES (%s)",
-                    taskProcessorConfig.getTargetDataSet().getKeyName(),
+                    getTaskProcessorConfig().getTargetDataSet().getKeyName(),
                     sql,
                     currentTableDefinition.getColumnsMergeOn(),
                     currentTableDefinition.getColumnsUpdateSet(),
@@ -121,12 +126,12 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
 
             );
 
-            sparkSession.sql(feelScripts("select ( '{{ targetDateTimeTZ }}') + interval '1 day' , '{{ targetDateTimeTZ }}'")).printSchema();
-            sparkSession.sql(feelScripts("select ( '{{ targetDateTimeTZ }}') + interval '1 day' , '{{ targetDateTimeTZ }}'")).show(false);
+            //sparkSession.sql(feelScripts("select ( '{{ targetDateTimeTZ }}') + interval '1 day' , '{{ targetDateTimeTZ }}'")).printSchema();
+            //sparkSession.sql(feelScripts("select ( '{{ targetDateTimeTZ }}') + interval '1 day' , '{{ targetDateTimeTZ }}'")).show(false);
             logger.info(merge);
             sparkSession.sql(merge);
             logger.info("Script execution is done");
-            sparkSession.sql(String.format("select * from %s",taskProcessorConfig.getTargetDataSet().getKeyName())).show();
+            sparkSession.sql(String.format("select * from %s",getTaskProcessorConfig().getTargetDataSet().getKeyName())).show();
             result = Status.Task.SUCCESS;
         }catch (Exception e){
             logger.error("Error task execution",e);
@@ -152,7 +157,7 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
     public String feelScripts(String script){
         String result = new String(script);
 
-        for(Map.Entry<String,String> sse: taskProcessorConfig
+        for(Map.Entry<String,String> sse: getTaskProcessorConfig()
                 .getKeyBind()
                 .entrySet()){
             logger.info("Replace {} to {}",sse.getKey(),sse.getValue());
@@ -185,7 +190,7 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
 
                 }else{
                     //todo just for demo
-                    TableDefinition td = taskProcessorConfig.getTableDefinitions().get(dataSetDTO.getKeyName());
+                    TableDefinition td = getTaskProcessorConfig().getTableDefinitions().get(dataSetDTO.getKeyName());
                   //  sparkSession.sqlContext().tables().show();
                    /* sparkSession.sqlContext().createExternalTable(
                             dataSetDTO.getName(),

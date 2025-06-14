@@ -11,12 +11,12 @@ import org.lakehouse.client.api.dto.configs.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.DataStoreDTO;
 import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
 import org.lakehouse.client.api.dto.configs.TaskDTO;
-import org.lakehouse.client.api.dto.service.ScheduledTaskLockDTO;
+import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.state.DataSetIntervalDTO;
 import org.lakehouse.client.api.dto.state.DataSetStateDTO;
 import org.lakehouse.client.api.dto.state.DataSetStateResponseDTO;
-import org.lakehouse.client.api.dto.tasks.ScheduledTaskDTO;
-import org.lakehouse.client.api.dto.tasks.ScheduledTaskMsgDTO;
+import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
+import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskMsgDTO;
 import org.lakehouse.client.api.serialization.task.ScheduledTaskMsgKafkaDeserializer;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
@@ -31,9 +31,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -165,7 +166,7 @@ public class TaskExecutorTest {
                 return null;
             }
         },jinjava);
-        return pf.buildProcessor(t);
+        return pf.buildProcessor(pcf.buildTaskProcessorConfig(t),t.getScheduledTaskEffectiveDTO().getExecutionModule());
     }
 
     private ScheduledTaskDTO getLoadTaskByDatasetName(

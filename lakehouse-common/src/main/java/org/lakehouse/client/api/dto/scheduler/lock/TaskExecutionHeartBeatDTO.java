@@ -1,4 +1,4 @@
-package org.lakehouse.client.api.dto.service;
+package org.lakehouse.client.api.dto.scheduler.lock;
 
 public class TaskExecutionHeartBeatDTO {
 

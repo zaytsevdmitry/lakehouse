@@ -232,6 +232,29 @@ public class TestWithPostgres {
 		assert (resultDTO.equals(dto));
 	}
 
+	@Test
+	@Order(6)
+	void scenarioActTemplateChange() throws Exception {
+
+		putTaskExecutionServiceGroupDTO();
+		ScenarioActTemplateDTO beforeWrite = fileLoader.loadScenarioActTemplateDTO();
+		ScenarioActTemplateDTO afterWrite = scenarioActTemplateService.save(beforeWrite);
+		assert (afterWrite.equals(beforeWrite));
+
+		ScenarioActTemplateDTO beforeChange = afterWrite;
+		TaskDTO newTask = new TaskDTO();
+		newTask.setName("newTask");
+		newTask.setTaskExecutionServiceGroupName("default");
+		newTask.setExecutionModule("");
+		newTask.setImportance("critical");
+		List<TaskDTO> taskDTOS = new ArrayList<>();
+		taskDTOS.addAll(beforeChange.getTasks());
+		taskDTOS.add(newTask);
+		beforeChange.setTasks(taskDTOS);
+		ScenarioActTemplateDTO afterChange = scenarioActTemplateService.save(beforeChange);
+		assert (afterChange.equals(beforeChange));
+	}
+
 	private ScheduleDTO putScheduleDTO(String name) throws Exception {
 		ScheduleDTO dto = fileLoader.loadScheduleDTO(name);
 		return ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getName(),
@@ -239,7 +262,7 @@ public class TestWithPostgres {
 	}
 
 	@Test
-	@Order(6)
+	@Order(7)
 	void scenarioActRepositoryFindByScheduleName() throws Exception{
 		Schedule schedule = new Schedule();
 		ScenarioAct sa = new ScenarioAct();
@@ -299,7 +322,7 @@ public class TestWithPostgres {
 	}
 
 	@Test()
-	@Order(7)
+	@Order(8)
 	void shouldTestColumnOrdering(){
 		DataSetDTO dataSetDTO = new DataSetDTO();
 		ArrayList<ColumnDTO> columnDTOListEstimate = new ArrayList<>();
@@ -319,7 +342,7 @@ public class TestWithPostgres {
 		assert (columnDTOListEstimate.equals(dataSetDTO.getColumnSchema()));
 	}
 	@Test
-	@Order(8)
+	@Order(9)
 	void shouldTestAllDTO() throws Exception {
 
         logger.info("{} {} {}",postgres.getJdbcUrl(),postgres.getUsername(), postgres.getPassword());
@@ -361,7 +384,7 @@ public class TestWithPostgres {
 				.getScenarioActs()
 				.stream()
 				.mapToInt(s -> s.getTasks().size())
-				.sum() == 24);
+				.sum() == 27);
 		assert ( //extended task in schedule scenario
 				scheduleEffectiveDTO
 				.getScenarioActs()
@@ -428,7 +451,7 @@ public class TestWithPostgres {
 
 	}
 
-	@Order(9)
+	@Order(10)
 	@Test
 	void shouldTestEffectiveTask() throws Exception {
 		//prepare

@@ -2,8 +2,8 @@ package org.lakehouse.client.rest.config;
 
 import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.api.dto.configs.*;
-import org.lakehouse.client.api.dto.service.ScheduledTaskLockDTO;
-import org.lakehouse.client.api.dto.tasks.ScheduledTaskMsgDTO;
+import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
+import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskMsgDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.rest.RestClientHelper;
 

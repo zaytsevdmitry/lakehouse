@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
-public class ScheduleEffectiveDTOKafkaProducerConfiguration {
+public class ScheduleChangeMsgDTOProducerConfiguration {
 
     @Value("${lakehouse.config.schedule.kafka.producer.bootstrap-servers}" )
     private String bootstrapServers;
@@ -35,7 +35,7 @@ public class ScheduleEffectiveDTOKafkaProducerConfiguration {
         return props;
     }
     @Bean
-    public KafkaTemplate<String, ScheduleEffectiveDTO> ScheduleEffectiveDTOKafkaTemplate() {
+    public KafkaTemplate<String, ScheduleEffectiveDTO> kafkaTemplate() {
         Producer<String, ScheduleEffectiveDTO> p = producerFactory().createProducer();
         return new KafkaTemplate<String, ScheduleEffectiveDTO>(producerFactory());
     }

@@ -1,6 +1,6 @@
 package org.lakehouse.taskexecutor.service;
 
-import org.lakehouse.client.api.dto.service.TaskExecutionHeartBeatDTO;
+import org.lakehouse.client.api.dto.scheduler.lock.TaskExecutionHeartBeatDTO;
 import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -5,7 +5,7 @@ import org.lakehouse.client.api.constant.SystemVarKeys;
 import org.lakehouse.client.api.dto.configs.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.DataSetScriptDTO;
 import org.lakehouse.client.api.dto.configs.DataStoreDTO;
-import org.lakehouse.client.api.dto.service.ScheduledTaskLockDTO;
+import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.api.utils.LogPasswdRespectively;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
@@ -36,6 +36,7 @@ public class TaskProcessorConfigFactory  {
     }
 
     public TaskProcessorConfig buildTaskProcessorConfig(ScheduledTaskLockDTO scheduledTaskLockDTO){
+        logger.info("Build config");
         TaskProcessorConfig result = new TaskProcessorConfig();
 
         result.setTargetDataSet(
@@ -78,6 +79,7 @@ public class TaskProcessorConfigFactory  {
                 renderJinjaDateTime(
                         scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getIntervalEndDateTime(),
                         jinjaContext));
+        logger.info("Config ready");
         return result;
     }
 

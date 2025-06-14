@@ -32,6 +32,9 @@ public class Endpoint {
     public final static String SCENARIOS_NAME = SCENARIOS + "/{name}";
 
 
+    public final static String SCHEDULE = ROOT_API_V1_0 + "/schedule";
+    public final static String SCHEDULE_NAME = ROOT_API_V1_0 + "/schedule/name={name}/limit={limit}";
+    public final static String SCHEDULE_ID = ROOT_API_V1_0 + "/schedule/id={id}";
     public final static String TASKS = ROOT_API_V1_0 + "/tasks";
     public final static String SCHEDULED_TASKS = TASKS + "/scheduledtasks";
     public final static String SCHEDULED_TASKS_LOCK_BY_ID = SCHEDULED_TASKS + "/lock/taskId/{id}/service/{serviceId}";

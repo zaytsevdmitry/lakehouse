@@ -3,7 +3,7 @@ package org.lakehouse.scheduler.factory;
 import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.configs.ScheduleScenarioActEffectiveDTO;
 import org.lakehouse.client.api.dto.configs.TaskDTO;
-import org.lakehouse.client.api.dto.tasks.ScheduledTaskDTO;
+import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.scheduler.entities.ScheduleScenarioActInstance;

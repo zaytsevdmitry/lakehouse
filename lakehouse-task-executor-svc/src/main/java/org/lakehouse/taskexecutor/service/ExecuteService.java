@@ -2,23 +2,19 @@ package org.lakehouse.taskexecutor.service;
 
 import com.hubspot.jinjava.Jinjava;
 import org.lakehouse.client.api.constant.Status;
-import org.lakehouse.client.api.constant.SystemVarKeys;
-import org.lakehouse.client.api.dto.service.ScheduledTaskLockDTO;
-import org.lakehouse.client.api.dto.service.TaskExecutionHeartBeatDTO;
-import org.lakehouse.client.api.dto.service.TaskInstanceReleaseDTO;
+import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
+import org.lakehouse.client.api.dto.scheduler.lock.TaskExecutionHeartBeatDTO;
+import org.lakehouse.client.api.dto.scheduler.lock.TaskInstanceReleaseDTO;
 import org.lakehouse.client.api.dto.state.DataSetStateDTO;
-import org.lakehouse.client.api.dto.tasks.ScheduledTaskDTO;
+import org.lakehouse.client.rest.exception.TaskStatusException;
 import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
 import org.lakehouse.client.rest.state.StateRestClientApi;
 import org.lakehouse.taskexecutor.entity.TaskProcessor;
+import org.lakehouse.taskexecutor.entity.TaskProcessorConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.Map;
 
 @Service
 public class ExecuteService {
@@ -29,6 +25,7 @@ public class ExecuteService {
     private final String groupName;
     private final long heartBeatIntervalMs;
     private final ProcessorFactory processorFactory;
+    private final TaskProcessorConfigFactory taskProcessorConfigFactory;
     private final Jinjava jinjava;
     public ExecuteService(
             SchedulerRestClientApi schedulerRestClientApi,
@@ -36,35 +33,25 @@ public class ExecuteService {
             @Value("${lakehouse.task-executor.service.id}") String serviceId,
             @Value("${lakehouse.task-executor.service.groupName}") String groupName,
             @Value("${lakehouse.task-executor.service.heart-beat-interval-ms}") long heartBeatIntervalMs,
-            ProcessorFactory processorFactory, Jinjava jinjava) {
+            ProcessorFactory processorFactory, TaskProcessorConfigFactory taskProcessorConfigFactory, Jinjava jinjava) {
         this.schedulerRestClientApi = schedulerRestClientApi;
         this.stateRestClientApi = stateRestClientApi;
         this.serviceId = serviceId;
         this.groupName = groupName;
         this.heartBeatIntervalMs = heartBeatIntervalMs;
         this.processorFactory = processorFactory;
+        this.taskProcessorConfigFactory = taskProcessorConfigFactory;
         this.jinjava = jinjava;
         logger.info("Started executor with serviceId={} and groupName={}", serviceId, groupName);
     }
 
-    private DataSetStateDTO getDataSetStateDTO(Status.DataSet status, ScheduledTaskDTO scheduledTaskDTO) {
-        Map<String,String> map = new HashMap<>(Map.of(SystemVarKeys.TARGET_DATE_TIME_TZ_KEY, scheduledTaskDTO.getTargetDateTime()));
-        DataSetStateDTO result = new DataSetStateDTO();
-        result.setDataSetKeyName(scheduledTaskDTO.getDataSetKeyName());
-        result.setIntervalStartDateTime(jinjava.render(scheduledTaskDTO.getIntervalStartDateTime(),map));
-        result.setIntervalEndDateTime(jinjava.render(scheduledTaskDTO.getIntervalEndDateTime(),map));
-        result.setStatus(status.label);
 
-        return result;
-    }
-
-    public void takeAndRunTask(ScheduledTaskLockDTO scheduledTaskLockDTO) {
+    public void takeAndRunTask(ScheduledTaskLockDTO scheduledTaskLockDTO) throws TaskStatusException {
+        TaskProcessorConfig taskProcessorConfig = taskProcessorConfigFactory.buildTaskProcessorConfig(scheduledTaskLockDTO);
+        DataSetStateDTO dataSetStateDTO = DataSetStateDTOFactory.buildtDataSetStateDTO(Status.DataSet.RUNNING, taskProcessorConfig);
 
         stateRestClientApi
-                .setDataSetStateDTO(
-                        getDataSetStateDTO(
-                                Status.DataSet.RUNNING,
-                                scheduledTaskLockDTO.getScheduledTaskEffectiveDTO()));
+                .setDataSetStateDTO(dataSetStateDTO);
 
         TaskInstanceReleaseDTO taskInstanceReleaseDTO = new TaskInstanceReleaseDTO();
         taskInstanceReleaseDTO.setLockId(scheduledTaskLockDTO.getLockId());
@@ -74,15 +61,16 @@ public class ExecuteService {
         Thread hb = null;
         TaskLockHeartBeat taskLockHeartBeat = new TaskLockHeartBeat(schedulerRestClientApi, heartBeatIntervalMs, taskExecutionHeartBeatDTO);
         try {
-            TaskProcessor p = processorFactory.buildProcessor(scheduledTaskLockDTO);
+            TaskProcessor p = processorFactory.buildProcessor(taskProcessorConfig,scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getExecutionModule());
             hb = new Thread(taskLockHeartBeat);
             hb.start();
-            taskInstanceReleaseDTO.setStatus(p.runTask().label);
-        } catch (ClassNotFoundException | InvocationTargetException | InstantiationException |
-                 IllegalAccessException | NoSuchMethodException e) {
+            String status = p.runTask().label;
+            taskInstanceReleaseDTO.setStatus(status);
+        } catch (Exception e){
             logger.error("Task execution error ", e);
-            taskInstanceReleaseDTO.setStatus(Status.Task.FAILED.label);
-        } finally {
+            taskInstanceReleaseDTO.setStatus(Status.Task.CONF_ERROR.label);
+        }
+        finally {
             logger.info("Status {}", taskInstanceReleaseDTO.getStatus());
             taskLockHeartBeat.setExit();
             if (hb != null && hb.isAlive() && !hb.isInterrupted())
@@ -103,11 +91,13 @@ public class ExecuteService {
 
 
         }
-        if (taskInstanceReleaseDTO.getStatus().equals(Status.Task.FAILED)) {
+        if (taskInstanceReleaseDTO.getStatus().equals(Status.Task.FAILED.label)) {
             logger.info("Send dataset {} status {} ",
                     scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getDataSetKeyName(),
                     Status.Task.FAILED.label);
-            stateRestClientApi.setDataSetStateDTO(getDataSetStateDTO(Status.DataSet.FAILED, scheduledTaskLockDTO.getScheduledTaskEffectiveDTO()));
+            dataSetStateDTO.setStatus(Status.DataSet.FAILED.label);
+            stateRestClientApi
+                    .setDataSetStateDTO(dataSetStateDTO);
         }
         //  } catch (NotFound | ResourceAccessException e) {
         //     logger.warn(e.getMessage());

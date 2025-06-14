@@ -6,8 +6,6 @@ import org.lakehouse.taskexecutor.entity.TaskProcessorConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-
 public abstract class MaintenanceAbstractTaskProcessor extends AbstractTaskProcessor {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());

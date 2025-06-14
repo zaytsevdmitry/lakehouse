@@ -239,7 +239,7 @@ public class ScheduleService {
 		});
 		// -------------------------
 		ScheduleDTO result = mapScheduleToDTO(schedule);
-		scheduleConfigProducerService.send(findEffectiveScheduleDTOById(result.getName()) );
+		scheduleConfigProducerService.changeSchedule(schedule);
 		return result;
 	}
 

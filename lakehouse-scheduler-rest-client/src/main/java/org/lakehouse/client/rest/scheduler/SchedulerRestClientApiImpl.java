@@ -1,12 +1,13 @@
 package org.lakehouse.client.rest.scheduler;
 
 import org.lakehouse.client.api.constant.Endpoint;
-import org.lakehouse.client.api.dto.service.ScheduledTaskLockDTO;
-import org.lakehouse.client.api.dto.service.TaskExecutionHeartBeatDTO;
-import org.lakehouse.client.api.dto.service.TaskInstanceReleaseDTO;
-import org.lakehouse.client.api.dto.tasks.ScheduledTaskDTO;
-import org.lakehouse.client.api.dto.tasks.ScheduledTaskMsgDTO;
+import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
+import org.lakehouse.client.api.dto.scheduler.lock.TaskExecutionHeartBeatDTO;
+import org.lakehouse.client.api.dto.scheduler.lock.TaskInstanceReleaseDTO;
+import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
+import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskMsgDTO;
 import org.lakehouse.client.rest.RestClientHelper;
+import org.lakehouse.client.rest.exception.TaskStatusException;
 
 import java.util.Arrays;
 import java.util.List;
@@ -55,7 +56,11 @@ public class SchedulerRestClientApiImpl implements SchedulerRestClientApi {
 		return restClientHelper.putDTO(taskExecutionHeartBeat, Endpoint.SCHEDULED_TASKS_LOCK_HEARTBEAT);
 	}
 	@Override
-	public int lockRelease(TaskInstanceReleaseDTO taskInstanceReleaseDTO) {
+	public int lockRelease(TaskInstanceReleaseDTO taskInstanceReleaseDTO) throws TaskStatusException {
+		if (taskInstanceReleaseDTO.getStatus() == null){
+			throw new TaskStatusException("Status can't be null");
+
+		}
 		return restClientHelper.putDTO(taskInstanceReleaseDTO, Endpoint.SCHEDULED_TASKS_RELEASE);
 	}
 

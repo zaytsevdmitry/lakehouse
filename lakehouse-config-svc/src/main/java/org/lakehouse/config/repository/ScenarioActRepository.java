@@ -13,8 +13,11 @@ public interface ScenarioActRepository extends JpaRepository<ScenarioAct, Long> 
 	@Query("select p from ScenarioAct p where p.schedule.name = ?1")
 	List<ScenarioAct> findByScheduleName(String scheduleName);
 
+	List<ScenarioAct> findByScenarioActTemplateName(String scenarioActTemplateName);
+
 	@Query("select p from ScenarioAct p where p.schedule.name = ?1 and p.name = ?2")
 	Optional<ScenarioAct> findByScheduleNameAndActName(String scheduleName, String actName);
+
 
 	@Modifying
 	@Query("delete from ScenarioAct sa where sa.schedule.name = ?1")

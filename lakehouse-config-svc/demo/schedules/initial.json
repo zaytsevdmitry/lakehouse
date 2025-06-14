@@ -10,7 +10,7 @@
       "name": "transaction_processing",
       "dataSet": "transaction_processing",
       "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
-      "intervalEnd": "targetDateTimeTZ",
+      "intervalEnd": "{{ targetDateTimeTZ }}",
       "scenarioActTemplate": null,
       "tasks": [
         {
@@ -23,6 +23,13 @@
             "spark.executor.memory": "1gb",
             "spark.executor.cores": "2"
           }
+        },
+        {
+          "name": "success",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.SuccessTaskProcessor",
+          "importance": "critical",
+          "description": "DataSet success"
         }
       ]
 
@@ -32,7 +39,7 @@
       "dataSet": "client_processing",
       "scenarioActTemplate": null,
       "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
-      "intervalEnd": "targetDateTimeTZ",
+      "intervalEnd": "{{ targetDateTimeTZ }}",
 
       "tasks": [
         {
@@ -45,6 +52,13 @@
             "spark.executor.memory": "1gb",
             "spark.executor.cores": "2"
           }
+        },
+        {
+          "name": "success",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.SuccessTaskProcessor",
+          "importance": "critical",
+          "description": "DataSet success"
         }
       ]
 
@@ -54,7 +68,7 @@
       "dataSet": "transaction_dds",
       "scenarioActTemplate": "default",
       "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
-      "intervalEnd": "targetDateTimeTZ",
+      "intervalEnd": "{{ targetDateTimeTZ }}",
       "tasks": [
         {
           "name": "extend",
@@ -86,14 +100,14 @@
       "dataSet": "aggregation_pay_per_client_daily_mart",
       "scenarioActTemplate": "default",
       "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
-      "intervalEnd": "targetDateTimeTZ"
+      "intervalEnd": "{{ targetDateTimeTZ }}"
     },
     {
       "name": "aggregation_pay_per_client_total_mart",
       "dataSet": "aggregation_pay_per_client_total_mart",
       "scenarioActTemplate": "default",
       "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
-      "intervalEnd": "targetDateTimeTZ"
+      "intervalEnd": "{{ targetDateTimeTZ }}"
     }
   ],
   "scenarioActEdges": [

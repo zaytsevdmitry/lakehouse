@@ -6,7 +6,7 @@ import org.lakehouse.client.api.dto.state.DataSetStateDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.rest.state.StateRestClientApi;
 import org.lakehouse.taskexecutor.entity.TaskProcessorConfig;
-import  org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatus;
 
 
 public class StateSuccessTaskProcessor extends MaintenanceAbstractTaskProcessor{

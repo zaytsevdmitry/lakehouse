@@ -2,7 +2,7 @@ package org.lakehouse.client.api.serialization.task;
 
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Deserializer;
-import org.lakehouse.client.api.dto.tasks.ScheduledTaskMsgDTO;
+import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskMsgDTO;
 import org.lakehouse.client.api.utils.ObjectMapping;
 
 public class ScheduledTaskMsgKafkaDeserializer implements Deserializer<ScheduledTaskMsgDTO> {

@@ -2,7 +2,7 @@ package org.lakehouse.taskexecutor.configuration;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.lakehouse.client.api.dto.tasks.ScheduledTaskMsgDTO;
+import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskMsgDTO;
 import org.lakehouse.client.api.serialization.task.ScheduledTaskMsgKafkaDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

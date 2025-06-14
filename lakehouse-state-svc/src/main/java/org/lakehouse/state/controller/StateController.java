@@ -7,7 +7,7 @@ import org.lakehouse.client.api.dto.state.DataSetStateResponseDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.state.mapper.StateMapper;
 import org.lakehouse.state.service.StateService;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,7 +20,7 @@ public class StateController {
         this.stateService = stateService;
     }
 
-    @GetMapping(Endpoint.STATE_DATASET)
+    @PostMapping(Endpoint.STATE_DATASET)
     DataSetStateResponseDTO getStateByInterval(
             @RequestBody DataSetIntervalDTO dataSetIntervalDTO
             /*@PathVariable String dataSetKeyName,
