@@ -97,7 +97,6 @@ public class TaskProcessorConfigFactory  {
     private Map<String,String> getKeyBind(
             ScheduledTaskLockDTO scheduledTaskLockDTO){
         Map<String,String> result = new HashMap<>();
-        result.putAll(System.getenv());
         result.put(
                 SystemVarKeys.TARGET_DATE_TIME_TZ_KEY,
                 scheduledTaskLockDTO

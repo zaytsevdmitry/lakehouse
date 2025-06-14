@@ -34,6 +34,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.*;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.KafkaContainer;
@@ -73,8 +74,11 @@ import java.util.Map;
         })
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-
+@ContextConfiguration(classes = {ImportBeans.class,ConfigRestClientApiTest.class})
 public class TaskExecutorTest {
+    @Autowired
+    @Qualifier("jinjava")
+    Jinjava jinjava;
 
     @Value("${lakehouse.task-executor.scheduled.task.kafka.consumer.topics}") String topic;
     @Bean
@@ -141,7 +145,6 @@ public class TaskExecutorTest {
     @Autowired
     ConfigRestClientApi configRestClientApi;
 
-    Jinjava jinjava  = new ImportBeans().Jiinjava();
 
     private TaskProcessor buildTaskProcessor(
             ScheduledTaskDTO scheduledTaskDTO)
@@ -177,7 +180,7 @@ public class TaskExecutorTest {
         ScheduledTaskDTO result = new ScheduledTaskDTO();
         result.setTargetDateTime(DateTimeUtils.nowStr());
         result.setIntervalStartDateTime("{{ " + SystemVarKeys.TARGET_DATE_TIME_TZ_KEY + " }}");
-        result.setIntervalEndDateTime("{{ adddays(" + SystemVarKeys.TARGET_DATE_TIME_TZ_KEY + "}, -1)}");
+        result.setIntervalEndDateTime("{{ adddays(" + SystemVarKeys.TARGET_DATE_TIME_TZ_KEY + ", -1)}}");
         result.setName(taskDTO.getName());
         result.setDataSetKeyName(dataSetKeyName);
         result.setExecutionModuleArgs(taskDTO.getExecutionModuleArgs());

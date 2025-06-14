@@ -23,6 +23,8 @@
   "scenarioActs" : [ {
     "name" : "transaction_processing",
     "dataSet" : "transaction_processing",
+    "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
+    "intervalEnd": "targetDateTimeTZ",
     "tasks" : [ {
       "name" : "load",
       "taskExecutionServiceGroupName" : "default",
@@ -38,6 +40,8 @@
   }, {
     "name" : "client_processing",
     "dataSet" : "client_processing",
+    "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
+    "intervalEnd": "targetDateTimeTZ",
     "tasks" : [ {
       "name" : "load",
       "taskExecutionServiceGroupName" : "default",
@@ -53,6 +57,8 @@
   }, {
     "name" : "aggregation_pay_per_client_daily_mart",
     "dataSet" : "aggregation_pay_per_client_daily_mart",
+    "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
+    "intervalEnd": "targetDateTimeTZ",
     "tasks" : [ {
       "name" : "merge",
       "taskExecutionServiceGroupName" : "default",
@@ -135,6 +141,8 @@
   }, {
     "name" : "aggregation_pay_per_client_total_mart",
     "dataSet" : "aggregation_pay_per_client_total_mart",
+    "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
+    "intervalEnd": "targetDateTimeTZ",
     "tasks" : [ {
       "name" : "merge",
       "taskExecutionServiceGroupName" : "default",
@@ -217,6 +225,8 @@
   }, {
     "name" : "transaction_dds",
     "dataSet" : "transaction_dds",
+    "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
+    "intervalEnd": "targetDateTimeTZ",
     "tasks" : [ {
       "name" : "merge",
       "taskExecutionServiceGroupName" : "default",
