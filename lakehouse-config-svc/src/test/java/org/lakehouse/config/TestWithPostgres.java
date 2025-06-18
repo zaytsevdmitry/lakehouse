@@ -7,10 +7,7 @@ import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.config.entities.Schedule;
 import org.lakehouse.config.entities.scenario.ScenarioAct;
-import org.lakehouse.config.repository.DataSetRepository;
-import org.lakehouse.config.repository.ScenarioActRepository;
-import org.lakehouse.config.repository.ScheduleRepository;
-import org.lakehouse.config.repository.ScriptRepository;
+import org.lakehouse.config.repository.*;
 import org.lakehouse.config.service.ScenarioActTemplateService;
 import org.lakehouse.config.service.ScheduleService;
 import org.lakehouse.config.test.configutation.RestManipulator;
@@ -60,6 +57,8 @@ public class TestWithPostgres {
 	@Autowired
 	ScenarioActRepository scenarioActRepository;
 
+	@Autowired
+	DataSetSourceRepository dataSetSourceRepository;
 	//test tools
 	@Autowired
 	FileLoader fileLoader;
@@ -384,7 +383,7 @@ public class TestWithPostgres {
 				.getScenarioActs()
 				.stream()
 				.mapToInt(s -> s.getTasks().size())
-				.sum() == 27);
+				.sum() == 32);
 		assert ( //extended task in schedule scenario
 				scheduleEffectiveDTO
 				.getScenarioActs()
@@ -455,6 +454,12 @@ public class TestWithPostgres {
 	@Test
 	void shouldTestEffectiveTask() throws Exception {
 		//prepare
+
+		scenarioActRepository.deleteAll();
+		scheduleRepository.deleteAll();
+		dataSetSourceRepository.deleteAll();
+		dataSetRepository.deleteAll();
+
 		ProjectDTO projectDTO = putProjectDTO();
 		// datastores
 		DataStoreDTO someelsedbDataStoreDTO = putDataStoreDTO("processingdb");

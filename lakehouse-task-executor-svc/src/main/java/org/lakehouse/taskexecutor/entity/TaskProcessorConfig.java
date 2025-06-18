@@ -4,20 +4,17 @@ import org.lakehouse.client.api.dto.configs.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.DataStoreDTO;
 
 import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 public class TaskProcessorConfig {
-    private  Map<String, String> executionModuleArgs;
-    private  List<String> scripts;
-    private  Map<String, DataSetDTO> sources;
+    private  Map<String, String> executionModuleArgs = new HashMap<>();
+    private  List<String> scripts = new ArrayList<>();
+    private  Map<String, DataSetDTO> sources = new HashMap<>();
     private  DataSetDTO targetDataSet;
-    private  Map<String, DataStoreDTO> dataStores;
-    private  Map<String, String> KeyBind;
-    private  Map<String, TableDefinition> tableDefinitions;
-    private  Set<DataSetDTO> dataSetDTOSet;
+    private  Map<String, DataStoreDTO> dataStores = new HashMap<>();
+    private  Map<String, String> KeyBind = new HashMap<>();
+    private  Map<String, TableDefinition> tableDefinitions = new HashMap<>();
+    private  Set<DataSetDTO> dataSetDTOSet = new HashSet<>();
     private OffsetDateTime intervalStartDateTime;
     private OffsetDateTime intervalEndDateTime;
 

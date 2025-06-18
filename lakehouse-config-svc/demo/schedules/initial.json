@@ -31,6 +31,12 @@
           "importance": "critical",
           "description": "DataSet success"
         }
+      ],
+      "dagEdges": [
+        {
+          "from": "load",
+          "to": "success"
+        }
       ]
 
     },
@@ -59,6 +65,12 @@
           "executionModule": "org.lakehouse.taskexecutor.executionmodule.SuccessTaskProcessor",
           "importance": "critical",
           "description": "DataSet success"
+        }
+      ],
+      "dagEdges": [
+        {
+          "from": "load",
+          "to": "success"
         }
       ]
 
@@ -92,6 +104,12 @@
             "spark.driver.memory": "2gb",
             "spark.executor.cores": "2"
           }
+        }
+      ],
+      "dagEdges": [
+        {
+          "from": "extend",
+          "to": "load"
         }
       ]
     },

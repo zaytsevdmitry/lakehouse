@@ -57,11 +57,7 @@ public class TaskLockObjectActionsImpl implements TaskLockObjectActions{
 		r.setLockId(Long.valueOf(args[2].toUpperCase()));
 		r.setStatus(Status.Task.valueOf(args[3].toUpperCase()).label);
         int code = 0;
-        try {
-            code = schedulerRestClientApi.lockRelease(r);
-        } catch (TaskStatusException e) {
-            throw new RuntimeException(e);
-        }
+        code = schedulerRestClientApi.lockRelease(r);
         return ObjectActionsHelper.coverHttpCode(code);
 	}
 }

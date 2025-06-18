@@ -24,6 +24,7 @@ public class HeardBeatService {
             initialDelayString = "${lakehouse.task-executor.service.heart-beat-initial-delaY-ms}")
     public void sendHeardBeat(){
         if (taskExecutionHeartBeatDTO != null){
+            logger.info("Prepare heard beat {}",taskExecutionHeartBeatDTO);
             schedulerRestClientApi.lockHeartBeat(taskExecutionHeartBeatDTO);
             logger.info("Heart beat lockId={} sent", taskExecutionHeartBeatDTO.getLockId());
         }

@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class DependencyCheckTaskProcessor extends AbstractTaskProcessor{
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -30,7 +31,12 @@ public class DependencyCheckTaskProcessor extends AbstractTaskProcessor{
     @Override
     public Status.Task runTask() {
         List<DataSetStateDTO> dataSetStateDTOs = new ArrayList<>();
-        for (String dataSetKeyName: getTaskProcessorConfig().getDataSetDTOSet().stream().map(DataSetDTO::getKeyName).toList()) {
+        for (String dataSetKeyName: getTaskProcessorConfig()
+                .getSources()
+                .values()
+                .stream()
+                .map(DataSetDTO::getKeyName)
+                .collect(Collectors.toSet())) {
             DataSetIntervalDTO dataSetIntervalDTO = new DataSetIntervalDTO();
             dataSetIntervalDTO.setDataSetKeyName(dataSetKeyName);
             dataSetIntervalDTO.setIntervalStartDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(getTaskProcessorConfig().getIntervalStartDateTime()));

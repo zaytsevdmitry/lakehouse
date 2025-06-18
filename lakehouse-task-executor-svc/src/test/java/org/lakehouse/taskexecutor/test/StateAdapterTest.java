@@ -19,6 +19,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @SpringBootTest( properties = {"spring.main.allow-bean-definition-overriding=true"})
@@ -61,25 +62,27 @@ public class StateAdapterTest {
         OffsetDateTime start = DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-01T00:00:00z");
         OffsetDateTime end   = DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-02T00:00:00z");
 
+        //datasets target and dependency
+        DataSetDTO testTargetDataSet = fileLoader.loadDataSetDTO("transaction_dds");
+        DataSetDTO testDependencyDataSet = fileLoader.loadDataSetDTO("client_processing");
 
-
-
+        //config
         TaskProcessorConfig tpc = new TaskProcessorConfig();
-        DataSetDTO testDataSet = fileLoader.loadDataSetDTO("client_processing");
-        tpc.setTargetDataSet(testDataSet);
+        tpc.setTargetDataSet(testTargetDataSet);
         tpc.setIntervalStartDateTime(start);
         tpc.setIntervalEndDateTime(end);
+        tpc.setDataSetDTOSet(Set.of(testTargetDataSet,testDependencyDataSet));
+        tpc.setSources(Map.of(testDependencyDataSet.getKeyName(),testDependencyDataSet));
 
-        tpc.setDataSetDTOSet(Set.of(testDataSet));
-
-
+        //History wrong record
         DataSetStateDTO dataSetStateDTOWrong = new DataSetStateDTO();
-        dataSetStateDTOWrong.setDataSetKeyName(testDataSet.getKeyName());
+        dataSetStateDTOWrong.setDataSetKeyName(testDependencyDataSet.getKeyName());
         dataSetStateDTOWrong.setStatus(Status.DataSet.FAILED.label);
         dataSetStateDTOWrong.setIntervalStartDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(tpc.getIntervalStartDateTime()));
         dataSetStateDTOWrong.setIntervalEndDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(tpc.getIntervalEndDateTime()));
-
         DependencyCheckStateRestClientApiTest stateRestClientApi = new DependencyCheckStateRestClientApiTest(List.of(dataSetStateDTOWrong));
+
+        // Execute check
         DependencyCheckTaskProcessor processor = new DependencyCheckTaskProcessor(tpc,stateRestClientApi,new Jinjava());
         assert (processor.runTask().equals(Status.Task.FAILED));
     }

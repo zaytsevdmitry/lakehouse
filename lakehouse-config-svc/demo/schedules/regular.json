@@ -23,6 +23,19 @@
             "spark.executor.memory": "1gb",
             "spark.executor.cores": "2"
           }
+        },
+        {
+          "name": "success",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.SuccessTaskProcessor",
+          "importance": "critical",
+          "description": "DataSet success"
+        }
+      ],
+      "dagEdges": [
+        {
+        "from": "load",
+        "to": "success"
         }
       ]
 
@@ -44,9 +57,21 @@
             "spark.executor.memory": "1gb",
             "spark.executor.cores": "2"
           }
+        },
+        {
+          "name": "success",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.SuccessTaskProcessor",
+          "importance": "critical",
+          "description": "DataSet success"
+        }
+      ],
+      "dagEdges": [
+        {
+          "from": "load",
+          "to": "success"
         }
       ]
-
     },
     {
       "name": "transaction_dds",
