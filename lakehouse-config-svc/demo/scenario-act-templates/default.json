@@ -3,18 +3,17 @@
   "description": "Default scenario",
   "tasks": [
     {
+      "name": "begin",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.BeginTaskProcessor",
+      "importance": "critical",
+      "description": "Made interval status RUNNING"
+    }, {
       "name": "check",
       "taskExecutionServiceGroupName": "default",
       "executionModule": "org.lakehouse.taskexecutor.executionmodule.DependencyCheckTaskProcessor",
       "importance": "critical",
       "description": "Dependency check"
-    },
-    {
-      "name": "success",
-      "taskExecutionServiceGroupName": "default",
-      "executionModule": "org.lakehouse.taskexecutor.executionmodule.SuccessTaskProcessor",
-      "importance": "critical",
-      "description": "DataSet success"
     },
     {
       "name": "load",
@@ -40,7 +39,7 @@
       }
     },
     {
-      "name": "dataQualityBefore",
+      "name": "dataQualityBeforeApply",
       "taskExecutionServiceGroupName": "default",
       "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.DataQualityBeforeProcessor",
       "importance": "warn",
@@ -74,14 +73,18 @@
     {
       "name": "finally",
       "taskExecutionServiceGroupName": "default",
-      "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.FinallyProcessor",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.SuccessTaskProcessor",
       "importance": "critical",
-      "description": "load from remote datastore",
-      "executionModuleArgs": {}
+      "description": "DataSet success"
     }
   ],
   "dagEdges": [
-    { "from": "check",
+    {
+      "from": "begin",
+      "to": "check"
+    },
+    {
+      "from": "check",
       "to": "load"
     },
     {
@@ -90,10 +93,10 @@
     },
     {
       "from": "merge",
-      "to": "dataQualityBefore"
+      "to": "dataQualityBeforeApply"
     },
     {
-      "from": "dataQualityBefore",
+      "from": "dataQualityBeforeApply",
       "to": "apply"
     },
     {
@@ -102,19 +105,11 @@
     },
     {
       "from": "dataQualityAfterCritical",
-      "to": "success"
-    },
-    {
-      "from": "success",
       "to": "finally"
     },
     {
       "from": "apply",
       "to": "dataQualityAfterWarn"
-    },
-    {
-      "from": "dataQualityAfterWarn",
-      "to": "finally"
     }
   ]
 }

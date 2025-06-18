@@ -12,6 +12,9 @@ import org.lakehouse.config.entities.templates.TaskTemplateEdge;
 import org.lakehouse.config.entities.templates.TaskTemplateExecutionModuleArg;
 import org.lakehouse.config.mapper.Mapper;
 import org.lakehouse.config.repository.*;
+import org.lakehouse.config.validator.ScenarioActTemplateConfValidator;
+import org.lakehouse.config.validator.ConfDTOValidationException;
+import org.lakehouse.config.validator.ValidationResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -117,6 +120,12 @@ public class ScenarioActTemplateService {
 	}
 	@Transactional
 	public ScenarioActTemplateDTO save(ScenarioActTemplateDTO scenarioActTemplateDTO) {
+
+		ValidationResult vr = ScenarioActTemplateConfValidator.validate(scenarioActTemplateDTO);
+
+		if (!vr.isValid())
+			throw new ConfDTOValidationException(vr.getDescriptions());
+
 		ScenarioActTemplate scenarioActTemplate = mapScenarioToEntity(scenarioActTemplateDTO);
 		taskTemplateEdgeRepository.findByScenarioTemplateName(scenarioActTemplate.getName()).forEach(taskTemplateEdgeRepository::delete);
 		taskTemplateRepository.findByScenarioTemplateName(scenarioActTemplate.getName()).forEach(

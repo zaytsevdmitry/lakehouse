@@ -288,7 +288,11 @@ public class TestWithPostgres {
 		assert(	scenarioActRepository.findByScheduleName(schedule.getName()).size() ==1);
 		// test up config version number
 		ScheduleDTO scheduleDTO = scheduleService.findDtoById(schedule.getName());
-		scheduleDTO.setScenarioActs(new ArrayList<>());
+		ScheduleScenarioActDTO emptyScenario = new ScheduleScenarioActDTO();
+		emptyScenario.setIntervalStart("1");
+		emptyScenario.setIntervalEnd("2");
+		emptyScenario.setDataSet(dto.getKeyName());
+		scheduleDTO.setScenarioActs(List.of(emptyScenario));
 		scheduleDTO.setScenarioActEdges(new ArrayList<>());
 		scheduleDTO.setIntervalExpression("*****");
 		ScheduleDTO resultscheduleDTO = scheduleService.save(scheduleDTO);

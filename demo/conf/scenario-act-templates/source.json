@@ -1,0 +1,39 @@
+{
+  "name": "source",
+  "description": "Default scenario",
+  "tasks": [
+    {
+      "name": "begin",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.BeginTaskProcessor",
+      "importance": "critical",
+      "description": "Made dataset interval status RUNNING"
+    },
+    {
+      "name": "load",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.SparkTaskProcessor",
+      "importance": "critical",
+      "description": "load data",
+      "executionModuleArgs": {
+      }
+    },
+    {
+      "name": "finally",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.SuccessTaskProcessor",
+      "importance": "critical",
+      "description": "Made dataset interval status SUCCESS"
+    }
+  ],
+  "dagEdges": [
+    {
+      "from": "begin",
+      "to": "load"
+    },
+    {
+      "from": "load",
+      "to": "finally"
+    }
+  ]
+}

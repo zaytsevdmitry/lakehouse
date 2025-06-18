@@ -37,4 +37,12 @@ public class DagEdgeDTO {
     public int hashCode() {
         return Objects.hash(getFrom(), getTo());
     }
+
+    @Override
+    public String toString() {
+        return "DagEdgeDTO{" +
+                "from='" + from + '\'' +
+                ", to='" + to + '\'' +
+                '}';
+    }
 }

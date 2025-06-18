@@ -38,7 +38,7 @@ do
      --data-binary "@./taskexecutionservicegroups/$s.json"
 done
 
-for s in "default"
+for s in "default" "source"
 do
    curl -i -X POST 127.0.0.1:8080/v1_0/configs/scenarios \
      -H "Content-Type: application/json" \
@@ -46,7 +46,7 @@ do
 done
 
 
-for s in "regular" "initial"
+for s in "regular" "initial" "generateSourceDict" "generateSource"
 do
    curl -i -X POST 127.0.0.1:8080/v1_0/configs/schedules \
      -H "Content-Type: application/json" \

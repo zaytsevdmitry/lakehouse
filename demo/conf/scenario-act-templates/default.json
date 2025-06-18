@@ -3,14 +3,27 @@
   "description": "Default scenario",
   "tasks": [
     {
+      "name": "begin",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.BeginTaskProcessor",
+      "importance": "critical",
+      "description": "Made interval status RUNNING"
+    }, {
+      "name": "check",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.DependencyCheckTaskProcessor",
+      "importance": "critical",
+      "description": "Dependency check"
+    },
+    {
       "name": "load",
       "taskExecutionServiceGroupName": "default",
       "executionModule": "org.lakehouse.taskexecutor.executionmodule.SparkTaskProcessor",
       "importance": "critical",
       "description": "load from remote datastore",
       "executionModuleArgs": {
-        "spark.executor.memory": "1gb",
-        "spark.driver.memory": "1gb"
+        "spark.executor.memory": "5gb",
+        "spark.driver.memory": "2gb"
       }
     },
     {
@@ -20,9 +33,9 @@
       "importance": "critical",
       "description": "load from remote datastore",
       "executionModuleArgs": {
-        "spark.executor.memory": "1gb",
-        "spark.driver.memory": "1gb",
-        "spark.driver.cores": "1"
+        "spark.executor.memory": "5gb",
+        "spark.driver.memory": "2gb",
+        "spark.driver.cores": "3"
       }
     },
     {
@@ -60,23 +73,30 @@
     {
       "name": "finally",
       "taskExecutionServiceGroupName": "default",
-      "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.FinallyProcessor",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.SuccessTaskProcessor",
       "importance": "critical",
-      "description": "load from remote datastore",
-      "executionModuleArgs": {}
+      "description": "DataSet success"
     }
   ],
   "dagEdges": [
+    {
+      "from": "begin",
+      "to": "check"
+    },
+    {
+      "from": "check",
+      "to": "load"
+    },
     {
       "from": "load",
       "to": "merge"
     },
     {
       "from": "merge",
-      "to": "dataQualityBefore"
+      "to": "dataQualityBeforeApply"
     },
     {
-      "from": "dataQualityBefore",
+      "from": "dataQualityBeforeApply",
       "to": "apply"
     },
     {
@@ -90,10 +110,6 @@
     {
       "from": "apply",
       "to": "dataQualityAfterWarn"
-    },
-    {
-      "from": "dataQualityAfterWarn",
-      "to": "finally"
     }
   ]
 }

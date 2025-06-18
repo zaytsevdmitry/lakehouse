@@ -11,6 +11,9 @@ import org.lakehouse.config.exception.ScheduleNotFoundException;
 import org.lakehouse.config.exception.TaskEffectiveNotFoundException;
 import org.lakehouse.config.mapper.Mapper;
 import org.lakehouse.config.repository.*;
+import org.lakehouse.config.validator.ConfDTOValidationException;
+import org.lakehouse.config.validator.ScheduleConfValidator;
+import org.lakehouse.config.validator.ValidationResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -165,6 +168,10 @@ public class ScheduleService {
 
 	@Transactional
 	public ScheduleDTO save(ScheduleDTO scheduleDTO) {
+
+		ValidationResult vr = ScheduleConfValidator.validate(scheduleDTO);
+		if(!vr.isValid())
+			throw new ConfDTOValidationException(vr.getDescriptions());
 
 		Schedule currentScheduleVersion =
 				scheduleRepository
