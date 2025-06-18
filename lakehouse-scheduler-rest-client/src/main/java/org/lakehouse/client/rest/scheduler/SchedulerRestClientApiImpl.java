@@ -56,11 +56,7 @@ public class SchedulerRestClientApiImpl implements SchedulerRestClientApi {
 		return restClientHelper.putDTO(taskExecutionHeartBeat, Endpoint.SCHEDULED_TASKS_LOCK_HEARTBEAT);
 	}
 	@Override
-	public int lockRelease(TaskInstanceReleaseDTO taskInstanceReleaseDTO) throws TaskStatusException {
-		if (taskInstanceReleaseDTO.getStatus() == null){
-			throw new TaskStatusException("Status can't be null");
-
-		}
+	public int lockRelease(TaskInstanceReleaseDTO taskInstanceReleaseDTO)  {
 		return restClientHelper.putDTO(taskInstanceReleaseDTO, Endpoint.SCHEDULED_TASKS_RELEASE);
 	}
 

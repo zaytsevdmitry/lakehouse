@@ -1,6 +1,8 @@
 package org.lakehouse.scheduler.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.OffsetDateTime;
 
@@ -24,6 +26,7 @@ public class ScheduleTaskInstanceExecutionLock {
 	
 	@ManyToOne
 	@JoinColumn(nullable = false, foreignKey = @ForeignKey(name = "schedule_task_instance_execution_lock__sti_id_fk"))
+	@OnDelete(action = OnDeleteAction.CASCADE)
 	private ScheduleTaskInstance scheduleTaskInstance;
 	
 	public String getServiceId() {

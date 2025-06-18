@@ -107,12 +107,8 @@ public class ScheduleTaskInstanceService {
 						message.getScheduleTaskInstance().getName());
 				scheduledTaskMsgDTO.setTaskExecutionServiceGroupName(t.getTaskExecutionServiceGroupName());
 			}
-
 			catch (RuntimeException e){
-				logger.error("Error when getting EffectiveTaskDTO", e);
-				message.getScheduleTaskInstance().setStatus(Status.Task.CONF_ERROR.label);
-				repository.save(message.getScheduleTaskInstance());
-				scheduledTaskForProducerMessagesRepository.delete(message);
+				logger.warn("Error when getting EffectiveTaskDTO from config service", e);
 			}
 			if (t != null){
 
@@ -181,7 +177,8 @@ public class ScheduleTaskInstanceService {
 		ScheduleTaskInstanceExecutionLock lock = 
 				executionLockRepository
 					.findById(taskExecutionHeardBeat.getLockId())
-					.orElseThrow(() ->  new ScheduledTaskInstanceLockNotFoundException(taskExecutionHeardBeat.getLockId()));
+					.orElseThrow(() ->
+							new ScheduledTaskInstanceLockNotFoundException(taskExecutionHeardBeat.getLockId()));
 		
 		lock.setLastHeartBeatDateTime(DateTimeUtils.now());
 		return executionLockRepository.save(lock);
@@ -192,7 +189,8 @@ public class ScheduleTaskInstanceService {
 		Status.Task t = Status.Task.valueOf(taskInstanceReleaseDTO.getStatus());
 		
 		if (t == Status.Task.SUCCESS || 
-				t == Status.Task.FAILED) {
+				t == Status.Task.FAILED ||
+					t == Status.Task.CONF_ERROR) {
 		
 			ScheduleTaskInstanceExecutionLock executionLock = 			
 				executionLockRepository

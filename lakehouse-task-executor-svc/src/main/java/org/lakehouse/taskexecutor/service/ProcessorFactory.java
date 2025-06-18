@@ -5,6 +5,7 @@ import org.lakehouse.client.rest.state.StateRestClientApi;
 import org.lakehouse.taskexecutor.entity.TaskProcessor;
 import org.lakehouse.taskexecutor.entity.TaskProcessorConfig;
 import org.lakehouse.taskexecutor.executionmodule.DependencyCheckTaskProcessor;
+import org.lakehouse.taskexecutor.executionmodule.SuccessTaskProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,7 @@ public class ProcessorFactory {
         this.jinjava = jinjava;
 		internalProcessors = new HashMap<>();
 		internalProcessors.put(DependencyCheckTaskProcessor.class.getName(),DependencyCheckTaskProcessor.class);
+		internalProcessors.put(SuccessTaskProcessor.class.getName(),SuccessTaskProcessor.class);
     }
 
 	private TaskProcessor buildCustomProcessor(
@@ -56,7 +58,9 @@ public class ProcessorFactory {
             throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
 		TaskProcessor result = null;
 
-		if( DependencyCheckTaskProcessor.class.getName().equals(processorClass.getName())){
+		if(
+				DependencyCheckTaskProcessor.class.getName().equals(processorClass.getName())
+				|| SuccessTaskProcessor.class.getName().equals(processorClass.getName())){
 			Constructor<?> constructor =
 					processorClass.getConstructor(TaskProcessorConfig.class,StateRestClientApi.class, Jinjava.class);
 			logger.info("Making maintenance class instance {}", processorClass.getName());

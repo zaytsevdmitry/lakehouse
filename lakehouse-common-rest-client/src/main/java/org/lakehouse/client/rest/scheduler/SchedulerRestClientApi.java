@@ -19,5 +19,5 @@ public interface SchedulerRestClientApi{
 	public List<ScheduledTaskLockDTO>  getScheduledTaskLockDTOList();
 	public ScheduledTaskLockDTO lockTaskById(Long taskId, String serviceId);
 	public int lockHeartBeat (TaskExecutionHeartBeatDTO taskExecutionHeartBeat);
-	public int lockRelease(TaskInstanceReleaseDTO taskInstanceReleaseDTO) throws TaskStatusException;
+	public int lockRelease(TaskInstanceReleaseDTO taskInstanceReleaseDTO) ;
 }

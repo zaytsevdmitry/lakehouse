@@ -18,6 +18,7 @@ lakehouse:
           url: http://127.0.0.1:8081
   task-executor:
     service:
+      heart-beat-initial-delaY-ms: 5000
       heart-beat-interval-ms: 5000 # must be lower than lakehouse.scheduler.task.retry.delay-ms
       max-lock-retries: 5
       max-lock-retries-duration-ms: 5
