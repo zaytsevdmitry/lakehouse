@@ -9,6 +9,7 @@
         <module name="lakehouse-common-rest-client" />
         <module name="lakehouse-common-test" />
         <module name="lakehouse-common" />
+        <module name="lakehouse-state-svc" />
         <module name="lakehouse-dataSetState-svc" />
         <module name="lakehouse-config-svc" />
         <module name="lakehouse-task-coordinator-svc" />
@@ -22,9 +23,9 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="lakehouse-dataSetState-rest-client" target="17" />
+      <module name="lakehouse-dataSetState-svc" target="17" />
       <module name="lakehouse-jinjava-cusom" target="17" />
-      <module name="lakehouse-state-rest-client" target="17" />
-      <module name="lakehouse-state-svc" target="17" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
