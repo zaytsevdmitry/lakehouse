@@ -6,6 +6,7 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="lakehouse-state-rest-client" />
         <module name="lakehouse-common-rest-client" />
         <module name="lakehouse-common-test" />
         <module name="lakehouse-common" />
