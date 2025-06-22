@@ -4,14 +4,14 @@
   "tasks": [
     {
       "name": "begin",
-      "taskExecutionServiceGroupName": "default",
-      "executionModule": "org.lakehouse.taskexecutor.executionmodule.BeginTaskProcessor",
+      "taskExecutionServiceGroupName": "state-exe",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.RunningStateTaskProcessor",
       "importance": "critical",
       "description": "Made interval status RUNNING"
     }, {
       "name": "check",
-      "taskExecutionServiceGroupName": "default",
-      "executionModule": "org.lakehouse.taskexecutor.executionmodule.DependencyCheckTaskProcessor",
+      "taskExecutionServiceGroupName": "state-exe",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.DependencyCheckStateTaskProcessor",
       "importance": "critical",
       "description": "Dependency check"
     },
@@ -39,7 +39,7 @@
       }
     },
     {
-      "name": "dataQualityBefore",
+      "name": "dataQualityBeforeApply",
       "taskExecutionServiceGroupName": "default",
       "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.DataQualityBeforeProcessor",
       "importance": "warn",
@@ -72,8 +72,8 @@
     },
     {
       "name": "finally",
-      "taskExecutionServiceGroupName": "default",
-      "executionModule": "org.lakehouse.taskexecutor.executionmodule.SuccessTaskProcessor",
+      "taskExecutionServiceGroupName": "state-exe",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.SuccessStateTaskProcessor",
       "importance": "critical",
       "description": "DataSet success"
     }

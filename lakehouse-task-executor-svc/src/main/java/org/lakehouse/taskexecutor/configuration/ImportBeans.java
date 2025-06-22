@@ -18,7 +18,7 @@ public class ImportBeans {
 		return result;
 	}
 	@Bean(name = "jinjava")
-	public Jinjava Jiinjava(){
+	public Jinjava getJinjava(){
 		Jinjava jinjava = new Jinjava();
 		jinjava.getGlobalContext().registerFunction(
 				new ELFunctionDefinition(
@@ -26,6 +26,13 @@ public class ImportBeans {
 						"adddays",
 						JinjavaDateTimeFunctions.class,
 						"addDaysISO",
+						String.class, Integer.class));
+		jinjava.getGlobalContext().registerFunction(
+				new ELFunctionDefinition(
+						"",
+						"addmonths",
+						JinjavaDateTimeFunctions.class,
+						"addMonthsISO",
 						String.class, Integer.class));
 		return jinjava;
 	}

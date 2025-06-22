@@ -4,9 +4,12 @@ import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskExecutionHeartBeatDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskInstanceReleaseDTO;
+import org.lakehouse.client.api.dto.scheduler.lock.TaskResultDTO;
 import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
 import org.lakehouse.taskexecutor.entity.TaskProcessor;
 import org.lakehouse.taskexecutor.entity.TaskProcessorConfig;
+import org.lakehouse.taskexecutor.exception.TaskFailedException;
+import org.lakehouse.taskexecutor.exception.TaskProcessorConfigurationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -16,16 +19,16 @@ import org.springframework.stereotype.Service;
 public class ExecuteService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final SchedulerRestClientApi schedulerRestClientApi;
-    private final ProcessorFactory processorFactory;
+    private final TaskProcessorFactory taskProcessorFactory;
     private final TaskProcessorConfigFactory taskProcessorConfigFactory;
     private final HeardBeatService heardBeatService;
     public ExecuteService(
             SchedulerRestClientApi schedulerRestClientApi,
-            ProcessorFactory processorFactory,
+            TaskProcessorFactory taskProcessorFactory,
             TaskProcessorConfigFactory taskProcessorConfigFactory,
             HeardBeatService heardBeatService) {
         this.schedulerRestClientApi = schedulerRestClientApi;
-        this.processorFactory = processorFactory;
+        this.taskProcessorFactory = taskProcessorFactory;
         this.taskProcessorConfigFactory = taskProcessorConfigFactory;
         this.heardBeatService = heardBeatService;
     }
@@ -34,11 +37,6 @@ public class ExecuteService {
     public void takeAndRunTask(ScheduledTaskLockDTO scheduledTaskLockDTO)  {
         TaskProcessorConfig taskProcessorConfig = taskProcessorConfigFactory.buildTaskProcessorConfig(scheduledTaskLockDTO);
 
-        /*DataSetStateDTO dataSetStateDTO = DataSetStateDTOFactory.buildtDataSetStateDTO(Status.DataSet.RUNNING, taskProcessorConfig);
-*/
-        /*stateRestClientApi
-                .setDataSetStateDTO(dataSetStateDTO);
-*/
         TaskInstanceReleaseDTO taskInstanceReleaseDTO = new TaskInstanceReleaseDTO();
         taskInstanceReleaseDTO.setLockId(scheduledTaskLockDTO.getLockId());
 
@@ -46,18 +44,21 @@ public class ExecuteService {
         taskExecutionHeartBeatDTO.setLockId(scheduledTaskLockDTO.getLockId());
 
         try {
-            TaskProcessor p = processorFactory
+            TaskProcessor p = taskProcessorFactory
                     .buildProcessor(
                             taskProcessorConfig,
                             scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getExecutionModule());
             heardBeatService.start(taskExecutionHeartBeatDTO);
-            String status = p.runTask().label;
-            taskInstanceReleaseDTO.setStatus(status);
-        } catch (ReflectiveOperationException   e){
+            p.runTask();
+            taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.SUCCESS));;
+        } catch (TaskProcessorConfigurationException e) {
+            logger.error("Task creation error ", e);
+            taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.CONF_ERROR,e.toString()));
+        } catch (TaskFailedException e){
             logger.error("Task execution error ", e);
-            taskInstanceReleaseDTO.setStatus(Status.Task.CONF_ERROR.label);
+            taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.FAILED,e.toString()));
         } finally {
-            logger.info("Status {}", taskInstanceReleaseDTO.getStatus());
+            logger.info("Status {}", taskInstanceReleaseDTO.getTaskResult().getStatus());
             heardBeatService.stop();
             logger.info("Heart beat shutdown");
 
@@ -68,21 +69,11 @@ public class ExecuteService {
                     scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getScheduleKeyName(),
                     scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getTargetDateTime(),
                     scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getScenarioActKeyName(),
-                    taskInstanceReleaseDTO.getStatus());
+                    taskInstanceReleaseDTO.getTaskResult().getStatus());
 
             schedulerRestClientApi.lockRelease(taskInstanceReleaseDTO);
 
         }
-        /*if (taskInstanceReleaseDTO.getStatus().equals(Status.Task.FAILED.label)) {
-            logger.info("Send dataset {} status {} Target",
-                    scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getDataSetKeyName(),
-                    Status.Task.FAILED.label);
-            dataSetStateDTO.setStatus(Status.DataSet.FAILED.label);
-            logger.info("State {}", dataSetStateDTO);
-            stateRestClientApi
-                    .setDataSetStateDTO(dataSetStateDTO);
-        }*/
-
     }
 
 }

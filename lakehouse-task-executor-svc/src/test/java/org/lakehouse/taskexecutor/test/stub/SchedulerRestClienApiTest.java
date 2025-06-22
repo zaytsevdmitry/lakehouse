@@ -1,4 +1,4 @@
-package org.lakehouse.taskexecutor.test;
+package org.lakehouse.taskexecutor.test.stub;
 
 import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskExecutionHeartBeatDTO;
@@ -9,7 +9,14 @@ import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
 
 import java.util.List;
 
-public class SchedulerRestClientApiErrorTest implements SchedulerRestClientApi{
+public class SchedulerRestClienApiTest implements SchedulerRestClientApi{
+
+    private final List<ScheduledTaskLockDTO> scheduledTaskLockDTOS;
+    public SchedulerRestClienApiTest(List<ScheduledTaskLockDTO> scheduledTaskLockDTOS) {
+
+        this.scheduledTaskLockDTOS = scheduledTaskLockDTOS;
+    }
+
     @Override
     public ScheduledTaskMsgDTO getScheduledTaskDTO(String name) {
         return null;

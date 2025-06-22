@@ -71,12 +71,13 @@ services:
       bash -c "java
       -Dspring.datasource.url=jdbc:postgresql://db:5432/postgresDB
       -Dlakehouse.config.schedule.kafka.producer.bootstrap-servers=broker:9092
-      -jar /opt/lakehouse-config-svc/lakehouse-config-svc-0.1.1-jar-with-dependencies.jar"
+      -jar /opt/lakehouse-config-svc/lakehouse-config-svc-0.2.0-jar-with-dependencies.jar"
     depends_on:
 #      - minio
       - db
       - broker
-#      - hms
+  
+  #      - hms
   scheduler-svc:
     image: lakehouse
     container_name: scheduler-svc
@@ -92,11 +93,26 @@ services:
       -Dlakehouse.scheduler.run.delay-ms=5000 
       -Dlakehouse.scheduler.resolvedeps.delay-ms=5000 
       -Dlakehouse.client.rest.config.server.url=http://conf-svc:8080 
-      -jar /opt/lakehouse-scheduler-svc/lakehouse-scheduler-svc-0.1.1-jar-with-dependencies.jar"
+      -jar /opt/lakehouse-scheduler-svc/lakehouse-scheduler-svc-0.2.0-jar-with-dependencies.jar"
     depends_on:
       - db
       - broker
       - conf-svc
+
+  state-svc:
+    image: lakehouse
+    container_name: state-svc
+    #    restart: always
+    ports:
+      - "8082:8082"
+    command: >
+      bash -c "java
+      -Dspring.datasource.url=jdbc:postgresql://db:5432/postgresDB
+      -Dlakehouse.config.schedule.kafka.producer.bootstrap-servers=broker:9092
+      -jar /opt/lakehouse-state-svc/lakehouse-state-svc-0.2.0-jar-with-dependencies.jar"
+    depends_on:
+      #      - minio
+      - db
 
   lakehouse-task-executor-svc-1:
     image: lakehouse
@@ -104,8 +120,8 @@ services:
     hostname: task-executor-svc-1
   #  restart: always
     ports:
-      - "8082:8091"
-      - "4040:4040"
+      - "8091:8091"
+      - "4041:4041"
     environment:
       SPARK_DRIVER_HOST: task-executor-svc-1
       SPARK_MASTER_HOST: task-executor-svc-1
@@ -116,16 +132,18 @@ services:
       -Dserver.port=8091
       -Dlakehouse.client.rest.config.server.url=http://conf-svc:8080
       -Dlakehouse.client.rest.scheduler.server.url=http://scheduler-svc:8081
-      -Dlakehouse.task-executor.service.groupName=default
+      -Dlakehouse.client.rest.state.server.url=http://state-svc:8082
+      -Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id=default
       -Dlakehouse.task-executor.service.id=first1
       -Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1
       -Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=broker:9092
-      -jar /opt/lakehouse-task-executor-svc/lakehouse-task-executor-svc-0.1.1-jar-with-dependencies.jar"
+      -jar /opt/lakehouse-task-executor-svc/lakehouse-task-executor-svc-0.2.0-jar-with-dependencies.jar"
     depends_on:
 #     - minio
       - broker
       - conf-svc
       - scheduler-svc
+      - state-svc
 
   lakehouse-task-executor-svc-2:
     image: lakehouse
@@ -133,7 +151,7 @@ services:
     hostname: task-executor-svc-2
     #  restart: always
     ports:
-      - "8083:8092"
+      - "8092:8092"
       - "4042:4042"
     environment:
       SPARK_DRIVER_HOST: task-executor-svc-2
@@ -142,19 +160,47 @@ services:
       bash -c "java
       --add-exports java.base/sun.nio.ch=ALL-UNNAMED 
       --add-opens=java.base/java.nio=ALL-UNNAMED 
-      -Dserver.port=8083
+      -Dserver.port=8092
       -Dlakehouse.client.rest.config.server.url=http://conf-svc:8080
       -Dlakehouse.client.rest.scheduler.server.url=http://scheduler-svc:8081
-      -Dlakehouse.task-executor.service.groupName=default
+      -Dlakehouse.client.rest.state.server.url=http://state-svc:8082
+      -Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id=default
       -Dlakehouse.task-executor.service.id=second
       -Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1
       -Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=broker:9092
-      -jar /opt/lakehouse-task-executor-svc/lakehouse-task-executor-svc-0.1.1-jar-with-dependencies.jar"
+      -jar /opt/lakehouse-task-executor-svc/lakehouse-task-executor-svc-0.2.0-jar-with-dependencies.jar"
     depends_on:
 #      - minio
       - broker
       - conf-svc
       - scheduler-svc
+      - state-svc
+  lakehouse-task-executor-svc-3:
+    image: lakehouse
+    container_name: task-executor-svc-3
+    hostname: task-executor-svc-3
+    #  restart: always
+    ports:
+      - "8093:8093"
+    command: >
+      bash -c "java
+      --add-exports java.base/sun.nio.ch=ALL-UNNAMED 
+      --add-opens=java.base/java.nio=ALL-UNNAMED 
+      -Dserver.port=8093
+      -Dlakehouse.client.rest.config.server.url=http://conf-svc:8080
+      -Dlakehouse.client.rest.scheduler.server.url=http://scheduler-svc:8081
+      -Dlakehouse.client.rest.state.server.url=http://state-svc:8082
+      -Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id=state-exe
+      -Dlakehouse.task-executor.service.id=state-exe
+      -Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1
+      -Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=broker:9092
+      -jar /opt/lakehouse-task-executor-svc/lakehouse-task-executor-svc-0.2.0-jar-with-dependencies.jar"
+    depends_on:
+      #      - minio
+      - broker
+      - conf-svc
+      - scheduler-svc
+      - state-svc
 
 volumes:
   minio_storage: {}

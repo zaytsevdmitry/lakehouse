@@ -14,6 +14,13 @@
       "scenarioActTemplate": null,
       "tasks": [
         {
+          "name": "begin",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.RunningStateTaskProcessor",
+          "importance": "critical",
+          "description": "Made interval status RUNNING"
+        },
+        {
           "name": "load",
           "taskExecutionServiceGroupName": "default",
           "executionModule": "org.lakehouse.taskexecutor.executionmodule.JdbcTaskProcessor",
@@ -27,12 +34,16 @@
         {
           "name": "success",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.SuccessTaskProcessor",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.SuccessStateTaskProcessor",
           "importance": "critical",
           "description": "DataSet success"
         }
       ],
       "dagEdges": [
+        {
+          "from": "begin",
+          "to": "load"
+        },
         {
           "from": "load",
           "to": "success"
@@ -46,8 +57,14 @@
       "scenarioActTemplate": null,
       "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
       "intervalEnd": "{{ targetDateTimeTZ }}",
-
       "tasks": [
+        {
+          "name": "begin",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.RunningStateTaskProcessor",
+          "importance": "critical",
+          "description": "Made interval status RUNNING"
+        },
         {
           "name": "load",
           "taskExecutionServiceGroupName": "default",
@@ -62,18 +79,21 @@
         {
           "name": "success",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.SuccessTaskProcessor",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.SuccessStateTaskProcessor",
           "importance": "critical",
           "description": "DataSet success"
         }
       ],
       "dagEdges": [
         {
+          "from": "begin",
+          "to": "load"
+        },
+        {
           "from": "load",
           "to": "success"
         }
       ]
-
     },
     {
       "name": "transaction_dds",
@@ -147,4 +167,3 @@
     }
   ]
 }
-

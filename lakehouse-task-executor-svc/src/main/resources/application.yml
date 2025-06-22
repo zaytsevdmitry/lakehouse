@@ -3,7 +3,6 @@ server:
 spark:
   master: local
 
-
 lakehouse:
   client:
     rest:
@@ -22,7 +21,6 @@ lakehouse:
       heart-beat-interval-ms: 5000 # must be lower than lakehouse.scheduler.task.retry.delay-ms
       max-lock-retries: 5
       max-lock-retries-duration-ms: 5
-      groupName: default
       id: first1
     scheduled:
       task:
@@ -31,7 +29,7 @@ lakehouse:
             concurrency: 1
             properties:
               bootstrap.servers: localhost:9092
-              group.id: task-executor
+              group.id: default
               auto.offset.reset: earliest
             topics: scheduled_task_msg
 #    schedule:

@@ -1,6 +1,5 @@
 package org.lakehouse.config.validator;
 
-import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.configs.DagEdgeDTO;
 import org.lakehouse.client.api.dto.configs.ScheduleDTO;
 import org.lakehouse.client.api.dto.configs.ScheduleScenarioActAbstract;

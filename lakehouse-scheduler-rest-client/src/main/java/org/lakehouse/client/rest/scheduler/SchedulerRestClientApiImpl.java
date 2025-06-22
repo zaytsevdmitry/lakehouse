@@ -7,7 +7,6 @@ import org.lakehouse.client.api.dto.scheduler.lock.TaskInstanceReleaseDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskMsgDTO;
 import org.lakehouse.client.rest.RestClientHelper;
-import org.lakehouse.client.rest.exception.TaskStatusException;
 
 import java.util.Arrays;
 import java.util.List;

@@ -5,7 +5,6 @@ import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskExecutionHeartBeatDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskInstanceReleaseDTO;
 import org.lakehouse.client.commandline.model.CommandResult;
-import org.lakehouse.client.rest.exception.TaskStatusException;
 import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
 import org.springframework.stereotype.Component;
 
@@ -55,7 +54,7 @@ public class TaskLockObjectActionsImpl implements TaskLockObjectActions{
 	public CommandResult lockRelease(String[] args) {
 		TaskInstanceReleaseDTO r = new TaskInstanceReleaseDTO();
 		r.setLockId(Long.valueOf(args[2].toUpperCase()));
-		r.setStatus(Status.Task.valueOf(args[3].toUpperCase()).label);
+		r.getTaskResult().setStatus(Status.Task.valueOf(args[3].toUpperCase()));
         int code = 0;
         code = schedulerRestClientApi.lockRelease(r);
         return ObjectActionsHelper.coverHttpCode(code);

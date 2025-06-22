@@ -5,13 +5,13 @@
     {
       "name": "begin",
       "taskExecutionServiceGroupName": "default",
-      "executionModule": "org.lakehouse.taskexecutor.executionmodule.BeginTaskProcessor",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.RunningStateTaskProcessor",
       "importance": "critical",
       "description": "Made interval status RUNNING"
     }, {
       "name": "check",
       "taskExecutionServiceGroupName": "default",
-      "executionModule": "org.lakehouse.taskexecutor.executionmodule.DependencyCheckTaskProcessor",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.DependencyCheckStateTaskProcessor",
       "importance": "critical",
       "description": "Dependency check"
     },
@@ -73,7 +73,7 @@
     {
       "name": "finally",
       "taskExecutionServiceGroupName": "default",
-      "executionModule": "org.lakehouse.taskexecutor.executionmodule.SuccessTaskProcessor",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.SuccessStateTaskProcessor",
       "importance": "critical",
       "description": "DataSet success"
     }

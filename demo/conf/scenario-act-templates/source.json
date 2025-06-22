@@ -4,15 +4,15 @@
   "tasks": [
     {
       "name": "begin",
-      "taskExecutionServiceGroupName": "default",
-      "executionModule": "org.lakehouse.taskexecutor.executionmodule.BeginTaskProcessor",
+      "taskExecutionServiceGroupName": "state-exe",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.RunningStateTaskProcessor",
       "importance": "critical",
       "description": "Made dataset interval status RUNNING"
     },
     {
       "name": "load",
       "taskExecutionServiceGroupName": "default",
-      "executionModule": "org.lakehouse.taskexecutor.executionmodule.SparkTaskProcessor",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.JdbcTaskProcessor",
       "importance": "critical",
       "description": "load data",
       "executionModuleArgs": {
@@ -20,8 +20,8 @@
     },
     {
       "name": "finally",
-      "taskExecutionServiceGroupName": "default",
-      "executionModule": "org.lakehouse.taskexecutor.executionmodule.SuccessTaskProcessor",
+      "taskExecutionServiceGroupName": "state-exe",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.SuccessStateTaskProcessor",
       "importance": "critical",
       "description": "Made dataset interval status SUCCESS"
     }

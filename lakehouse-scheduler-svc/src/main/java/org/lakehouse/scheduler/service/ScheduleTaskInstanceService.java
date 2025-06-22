@@ -6,6 +6,7 @@ import org.lakehouse.client.api.dto.configs.TaskDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskExecutionHeartBeatDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskInstanceReleaseDTO;
+import org.lakehouse.client.api.dto.scheduler.lock.TaskResultDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskMsgDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
@@ -27,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -39,7 +41,6 @@ public class ScheduleTaskInstanceService {
 	private final ScheduledTaskForProducerMessagesRepository scheduledTaskForProducerMessagesRepository;
 	private final ScheduledTaskDTOProducerService scheduledTaskDTOProducerService;
 	private final ConfigRestClientApi configRestClientApi;
-	private final ScheduleEffectiveService scheduleEffectiveService;
 	private final ScheduleTaskInstanceFactory scheduleTaskInstanceFactory;
 	public ScheduleTaskInstanceService(
             ScheduleTaskInstanceRepository repository,
@@ -47,7 +48,8 @@ public class ScheduleTaskInstanceService {
             ScheduleTaskInstanceDependencyRepository dependencyRepository,
             ScheduledTaskDTOProducerService scheduledTaskDTOProducerService,
             ScheduledTaskForProducerMessagesRepository scheduledTaskForProducerMessagesRepository,
-            ConfigRestClientApi configRestClientApi, ScheduleEffectiveService scheduleEffectiveService, ScheduleTaskInstanceFactory scheduleTaskInstanceFactory
+            ConfigRestClientApi configRestClientApi,
+			ScheduleTaskInstanceFactory scheduleTaskInstanceFactory
     ) {
 		this.repository = repository;
 		this.dependencyRepository = dependencyRepository;
@@ -55,7 +57,6 @@ public class ScheduleTaskInstanceService {
         this.scheduledTaskForProducerMessagesRepository = scheduledTaskForProducerMessagesRepository;
         this.configRestClientApi = configRestClientApi;
 		this.scheduledTaskDTOProducerService = scheduledTaskDTOProducerService;
-        this.scheduleEffectiveService = scheduleEffectiveService;
         this.scheduleTaskInstanceFactory = scheduleTaskInstanceFactory;
     }
 	
@@ -153,6 +154,7 @@ public class ScheduleTaskInstanceService {
 		sti.setStatus(Status.Task.RUNNING.label);
 		sti.setBeginDateTime(DateTimeUtils.now());
 		sti.setEndDateTime(null);
+		sti.setServiceId(serviceId);
 
 		ScheduleTaskInstanceExecutionLock beforeLock = new ScheduleTaskInstanceExecutionLock();
 		beforeLock.setLastHeartBeatDateTime(DateTimeUtils.now());
@@ -186,7 +188,7 @@ public class ScheduleTaskInstanceService {
 	@Transactional
 	public void releaseTask(TaskInstanceReleaseDTO taskInstanceReleaseDTO) {
 		
-		Status.Task t = Status.Task.valueOf(taskInstanceReleaseDTO.getStatus());
+		Status.Task t = taskInstanceReleaseDTO.getTaskResult().getStatus();
 		
 		if (t == Status.Task.SUCCESS || 
 				t == Status.Task.FAILED ||
@@ -202,6 +204,7 @@ public class ScheduleTaskInstanceService {
 			sti.setStatus(t.label);
 			sti.setEndDateTime(DateTimeUtils.now());
 			sti.setReTryCount(sti.getReTryCount()+1);
+			sti.setCauses(taskInstanceReleaseDTO.getTaskResult().getCauses());
 			repository.save(sti);
 			
 			executionLockRepository.delete(executionLock);
@@ -209,7 +212,6 @@ public class ScheduleTaskInstanceService {
 		}
 		else 
 			throw new ReleaseTaskStatusChangeException(t);
-			
 	}
 
 	public List<ScheduledTaskDTO> findAll() {
@@ -249,14 +251,36 @@ public class ScheduleTaskInstanceService {
 	}
 	
 	public int reTryFailedTasks() {
-		List<ScheduleTaskInstance> l = repository
-			.findByStatus(Status.Task.FAILED.label);
-		
+		List<ScheduleTaskInstance> l =  new ArrayList<>();
+		l.addAll(
+			repository
+				.findByStatus(Status.Task.FAILED.label)
+					.stream()
+					.filter(sti-> sti
+							.getEndDateTime()
+							.isAfter(
+									DateTimeUtils.now()
+											.minusMinutes(2)))	//todo move to application properties
+					.toList());
+		l.addAll(
+			repository
+				.findByStatus(Status.Task.CONF_ERROR.label)
+					.stream()
+					.filter(sti-> sti
+							.getEndDateTime()
+							.isAfter(
+									DateTimeUtils.now()
+											.minusMinutes(4)))	//todo move to application properties
+					.toList());
+
 		l.forEach(t -> {
 				t.setReTryCount(t.getReTryCount() +1);
 				t.setStatus(Status.Task.NEW.label);
-				repository.save(t);
-				
+				t.setBeginDateTime(null);
+				t.setEndDateTime(null);
+				t.setCauses(null);
+				ScheduleTaskInstance sti = repository.save(t);
+				logger.info("Retry task {}", sti);
 			});
 		
 		return l.size();
@@ -268,10 +292,17 @@ public class ScheduleTaskInstanceService {
 				.findAll()
 				.stream()
 				.filter(l -> 
-					l.getLastHeartBeatDateTime().toEpochSecond() 
-				    	< DateTimeUtils.now().minusMinutes(2).toEpochSecond())
+					l.getLastHeartBeatDateTime().isAfter(
+							//todo move to application properties
+				    	 DateTimeUtils.now().minusMinutes(2)))
 				.toList();
-		locks.forEach( l -> releaseTask(new TaskInstanceReleaseDTO(l.getId(), Status.Task.FAILED.label)) );
+		locks.forEach( l -> {
+			releaseTask(
+				new TaskInstanceReleaseDTO(
+						l.getId(),
+						new TaskResultDTO(Status.Task.FAILED, "Heart beat limit exceeded")));
+			logger.info("Heart beat limit exceeded of lock {}", l);
+		});
 		
 		return locks.size();
 	}

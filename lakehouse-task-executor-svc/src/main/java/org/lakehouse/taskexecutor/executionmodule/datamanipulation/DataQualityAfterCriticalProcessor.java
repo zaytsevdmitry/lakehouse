@@ -2,11 +2,11 @@ package org.lakehouse.taskexecutor.executionmodule.datamanipulation;
 
 
 import com.hubspot.jinjava.Jinjava;
-import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.taskexecutor.entity.TaskProcessorConfig;
-import org.lakehouse.taskexecutor.executionmodule.AbstractTaskProcessor;
+import org.lakehouse.taskexecutor.exception.TaskFailedException;
+import org.lakehouse.taskexecutor.executionmodule.AbstractDefaultTaskProcessor;
 
-public class DataQualityAfterCriticalProcessor extends AbstractTaskProcessor{
+public class DataQualityAfterCriticalProcessor extends AbstractDefaultTaskProcessor {
 
 	public DataQualityAfterCriticalProcessor(TaskProcessorConfig taskProcessorConfig, Jinjava jinjava) {
 		super(taskProcessorConfig,jinjava);
@@ -14,8 +14,8 @@ public class DataQualityAfterCriticalProcessor extends AbstractTaskProcessor{
 
 
 	@Override
-	public Status.Task runTask() {
-		return Status.Task.SUCCESS;
+	public void runTask()throws TaskFailedException {
+
 	}
 
 }

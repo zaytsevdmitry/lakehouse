@@ -1,13 +1,10 @@
 package org.lakehouse.config.validator;
 
 import org.lakehouse.client.api.dto.configs.ScenarioActTemplateDTO;
-import org.lakehouse.client.api.dto.configs.ScheduleDTO;
-import org.lakehouse.client.api.dto.configs.ScheduleScenarioActAbstract;
 import org.lakehouse.client.api.dto.configs.TaskDTO;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ScenarioActTemplateConfValidator {

@@ -55,4 +55,16 @@ public class JinjavaTest {
         System.out.println(renderedTemplate);
         assert (renderedTemplate.equals(targetDateTimeStr));
     }
+    @Test
+    @Order(2)
+    public void testJinjaAddMonths() {
+
+        OffsetDateTime targetDateTime = OffsetDateTime.now();
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ISO_DATE_TIME;
+        String template = "{{ addmonths(" + SystemVarKeys.TARGET_DATE_TIME_TZ_KEY + ",  10)}}";
+        Map<String,String> context = new HashMap<>(Map.of(SystemVarKeys.TARGET_DATE_TIME_TZ_KEY, targetDateTime.format(dateTimeFormatter)));
+        String renderedTemplate = jinjava.render(template, context);
+        System.out.println(renderedTemplate);
+        assert (renderedTemplate.equals(targetDateTime.plusMonths(10).format(dateTimeFormatter)));
+    }
 }

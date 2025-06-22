@@ -13,7 +13,7 @@ public class ScheduleAbstract extends NameDescriptionAbstract
     @Serial
     private static final long serialVersionUID = 5872306801909970542L;
 	private String intervalExpression;
-    private String startDateTime;
+    private String startDateTime; // use DateTimeUtils.strEquals to compare
     private String stopDateTime;
     private List<DagEdgeDTO> scenarioActEdges = new ArrayList<>();
     private boolean enabled;
@@ -71,17 +71,20 @@ public class ScheduleAbstract extends NameDescriptionAbstract
         ScheduleAbstract that = (ScheduleAbstract) o;
         return isEnabled() == that.isEnabled()
                 && Objects.equals(getIntervalExpression(), that.getIntervalExpression())
-                && Objects.equals(//todo resolve what is this
-                        DateTimeUtils.parseDateTimeFormatWithTZ(getStartDateTime()),
-                        DateTimeUtils.parseDateTimeFormatWithTZ(that.getStartDateTime()))
-                && Objects.equals(getStopDateTime(), that.getStopDateTime())
-
+                && DateTimeUtils.strEquals(getStartDateTime(), that.getStartDateTime())
+                && DateTimeUtils.strEquals(getStopDateTime(), that.getStopDateTime())
                 && Objects.equals(getScenarioActEdges(), that.getScenarioActEdges());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), getIntervalExpression(), getStartDateTime(), getStopDateTime(),  getScenarioActEdges(), isEnabled());
+        return Objects.hash(
+                super.hashCode(),
+                getIntervalExpression(),
+                DateTimeUtils.parseDateTimeFormatWithTZ(getStartDateTime()),
+                DateTimeUtils.parseDateTimeFormatWithTZ(getStopDateTime()),
+                getScenarioActEdges(),
+                isEnabled());
     }
     
     public ScheduleAbstract copy() throws Exception {

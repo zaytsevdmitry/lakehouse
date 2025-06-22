@@ -1,11 +1,11 @@
 package org.lakehouse.taskexecutor.executionmodule;
 
 import com.hubspot.jinjava.Jinjava;
-import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.configs.ColumnDTO;
 import org.lakehouse.client.api.dto.configs.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.DataStoreDTO;
 import org.lakehouse.taskexecutor.entity.TaskProcessorConfig;
+import org.lakehouse.taskexecutor.exception.TaskFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +17,7 @@ import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 //todo this is Demo
-public class JdbcTaskProcessor extends AbstractTaskProcessor {
+public class JdbcTaskProcessor extends AbstractDefaultTaskProcessor {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final TaskProcessorConfig taskProcessorConfig;
     private final Jinjava jinjava;
@@ -29,9 +29,8 @@ public class JdbcTaskProcessor extends AbstractTaskProcessor {
         this.jinjava = jinjava;
     }
 
-
     @Override
-    public Status.Task runTask() {
+    public void runTask() throws TaskFailedException {
         Map<String, String> keyBind = new HashMap<>();
         keyBind.putAll(taskProcessorConfig.getKeyBind());
         keyBind.putAll(
@@ -45,9 +44,8 @@ public class JdbcTaskProcessor extends AbstractTaskProcessor {
         try {
             logger.info("JdbcTaskProcessor.run >> dataSet={}, dataStore={}",
                     taskProcessorConfig.getTargetDataSet().getKeyName(),
-                    taskProcessorConfig.getTargetDataSet().getDataStoreKeyName()
-            )
-            ;
+                    taskProcessorConfig.getTargetDataSet().getDataStoreKeyName());
+
             DataStoreDTO ds = taskProcessorConfig
                     .getDataStores()
                     .get(taskProcessorConfig
@@ -103,14 +101,13 @@ public class JdbcTaskProcessor extends AbstractTaskProcessor {
 
             } catch (SQLException e) {
                 logger.error(e.getMessage());
-                throw new RuntimeException(e);
+                throw new TaskFailedException(e);
             }
 
         } catch (Exception e) {
             logger.error("Error task execution", e);
-            return Status.Task.FAILED;
+            throw  new TaskFailedException(e);
         }
-        return Status.Task.SUCCESS;
     }
 
     public String feelScripts(String script) {

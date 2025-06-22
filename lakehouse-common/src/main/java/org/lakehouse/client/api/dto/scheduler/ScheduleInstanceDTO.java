@@ -1,6 +1,5 @@
 package org.lakehouse.client.api.dto.scheduler;
 
-import java.time.OffsetDateTime;
 import java.util.Objects;
 
 public class ScheduleInstanceDTO {

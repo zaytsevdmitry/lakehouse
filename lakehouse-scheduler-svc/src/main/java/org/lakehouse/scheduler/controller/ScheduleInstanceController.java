@@ -2,7 +2,6 @@ package org.lakehouse.scheduler.controller;
 
 import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.api.dto.scheduler.ScheduleInstanceDTO;
-import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.scheduler.service.ManageStateService;
 import org.lakehouse.scheduler.service.ScheduleTaskInstanceService;
 import org.springframework.web.bind.annotation.DeleteMapping;

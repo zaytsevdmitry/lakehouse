@@ -31,7 +31,7 @@ do
      --data-binary "@./datasets/$s.json"
 done
 
-for s in "default"
+for s in "default" "state-exe"
 do
    curl -i -X POST 127.0.0.1:8080/v1_0/configs/taskexecutionservicegroups \
      -H "Content-Type: application/json" \
@@ -53,4 +53,5 @@ do
      --data-binary "@./schedules/$s.json"
 done
 
-curl -i -X GET 127.0.0.1:8080/v1_0/configs/effective_schedules/initial
+curl -i -X GET 127.0.0.1:8080/v1_0/configs/effective/schedules/name/initial
+

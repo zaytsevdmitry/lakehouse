@@ -27,7 +27,7 @@ public class ScheduledTaskKafkaConsumerService  {
             ExecuteService executeService,
             SchedulerRestClientApi schedulerRestClientApi,
             @Value("${lakehouse.task-executor.service.id}") String serviceId,
-            @Value("${lakehouse.task-executor.service.groupName}") String groupName,
+            @Value("${lakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id}") String groupName,
             @Value("${lakehouse.task-executor.service.max-lock-retries}") Integer maxLockRetries,
             @Value("${lakehouse.task-executor.service.max-lock-retries-duration-ms}") Integer maxLockRetriesDuration
             ){

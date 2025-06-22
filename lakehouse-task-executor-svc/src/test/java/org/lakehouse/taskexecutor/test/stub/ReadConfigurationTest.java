@@ -1,4 +1,4 @@
-package org.lakehouse.taskexecutor.test;
+package org.lakehouse.taskexecutor.test.stub;
 
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;

@@ -53,4 +53,14 @@ public class ScheduleTaskInstanceExecutionLock {
 	public void setLastHeartBeatDateTime(OffsetDateTime lastHeartBeatDateTime) {
 		this.lastHeartBeatDateTime = lastHeartBeatDateTime;
 	}
+
+	@Override
+	public String toString() {
+		return "ScheduleTaskInstanceExecutionLock{" +
+				"id=" + id +
+				", serviceId='" + serviceId + '\'' +
+				", lastHeartBeatDateTime=" + lastHeartBeatDateTime +
+				", scheduleTaskInstance=" + scheduleTaskInstance +
+				'}';
+	}
 }

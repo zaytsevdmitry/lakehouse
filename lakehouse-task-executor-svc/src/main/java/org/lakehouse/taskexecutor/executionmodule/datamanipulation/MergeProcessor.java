@@ -1,13 +1,13 @@
 package org.lakehouse.taskexecutor.executionmodule.datamanipulation;
 
 import com.hubspot.jinjava.Jinjava;
-import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.taskexecutor.entity.TaskProcessorConfig;
-import org.lakehouse.taskexecutor.executionmodule.AbstractTaskProcessor;
+import org.lakehouse.taskexecutor.exception.TaskFailedException;
+import org.lakehouse.taskexecutor.executionmodule.AbstractDefaultTaskProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MergeProcessor extends AbstractTaskProcessor{
+public class MergeProcessor extends AbstractDefaultTaskProcessor {
 	final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	public MergeProcessor(TaskProcessorConfig taskProcessorConfig, Jinjava jinjava) {
@@ -16,16 +16,8 @@ public class MergeProcessor extends AbstractTaskProcessor{
 	}
 
 	@Override
-	public Status.Task  runTask() {
-		try {
-			Thread.sleep(10000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			logger.error(e.getMessage(), e);
-		} catch (Exception e){
-		return Status.Task.FAILED;
-	}
-        return Status.Task.SUCCESS;
+	public void runTask() throws TaskFailedException {
+
 	}
 
 }

@@ -380,27 +380,14 @@ public class TestWithPostgres {
 		assert (resultInitialScheduleDTO.equals(initialScheduleDTO));
 		assert (resultRegularScheduleDTO.equals(regularScheduleDTO));
 
-		ScheduleEffectiveDTO scheduleEffectiveDTO = scheduleService
+		ScheduleEffectiveDTO scheduleEffectiveDTOExpected = fileLoader.loadScheduleEffectiveDTO();
+		ScheduleEffectiveDTO scheduleEffectiveDTOResult = scheduleService
 				.findEffectiveScheduleDTOById(initialScheduleDTO.getName());
-		assert ( //  sum total of merge template with direct tasks
-				scheduleEffectiveDTO
-				.getScenarioActs()
-				.stream()
-				.mapToInt(s -> s.getTasks().size())
-				.sum() == 32);
-		assert ( //extended task in schedule scenario
-				scheduleEffectiveDTO
-				.getScenarioActs()
-				.stream()
-				.mapToInt(sa -> sa.getTasks()
-						.stream()
-						.filter(t-> t.getName().equals("extend"))
-						.toList()
-						.size())
-				.sum() == 1);
-		System.out.println(ObjectMapping.asJsonString(scheduleEffectiveDTO));
-		ScheduleEffectiveDTO sef = scheduleService.findEffectiveScheduleDTOById(initialScheduleDTO.getName());
-		sef.getScenarioActs().stream()
+		//lastChangeTime untestable
+		scheduleEffectiveDTOExpected.setLastChangedDateTime(scheduleEffectiveDTOResult.getLastChangedDateTime());
+		assert (scheduleEffectiveDTOResult.equals(scheduleEffectiveDTOExpected));
+		System.out.println(ObjectMapping.asJsonString(scheduleEffectiveDTOExpected));
+		scheduleEffectiveDTOResult.getScenarioActs().stream()
 				.forEach(s -> {
 					s.getTasks().forEach(taskDTO -> {
 						System.out.printf("Scenario Act name %s Task name %s%n", s.getName(), taskDTO.getName());
@@ -411,18 +398,18 @@ public class TestWithPostgres {
 
 				});
 
-		assert (sef.getLastChangeNumber() !=null);
-		assert (sef.getLastChangedDateTime() !=null);
-		assert (sef.getScenarioActs() !=null);
-		assert (sef.getIntervalExpression() !=null);
-		assert (sef.getStartDateTime() !=null);
-		assert (sef.getScenarioActEdges() != null);
+		assert (scheduleEffectiveDTOResult.getLastChangeNumber() !=null);
+		assert (scheduleEffectiveDTOResult.getLastChangedDateTime() !=null);
+		assert (scheduleEffectiveDTOResult.getScenarioActs() !=null);
+		assert (scheduleEffectiveDTOResult.getIntervalExpression() !=null);
+		assert (scheduleEffectiveDTOResult.getStartDateTime() !=null);
+		assert (scheduleEffectiveDTOResult.getScenarioActEdges() != null);
 		//------------------------------------
 
 		//all task in source schedule present in effective version
 		initialScheduleDTO.getScenarioActs().forEach( sae -> {
 			List<String> taskNamesExp = sae.getTasks().stream().map(TaskDTO::getName).toList();
-			assert (scheduleEffectiveDTO.getScenarioActs()
+			assert (scheduleEffectiveDTOResult.getScenarioActs()
 					.stream()
 					.filter(sar -> sar.getName().equals(sae.getName()))
 					.toList()

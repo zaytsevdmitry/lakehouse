@@ -5,6 +5,7 @@ import org.springframework.scheduling.support.CronExpression;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 
 public class DateTimeUtils {
 
@@ -41,5 +42,11 @@ public class DateTimeUtils {
     }
     public static String nowStr(){
         return formatDateTimeFormatWithTZ(now());
+    }
+
+    public static boolean strEquals(String strDT1, String strDT2){
+        return Objects.equals(
+                parseDateTimeFormatWithTZ(strDT1),
+                parseDateTimeFormatWithTZ(strDT2));
     }
 }

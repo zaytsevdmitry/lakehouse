@@ -1,8 +1,8 @@
 {
   "name": "regular",
   "description": "regular schedule for client transactions",
-  "intervalExpression": "0 0 * * * *",
-  "startDateTime": "2024-07-29T21:26:19.183+00:00",
+  "intervalExpression": "@daily",
+  "startDateTime": "2023-12-31T00:00:00.0+00:00",
   "stopDateTime": null,
   "enabled": true,
   "scenarioActs": [

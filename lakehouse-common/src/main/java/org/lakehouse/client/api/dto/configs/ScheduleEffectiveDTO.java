@@ -56,30 +56,18 @@ public class ScheduleEffectiveDTO extends ScheduleAbstract
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         ScheduleEffectiveDTO that = (ScheduleEffectiveDTO) o;
-        return isEnabled() == that.isEnabled()
-                && Objects.equals(getIntervalExpression(), that.getIntervalExpression())
-                && Objects.equals(//todo resolve what is this
-                        DateTimeUtils.parseDateTimeFormatWithTZ(getStartDateTime()),
-                        DateTimeUtils.parseDateTimeFormatWithTZ(that.getStartDateTime()))
-                && Objects.equals(getStopDateTime(), that.getStopDateTime())
-                && Objects.equals(getScenarioActs(), that.getScenarioActs())
-                && Objects.equals(getScenarioActEdges(), that.getScenarioActEdges())
-                && Objects.equals(getLastChangedDateTime(), that.getLastChangedDateTime())
-                && Objects.equals(getLastChangeNumber(), that.getLastChangeNumber());
+        return Objects.equals(getLastChangeNumber(), that.getLastChangeNumber())
+                && DateTimeUtils.strEquals(getLastChangedDateTime(), that.getLastChangedDateTime())
+                && Objects.equals(getScenarioActs(), that.getScenarioActs());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(
-                super.hashCode(),
-                getIntervalExpression(),
-                getStartDateTime(),
-                getStopDateTime(),
-                getScenarioActs(),
-                getScenarioActEdges(),
-                isEnabled(),
-                getLastChangedDateTime(),
-                getLastChangeNumber());
+
+        return Objects.hash(super.hashCode(),
+                getLastChangeNumber(),
+                DateTimeUtils.parseDateTimeFormatWithTZ(getLastChangedDateTime()),
+                getScenarioActs());
     }
 
     @Override

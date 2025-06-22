@@ -1,4 +1,4 @@
-package org.lakehouse.taskexecutor.test;
+package org.lakehouse.taskexecutor.test.stub;
 
 import org.apache.http.HttpStatus;
 import org.lakehouse.client.api.dto.configs.*;

@@ -2,13 +2,13 @@ package org.lakehouse.client.api.dto.scheduler.lock;
 
 public class TaskInstanceReleaseDTO {
 	private Long lockId;
-	private String status;
+	private TaskResultDTO taskResult;
 	public TaskInstanceReleaseDTO() {
 	}
 	
-	public TaskInstanceReleaseDTO(Long lockId, String status) {
+	public TaskInstanceReleaseDTO(Long lockId, TaskResultDTO taskResult) {
 		this.lockId = lockId;
-		this.status = status;
+		this.taskResult = taskResult;
 	}
 	
 	public Long getLockId() {
@@ -17,12 +17,12 @@ public class TaskInstanceReleaseDTO {
 	public void setLockId(Long lockId) {
 		this.lockId = lockId;
 	}
-	public String getStatus() {
-		return status;
+
+	public TaskResultDTO getTaskResult() {
+		return taskResult;
 	}
-	public void setStatus(String status) {
-		this.status = status;
+
+	public void setTaskResult(TaskResultDTO taskResult) {
+		this.taskResult = taskResult;
 	}
-	
-	
 }

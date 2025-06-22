@@ -44,7 +44,6 @@ public class Endpoint {
     public final static String SCHEDULED_TASKS_LOCK_HEARTBEAT = SCHEDULED_TASKS + "/lock/heartbeat";
     public final static String SCHEDULED_TASKS_ID = SCHEDULED_TASKS + "/{id}";
 
-
     public final static String STATE= ROOT_API_V1_0 + "/state";
     public final static String STATE_DATASET= STATE + "/dataset";
     public final static String STATE_DATASET_GET="/state/dataset/dataSetKeyName/{dataSetKeyName}/intervalStartDateTime/{intervalStartDateTime}/intervalEndDateTime/{intervalEndDateTime}";

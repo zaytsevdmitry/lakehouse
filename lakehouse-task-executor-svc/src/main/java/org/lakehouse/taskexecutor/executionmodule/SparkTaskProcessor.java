@@ -5,11 +5,11 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.spark.sql.SparkSession;
-import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.configs.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.DataStoreDTO;
 import org.lakehouse.taskexecutor.entity.TableDefinition;
 import org.lakehouse.taskexecutor.entity.TaskProcessorConfig;
+import org.lakehouse.taskexecutor.exception.TaskFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +21,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 //todo this is demo. ad-hoc experimental  code
-public class SparkTaskProcessor extends AbstractTaskProcessor{
+public class SparkTaskProcessor extends AbstractDefaultTaskProcessor{
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
    
     public SparkTaskProcessor(
@@ -62,7 +62,7 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
     }
 
     @Override
-    public Status.Task runTask() {
+    public void runTask() throws TaskFailedException {
         Map<String,String> keyBind = new HashMap<>();
         keyBind.putAll(getTaskProcessorConfig().getKeyBind());
         keyBind.putAll(
@@ -72,10 +72,7 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
                                 DataSetDTO::getKeyName))
         );
         getTaskProcessorConfig().setKeyBind(keyBind);
-
-        
         SparkSession sparkSession = null;
-        Status.Task result = null;
         try {
 
 
@@ -132,18 +129,16 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
             sparkSession.sql(merge);
             logger.info("Script execution is done");
             sparkSession.sql(String.format("select * from %s",getTaskProcessorConfig().getTargetDataSet().getKeyName())).show();
-            result = Status.Task.SUCCESS;
         }catch (Exception e){
             logger.error("Error task execution",e);
-            result = Status.Task.FAILED;
+            throw new TaskFailedException(e);
         }finally {
             if(sparkSession == null){
                 logger.error("Spark not initialised");
-                result = Status.Task.FAILED;
             }else
             {
                 logger.info("Shutdown spark");
-               // sparkSession.stop();
+                sparkSession.stop();
             }
             if (!SparkSession.getActiveSession().isEmpty()){
                 SparkSession s = SparkSession.getActiveSession().get();
@@ -152,7 +147,6 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
             }
 
         }
-        return result;
     }
     public String feelScripts(String script){
         String result = new String(script);
@@ -172,9 +166,7 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
             SparkSession sparkSession,
             Set<DataSetDTO> datasets,
             Map<String,DataStoreDTO> dataStoreDTOMap){
-       /// sparkSession.sql("show tables").show();
         for(DataSetDTO dataSetDTO:datasets){
-           // sparkSession.sql("show tables").show();
             DataStoreDTO dataStoreDTO = dataStoreDTOMap.get(dataSetDTO.getDataStoreKeyName());
                 if(dataStoreDTO.getInterfaceType().equals("jdbc")){
                     Properties properties = new Properties();
@@ -182,35 +174,15 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
                     sparkSession
                             .read()
                             .jdbc(dataStoreDTO.getUrl(),dataSetDTO.getFullTableName(),properties)
-                            /*.options(dataStoreDTO.getProperties())
-                            .option("url", dataStoreDTO.getUrl())
-                            .option("dbtable", dataSetDTO.getFullTableName())
-                            .load()
-                            */.createOrReplaceTempView(dataSetDTO.getKeyName());
+                            .createOrReplaceTempView(dataSetDTO.getKeyName());
 
                 }else{
                     //todo just for demo
                     TableDefinition td = getTaskProcessorConfig().getTableDefinitions().get(dataSetDTO.getKeyName());
-                  //  sparkSession.sqlContext().tables().show();
-                   /* sparkSession.sqlContext().createExternalTable(
-                            dataSetDTO.getName(),
-                            "iceberg", //todo add this to dataset config
-                            StructType.fromDDL(td.getColumnsDDL()),dataStoreDTO.getProperties());
-*/
-                   /* fscheck(sparkSession,dataStoreDTO.getUrl().concat(dataSetDTO.getProperties().get("location")));
-               */  /*  sparkSession
-                            .read()
-                            .format("iceberg")
-                            .schema(td.getColumnsDDL())
-                            .load(dataStoreDTO.getUrl().concat(dataSetDTO.getProperties().get("location")))
-                            //.parquet(dataStoreDTO.getUrl().concat(dataSetDTO.getProperties().get("location")))
-                            .createOrReplaceTempView(dataSetDTO.getName());*/
 
                 String ddl = String.format("create  external table\n if not exists\n %s(%s)\n using  iceberg\n",
                         dataSetDTO.getKeyName(),
-                        td.getColumnsDDL()
-                      //  dataStoreDTO.getUrl().concat(dataSetDTO.getProperties().get("location"))
-                        );
+                        td.getColumnsDDL());
                 logger.info(ddl);
                 sparkSession.sql(ddl);
                 }
@@ -218,17 +190,6 @@ public class SparkTaskProcessor extends AbstractTaskProcessor{
             logger.info(dataSetDTO.getKeyName());
             sparkSession.sql(String.format("select * from %s",dataSetDTO.getKeyName())).show();
         }
-
-        /*
-        taskProcessorConfig
-                .getTableDefinitions()
-                .values()
-                .forEach(t -> {
-                    logger.info(t.getTableDDL());
-                    sparkSession.sql(t.getTableDDL());
-                });
-
-*/
     }
     private void fscheck(SparkSession sparkSession, String location){
         try {
