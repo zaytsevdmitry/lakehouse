@@ -112,7 +112,10 @@ public class ScheduleTaskInstance {
 	}
 
 	public void setCauses(String causes) {
-		this.causes = causes.substring(0,Math.min(causes.length(), 254));
+		if (causes!=null)
+			this.causes = causes.substring(0,Math.min(causes.length(), 254));
+		else
+			this.causes = causes;
 	}
 
 	@Override
