@@ -1,27 +1,34 @@
 # Compatible keywords
 Domain Driven Design (DDD)
+
 Data mesh
+
 Data vault
+
 Data governance
+
 Scheduling
+
 Custom code
+
 SQL 
+
 Data engineer tool
+
 United namespace
+
 # links
 [System design](./doc/system_design/system_design.md)
 
-
-
 [Entities design](./doc/entities_design/entities_design.md)
+
+[States](doc/state_model/state-models.MD)
 
 [Command line](./lakehouse-cli/doc/commandline.MD)
 
-+-- doc
-|   +-- system_design
 
 
-[Демо](./demo/README.md)
+[Demo](./demo/README.md)
 
 # Project status
 

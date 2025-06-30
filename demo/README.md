@@ -62,8 +62,17 @@ docker container rm scheduler-svc
 
 Наполнение данными источников, производится в одном том же расписании, что и трансформация по какой-то, нужной кому-то логике. 
 Конфигурация содержит описания
--  двух мест хранения данных бд Postgres и файловая система.
--  пяти датасетов
--  расписания, сценарий которого применяет шаблоны последовательностей задач.
--  проекта (пространства имен, он один DEMO)
--  группы исполнителей (она одна, default)
+-  двух мест хранения данных бд Postgres и файловая система [datastores](conf/datastores).
+-  пяти датасетов [datasets](conf/datasets) и скриптов описывающих трансформацию данных [dataset-sql-model](conf/dataset-sql-model)
+-  расписаний, сценарий которого применяет шаблоны последовательностей задач.
+  - [generateSource](conf/schedules/generateSource.json) формирует данные в таблице платежных транзакций [transaction_processing](conf/datasets/transaction_processing.json) в postgres [processingdb](conf/datastores/processingdb.json)
+  - [generateSourceDict](conf/schedules/generateSourceDict.json) просто перезаписывает справочник клиентов [client_processing](conf/datasets/client_processing.json) в postgres [processingdb](conf/datastores/processingdb.json)
+  - [regular](conf/schedules/regular.json) имитирует ежедневное соединение двух таблиц [transaction_dds.sql](conf/dataset-sql-model/transaction_dds.sql) из расписаний выше в одну на spark [transaction_dds](conf/datasets/transaction_dds.json) сохраняя на диск [lakehousestorage](conf/datastores/lakehousestorage.json)
+    - transaction_dds послужит источником [aggregation_pay_per_client_total_mart.sql](conf/dataset-sql-model/aggregation_pay_per_client_total_mart.sql) для витрины [aggregation_pay_per_client_total_mart.json](conf/datasets/aggregation_pay_per_client_total_mart.json) которая будет сохранена в [lakehousestorage](conf/datastores/lakehousestorage.json)
+    - transaction_dds послужит источником [aggregation_pay_per_client_daily_mart.sql](conf/dataset-sql-model/aggregation_pay_per_client_daily_mart.sql) для витрины [aggregation_pay_per_client_daily_mart.json](conf/datasets/aggregation_pay_per_client_daily_mart.json) которая будет сохранена в [lakehousestorage](conf/datastores/lakehousestorage.json)
+  - [initial](conf/schedules/initial.json) ежемесячная версия [regular](conf/schedules/regular.json). Будет заблокирована сбором generateSource и generateSourceDict до тех пор, пока они не будут собраны за первый месяц 
+- проекта (пространства имен, он один [demo](conf/projects/demo.json))
+-  двух групп исполнителей [taskexecutionservicegroups](conf/taskexecutionservicegroups)
+  - [state-exe](conf/taskexecutionservicegroups/state-exe.json) для работы с задачами "состояний" 1 экземпляр
+  - [default](conf/taskexecutionservicegroups/default.json) обрабатывает задачи с данными 2 конкурирующих экземпляра
+

@@ -1,10 +1,10 @@
 @startuml
 'https://plantuml.com/sequence-diagram
 
-autonumber
 
-"task-executor-svc" -> "state-svc": send DataSetStateDTO
-"task-executor-svc" -> "state-svc": request for dependency states. Body - DataSetIntervalDTO
-"state-svc" --> "task-executor-svc" : response dependencies. Body DataSetStateResponseDTO
+
+"task-executor-svc" -> "state-svc": 1.send DataSetStateDTO
+"task-executor-svc" --> "state-svc": 1.request for dependency states. Body - DataSetIntervalDTO
+"state-svc" --> "task-executor-svc" : 2.response dependencies. Body DataSetStateResponseDTO
 
 @enduml

@@ -1,0 +1,5 @@
+@startuml 
+[*] --> RUNNING: TaskExecuter executed "begin" task
+RUNNING --> SUCCESS: TaskExecuter executed "finally" task
+[*] -> null: when state unknown
+@enduml
