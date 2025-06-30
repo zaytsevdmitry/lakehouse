@@ -65,8 +65,8 @@ docker container rm scheduler-svc
 Конфигурация содержит описания
 -  двух мест хранения данных бд Postgres и файловая система [datastores](conf/datastores).
 -  пяти датасетов [datasets](conf/datasets) и скриптов описывающих трансформацию данных [dataset-sql-model](conf/dataset-sql-model)
--  двух шаблонов сценариев [scenario-act-templates](conf/scenario-act-templates)
-  -  [default](conf/scenario-act-templates/default.json) применяется в расписаниях [regular](conf/schedules/regular.json) и [initial](conf/schedules/initial.json). Обслуживает логику Spark задач
+-  двух шаблонов сценариев [scenario-act-templates](conf/scenario-act-templates):
+  - [default](conf/scenario-act-templates/default.json) применяется в расписаниях [regular](conf/schedules/regular.json) и [initial](conf/schedules/initial.json). Обслуживает логику Spark задач
   - [source.json](conf/scenario-act-templates/source.json) применяется в расписаниях [generateSource](conf/schedules/generateSource.json) и [generateSourceDict](conf/schedules/generateSourceDict.json). Обслуживает логику jdbc задач
 - расписаний, сценарий которого применяет шаблоны последовательностей задач.
   - [generateSource](conf/schedules/generateSource.json) формирует данные в таблице платежных транзакций [transaction_processing](conf/datasets/transaction_processing.json) в postgres [processingdb](conf/datastores/processingdb.json)
