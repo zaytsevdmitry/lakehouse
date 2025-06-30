@@ -45,6 +45,7 @@ docker container rm broker
 docker container rm db
 docker container rm task-executor-svc-1
 docker container rm task-executor-svc-2 
+docker container rm task-executor-svc-3 
 docker container rm conf-svc 
 docker container rm scheduler-svc 
 ```
@@ -64,7 +65,10 @@ docker container rm scheduler-svc
 Конфигурация содержит описания
 -  двух мест хранения данных бд Postgres и файловая система [datastores](conf/datastores).
 -  пяти датасетов [datasets](conf/datasets) и скриптов описывающих трансформацию данных [dataset-sql-model](conf/dataset-sql-model)
--  расписаний, сценарий которого применяет шаблоны последовательностей задач.
+-  двух шаблонов сценариев [scenario-act-templates](conf/scenario-act-templates)
+  -  [default](conf/scenario-act-templates/default.json) применяется в расписаниях [regular](conf/schedules/regular.json) и [initial](conf/schedules/initial.json). Обслуживает логику Spark задач
+  - [source.json](conf/scenario-act-templates/source.json) применяется в расписаниях [generateSource](conf/schedules/generateSource.json) и [generateSourceDict](conf/schedules/generateSourceDict.json). Обслуживает логику jdbc задач
+- расписаний, сценарий которого применяет шаблоны последовательностей задач.
   - [generateSource](conf/schedules/generateSource.json) формирует данные в таблице платежных транзакций [transaction_processing](conf/datasets/transaction_processing.json) в postgres [processingdb](conf/datastores/processingdb.json)
   - [generateSourceDict](conf/schedules/generateSourceDict.json) просто перезаписывает справочник клиентов [client_processing](conf/datasets/client_processing.json) в postgres [processingdb](conf/datastores/processingdb.json)
   - [regular](conf/schedules/regular.json) имитирует ежедневное соединение двух таблиц [transaction_dds.sql](conf/dataset-sql-model/transaction_dds.sql) из расписаний выше в одну на spark [transaction_dds](conf/datasets/transaction_dds.json) сохраняя на диск [lakehousestorage](conf/datastores/lakehousestorage.json)
