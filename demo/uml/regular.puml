@@ -1,7 +1,7 @@
 @startuml
 'https://plantuml.com/sequence-diagram
-[* generateSource] -> (transaction_processing)
-[* generateSourceDict] -> (client_processing)
+[* generateSource\n @daily] -> (transaction_processing)
+[* generateSourceDict\n @daily] -> (client_processing)
 [* regular\n @daily]-> (transaction_dds)
 (client_processing) --->  (transaction_dds)
 (transaction_processing) --> (transaction_dds)
