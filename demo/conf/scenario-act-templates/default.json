@@ -3,17 +3,18 @@
   "description": "Default scenario",
   "tasks": [
     {
-      "name": "begin",
-      "taskExecutionServiceGroupName": "state-exe",
-      "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.RunningStateTaskProcessor",
-      "importance": "critical",
-      "description": "Made interval status RUNNING"
-    }, {
       "name": "check",
       "taskExecutionServiceGroupName": "state-exe",
       "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.DependencyCheckStateTaskProcessor",
       "importance": "critical",
       "description": "Dependency check"
+    },
+    {
+      "name": "begin",
+      "taskExecutionServiceGroupName": "state-exe",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.RunningStateTaskProcessor",
+      "importance": "critical",
+      "description": "Made interval status RUNNING"
     },
     {
       "name": "load",
@@ -80,8 +81,8 @@
   ],
   "dagEdges": [
     {
-      "from": "begin",
-      "to": "check"
+      "from": "check",
+      "to": "begin"
     },
     {
       "from": "check",
