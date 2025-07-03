@@ -80,9 +80,11 @@ docker container rm scheduler-svc
   - [state-exe](conf/taskexecutionservicegroups/state-exe.json) для работы с задачами "состояний" 1 экземпляр
   - [default](conf/taskexecutionservicegroups/default.json) обрабатывает задачи с данными 2 конкурирующих экземпляра
 
-Источники собираются каждый день, трансформации тоже каждый день
+### Источники собираются каждый день, трансформации тоже каждый день
 ![regular.png](uml/regular.png)
 
 
-Источники собираются каждый день, трансформации каждый месяц
+
+
+### Источники собираются каждый день, трансформации каждый месяц
 ![initial.png](uml/initial.png)
