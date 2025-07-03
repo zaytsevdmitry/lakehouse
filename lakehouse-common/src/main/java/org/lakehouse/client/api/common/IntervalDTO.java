@@ -1,5 +1,7 @@
 package org.lakehouse.client.api.common;
 
+import org.lakehouse.client.api.utils.DateTimeUtils;
+
 import java.util.Objects;
 
 public class IntervalDTO {
@@ -31,8 +33,8 @@ public class IntervalDTO {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         IntervalDTO that = (IntervalDTO) o;
-        return  Objects.equals(getIntervalStartDateTime(), that.getIntervalStartDateTime())
-                && Objects.equals(getIntervalEndDateTime(), that.getIntervalEndDateTime());
+        return DateTimeUtils.strEquals(getIntervalStartDateTime(), that.getIntervalStartDateTime())
+                && DateTimeUtils.strEquals(getIntervalEndDateTime(), that.getIntervalEndDateTime());
     }
 
     @Override

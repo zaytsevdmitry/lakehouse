@@ -24,14 +24,13 @@ public class DataSetIntervalDTO extends IntervalDTO {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DataSetIntervalDTO that = (DataSetIntervalDTO) o;
-        return Objects.equals(getDataSetKeyName(), that.getDataSetKeyName())
-                && Objects.equals(getIntervalStartDateTime(), that.getIntervalStartDateTime())
-                && Objects.equals(getIntervalEndDateTime(), that.getIntervalEndDateTime());
+        return super.equals(o)
+                && Objects.equals(getDataSetKeyName(), that.getDataSetKeyName());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getDataSetKeyName(), getIntervalStartDateTime(), getIntervalEndDateTime());
+        return Objects.hash(getDataSetKeyName(), getIntervalStartDateTime(), getIntervalEndDateTime(), super.hashCode());
     }
 
     @Override

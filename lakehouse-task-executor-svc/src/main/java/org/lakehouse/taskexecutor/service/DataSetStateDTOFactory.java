@@ -13,6 +13,7 @@ public class DataSetStateDTOFactory {
         result.setIntervalStartDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(taskProcessorConfig.getIntervalStartDateTime()));
         result.setIntervalEndDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(taskProcessorConfig.getIntervalEndDateTime()));
         result.setStatus(status.label);
+        result.setLockHash(taskProcessorConfig.getLockHash());
 
         return result;
     }

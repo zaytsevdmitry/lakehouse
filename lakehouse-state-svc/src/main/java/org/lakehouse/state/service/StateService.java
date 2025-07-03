@@ -27,13 +27,28 @@ public class StateService {
 
     @Transactional
     public void save(DataSetState newState) throws Exception {
+
+        List<DataSetState> intersection = dataSetStateRepository
+                .findIntersection(
+                        newState.getDataSetKeyName(),
+                        newState.getIntervalStartDateTime(),
+                        newState.getIntervalEndDateTime())
+                .stream()
+                .filter(dataSetState -> !dataSetState.getLockHash().equals(newState.getLockHash()))
+                .toList();
+        if (!intersection.isEmpty()) {
+            String errs = "The new hash '%s' does not match the current." +
+                    String.join("\n", intersection.stream().map(DataSetState::toString).toList());
+            logger.error(errs);
+            throw new RuntimeException(errs);
+        }
         if(newState.getIntervalStartDateTime().isAfter(newState.getIntervalEndDateTime())
                 || newState.getIntervalStartDateTime()==null
-                || newState.getIntervalEndDateTime() ==null)
+                || newState.getIntervalEndDateTime() == null) {
 
             throw new RuntimeException("Wrong interval");
 
-        else{
+        } else {
 
             List<DataSetState> current =
                     dataSetStateRepository

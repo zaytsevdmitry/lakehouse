@@ -18,6 +18,7 @@ public class DataSetState {
     OffsetDateTime intervalStartDateTime;
     OffsetDateTime intervalEndDateTime;
     String status;
+    String lockHash;
 
     public DataSetState() {
     }
@@ -62,6 +63,14 @@ public class DataSetState {
         this.status = status;
     }
 
+    public String getLockHash() {
+        return lockHash;
+    }
+
+    public void setLockHash(String lockHash) {
+        this.lockHash = lockHash;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -71,12 +80,13 @@ public class DataSetState {
                 && Objects.equals(getIntervalStartDateTime(), dataSetState.getIntervalStartDateTime())
                 && Objects.equals(getIntervalEndDateTime(), dataSetState.getIntervalEndDateTime())
                 && Objects.equals(getStatus(), dataSetState.getStatus())
-                && Objects.equals(getId(), dataSetState.getId());
+                && Objects.equals(getId(), dataSetState.getId())
+                && Objects.equals(getLockHash(), dataSetState.getLockHash());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getDataSetKeyName(), getIntervalStartDateTime(), getIntervalEndDateTime(), getStatus(), getId());
+        return Objects.hash(getDataSetKeyName(), getIntervalStartDateTime(), getIntervalEndDateTime(), getStatus(), getId(), getLockHash());
     }
 
     @Override
@@ -87,6 +97,7 @@ public class DataSetState {
                 ", intervalStartDateTime=" + intervalStartDateTime +
                 ", intervalEndDateTime=" + intervalEndDateTime +
                 ", status='" + status + '\'' +
+                ", lockHash='" + lockHash + '\'' +
                 '}';
     }
 

@@ -17,6 +17,8 @@ public class TaskProcessorConfig {
     private  Set<DataSetDTO> dataSetDTOSet = new HashSet<>();
     private OffsetDateTime intervalStartDateTime;
     private OffsetDateTime intervalEndDateTime;
+    private String lockHash;
+
 
     public TaskProcessorConfig(){}
 
@@ -100,16 +102,34 @@ public class TaskProcessorConfig {
         this.intervalEndDateTime = intervalEndDateTime;
     }
 
+    public String getLockHash() {
+        return lockHash;
+    }
+
+    public void setLockHash(String lockHash) {
+        this.lockHash = lockHash;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TaskProcessorConfig that = (TaskProcessorConfig) o;
-        return Objects.equals(getExecutionModuleArgs(), that.getExecutionModuleArgs()) && Objects.equals(getScripts(), that.getScripts()) && Objects.equals(getSources(), that.getSources()) && Objects.equals(getTargetDataSet(), that.getTargetDataSet()) && Objects.equals(getDataStores(), that.getDataStores()) && Objects.equals(getKeyBind(), that.getKeyBind()) && Objects.equals(getTableDefinitions(), that.getTableDefinitions()) && Objects.equals(getDataSetDTOSet(), that.getDataSetDTOSet()) && Objects.equals(getIntervalStartDateTime(), that.getIntervalStartDateTime()) && Objects.equals(getIntervalEndDateTime(), that.getIntervalEndDateTime());
+        return Objects.equals(executionModuleArgs, that.executionModuleArgs)
+                && Objects.equals(scripts, that.scripts)
+                && Objects.equals(sources, that.sources)
+                && Objects.equals(targetDataSet, that.targetDataSet)
+                && Objects.equals(dataStores, that.dataStores)
+                && Objects.equals(KeyBind, that.KeyBind)
+                && Objects.equals(tableDefinitions, that.tableDefinitions)
+                && Objects.equals(dataSetDTOSet, that.dataSetDTOSet)
+                && Objects.equals(intervalStartDateTime, that.intervalStartDateTime)
+                && Objects.equals(intervalEndDateTime, that.intervalEndDateTime)
+                && Objects.equals(lockHash, that.lockHash);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getExecutionModuleArgs(), getScripts(), getSources(), getTargetDataSet(), getDataStores(), getKeyBind(), getTableDefinitions(), getDataSetDTOSet(), getIntervalStartDateTime(), getIntervalEndDateTime());
+        return Objects.hash(executionModuleArgs, scripts, sources, targetDataSet, dataStores, KeyBind, tableDefinitions, dataSetDTOSet, intervalStartDateTime, intervalEndDateTime, lockHash);
     }
 }

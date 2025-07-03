@@ -4,7 +4,7 @@ import java.util.Objects;
 
 public class DataSetStateDTO  extends DataSetIntervalDTO{
     String status;
-    String processName;
+    String lockHash;
     public DataSetStateDTO() {
     }
 
@@ -16,29 +16,35 @@ public class DataSetStateDTO  extends DataSetIntervalDTO{
         this.status = status;
     }
 
+    public String getLockHash() {
+        return lockHash;
+    }
+
+    public void setLockHash(String lockHash) {
+        this.lockHash = lockHash;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DataSetStateDTO that = (DataSetStateDTO) o;
-        return Objects.equals(getDataSetKeyName(), that.getDataSetKeyName())
-                && Objects.equals(getIntervalStartDateTime(), that.getIntervalStartDateTime())
-                && Objects.equals(getIntervalEndDateTime(), that.getIntervalEndDateTime())
-                && Objects.equals(getStatus(), that.getStatus());
+        return Objects.equals(getStatus(), that.getStatus())
+                && Objects.equals(getLockHash(), that.getLockHash())
+                && super.equals(o);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getDataSetKeyName(), getIntervalStartDateTime(), getIntervalEndDateTime(), getStatus());
+        return Objects.hash(getDataSetKeyName(), getIntervalStartDateTime(), getIntervalEndDateTime(), getStatus(), super.hashCode(), getLockHash());
     }
 
     @Override
     public String toString() {
-        return this.getClass().getName() +"{" +
-                "dataSetKeyName='" + dataSetKeyName + '\'' +
-                ", intervalStartDateTime='" + getIntervalStartDateTime() + '\'' +
-                ", intervalEndDateTime='" + getIntervalEndDateTime() + '\'' +
-                ", status='" + status + '\'' +
+        return "DataSetStateDTO{" +
+                "status='" + status + '\'' +
+                ", lockHash='" + lockHash + '\'' +
+                ", dataSetKeyName='" + dataSetKeyName + '\'' +
                 '}';
     }
 }

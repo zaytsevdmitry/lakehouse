@@ -22,14 +22,8 @@ public class StateController {
 
     @PostMapping(Endpoint.STATE_DATASET)
     DataSetStateResponseDTO getStateByInterval(
-            @RequestBody DataSetIntervalDTO dataSetIntervalDTO
-            /*@PathVariable String dataSetKeyName,
-            @PathVariable String intervalStartDateTime,
-            @PathVariable String intervalEndDateTime*/) {
+            @RequestBody DataSetIntervalDTO dataSetIntervalDTO) {
         return stateService.getStateByInterval(
-                /*dataSetKeyName,
-                DateTimeUtils.parceDateTimeFormatWithTZ(intervalStartDateTime),
-                DateTimeUtils.parceDateTimeFormatWithTZ(intervalEndDateTime)*/
                 dataSetIntervalDTO.getDataSetKeyName(),
                 DateTimeUtils.parseDateTimeFormatWithTZ(dataSetIntervalDTO.getIntervalStartDateTime()),
                 DateTimeUtils.parseDateTimeFormatWithTZ(dataSetIntervalDTO.getIntervalEndDateTime()));
