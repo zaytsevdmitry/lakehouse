@@ -25,7 +25,7 @@ public class RunningStateTaskProcessor extends AbstractStateTaskProcessor {
 
     @Override
     public void runTask() throws TaskFailedException {
-        DataSetStateDTO dataSetStateDTO = DataSetStateDTOFactory.buildtDataSetStateDTO(Status.DataSet.RUNNING,getTaskProcessorConfig());
+        DataSetStateDTO dataSetStateDTO = DataSetStateDTOFactory.buildtDataSetStateDTO(Status.DataSet.LOCKED,getTaskProcessorConfig());
         logger.info("Send  {}", dataSetStateDTO);
         int resultCode = getStateRestClientApi().setDataSetStateDTO(dataSetStateDTO);
         if( resultCode != HttpStatus.SC_OK ){

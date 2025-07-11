@@ -46,5 +46,5 @@ public class Endpoint {
 
     public final static String STATE= ROOT_API_V1_0 + "/state";
     public final static String STATE_DATASET= STATE + "/dataset";
-    public final static String STATE_DATASET_GET="/state/dataset/dataSetKeyName/{dataSetKeyName}/intervalStartDateTime/{intervalStartDateTime}/intervalEndDateTime/{intervalEndDateTime}";
+
 }

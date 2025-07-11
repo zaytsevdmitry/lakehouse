@@ -45,9 +45,8 @@ public class Status {
     }
 
     public enum DataSet{
-        RUNNING("RUNNING"),
-        SUCCESS("SUCCESS"),
-        FAILED("FAILED");
+        LOCKED("LOCKED"),
+        SUCCESS("SUCCESS");
 
         public final String label;
 

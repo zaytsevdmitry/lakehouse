@@ -1,6 +1,7 @@
 spark-warehouse
 target
 distr
+debug
 .idea
 .gigaide
 .project

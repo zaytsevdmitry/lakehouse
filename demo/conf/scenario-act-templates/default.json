@@ -85,7 +85,7 @@
       "to": "begin"
     },
     {
-      "from": "check",
+      "from": "begin",
       "to": "load"
     },
     {

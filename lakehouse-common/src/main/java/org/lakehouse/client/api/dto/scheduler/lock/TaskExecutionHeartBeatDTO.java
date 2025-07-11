@@ -9,4 +9,11 @@ public class TaskExecutionHeartBeatDTO {
 	public void setLockId(Long lockId) {
 		this.lockId = lockId;
 	}
+
+	@Override
+	public String toString() {
+		return "TaskExecutionHeartBeatDTO{" +
+				"lockId=" + lockId +
+				'}';
+	}
 }

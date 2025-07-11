@@ -25,11 +25,6 @@ import java.util.Map;
 import java.util.Set;
 
 @SpringBootTest( properties = {"spring.main.allow-bean-definition-overriding=true"})
-/*
-@ComponentScan(basePackages = {
-        "org.lakehouse.taskexecutor"
-}
-)*/
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class StateAdapterTest {
@@ -52,9 +47,6 @@ public class StateAdapterTest {
         StateRestClientApiTest stateRestClientApi = new StateRestClientApiTest();
         SuccessStateTaskProcessor processor = new SuccessStateTaskProcessor(tpc, new Jinjava(), stateRestClientApi);
         processor.runTask();
-        //assert (processor.runTask().equals(Status.Task.SUCCESS));
-
-
     }
 
 
@@ -77,13 +69,13 @@ public class StateAdapterTest {
         tpc.setDataSetDTOSet(Set.of(testTargetDataSet,testDependencyDataSet));
         tpc.setSources(Map.of(testDependencyDataSet.getKeyName(),testDependencyDataSet));
 
-        //History wrong record
-        DataSetStateDTO dataSetStateDTOWrong = new DataSetStateDTO();
-        dataSetStateDTOWrong.setDataSetKeyName(testDependencyDataSet.getKeyName());
-        dataSetStateDTOWrong.setStatus(Status.DataSet.FAILED.label);
-        dataSetStateDTOWrong.setIntervalStartDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(tpc.getIntervalStartDateTime()));
-        dataSetStateDTOWrong.setIntervalEndDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(tpc.getIntervalEndDateTime()));
-        StateRestClientApiTest stateRestClientApi = new StateRestClientApiTest(List.of(dataSetStateDTOWrong));
+        //History locked record
+        DataSetStateDTO dataSetStateDTOLocked = new DataSetStateDTO();
+        dataSetStateDTOLocked.setDataSetKeyName(testDependencyDataSet.getKeyName());
+        dataSetStateDTOLocked.setStatus(Status.DataSet.LOCKED.label);
+        dataSetStateDTOLocked.setIntervalStartDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(tpc.getIntervalStartDateTime()));
+        dataSetStateDTOLocked.setIntervalEndDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(tpc.getIntervalEndDateTime()));
+        StateRestClientApiTest stateRestClientApi = new StateRestClientApiTest(List.of(dataSetStateDTOLocked));
 
         // Execute check
         DependencyCheckStateTaskProcessor processor = new DependencyCheckStateTaskProcessor(tpc,new Jinjava(),stateRestClientApi);
@@ -93,7 +85,6 @@ public class StateAdapterTest {
         }catch (TaskFailedException e){
             // Failed because it was Expected
         }
-      //  assert (processor.runTask().equals(Status.Task.FAILED));
     }
     @Test
     @Order(2)
@@ -116,7 +107,6 @@ public class StateAdapterTest {
         StateRestClientApiTest stateRestClientApi = new StateRestClientApiTest();
         DependencyCheckStateTaskProcessor processor = new DependencyCheckStateTaskProcessor(tpc,new Jinjava(),stateRestClientApi);
         processor.runTask();
-        //assert (processor.runTask().equals(Status.Task.SUCCESS));
     }
     @Test
     @Order(3)
@@ -139,7 +129,5 @@ public class StateAdapterTest {
         StateRestClientApiTest stateRestClientApi = new StateRestClientApiTest();
         RunningStateTaskProcessor processor = new RunningStateTaskProcessor(tpc,new Jinjava(),stateRestClientApi);
         processor.runTask();
-        //assert (processor.runTask().equals(Status.Task.SUCCESS));
-
     }
  }

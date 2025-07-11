@@ -57,7 +57,7 @@ public class DependencyCheckStateTaskProcessor extends AbstractStateTaskProcesso
 
         if (!dataSetStateDTOs.isEmpty() ){
             StringJoiner rows = new StringJoiner(",");
-            dataSetStateDTOs.forEach(d -> rows.add(d.toString()));
+            dataSetStateDTOs.forEach(d -> rows.add(d.toString() + "\n"));
             logger.info("wrong interval\n {}",rows);
             throw new TaskFailedException(rows.toString());
         }

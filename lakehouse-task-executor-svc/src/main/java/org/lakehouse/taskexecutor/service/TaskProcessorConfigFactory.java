@@ -38,11 +38,11 @@ public class TaskProcessorConfigFactory  {
     public TaskProcessorConfig buildTaskProcessorConfig(ScheduledTaskLockDTO scheduledTaskLockDTO){
         logger.info("Build config");
         TaskProcessorConfig result = new TaskProcessorConfig();
-        result.setLockHash(
-                String.valueOf(
-                        Objects.hash(
-                                scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getScheduleKeyName(),
-                                scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getScenarioActKeyName())));
+        result.setLockSource(
+                String.format("%s.%s.%s",
+                        scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getScheduleKeyName(),
+                        scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getScenarioActKeyName(),
+                        scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getTargetDateTime()));
         result.setTargetDataSet(
                 configRestClientApi.getDataSetDTO(
                 scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getDataSetKeyName()));

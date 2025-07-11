@@ -76,11 +76,13 @@ public class StateFactory {
 
                                     DataSetState prev = dataSetCurState.copy();
                                     prev.setIntervalEndDateTime(newState.getIntervalStartDateTime());
+                                    prev.setLockSource(newState.getLockSource());
                                     result.add(prev);
 
                                     DataSetState post = dataSetCurState.copy();
                                     post.setId(null);
                                     post.setIntervalStartDateTime(newState.getIntervalEndDateTime());
+                                    post.setLockSource(newState.getLockSource());
                                     result.add(post);
                                 }
                             else {
@@ -113,10 +115,12 @@ public class StateFactory {
         return beforeChange.stream().filter(state -> !afterChangeIds.contains(state.getId())).toList();
     }
 
-    public List<DataSetState> leftRightPad( List<DataSetState> dataSetStates,
+    public List<DataSetState> leftRightPad(
+            List<DataSetState> dataSetStates,
             OffsetDateTime intervalStartDateTime,
-            OffsetDateTime intervalEndDateTime
-    ){
+            OffsetDateTime intervalEndDateTime) {
+
+
         List<DataSetState>  result =  sortStates(dataSetStates);
         DataSetState lastState = result.get(result.size()-1);
         DataSetState  firstState = result.get(0);

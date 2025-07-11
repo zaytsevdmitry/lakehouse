@@ -6,12 +6,13 @@ import org.lakehouse.state.entity.DataSetState;
 
 public  class StateMapper {
      public static DataSetState getState (DataSetStateDTO dataSetStateDTO){
-         DataSetState dataSetState = new DataSetState();
-         dataSetState.setDataSetKeyName(dataSetStateDTO.getDataSetKeyName());
-         dataSetState.setStatus(dataSetStateDTO.getStatus());
-         dataSetState.setIntervalStartDateTime(DateTimeUtils.parseDateTimeFormatWithTZ(dataSetStateDTO.getIntervalStartDateTime()));
-         dataSetState.setIntervalEndDateTime(DateTimeUtils.parseDateTimeFormatWithTZ(dataSetStateDTO.getIntervalEndDateTime()));
-         return dataSetState;
+         DataSetState result = new DataSetState();
+         result.setDataSetKeyName(dataSetStateDTO.getDataSetKeyName());
+         result.setStatus(dataSetStateDTO.getStatus());
+         result.setIntervalStartDateTime(DateTimeUtils.parseDateTimeFormatWithTZ(dataSetStateDTO.getIntervalStartDateTime()));
+         result.setIntervalEndDateTime(DateTimeUtils.parseDateTimeFormatWithTZ(dataSetStateDTO.getIntervalEndDateTime()));
+         result.setLockSource(dataSetStateDTO.getLockSource());
+         return result;
     }
     public static DataSetStateDTO getDataSetStateDTO(DataSetState dataSetState){
          DataSetStateDTO result = new DataSetStateDTO();
@@ -19,6 +20,7 @@ public  class StateMapper {
          result.setStatus(dataSetState.getStatus());
          result.setIntervalStartDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(dataSetState.getIntervalStartDateTime()));
          result.setIntervalEndDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(dataSetState.getIntervalEndDateTime()));
+         result.setLockSource(dataSetState.getLockSource());
          return result;
 
     }

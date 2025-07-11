@@ -246,9 +246,5 @@ public class TaskExecutorTest {
         //assert (fin.runTask().equals(Status.Task.SUCCESS));
     }
 
-    @Test
-    @Order(2)
-    void testStateHashValue() throws Exception {
-        throw new Exception("To be");
-    }
+
 }

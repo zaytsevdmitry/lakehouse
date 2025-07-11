@@ -4,7 +4,7 @@ import java.util.Objects;
 
 public class DataSetStateDTO  extends DataSetIntervalDTO{
     String status;
-    String lockHash;
+    String lockSource;
     public DataSetStateDTO() {
     }
 
@@ -16,12 +16,12 @@ public class DataSetStateDTO  extends DataSetIntervalDTO{
         this.status = status;
     }
 
-    public String getLockHash() {
-        return lockHash;
+    public String getLockSource() {
+        return lockSource;
     }
 
-    public void setLockHash(String lockHash) {
-        this.lockHash = lockHash;
+    public void setLockSource(String lockSource) {
+        this.lockSource = lockSource;
     }
 
     @Override
@@ -30,21 +30,23 @@ public class DataSetStateDTO  extends DataSetIntervalDTO{
         if (o == null || getClass() != o.getClass()) return false;
         DataSetStateDTO that = (DataSetStateDTO) o;
         return Objects.equals(getStatus(), that.getStatus())
-                && Objects.equals(getLockHash(), that.getLockHash())
+                && Objects.equals(getLockSource(), that.getLockSource())
                 && super.equals(o);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getDataSetKeyName(), getIntervalStartDateTime(), getIntervalEndDateTime(), getStatus(), super.hashCode(), getLockHash());
+        return Objects.hash(getDataSetKeyName(), getIntervalStartDateTime(), getIntervalEndDateTime(), getStatus(), super.hashCode(), getLockSource());
     }
 
     @Override
     public String toString() {
         return "DataSetStateDTO{" +
                 "status='" + status + '\'' +
-                ", lockHash='" + lockHash + '\'' +
-                ", dataSetKeyName='" + dataSetKeyName + '\'' +
+                ", lockSource='" + lockSource + '\'' +
+                ", dataSetKeyName='" + getDataSetKeyName() + '\'' +
+                ", intervalStartDateTime='" + getIntervalStartDateTime() + '\'' +
+                ", intervalEndDateTime='" + getIntervalEndDateTime() + '\'' +
                 '}';
     }
 }

@@ -1,0 +1,18 @@
+@startgantt
+projectscale monthly
+Project starts the 1st of jan 2025
+[transaction_processing] lasts 365 days and is colored in Lavender/Blue
+[client_processing] lasts 365 days and is colored in Lavender/Blue
+[transaction_dds] starts 2025-01-01
+[transaction_dds] ends 2025-12-31
+[transaction_dds] is colored in Green/LightGreen
+
+[aggregation_pay_per_client_daily_mart] starts 2025-01-01
+[aggregation_pay_per_client_daily_mart] ends 2025-12-31
+[aggregation_pay_per_client_daily_mart] is colored in Green/LightGreen
+
+
+[aggregation_pay_per_client_total_mart] starts 2025-01-01
+[aggregation_pay_per_client_total_mart] ends 2025-12-31
+[aggregation_pay_per_client_total_mart] is colored in Green/LightGreen
+@endgantt

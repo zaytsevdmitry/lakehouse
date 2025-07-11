@@ -14,11 +14,21 @@ public class DataSetState {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
+
+    @Column( nullable = false)
     String dataSetKeyName;
+
+    @Column( nullable = false)
     OffsetDateTime intervalStartDateTime;
+
+    @Column( nullable = false)
     OffsetDateTime intervalEndDateTime;
+
+    @Column( nullable = false)
     String status;
-    String lockHash;
+
+    @Column(length = 1000)
+    String lockSource;
 
     public DataSetState() {
     }
@@ -63,12 +73,12 @@ public class DataSetState {
         this.status = status;
     }
 
-    public String getLockHash() {
-        return lockHash;
+    public String getLockSource() {
+        return lockSource;
     }
 
-    public void setLockHash(String lockHash) {
-        this.lockHash = lockHash;
+    public void setLockSource(String lockSource) {
+        this.lockSource = lockSource;
     }
 
     @Override
@@ -81,12 +91,12 @@ public class DataSetState {
                 && Objects.equals(getIntervalEndDateTime(), dataSetState.getIntervalEndDateTime())
                 && Objects.equals(getStatus(), dataSetState.getStatus())
                 && Objects.equals(getId(), dataSetState.getId())
-                && Objects.equals(getLockHash(), dataSetState.getLockHash());
+                && Objects.equals(getLockSource(), dataSetState.getLockSource());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getDataSetKeyName(), getIntervalStartDateTime(), getIntervalEndDateTime(), getStatus(), getId(), getLockHash());
+        return Objects.hash(getDataSetKeyName(), getIntervalStartDateTime(), getIntervalEndDateTime(), getStatus(), getId(), getLockSource());
     }
 
     @Override
@@ -97,7 +107,7 @@ public class DataSetState {
                 ", intervalStartDateTime=" + intervalStartDateTime +
                 ", intervalEndDateTime=" + intervalEndDateTime +
                 ", status='" + status + '\'' +
-                ", lockHash='" + lockHash + '\'' +
+                ", lockSource='" + lockSource + '\'' +
                 '}';
     }
 
@@ -109,6 +119,7 @@ public class DataSetState {
         result.setIntervalStartDateTime(getIntervalStartDateTime());
         result.setIntervalEndDateTime(getIntervalEndDateTime());
         result.setStatus(getStatus());
+        result.setLockSource(getLockSource());
         return result;
     }
 }

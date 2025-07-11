@@ -3,6 +3,7 @@ package org.lakehouse.state.service;
 import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.state.DataSetStateResponseDTO;
 import org.lakehouse.state.entity.DataSetState;
+import org.lakehouse.state.exception.LockedStateRuntimeException;
 import org.lakehouse.state.factory.MergeResult;
 import org.lakehouse.state.factory.StateFactory;
 import org.lakehouse.state.mapper.StateMapper;
@@ -25,32 +26,45 @@ public class StateService {
         this.stateFactory = stateFactory;
     }
 
-    @Transactional
-    public void save(DataSetState newState) throws Exception {
-
+    private void checkForPossibleChanges(DataSetState newState){
         List<DataSetState> intersection = dataSetStateRepository
                 .findIntersection(
                         newState.getDataSetKeyName(),
                         newState.getIntervalStartDateTime(),
                         newState.getIntervalEndDateTime())
+                ;
+        List<DataSetState> founds = intersection
                 .stream()
-                .filter(dataSetState -> !dataSetState.getLockHash().equals(newState.getLockHash()))
+                .filter(state -> !(state.getStatus() == null))
+                .filter(state -> !state.getLockSource().equals(newState.getLockSource()))
+                .filter(state -> !state.getStatus().equals(Status.DataSet.SUCCESS.label))
                 .toList();
-        if (!intersection.isEmpty()) {
-            String errs = "The new hash '%s' does not match the current." +
+
+        if (!founds.isEmpty()) {
+            String errs = String
+                    .format(
+                            "The new lockSource '%s' does not match the current.",
+                            newState.toString()) +
                     String.join("\n", intersection.stream().map(DataSetState::toString).toList());
             logger.error(errs);
-            throw new RuntimeException(errs);
+            throw new LockedStateRuntimeException(errs);
         }
+
+
         if(newState.getIntervalStartDateTime().isAfter(newState.getIntervalEndDateTime())
                 || newState.getIntervalStartDateTime()==null
                 || newState.getIntervalEndDateTime() == null) {
-
+            logger.info("Wrong interval {}", newState);
             throw new RuntimeException("Wrong interval");
+        }
+    }
 
-        } else {
+    @Transactional
+    public void save(DataSetState newState) throws Exception {
 
-            List<DataSetState> current =
+        checkForPossibleChanges(newState);
+
+        List<DataSetState> current =
                     dataSetStateRepository
                             .findIntersection(
                                     newState.getDataSetKeyName(),
@@ -61,31 +75,43 @@ public class StateService {
             mergeResult.getForRemove().forEach(dataSetState -> logger.info("for remove {}",dataSetState));
             dataSetStateRepository.deleteAll(mergeResult.getForRemove());
             dataSetStateRepository.saveAll(mergeResult.getAfterChange());
-        }
+
     }
+
     public DataSetStateResponseDTO getStateByInterval(
             String dataSetKeyName,
             OffsetDateTime intervalStartDateTime,
-            OffsetDateTime intervalEndDateTime){
+            OffsetDateTime intervalEndDateTime) {
 
         DataSetStateResponseDTO result = new DataSetStateResponseDTO();
 
-        result.setWrongStates(
-                stateFactory.feelGaps(
-                        stateFactory.leftRightPad(
-                                dataSetStateRepository
-                                        .findIntersection(
-                                                dataSetKeyName,
-                                                intervalStartDateTime,
-                                                intervalEndDateTime),
-                                intervalStartDateTime,
-                                intervalEndDateTime
-                        )
-                )
-                .stream()
-                .filter(state -> state.getStatus()==null || !state.getStatus().equals(Status.DataSet.SUCCESS.label))
-                .map(StateMapper::getDataSetStateDTO)
-                .toList());
+        List<DataSetState> dataSetStates = dataSetStateRepository
+                .findIntersection(
+                        dataSetKeyName,
+                        intervalStartDateTime,
+                        intervalEndDateTime);
+        if (dataSetStates.isEmpty()) {
+            DataSetState nullState = new DataSetState();
+            nullState.setLockSource("");
+            nullState.setIntervalStartDateTime(intervalStartDateTime);
+            nullState.setIntervalEndDateTime(intervalEndDateTime);
+            nullState.setDataSetKeyName(dataSetKeyName);
+            result.setWrongStates(List.of(StateMapper.getDataSetStateDTO(nullState)));
+        } else {
+            result.setWrongStates(
+                    stateFactory.feelGaps(
+
+                                    stateFactory.leftRightPad(
+                                            dataSetStates,
+                                            intervalStartDateTime,
+                                            intervalEndDateTime
+                                    )
+                            )
+                            .stream()
+                            .filter(state -> state.getStatus() == null || !state.getStatus().equals(Status.DataSet.SUCCESS.label))
+                            .map(StateMapper::getDataSetStateDTO)
+                            .toList());
+        }
         return result;
     }
 }

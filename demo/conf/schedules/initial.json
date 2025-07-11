@@ -2,8 +2,8 @@
   "name": "initial",
   "description": "initial schedule for client transactions",
   "intervalExpression": "@monthly",
-  "startDateTime": "2024-01-31T00:00:00.000+00:00",
-  "stopDateTime": null,
+  "startDateTime": "2025-01-01T00:00:00.000+00:00",
+  "stopDateTime": "2024-03-02T00:00:00.000+00:00",
   "enabled": true,
   "scenarioActs": [
     {

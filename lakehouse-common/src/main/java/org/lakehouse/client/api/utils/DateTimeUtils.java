@@ -23,7 +23,7 @@ public class DateTimeUtils {
 
 
     public static OffsetDateTime parseDateTimeFormatWithTZ(String s){
-        if (s == null)
+        if (s == null || s.isBlank())
             return null;
         else
             return OffsetDateTime.parse(s,dateTimeFormatWithTZ);

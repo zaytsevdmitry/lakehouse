@@ -2,6 +2,7 @@ package org.lakehouse.scheduler.service;
 
 import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
+import org.lakehouse.client.api.exception.CronParceErrorException;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.scheduler.entities.*;
 import org.lakehouse.scheduler.factory.ScheduleInstanceFactory;
@@ -146,27 +147,44 @@ public class BuildService {
     }
 
 
+    private boolean isRunnable(
+            ScheduleInstanceLastBuild lastBuild) {
+        boolean result;
+        ScheduleEffectiveDTO scheduleEffectiveDTO =
+                scheduleEffectiveService
+                        .getScheduleEffectiveDTO(lastBuild.getConfigScheduleKeyName());
 
+        OffsetDateTime lastOffsetDateTime = null;
+        OffsetDateTime nextOffsetDateTime = null;
+        OffsetDateTime stopOffsetDateTime = DateTimeUtils.parseDateTimeFormatWithTZ(scheduleEffectiveDTO.getStopDateTime());
+
+        if( lastBuild.getScheduleInstance() == null){
+            lastOffsetDateTime = DateTimeUtils.parseDateTimeFormatWithTZ(
+                    scheduleEffectiveDTO.getStartDateTime());
+        }else {
+            lastOffsetDateTime = lastBuild.getScheduleInstance().getTargetExecutionDateTime();
+        }
+        try {
+            nextOffsetDateTime = DateTimeUtils.getNextTargetExecutionDateTime(scheduleEffectiveDTO.getIntervalExpression(), lastOffsetDateTime);
+
+
+            result = scheduleEffectiveService.isBefore(scheduleEffectiveDTO.getIntervalExpression(), lastOffsetDateTime)
+                    && (
+                    stopOffsetDateTime == null || stopOffsetDateTime.isAfter(nextOffsetDateTime)
+            );
+        }catch (CronParceErrorException e){
+            logger.warn( e.getMessage());
+            result = false;
+        }
+        return result;
+    }
 
     public int buildAll() {
         AtomicInteger result = new AtomicInteger();
         scheduleInstanceLastBuildRepository
                 .findByEnabled(true)
                 .stream()
-                .filter(lastBuild -> {
-                    OffsetDateTime lastOffsetDateTime = null;
-                    ScheduleEffectiveDTO scheduleEffectiveDTO =
-                            scheduleEffectiveService
-                                    .getScheduleEffectiveDTO(lastBuild.getConfigScheduleKeyName());
-                    if( lastBuild.getScheduleInstance() == null){
-                        lastOffsetDateTime = DateTimeUtils.parseDateTimeFormatWithTZ(
-                                scheduleEffectiveDTO.getStartDateTime());
-                    }else {
-                        lastOffsetDateTime = lastBuild.getScheduleInstance().getTargetExecutionDateTime();
-                    }
-                  return  scheduleEffectiveService.isBefore(scheduleEffectiveDTO.getIntervalExpression(),lastOffsetDateTime);
-
-                })
+                .filter(this::isRunnable)
                 .forEach(lastBuild -> {
                     if (lastBuild.getScheduleInstance() == null ||
                             Arrays

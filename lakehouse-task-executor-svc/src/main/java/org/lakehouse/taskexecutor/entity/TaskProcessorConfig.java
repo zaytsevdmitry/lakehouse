@@ -17,7 +17,7 @@ public class TaskProcessorConfig {
     private  Set<DataSetDTO> dataSetDTOSet = new HashSet<>();
     private OffsetDateTime intervalStartDateTime;
     private OffsetDateTime intervalEndDateTime;
-    private String lockHash;
+    private String lockSource;
 
 
     public TaskProcessorConfig(){}
@@ -102,12 +102,12 @@ public class TaskProcessorConfig {
         this.intervalEndDateTime = intervalEndDateTime;
     }
 
-    public String getLockHash() {
-        return lockHash;
+    public String getLockSource() {
+        return lockSource;
     }
 
-    public void setLockHash(String lockHash) {
-        this.lockHash = lockHash;
+    public void setLockSource(String lockSource) {
+        this.lockSource = lockSource;
     }
 
     @Override
@@ -125,11 +125,11 @@ public class TaskProcessorConfig {
                 && Objects.equals(dataSetDTOSet, that.dataSetDTOSet)
                 && Objects.equals(intervalStartDateTime, that.intervalStartDateTime)
                 && Objects.equals(intervalEndDateTime, that.intervalEndDateTime)
-                && Objects.equals(lockHash, that.lockHash);
+                && Objects.equals(lockSource, that.lockSource);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(executionModuleArgs, scripts, sources, targetDataSet, dataStores, KeyBind, tableDefinitions, dataSetDTOSet, intervalStartDateTime, intervalEndDateTime, lockHash);
+        return Objects.hash(executionModuleArgs, scripts, sources, targetDataSet, dataStores, KeyBind, tableDefinitions, dataSetDTOSet, intervalStartDateTime, intervalEndDateTime, lockSource);
     }
 }

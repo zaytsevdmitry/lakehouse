@@ -86,4 +86,15 @@ public class ScheduleScenarioActInstance {
 	public int hashCode() {
 		return Objects.hash(getId(), getName(), getScheduleInstance(), getConfDataSetKeyName(), getStatus());
 	}
+
+	@Override
+	public String toString() {
+		return "ScheduleScenarioActInstance{" +
+				"id=" + id +
+				", name='" + name + '\'' +
+				", scheduleInstance=" + scheduleInstance +
+				", confDataSetKeyName='" + confDataSetKeyName + '\'' +
+				", status='" + status + '\'' +
+				'}';
+	}
 }

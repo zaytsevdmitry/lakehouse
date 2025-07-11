@@ -316,5 +316,46 @@ public class SchedulesTest {
         rows = manageStateService.successSchedules();
         logger.info("Success schedules {}", rows );
     }
+    @Test
+    @Order(5)
+    void scheduleEndDateTest() throws IOException {
+        scheduleInstanceRepository.deleteAll();
+        scheduleInstanceRunningRepository.deleteAll();
+        scheduleInstanceLastBuildRepository.deleteAll();
+        ScheduleEffectiveDTO sef = fileLoader.loadScheduleEffectiveDTO();
+        sef.setStartDateTime("2025-05-05T00:00:00z");
+        sef.setStopDateTime("2025-05-06T00:00:01z"); // 1 day and 1 second
+        sef.setIntervalExpression("0 0 0 * * *"); // every day
+        sef.setName("scheduleEndDateTest");
+        // schedule registration
+        buildService.registration(sef);
+        buildService.buildAll(); // create schedule
+        manageStateService.runAll();
+
+        assert (scheduleInstanceRepository.findAll().get(0).getStatus().equals(Status.Schedule.RUNNING.label));
+        assert (scheduleInstanceRepository.findAll().size() == 1);
+        scheduleTaskInstanceRepository
+                .findAll()
+                .forEach(t-> {
+                    t.setStatus(Status.Schedule.SUCCESS.label);
+                    scheduleTaskInstanceRepository.save(t);
+                });
+        // first wave
+        manageStateService.runNewScenariosActs();
+        manageStateService.setScenariosActsStatusToSuccess();
+        // second wave
+        manageStateService.runNewScenariosActs();
+        manageStateService.setScenariosActsStatusToSuccess();
+        // last wave
+        manageStateService.runNewScenariosActs();
+        manageStateService.setScenariosActsStatusToSuccess();
+
+        assert (manageStateService.successSchedules() == 1);
+        assert (scheduleInstanceRepository.findAll().get(0).getStatus().equals(Status.Schedule.SUCCESS.label));
+        assert (scheduleInstanceRepository.findAll().size() == 1);
+        buildService.buildAll();
+        assert (scheduleInstanceRepository.findAll().size() == 1);
+
+    }
 
 }

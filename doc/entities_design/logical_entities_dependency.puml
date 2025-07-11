@@ -1,13 +1,12 @@
 @startuml 
 (schedule) --> (scenarioActs)
 (scenarioActs) --> (scenarioAct)
+(scenarioActTemplate) -> (scenarioAct)
 (scenarioAct) --> (task)
-(task)-->(executionService)
-(executionService)-->(executionModule)
+(task)-->(taskExecutionService)
 (dataset) -> (scenarioAct)
 (datastore) --> (dataset)
 (project) -> (dataset)
 (project) --> (schedule)
 (project) -> (datastore)
-(project) --> (executionService)
 @enduml 

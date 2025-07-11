@@ -5,7 +5,7 @@ import org.lakehouse.client.api.common.IntervalDTO;
 import java.util.Objects;
 
 public class DataSetIntervalDTO extends IntervalDTO {
-    String dataSetKeyName;
+    private String dataSetKeyName;
 
     public DataSetIntervalDTO() {
     }
