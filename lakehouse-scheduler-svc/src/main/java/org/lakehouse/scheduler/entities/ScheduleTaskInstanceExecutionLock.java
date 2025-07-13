@@ -1,17 +1,10 @@
 package org.lakehouse.scheduler.entities;
 
-import java.time.OffsetDateTime;
+import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.ForeignKey;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
+import java.time.OffsetDateTime;
 
 @Entity
 @Table(uniqueConstraints = { 
@@ -33,6 +26,7 @@ public class ScheduleTaskInstanceExecutionLock {
 	
 	@ManyToOne
 	@JoinColumn(nullable = false, foreignKey = @ForeignKey(name = "schedule_task_instance_execution_lock__sti_id_fk"))
+	@OnDelete(action = OnDeleteAction.CASCADE)
 	private ScheduleTaskInstance scheduleTaskInstance;
 	
 	public String getServiceId() {
@@ -58,5 +52,15 @@ public class ScheduleTaskInstanceExecutionLock {
 	}
 	public void setLastHeartBeatDateTime(OffsetDateTime lastHeartBeatDateTime) {
 		this.lastHeartBeatDateTime = lastHeartBeatDateTime;
+	}
+
+	@Override
+	public String toString() {
+		return "ScheduleTaskInstanceExecutionLock{" +
+				"id=" + id +
+				", serviceId='" + serviceId + '\'' +
+				", lastHeartBeatDateTime=" + lastHeartBeatDateTime +
+				", scheduleTaskInstance=" + scheduleTaskInstance +
+				'}';
 	}
 }

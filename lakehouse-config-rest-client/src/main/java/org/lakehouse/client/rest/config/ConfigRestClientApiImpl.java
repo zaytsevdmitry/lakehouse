@@ -1,15 +1,15 @@
 package org.lakehouse.client.rest.config;
+
+import org.lakehouse.client.api.constant.Endpoint;
+import org.lakehouse.client.api.dto.configs.*;
+import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
+import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskMsgDTO;
+import org.lakehouse.client.api.utils.DateTimeUtils;
+import org.lakehouse.client.rest.RestClientHelper;
+
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
-
-import org.lakehouse.client.rest.RestClientHelper;
-import org.lakehouse.client.api.dto.configs.*;
-import org.lakehouse.client.api.utils.DateTimeUtils;
-
-import org.lakehouse.client.api.constant.Endpoint;
-import org.lakehouse.client.api.dto.service.ScheduledTaskLockDTO;
-import org.lakehouse.client.api.dto.tasks.ScheduledTaskMsgDTO;
 
 
 public class ConfigRestClientApiImpl implements ConfigRestClientApi {

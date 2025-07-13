@@ -9,8 +9,17 @@
     {
       "name": "transaction_processing",
       "dataSet": "transaction_processing",
+      "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
+      "intervalEnd": "{{ targetDateTimeTZ }}",
       "scenarioActTemplate": null,
       "tasks": [
+        {
+          "name": "begin",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.RunningStateTaskProcessor",
+          "importance": "critical",
+          "description": "Made interval status RUNNING"
+        },
         {
           "name": "load",
           "taskExecutionServiceGroupName": "default",
@@ -21,6 +30,23 @@
             "spark.executor.memory": "1gb",
             "spark.executor.cores": "2"
           }
+        },
+        {
+          "name": "success",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.SuccessStateTaskProcessor",
+          "importance": "critical",
+          "description": "DataSet success"
+        }
+      ],
+      "dagEdges": [
+        {
+          "from": "begin",
+          "to": "load"
+        },
+        {
+          "from": "load",
+          "to": "success"
         }
       ]
 
@@ -29,7 +55,16 @@
       "name": "client_processing",
       "dataSet": "client_processing",
       "scenarioActTemplate": null,
+      "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
+      "intervalEnd": "{{ targetDateTimeTZ }}",
       "tasks": [
+        {
+          "name": "begin",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.RunningStateTaskProcessor",
+          "importance": "critical",
+          "description": "Made interval status RUNNING"
+        },
         {
           "name": "load",
           "taskExecutionServiceGroupName": "default",
@@ -40,24 +75,77 @@
             "spark.executor.memory": "1gb",
             "spark.executor.cores": "2"
           }
+        },
+        {
+          "name": "success",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.SuccessStateTaskProcessor",
+          "importance": "critical",
+          "description": "DataSet success"
+        }
+      ],
+      "dagEdges": [
+        {
+          "from": "begin",
+          "to": "load"
+        },
+        {
+          "from": "load",
+          "to": "success"
         }
       ]
-
     },
     {
       "name": "transaction_dds",
       "dataSet": "transaction_dds",
-      "scenarioActTemplate": "default"
+      "scenarioActTemplate": "default",
+      "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
+      "intervalEnd": "{{ targetDateTimeTZ }}",
+      "tasks": [
+        {
+          "name": "extend",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.SparkTaskProcessor",
+          "importance": "critical",
+          "description": "Not exists in template",
+          "executionModuleArgs": {
+            "spark.executor.memory": "5gb",
+            "spark.driver.memory": "2gb"
+          }
+        },
+        {
+          "name": "load",
+          "taskExecutionServiceGroupName": "default",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.SparkTaskProcessor",
+          "importance": "critical",
+          "description": "override load",
+          "executionModuleArgs": {
+            "spark.executor.memory": "1gb",
+            "spark.driver.memory": "2gb",
+            "spark.executor.cores": "2"
+          }
+        }
+      ],
+      "dagEdges": [
+        {
+          "from": "extend",
+          "to": "load"
+        }
+      ]
     },
     {
       "name": "aggregation_pay_per_client_daily_mart",
       "dataSet": "aggregation_pay_per_client_daily_mart",
-      "scenarioActTemplate": "default"
+      "scenarioActTemplate": "default",
+      "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
+      "intervalEnd": "{{ targetDateTimeTZ }}"
     },
     {
       "name": "aggregation_pay_per_client_total_mart",
       "dataSet": "aggregation_pay_per_client_total_mart",
-      "scenarioActTemplate": "default"
+      "scenarioActTemplate": "default",
+      "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
+      "intervalEnd": "{{ targetDateTimeTZ }}"
     }
   ],
   "scenarioActEdges": [

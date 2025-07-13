@@ -3,14 +3,28 @@
   "description": "Default scenario",
   "tasks": [
     {
+      "name": "check",
+      "taskExecutionServiceGroupName": "state-exe",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.DependencyCheckStateTaskProcessor",
+      "importance": "critical",
+      "description": "Dependency check"
+    },
+    {
+      "name": "begin",
+      "taskExecutionServiceGroupName": "state-exe",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.RunningStateTaskProcessor",
+      "importance": "critical",
+      "description": "Made interval status RUNNING"
+    },
+    {
       "name": "load",
       "taskExecutionServiceGroupName": "default",
       "executionModule": "org.lakehouse.taskexecutor.executionmodule.SparkTaskProcessor",
       "importance": "critical",
       "description": "load from remote datastore",
       "executionModuleArgs": {
-        "spark.executor.memory": "1gb",
-        "spark.driver.memory": "1gb"
+        "spark.executor.memory": "5gb",
+        "spark.driver.memory": "2gb"
       }
     },
     {
@@ -20,13 +34,13 @@
       "importance": "critical",
       "description": "load from remote datastore",
       "executionModuleArgs": {
-        "spark.executor.memory": "1gb",
-        "spark.driver.memory": "1gb",
-        "spark.driver.cores": "1"
+        "spark.executor.memory": "5gb",
+        "spark.driver.memory": "2gb",
+        "spark.driver.cores": "3"
       }
     },
     {
-      "name": "dataQualityBefore",
+      "name": "dataQualityBeforeApply",
       "taskExecutionServiceGroupName": "default",
       "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.DataQualityBeforeProcessor",
       "importance": "warn",
@@ -59,24 +73,31 @@
     },
     {
       "name": "finally",
-      "taskExecutionServiceGroupName": "default",
-      "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.FinallyProcessor",
+      "taskExecutionServiceGroupName": "state-exe",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.SuccessStateTaskProcessor",
       "importance": "critical",
-      "description": "load from remote datastore",
-      "executionModuleArgs": {}
+      "description": "DataSet success"
     }
   ],
   "dagEdges": [
+    {
+      "from": "check",
+      "to": "begin"
+    },
+    {
+      "from": "begin",
+      "to": "load"
+    },
     {
       "from": "load",
       "to": "merge"
     },
     {
       "from": "merge",
-      "to": "dataQualityBefore"
+      "to": "dataQualityBeforeApply"
     },
     {
-      "from": "dataQualityBefore",
+      "from": "dataQualityBeforeApply",
       "to": "apply"
     },
     {
@@ -90,10 +111,6 @@
     {
       "from": "apply",
       "to": "dataQualityAfterWarn"
-    },
-    {
-      "from": "dataQualityAfterWarn",
-      "to": "finally"
     }
   ]
 }

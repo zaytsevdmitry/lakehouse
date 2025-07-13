@@ -1,8 +1,0 @@
-@startuml 
-'autonumber
-[*] -> NEW
-NEW: findAndRegisterNewSchedules:create instances of schedule scenariio and tasks with status = NEW
-  
-[*] -> QUEUED 
-
-@enduml

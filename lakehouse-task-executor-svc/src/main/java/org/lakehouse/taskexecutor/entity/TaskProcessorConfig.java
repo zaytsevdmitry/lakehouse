@@ -3,20 +3,22 @@ package org.lakehouse.taskexecutor.entity;
 import org.lakehouse.client.api.dto.configs.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.DataStoreDTO;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.time.OffsetDateTime;
+import java.util.*;
 
 public class TaskProcessorConfig {
-    private  Map<String, String> executionModuleArgs;
-    private  List<String> scripts;
-    private  Map<String, DataSetDTO> sources;
+    private  Map<String, String> executionModuleArgs = new HashMap<>();
+    private  List<String> scripts = new ArrayList<>();
+    private  Map<String, DataSetDTO> sources = new HashMap<>();
     private  DataSetDTO targetDataSet;
-    private  Map<String, DataStoreDTO> dataStores;
-    private  Map<String, String> KeyBind;
-    private  Map<String, TableDefinition> tableDefinitions;
-    private  Set<DataSetDTO> dataSetDTOSet;
+    private  Map<String, DataStoreDTO> dataStores = new HashMap<>();
+    private  Map<String, String> KeyBind = new HashMap<>();
+    private  Map<String, TableDefinition> tableDefinitions = new HashMap<>();
+    private  Set<DataSetDTO> dataSetDTOSet = new HashSet<>();
+    private OffsetDateTime intervalStartDateTime;
+    private OffsetDateTime intervalEndDateTime;
+    private String lockSource;
+
 
     public TaskProcessorConfig(){}
 
@@ -84,15 +86,50 @@ public class TaskProcessorConfig {
         this.dataSetDTOSet = dataSetDTOSet;
     }
 
+    public OffsetDateTime getIntervalStartDateTime() {
+        return intervalStartDateTime;
+    }
+
+    public void setIntervalStartDateTime(OffsetDateTime intervalStartDateTime) {
+        this.intervalStartDateTime = intervalStartDateTime;
+    }
+
+    public OffsetDateTime getIntervalEndDateTime() {
+        return intervalEndDateTime;
+    }
+
+    public void setIntervalEndDateTime(OffsetDateTime intervalEndDateTime) {
+        this.intervalEndDateTime = intervalEndDateTime;
+    }
+
+    public String getLockSource() {
+        return lockSource;
+    }
+
+    public void setLockSource(String lockSource) {
+        this.lockSource = lockSource;
+    }
+
     @Override
     public boolean equals(Object o) {
+        if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TaskProcessorConfig that = (TaskProcessorConfig) o;
-        return Objects.equals(getExecutionModuleArgs(), that.getExecutionModuleArgs()) && Objects.equals(getScripts(), that.getScripts()) && Objects.equals(getSources(), that.getSources()) && Objects.equals(getTargetDataSet(), that.getTargetDataSet()) && Objects.equals(getDataStores(), that.getDataStores()) && Objects.equals(getKeyBind(), that.getKeyBind()) && Objects.equals(getTableDefinitions(), that.getTableDefinitions()) && Objects.equals(getDataSetDTOSet(), that.getDataSetDTOSet());
+        return Objects.equals(executionModuleArgs, that.executionModuleArgs)
+                && Objects.equals(scripts, that.scripts)
+                && Objects.equals(sources, that.sources)
+                && Objects.equals(targetDataSet, that.targetDataSet)
+                && Objects.equals(dataStores, that.dataStores)
+                && Objects.equals(KeyBind, that.KeyBind)
+                && Objects.equals(tableDefinitions, that.tableDefinitions)
+                && Objects.equals(dataSetDTOSet, that.dataSetDTOSet)
+                && Objects.equals(intervalStartDateTime, that.intervalStartDateTime)
+                && Objects.equals(intervalEndDateTime, that.intervalEndDateTime)
+                && Objects.equals(lockSource, that.lockSource);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getExecutionModuleArgs(), getScripts(), getSources(), getTargetDataSet(), getDataStores(), getKeyBind(), getTableDefinitions(), getDataSetDTOSet());
+        return Objects.hash(executionModuleArgs, scripts, sources, targetDataSet, dataStores, KeyBind, tableDefinitions, dataSetDTOSet, intervalStartDateTime, intervalEndDateTime, lockSource);
     }
 }

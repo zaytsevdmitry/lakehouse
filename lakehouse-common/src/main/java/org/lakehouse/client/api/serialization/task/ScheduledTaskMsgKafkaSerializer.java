@@ -2,7 +2,7 @@ package org.lakehouse.client.api.serialization.task;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.common.serialization.Serializer;
-import org.lakehouse.client.api.dto.tasks.ScheduledTaskMsgDTO;
+import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskMsgDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.serializer.support.SerializationFailedException;

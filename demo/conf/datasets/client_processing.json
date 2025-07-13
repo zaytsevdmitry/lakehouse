@@ -1,7 +1,7 @@
 {
-  "name": "client_processing",
+  "keyName": "client_processing",
   "project": "DEMO",
-  "dataStore": "processingdb",
+  "dataStoreKeyName": "processingdb",
   "fullTableName": "proc.client",
   "scripts": [
     {

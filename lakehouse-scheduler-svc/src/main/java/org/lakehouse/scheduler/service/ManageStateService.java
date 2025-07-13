@@ -3,6 +3,7 @@ package org.lakehouse.scheduler.service;
 import jakarta.transaction.Transactional;
 import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
+import org.lakehouse.client.api.dto.scheduler.ScheduleInstanceDTO;
 import org.lakehouse.client.api.exception.CronParceErrorException;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.scheduler.entities.ScheduleInstance;
@@ -10,9 +11,11 @@ import org.lakehouse.scheduler.entities.ScheduleInstanceRunning;
 import org.lakehouse.scheduler.entities.ScheduleScenarioActInstance;
 import org.lakehouse.scheduler.entities.ScheduleScenarioActInstanceDependency;
 import org.lakehouse.scheduler.exception.ScheduledNotFoundException;
+import org.lakehouse.scheduler.factory.ScheduleInstanceFactory;
 import org.lakehouse.scheduler.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
@@ -28,18 +31,19 @@ public class ManageStateService {
     private final ScheduleScenarioActInstanceRepository scheduleScenarioActInstanceRepository;
     private final ScheduleEffectiveService scheduleEffectiveService;
     private final ScheduleScenarioActInstanceDependencyRepository scenarioActInstanceDependencyRepository;
-
+    private final ScheduleInstanceLastBuildRepository scheduleInstanceLastBuildRepository;
     public ManageStateService(
             ScheduleInstanceRunningRepository scheduleInstanceRunningRepository,
             ScheduleInstanceRepository scheduleInstanceRepository,
             ScheduleScenarioActInstanceRepository scheduleScenarioActInstanceRepository,
             ScheduleEffectiveService scheduleEffectiveService,
-            ScheduleScenarioActInstanceDependencyRepository scenarioActInstanceDependencyRepository) {
+            ScheduleScenarioActInstanceDependencyRepository scenarioActInstanceDependencyRepository, ScheduleInstanceLastBuildRepository scheduleInstanceLastBuildRepository) {
         this.scheduleInstanceRunningRepository = scheduleInstanceRunningRepository;
         this.scheduleInstanceRepository = scheduleInstanceRepository;
         this.scheduleScenarioActInstanceRepository = scheduleScenarioActInstanceRepository;
         this.scheduleEffectiveService = scheduleEffectiveService;
         this.scenarioActInstanceDependencyRepository = scenarioActInstanceDependencyRepository;
+        this.scheduleInstanceLastBuildRepository = scheduleInstanceLastBuildRepository;
     }
     private OffsetDateTime resolveNextDate(
             ScheduleInstance scheduleInstance,
@@ -54,7 +58,7 @@ public class ManageStateService {
             lastOffsetDateTime =  scheduleInstance.getTargetExecutionDateTime();
         else {
             lastOffsetDateTime = DateTimeUtils
-                    .parceDateTimeFormatWithTZ(scheduleEffectiveDTO.getStartDateTime());
+                    .parseDateTimeFormatWithTZ(scheduleEffectiveDTO.getStartDateTime());
         }
 
         try {
@@ -72,7 +76,7 @@ public class ManageStateService {
         return result;
     }
 
-@Transactional
+    @Transactional
     public int  runAll() {
         AtomicInteger result = new AtomicInteger();
         List<ScheduleInstanceRunning> sirList = new ArrayList<>();
@@ -185,5 +189,38 @@ public class ManageStateService {
                         })
                         .toList();
         scenarioActInstanceDependencyRepository.saveAll(deps);
+    }
+    public List<ScheduleInstanceDTO> findAll(){
+        return ScheduleInstanceFactory.scheduleInstanceDTOList( scheduleInstanceRepository.findAll());
+    }
+
+    public List<ScheduleInstanceDTO> findAllByName(String name, int limit){
+        return ScheduleInstanceFactory.scheduleInstanceDTOList(
+                scheduleInstanceRepository.findByScheduleNameOrderByTargetExecutionDateTimeDesc(name, Limit.of(limit)));
+    }
+
+    public void delete(Long id){
+        scheduleInstanceRepository.findById(id).ifPresent(
+                scheduleInstance -> {
+
+                       scheduleInstanceLastBuildRepository
+                               .findByConfigScheduleKeyName(scheduleInstance.getConfigScheduleKeyName())
+                               .ifPresent(scheduleInstanceLastBuild -> {
+
+
+                                   List<ScheduleInstance> lastList =
+                                           scheduleInstanceRepository
+                                                   .findByScheduleNameOrderByTargetExecutionDateTimeDescLess(
+                                                           scheduleInstance.getConfigScheduleKeyName(),
+                                                           scheduleInstance.getTargetExecutionDateTime(),
+                                                           Limit.of(1));
+                                   ScheduleInstance last = null;
+                                   if(!lastList.isEmpty()) last = lastList.get(0);
+                                   scheduleInstanceLastBuild.setScheduleInstance(last);
+                                    scheduleInstanceLastBuildRepository.save(scheduleInstanceLastBuild);
+                               });
+                    scheduleInstanceRepository.deleteById(id);
+                });
+
     }
 }

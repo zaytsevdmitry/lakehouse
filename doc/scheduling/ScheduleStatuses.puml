@@ -1,0 +1,30 @@
+@startuml
+'https://plantuml.com/state-diagram
+
+scale 650 width
+
+
+state Schedule{
+
+
+
+}
+state ScenarioAct{
+
+}
+state Task{
+}
+
+[*] --> Schedule.NEW
+Schedule.NEW-->ScenarioAct.NEW
+Schedule.RUNNING-->ScenarioAct.RUNNING
+ScenarioAct.NEW-->Task.NEW
+Schedule.NEW->Schedule.RUNNING
+ScenarioAct.RUNNING--->Task.QUEUED
+Task.RUNNING-->Task.SUCCESS
+Task.SUCCESS->ScenarioAct.SUCCESS
+ScenarioAct.SUCCESS->Schedule.SUCCESS
+Task.QUEUED --> Task.RUNNING
+Task.RUNNING->Task.FAILED
+Task.FAILED-->Task.QUEUED
+@enduml

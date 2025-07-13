@@ -36,6 +36,11 @@ public class ScenarioAct {
 	@JoinColumn(foreignKey = @ForeignKey(name = "scenario_act__scenario_act_template_fk"))
 	private ScenarioActTemplate scenarioActTemplate;
 
+	@Column(nullable = false)
+	String intervalStart;
+
+	@Column(nullable = false)
+	String intervalEnd;
 	public ScenarioAct() {
 	}
 
@@ -79,20 +84,32 @@ public class ScenarioAct {
 		this.scenarioActTemplate = scenarioActTemplate;
 	}
 
+	public String getIntervalStart() {
+		return intervalStart;
+	}
+
+	public void setIntervalStart(String intervalStart) {
+		this.intervalStart = intervalStart;
+	}
+
+	public String getIntervalEnd() {
+		return intervalEnd;
+	}
+
+	public void setIntervalEnd(String intervalEnd) {
+		this.intervalEnd = intervalEnd;
+	}
+
 	@Override
 	public boolean equals(Object o) {
-		if (this == o)
-			return true;
-		if (o == null || getClass() != o.getClass())
-			return false;
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
 		ScenarioAct that = (ScenarioAct) o;
-		return Objects.equals(getId(), that.getId()) && Objects.equals(getName(), that.getName())
-				&& Objects.equals(getDataSet(), that.getDataSet()) && Objects.equals(getSchedule(), that.getSchedule())
-				&& Objects.equals(getScenarioActTemplate(), that.getScenarioActTemplate());
+		return Objects.equals(getId(), that.getId()) && Objects.equals(getName(), that.getName()) && Objects.equals(getDataSet(), that.getDataSet()) && Objects.equals(getSchedule(), that.getSchedule()) && Objects.equals(getScenarioActTemplate(), that.getScenarioActTemplate()) && Objects.equals(getIntervalStart(), that.getIntervalStart()) && Objects.equals(getIntervalEnd(), that.getIntervalEnd());
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(getId(), getName(), getDataSet(), getSchedule(), getScenarioActTemplate());
+		return Objects.hash(getId(), getName(), getDataSet(), getSchedule(), getScenarioActTemplate(), getIntervalStart(), getIntervalEnd());
 	}
 }

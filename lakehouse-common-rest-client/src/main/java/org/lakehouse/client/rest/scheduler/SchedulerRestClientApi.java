@@ -1,10 +1,10 @@
 package org.lakehouse.client.rest.scheduler;
 
-import org.lakehouse.client.api.dto.service.ScheduledTaskLockDTO;
-import org.lakehouse.client.api.dto.service.TaskExecutionHeartBeatDTO;
-import org.lakehouse.client.api.dto.service.TaskInstanceReleaseDTO;
-import org.lakehouse.client.api.dto.tasks.ScheduledTaskDTO;
-import org.lakehouse.client.api.dto.tasks.ScheduledTaskMsgDTO;
+import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
+import org.lakehouse.client.api.dto.scheduler.lock.TaskExecutionHeartBeatDTO;
+import org.lakehouse.client.api.dto.scheduler.lock.TaskInstanceReleaseDTO;
+import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
+import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskMsgDTO;
 
 import java.util.List;
 
@@ -18,5 +18,5 @@ public interface SchedulerRestClientApi{
 	public List<ScheduledTaskLockDTO>  getScheduledTaskLockDTOList();
 	public ScheduledTaskLockDTO lockTaskById(Long taskId, String serviceId);
 	public int lockHeartBeat (TaskExecutionHeartBeatDTO taskExecutionHeartBeat);
-	public int lockRelease(TaskInstanceReleaseDTO taskInstanceReleaseDTO);
+	public int lockRelease(TaskInstanceReleaseDTO taskInstanceReleaseDTO) ;
 }

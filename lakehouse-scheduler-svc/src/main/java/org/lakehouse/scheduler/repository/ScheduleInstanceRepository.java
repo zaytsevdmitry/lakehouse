@@ -35,6 +35,14 @@ public interface ScheduleInstanceRepository extends JpaRepository<ScheduleInstan
             select si\s
             from ScheduleInstance si\s
             where si.configScheduleKeyName = ?1
+            and si.targetExecutionDateTime < ?2
+            order by si.targetExecutionDateTime desc""")
+	List<ScheduleInstance> findByScheduleNameOrderByTargetExecutionDateTimeDescLess(String scheduleName, OffsetDateTime targetExecutionDateTime,Limit limit);
+
+	@Query("""
+            select si\s
+            from ScheduleInstance si\s
+            where si.configScheduleKeyName = ?1
             order by
                   case\s
                    when si.status = 'RUNNING' then 1

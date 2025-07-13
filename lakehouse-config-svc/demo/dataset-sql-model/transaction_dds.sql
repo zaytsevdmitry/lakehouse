@@ -8,6 +8,7 @@ select t.id id
 from ${source(transaction_processing)} t
 join ${source(client_processing)} c
   on t.client_id = c.id
-where  t.reg_date_time >= '${target-timestamp-tz}'
-and  t.reg_date_time <  '${target-timestamp-tz}' + interval '1 day'
+ where
+   t.reg_date_time >= timestamp '{{ targetIntervalStartTZ }}' and
+   t.reg_date_time < timestamp '{{ targetIntervalEndTZ }}'
 -- NB spark sql

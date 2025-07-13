@@ -6,7 +6,7 @@
     <parent>
         <groupId>lakehouse</groupId>
         <artifactId>lakehouse-parent</artifactId>
-        <version>0.1.1</version>
+        <version>0.2.0</version>
     </parent>
 
     <artifactId>lakehouse-config-svc</artifactId>
@@ -21,15 +21,14 @@
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-common</artifactId>
-            <version>0.1.1</version>
+            <version>0.2.0</version>
         </dependency>
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-common-test</artifactId>
-            <version>0.1.1</version>
+            <version>0.2.0</version>
             <scope>test</scope>
         </dependency>
-
         <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -59,7 +58,6 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>

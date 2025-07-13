@@ -3,14 +3,18 @@ package org.lakehouse.config.service;
 import jakarta.transaction.Transactional;
 import org.lakehouse.client.api.dto.configs.DagEdgeDTO;
 import org.lakehouse.client.api.dto.configs.ScenarioActTemplateDTO;
-
 import org.lakehouse.client.api.dto.configs.TaskDTO;
+import org.lakehouse.client.api.utils.DateTimeUtils;
+import org.lakehouse.config.entities.scenario.ScenarioAct;
 import org.lakehouse.config.entities.templates.ScenarioActTemplate;
 import org.lakehouse.config.entities.templates.TaskTemplate;
 import org.lakehouse.config.entities.templates.TaskTemplateEdge;
 import org.lakehouse.config.entities.templates.TaskTemplateExecutionModuleArg;
 import org.lakehouse.config.mapper.Mapper;
 import org.lakehouse.config.repository.*;
+import org.lakehouse.config.validator.ConfDTOValidationException;
+import org.lakehouse.config.validator.ScenarioActTemplateConfValidator;
+import org.lakehouse.config.validator.ValidationResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -26,20 +30,26 @@ public class ScenarioActTemplateService {
 	private final TaskTemplateExecutionModuleArgRepository executionModuleArgRepository;
 	private final TaskExecutionServiceGroupRepository taskExecutionServiceGroupRepository;
 	private final TaskTemplateEdgeRepository taskTemplateEdgeRepository;
+	private final ScenarioActRepository scenarioActRepository;
+	private final ScheduleRepository scheduleRepository;
+	private final ScheduleConfigProducerService scheduleConfigProducerService;
 	private final Mapper mapper;
 
 	public ScenarioActTemplateService(ScenarioActTemplateRepository scenarioActTemplateRepository,
-									  TaskTemplateRepository taskTemplateRepository,
-									  TaskTemplateExecutionModuleArgRepository executionModuleArgRepository,
-									  TaskExecutionServiceGroupRepository taskExecutionServiceGroupRepository,
-									  TaskTemplateEdgeRepository taskTemplateEdgeRepository,
-									  Mapper mapper) {
+                                      TaskTemplateRepository taskTemplateRepository,
+                                      TaskTemplateExecutionModuleArgRepository executionModuleArgRepository,
+                                      TaskExecutionServiceGroupRepository taskExecutionServiceGroupRepository,
+                                      TaskTemplateEdgeRepository taskTemplateEdgeRepository, ScenarioActRepository scenarioActRepository, ScheduleRepository scheduleRepository, org.lakehouse.config.service.ScheduleConfigProducerService scheduleConfigProducerService,
+                                      Mapper mapper) {
 		this.scenarioActTemplateRepository = scenarioActTemplateRepository;
 		this.taskTemplateRepository = taskTemplateRepository;
 		this.executionModuleArgRepository = executionModuleArgRepository;
 		this.taskExecutionServiceGroupRepository = taskExecutionServiceGroupRepository;
 		this.taskTemplateEdgeRepository = taskTemplateEdgeRepository;
-		this.mapper = mapper;
+        this.scenarioActRepository = scenarioActRepository;
+        this.scheduleRepository = scheduleRepository;
+        this.scheduleConfigProducerService = scheduleConfigProducerService;
+        this.mapper = mapper;
 	}
 
 	public TaskDTO findTaskByScenarioActTemplateAndTaskName(
@@ -110,9 +120,21 @@ public class ScenarioActTemplateService {
 	}
 	@Transactional
 	public ScenarioActTemplateDTO save(ScenarioActTemplateDTO scenarioActTemplateDTO) {
+
+		ValidationResult vr = ScenarioActTemplateConfValidator.validate(scenarioActTemplateDTO);
+
+		if (!vr.isValid())
+			throw new ConfDTOValidationException(vr.getDescriptions());
+
 		ScenarioActTemplate scenarioActTemplate = mapScenarioToEntity(scenarioActTemplateDTO);
-		taskTemplateRepository.findByScenarioTemplateName(scenarioActTemplate.getName()).forEach(taskTemplateRepository::delete);
 		taskTemplateEdgeRepository.findByScenarioTemplateName(scenarioActTemplate.getName()).forEach(taskTemplateEdgeRepository::delete);
+		taskTemplateRepository.findByScenarioTemplateName(scenarioActTemplate.getName()).forEach(
+				taskTemplate -> {
+					logger.info("Delete task {}.{}",scenarioActTemplate.getName(),taskTemplate.getName());
+					taskTemplateRepository.delete(taskTemplate);
+				});
+		taskTemplateRepository.findByScenarioTemplateName(scenarioActTemplate.getName()).forEach(taskTemplate ->
+				logger.info("Found task {}.{}",scenarioActTemplate.getName(),taskTemplate.getName()));
 		logger.info("Save ScenarioActTemplate.name={}",scenarioActTemplateDTO.getName());
 		ScenarioActTemplate result = scenarioActTemplateRepository.save(scenarioActTemplate);
 
@@ -157,6 +179,19 @@ public class ScenarioActTemplateService {
 			taskTemplateEdge.setToTaskTemplate(taskTemplates.get(dagEdgeDTO.getTo()));
 			taskTemplateEdgeRepository.save(taskTemplateEdge);
 		});
+
+		scenarioActRepository
+				.findByScenarioActTemplateName(scenarioActTemplate.getName())
+				.stream()
+				.map(ScenarioAct::getSchedule)
+				.collect(Collectors.toSet())
+				.forEach(schedule -> {
+							schedule.setLastChangeNumber(schedule.getLastChangeNumber() + 1);
+							schedule.setLastChangedDateTime(DateTimeUtils.now());
+							scheduleConfigProducerService.changeSchedule(scheduleRepository.save(schedule));
+						}
+
+					);
 
 		return mapScenarioToDTO(result);
 	}

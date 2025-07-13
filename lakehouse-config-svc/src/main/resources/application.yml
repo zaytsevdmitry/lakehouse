@@ -29,6 +29,10 @@ spring:
 lakehouse:
   config:
     schedule:
+      send:
+        delay-ms: 10000
+        initial-delay-ms: 20000
+        limit: 100
       kafka:
         producer:
           schedule:

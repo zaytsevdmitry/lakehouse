@@ -1,10 +1,9 @@
 package org.lakehouse.taskexecutor.entity;
 
-import org.lakehouse.client.api.constant.Status;
+import org.lakehouse.taskexecutor.exception.TaskFailedException;
 
-// todo replace runnable to callable for take result task status
 public interface TaskProcessor {
 
-    Status.Task runTask();
+    void runTask() throws TaskFailedException;
 	
 }

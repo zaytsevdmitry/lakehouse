@@ -1,0 +1,19 @@
+{
+  "name": "generateSource",
+  "description": "regular schedule for client transactions",
+  "intervalExpression": "@daily",
+  "startDateTime": "2025-01-01T00:00:00.0+00:00",
+  "stopDateTime": null,
+  "enabled": true,
+  "scenarioActs": [
+    {
+      "name": "transaction_processing",
+      "dataSet": "transaction_processing",
+      "scenarioActTemplate": "source",
+      "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
+      "intervalEnd": "{{ targetDateTimeTZ }}"
+    }
+  ],
+  "scenarioActEdges": [
+  ]
+}

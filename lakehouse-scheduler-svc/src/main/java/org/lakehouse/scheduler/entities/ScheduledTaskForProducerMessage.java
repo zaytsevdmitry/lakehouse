@@ -1,6 +1,8 @@
 package org.lakehouse.scheduler.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.util.Objects;
 
@@ -12,6 +14,7 @@ public class ScheduledTaskForProducerMessage{
 
     @ManyToOne
     @JoinColumn(nullable = false, foreignKey = @ForeignKey(name = "scheduled_task_for_producer_message__sti_id_fk"))
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private ScheduleTaskInstance scheduleTaskInstance;
 
     public ScheduledTaskForProducerMessage() {

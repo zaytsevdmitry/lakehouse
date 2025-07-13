@@ -5,9 +5,9 @@ import java.util.*;
 
 public class DataSetDTO implements Serializable {
     private static final long serialVersionUID = -7115041705179190105L;
-	private String name;
+	private String keyName;
     private String project;
-    private String dataStore;
+    private String dataStoreKeyName;
     private String fullTableName;
     private List<DataSetSourceDTO> sources = new ArrayList<>();
     private List<ColumnDTO> columnSchema = new ArrayList<>();
@@ -18,12 +18,12 @@ public class DataSetDTO implements Serializable {
     public DataSetDTO() {
     }
 
-    public String getName() {
-        return name;
+    public String getKeyName() {
+        return keyName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setKeyName(String keyName) {
+        this.keyName = keyName;
     }
 
     public String getProject() {
@@ -34,12 +34,12 @@ public class DataSetDTO implements Serializable {
         this.project = project;
     }
 
-    public String getDataStore() {
-        return dataStore;
+    public String getDataStoreKeyName() {
+        return dataStoreKeyName;
     }
 
-    public void setDataStore(String dataStore) {
-        this.dataStore = dataStore;
+    public void setDataStoreKeyName(String dataStoreKeyName) {
+        this.dataStoreKeyName = dataStoreKeyName;
     }
 
     public List<DataSetSourceDTO> getSources() {
@@ -114,9 +114,9 @@ public class DataSetDTO implements Serializable {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         DataSetDTO that = (DataSetDTO) o;
-        return Objects.equals(getName(), that.getName())
+        return Objects.equals(getKeyName(), that.getKeyName())
                 && Objects.equals(getProject(), that.getProject())
-                && Objects.equals(getDataStore(), that.getDataStore())
+                && Objects.equals(getDataStoreKeyName(), that.getDataStoreKeyName())
                 && Objects.equals(getFullTableName(), that.getFullTableName())
                 && Objects.equals(getSources(), that.getSources())
                 && Objects.equals(getColumnSchema(), that.getColumnSchema())
@@ -128,7 +128,7 @@ public class DataSetDTO implements Serializable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(getName(), getProject(), getDataStore(), getFullTableName(), getSources(), getColumnSchema(),
+        return Objects.hash(getKeyName(), getProject(), getDataStoreKeyName(), getFullTableName(), getSources(), getColumnSchema(),
                 getProperties(), getScripts(), getDescription(), getConstraints());
     }
 }

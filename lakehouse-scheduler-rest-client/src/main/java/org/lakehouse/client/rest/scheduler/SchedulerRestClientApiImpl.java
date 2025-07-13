@@ -1,15 +1,16 @@
 package org.lakehouse.client.rest.scheduler;
 
 import org.lakehouse.client.api.constant.Endpoint;
-import org.lakehouse.client.api.dto.service.ScheduledTaskLockDTO;
-import org.lakehouse.client.api.dto.service.TaskExecutionHeartBeatDTO;
-import org.lakehouse.client.api.dto.service.TaskInstanceReleaseDTO;
-import org.lakehouse.client.api.dto.tasks.ScheduledTaskDTO;
-import org.lakehouse.client.api.dto.tasks.ScheduledTaskMsgDTO;
+import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
+import org.lakehouse.client.api.dto.scheduler.lock.TaskExecutionHeartBeatDTO;
+import org.lakehouse.client.api.dto.scheduler.lock.TaskInstanceReleaseDTO;
+import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
+import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskMsgDTO;
 import org.lakehouse.client.rest.RestClientHelper;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 
 public class SchedulerRestClientApiImpl implements SchedulerRestClientApi {
@@ -21,23 +22,23 @@ public class SchedulerRestClientApiImpl implements SchedulerRestClientApi {
 	}
 @Override
 	public List<ScheduledTaskDTO> getScheduledTaskDTOList() {
-		return Arrays.asList( restClientHelper.getRestClient()
-				.get()
-				.uri(Endpoint.SCHEDULED_TASKS)
-				.retrieve()
-				.body(ScheduledTaskDTO[].class));
+		return Arrays.asList(Objects.requireNonNull(restClientHelper.getRestClient()
+                .get()
+                .uri(Endpoint.SCHEDULED_TASKS)
+                .retrieve()
+                .body(ScheduledTaskDTO[].class)));
 	}
 @Override
 	public List<ScheduledTaskLockDTO>  getScheduledTaskLockDTOList() {
-		return Arrays.asList( restClientHelper.getRestClient()
-				.get()
-				.uri(Endpoint.SCHEDULED_TASKS_LOCKS)
-				.retrieve()
-				.body(ScheduledTaskLockDTO[].class));
+		return Arrays.asList(Objects.requireNonNull(restClientHelper.getRestClient()
+                .get()
+                .uri(Endpoint.SCHEDULED_TASKS_LOCKS)
+                .retrieve()
+                .body(ScheduledTaskLockDTO[].class)));
 	}
 
 	@Override
-	public int  postScheduledTaskDTO(ScheduledTaskMsgDTO o) {
+	public int  	postScheduledTaskDTO(ScheduledTaskMsgDTO o) {
 		return restClientHelper.postDTO(o,  Endpoint.SCHEDULED_TASKS_ID);
 	}
 
@@ -54,7 +55,7 @@ public class SchedulerRestClientApiImpl implements SchedulerRestClientApi {
 		return restClientHelper.putDTO(taskExecutionHeartBeat, Endpoint.SCHEDULED_TASKS_LOCK_HEARTBEAT);
 	}
 	@Override
-	public int lockRelease(TaskInstanceReleaseDTO taskInstanceReleaseDTO) {
+	public int lockRelease(TaskInstanceReleaseDTO taskInstanceReleaseDTO)  {
 		return restClientHelper.putDTO(taskInstanceReleaseDTO, Endpoint.SCHEDULED_TASKS_RELEASE);
 	}
 

@@ -1,13 +1,12 @@
 package org.lakehouse.scheduler.controller;
 
 import org.lakehouse.client.api.constant.Endpoint;
-import org.lakehouse.client.api.dto.tasks.ScheduledTaskDTO;
-
-import java.util.List;
-
+import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.scheduler.service.ScheduleTaskInstanceService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 public class ScheduledTaskController {

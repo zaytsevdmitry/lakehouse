@@ -8,5 +8,6 @@
 
 ![localImage](./services-sequence.png)
 
-## Status
+## State
+![task-executor-state-sq.png](task-executor-state-sq.png)
 

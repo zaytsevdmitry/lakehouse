@@ -1,0 +1,8 @@
+@startuml 
+[*] --> NEW: Created task
+NEW --> QUEUED: Scheduler send task to kafka
+QUEUED --> RUNNING: TaskExecutor lock taken
+RUNNING --> SUCCESS: TaskExecutor executed task\n and release lock
+RUNNING --> FAILED: 1) case when taskExecutor return TaskError\n 2)case when scheduler failed task \n because heart beat time limit exceed
+RUNNING --> CONF_ERROR: Error in configuration of taskProcessor
+@enduml

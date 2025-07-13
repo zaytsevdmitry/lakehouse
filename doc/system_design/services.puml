@@ -2,8 +2,8 @@
 !pragma layout smetana
 ':ui-svc: as uisvc
 :config-svc:  as confsvc
-:status-svc:  as statussvc
-:task-executor-svc:  as taskexecutorsvc
+:state-svc:  as statesvc
+:task-executor-svc(1..n):  as taskexecutorsvc
 :scheduler-svc: as schedulersvc
 :cvs-svc: as cvssvc
 ':cmd-cli: as cmdcli
@@ -14,7 +14,7 @@ schedulersvc -> confsvc
 'cmdcli --> confsvc
 'cmdcli --> schedulersvc
 schedulersvc <-- taskexecutorsvc
-taskexecutorsvc --> statussvc
+taskexecutorsvc --> statesvc
 taskexecutorsvc --> confsvc
 taskexecutorsvc --->(sparkexecutors):task-executorsvc may be a spark  driver
 @enduml

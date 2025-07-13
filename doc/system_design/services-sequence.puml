@@ -2,14 +2,17 @@
 autonumber
 
 "cvs-svc" -> "conf-svc" : all configs
-queue broker as broker
-"conf-svc" --> broker : schedule confugurations
-broker -> "scheduler-svc" : schedule confugurations
-"scheduler-svc" -> broker : queued task
-broker -> "task-executor-svc" : queued task
-"task-executor-svc" -> "scheduler-svc" : request lock queued task
-"scheduler-svc" -> "conf-svc" : request task details
-"scheduler-svc" -> "task-executor-svc" : response lock with task details or error
-"task-executor-svc" -> "scheduler-svc" : send task lock heardbeat
-"task-executor-svc" -> "scheduler-svc" : send release lock
+queue schedule_changes
+queue scheduled_task_msg
+"conf-svc" -> schedule_changes : schedule configurations ScheduleEffectiveDTO
+schedule_changes -> "scheduler-svc" : consume ScheduleEffectiveDTO
+
+"scheduler-svc" -> scheduled_task_msg : send ScheduledTaskMsgDTO
+scheduled_task_msg -> "task-executor-svc" : respond ScheduledTaskMsgDTO
+"task-executor-svc" -> "scheduler-svc" : lockTaskById ScheduledTaskMsgDTO.id
+"scheduler-svc" -> "conf-svc" : request task details TaskDTO scheduledTaskEffectiveDTO
+"scheduler-svc" -> "task-executor-svc" : response ScheduledTaskLockDTO with task details or error
+"task-executor-svc" -> "scheduler-svc" : send TaskExecutionHeartBeatDTO
+"task-executor-svc" -> "scheduler-svc" : send TaskInstanceReleaseDTO to release lock
+"cli" <- "scheduler-svc" : get tasks info ScheduledTaskDTO
 @enduml

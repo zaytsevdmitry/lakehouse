@@ -42,7 +42,14 @@ public class Status {
         ScenarioAct(String label) {
             this.label = label;
         }
-
     }
 
+    public enum DataSet{
+        LOCKED("LOCKED"),
+        SUCCESS("SUCCESS");
+
+        public final String label;
+
+        DataSet(String label){this.label = label;}
+    }
 }

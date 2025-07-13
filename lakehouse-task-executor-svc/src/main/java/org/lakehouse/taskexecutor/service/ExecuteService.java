@@ -1,85 +1,79 @@
 package org.lakehouse.taskexecutor.service;
 
 import org.lakehouse.client.api.constant.Status;
-import org.lakehouse.client.api.dto.service.ScheduledTaskLockDTO;
-import org.lakehouse.client.api.dto.service.TaskExecutionHeartBeatDTO;
-import org.lakehouse.client.api.dto.service.TaskInstanceReleaseDTO;
-import org.lakehouse.client.api.dto.tasks.ScheduledTaskMsgDTO;
+import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
+import org.lakehouse.client.api.dto.scheduler.lock.TaskExecutionHeartBeatDTO;
+import org.lakehouse.client.api.dto.scheduler.lock.TaskInstanceReleaseDTO;
+import org.lakehouse.client.api.dto.scheduler.lock.TaskResultDTO;
+import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
 import org.lakehouse.taskexecutor.entity.TaskProcessor;
+import org.lakehouse.taskexecutor.entity.TaskProcessorConfig;
+import org.lakehouse.taskexecutor.exception.TaskFailedException;
+import org.lakehouse.taskexecutor.exception.TaskProcessorConfigurationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
 
-import java.lang.reflect.InvocationTargetException;
 
 @Service
 public class ExecuteService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final SchedulerRestClientApi schedulerRestClientApi;
-    private final String serviceId;
-    private final String groupName;
-    private final long heartBeatIntervalMs;
-    private final ProcessorFactory processorFactory;
+    private final TaskProcessorFactory taskProcessorFactory;
+    private final TaskProcessorConfigFactory taskProcessorConfigFactory;
+    private final HeardBeatService heardBeatService;
     public ExecuteService(
-           // ConfigRestClientApi configRestClientApi,
             SchedulerRestClientApi schedulerRestClientApi,
-            @Value("${lakehouse.task-executor.service.id}") String serviceId,
-            @Value("${lakehouse.task-executor.service.groupName}") String groupName,
-            @Value("${lakehouse.task-executor.service.heart-beat-interval-ms}") long heartBeatIntervalMs,
-            ProcessorFactory processorFactory) {
-     //   this.configRestClientApi = configRestClientApi;
+            TaskProcessorFactory taskProcessorFactory,
+            TaskProcessorConfigFactory taskProcessorConfigFactory,
+            HeardBeatService heardBeatService) {
         this.schedulerRestClientApi = schedulerRestClientApi;
-        this.serviceId = serviceId;
-        this.groupName = groupName;
-        this.heartBeatIntervalMs = heartBeatIntervalMs;
-        this.processorFactory = processorFactory;
-        logger.info("Started executor with serviceId={} and groupName={}", serviceId, groupName);
+        this.taskProcessorFactory = taskProcessorFactory;
+        this.taskProcessorConfigFactory = taskProcessorConfigFactory;
+        this.heardBeatService = heardBeatService;
     }
 
-    public void takeAndRunTask(ScheduledTaskMsgDTO scheduledTaskMsgDTO, ScheduledTaskLockDTO scheduledTaskLockDTO) {
 
-            TaskInstanceReleaseDTO taskInstanceReleaseDTO = new TaskInstanceReleaseDTO();
-            taskInstanceReleaseDTO.setLockId(scheduledTaskLockDTO.getLockId());
+    public void takeAndRunTask(ScheduledTaskLockDTO scheduledTaskLockDTO)  {
+        TaskProcessorConfig taskProcessorConfig = taskProcessorConfigFactory.buildTaskProcessorConfig(scheduledTaskLockDTO);
 
-            TaskExecutionHeartBeatDTO taskExecutionHeartBeatDTO = new TaskExecutionHeartBeatDTO();
-            taskExecutionHeartBeatDTO.setLockId(scheduledTaskLockDTO.getLockId());
-            Thread hb = null;
-            TaskLockHeartBeat taskLockHeartBeat = new TaskLockHeartBeat(schedulerRestClientApi, heartBeatIntervalMs, taskExecutionHeartBeatDTO);
+        TaskInstanceReleaseDTO taskInstanceReleaseDTO = new TaskInstanceReleaseDTO();
+        taskInstanceReleaseDTO.setLockId(scheduledTaskLockDTO.getLockId());
 
-            try {
-                TaskProcessor p = processorFactory.buildProcessor(scheduledTaskLockDTO);
-                hb = new Thread(taskLockHeartBeat);
-                hb.start();
-                taskInstanceReleaseDTO.setStatus(p.runTask().label);
-            } catch (ClassNotFoundException | InvocationTargetException | InstantiationException |
-                     IllegalAccessException | NoSuchMethodException e) {
-                logger.error("Task execution error ", e);
-                taskInstanceReleaseDTO.setStatus(Status.Task.FAILED.label);
-            } finally {
-                logger.info("Status {}",taskInstanceReleaseDTO.getStatus());
-                taskLockHeartBeat.setExit();
-                if (hb != null && hb.isAlive() && !hb.isInterrupted())
-                    hb.interrupt();
-                logger.info("Heart beat shutdown");
+        TaskExecutionHeartBeatDTO taskExecutionHeartBeatDTO = new TaskExecutionHeartBeatDTO();
+        taskExecutionHeartBeatDTO.setLockId(scheduledTaskLockDTO.getLockId());
 
+        try {
+            TaskProcessor p = taskProcessorFactory
+                    .buildProcessor(
+                            taskProcessorConfig,
+                            scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getExecutionModule());
+            heardBeatService.start(taskExecutionHeartBeatDTO);
+            p.runTask();
+            taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.SUCCESS));;
+        } catch (TaskProcessorConfigurationException e) {
+            logger.error("Task creation error ", e);
+            taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.CONF_ERROR,e.toString()));
+        } catch (TaskFailedException e){
+            logger.error("Task execution error ", e);
+            taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.FAILED,e.toString()));
+        } finally {
+            logger.info("Status {}", taskInstanceReleaseDTO.getTaskResult().getStatus());
+            heardBeatService.stop();
+            logger.info("Heart beat shutdown");
 
-                logger.info(
-                        "Release lockid={}, task={}, scheduleName={}, scheduleTargetTimestamp={}, scenarioActName={}, status={}",
-                        scheduledTaskLockDTO.getLockId(),
-                        scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getName(),
-                        scheduledTaskLockDTO.getScheduleConfKeyName(),
-                        scheduledTaskLockDTO.getScheduleTargetDateTime(),
-                        scheduledTaskLockDTO.getScenarioActConfKeyName(),
-                        taskInstanceReleaseDTO.getStatus());
+            logger.info(
+                    "Release lockid={}, task={}, scheduleName={}, scheduleTargetTimestamp={}, scenarioActName={}, status={}",
+                    scheduledTaskLockDTO.getLockId(),
+                    scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getName(),
+                    scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getScheduleKeyName(),
+                    scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getTargetDateTime(),
+                    scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getScenarioActKeyName(),
+                    taskInstanceReleaseDTO.getTaskResult().getStatus());
 
-                schedulerRestClientApi.lockRelease(taskInstanceReleaseDTO);
+            schedulerRestClientApi.lockRelease(taskInstanceReleaseDTO);
 
-            }
-      //  } catch (NotFound | ResourceAccessException e) {
-       //     logger.warn(e.getMessage());
-      //  }
+        }
     }
 
 }

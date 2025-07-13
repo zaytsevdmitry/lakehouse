@@ -2,7 +2,6 @@ package org.lakehouse.config.controller;
 
 import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.api.dto.configs.ScenarioActTemplateDTO;
-
 import org.lakehouse.config.service.ScenarioActTemplateService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;

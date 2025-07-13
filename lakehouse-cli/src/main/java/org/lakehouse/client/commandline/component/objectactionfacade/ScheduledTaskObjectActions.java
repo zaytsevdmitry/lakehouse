@@ -1,11 +1,11 @@
 package org.lakehouse.client.commandline.component.objectactionfacade;
 
-import java.util.List;
-
-import org.lakehouse.client.api.dto.tasks.ScheduledTaskDTO;
+import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.commandline.model.CommandResult;
 import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 public class ScheduledTaskObjectActions implements ObjectActions{
@@ -26,16 +26,16 @@ public class ScheduledTaskObjectActions implements ObjectActions{
 		return ObjectActionsHelper.table(
 				new String[]{
 						"scheduleName",
-						"scheduleTargetTimestamp",
+						"scheduleTargetDateTime",
 						"scenarioActName",
 						"name", 
 						"status",
 						"executionModule", 
 						"taskExecutionServiceGroupName"}, 
 				l.stream().map(o -> new String[]{
-						o.getScheduleName(),
-						o.getScheduleTargetTimestamp(),
-						o.getScenarioActName(),
+						o.getScheduleKeyName(),
+						o.getTargetDateTime(),
+						o.getScenarioActKeyName(),
 						o.getName(), 
 						o.getStatus(),
 						o.getExecutionModule(),

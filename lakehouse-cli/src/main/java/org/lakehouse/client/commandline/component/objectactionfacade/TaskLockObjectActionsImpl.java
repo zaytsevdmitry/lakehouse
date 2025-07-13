@@ -1,15 +1,14 @@
 package org.lakehouse.client.commandline.component.objectactionfacade;
 
-import java.util.List;
-
+import org.lakehouse.client.api.constant.Status;
+import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
+import org.lakehouse.client.api.dto.scheduler.lock.TaskExecutionHeartBeatDTO;
+import org.lakehouse.client.api.dto.scheduler.lock.TaskInstanceReleaseDTO;
 import org.lakehouse.client.commandline.model.CommandResult;
 import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
 import org.springframework.stereotype.Component;
 
-import org.lakehouse.client.api.constant.Status;
-import org.lakehouse.client.api.dto.service.ScheduledTaskLockDTO;
-import org.lakehouse.client.api.dto.service.TaskExecutionHeartBeatDTO;
-import org.lakehouse.client.api.dto.service.TaskInstanceReleaseDTO;
+import java.util.List;
 @Component
 public class TaskLockObjectActionsImpl implements TaskLockObjectActions{
 	private final SchedulerRestClientApi schedulerRestClientApi;
@@ -55,7 +54,9 @@ public class TaskLockObjectActionsImpl implements TaskLockObjectActions{
 	public CommandResult lockRelease(String[] args) {
 		TaskInstanceReleaseDTO r = new TaskInstanceReleaseDTO();
 		r.setLockId(Long.valueOf(args[2].toUpperCase()));
-		r.setStatus(Status.Task.valueOf(args[3].toUpperCase()).label);
-		return ObjectActionsHelper.coverHttpCode(schedulerRestClientApi.lockRelease(r));
+		r.getTaskResult().setStatus(Status.Task.valueOf(args[3].toUpperCase()));
+        int code = 0;
+        code = schedulerRestClientApi.lockRelease(r);
+        return ObjectActionsHelper.coverHttpCode(code);
 	}
 }

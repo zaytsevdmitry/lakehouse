@@ -1,7 +1,6 @@
 package org.lakehouse.scheduler.entities;
 
 import jakarta.persistence.*;
-
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -86,5 +85,16 @@ public class ScheduleScenarioActInstance {
 	@Override
 	public int hashCode() {
 		return Objects.hash(getId(), getName(), getScheduleInstance(), getConfDataSetKeyName(), getStatus());
+	}
+
+	@Override
+	public String toString() {
+		return "ScheduleScenarioActInstance{" +
+				"id=" + id +
+				", name='" + name + '\'' +
+				", scheduleInstance=" + scheduleInstance +
+				", confDataSetKeyName='" + confDataSetKeyName + '\'' +
+				", status='" + status + '\'' +
+				'}';
 	}
 }
