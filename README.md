@@ -22,6 +22,8 @@ United namespace
 
 [Entities design](./doc/entities_design/entities_design.md)
 
+[Scheduling](doc/scheduling/Scheduling.md)
+
 [States](doc/state_model/state-models.MD)
 
 [Command line](./lakehouse-cli/doc/commandline.MD)
