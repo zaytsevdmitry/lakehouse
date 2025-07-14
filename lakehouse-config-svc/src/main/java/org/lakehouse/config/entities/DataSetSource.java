@@ -13,7 +13,7 @@ public class DataSetSource {
 
 	@ManyToOne(optional = false)
 	@JoinColumn(foreignKey = @ForeignKey(name = "data_set_source__data_set_cur_fk"))
-	DataSet source;
+	private DataSet source;
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
