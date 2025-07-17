@@ -29,6 +29,30 @@ public class QualityMetricsConfTestSet {
     public QualityMetricsConfTestSet() {
     }
 
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public QualityMetricsConf getQualityMetricsConf() {
+        return qualityMetricsConf;
+    }
+
+    public void setQualityMetricsConf(QualityMetricsConf qualityMetricsConf) {
+        this.qualityMetricsConf = qualityMetricsConf;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     public String getKeyName() {
         return keyName;
     }

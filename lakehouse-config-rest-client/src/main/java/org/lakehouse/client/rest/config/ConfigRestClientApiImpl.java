@@ -58,6 +58,11 @@ public class ConfigRestClientApiImpl implements ConfigRestClientApi {
 		return restClientHelper.getDtoOne(name,  Endpoint.TASK_EXECUTION_SERVICE_GROUPS_NAME, TaskExecutionServiceGroupDTO.class);
 	}
 
+	@Override
+	public QualityMetricsConfDTO getQualityMetricsConf(String key) {
+		return null;
+	}
+
 	public ScheduledTaskMsgDTO getScheduledTaskDTO(String name) {
 		return restClientHelper.getDtoOne(name,  Endpoint.SCHEDULED_TASKS_ID, ScheduledTaskMsgDTO.class);
 	}
@@ -125,8 +130,17 @@ public class ConfigRestClientApiImpl implements ConfigRestClientApi {
 				.body(TaskExecutionServiceGroupDTO[].class));
 	}
 
+	@Override
+	public List<QualityMetricsConfDTO> getQualityMetricsConfList() {
+		return List.of();
+	}
 
-	
+	@Override
+	public List<QualityMetricsConfDTO> getQualityMetricsConfList(String dataSetKeyName) {
+		return List.of();
+	}
+
+
 	public int deleteProjectDTO(String ProjectName) {
 		return restClientHelper.deleteDtoByName(ProjectName, Endpoint.PROJECTS_NAME);
 	}
@@ -175,6 +189,11 @@ public class ConfigRestClientApiImpl implements ConfigRestClientApi {
 	
 	public int  postTaskExecutionServiceGroupDTO(TaskExecutionServiceGroupDTO o) {
 		return restClientHelper.postDTO(o,  Endpoint.TASK_EXECUTION_SERVICE_GROUPS);
+	}
+
+	@Override
+	public int postQualityMetricsConf(QualityMetricsConfDTO o) {
+		return 0;
 	}
 
 

@@ -20,7 +20,7 @@ public interface ConfigRestClientApi {
 	public TaskDTO getEffectiveTaskDTO(String schedule, String scenarioAct, String task);
 	public TaskExecutionServiceGroupDTO  getTaskExecutionServiceGroupDTO(String name);
 
-	public QualityMetricsConfTestSet getQualityMetricsConfTestSet(String key);
+	public QualityMetricsConfDTO getQualityMetricsConf(String key);
 
 	public String getScript(String key);
 	public List<ProjectDTO> getProjectDTOList();
@@ -33,8 +33,8 @@ public interface ConfigRestClientApi {
 	public List<ScheduleEffectiveDTO> getScheduleEffectiveDTOList(OffsetDateTime dt);
 	public List<TaskExecutionServiceGroupDTO>  getTaskExecutionServiceGroupDTOList() ;
 
-	public List<QualityMetricsConfTestSet> getQualityMetricsConfTestSetList();
-	public List<QualityMetricsConfTestSet> getQualityMetricsConfTestSetList(String dataSetKeyName);
+	public List<QualityMetricsConfDTO> getQualityMetricsConfList();
+	public List<QualityMetricsConfDTO> getQualityMetricsConfList(String dataSetKeyName);
 
 	public int deleteProjectDTO(String ProjectName);
 	public int deleteDataStoreDTO(String name);
@@ -53,6 +53,6 @@ public interface ConfigRestClientApi {
 	public int postScenarioActTemplateDTO(ScenarioActTemplateDTO o);
 	public int postScheduleDTO(ScheduleDTO o);
 	public int postTaskExecutionServiceGroupDTO(TaskExecutionServiceGroupDTO o);
-	public int postQualityMetricsConfTestSet(QualityMetricsConfTestSet o);
+	public int postQualityMetricsConf(QualityMetricsConfDTO o);
 }
 
