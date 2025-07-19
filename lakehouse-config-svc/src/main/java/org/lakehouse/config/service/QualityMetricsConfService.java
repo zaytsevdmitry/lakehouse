@@ -1,7 +1,6 @@
 package org.lakehouse.config.service;
 
 import jakarta.transaction.Transactional;
-import org.lakehouse.client.api.dto.configs.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.DataSetSourceDTO;
 import org.lakehouse.client.api.dto.configs.QualityMetricsConfDTO;
 import org.lakehouse.client.api.dto.configs.QualityMetricsConfTestSetDTO;
