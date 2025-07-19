@@ -7,8 +7,9 @@ public class QualityMetricsConfDTO {
     private String keyName;
     private String description;
     private boolean enabled;
-    private List<DataSetSourceDTO> sources = new ArrayList<>();
+    private Set<DataSetSourceDTO> sources = new HashSet<>();
     private Set<QualityMetricsConfTestSetDTO> qualityMetricsConfTestSets = new HashSet<>();
+    private Set<QualityMetricsConfTestSetDTO> thresholds = new HashSet<>();
 
     public QualityMetricsConfDTO() {
     }
@@ -45,11 +46,11 @@ public class QualityMetricsConfDTO {
         this.enabled = enabled;
     }
 
-    public List<DataSetSourceDTO> getSources() {
+    public Set<DataSetSourceDTO> getSources() {
         return sources;
     }
 
-    public void setSources(List<DataSetSourceDTO> sources) {
+    public void setSources(Set<DataSetSourceDTO> sources) {
         this.sources = sources;
     }
 
@@ -66,24 +67,33 @@ public class QualityMetricsConfDTO {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         QualityMetricsConfDTO that = (QualityMetricsConfDTO) o;
-        return enabled == that.enabled && Objects.equals(dataSetKeyName, that.dataSetKeyName) && Objects.equals(keyName, that.keyName) && Objects.equals(description, that.description) && Objects.equals(sources, that.sources) && Objects.equals(qualityMetricsConfTestSets, that.qualityMetricsConfTestSets);
+        return isEnabled() == that.isEnabled() && Objects.equals(getDataSetKeyName(), that.getDataSetKeyName()) && Objects.equals(getKeyName(), that.getKeyName()) && Objects.equals(getDescription(), that.getDescription()) && Objects.equals(getSources(), that.getSources()) && Objects.equals(getQualityMetricsConfTestSets(), that.getQualityMetricsConfTestSets()) && Objects.equals(getThresholds(), that.getThresholds());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(dataSetKeyName, keyName, description, enabled, sources, qualityMetricsConfTestSets);
+        return Objects.hash(getDataSetKeyName(), getKeyName(), getDescription(), isEnabled(), getSources(), getQualityMetricsConfTestSets(), getThresholds());
     }
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() +"{" +
+        return this.getClass().getSimpleName()+"{" +
                 "dataSetKeyName='" + dataSetKeyName + '\'' +
                 ", keyName='" + keyName + '\'' +
                 ", description='" + description + '\'' +
                 ", enabled=" + enabled +
                 ", sources=" + sources +
                 ", qualityMetricsConfTestSets=" + qualityMetricsConfTestSets +
+                ", thresholds=" + thresholds +
                 '}';
+    }
+
+    public Set<QualityMetricsConfTestSetDTO> getThresholds() {
+        return thresholds;
+    }
+
+    public void setThresholds(Set<QualityMetricsConfTestSetDTO> thresholds) {
+        this.thresholds = thresholds;
     }
 }
 

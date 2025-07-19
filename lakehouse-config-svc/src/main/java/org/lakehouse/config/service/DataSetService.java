@@ -4,7 +4,6 @@ import jakarta.transaction.Transactional;
 import org.lakehouse.client.api.dto.configs.ColumnDTO;
 import org.lakehouse.client.api.dto.configs.DataSetConstraintDTO;
 import org.lakehouse.client.api.dto.configs.DataSetDTO;
-import org.lakehouse.client.api.dto.configs.DataSetSourceDTO;
 import org.lakehouse.config.entities.*;
 import org.lakehouse.config.exception.DataSetNotFoundException;
 import org.lakehouse.config.repository.*;
@@ -73,13 +72,7 @@ public class DataSetService {
 			return dataSetConstraintDTO;
 		}).toList());
 		result.setSources(dataSetSourceRepository.findByDataSetName(dataSet.getName()).stream().map(dataSetSource -> {
-			DataSetSourceDTO dataSetSourceDTO = new DataSetSourceDTO();
-			dataSetSourceDTO.setName(dataSetSource.getSource().getName());
-			Map<String, String> props = new HashMap<>();
-			dataSetSourcePropertyRepository.findBySourceId(dataSetSource.getId()).forEach(dataSetSourceProperty -> props
-					.put(dataSetSourceProperty.getName(), dataSetSourceProperty.getValue()));
-			dataSetSourceDTO.setProperties(props);
-			return dataSetSourceDTO;
+
 		}).toList());
 
 		Map<String, String> properties = new HashMap<>();
@@ -182,7 +175,7 @@ public class DataSetService {
 			dataSetSourceDTO.getProperties().entrySet().forEach(stringStringEntry -> {
 				DataSetSourceProperty dataSetSourceProperty = new DataSetSourceProperty();
 				dataSetSourceProperty.setDataSetSource(resultDataSetSource);
-				dataSetSourceProperty.setName(stringStringEntry.getKey());
+				dataSetSourceProperty.setKey(stringStringEntry.getKey());
 				dataSetSourceProperty.setValue(stringStringEntry.getValue());
 				dataSetSourcePropertyRepository.save(dataSetSourceProperty);
 			});
