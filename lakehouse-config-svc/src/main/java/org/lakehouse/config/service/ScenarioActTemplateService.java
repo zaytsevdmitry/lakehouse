@@ -69,16 +69,16 @@ public class ScenarioActTemplateService {
 
 	private ScenarioActTemplateDTO mapScenarioToDTO(ScenarioActTemplate scenarioActTemplate) {
 		ScenarioActTemplateDTO result = new ScenarioActTemplateDTO();
-		result.setName(scenarioActTemplate.getName());
+		result.setName(scenarioActTemplate.getKeyName());
 		result.setDescription(scenarioActTemplate.getDescription());
-		result.setTasks(taskTemplateRepository.findByScenarioTemplateName(scenarioActTemplate.getName()).stream()
+		result.setTasks(taskTemplateRepository.findByScenarioActTemplateKeyName(scenarioActTemplate.getKeyName()).stream()
 				.map(taskTemplate -> mapper
 							 .mapTaskToDTO(
 									 taskTemplate,
 									 getTaskTemplateExecutionModuleArgsByTaskTemplateId(taskTemplate.getId()))
 				).toList());
 
-		result.setDagEdges(taskTemplateEdgeRepository.findByScenarioTemplateName(scenarioActTemplate.getName()).stream()
+		result.setDagEdges(taskTemplateEdgeRepository.findByScenarioActTemplateKeyName(scenarioActTemplate.getKeyName()).stream()
 				.map(taskTemplateEdge -> {
 					DagEdgeDTO dagEdgeDTO = new DagEdgeDTO();
 					dagEdgeDTO.setFrom(taskTemplateEdge.getFromTaskTemplate().getName());
@@ -90,7 +90,7 @@ public class ScenarioActTemplateService {
 
 	private ScenarioActTemplate mapScenarioToEntity(ScenarioActTemplateDTO scenarioActTemplateDTO) {
 		ScenarioActTemplate result = new ScenarioActTemplate();
-		result.setName(scenarioActTemplateDTO.getName());
+		result.setKeyName(scenarioActTemplateDTO.getName());
 		result.setDescription(scenarioActTemplateDTO.getDescription());
 
 		return result;
@@ -127,14 +127,14 @@ public class ScenarioActTemplateService {
 			throw new ConfDTOValidationException(vr.getDescriptions());
 
 		ScenarioActTemplate scenarioActTemplate = mapScenarioToEntity(scenarioActTemplateDTO);
-		taskTemplateEdgeRepository.findByScenarioTemplateName(scenarioActTemplate.getName()).forEach(taskTemplateEdgeRepository::delete);
-		taskTemplateRepository.findByScenarioTemplateName(scenarioActTemplate.getName()).forEach(
+		taskTemplateEdgeRepository.findByScenarioActTemplateKeyName(scenarioActTemplate.getKeyName()).forEach(taskTemplateEdgeRepository::delete);
+		taskTemplateRepository.findByScenarioActTemplateKeyName(scenarioActTemplate.getKeyName()).forEach(
 				taskTemplate -> {
-					logger.info("Delete task {}.{}",scenarioActTemplate.getName(),taskTemplate.getName());
+					logger.info("Delete task {}.{}",scenarioActTemplate.getKeyName(),taskTemplate.getName());
 					taskTemplateRepository.delete(taskTemplate);
 				});
-		taskTemplateRepository.findByScenarioTemplateName(scenarioActTemplate.getName()).forEach(taskTemplate ->
-				logger.info("Found task {}.{}",scenarioActTemplate.getName(),taskTemplate.getName()));
+		taskTemplateRepository.findByScenarioActTemplateKeyName(scenarioActTemplate.getKeyName()).forEach(taskTemplate ->
+				logger.info("Found task {}.{}",scenarioActTemplate.getKeyName(),taskTemplate.getName()));
 		logger.info("Save ScenarioActTemplate.name={}",scenarioActTemplateDTO.getName());
 		ScenarioActTemplate result = scenarioActTemplateRepository.save(scenarioActTemplate);
 
@@ -181,7 +181,7 @@ public class ScenarioActTemplateService {
 		});
 
 		scenarioActRepository
-				.findByScenarioActTemplateName(scenarioActTemplate.getName())
+				.findByScenarioActTemplateKeyName(scenarioActTemplate.getKeyName())
 				.stream()
 				.map(ScenarioAct::getSchedule)
 				.collect(Collectors.toSet())

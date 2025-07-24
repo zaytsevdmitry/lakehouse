@@ -1,6 +1,10 @@
 package org.lakehouse.client.api.dto.configs;
 
-import java.util.*;
+import org.lakehouse.client.api.utils.Coalesce;
+
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 public class QualityMetricsConfDTO {
     private String dataSetKeyName;
@@ -67,7 +71,13 @@ public class QualityMetricsConfDTO {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         QualityMetricsConfDTO that = (QualityMetricsConfDTO) o;
-        return isEnabled() == that.isEnabled() && Objects.equals(getDataSetKeyName(), that.getDataSetKeyName()) && Objects.equals(getKeyName(), that.getKeyName()) && Objects.equals(getDescription(), that.getDescription()) && Objects.equals(getSources(), that.getSources()) && Objects.equals(getQualityMetricsConfTestSets(), that.getQualityMetricsConfTestSets()) && Objects.equals(getThresholds(), that.getThresholds());
+        return isEnabled() == that.isEnabled()
+                && Objects.equals(getDataSetKeyName(), that.getDataSetKeyName())
+                && Objects.equals(getKeyName(), that.getKeyName())
+                && Objects.equals(Coalesce.apply(getDescription(),""), Coalesce.apply(that.getDescription(),""))
+                && Objects.equals(getSources(), that.getSources())
+                && Objects.equals(getQualityMetricsConfTestSets(), that.getQualityMetricsConfTestSets())
+                && Objects.equals(getThresholds(), that.getThresholds());
     }
 
     @Override

@@ -8,6 +8,7 @@ import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.config.entities.Schedule;
 import org.lakehouse.config.entities.scenario.ScenarioAct;
 import org.lakehouse.config.repository.*;
+import org.lakehouse.config.service.QualityMetricsConfService;
 import org.lakehouse.config.service.ScenarioActTemplateService;
 import org.lakehouse.config.service.ScheduleService;
 import org.lakehouse.config.test.configutation.RestManipulator;
@@ -44,6 +45,8 @@ public class TestWithPostgres {
 	@Autowired ScheduleService scheduleService;
 	@Autowired
 	ScenarioActTemplateService scenarioActTemplateService;
+	@Autowired
+	QualityMetricsConfService qualityMetricsConfService;
 	@Autowired
 	ScheduleRepository scheduleRepository;
 	@Autowired
@@ -269,7 +272,7 @@ public class TestWithPostgres {
 		ProjectDTO projectDTO = putProjectDTO();
 		DataSetDTO dto = putDataSetDTO("client_processing");
 
-		schedule.setName("TestScheduel");
+		schedule.setKeyName("TestScheduel");
 		schedule.setDescription("TestScheduel");
 		schedule.setEnabled(true);
 		schedule.setIntervalExpression("********");
@@ -285,9 +288,9 @@ public class TestWithPostgres {
 		sa.setIntervalEnd("");
 		scenarioActRepository.save(sa);
 		
-		assert(	scenarioActRepository.findByScheduleName(schedule.getName()).size() ==1);
+		assert(	scenarioActRepository.findByScheduleKeyName(schedule.getKeyName()).size() ==1);
 		// test up config version number
-		ScheduleDTO scheduleDTO = scheduleService.findDtoById(schedule.getName());
+		ScheduleDTO scheduleDTO = scheduleService.findDtoById(schedule.getKeyName());
 		ScheduleScenarioActDTO emptyScenario = new ScheduleScenarioActDTO();
 		emptyScenario.setIntervalStart("1");
 		emptyScenario.setIntervalEnd("2");
@@ -526,5 +529,20 @@ public class TestWithPostgres {
 		restManipulator.deleteDTO(projectDTO.getName(), Endpoint.PROJECTS_NAME);
 
 	}
+	@Test
+	@Order(11)
+	void saveQualityMetricsService() throws Exception {
+		putProjectDTO();
+		putDataStoreDTO("lakehousestorage");
+		putDataStoreDTO("processingdb");
+		putDataSetDTO("client_processing");
+		putDataSetDTO("transaction_processing");
+		putDataSetDTO("transaction_dds");
+		QualityMetricsConfDTO expected = fileLoader.loaQualityMetricsConfDTO("transaction_dds_qm");
+		QualityMetricsConfDTO resulted = qualityMetricsConfService.save(expected);
 
+		System.out.println(ObjectMapping.asJsonString(expected));
+		System.out.println(ObjectMapping.asJsonString(resulted));
+		assert (expected.equals(resulted));
+	}
 }

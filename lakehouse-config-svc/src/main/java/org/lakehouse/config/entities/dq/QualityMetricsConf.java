@@ -1,14 +1,16 @@
 package org.lakehouse.config.entities.dq;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import org.lakehouse.config.entities.DataSet;
 import org.lakehouse.config.entities.KeyEntityAbstract;
 
 import java.util.Objects;
 @Entity
 public class QualityMetricsConf extends KeyEntityAbstract {
-    @Id
-    private String keyName;
+
 
     @ManyToOne(optional = false)
     @JoinColumn(foreignKey = @ForeignKey(name = "quality_metrics_conf__data_set__fk"))
@@ -29,14 +31,6 @@ public class QualityMetricsConf extends KeyEntityAbstract {
         this.dataSet = dataSet;
     }
 
-    public String getKeyName() {
-        return keyName;
-    }
-
-    public void setKeyName(String keyName) {
-        this.keyName = keyName;
-    }
-
     public boolean isEnabled() {
         return enabled;
     }
@@ -50,11 +44,12 @@ public class QualityMetricsConf extends KeyEntityAbstract {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         QualityMetricsConf that = (QualityMetricsConf) o;
-        return enabled == that.enabled && Objects.equals(dataSet, that.dataSet) && Objects.equals(keyName, that.keyName);
+        return enabled == that.enabled
+                && Objects.equals(dataSet, that.dataSet) && super.equals(that);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(dataSet, keyName, enabled);
+        return Objects.hash(super.hashCode(),dataSet, enabled);
     }
 }

@@ -2,10 +2,10 @@ package org.lakehouse.client.api.constant;
 
 public class Types {
     public enum DQMetricsType {
-        CONSTRAINT("constraint"),
-        SPARK_SQL("sparkSQL"),
-        PUSH_DOWN_SQL("pushDownSQL"),
-        CLASS("class");
+        constraint("constraint"),
+        sparkSQL("sparkSQL"),
+        pushDownSQL("pushDownSQL"),
+        objectClass("objectClass");
 
         public final String label;
 

@@ -1,9 +1,7 @@
 package org.lakehouse.config.mapper;
 
-import org.lakehouse.client.api.dto.configs.QualityMetricsConfDTO;
 import org.lakehouse.client.api.dto.configs.TaskDTO;
 import org.lakehouse.config.entities.TaskAbstract;
-import org.lakehouse.config.entities.dq.QualityMetricsConf;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -17,7 +15,7 @@ public class Mapper {
 		taskDTO.setDescription(taskAbstract.getDescription());
 		taskDTO.setImportance(taskAbstract.getImportance());
 		taskDTO.setExecutionModule(taskAbstract.getExecutionModule());
-		taskDTO.setTaskExecutionServiceGroupName(taskAbstract.getTaskExecutionServiceGroup().getName());
+		taskDTO.setTaskExecutionServiceGroupName(taskAbstract.getTaskExecutionServiceGroup().getKeyName());
 		taskDTO.setExecutionModuleArgs(executionModuleArgs);
 		return taskDTO;
 	}

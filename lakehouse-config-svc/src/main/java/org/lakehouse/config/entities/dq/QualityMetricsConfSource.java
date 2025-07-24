@@ -6,7 +6,7 @@ import org.hibernate.annotations.OnDeleteAction;
 import org.lakehouse.config.entities.DataSet;
 
 import java.util.Objects;
-
+@Entity
 public class QualityMetricsConfSource {
     @ManyToOne(optional = false)
     @JoinColumn(foreignKey = @ForeignKey(name = "quality_metrics_conf_source__data_set__fk"))

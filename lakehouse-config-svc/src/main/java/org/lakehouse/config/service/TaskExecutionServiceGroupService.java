@@ -20,7 +20,7 @@ public class TaskExecutionServiceGroupService {
 	private TaskExecutionServiceGroupDTO mapTaskExecutionServiceGroupToDTO(
 			TaskExecutionServiceGroup taskExecutionServiceGroup) {
 		TaskExecutionServiceGroupDTO result = new TaskExecutionServiceGroupDTO();
-		result.setName(taskExecutionServiceGroup.getName());
+		result.setName(taskExecutionServiceGroup.getKeyName());
 		result.setDescription(taskExecutionServiceGroup.getDescription());
 		return result;
 
@@ -29,7 +29,7 @@ public class TaskExecutionServiceGroupService {
 	private TaskExecutionServiceGroup mapTaskExecutionServiceGroupToEntity(
 			TaskExecutionServiceGroupDTO taskExecutionServiceGroupDTO) {
 		TaskExecutionServiceGroup result = new TaskExecutionServiceGroup();
-		result.setName(taskExecutionServiceGroupDTO.getName());
+		result.setKeyName(taskExecutionServiceGroupDTO.getName());
 		result.setDescription(taskExecutionServiceGroupDTO.getDescription());
 		return result;
 	}

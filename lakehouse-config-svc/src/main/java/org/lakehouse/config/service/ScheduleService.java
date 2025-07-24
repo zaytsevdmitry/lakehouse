@@ -69,11 +69,11 @@ public class ScheduleService {
 		logger.info("mapScheduleScenarioActToDTO: {}", scenarioAct.getName());
 		ScheduleScenarioActDTO result = new ScheduleScenarioActDTO();
 		result.setName(scenarioAct.getName());
-		result.setDataSet(scenarioAct.getDataSet().getName());
+		result.setDataSet(scenarioAct.getDataSet().getKeyName());
 		result.setIntervalStart(scenarioAct.getIntervalStart());
 		result.setIntervalEnd(scenarioAct.getIntervalEnd());
 		if (scenarioAct.getScenarioActTemplate()!=null)
-			result.setScenarioActTemplate(scenarioAct.getScenarioActTemplate().getName());
+			result.setScenarioActTemplate(scenarioAct.getScenarioActTemplate().getKeyName());
 	    result.setTasks(scenarioActTaskRepository
 	    		.findByScenarioActId(scenarioAct.getId())
 	    		.stream()
@@ -127,21 +127,21 @@ public class ScheduleService {
 
 	private ScheduleDTO mapScheduleToDTO(Schedule schedule) {
 		ScheduleDTO result = new ScheduleDTO();
-		result.setName(schedule.getName());
+		result.setName(schedule.getKeyName());
 		result.setDescription(schedule.getDescription());
 		result.setIntervalExpression(schedule.getIntervalExpression());
 		result.setStartDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(schedule.getStartDateTime()));
 		result.setEnabled(schedule.isEnabled());
-		result.setScenarioActs(scenarioActRepository.findByScheduleName(schedule.getName()).stream()
+		result.setScenarioActs(scenarioActRepository.findByScheduleKeyName(schedule.getKeyName()).stream()
 				.map(this::mapScheduleScenarioActToDTO).toList());
-		result.setScenarioActEdges(scenarioActEdgeRepository.findByScheduleName(schedule.getName()).stream()
+		result.setScenarioActEdges(scenarioActEdgeRepository.findByScheduleKeyName(schedule.getKeyName()).stream()
 				.map(this::mapScenarioActEdgesToDTO).toList());
 		return result;
 
 	}
 
 	private Schedule mapScheduleToEntity(Schedule schedule, ScheduleDTO scheduleDTO) {
-		schedule.setName(scheduleDTO.getName());
+		schedule.setKeyName(scheduleDTO.getName());
 		schedule.setDescription(scheduleDTO.getDescription());
 		schedule.setIntervalExpression(scheduleDTO.getIntervalExpression());
 		schedule.setStartDateTime(DateTimeUtils.parseDateTimeFormatWithTZ(scheduleDTO.getStartDateTime()));
@@ -154,9 +154,9 @@ public class ScheduleService {
 	private ScenarioActEdge mapScheduleScenarioActEdgeToEntity(Schedule schedule, DagEdgeDTO dagEdgeDTO) {
 		ScenarioActEdge result = new ScenarioActEdge();
 		result.setSchedule(schedule);
-		scenarioActRepository.findByScheduleNameAndActName(schedule.getName(), dagEdgeDTO.getFrom())
+		scenarioActRepository.findByScheduleNameAndActName(schedule.getKeyName(), dagEdgeDTO.getFrom())
 				.ifPresent(result::setFromScenarioAct);
-		scenarioActRepository.findByScheduleNameAndActName(schedule.getName(), dagEdgeDTO.getTo())
+		scenarioActRepository.findByScheduleNameAndActName(schedule.getKeyName(), dagEdgeDTO.getTo())
 				.ifPresent(result::setToScenarioAct);
 		return result;
 
@@ -189,7 +189,7 @@ public class ScheduleService {
 								currentScheduleVersion,
 								scheduleDTO));
 
-		scenarioActRepository.deleteByScheduleName(schedule.getName());
+		scenarioActRepository.deleteByScheduleName(schedule.getKeyName());
 
 		Map<String, ScenarioAct> scenarioActMap = new HashMap<>();
 
@@ -197,7 +197,7 @@ public class ScheduleService {
 				.map(scheduleScenarioActDTO -> mapScheduleScenarioActToEntity(schedule, scheduleScenarioActDTO))
 				.toList()).forEach(sa -> scenarioActMap.put(sa.getName(), sa));
 
-		scenarioActEdgeRepository.deleteByScheduleName(schedule.getName());
+		scenarioActEdgeRepository.deleteByScheduleName(schedule.getKeyName());
 
 		scheduleDTO.getScenarioActEdges().stream()
 				.map(dagEdgeDTO -> mapScheduleScenarioActEdgeToEntity(schedule, dagEdgeDTO))
@@ -335,7 +335,7 @@ public class ScheduleService {
 		if (scenarioAct.getScenarioActTemplate() != null)
 			taskTemplate = scenarioActTemplateService
 				.findTaskByScenarioActTemplateAndTaskName(
-						scenarioAct.getScenarioActTemplate().getName(),
+						scenarioAct.getScenarioActTemplate().getKeyName(),
 						taskName);
 
 		TaskDTO result = matchTaskWithTemplate(taskDTO, taskTemplate);

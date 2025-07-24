@@ -3,7 +3,6 @@ package org.lakehouse.config.entities.dq;
 import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
-import org.lakehouse.client.api.constant.Types;
 
 import java.util.Objects;
 @Entity
@@ -40,4 +39,5 @@ public class QualityMetricsConfTestSet extends QualityMetricsConfTestSetAbstract
     public int hashCode() {
         return Objects.hash(super.hashCode(), getQualityMetricsConf());
     }
+
 }

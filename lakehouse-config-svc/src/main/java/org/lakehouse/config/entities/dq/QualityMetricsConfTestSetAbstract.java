@@ -1,8 +1,9 @@
 package org.lakehouse.config.entities.dq;
 
-import jakarta.persistence.*;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
 import org.lakehouse.client.api.constant.Types;
 
 import java.util.Objects;
@@ -21,6 +22,14 @@ public class QualityMetricsConfTestSetAbstract {
     private String value;
 
     public QualityMetricsConfTestSetAbstract() {
+    }
+    public void of(QualityMetricsConfTestSetAbstract a) {
+        this.id = a.getId();
+        this.keyName = a.getKeyName();
+        this.description = a.getDescription();
+        this.dqMetricsType = a.getDqMetricsType();
+        this.save = a.isSave();
+        this.value = a.getValue();
     }
 
     public Long getId() {

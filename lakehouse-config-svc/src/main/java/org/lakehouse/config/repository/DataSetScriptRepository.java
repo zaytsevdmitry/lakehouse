@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface DataSetScriptRepository extends JpaRepository<DataSetScript, Long> {
-    List<DataSetScript> findByDataSetName(String name);
+    List<DataSetScript> findByDataSetKeyName(String name);
 }

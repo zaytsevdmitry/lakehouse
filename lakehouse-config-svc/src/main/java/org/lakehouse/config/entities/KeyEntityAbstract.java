@@ -8,19 +8,19 @@ import java.util.Objects;
 @MappedSuperclass
 public abstract class KeyEntityAbstract {
 	@Id
-	private String name;
+	private String keyName;
 
 	private String description;
 
 	public KeyEntityAbstract() {
 	}
 
-	public String getName() {
-		return name;
+	public String getKeyName() {
+		return keyName;
 	}
 
-	public void setName(String name) {
-		this.name = name;
+	public void setKeyName(String keyName) {
+		this.keyName = keyName;
 	}
 
 	public String getDescription() {
@@ -33,7 +33,7 @@ public abstract class KeyEntityAbstract {
 
 	@Override
 	public String toString() {
-		return getName();
+		return getKeyName();
 	}
 
 	@Override
@@ -42,16 +42,16 @@ public abstract class KeyEntityAbstract {
 			return true;
 		if (!(o instanceof KeyEntityAbstract keyEntity))
 			return false;
-		return Objects.equals(getName(), keyEntity.getName())
+		return Objects.equals(getKeyName(), keyEntity.getKeyName())
 				&& Objects.equals(getDescription(), keyEntity.getDescription());
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(getName(), getDescription());
+		return Objects.hash(getKeyName(), getDescription());
 	}
 
 	public boolean equalsByName(KeyEntityAbstract that) {
-		return Objects.equals(this.getName(), that.getName());
+		return Objects.equals(this.getKeyName(), that.getKeyName());
 	}
 }

@@ -1,7 +1,6 @@
 package org.lakehouse.config.controller;
 
 import org.lakehouse.client.api.constant.Endpoint;
-import org.lakehouse.client.api.dto.configs.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.QualityMetricsConfDTO;
 import org.lakehouse.config.service.QualityMetricsConfService;
 import org.springframework.http.HttpStatus;

@@ -30,7 +30,7 @@ public class DataSetScriptService {
     @Transactional
     public List<DataSetScriptDTO> findDataSetScriptDTOListByDataSetName(String dataSetName){
 
-       return dataSetScriptRepository.findByDataSetName(dataSetName).stream().map(dataSetScript -> {
+       return dataSetScriptRepository.findByDataSetKeyName(dataSetName).stream().map(dataSetScript -> {
             DataSetScriptDTO dataSetScriptDTO = new DataSetScriptDTO();
             dataSetScriptDTO.setKey(dataSetScript.getScript().getKey());
             dataSetScriptDTO.setOrder(dataSetScript.getScriptOrder());
@@ -40,7 +40,7 @@ public class DataSetScriptService {
     }
     @Transactional
     public List<DataSetScript> findDataSetScriptListByDataSetName(String dataSetName){
-        return dataSetScriptRepository.findByDataSetName(dataSetName);
+        return dataSetScriptRepository.findByDataSetKeyName(dataSetName);
     }
 
 }
