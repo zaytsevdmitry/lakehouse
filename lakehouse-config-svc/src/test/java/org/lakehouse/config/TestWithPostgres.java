@@ -472,13 +472,14 @@ public class TestWithPostgres {
 		// override template
 		TaskDTO loadTaskDTOExpected = new TaskDTO();
 		Map<String,String> loadExpectArgs = new HashMap<>();
-		loadExpectArgs.put("spark.executor.memory", "1gb");
+		loadExpectArgs.put("spark.executor.memory", "1g");
 		loadExpectArgs.put( "spark.executor.cores", "2");
-		loadExpectArgs.put( "spark.driver.memory", "2gb");
+		loadExpectArgs.put( "spark.driver.memory", "2g");
+		loadExpectArgs.put( "executionBody", "org.lakehouse.taskexecutor.executionmodule.body.SparkTaskProcessorBody");
 		loadTaskDTOExpected.setExecutionModuleArgs(loadExpectArgs);
 		loadTaskDTOExpected.setName("load");
 		loadTaskDTOExpected.setTaskExecutionServiceGroupName("default");
-		loadTaskDTOExpected.setExecutionModule("org.lakehouse.taskexecutor.executionmodule.SparkTaskProcessor");
+		loadTaskDTOExpected.setExecutionModule("org.lakehouse.taskexecutor.executionmodule.SparkLauncherTaskProcessor");
 		loadTaskDTOExpected.setImportance("critical");
 		loadTaskDTOExpected.setDescription("override load");
 		TaskDTO loadTaskDTO   = scheduleService.getEffectiveTaskDTO(initialScheduleDTO.getName(), "transaction_dds", "load");
@@ -487,12 +488,13 @@ public class TestWithPostgres {
 		// not exists in template
 		TaskDTO extendTaskDTOExpected = new TaskDTO();
 		Map<String,String> extendTaskDTOExpectedArgs = new HashMap<>();
-		extendTaskDTOExpectedArgs.put("spark.executor.memory","5gb");
-		extendTaskDTOExpectedArgs.put("spark.driver.memory","2gb");
+		extendTaskDTOExpectedArgs.put("spark.executor.memory","5g");
+		extendTaskDTOExpectedArgs.put("spark.driver.memory","2g");
+		extendTaskDTOExpectedArgs.put( "executionBody", "org.lakehouse.taskexecutor.executionmodule.body.SparkTaskProcessorBody");
 		extendTaskDTOExpected.setExecutionModuleArgs(extendTaskDTOExpectedArgs);
 		extendTaskDTOExpected.setName("extend");
 		extendTaskDTOExpected.setTaskExecutionServiceGroupName("default");
-		extendTaskDTOExpected.setExecutionModule("org.lakehouse.taskexecutor.executionmodule.SparkTaskProcessor");
+		extendTaskDTOExpected.setExecutionModule("org.lakehouse.taskexecutor.executionmodule.SparkLauncherTaskProcessor");
 		extendTaskDTOExpected.setImportance("critical");
 		extendTaskDTOExpected.setDescription("Not exists in template");
 		TaskDTO extendTaskDTO = scheduleService.getEffectiveTaskDTO(initialScheduleDTO.getName(), "transaction_dds", "extend");
@@ -502,8 +504,8 @@ public class TestWithPostgres {
 		// exists only in template
 		TaskDTO mergeTaskDTOExpected = new TaskDTO();
 		Map<String,String> mergeTaskDTOExpectedArgs = new HashMap<>();
-		mergeTaskDTOExpectedArgs.put("spark.executor.memory", "5gb");
-		mergeTaskDTOExpectedArgs.put("spark.driver.memory", "2gb");
+		mergeTaskDTOExpectedArgs.put("spark.executor.memory", "5g");
+		mergeTaskDTOExpectedArgs.put("spark.driver.memory", "2g");
 		mergeTaskDTOExpectedArgs.put("spark.driver.cores", "3");
 		mergeTaskDTOExpected.setExecutionModuleArgs(mergeTaskDTOExpectedArgs);
 		mergeTaskDTOExpected.setName("merge");

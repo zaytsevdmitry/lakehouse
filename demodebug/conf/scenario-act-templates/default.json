@@ -1,0 +1,118 @@
+{
+  "name": "default",
+  "description": "Default scenario",
+  "tasks": [
+    {
+      "name": "check",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.DependencyCheckStateTaskProcessor",
+      "importance": "critical",
+      "description": "Dependency check"
+    },
+    {
+      "name": "begin",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.RunningStateTaskProcessor",
+      "importance": "critical",
+      "description": "Made interval status RUNNING"
+    },
+    {
+      "name": "load",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.SparkLauncherTaskProcessor",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "executionModuleArgs": {
+        "spark.executor.memory": "5g",
+        "spark.driver.memory": "2g",
+        "spark.master": "spark://127.0.0.1:7077",
+        "executionBody": "org.lakehouse.taskexecutor.executionmodule.body.SparkTaskProcessorBody"
+      }
+    },
+    {
+      "name": "merge",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.MergeProcessor",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "executionModuleArgs": {
+        "spark.executor.memory": "5g",
+        "spark.driver.memory": "2g",
+        "spark.driver.cores": "3"
+      }
+    },
+    {
+      "name": "dataQualityBeforeApply",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.DataQualityBeforeProcessor",
+      "importance": "warn",
+      "description": "load from remote datastore",
+      "executionModuleArgs": {}
+    },
+    {
+      "name": "apply",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.ApplyProcessor",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "executionModuleArgs": {}
+    },
+    {
+      "name": "dataQualityAfterCritical",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.DataQualityAfterCriticalProcessor",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "executionModuleArgs": {}
+    },
+    {
+      "name": "dataQualityAfterWarn",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.DataQualityAfterWarnProcessor",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "executionModuleArgs": {}
+    },
+    {
+      "name": "finally",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.SuccessStateTaskProcessor",
+      "importance": "critical",
+      "description": "DataSet success"
+    }
+  ],
+  "dagEdges": [
+    {
+      "from": "check",
+      "to": "begin"
+    },
+    {
+      "from": "begin",
+      "to": "load"
+    },
+    {
+      "from": "load",
+      "to": "merge"
+    },
+    {
+      "from": "merge",
+      "to": "dataQualityBeforeApply"
+    },
+    {
+      "from": "dataQualityBeforeApply",
+      "to": "apply"
+    },
+    {
+      "from": "apply",
+      "to": "dataQualityAfterCritical"
+    },
+    {
+      "from": "dataQualityAfterCritical",
+      "to": "finally"
+    },
+    {
+      "from": "apply",
+      "to": "dataQualityAfterWarn"
+    }
+  ]
+}

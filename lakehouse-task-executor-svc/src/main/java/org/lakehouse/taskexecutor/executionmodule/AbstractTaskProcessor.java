@@ -1,7 +1,6 @@
 package org.lakehouse.taskexecutor.executionmodule;
-import com.hubspot.jinjava.Jinjava;
-import org.lakehouse.taskexecutor.entity.TaskProcessor;
-import org.lakehouse.taskexecutor.entity.TaskProcessorConfig;
+import org.lakehouse.common.api.task.processor.entity.TaskProcessor;
+import org.lakehouse.common.api.task.processor.entity.TaskProcessorConfigDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,19 +8,14 @@ import org.slf4j.LoggerFactory;
 
 public abstract class AbstractTaskProcessor implements TaskProcessor {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
-	private final TaskProcessorConfig taskProcessorConfig;
-	private final Jinjava jinjava;
+	private final TaskProcessorConfigDTO taskProcessorConfigDTO;
 	public AbstractTaskProcessor(
-            TaskProcessorConfig taskProcessorConfig, Jinjava jinjava) {
-		this.taskProcessorConfig = taskProcessorConfig;
-        this.jinjava = jinjava;
+            TaskProcessorConfigDTO taskProcessorConfigDTO) {
+		this.taskProcessorConfigDTO = taskProcessorConfigDTO;
     }
 
-	public TaskProcessorConfig getTaskProcessorConfig() {
-		return taskProcessorConfig;
+	public TaskProcessorConfigDTO getTaskProcessorConfig() {
+		return taskProcessorConfigDTO;
 	}
 
-	public Jinjava getJinjava() {
-		return jinjava;
-	}
 }

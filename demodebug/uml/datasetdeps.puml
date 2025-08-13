@@ -1,0 +1,8 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+(client_processing) --->  (transaction_dds)
+(transaction_processing) --> (transaction_dds)
+(transaction_dds) --> (aggregation_pay_per_client_daily_mart)
+(transaction_dds) --> (aggregation_pay_per_client_total_mart)
+@enduml

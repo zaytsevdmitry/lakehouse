@@ -1,0 +1,42 @@
+{
+  "name": "initial",
+  "description": "initial schedule for client transactions",
+  "intervalExpression": "@monthly",
+  "startDateTime": "2025-01-01T00:00:00.000+00:00",
+  "stopDateTime": "2024-03-02T00:00:00.000+00:00",
+  "enabled": true,
+  "scenarioActs": [
+    {
+      "name": "transaction_dds",
+      "dataSet": "transaction_dds",
+      "scenarioActTemplate": "default",
+      "intervalStart": "{{ addmonths(targetDateTimeTZ, -1) }}",
+      "intervalEnd": "{{ targetDateTimeTZ }}"
+    },
+    {
+      "name": "aggregation_pay_per_client_daily_mart",
+      "dataSet": "aggregation_pay_per_client_daily_mart",
+      "scenarioActTemplate": "default",
+      "intervalStart": "{{ addmonths(targetDateTimeTZ, -1) }}",
+      "intervalEnd": "{{ targetDateTimeTZ }}"
+    },
+    {
+      "name": "aggregation_pay_per_client_total_mart",
+      "dataSet": "aggregation_pay_per_client_total_mart",
+      "scenarioActTemplate": "default",
+      "intervalStart": "{{ addmonths(targetDateTimeTZ, -1) }}",
+      "intervalEnd": "{{ targetDateTimeTZ }}"
+    }
+  ],
+  "scenarioActEdges": [
+    {
+      "from": "transaction_dds",
+      "to": "aggregation_pay_per_client_daily_mart"
+    },
+    {
+      "from": "transaction_dds",
+      "to": "aggregation_pay_per_client_total_mart"
+    }
+  ]
+}
+

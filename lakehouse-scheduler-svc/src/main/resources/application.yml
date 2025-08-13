@@ -65,4 +65,7 @@ lakehouse:
       retry:
         delay-ms: 14000
         initial-delay-ms: 10000
+        lag-when-failed: 1000
+        lag-when-config-failed: 120000
+
 

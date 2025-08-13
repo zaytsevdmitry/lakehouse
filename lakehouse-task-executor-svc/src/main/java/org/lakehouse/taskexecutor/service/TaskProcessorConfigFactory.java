@@ -9,8 +9,8 @@ import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.api.utils.LogPasswdRespectively;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
-import org.lakehouse.taskexecutor.entity.TableDefinition;
-import org.lakehouse.taskexecutor.entity.TaskProcessorConfig;
+import org.lakehouse.common.api.task.processor.entity.TableDefinition;
+import org.lakehouse.common.api.task.processor.entity.TaskProcessorConfigDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -29,24 +29,43 @@ public class TaskProcessorConfigFactory  {
     private final Jinjava jinjava;
     public TaskProcessorConfigFactory(
             ConfigRestClientApi configRestClientApi,
-            TableDefinitionFactory tableDefinitionFactory, Jinjava jinjava) {
+            TableDefinitionFactory tableDefinitionFactory,
+            Jinjava jinjava) {
         this.configRestClientApi = configRestClientApi;
         this.tableDefinitionFactory = tableDefinitionFactory;
         this.jinjava = jinjava;
     }
 
-    public TaskProcessorConfig buildTaskProcessorConfig(ScheduledTaskLockDTO scheduledTaskLockDTO){
+    public TaskProcessorConfigDTO buildTaskProcessorConfig(ScheduledTaskLockDTO scheduledTaskLockDTO){
         logger.info("Build config");
-        TaskProcessorConfig result = new TaskProcessorConfig();
+
+        TaskProcessorConfigDTO result = new TaskProcessorConfigDTO();
+
+        Map<String,String> keyBind = new HashMap<>();
+
+        keyBind.put(SystemVarKeys.TARGET_DATE_TIME_TZ_KEY, scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getTargetDateTime());
+        keyBind.put(SystemVarKeys.TARGET_INTERVAL_START_TZ_KEY, jinjava.render(scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getIntervalStartDateTime(),keyBind));
+        keyBind.put(SystemVarKeys.TARGET_INTERVAL_END_TZ_KEY, jinjava.render(scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getIntervalEndDateTime(),keyBind));
+
+        result.setTargetDateTime(DateTimeUtils.parseDateTimeFormatWithTZ(keyBind.get(SystemVarKeys.TARGET_DATE_TIME_TZ_KEY)));
+        result.setIntervalStartDateTime(DateTimeUtils.parseDateTimeFormatWithTZ(keyBind.get(SystemVarKeys.TARGET_INTERVAL_START_TZ_KEY)));
+        result.setIntervalEndDateTime(DateTimeUtils.parseDateTimeFormatWithTZ(keyBind.get(SystemVarKeys.TARGET_INTERVAL_END_TZ_KEY)));
+
         result.setLockSource(
                 String.format("%s.%s.%s",
                         scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getScheduleKeyName(),
                         scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getScenarioActKeyName(),
                         scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getTargetDateTime()));
+
         result.setTargetDataSet(
                 configRestClientApi.getDataSetDTO(
                 scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getDataSetKeyName()));
-        result.setExecutionModuleArgs(scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getExecutionModuleArgs());
+
+        result.setExecutionModuleArgs(
+                scheduledTaskLockDTO
+                        .getScheduledTaskEffectiveDTO()
+                        .getExecutionModuleArgs());
+
         result.setSources(
                 result.getTargetDataSet().getSources().stream()
                         .map(dataSetSourceDTO -> {
@@ -57,34 +76,47 @@ public class TaskProcessorConfigFactory  {
 
         result.setDataStores(getDataStores(result.getTargetDataSet(),result.getSources().values()));
 
+        Set<DataSetDTO> dataSets = collapseDataSetDTOs(result.getTargetDataSet(),result.getSources());
+
+        result.setDataSetDTOSet(dataSets);
+
+
+        result.setTableDefinitions(getTableDefinitionMap(dataSets,result.getDataStores()));
+
+        keyBind.putAll(configToContext(result));
+        result.setKeyBind(keyBind);
+
         result.setScripts(result.getTargetDataSet()
                 .getScripts()
                 .stream()
                 .sorted(Comparator.comparingInt(DataSetScriptDTO::getOrder ))
                 .map(DataSetScriptDTO::getKey)
                 .map(configRestClientApi::getScript)
+                .map(script-> jinjava.render(script, result.getKeyBind()))
                 .toList());
 
-        Set<DataSetDTO> dataSets = collapseDataSetDTOs(result.getTargetDataSet(),result.getSources());
 
-        result.setDataSetDTOSet(dataSets);
 
-        result.setKeyBind(getKeyBind(scheduledTaskLockDTO));
-
-        result.setTableDefinitions(getTableDefinitionMap(dataSets,result.getDataStores()));
-        Map<String,String> jinjaContext = new HashMap<>();
-        result.getKeyBind().forEach((s, s2) -> jinjaContext.put(s.replace("${","").replace("}",""), s2));
-        result.setIntervalStartDateTime(
-                renderJinjaDateTime(
-                        scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getIntervalStartDateTime(),
-                        jinjaContext));
-
-        result.setIntervalEndDateTime(
-                renderJinjaDateTime(
-                        scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getIntervalEndDateTime(),
-                        jinjaContext));
         logger.info("Config ready");
         return result;
+    }
+
+    private Map<String,String> configToContext(
+            TaskProcessorConfigDTO taskProcessorConfigDTO){
+        Map<String,String> result = new HashMap<>();
+        result.putAll(taskProcessorConfigDTO.getKeyBind());
+        taskProcessorConfigDTO.getDataSetDTOSet().forEach(dataSetDTO -> {
+            result.put(SystemVarKeys.buildSourceTableFullName(dataSetDTO.getProject(),dataSetDTO.getKeyName()), dataSetDTO.getFullTableName());
+            result.put(SystemVarKeys.buildSourceKeyName(dataSetDTO.getProject(),dataSetDTO.getKeyName()), dataSetDTO.getKeyName());
+        });
+
+        result.entrySet().forEach(stringEntry  ->
+                logger.info(
+                        "key -> {} | value -> {}",
+                        stringEntry.getKey(),
+                        LogPasswdRespectively.hidePasswords(stringEntry)));
+        return result;
+
     }
 
     private OffsetDateTime renderJinjaDateTime(String template, Map<String,String> context){
@@ -97,34 +129,6 @@ public class TaskProcessorConfigFactory  {
         Set<DataSetDTO> result = new HashSet<>();
         result.addAll(sources.values());
         result.add(dataSetDTO);
-        return result;
-    }
-
-    private Map<String,String> getKeyBind(
-            ScheduledTaskLockDTO scheduledTaskLockDTO){
-        Map<String,String> result = new HashMap<>();
-        result.put(
-                SystemVarKeys.TARGET_DATE_TIME_TZ_KEY,
-                scheduledTaskLockDTO
-                        .getScheduledTaskEffectiveDTO()
-                        .getTargetDateTime());
-        result.forEach((key, value) -> result.put( key, value));
-
-        result.put(
-                SystemVarKeys.TARGET_INTERVAL_START_TZ_KEY,
-                jinjava.render(
-                        scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getIntervalStartDateTime(),
-                        result));
-        result.put(
-                SystemVarKeys.TARGET_INTERVAL_END_TZ_KEY,
-                jinjava.render(
-                        scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getIntervalEndDateTime(),
-                        result));
-        result.entrySet().forEach(stringEntry  ->
-                logger.info(
-                        "key -> {} | value -> {}",
-                        stringEntry.getKey(),
-                        LogPasswdRespectively.hidePasswords(stringEntry)));
         return result;
     }
 

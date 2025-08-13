@@ -9,7 +9,7 @@ import java.nio.charset.StandardCharsets;
 
 
 public  class ObjectMapping {
-	private static final ObjectMapper objectMapper = new ObjectMapper();
+	private static final ObjectMapper objectMapper = new ObjectMapperTS();
     
 	public static <T> T stringToObject(String string, Class<T> clazz) throws IOException {
         return objectMapper.readValue(
@@ -26,7 +26,7 @@ public  class ObjectMapping {
         return objectMapper.readValue(file, clazz);
     }
     
-    public static void objectTofile(String filePath, Object o) throws IOException {
+    public static void objectToFile(String filePath, Object o) throws IOException {
     	objectMapper
     		.writerWithDefaultPrettyPrinter()
     		.writeValue(new File(filePath),o);

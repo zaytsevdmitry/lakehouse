@@ -1,0 +1,237 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------------< lakehouse:lakehouse-task-spark-apps >-----------------
+[INFO] Building lakehouse-task-spark-apps 0.3.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+Downloading from central: https://repo.maven.apache.org/maven2/lakehouse/lakehouse-common/0.3.0/lakehouse-common-0.3.0.pom
+[WARNING] The POM for lakehouse:lakehouse-common:jar:0.3.0 is missing, no dependency information available
+Downloading from central: https://repo.maven.apache.org/maven2/lakehouse/lakehouse-task-executor-rest-client/0.3.0/lakehouse-task-executor-rest-client-0.3.0.pom
+[WARNING] The POM for lakehouse:lakehouse-task-executor-rest-client:jar:0.3.0 is missing, no dependency information available
+[WARNING] 2 problems were encountered while building the effective model for org.apache.yetus:audience-annotations:jar:0.5.0 during dependency collection step for project (use -X to see details)
+[WARNING] The POM for lakehouse:lakehouse-common-test:jar:0.3.0 is missing, no dependency information available
+[INFO] 
+[INFO] --- dependency:3.8.1:tree (default-cli) @ lakehouse-task-spark-apps ---
+[INFO] lakehouse:lakehouse-task-spark-apps:jar:0.3.0
+[INFO] +- lakehouse:lakehouse-common:jar:0.3.0:compile
+[INFO] +- lakehouse:lakehouse-task-executor-rest-client:jar:0.3.0:compile
+[INFO] +- org.apache.hadoop:hadoop-aws:jar:3.3.4:provided
+[INFO] |  +- com.amazonaws:aws-java-sdk-bundle:jar:1.12.262:provided
+[INFO] |  \- org.wildfly.openssl:wildfly-openssl:jar:1.0.7.Final:provided
+[INFO] +- org.apache.spark:spark-core_2.12:jar:3.5.4:provided
+[INFO] |  +- org.apache.avro:avro:jar:1.11.2:provided
+[INFO] |  |  \- com.fasterxml.jackson.core:jackson-core:jar:2.18.2:provided
+[INFO] |  +- org.apache.avro:avro-mapred:jar:1.11.2:provided
+[INFO] |  |  \- org.apache.avro:avro-ipc:jar:1.11.2:provided
+[INFO] |  |     \- org.tukaani:xz:jar:1.9:provided
+[INFO] |  +- com.twitter:chill_2.12:jar:0.10.0:provided
+[INFO] |  |  \- com.esotericsoftware:kryo-shaded:jar:4.0.2:provided
+[INFO] |  |     \- com.esotericsoftware:minlog:jar:1.3.0:provided
+[INFO] |  +- com.twitter:chill-java:jar:0.10.0:provided
+[INFO] |  +- org.apache.xbean:xbean-asm9-shaded:jar:4.23:provided
+[INFO] |  +- org.apache.hadoop:hadoop-client-api:jar:3.3.4:provided
+[INFO] |  +- org.apache.hadoop:hadoop-client-runtime:jar:3.3.4:provided
+[INFO] |  |  \- commons-logging:commons-logging:jar:1.1.3:provided
+[INFO] |  +- org.apache.spark:spark-launcher_2.12:jar:3.5.4:provided
+[INFO] |  +- org.apache.spark:spark-kvstore_2.12:jar:3.5.4:provided
+[INFO] |  |  +- org.fusesource.leveldbjni:leveldbjni-all:jar:1.8:provided
+[INFO] |  |  \- com.fasterxml.jackson.core:jackson-annotations:jar:2.18.2:provided
+[INFO] |  +- org.apache.spark:spark-network-common_2.12:jar:3.5.4:provided
+[INFO] |  |  \- com.google.crypto.tink:tink:jar:1.9.0:provided
+[INFO] |  |     +- com.google.code.gson:gson:jar:2.11.0:provided
+[INFO] |  |     +- com.google.protobuf:protobuf-java:jar:3.19.6:provided
+[INFO] |  |     \- joda-time:joda-time:jar:2.12.5:provided
+[INFO] |  +- org.apache.spark:spark-network-shuffle_2.12:jar:3.5.4:provided
+[INFO] |  +- org.apache.spark:spark-unsafe_2.12:jar:3.5.4:provided
+[INFO] |  +- org.apache.spark:spark-common-utils_2.12:jar:3.5.4:provided
+[INFO] |  |  +- org.slf4j:jul-to-slf4j:jar:2.0.16:provided
+[INFO] |  |  +- org.slf4j:jcl-over-slf4j:jar:2.0.16:provided
+[INFO] |  |  +- org.apache.logging.log4j:log4j-slf4j2-impl:jar:2.24.3:provided
+[INFO] |  |  +- org.apache.logging.log4j:log4j-api:jar:2.24.3:provided
+[INFO] |  |  +- org.apache.logging.log4j:log4j-core:jar:2.24.3:provided
+[INFO] |  |  \- org.apache.logging.log4j:log4j-1.2-api:jar:2.24.3:provided
+[INFO] |  +- javax.activation:activation:jar:1.1.1:provided
+[INFO] |  +- org.apache.curator:curator-recipes:jar:2.13.0:provided
+[INFO] |  |  \- org.apache.curator:curator-framework:jar:2.13.0:provided
+[INFO] |  |     \- org.apache.curator:curator-client:jar:2.13.0:provided
+[INFO] |  |        \- com.google.guava:guava:jar:33.3.1-jre:provided
+[INFO] |  |           +- com.google.guava:failureaccess:jar:1.0.2:provided
+[INFO] |  |           +- com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:provided
+[INFO] |  |           +- com.google.errorprone:error_prone_annotations:jar:2.28.0:provided
+[INFO] |  |           \- com.google.j2objc:j2objc-annotations:jar:3.0.0:provided
+[INFO] |  +- org.apache.zookeeper:zookeeper:jar:3.6.3:provided
+[INFO] |  |  +- org.apache.zookeeper:zookeeper-jute:jar:3.6.3:provided
+[INFO] |  |  \- org.apache.yetus:audience-annotations:jar:0.5.0:provided
+[INFO] |  +- jakarta.servlet:jakarta.servlet-api:jar:4.0.3:provided
+[INFO] |  +- commons-codec:commons-codec:jar:1.17.2:provided
+[INFO] |  +- org.apache.commons:commons-compress:jar:1.23.0:provided
+[INFO] |  +- org.apache.commons:commons-lang3:jar:3.17.0:provided
+[INFO] |  +- org.apache.commons:commons-math3:jar:3.6.1:provided
+[INFO] |  +- org.apache.commons:commons-text:jar:1.10.0:provided
+[INFO] |  +- commons-io:commons-io:jar:2.16.1:provided
+[INFO] |  +- commons-collections:commons-collections:jar:3.2.2:provided
+[INFO] |  +- org.apache.commons:commons-collections4:jar:4.4:provided
+[INFO] |  +- com.google.code.findbugs:jsr305:jar:3.0.0:provided
+[INFO] |  +- com.ning:compress-lzf:jar:1.1.2:provided
+[INFO] |  +- org.xerial.snappy:snappy-java:jar:1.1.10.5:provided
+[INFO] |  +- org.lz4:lz4-java:jar:1.8.0:provided
+[INFO] |  +- com.github.luben:zstd-jni:jar:1.5.5-4:provided
+[INFO] |  +- org.roaringbitmap:RoaringBitmap:jar:0.9.45:provided
+[INFO] |  |  \- org.roaringbitmap:shims:jar:0.9.45:provided
+[INFO] |  +- org.scala-lang.modules:scala-xml_2.12:jar:2.1.0:provided
+[INFO] |  +- org.scala-lang.modules:scala-collection-compat_2.12:jar:2.7.0:provided
+[INFO] |  +- org.scala-lang:scala-library:jar:2.12.18:provided
+[INFO] |  +- org.scala-lang:scala-reflect:jar:2.12.18:provided
+[INFO] |  +- org.json4s:json4s-jackson_2.12:jar:3.7.0-M11:provided
+[INFO] |  |  \- org.json4s:json4s-core_2.12:jar:3.7.0-M11:provided
+[INFO] |  |     +- org.json4s:json4s-ast_2.12:jar:3.7.0-M11:provided
+[INFO] |  |     \- org.json4s:json4s-scalap_2.12:jar:3.7.0-M11:provided
+[INFO] |  +- org.glassfish.jersey.core:jersey-client:jar:2.36:provided
+[INFO] |  |  +- jakarta.ws.rs:jakarta.ws.rs-api:jar:3.1.0:provided
+[INFO] |  |  \- org.glassfish.hk2.external:jakarta.inject:jar:2.6.1:provided
+[INFO] |  +- org.glassfish.jersey.core:jersey-common:jar:2.36:provided
+[INFO] |  |  +- jakarta.annotation:jakarta.annotation-api:jar:2.1.1:provided
+[INFO] |  |  \- org.glassfish.hk2:osgi-resource-locator:jar:1.0.3:provided
+[INFO] |  +- org.glassfish.jersey.core:jersey-server:jar:2.36:provided
+[INFO] |  |  \- jakarta.validation:jakarta.validation-api:jar:3.0.2:provided
+[INFO] |  +- org.glassfish.jersey.containers:jersey-container-servlet:jar:2.36:provided
+[INFO] |  +- org.glassfish.jersey.containers:jersey-container-servlet-core:jar:2.36:provided
+[INFO] |  +- org.glassfish.jersey.inject:jersey-hk2:jar:2.36:provided
+[INFO] |  |  +- org.glassfish.hk2:hk2-locator:jar:2.6.1:provided
+[INFO] |  |  |  +- org.glassfish.hk2.external:aopalliance-repackaged:jar:2.6.1:provided
+[INFO] |  |  |  +- org.glassfish.hk2:hk2-api:jar:2.6.1:provided
+[INFO] |  |  |  \- org.glassfish.hk2:hk2-utils:jar:2.6.1:provided
+[INFO] |  |  \- org.javassist:javassist:jar:3.25.0-GA:provided
+[INFO] |  +- io.netty:netty-all:jar:4.1.117.Final:provided
+[INFO] |  |  +- io.netty:netty-buffer:jar:4.1.117.Final:provided
+[INFO] |  |  +- io.netty:netty-codec:jar:4.1.117.Final:provided
+[INFO] |  |  +- io.netty:netty-codec-http:jar:4.1.117.Final:provided
+[INFO] |  |  +- io.netty:netty-codec-http2:jar:4.1.117.Final:provided
+[INFO] |  |  +- io.netty:netty-codec-socks:jar:4.1.117.Final:provided
+[INFO] |  |  +- io.netty:netty-common:jar:4.1.117.Final:provided
+[INFO] |  |  +- io.netty:netty-handler:jar:4.1.117.Final:provided
+[INFO] |  |  +- io.netty:netty-transport-native-unix-common:jar:4.1.117.Final:provided
+[INFO] |  |  +- io.netty:netty-handler-proxy:jar:4.1.117.Final:provided
+[INFO] |  |  +- io.netty:netty-resolver:jar:4.1.117.Final:provided
+[INFO] |  |  +- io.netty:netty-transport:jar:4.1.117.Final:provided
+[INFO] |  |  +- io.netty:netty-transport-classes-epoll:jar:4.1.117.Final:provided
+[INFO] |  |  +- io.netty:netty-transport-classes-kqueue:jar:4.1.117.Final:provided
+[INFO] |  |  \- io.netty:netty-transport-native-epoll:jar:linux-riscv64:4.1.117.Final:provided
+[INFO] |  +- io.netty:netty-transport-native-epoll:jar:linux-x86_64:4.1.117.Final:provided
+[INFO] |  +- io.netty:netty-transport-native-epoll:jar:linux-aarch_64:4.1.117.Final:provided
+[INFO] |  +- io.netty:netty-transport-native-kqueue:jar:osx-aarch_64:4.1.117.Final:provided
+[INFO] |  +- io.netty:netty-transport-native-kqueue:jar:osx-x86_64:4.1.117.Final:provided
+[INFO] |  +- com.clearspring.analytics:stream:jar:2.9.6:provided
+[INFO] |  +- io.dropwizard.metrics:metrics-core:jar:4.2.19:provided
+[INFO] |  +- io.dropwizard.metrics:metrics-jvm:jar:4.2.19:provided
+[INFO] |  +- io.dropwizard.metrics:metrics-json:jar:4.2.19:provided
+[INFO] |  +- io.dropwizard.metrics:metrics-graphite:jar:4.2.19:provided
+[INFO] |  +- io.dropwizard.metrics:metrics-jmx:jar:4.2.19:provided
+[INFO] |  +- com.fasterxml.jackson.core:jackson-databind:jar:2.18.2:provided
+[INFO] |  +- com.fasterxml.jackson.module:jackson-module-scala_2.12:jar:2.18.2:provided
+[INFO] |  |  \- com.thoughtworks.paranamer:paranamer:jar:2.8:provided
+[INFO] |  +- org.apache.ivy:ivy:jar:2.5.1:provided
+[INFO] |  +- oro:oro:jar:2.0.8:provided
+[INFO] |  +- net.razorvine:pickle:jar:1.3:provided
+[INFO] |  +- net.sf.py4j:py4j:jar:0.10.9.7:provided
+[INFO] |  +- org.apache.spark:spark-tags_2.12:jar:3.5.4:provided
+[INFO] |  \- org.apache.commons:commons-crypto:jar:1.1.0:provided
+[INFO] +- org.apache.spark:spark-sql_2.12:jar:3.5.4:provided
+[INFO] |  +- org.rocksdb:rocksdbjni:jar:8.3.2:provided
+[INFO] |  +- com.univocity:univocity-parsers:jar:2.9.1:provided
+[INFO] |  +- org.apache.spark:spark-sketch_2.12:jar:3.5.4:provided
+[INFO] |  +- org.apache.spark:spark-catalyst_2.12:jar:3.5.4:provided
+[INFO] |  |  +- org.apache.spark:spark-sql-api_2.12:jar:3.5.4:provided
+[INFO] |  |  |  +- org.scala-lang.modules:scala-parser-combinators_2.12:jar:2.3.0:provided
+[INFO] |  |  |  +- org.antlr:antlr4-runtime:jar:4.9.3:provided
+[INFO] |  |  |  +- org.apache.arrow:arrow-vector:jar:12.0.1:provided
+[INFO] |  |  |  |  +- org.apache.arrow:arrow-format:jar:12.0.1:provided
+[INFO] |  |  |  |  +- org.apache.arrow:arrow-memory-core:jar:12.0.1:provided
+[INFO] |  |  |  |  +- com.fasterxml.jackson.datatype:jackson-datatype-jsr310:jar:2.18.2:provided
+[INFO] |  |  |  |  \- com.google.flatbuffers:flatbuffers-java:jar:1.12.0:provided
+[INFO] |  |  |  \- org.apache.arrow:arrow-memory-netty:jar:12.0.1:provided
+[INFO] |  |  +- org.codehaus.janino:janino:jar:3.1.12:provided
+[INFO] |  |  +- org.codehaus.janino:commons-compiler:jar:3.1.12:provided
+[INFO] |  |  \- org.apache.datasketches:datasketches-java:jar:3.3.0:provided
+[INFO] |  |     \- org.apache.datasketches:datasketches-memory:jar:2.1.0:provided
+[INFO] |  +- org.apache.orc:orc-core:jar:shaded-protobuf:1.9.5:provided
+[INFO] |  |  +- org.apache.orc:orc-shims:jar:1.9.5:provided
+[INFO] |  |  +- io.airlift:aircompressor:jar:0.27:provided
+[INFO] |  |  +- org.jetbrains:annotations:jar:17.0.0:provided
+[INFO] |  |  \- org.threeten:threeten-extra:jar:1.7.1:provided
+[INFO] |  +- org.apache.orc:orc-mapreduce:jar:shaded-protobuf:1.9.5:provided
+[INFO] |  +- org.apache.hive:hive-storage-api:jar:2.8.1:provided
+[INFO] |  +- org.apache.parquet:parquet-column:jar:1.13.1:provided
+[INFO] |  |  +- org.apache.parquet:parquet-common:jar:1.13.1:provided
+[INFO] |  |  \- org.apache.parquet:parquet-encoding:jar:1.13.1:provided
+[INFO] |  \- org.apache.parquet:parquet-hadoop:jar:1.13.1:provided
+[INFO] |     +- org.apache.parquet:parquet-format-structures:jar:1.13.1:provided
+[INFO] |     \- org.apache.parquet:parquet-jackson:jar:1.13.1:provided
+[INFO] +- org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:jar:1.8.0:provided
+[INFO] +- org.postgresql:postgresql:jar:42.7.5:compile
+[INFO] |  \- org.checkerframework:checker-qual:jar:3.48.3:runtime
+[INFO] +- lakehouse:lakehouse-common-test:jar:0.3.0:test
+[INFO] +- org.testcontainers:junit-jupiter:jar:1.20.4:test
+[INFO] |  \- org.testcontainers:testcontainers:jar:1.20.4:test
+[INFO] |     +- org.rnorth.duct-tape:duct-tape:jar:1.0.8:test
+[INFO] |     +- com.github.docker-java:docker-java-api:jar:3.4.0:test
+[INFO] |     \- com.github.docker-java:docker-java-transport-zerodep:jar:3.4.0:test
+[INFO] |        +- com.github.docker-java:docker-java-transport:jar:3.4.0:test
+[INFO] |        \- net.java.dev.jna:jna:jar:5.13.0:test
+[INFO] +- org.springframework.boot:spring-boot-starter-test:jar:3.4.2:test
+[INFO] |  +- org.springframework.boot:spring-boot-starter:jar:3.4.2:test
+[INFO] |  |  +- org.springframework.boot:spring-boot-starter-logging:jar:3.4.2:test
+[INFO] |  |  |  +- ch.qos.logback:logback-classic:jar:1.5.16:test
+[INFO] |  |  |  |  \- ch.qos.logback:logback-core:jar:1.5.16:test
+[INFO] |  |  |  \- org.apache.logging.log4j:log4j-to-slf4j:jar:2.24.3:test
+[INFO] |  |  \- org.yaml:snakeyaml:jar:2.3:test
+[INFO] |  +- org.springframework.boot:spring-boot-test:jar:3.4.2:test
+[INFO] |  +- org.springframework.boot:spring-boot-test-autoconfigure:jar:3.4.2:test
+[INFO] |  +- com.jayway.jsonpath:json-path:jar:2.9.0:test
+[INFO] |  +- jakarta.xml.bind:jakarta.xml.bind-api:jar:4.0.2:test
+[INFO] |  |  \- jakarta.activation:jakarta.activation-api:jar:2.1.3:test
+[INFO] |  +- net.minidev:json-smart:jar:2.5.1:test
+[INFO] |  |  \- net.minidev:accessors-smart:jar:2.5.1:test
+[INFO] |  |     \- org.ow2.asm:asm:jar:9.6:test
+[INFO] |  +- org.assertj:assertj-core:jar:3.26.3:test
+[INFO] |  |  \- net.bytebuddy:byte-buddy:jar:1.15.11:test
+[INFO] |  +- org.awaitility:awaitility:jar:4.2.2:test
+[INFO] |  +- org.hamcrest:hamcrest:jar:2.2:test
+[INFO] |  +- org.junit.jupiter:junit-jupiter:jar:5.11.4:test
+[INFO] |  |  +- org.junit.jupiter:junit-jupiter-api:jar:5.11.4:test
+[INFO] |  |  |  +- org.opentest4j:opentest4j:jar:1.3.0:test
+[INFO] |  |  |  +- org.junit.platform:junit-platform-commons:jar:1.11.4:test
+[INFO] |  |  |  \- org.apiguardian:apiguardian-api:jar:1.1.2:test
+[INFO] |  |  +- org.junit.jupiter:junit-jupiter-params:jar:5.11.4:test
+[INFO] |  |  \- org.junit.jupiter:junit-jupiter-engine:jar:5.11.4:test
+[INFO] |  |     \- org.junit.platform:junit-platform-engine:jar:1.11.4:test
+[INFO] |  +- org.mockito:mockito-core:jar:5.14.2:test
+[INFO] |  |  +- net.bytebuddy:byte-buddy-agent:jar:1.15.11:test
+[INFO] |  |  \- org.objenesis:objenesis:jar:3.3:provided
+[INFO] |  +- org.mockito:mockito-junit-jupiter:jar:5.14.2:test
+[INFO] |  +- org.skyscreamer:jsonassert:jar:1.5.3:test
+[INFO] |  |  \- com.vaadin.external.google:android-json:jar:0.0.20131108.vaadin1:test
+[INFO] |  +- org.springframework:spring-core:jar:6.2.2:compile
+[INFO] |  |  \- org.springframework:spring-jcl:jar:6.2.2:compile
+[INFO] |  +- org.springframework:spring-test:jar:6.2.2:test
+[INFO] |  \- org.xmlunit:xmlunit-core:jar:2.10.0:test
+[INFO] +- org.testcontainers:postgresql:jar:1.20.4:test
+[INFO] |  \- org.testcontainers:jdbc:jar:1.20.4:test
+[INFO] |     \- org.testcontainers:database-commons:jar:1.20.4:test
+[INFO] +- org.springframework.boot:spring-boot:jar:3.4.2:compile
+[INFO] |  \- org.springframework:spring-context:jar:6.2.2:compile
+[INFO] |     +- org.springframework:spring-aop:jar:6.2.2:compile
+[INFO] |     +- org.springframework:spring-beans:jar:6.2.2:compile
+[INFO] |     +- org.springframework:spring-expression:jar:6.2.2:compile
+[INFO] |     \- io.micrometer:micrometer-observation:jar:1.14.3:compile
+[INFO] |        \- io.micrometer:micrometer-commons:jar:1.14.3:compile
+[INFO] +- org.springframework.boot:spring-boot-autoconfigure:jar:3.4.2:compile
+[INFO] +- org.slf4j:slf4j-api:jar:2.0.16:compile
+[INFO] \- junit:junit:jar:4.13.2:test
+[INFO]    \- org.hamcrest:hamcrest-core:jar:2.2:test
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  2.405 s
+[INFO] Finished at: 2025-08-11T00:46:37+03:00
+[INFO] ------------------------------------------------------------------------

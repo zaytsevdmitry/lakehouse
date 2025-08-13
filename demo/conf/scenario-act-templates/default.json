@@ -23,8 +23,8 @@
       "importance": "critical",
       "description": "load from remote datastore",
       "executionModuleArgs": {
-        "spark.executor.memory": "5gb",
-        "spark.driver.memory": "2gb"
+        "spark.executor.memory": "5g",
+        "spark.driver.memory": "2g"
       }
     },
     {
@@ -34,8 +34,8 @@
       "importance": "critical",
       "description": "load from remote datastore",
       "executionModuleArgs": {
-        "spark.executor.memory": "5gb",
-        "spark.driver.memory": "2gb",
+        "spark.executor.memory": "5g",
+        "spark.driver.memory": "2g",
         "spark.driver.cores": "3"
       }
     },

@@ -1,0 +1,10 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+[* generateSource\n @daily\n from 2025-01-01\n jan, etc] -> (transaction_processing)
+[* generateSourceDict\n @daily\n from 2025-01-01\n jan, etc] -> (client_processing)
+[* initial\n @monthly\n from 2025-02-01  \nto 2024-03-02\n Jan/feb/mart ]-> (transaction_dds)
+(client_processing) --->  (transaction_dds)
+(transaction_processing) --> (transaction_dds)
+(transaction_dds) -> (aggregation_pay_per_client_daily_mart)
+(transaction_dds) -> (aggregation_pay_per_client_total_mart)
+@enduml

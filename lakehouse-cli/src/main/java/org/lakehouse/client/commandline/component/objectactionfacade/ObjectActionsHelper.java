@@ -100,7 +100,7 @@ public class ObjectActionsHelper  {
 		CommandResult result = new CommandResult(new ArrayList<String>());
 		
 		try {
-			ObjectMapping.objectTofile(filePath, o);
+			ObjectMapping.objectToFile(filePath, o);
 		}catch (JsonProcessingException e) {
 			result.getResultSrtingList().add(e.getMessage());
 		}catch (IOException e) {	

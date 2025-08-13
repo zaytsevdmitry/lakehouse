@@ -1,10 +1,9 @@
 package org.lakehouse.taskexecutor.executionmodule;
 
-import com.hubspot.jinjava.Jinjava;
-import org.lakehouse.taskexecutor.entity.TaskProcessorConfig;
+import org.lakehouse.common.api.task.processor.entity.TaskProcessorConfigDTO;
 
 public abstract class AbstractDefaultTaskProcessor extends AbstractTaskProcessor{
-    public AbstractDefaultTaskProcessor(TaskProcessorConfig taskProcessorConfig, Jinjava jinjava) {
-        super(taskProcessorConfig, jinjava);
+    public AbstractDefaultTaskProcessor(TaskProcessorConfigDTO taskProcessorConfigDTO) {
+        super(taskProcessorConfigDTO);
     }
 }

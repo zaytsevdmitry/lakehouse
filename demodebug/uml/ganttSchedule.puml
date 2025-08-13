@@ -1,0 +1,12 @@
+@startgantt
+projectscale monthly
+Project starts the 1st of jan 2025
+[generateSource] lasts 365 days and is colored in Lavender/Blue
+[generateSourceDict] lasts 365 days and is colored in Lavender/Blue
+[initial] starts 2025-02-01
+[initial] ends 2025-03-01
+[initial]  is colored in blue/Blue
+[regular] starts 2025-02-01
+[regular] ends 2025-12-31
+[regular] is colored in Green/LightGreen
+@endgantt

@@ -49,4 +49,9 @@ public class Endpoint {
     public final static String STATE= ROOT_API_V1_0 + "/state";
     public final static String STATE_DATASET= STATE + "/dataset";
 
+    public final static String TASK_EXECUTOR = ROOT_API_V1_0 + "/taskexecutor";
+    public final static String TASK_EXECUTOR_PROCESSOR = TASK_EXECUTOR + "/processor";
+    public final static String TASK_EXECUTOR_PROCESSOR_CONFIG = TASK_EXECUTOR_PROCESSOR + "/config";
+    public final static String TASK_EXECUTOR_PROCESSOR_GET_BY_LOCK_ID = TASK_EXECUTOR_PROCESSOR_CONFIG + "/lock/{id}";
+
 }

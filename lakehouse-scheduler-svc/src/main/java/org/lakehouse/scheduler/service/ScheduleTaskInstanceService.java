@@ -9,6 +9,7 @@ import org.lakehouse.client.api.dto.scheduler.lock.TaskInstanceReleaseDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskResultDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskMsgDTO;
+import org.lakehouse.client.api.utils.Coalesce;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.scheduler.entities.ScheduleTaskInstance;
@@ -28,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,6 +52,7 @@ public class ScheduleTaskInstanceService {
             ScheduledTaskForProducerMessagesRepository scheduledTaskForProducerMessagesRepository,
             ConfigRestClientApi configRestClientApi,
 			ScheduleTaskInstanceFactory scheduleTaskInstanceFactory
+
     ) {
 		this.repository = repository;
 		this.dependencyRepository = dependencyRepository;
@@ -256,21 +259,21 @@ public class ScheduleTaskInstanceService {
 			repository
 				.findByStatus(Status.Task.FAILED.label)
 					.stream()
-					.filter(sti-> sti
-							.getEndDateTime()
+					.filter(sti-> DateTimeUtils.now().minusSeconds(10) //todo move to application properties
 							.isAfter(
-									DateTimeUtils.now()
-											.minusMinutes(2)))	//todo move to application properties
+								Coalesce.apply(
+									sti.getEndDateTime(),
+									OffsetDateTime.MIN)))
 					.toList());
 		l.addAll(
 			repository
 				.findByStatus(Status.Task.CONF_ERROR.label)
 					.stream()
-					.filter(sti-> sti
-							.getEndDateTime()
+					.filter(sti-> DateTimeUtils.now().minusMinutes(4) //todo move to application properties
 							.isAfter(
-									DateTimeUtils.now()
-											.minusMinutes(4)))	//todo move to application properties
+									Coalesce.apply(
+										sti.getEndDateTime(),
+										OffsetDateTime.MIN)))
 					.toList());
 
 		l.forEach(t -> {
@@ -291,10 +294,9 @@ public class ScheduleTaskInstanceService {
 		List<ScheduleTaskInstanceExecutionLock> locks = executionLockRepository
 				.findAll()
 				.stream()
-				.filter(l -> 
-					l.getLastHeartBeatDateTime().isAfter(
-							//todo move to application properties
-				    	 DateTimeUtils.now().minusMinutes(2)))
+				.filter(l ->   //todo move to application properties
+								DateTimeUtils.now().minusSeconds(30)
+										.isAfter(l.getLastHeartBeatDateTime()))
 				.toList();
 		locks.forEach( l -> {
 			releaseTask(

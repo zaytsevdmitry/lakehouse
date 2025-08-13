@@ -6,8 +6,8 @@ import org.lakehouse.client.api.dto.state.DataSetIntervalDTO;
 import org.lakehouse.client.api.dto.state.DataSetStateDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.rest.state.StateRestClientApi;
-import org.lakehouse.taskexecutor.entity.TaskProcessorConfig;
-import org.lakehouse.taskexecutor.exception.TaskFailedException;
+import org.lakehouse.common.api.task.processor.entity.TaskProcessorConfigDTO;
+import org.lakehouse.common.api.task.processor.exception.TaskFailedException;
 import org.lakehouse.taskexecutor.executionmodule.AbstractStateTaskProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,10 +22,9 @@ public class DependencyCheckStateTaskProcessor extends AbstractStateTaskProcesso
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public DependencyCheckStateTaskProcessor(
-            TaskProcessorConfig taskProcessorConfig,
-            Jinjava jinjava,
+            TaskProcessorConfigDTO taskProcessorConfigDTO,
             StateRestClientApi stateRestClientApi) {
-        super(taskProcessorConfig, jinjava, stateRestClientApi);
+        super(taskProcessorConfigDTO, stateRestClientApi);
     }
 
 
