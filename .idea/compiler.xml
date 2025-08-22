@@ -9,6 +9,7 @@
         <module name="lakehouse-state-rest-client" />
         <module name="lakehouse-common-rest-client" />
         <module name="lakehouse-common-test" />
+        <module name="lakehouse-spark-rest-client" />
         <module name="lakehouse-common" />
         <module name="lakehouse-task-executor-svc (1)" />
         <module name="lakehouse-state-svc" />
@@ -39,6 +40,7 @@
       <module name="lakehouse-jinjava" options="-parameters" />
       <module name="lakehouse-scheduler-rest-client" options="-parameters" />
       <module name="lakehouse-scheduler-svc" options="-parameters" />
+      <module name="lakehouse-spark-rest-client" options="-parameters" />
       <module name="lakehouse-state-rest-client" options="-parameters" />
       <module name="lakehouse-state-svc" options="-parameters" />
       <module name="lakehouse-task-coordinator-svc" options="-parameters" />

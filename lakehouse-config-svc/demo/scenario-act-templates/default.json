@@ -24,7 +24,6 @@
       "executionModuleArgs": {
         "spark.executor.memory": "5g",
         "spark.driver.memory": "2g",
-        "spark.master": "spark://127.0.0.1:7077",
         "executionBody": "org.lakehouse.taskexecutor.executionmodule.body.SparkTaskProcessorBody"
       }
     },

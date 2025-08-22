@@ -1,10 +1,13 @@
 package org.lakehouse.taskexecutor.service;
 
+import org.lakehouse.client.rest.spark.SparkRestClientApi;
 import org.lakehouse.client.rest.state.StateRestClientApi;
 import org.lakehouse.common.api.task.processor.entity.TaskProcessor;
 import org.lakehouse.common.api.task.processor.entity.TaskProcessorConfigDTO;
+import org.lakehouse.taskexecutor.configuration.SparkConfigurationProperties;
 import org.lakehouse.taskexecutor.exception.TaskProcessorConfigurationException;
 import org.lakehouse.taskexecutor.executionmodule.AbstractDefaultTaskProcessor;
+import org.lakehouse.taskexecutor.executionmodule.AbstractSparkDeployTaskProcessor;
 import org.lakehouse.taskexecutor.executionmodule.AbstractStateTaskProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,10 +21,15 @@ import java.lang.reflect.InvocationTargetException;
 public class TaskProcessorFactory {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	private final StateRestClientApi stateRestClientApi;
+	private final SparkRestClientApi sparkRestClientApi;
+	private final SparkConfigurationProperties sparkConfigurationProperties;
 	public TaskProcessorFactory(
-            StateRestClientApi stateRestClientApi) {
+			StateRestClientApi stateRestClientApi,
+			SparkRestClientApi sparkRestClientApi,
+			SparkConfigurationProperties sparkConfigurationProperties) {
         this.stateRestClientApi = stateRestClientApi;
-
+		this.sparkConfigurationProperties = sparkConfigurationProperties;
+        this.sparkRestClientApi = sparkRestClientApi;
     }
 
 	private TaskProcessor constructTaskProcessor(
@@ -44,6 +52,10 @@ public class TaskProcessorFactory {
 				logger.info("Making Default processor class instance {}", processorClass.getName());
 				constructor = processorClass.getConstructor(TaskProcessorConfigDTO.class);
 				result =  (TaskProcessor) constructor.newInstance(taskProcessorConfigDTO);
+			}else if ( AbstractSparkDeployTaskProcessor.class.isAssignableFrom(processorClass)) {
+				logger.info("Making Spark deployment processor class instance {}", processorClass.getName());
+				constructor = processorClass.getConstructor(TaskProcessorConfigDTO.class, SparkConfigurationProperties.class, SparkRestClientApi.class);
+				result =  (TaskProcessor) constructor.newInstance(taskProcessorConfigDTO, sparkConfigurationProperties, sparkRestClientApi);
 			}
 			else
 			{

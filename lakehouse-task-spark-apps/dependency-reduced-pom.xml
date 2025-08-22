@@ -17,7 +17,7 @@
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <argLine>--add-exports java.base/sun.nio.ch=ALL-UNNAMED
+          <argLine>--add-exports=java.base/sun.nio.ch=ALL-UNNAMED
                         --add-opens=java.base/java.nio=ALL-UNNAMED</argLine>
         </configuration>
       </plugin>
@@ -36,9 +36,7 @@
               <shadedClassifierName>jar-with-dependencies</shadedClassifierName>
               <transformers>
                 <transformer />
-                <transformer>
-                  <mainClass>${start-class}</mainClass>
-                </transformer>
+                <transformer />
               </transformers>
             </configuration>
           </execution>
@@ -58,81 +56,35 @@
       <artifactId>lakehouse-task-executor-rest-client</artifactId>
       <version>0.3.0</version>
       <scope>provided</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>spring-boot-starter-logging</artifactId>
+          <groupId>org.springframework.boot</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-aws</artifactId>
       <version>3.3.4</version>
       <scope>provided</scope>
-      <exclusions>
-        <exclusion>
-          <artifactId>log4j-slf4j-impl</artifactId>
-          <groupId>org.apache.logging.log4j</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>log4j-to-slf4j</artifactId>
-          <groupId>org.apache.logging.log4j</groupId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-core_2.12</artifactId>
-      <version>3.5.4</version>
+      <version>3.5.6</version>
       <scope>provided</scope>
-      <exclusions>
-        <exclusion>
-          <artifactId>log4j-slf4j-impl</artifactId>
-          <groupId>org.apache.logging.log4j</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>log4j-to-slf4j</artifactId>
-          <groupId>org.apache.logging.log4j</groupId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-sql_2.12</artifactId>
-      <version>3.5.4</version>
+      <version>3.5.6</version>
       <scope>provided</scope>
-      <exclusions>
-        <exclusion>
-          <artifactId>log4j-slf4j-impl</artifactId>
-          <groupId>org.apache.logging.log4j</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>log4j-to-slf4j</artifactId>
-          <groupId>org.apache.logging.log4j</groupId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.iceberg</groupId>
-      <artifactId>iceberg-spark</artifactId>
-      <version>1.8.0</version>
-      <scope>provided</scope>
-      <exclusions>
-        <exclusion>
-          <artifactId>log4j-slf4j-impl</artifactId>
-          <groupId>org.apache.logging.log4j</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>log4j-to-slf4j</artifactId>
-          <groupId>org.apache.logging.log4j</groupId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.iceberg</groupId>
       <artifactId>iceberg-spark-runtime-3.5_2.12</artifactId>
-      <version>1.8.0</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.hubspot.jinjava</groupId>
-      <artifactId>jinjava</artifactId>
-      <version>2.7.4</version>
+      <version>1.9.2</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -142,22 +94,40 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>kafka</artifactId>
-      <version>1.19.3</version>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <version>5.11.4</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
-          <artifactId>testcontainers</artifactId>
-          <groupId>org.testcontainers</groupId>
+          <artifactId>opentest4j</artifactId>
+          <groupId>org.opentest4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>junit-platform-commons</artifactId>
+          <groupId>org.junit.platform</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>apiguardian-api</artifactId>
+          <groupId>org.apiguardian</groupId>
         </exclusion>
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>lakehouse</groupId>
-      <artifactId>lakehouse-common-test</artifactId>
-      <version>0.3.0</version>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <version>5.11.4</version>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>junit-platform-engine</artifactId>
+          <groupId>org.junit.platform</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>apiguardian-api</artifactId>
+          <groupId>org.apiguardian</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.testcontainers</groupId>
@@ -168,70 +138,6 @@
         <exclusion>
           <artifactId>testcontainers</artifactId>
           <groupId>org.testcontainers</groupId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-test</artifactId>
-      <version>3.4.2</version>
-      <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <artifactId>spring-boot-test</artifactId>
-          <groupId>org.springframework.boot</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>spring-boot-test-autoconfigure</artifactId>
-          <groupId>org.springframework.boot</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>json-path</artifactId>
-          <groupId>com.jayway.jsonpath</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>jakarta.xml.bind-api</artifactId>
-          <groupId>jakarta.xml.bind</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>json-smart</artifactId>
-          <groupId>net.minidev</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>assertj-core</artifactId>
-          <groupId>org.assertj</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>awaitility</artifactId>
-          <groupId>org.awaitility</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>hamcrest</artifactId>
-          <groupId>org.hamcrest</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>junit-jupiter</artifactId>
-          <groupId>org.junit.jupiter</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>mockito-core</artifactId>
-          <groupId>org.mockito</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>mockito-junit-jupiter</artifactId>
-          <groupId>org.mockito</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>jsonassert</artifactId>
-          <groupId>org.skyscreamer</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>spring-test</artifactId>
-          <groupId>org.springframework</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>xmlunit-core</artifactId>
-          <groupId>org.xmlunit</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -281,13 +187,12 @@
   <properties>
     <scala.binary.version>2.12</scala.binary.version>
     <maven.compiler.target>17</maven.compiler.target>
-    <spark.version>3.5.4</spark.version>
+    <spark.version>3.5.6</spark.version>
     <jakarta-servlet.version>4.0.3</jakarta-servlet.version>
     <maven.compiler.source>17</maven.compiler.source>
     <jersey.version>2.36</jersey.version>
-    <start-class>org.lakehouse.taskexecutor.TaskExecutorApplication</start-class>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <iceberg-spark.version>1.8.0</iceberg-spark.version>
+    <iceberg-spark.version>1.9.2</iceberg-spark.version>
     <hadoop.version>3.3.4</hadoop.version>
   </properties>
 </project>

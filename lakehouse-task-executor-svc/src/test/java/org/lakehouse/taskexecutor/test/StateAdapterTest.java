@@ -1,6 +1,5 @@
 package org.lakehouse.taskexecutor.test;
 
-import com.hubspot.jinjava.Jinjava;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -9,14 +8,18 @@ import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.configs.DataSetDTO;
 import org.lakehouse.client.api.dto.state.DataSetStateDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
+import org.lakehouse.client.rest.spark.SparkRestClientApi;
 import org.lakehouse.common.api.task.processor.entity.TaskProcessorConfigDTO;
 import org.lakehouse.common.api.task.processor.exception.TaskFailedException;
 import org.lakehouse.taskexecutor.executionmodule.state.DependencyCheckStateTaskProcessor;
 import org.lakehouse.taskexecutor.executionmodule.state.RunningStateTaskProcessor;
 import org.lakehouse.taskexecutor.executionmodule.state.SuccessStateTaskProcessor;
+import org.lakehouse.taskexecutor.test.stub.SparkRestClientApiTest;
 import org.lakehouse.taskexecutor.test.stub.StateRestClientApiTest;
 import org.lakehouse.test.config.configuration.FileLoader;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ContextConfiguration;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
@@ -25,12 +28,17 @@ import java.util.Map;
 import java.util.Set;
 
 @SpringBootTest( properties = {"spring.main.allow-bean-definition-overriding=true"})
+@ContextConfiguration(classes = {
 
+        SparkRestClientApiTest.class
+})
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class StateAdapterTest {
 
     FileLoader fileLoader = new FileLoader();
 
+    @Autowired
+    SparkRestClientApi sparkRestClientApi;
     @Test
     @Order(1)
     public void testSendStateSUCCESS() throws IOException, TaskFailedException {

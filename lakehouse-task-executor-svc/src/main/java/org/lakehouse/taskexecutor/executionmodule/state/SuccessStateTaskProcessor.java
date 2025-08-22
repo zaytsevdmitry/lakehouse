@@ -1,6 +1,5 @@
 package org.lakehouse.taskexecutor.executionmodule.state;
 
-import com.hubspot.jinjava.Jinjava;
 import org.apache.http.HttpStatus;
 import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.state.DataSetStateDTO;

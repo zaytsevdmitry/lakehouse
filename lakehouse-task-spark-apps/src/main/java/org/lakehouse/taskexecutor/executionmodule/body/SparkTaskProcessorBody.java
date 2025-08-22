@@ -1,9 +1,6 @@
 package org.lakehouse.taskexecutor.executionmodule.body;
 
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.spark.sql.SparkSession;
 import org.lakehouse.client.api.dto.configs.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.DataStoreDTO;
@@ -13,7 +10,6 @@ import org.lakehouse.common.api.task.processor.exception.TaskFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -123,6 +119,7 @@ public class SparkTaskProcessorBody extends SparkProcessorBodyAbstract{
                 SparkSession s = SparkSession.getActiveSession().get();
                 if (s != null)
                     s.close();
+
             }
 
         }
@@ -131,10 +128,15 @@ public class SparkTaskProcessorBody extends SparkProcessorBodyAbstract{
     private void prepareSources(
             SparkSession sparkSession,
             Set<DataSetDTO> datasets,
-            Map<String,DataStoreDTO> dataStoreDTOMap){
+            Map<String,DataStoreDTO> dataStoreDTOMap) throws ClassNotFoundException {
         for(DataSetDTO dataSetDTO:datasets){
             DataStoreDTO dataStoreDTO = dataStoreDTOMap.get(dataSetDTO.getDataStoreKeyName());
                 if(dataStoreDTO.getInterfaceType().equals("jdbc")){
+                    logger.info("jdbc url {} user {} password {}",
+                            dataStoreDTO.getUrl(),
+                            dataStoreDTO.getProperties().get("user"),
+                            dataStoreDTO.getProperties().get("password"));
+                    Class.forName("org.postgresql.Driver");
                     Properties properties = new Properties();
                     properties.putAll(dataStoreDTO.getProperties());
                     sparkSession

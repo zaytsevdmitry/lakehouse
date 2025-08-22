@@ -29,8 +29,9 @@
         <module>lakehouse-state-svc</module>
 		<module>lakehouse-jinjava</module>
         <module>lakehouse-task-executor-rest-client</module>
+		<module>lakehouse-spark-rest-client</module>
 
-    </modules>
+	</modules>
 	<properties>
 		<maven.compiler.source>17</maven.compiler.source>
 		<maven.compiler.target>17</maven.compiler.target>

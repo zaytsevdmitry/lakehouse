@@ -388,6 +388,8 @@ public class TestWithPostgres {
 				.findEffectiveScheduleDTOById(initialScheduleDTO.getName());
 		//lastChangeTime untestable
 		scheduleEffectiveDTOExpected.setLastChangedDateTime(scheduleEffectiveDTOResult.getLastChangedDateTime());
+		System.out.println(ObjectMapping.asJsonString(scheduleEffectiveDTOExpected));
+		System.out.println(ObjectMapping.asJsonString(scheduleEffectiveDTOResult));
 		assert (scheduleEffectiveDTOResult.equals(scheduleEffectiveDTOExpected));
 		System.out.println(ObjectMapping.asJsonString(scheduleEffectiveDTOExpected));
 		scheduleEffectiveDTOResult.getScenarioActs().stream()

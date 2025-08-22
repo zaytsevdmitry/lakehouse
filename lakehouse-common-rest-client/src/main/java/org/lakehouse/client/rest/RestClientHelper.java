@@ -18,6 +18,13 @@ public  class RestClientHelper {
         return restClient;
     }
 
+    public  <T> T getDtoOne( String urn, Class<T> clazz) {
+        return restClient
+                .get()
+                .uri(urn)
+                .retrieve()
+                .body(clazz);
+    }
     public  <T> T getDtoOne(String dtoName, String urn, Class<T> clazz) {
         return restClient
                 .get()
@@ -57,7 +64,14 @@ public  class RestClientHelper {
                 .retrieve()
                 .toBodilessEntity().getStatusCode().value();
     }
-
+    public <T> T postDTO(Object o, String urn, Class<T> response) {
+        return restClient.post()
+                .uri(urn)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(o)
+                .retrieve()
+                .body(response);
+    }
     public int deleteDtoByName(String id, String urn) {
         return restClient
                 .delete()

@@ -1,6 +1,5 @@
 package org.lakehouse.taskexecutor.executionmodule.state;
 
-import com.hubspot.jinjava.Jinjava;
 import org.lakehouse.client.api.dto.configs.DataSetDTO;
 import org.lakehouse.client.api.dto.state.DataSetIntervalDTO;
 import org.lakehouse.client.api.dto.state.DataSetStateDTO;

@@ -59,7 +59,10 @@ public class ExecuteService {
         } catch (TaskProcessorConfigurationException e) {
             logger.error("Task creation error ", e);
             taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.CONF_ERROR,e.toString()));
-        } catch (TaskFailedException | RuntimeException e) {
+        } catch (TaskFailedException  e) {
+            logger.error("Task execution error {}", e.getMessage());
+            taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.FAILED, e.toString()));
+        } catch (RuntimeException e) {
             logger.error("Task execution error ", e);
             taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.FAILED, e.toString()));
         } finally {

@@ -1,4 +1,5 @@
 package org.lakehouse.taskexecutor;
+
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -6,8 +7,7 @@ import org.lakehouse.client.api.dto.configs.DataStoreDTO;
 import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.common.api.task.processor.entity.TaskProcessorConfigDTO;
 import org.lakehouse.common.api.task.processor.exception.TaskFailedException;
-import org.lakehouse.taskexecutor.executionmodule.body.SparkTaskProcessorBody;
-import org.springframework.beans.factory.annotation.Value;
+import org.lakehouse.taskexecutor.executionmodule.body.SparkProcessorBodyFactory;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 
@@ -16,10 +16,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 public class SparkTaskProcessorBodyTest {
     String config = "{\n" +
             "  \"executionModuleArgs\" : {\n" +
@@ -540,8 +536,11 @@ public class SparkTaskProcessorBodyTest {
     void testAddition() throws IOException, TaskFailedException, SQLException {
         SparkSession sparkSession = SparkSession
                 .builder()
-                .config("spark.driver.extraJavaOptions","--add-exports java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED")
+                .config("spark.driver.extraJavaOptions","--add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED")
+                .config("spark.executor.extraJavaOptions","--add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED")
                 .master("local[*]")
+               // .master("spark://127.0.0.1:7077")
+                //.config("spark.submit.deployMode", "cluster")
                 .getOrCreate();
 
         TaskProcessorConfigDTO conf = ObjectMapping.stringToObject(config, TaskProcessorConfigDTO.class);
@@ -567,9 +566,10 @@ public class SparkTaskProcessorBodyTest {
                 "reg_date_time  timestamptz" +
                 ")");
 
-
+        SparkProcessorBodyFactory.buildSparkProcessorBody(sparkSession,conf).run();
+        /*org.lakehouse.taskexecutor.executionmodule.body.SparkTaskProcessorBody;
         SparkTaskProcessorBody sparkTaskProcessorBody = new SparkTaskProcessorBody(sparkSession,conf);
-        sparkTaskProcessorBody.run();
+        sparkTaskProcessorBody.run();*/
     }
     private void executeJdbcQuery(String sql) throws SQLException {
         String url = postgres.getJdbcUrl();

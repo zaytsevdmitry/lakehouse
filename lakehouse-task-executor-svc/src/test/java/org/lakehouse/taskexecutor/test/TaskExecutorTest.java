@@ -17,20 +17,25 @@ import org.lakehouse.client.api.serialization.task.ScheduledTaskMsgKafkaDeserial
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
-import org.lakehouse.jinja.java.configuration.JinJavaConfiguration;
-import org.lakehouse.taskexecutor.configuration.ImportBeans;
+import org.lakehouse.client.rest.spark.SparkRestClientApi;
 import org.lakehouse.common.api.task.processor.entity.TaskProcessor;
 import org.lakehouse.common.api.task.processor.exception.TaskFailedException;
+import org.lakehouse.jinja.java.configuration.JinJavaConfiguration;
+import org.lakehouse.taskexecutor.configuration.ImportBeans;
+import org.lakehouse.taskexecutor.configuration.ScheduledTaskKafkaConfigurationProperties;
+import org.lakehouse.taskexecutor.configuration.SparkConfigurationProperties;
 import org.lakehouse.taskexecutor.exception.TaskProcessorConfigurationException;
 import org.lakehouse.taskexecutor.service.TableDefinitionFactory;
 import org.lakehouse.taskexecutor.service.TaskProcessorConfigFactory;
 import org.lakehouse.taskexecutor.service.TaskProcessorFactory;
 import org.lakehouse.taskexecutor.test.stub.ConfigRestClientApiTest;
 import org.lakehouse.taskexecutor.test.stub.SchedulerRestClientApiErrorTest;
+import org.lakehouse.taskexecutor.test.stub.SparkRestClientApiTest;
 import org.lakehouse.taskexecutor.test.stub.StateRestClientApiTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,13 +44,11 @@ import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
-import org.testcontainers.utility.MountableFile;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -76,20 +79,30 @@ import java.util.Map;
                 "lakehouse.task-executor.scheduled.task.kafka.consumer.properties.auto.offset.reset=earliest",
                 "lakehouse.task-executor.scheduled.task.kafka.consumer.topics=test_send_scheduled_task_topic",
                 "lakehouse.client.rest.state=http://state.test.lakehouse.org:12345",
+                "lakehouse.client.rest.spark.server.url=http://localhost:6066/v1/submissions"
         })
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-@ContextConfiguration(classes = {ImportBeans.class, ConfigRestClientApiTest.class, JinJavaConfiguration.class})
+@ContextConfiguration(classes = {
+        ImportBeans.class,
+        ConfigRestClientApiTest.class,
+        JinJavaConfiguration.class,
+        SparkRestClientApiTest.class
+})
+@EnableConfigurationProperties(value =  {
+        SparkConfigurationProperties.class})
 public class TaskExecutorTest {
     @Autowired
     @Qualifier("jinjava")
     Jinjava jinjava;
 
+    @Autowired
+    SparkRestClientApi sparkRestClientApi;
+
+    @Autowired
+    SparkConfigurationProperties sparkConfigurationProperties;
+
     @Value("${lakehouse.task-executor.scheduled.task.kafka.consumer.topics}") String topic;
-    @Bean
-    SchedulerRestClientApi getSchedulerRestClientApi(){
-        return new SchedulerRestClientApiErrorTest();
-    }
 
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine").withDatabaseName("test")
@@ -187,7 +200,7 @@ public class TaskExecutorTest {
         t.setScheduledTaskEffectiveDTO(scheduledTaskDTO);
         TableDefinitionFactory tdf = new TableDefinitionFactory();
         TaskProcessorConfigFactory pcf = new TaskProcessorConfigFactory(configRestClientApi, tdf, jinjava);
-        TaskProcessorFactory pf = new TaskProcessorFactory(new StateRestClientApiTest());
+        TaskProcessorFactory pf = new TaskProcessorFactory(new StateRestClientApiTest(), sparkRestClientApi, sparkConfigurationProperties);
         return pf.buildProcessor(pcf.buildTaskProcessorConfig(t),t.getScheduledTaskEffectiveDTO().getExecutionModule());
     }
 
