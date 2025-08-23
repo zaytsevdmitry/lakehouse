@@ -125,4 +125,8 @@ public class FileLoader {
 		}
 		return result;
 	}
+
+	public QualityMetricsConfDTO loaQualityMetricsConfDTO(String name) throws IOException {
+		return objectMapper.readValue(new File(rootPath.concat(String.format("/quality-metrics/%s.json",name))), QualityMetricsConfDTO.class);
+	}
 }

@@ -9,11 +9,11 @@ import java.util.List;
 
 public interface ScenarioActEdgeRepository extends JpaRepository<ScenarioActEdge, Long> {
 
-	@Query("select p from ScenarioActEdge p where p.schedule.name = ?1")
-	List<ScenarioActEdge> findByScheduleName(String scheduleName);
+	//@Query("select p from ScenarioActEdge p where p.schedule.name = ?1")
+	List<ScenarioActEdge> findByScheduleKeyName(String scheduleName);
 
 	@Modifying
-	@Query("delete  from ScenarioActEdge p where p.schedule.name = ?1")
+	@Query("delete  from ScenarioActEdge p where p.schedule.keyName = ?1")
 	void deleteByScheduleName(String scheduleName);
 
 }

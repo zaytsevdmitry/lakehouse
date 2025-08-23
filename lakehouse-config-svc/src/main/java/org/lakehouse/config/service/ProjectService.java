@@ -22,14 +22,14 @@ public class ProjectService {
 
 	private ProjectDTO mapToDTO(Project project) {
 		ProjectDTO result = new ProjectDTO();
-		result.setName(project.getName());
+		result.setName(project.getKeyName());
 		result.setDescription(project.getDescription());
 		return result;
 	}
 
 	private Project mapToEntity(ProjectDTO projectDTO) {
 		Project result = new Project();
-		result.setName(projectDTO.getName());
+		result.setKeyName(projectDTO.getName());
 		result.setDescription(projectDTO.getDescription());
 		return result;
 	}

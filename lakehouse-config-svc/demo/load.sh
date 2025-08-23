@@ -54,3 +54,10 @@ do
 done
 
 curl -i -X GET 127.0.0.1:8080/v1_0/configs/effective/schedules/name/initial
+
+for s in "transaction_dds_qm"
+do
+   curl -i -X POST 127.0.0.1:8080/v1_0/configs/qualityMetrics \
+     -H "Content-Type: application/json" \
+     --data-binary "@./quality-metrics/$s.json"
+done

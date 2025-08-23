@@ -1,11 +1,13 @@
 package org.lakehouse.taskexecutor.service;
 
-import com.hubspot.jinjava.Jinjava;
+import org.lakehouse.client.rest.spark.SparkRestClientApi;
 import org.lakehouse.client.rest.state.StateRestClientApi;
-import org.lakehouse.taskexecutor.entity.TaskProcessor;
-import org.lakehouse.taskexecutor.entity.TaskProcessorConfig;
+import org.lakehouse.common.api.task.processor.entity.TaskProcessor;
+import org.lakehouse.common.api.task.processor.entity.TaskProcessorConfigDTO;
+import org.lakehouse.taskexecutor.configuration.SparkConfigurationProperties;
 import org.lakehouse.taskexecutor.exception.TaskProcessorConfigurationException;
 import org.lakehouse.taskexecutor.executionmodule.AbstractDefaultTaskProcessor;
+import org.lakehouse.taskexecutor.executionmodule.AbstractSparkDeployTaskProcessor;
 import org.lakehouse.taskexecutor.executionmodule.AbstractStateTaskProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,17 +21,20 @@ import java.lang.reflect.InvocationTargetException;
 public class TaskProcessorFactory {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	private final StateRestClientApi stateRestClientApi;
-	private final Jinjava jinjava;
+	private final SparkRestClientApi sparkRestClientApi;
+	private final SparkConfigurationProperties sparkConfigurationProperties;
 	public TaskProcessorFactory(
-            StateRestClientApi stateRestClientApi,
-			Jinjava jinjava) {
+			StateRestClientApi stateRestClientApi,
+			SparkRestClientApi sparkRestClientApi,
+			SparkConfigurationProperties sparkConfigurationProperties) {
         this.stateRestClientApi = stateRestClientApi;
-        this.jinjava = jinjava;
+		this.sparkConfigurationProperties = sparkConfigurationProperties;
+        this.sparkRestClientApi = sparkRestClientApi;
     }
 
 	private TaskProcessor constructTaskProcessor(
 			Class<?> processorClass,
-			TaskProcessorConfig taskProcessorConfig)
+			TaskProcessorConfigDTO taskProcessorConfigDTO)
             throws  TaskProcessorConfigurationException {
 
 		TaskProcessor result = null;
@@ -40,13 +45,17 @@ public class TaskProcessorFactory {
 
 			if ( AbstractStateTaskProcessor.class.isAssignableFrom(processorClass)) {
 				logger.info("Making State maintenance class instance {}", processorClass.getName());
-				constructor = processorClass.getConstructor(TaskProcessorConfig.class, Jinjava.class, StateRestClientApi.class);
-				result = (TaskProcessor) constructor.newInstance(taskProcessorConfig, jinjava,stateRestClientApi);
+				constructor = processorClass.getConstructor(TaskProcessorConfigDTO.class,  StateRestClientApi.class);
+				result = (TaskProcessor) constructor.newInstance(taskProcessorConfigDTO, stateRestClientApi);
 			}
 			else if ( AbstractDefaultTaskProcessor.class.isAssignableFrom(processorClass)) {
 				logger.info("Making Default processor class instance {}", processorClass.getName());
-				constructor = processorClass.getConstructor(TaskProcessorConfig.class, Jinjava.class);
-				result =  (TaskProcessor) constructor.newInstance(taskProcessorConfig,jinjava);
+				constructor = processorClass.getConstructor(TaskProcessorConfigDTO.class);
+				result =  (TaskProcessor) constructor.newInstance(taskProcessorConfigDTO);
+			}else if ( AbstractSparkDeployTaskProcessor.class.isAssignableFrom(processorClass)) {
+				logger.info("Making Spark deployment processor class instance {}", processorClass.getName());
+				constructor = processorClass.getConstructor(TaskProcessorConfigDTO.class, SparkConfigurationProperties.class, SparkRestClientApi.class);
+				result =  (TaskProcessor) constructor.newInstance(taskProcessorConfigDTO, sparkConfigurationProperties, sparkRestClientApi);
 			}
 			else
 			{
@@ -60,7 +69,7 @@ public class TaskProcessorFactory {
 		return  result;
 	}
 
-    public TaskProcessor buildProcessor(TaskProcessorConfig taskProcessorConfig, String executionModule)
+    public TaskProcessor buildProcessor(TaskProcessorConfigDTO taskProcessorConfigDTO, String executionModule)
             throws TaskProcessorConfigurationException {
 
 		logger.info("Get class for name");
@@ -73,7 +82,7 @@ public class TaskProcessorFactory {
 
         logger.info("Loaded class:{}", processorClass.getName());
 		logger.info("Define constructor");
-		return constructTaskProcessor(processorClass,taskProcessorConfig);
+		return constructTaskProcessor(processorClass, taskProcessorConfigDTO);
 
 	}
 

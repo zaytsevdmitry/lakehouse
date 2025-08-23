@@ -95,8 +95,8 @@ public class ConfigRestClientHelperTest {
 	public void MakesCorrectCallScheduleEffectiveTaskDTO() throws Exception {
 		TaskDTO mergeTaskDTOExpected = new TaskDTO();
 		Map<String,String> mergeTaskDTOExpectedArgs = new HashMap<>();
-		mergeTaskDTOExpectedArgs.put("spark.executor.memory", "5gb");
-		mergeTaskDTOExpectedArgs.put("spark.driver.memory", "2gb");
+		mergeTaskDTOExpectedArgs.put("spark.executor.memory", "5g");
+		mergeTaskDTOExpectedArgs.put("spark.driver.memory", "2g");
 		mergeTaskDTOExpectedArgs.put("spark.driver.cores", "3");
 		mergeTaskDTOExpected.setExecutionModuleArgs(mergeTaskDTOExpectedArgs);
 		mergeTaskDTOExpected.setName("merge");

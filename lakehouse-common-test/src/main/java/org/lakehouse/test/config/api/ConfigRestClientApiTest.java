@@ -91,6 +91,11 @@ public class ConfigRestClientApiTest implements ConfigRestClientApi {
     }
 
     @Override
+    public QualityMetricsConfDTO getQualityMetricsConf(String key) {
+        return null;
+    }
+
+    @Override
     public String getScript(String key) {
         return scriptMap.get(key);
     }
@@ -127,6 +132,16 @@ public class ConfigRestClientApiTest implements ConfigRestClientApi {
 
     @Override
     public List<TaskExecutionServiceGroupDTO> getTaskExecutionServiceGroupDTOList() {
+        return List.of();
+    }
+
+    @Override
+    public List<QualityMetricsConfDTO> getQualityMetricsConfList() {
+        return List.of();
+    }
+
+    @Override
+    public List<QualityMetricsConfDTO> getQualityMetricsConfList(String dataSetKeyName) {
         return List.of();
     }
 
@@ -191,6 +206,10 @@ public class ConfigRestClientApiTest implements ConfigRestClientApi {
          return HTTP_NOT_IMPLEMENTED_501;  
     }
 
+    @Override
+    public int postQualityMetricsConf(QualityMetricsConfDTO o) {
+        return 0;
+    }
 
 
 }

@@ -18,12 +18,13 @@
     {
       "name": "load",
       "taskExecutionServiceGroupName": "default",
-      "executionModule": "org.lakehouse.taskexecutor.executionmodule.SparkTaskProcessor",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.SparkLauncherTaskProcessor",
       "importance": "critical",
       "description": "load from remote datastore",
       "executionModuleArgs": {
-        "spark.executor.memory": "5gb",
-        "spark.driver.memory": "2gb"
+        "spark.executor.memory": "5g",
+        "spark.driver.memory": "2g",
+        "executionBody": "org.lakehouse.taskexecutor.executionmodule.body.SparkTaskProcessorBody"
       }
     },
     {
@@ -33,8 +34,8 @@
       "importance": "critical",
       "description": "load from remote datastore",
       "executionModuleArgs": {
-        "spark.executor.memory": "5gb",
-        "spark.driver.memory": "2gb",
+        "spark.executor.memory": "5g",
+        "spark.driver.memory": "2g",
         "spark.driver.cores": "3"
       }
     },

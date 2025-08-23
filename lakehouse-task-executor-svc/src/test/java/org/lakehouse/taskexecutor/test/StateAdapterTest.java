@@ -1,6 +1,5 @@
 package org.lakehouse.taskexecutor.test;
 
-import com.hubspot.jinjava.Jinjava;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -9,14 +8,18 @@ import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.configs.DataSetDTO;
 import org.lakehouse.client.api.dto.state.DataSetStateDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
-import org.lakehouse.taskexecutor.entity.TaskProcessorConfig;
-import org.lakehouse.taskexecutor.exception.TaskFailedException;
+import org.lakehouse.client.rest.spark.SparkRestClientApi;
+import org.lakehouse.common.api.task.processor.entity.TaskProcessorConfigDTO;
+import org.lakehouse.common.api.task.processor.exception.TaskFailedException;
 import org.lakehouse.taskexecutor.executionmodule.state.DependencyCheckStateTaskProcessor;
 import org.lakehouse.taskexecutor.executionmodule.state.RunningStateTaskProcessor;
 import org.lakehouse.taskexecutor.executionmodule.state.SuccessStateTaskProcessor;
+import org.lakehouse.taskexecutor.test.stub.SparkRestClientApiTest;
 import org.lakehouse.taskexecutor.test.stub.StateRestClientApiTest;
 import org.lakehouse.test.config.configuration.FileLoader;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ContextConfiguration;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
@@ -25,19 +28,24 @@ import java.util.Map;
 import java.util.Set;
 
 @SpringBootTest( properties = {"spring.main.allow-bean-definition-overriding=true"})
+@ContextConfiguration(classes = {
 
+        SparkRestClientApiTest.class
+})
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class StateAdapterTest {
 
     FileLoader fileLoader = new FileLoader();
 
+    @Autowired
+    SparkRestClientApi sparkRestClientApi;
     @Test
     @Order(1)
     public void testSendStateSUCCESS() throws IOException, TaskFailedException {
         OffsetDateTime start = DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-01T00:00:00z");
         OffsetDateTime end   = DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-02T00:00:00z");
 
-        TaskProcessorConfig tpc = new TaskProcessorConfig();
+        TaskProcessorConfigDTO tpc = new TaskProcessorConfigDTO();
         DataSetDTO testDataSet = fileLoader.loadDataSetDTO("client_processing");
         tpc.setTargetDataSet(testDataSet);
         tpc.setIntervalStartDateTime(start);
@@ -45,7 +53,7 @@ public class StateAdapterTest {
 
 
         StateRestClientApiTest stateRestClientApi = new StateRestClientApiTest();
-        SuccessStateTaskProcessor processor = new SuccessStateTaskProcessor(tpc, new Jinjava(), stateRestClientApi);
+        SuccessStateTaskProcessor processor = new SuccessStateTaskProcessor(tpc, stateRestClientApi);
         processor.runTask();
     }
 
@@ -62,7 +70,7 @@ public class StateAdapterTest {
         DataSetDTO testDependencyDataSet = fileLoader.loadDataSetDTO("client_processing");
 
         //config
-        TaskProcessorConfig tpc = new TaskProcessorConfig();
+        TaskProcessorConfigDTO tpc = new TaskProcessorConfigDTO();
         tpc.setTargetDataSet(testTargetDataSet);
         tpc.setIntervalStartDateTime(start);
         tpc.setIntervalEndDateTime(end);
@@ -78,7 +86,7 @@ public class StateAdapterTest {
         StateRestClientApiTest stateRestClientApi = new StateRestClientApiTest(List.of(dataSetStateDTOLocked));
 
         // Execute check
-        DependencyCheckStateTaskProcessor processor = new DependencyCheckStateTaskProcessor(tpc,new Jinjava(),stateRestClientApi);
+        DependencyCheckStateTaskProcessor processor = new DependencyCheckStateTaskProcessor(tpc,stateRestClientApi);
         try {
             processor.runTask();
             throw new Exception("Expect failure, but ....");
@@ -96,7 +104,7 @@ public class StateAdapterTest {
 
 
 
-        TaskProcessorConfig tpc = new TaskProcessorConfig();
+        TaskProcessorConfigDTO tpc = new TaskProcessorConfigDTO();
         DataSetDTO testDataSet = fileLoader.loadDataSetDTO("client_processing");
         tpc.setTargetDataSet(testDataSet);
         tpc.setIntervalStartDateTime(start);
@@ -105,7 +113,7 @@ public class StateAdapterTest {
         tpc.setDataSetDTOSet(Set.of(testDataSet));
 
         StateRestClientApiTest stateRestClientApi = new StateRestClientApiTest();
-        DependencyCheckStateTaskProcessor processor = new DependencyCheckStateTaskProcessor(tpc,new Jinjava(),stateRestClientApi);
+        DependencyCheckStateTaskProcessor processor = new DependencyCheckStateTaskProcessor(tpc,stateRestClientApi);
         processor.runTask();
     }
     @Test
@@ -118,7 +126,7 @@ public class StateAdapterTest {
 
 
 
-        TaskProcessorConfig tpc = new TaskProcessorConfig();
+        TaskProcessorConfigDTO tpc = new TaskProcessorConfigDTO();
         DataSetDTO testDataSet = fileLoader.loadDataSetDTO("client_processing");
         tpc.setTargetDataSet(testDataSet);
         tpc.setIntervalStartDateTime(start);
@@ -127,7 +135,7 @@ public class StateAdapterTest {
         tpc.setDataSetDTOSet(Set.of(testDataSet));
 
         StateRestClientApiTest stateRestClientApi = new StateRestClientApiTest();
-        RunningStateTaskProcessor processor = new RunningStateTaskProcessor(tpc,new Jinjava(),stateRestClientApi);
+        RunningStateTaskProcessor processor = new RunningStateTaskProcessor(tpc, stateRestClientApi);
         processor.runTask();
     }
  }

@@ -16,6 +16,8 @@ public class Endpoint {
 
     public final static String DATA_SETS = CONFIGS + "/datasets";
     public final static String DATA_SETS_NAME = CONFIGS +  "/datasets" + "/{name}";
+    public final static String QUALITY_METRICS = CONFIGS + "/qualityMetrics";
+    public final static String QUALITY_METRICS_NAME = QUALITY_METRICS + "/{name}";
 
     public final static String DATA_STORES = CONFIGS +  "/datastores";
     public final static String DATA_STORES_NAME = DATA_STORES + "/{name}";
@@ -46,5 +48,10 @@ public class Endpoint {
 
     public final static String STATE= ROOT_API_V1_0 + "/state";
     public final static String STATE_DATASET= STATE + "/dataset";
+
+    public final static String TASK_EXECUTOR = ROOT_API_V1_0 + "/taskexecutor";
+    public final static String TASK_EXECUTOR_PROCESSOR = TASK_EXECUTOR + "/processor";
+    public final static String TASK_EXECUTOR_PROCESSOR_CONFIG = TASK_EXECUTOR_PROCESSOR + "/config";
+    public final static String TASK_EXECUTOR_PROCESSOR_GET_BY_LOCK_ID = TASK_EXECUTOR_PROCESSOR_CONFIG + "/lock/{id}";
 
 }

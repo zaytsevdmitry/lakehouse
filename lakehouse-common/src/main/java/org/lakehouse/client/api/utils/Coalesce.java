@@ -1,5 +1,6 @@
 package org.lakehouse.client.api.utils;
 
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,4 +26,8 @@ public class Coalesce {
         return result;
     }
 
+    public static OffsetDateTime apply(OffsetDateTime odt1, OffsetDateTime odt2){
+        if (odt1 == null ) return odt2;
+        else return odt1;
+    }
 }

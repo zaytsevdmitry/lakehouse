@@ -1,12 +1,11 @@
 package org.lakehouse.taskexecutor.executionmodule.state;
 
-import com.hubspot.jinjava.Jinjava;
 import org.apache.http.HttpStatus;
 import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.state.DataSetStateDTO;
 import org.lakehouse.client.rest.state.StateRestClientApi;
-import org.lakehouse.taskexecutor.entity.TaskProcessorConfig;
-import org.lakehouse.taskexecutor.exception.TaskFailedException;
+import org.lakehouse.common.api.task.processor.entity.TaskProcessorConfigDTO;
+import org.lakehouse.common.api.task.processor.exception.TaskFailedException;
 import org.lakehouse.taskexecutor.executionmodule.AbstractStateTaskProcessor;
 import org.lakehouse.taskexecutor.service.DataSetStateDTOFactory;
 import org.slf4j.Logger;
@@ -16,10 +15,9 @@ public class RunningStateTaskProcessor extends AbstractStateTaskProcessor {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public RunningStateTaskProcessor(
-            TaskProcessorConfig taskProcessorConfig,
-            Jinjava jinjava,
+            TaskProcessorConfigDTO taskProcessorConfigDTO,
             StateRestClientApi stateRestClientApi) {
-        super(taskProcessorConfig, jinjava, stateRestClientApi);
+        super(taskProcessorConfigDTO, stateRestClientApi);
     }
 
 

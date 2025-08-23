@@ -15,8 +15,9 @@ public class Mapper {
 		taskDTO.setDescription(taskAbstract.getDescription());
 		taskDTO.setImportance(taskAbstract.getImportance());
 		taskDTO.setExecutionModule(taskAbstract.getExecutionModule());
-		taskDTO.setTaskExecutionServiceGroupName(taskAbstract.getTaskExecutionServiceGroup().getName());
+		taskDTO.setTaskExecutionServiceGroupName(taskAbstract.getTaskExecutionServiceGroup().getKeyName());
 		taskDTO.setExecutionModuleArgs(executionModuleArgs);
 		return taskDTO;
 	}
+
 }

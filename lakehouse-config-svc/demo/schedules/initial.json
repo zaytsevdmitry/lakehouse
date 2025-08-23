@@ -27,7 +27,7 @@
           "importance": "critical",
           "description": "override load",
           "executionModuleArgs": {
-            "spark.executor.memory": "1gb",
+            "spark.executor.memory": "1g",
             "spark.executor.cores": "2"
           }
         },
@@ -72,7 +72,7 @@
           "importance": "critical",
           "description": "override load",
           "executionModuleArgs": {
-            "spark.executor.memory": "1gb",
+            "spark.executor.memory": "1g",
             "spark.executor.cores": "2"
           }
         },
@@ -105,24 +105,26 @@
         {
           "name": "extend",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.SparkTaskProcessor",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.SparkLauncherTaskProcessor",
           "importance": "critical",
           "description": "Not exists in template",
           "executionModuleArgs": {
-            "spark.executor.memory": "5gb",
-            "spark.driver.memory": "2gb"
+            "spark.executor.memory": "5g",
+            "spark.driver.memory": "2g",
+            "executionBody": "org.lakehouse.taskexecutor.executionmodule.body.SparkTaskProcessorBody"
           }
         },
         {
           "name": "load",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.SparkTaskProcessor",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.SparkLauncherTaskProcessor",
           "importance": "critical",
           "description": "override load",
           "executionModuleArgs": {
-            "spark.executor.memory": "1gb",
-            "spark.driver.memory": "2gb",
-            "spark.executor.cores": "2"
+            "spark.executor.memory": "1g",
+            "spark.driver.memory": "2g",
+            "spark.executor.cores": "2",
+            "executionBody": "org.lakehouse.taskexecutor.executionmodule.body.SparkTaskProcessorBody"
           }
         }
       ],

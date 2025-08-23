@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>lakehouse</groupId>
 	<artifactId>lakehouse-parent</artifactId>
-	<version>0.2.0</version>
+	<version>0.3.0</version>
 	<packaging>pom</packaging>
 	<modules>
 		<module>lakehouse-common</module>
@@ -20,14 +20,17 @@
 		<module>lakehouse-scheduler-svc</module>
 		<module>lakehouse-state-rest-client</module>
 		<module>lakehouse-task-executor-svc</module>
-		<module>lakehouse-task-coordinator-svc</module>
+		<module>lakehouse-task-spark-apps</module>
 		<module>lakehouse-ui-svc</module>
         <module>lakehouse-cli</module>
         <module>lakehouse-common-test</module>
         <module>lakehouse-common-rest-client</module>
         <module>lakehouse-state-svc</module>
+		<module>lakehouse-jinjava</module>
+        <module>lakehouse-task-executor-rest-client</module>
+		<module>lakehouse-spark-rest-client</module>
 
-    </modules>
+	</modules>
 	<properties>
 		<maven.compiler.source>17</maven.compiler.source>
 		<maven.compiler.target>17</maven.compiler.target>

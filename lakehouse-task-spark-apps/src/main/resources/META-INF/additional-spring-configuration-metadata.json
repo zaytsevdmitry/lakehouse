@@ -1,0 +1,37 @@
+{"properties": [
+  {
+    "name": "lakehouse.api.client.server.path",
+    "type": "java.lang.String",
+    "description": "A description for 'lakehouse.api.client.server.path'"
+  },
+  {
+    "name": "lakehouse.taskexecutor.schedule.lock-task.delay-ms",
+    "type": "java.lang.String",
+    "description": "A description for 'lakehouse.taskexecutor.schedule.lock-task.delay-ms'"
+  },
+  {
+    "name": "lakehouse.taskexecutor.schedule.lock-task.initial-delay-ms",
+    "type": "java.lang.String",
+    "description": "A description for 'lakehouse.taskexecutor.schedule.lock-task.initial-delay-ms'"
+  },
+  {
+    "name": "lakehouse.taskexecutor.schedule.heardBeatTask.delay-ms",
+    "type": "java.lang.String",
+    "description": "A description for 'lakehouse.taskexecutor.schedule.heardBeatTask.delay-ms'"
+  },
+  {
+    "name": "lakehouse.taskexecutor.schedule.heardBeatTask.initial-delay-ms",
+    "type": "java.lang.String",
+    "description": "A description for 'lakehouse.taskexecutor.schedule.heardBeatTask.initial-delay-ms'"
+  },
+  {
+    "name": "lakehouse.taskexecutor.service.group-name",
+    "type": "java.lang.String",
+    "description": "A description for 'lakehouse.taskexecutor.service.group-name'"
+  },
+  {
+    "name": "lakehouse.taskexecutor.service.id",
+    "type": "java.lang.String",
+    "description": "A description for 'lakehouse.taskexecutor.service.id'"
+  }
+]}

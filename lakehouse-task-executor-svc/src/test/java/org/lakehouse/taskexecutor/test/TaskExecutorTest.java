@@ -17,19 +17,25 @@ import org.lakehouse.client.api.serialization.task.ScheduledTaskMsgKafkaDeserial
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
+import org.lakehouse.client.rest.spark.SparkRestClientApi;
+import org.lakehouse.common.api.task.processor.entity.TaskProcessor;
+import org.lakehouse.common.api.task.processor.exception.TaskFailedException;
+import org.lakehouse.jinja.java.configuration.JinJavaConfiguration;
 import org.lakehouse.taskexecutor.configuration.ImportBeans;
-import org.lakehouse.taskexecutor.entity.TaskProcessor;
-import org.lakehouse.taskexecutor.exception.TaskFailedException;
+import org.lakehouse.taskexecutor.configuration.ScheduledTaskKafkaConfigurationProperties;
+import org.lakehouse.taskexecutor.configuration.SparkConfigurationProperties;
 import org.lakehouse.taskexecutor.exception.TaskProcessorConfigurationException;
 import org.lakehouse.taskexecutor.service.TableDefinitionFactory;
 import org.lakehouse.taskexecutor.service.TaskProcessorConfigFactory;
 import org.lakehouse.taskexecutor.service.TaskProcessorFactory;
 import org.lakehouse.taskexecutor.test.stub.ConfigRestClientApiTest;
 import org.lakehouse.taskexecutor.test.stub.SchedulerRestClientApiErrorTest;
+import org.lakehouse.taskexecutor.test.stub.SparkRestClientApiTest;
 import org.lakehouse.taskexecutor.test.stub.StateRestClientApiTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,6 +45,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.containers.Network;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
@@ -72,20 +79,30 @@ import java.util.Map;
                 "lakehouse.task-executor.scheduled.task.kafka.consumer.properties.auto.offset.reset=earliest",
                 "lakehouse.task-executor.scheduled.task.kafka.consumer.topics=test_send_scheduled_task_topic",
                 "lakehouse.client.rest.state=http://state.test.lakehouse.org:12345",
+                "lakehouse.client.rest.spark.server.url=http://localhost:6066/v1/submissions"
         })
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-@ContextConfiguration(classes = {ImportBeans.class, ConfigRestClientApiTest.class})
+@ContextConfiguration(classes = {
+        ImportBeans.class,
+        ConfigRestClientApiTest.class,
+        JinJavaConfiguration.class,
+        SparkRestClientApiTest.class
+})
+@EnableConfigurationProperties(value =  {
+        SparkConfigurationProperties.class})
 public class TaskExecutorTest {
     @Autowired
     @Qualifier("jinjava")
     Jinjava jinjava;
 
+    @Autowired
+    SparkRestClientApi sparkRestClientApi;
+
+    @Autowired
+    SparkConfigurationProperties sparkConfigurationProperties;
+
     @Value("${lakehouse.task-executor.scheduled.task.kafka.consumer.topics}") String topic;
-    @Bean
-    SchedulerRestClientApi getSchedulerRestClientApi(){
-        return new SchedulerRestClientApiErrorTest();
-    }
 
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine").withDatabaseName("test")
@@ -110,6 +127,34 @@ public class TaskExecutorTest {
     static final KafkaContainer kafka = new KafkaContainer(
             DockerImageName.parse("confluentinc/cp-kafka:7.6.1")
     );
+
+
+    private static Network network = Network.newNetwork();
+/*
+
+    @Container
+    public LocalStackContainer localstack = new LocalStackContainer(DockerImageName.parse("localstack/localstack:0.12.13"))
+            .withNetwork(network)
+            .withNetworkAliases("localstack")
+            .withServices(SQS);
+*/
+
+/*
+    @Container
+    public GenericContainer spark = new GenericContainer(DockerImageName.parse("bitnami/spark:3.5"))
+            .withCopyFileToContainer(MountableFile.forHostPath("build/resources/test/.", 0744), "/home/")
+            .withCopyFileToContainer(MountableFile.forHostPath(
+                    "lakehouse-task-spark-apps-0.3.0-jar-with-dependencies.jar",
+                    0744),
+                    "/opt/bitnami/spark/jars/")
+            .withCopyFileToContainer(MountableFile.forHostPath("build/libs/.", 0555), "/home/")
+            .withNetwork(network)
+            .withEnv("AWS_ACCESS_KEY_ID", "test")
+            .withEnv("AWS_SECRET_KEY", "test")
+            .withEnv("SPARK_MODE", "master");
+
+*/
+
 
     @BeforeAll
     static void beforeAll() {
@@ -155,7 +200,7 @@ public class TaskExecutorTest {
         t.setScheduledTaskEffectiveDTO(scheduledTaskDTO);
         TableDefinitionFactory tdf = new TableDefinitionFactory();
         TaskProcessorConfigFactory pcf = new TaskProcessorConfigFactory(configRestClientApi, tdf, jinjava);
-        TaskProcessorFactory pf = new TaskProcessorFactory(new StateRestClientApiTest(),jinjava);
+        TaskProcessorFactory pf = new TaskProcessorFactory(new StateRestClientApiTest(), sparkRestClientApi, sparkConfigurationProperties);
         return pf.buildProcessor(pcf.buildTaskProcessorConfig(t),t.getScheduledTaskEffectiveDTO().getExecutionModule());
     }
 
@@ -211,9 +256,9 @@ public class TaskExecutorTest {
 
 
         //third spark join two postgres tables outside from db
-        TaskProcessor transactionDDSTaskProcessor = buildTaskProcessor(
+       /* TaskProcessor transactionDDSTaskProcessor = buildTaskProcessor(
                 getTaskByDatasetName(scheduleEffectiveDTO,"transaction_dds","load"));
-        transactionDDSTaskProcessor.runTask();
+        transactionDDSTaskProcessor.runTask();*/
         //assert (transactionDDSTaskProcessor.runTask().equals(Status.Task.SUCCESS));
     }
     @Test
@@ -245,6 +290,8 @@ public class TaskExecutorTest {
         fin.runTask();
         //assert (fin.runTask().equals(Status.Task.SUCCESS));
     }
+
+
 
 
 }

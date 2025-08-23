@@ -31,13 +31,13 @@ public class DataStoreService {
 
 	private DataStoreDTO mapDataStoreToDTO(DataStore dataStore) {
 		DataStoreDTO result = new DataStoreDTO();
-		result.setName(dataStore.getName());
+		result.setName(dataStore.getKeyName());
 		result.setDescription(dataStore.getDescription());
 		result.setInterfaceType(dataStore.getInterfaceType());
 		result.setVendor(dataStore.getVendor());
 		result.setUrl(dataStore.getUrl());
 		Map<String, String> properties = new HashMap<>();
-		dataStorePropertyRepository.findByDataStoreName(dataStore.getName())
+		dataStorePropertyRepository.findByDataStoreKeyName(dataStore.getKeyName())
 				.forEach(dataStoreProperty -> properties.put(dataStoreProperty.getKey(), dataStoreProperty.getValue()));
 		result.setProperties(properties);
 		return result;
@@ -45,7 +45,7 @@ public class DataStoreService {
 
 	private DataStore mapDataStoreToEntity(DataStoreDTO dataStore) {
 		DataStore result = new DataStore();
-		result.setName(dataStore.getName());
+		result.setKeyName(dataStore.getName());
 		result.setDescription(dataStore.getDescription());
 		result.setVendor(dataStore.getVendor());
 		result.setInterfaceType(dataStore.getInterfaceType());
@@ -61,7 +61,7 @@ public class DataStoreService {
 	public DataStoreDTO save(DataStoreDTO dataStoreDTO) {
 		DataStore dataStore = dataStoreRepository.save(mapDataStoreToEntity(dataStoreDTO));
 		List<DataStoreProperty> dataStorePropertiesBeforeChange = dataStorePropertyRepository
-				.findByDataStoreName(dataStore.getName());
+				.findByDataStoreKeyName(dataStore.getKeyName());
 
 		dataStorePropertiesBeforeChange.forEach(dataStoreProperty -> {
 			if (!dataStoreDTO.getProperties().containsKey(dataStoreProperty.getKey())) {

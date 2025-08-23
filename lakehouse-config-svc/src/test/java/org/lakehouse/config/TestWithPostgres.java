@@ -8,6 +8,7 @@ import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.config.entities.Schedule;
 import org.lakehouse.config.entities.scenario.ScenarioAct;
 import org.lakehouse.config.repository.*;
+import org.lakehouse.config.service.QualityMetricsConfService;
 import org.lakehouse.config.service.ScenarioActTemplateService;
 import org.lakehouse.config.service.ScheduleService;
 import org.lakehouse.config.test.configutation.RestManipulator;
@@ -44,6 +45,8 @@ public class TestWithPostgres {
 	@Autowired ScheduleService scheduleService;
 	@Autowired
 	ScenarioActTemplateService scenarioActTemplateService;
+	@Autowired
+	QualityMetricsConfService qualityMetricsConfService;
 	@Autowired
 	ScheduleRepository scheduleRepository;
 	@Autowired
@@ -269,7 +272,7 @@ public class TestWithPostgres {
 		ProjectDTO projectDTO = putProjectDTO();
 		DataSetDTO dto = putDataSetDTO("client_processing");
 
-		schedule.setName("TestScheduel");
+		schedule.setKeyName("TestScheduel");
 		schedule.setDescription("TestScheduel");
 		schedule.setEnabled(true);
 		schedule.setIntervalExpression("********");
@@ -285,9 +288,9 @@ public class TestWithPostgres {
 		sa.setIntervalEnd("");
 		scenarioActRepository.save(sa);
 		
-		assert(	scenarioActRepository.findByScheduleName(schedule.getName()).size() ==1);
+		assert(	scenarioActRepository.findByScheduleKeyName(schedule.getKeyName()).size() ==1);
 		// test up config version number
-		ScheduleDTO scheduleDTO = scheduleService.findDtoById(schedule.getName());
+		ScheduleDTO scheduleDTO = scheduleService.findDtoById(schedule.getKeyName());
 		ScheduleScenarioActDTO emptyScenario = new ScheduleScenarioActDTO();
 		emptyScenario.setIntervalStart("1");
 		emptyScenario.setIntervalEnd("2");
@@ -385,6 +388,8 @@ public class TestWithPostgres {
 				.findEffectiveScheduleDTOById(initialScheduleDTO.getName());
 		//lastChangeTime untestable
 		scheduleEffectiveDTOExpected.setLastChangedDateTime(scheduleEffectiveDTOResult.getLastChangedDateTime());
+		System.out.println(ObjectMapping.asJsonString(scheduleEffectiveDTOExpected));
+		System.out.println(ObjectMapping.asJsonString(scheduleEffectiveDTOResult));
 		assert (scheduleEffectiveDTOResult.equals(scheduleEffectiveDTOExpected));
 		System.out.println(ObjectMapping.asJsonString(scheduleEffectiveDTOExpected));
 		scheduleEffectiveDTOResult.getScenarioActs().stream()
@@ -469,13 +474,14 @@ public class TestWithPostgres {
 		// override template
 		TaskDTO loadTaskDTOExpected = new TaskDTO();
 		Map<String,String> loadExpectArgs = new HashMap<>();
-		loadExpectArgs.put("spark.executor.memory", "1gb");
+		loadExpectArgs.put("spark.executor.memory", "1g");
 		loadExpectArgs.put( "spark.executor.cores", "2");
-		loadExpectArgs.put( "spark.driver.memory", "2gb");
+		loadExpectArgs.put( "spark.driver.memory", "2g");
+		loadExpectArgs.put( "executionBody", "org.lakehouse.taskexecutor.executionmodule.body.SparkTaskProcessorBody");
 		loadTaskDTOExpected.setExecutionModuleArgs(loadExpectArgs);
 		loadTaskDTOExpected.setName("load");
 		loadTaskDTOExpected.setTaskExecutionServiceGroupName("default");
-		loadTaskDTOExpected.setExecutionModule("org.lakehouse.taskexecutor.executionmodule.SparkTaskProcessor");
+		loadTaskDTOExpected.setExecutionModule("org.lakehouse.taskexecutor.executionmodule.SparkLauncherTaskProcessor");
 		loadTaskDTOExpected.setImportance("critical");
 		loadTaskDTOExpected.setDescription("override load");
 		TaskDTO loadTaskDTO   = scheduleService.getEffectiveTaskDTO(initialScheduleDTO.getName(), "transaction_dds", "load");
@@ -484,12 +490,13 @@ public class TestWithPostgres {
 		// not exists in template
 		TaskDTO extendTaskDTOExpected = new TaskDTO();
 		Map<String,String> extendTaskDTOExpectedArgs = new HashMap<>();
-		extendTaskDTOExpectedArgs.put("spark.executor.memory","5gb");
-		extendTaskDTOExpectedArgs.put("spark.driver.memory","2gb");
+		extendTaskDTOExpectedArgs.put("spark.executor.memory","5g");
+		extendTaskDTOExpectedArgs.put("spark.driver.memory","2g");
+		extendTaskDTOExpectedArgs.put( "executionBody", "org.lakehouse.taskexecutor.executionmodule.body.SparkTaskProcessorBody");
 		extendTaskDTOExpected.setExecutionModuleArgs(extendTaskDTOExpectedArgs);
 		extendTaskDTOExpected.setName("extend");
 		extendTaskDTOExpected.setTaskExecutionServiceGroupName("default");
-		extendTaskDTOExpected.setExecutionModule("org.lakehouse.taskexecutor.executionmodule.SparkTaskProcessor");
+		extendTaskDTOExpected.setExecutionModule("org.lakehouse.taskexecutor.executionmodule.SparkLauncherTaskProcessor");
 		extendTaskDTOExpected.setImportance("critical");
 		extendTaskDTOExpected.setDescription("Not exists in template");
 		TaskDTO extendTaskDTO = scheduleService.getEffectiveTaskDTO(initialScheduleDTO.getName(), "transaction_dds", "extend");
@@ -499,8 +506,8 @@ public class TestWithPostgres {
 		// exists only in template
 		TaskDTO mergeTaskDTOExpected = new TaskDTO();
 		Map<String,String> mergeTaskDTOExpectedArgs = new HashMap<>();
-		mergeTaskDTOExpectedArgs.put("spark.executor.memory", "5gb");
-		mergeTaskDTOExpectedArgs.put("spark.driver.memory", "2gb");
+		mergeTaskDTOExpectedArgs.put("spark.executor.memory", "5g");
+		mergeTaskDTOExpectedArgs.put("spark.driver.memory", "2g");
 		mergeTaskDTOExpectedArgs.put("spark.driver.cores", "3");
 		mergeTaskDTOExpected.setExecutionModuleArgs(mergeTaskDTOExpectedArgs);
 		mergeTaskDTOExpected.setName("merge");
@@ -526,5 +533,20 @@ public class TestWithPostgres {
 		restManipulator.deleteDTO(projectDTO.getName(), Endpoint.PROJECTS_NAME);
 
 	}
+	@Test
+	@Order(11)
+	void saveQualityMetricsService() throws Exception {
+		putProjectDTO();
+		putDataStoreDTO("lakehousestorage");
+		putDataStoreDTO("processingdb");
+		putDataSetDTO("client_processing");
+		putDataSetDTO("transaction_processing");
+		putDataSetDTO("transaction_dds");
+		QualityMetricsConfDTO expected = fileLoader.loaQualityMetricsConfDTO("transaction_dds_qm");
+		QualityMetricsConfDTO resulted = qualityMetricsConfService.save(expected);
 
+		System.out.println(ObjectMapping.asJsonString(expected));
+		System.out.println(ObjectMapping.asJsonString(resulted));
+		assert (expected.equals(resulted));
+	}
 }
