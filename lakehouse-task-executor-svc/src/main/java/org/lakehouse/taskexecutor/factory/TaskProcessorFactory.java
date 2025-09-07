@@ -1,4 +1,4 @@
-package org.lakehouse.taskexecutor.service;
+package org.lakehouse.taskexecutor.factory;
 
 import org.lakehouse.client.rest.spark.SparkRestClientApi;
 import org.lakehouse.client.rest.state.StateRestClientApi;

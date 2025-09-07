@@ -1,14 +1,17 @@
-package org.lakehouse.client.api.dto.configs;
+package org.lakehouse.client.api.dto.configs.dataset;
+
+import org.lakehouse.client.api.constant.Types;
 
 import java.util.Objects;
 
 public class DataSetConstraintDTO {
     private String name;
-    private String type;
+    private Types.Constraint type;
     private String columns;
     private boolean enabled;
     private boolean runtimeLevelCheck;
     private boolean constructLevelCheck;
+    private ReferenceDTO reference;
 
     public DataSetConstraintDTO() {
     }
@@ -21,11 +24,11 @@ public class DataSetConstraintDTO {
         this.name = name;
     }
 
-    public String getType() {
+    public Types.Constraint getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(Types.Constraint type) {
         this.type = type;
     }
 
@@ -62,6 +65,14 @@ public class DataSetConstraintDTO {
         this.constructLevelCheck = constructLevelCheck;
     }
 
+    public ReferenceDTO getReference() {
+        return reference;
+    }
+
+    public void setReference(ReferenceDTO reference) {
+        this.reference = reference;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
@@ -71,7 +82,8 @@ public class DataSetConstraintDTO {
                 && isConstructLevelCheck() == that.isConstructLevelCheck()
                 && Objects.equals(getName(), that.getName())
                 && Objects.equals(getType(), that.getType())
-                && Objects.equals(getColumns(), that.getColumns());
+                && Objects.equals(getColumns(), that.getColumns())
+                && Objects.equals(getReference(), that.getReference());
     }
 
     @Override
@@ -81,6 +93,8 @@ public class DataSetConstraintDTO {
                 getColumns(),
                 isEnabled(),
                 isRuntimeLevelCheck(),
-                isConstructLevelCheck());
+                isConstructLevelCheck(),
+                getReference()
+        );
     }
 }

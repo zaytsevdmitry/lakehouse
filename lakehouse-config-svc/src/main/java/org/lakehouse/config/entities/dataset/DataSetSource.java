@@ -1,4 +1,4 @@
-package org.lakehouse.config.entities;
+package org.lakehouse.config.entities.dataset;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;

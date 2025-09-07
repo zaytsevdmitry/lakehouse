@@ -2,6 +2,7 @@ package org.lakehouse.test.config.configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.lakehouse.client.api.dto.configs.*;
+import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 
 import java.io.DataInputStream;
 import java.io.File;

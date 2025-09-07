@@ -1,6 +1,9 @@
-package org.lakehouse.config.entities;
+package org.lakehouse.config.entities.dataset;
 
 import jakarta.persistence.*;
+import org.lakehouse.config.entities.DataStore;
+import org.lakehouse.config.entities.KeyEntityAbstract;
+import org.lakehouse.config.entities.Project;
 
 import java.util.Objects;
 

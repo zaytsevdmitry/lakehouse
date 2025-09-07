@@ -56,6 +56,17 @@
       "columns": "id",
       "runtimeLevelCheck": false,
       "constructLevelCheck": true
+    },
+    {
+      "name": "transaction_processing_client_fk",
+      "type": "foreign",
+      "columns": "client_id",
+      "reference": {
+         "dataSetKeyName": "client_processing",
+         "constraintName": "client_processing_pk"
+      },
+      "runtimeLevelCheck": false,
+      "constructLevelCheck": true
     }
   ],
   "properties": {

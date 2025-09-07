@@ -1,4 +1,4 @@
-package org.lakehouse.client.api.dto.configs;
+package org.lakehouse.client.api.dto.configs.dataset;
 
 import java.io.Serializable;
 import java.util.HashMap;

@@ -566,7 +566,7 @@ public class SparkTaskProcessorBodyTest {
                 "reg_date_time  timestamptz" +
                 ")");
 
-        SparkProcessorBodyFactory.buildSparkProcessorBody(sparkSession,conf).run();
+        SparkProcessorBodyFactory.buildSparkProcessorBody(sparkSession, new String[]{config}).run();
         /*org.lakehouse.taskexecutor.executionmodule.body.SparkTaskProcessorBody;
         SparkTaskProcessorBody sparkTaskProcessorBody = new SparkTaskProcessorBody(sparkSession,conf);
         sparkTaskProcessorBody.run();*/

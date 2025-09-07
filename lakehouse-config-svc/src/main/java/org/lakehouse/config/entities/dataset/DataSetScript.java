@@ -1,8 +1,9 @@
-package org.lakehouse.config.entities;
+package org.lakehouse.config.entities.dataset;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.lakehouse.config.entities.Script;
 
 import java.util.Objects;
 
@@ -13,7 +14,7 @@ public class DataSetScript {
 
 	@ManyToOne(optional = false)
 	@JoinColumn(foreignKey = @ForeignKey(name = "data_set_script__script_fk"))
-	Script script;
+    Script script;
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

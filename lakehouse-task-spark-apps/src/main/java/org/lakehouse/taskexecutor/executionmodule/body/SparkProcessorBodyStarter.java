@@ -14,9 +14,8 @@ public class SparkProcessorBodyStarter {
         Logger logger = LoggerFactory.getLogger(SparkProcessorBodyStarter.class);
         if( args.length >= 1){
 
-            TaskProcessorConfigDTO taskProcessorConfigDTO = ObjectMapping.stringToObject(args[0], TaskProcessorConfigDTO.class);
             SparkSession sparkSession = SparkSession.builder().getOrCreate();
-            SparkProcessorBody body = SparkProcessorBodyFactory.buildSparkProcessorBody(sparkSession,taskProcessorConfigDTO);
+            SparkProcessorBody body = SparkProcessorBodyFactory.buildSparkProcessorBody(sparkSession,args);
             body.run();
 
         } else {

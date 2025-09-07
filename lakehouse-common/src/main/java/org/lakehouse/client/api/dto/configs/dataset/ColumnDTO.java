@@ -1,7 +1,9 @@
-package org.lakehouse.client.api.dto.configs;
+package org.lakehouse.client.api.dto.configs.dataset;
+import org.lakehouse.client.api.dto.configs.NameDescriptionAbstract;
+
 import java.util.Objects;
 
-public class ColumnDTO extends NameDescriptionAbstract{
+public class ColumnDTO extends NameDescriptionAbstract {
 
 
 	private static final long serialVersionUID = -8442899990290676056L;

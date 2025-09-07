@@ -2,6 +2,7 @@ package org.lakehouse.taskexecutor.test.stub;
 
 import org.apache.http.HttpStatus;
 import org.lakehouse.client.api.dto.configs.*;
+import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.test.config.configuration.FileLoader;
 import org.slf4j.Logger;
@@ -17,7 +18,7 @@ public class ConfigRestClientApiTest implements ConfigRestClientApi {
     private final FileLoader fileLoader = new FileLoader();
     private final Map<String, TaskDTO> taskDTOEffectiveMap = new HashMap<>();
     private final Map<String,String> scriptMap;
-    private final Map<String,DataSetDTO> dataSetDTOMap;
+    private final Map<String, DataSetDTO> dataSetDTOMap;
     private final Map<String,DataStoreDTO> dataStoreDTOMap;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());

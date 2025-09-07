@@ -3,7 +3,7 @@ package org.lakehouse.config.entities.dq;
 import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
-import org.lakehouse.config.entities.DataSet;
+import org.lakehouse.config.entities.dataset.DataSet;
 
 import java.util.Objects;
 @Entity

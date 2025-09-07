@@ -21,6 +21,7 @@
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-common-rest-client</artifactId>
             <version>0.3.0</version>
+            <scope>compile</scope>
         </dependency>
 
         <!--Test-->
@@ -53,12 +54,6 @@
             <artifactId>lakehouse-common-test</artifactId>
             <version>0.3.0</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>lakehouse</groupId>
-            <artifactId>lakehouse-common-rest-client</artifactId>
-            <version>0.3.0</version>
-            <scope>compile</scope>
         </dependency>
     </dependencies>
 </project>

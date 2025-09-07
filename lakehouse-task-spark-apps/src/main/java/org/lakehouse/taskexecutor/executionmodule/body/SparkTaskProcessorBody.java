@@ -2,10 +2,9 @@ package org.lakehouse.taskexecutor.executionmodule.body;
 
 
 import org.apache.spark.sql.SparkSession;
-import org.lakehouse.client.api.dto.configs.DataSetDTO;
+import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.DataStoreDTO;
 import org.lakehouse.common.api.task.processor.entity.TableDefinition;
-import org.lakehouse.common.api.task.processor.entity.TaskProcessorConfigDTO;
 import org.lakehouse.common.api.task.processor.exception.TaskFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,10 +18,8 @@ import java.util.stream.Collectors;
 //todo this is demo. ad-hoc experimental  code
 public class SparkTaskProcessorBody extends SparkProcessorBodyAbstract{
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    public SparkTaskProcessorBody(
-            SparkSession sparkSession,
-            TaskProcessorConfigDTO taskProcessorConfigDTO) {
-        super(sparkSession,taskProcessorConfigDTO);
+    public SparkTaskProcessorBody(BodyParam bodyParam) {
+        super(bodyParam);
     }
 
 

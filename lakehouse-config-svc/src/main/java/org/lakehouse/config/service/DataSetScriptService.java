@@ -1,8 +1,8 @@
 package org.lakehouse.config.service;
 
-import org.lakehouse.client.api.dto.configs.DataSetScriptDTO;
-import org.lakehouse.config.entities.DataSetScript;
-import org.lakehouse.config.repository.DataSetScriptRepository;
+import org.lakehouse.client.api.dto.configs.dataset.DataSetScriptDTO;
+import org.lakehouse.config.entities.dataset.DataSetScript;
+import org.lakehouse.config.repository.dataset.DataSetScriptRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

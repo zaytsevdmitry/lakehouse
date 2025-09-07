@@ -1,11 +1,14 @@
-package org.lakehouse.config.entities;
+package org.lakehouse.config.entities.dataset;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.lakehouse.client.api.constant.Types;
 
 import java.util.Objects;
 @Entity
+@Table(uniqueConstraints = @UniqueConstraint(name = "data_set_constraint__uk", columnNames = {
+        "data_set_key_name", "name" }))
 public class DataSetConstraint {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,7 +23,7 @@ public class DataSetConstraint {
     private String name;
 
     @Column(nullable = false)
-    private String type;
+    private Types.Constraint type;
 
     @Column(nullable = false)
     private String columns;
@@ -61,11 +64,11 @@ public class DataSetConstraint {
         this.name = name;
     }
 
-    public String getType() {
+    public Types.Constraint getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(Types.Constraint type) {
         this.type = type;
     }
 

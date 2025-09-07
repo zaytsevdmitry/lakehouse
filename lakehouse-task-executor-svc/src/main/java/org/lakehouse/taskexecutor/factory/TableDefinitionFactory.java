@@ -1,9 +1,9 @@
-package org.lakehouse.taskexecutor.service;
+package org.lakehouse.taskexecutor.factory;
 
-import org.lakehouse.client.api.constant.Constraint;
-import org.lakehouse.client.api.dto.configs.ColumnDTO;
-import org.lakehouse.client.api.dto.configs.DataSetConstraintDTO;
-import org.lakehouse.client.api.dto.configs.DataSetDTO;
+import org.lakehouse.client.api.constant.Types;
+import org.lakehouse.client.api.dto.configs.dataset.ColumnDTO;
+import org.lakehouse.client.api.dto.configs.dataset.DataSetConstraintDTO;
+import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.DataStoreDTO;
 import org.lakehouse.common.api.task.processor.entity.TableDefinition;
 import org.springframework.stereotype.Service;
@@ -76,7 +76,7 @@ public class TableDefinitionFactory {
 
        return   constraints.stream()
                 .filter(c ->
-                        Constraint.Key.valueOf( c.getType()).equals(Constraint.Key.primary))
+                         c.getType().equals(Types.Constraint.primary))
                 .flatMap(dataSetConstraintDTO ->
                         Stream.of( dataSetConstraintDTO.getColumns().split("\\,")))
                 .collect(Collectors.toSet());

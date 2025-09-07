@@ -1,6 +1,6 @@
-package org.lakehouse.config.repository;
+package org.lakehouse.config.repository.dataset;
 
-import org.lakehouse.config.entities.DataSet;
+import org.lakehouse.config.entities.dataset.DataSet;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface DataSetRepository extends JpaRepository<DataSet, String> {

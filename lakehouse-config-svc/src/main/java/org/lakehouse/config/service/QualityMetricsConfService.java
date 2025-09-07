@@ -1,12 +1,13 @@
 package org.lakehouse.config.service;
 
 import jakarta.transaction.Transactional;
-import org.lakehouse.client.api.dto.configs.DataSetSourceDTO;
+import org.lakehouse.client.api.dto.configs.dataset.DataSetSourceDTO;
 import org.lakehouse.client.api.dto.configs.QualityMetricsConfDTO;
 import org.lakehouse.client.api.dto.configs.QualityMetricsConfTestSetDTO;
 import org.lakehouse.config.entities.dq.*;
 import org.lakehouse.config.exception.QualityMetricsConfNotFoundException;
 import org.lakehouse.config.repository.*;
+import org.lakehouse.config.repository.dataset.DataSetRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

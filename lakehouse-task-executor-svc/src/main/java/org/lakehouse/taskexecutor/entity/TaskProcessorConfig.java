@@ -1,6 +1,6 @@
 package org.lakehouse.taskexecutor.entity;
 
-import org.lakehouse.client.api.dto.configs.DataSetDTO;
+import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.DataStoreDTO;
 
 import java.time.OffsetDateTime;

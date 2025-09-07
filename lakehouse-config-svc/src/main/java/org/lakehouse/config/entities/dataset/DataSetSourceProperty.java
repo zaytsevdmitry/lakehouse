@@ -1,15 +1,16 @@
-package org.lakehouse.config.entities;
+package org.lakehouse.config.entities.dataset;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.lakehouse.config.entities.KeyValueAbstract;
 
 import java.util.Objects;
 
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(name = "data_set_source_property_data_set_source_id_key_uk", columnNames = {
 		"data_set_source_id", "key" }))
-public class DataSetSourceProperty extends  KeyValueAbstract{
+public class DataSetSourceProperty extends KeyValueAbstract {
 
 
 	@ManyToOne(optional = false)

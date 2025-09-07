@@ -10,6 +10,8 @@ import org.lakehouse.common.api.task.processor.entity.TaskProcessor;
 import org.lakehouse.common.api.task.processor.entity.TaskProcessorConfigDTO;
 import org.lakehouse.common.api.task.processor.exception.TaskFailedException;
 import org.lakehouse.taskexecutor.exception.TaskProcessorConfigurationException;
+import org.lakehouse.taskexecutor.factory.TaskProcessorConfigFactory;
+import org.lakehouse.taskexecutor.factory.TaskProcessorFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

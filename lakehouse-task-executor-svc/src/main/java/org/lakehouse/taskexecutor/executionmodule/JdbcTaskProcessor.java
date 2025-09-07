@@ -1,6 +1,6 @@
 package org.lakehouse.taskexecutor.executionmodule;
 
-import org.lakehouse.client.api.dto.configs.ColumnDTO;
+import org.lakehouse.client.api.dto.configs.dataset.ColumnDTO;
 import org.lakehouse.client.api.dto.configs.DataStoreDTO;
 import org.lakehouse.common.api.task.processor.entity.TaskProcessorConfigDTO;
 import org.lakehouse.common.api.task.processor.exception.TaskFailedException;

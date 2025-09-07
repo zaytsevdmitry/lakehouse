@@ -38,7 +38,7 @@
       "constructLevelCheck": true
     },
     {
-      "name": "client_processing_pk",
+      "name": "client_processing_uk",
       "type": "unique",
       "columns": "name",
       "enabled": "true",

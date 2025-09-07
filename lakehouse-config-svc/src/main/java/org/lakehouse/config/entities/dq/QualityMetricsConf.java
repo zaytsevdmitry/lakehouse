@@ -4,7 +4,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import org.lakehouse.config.entities.DataSet;
+import org.lakehouse.config.entities.dataset.DataSet;
 import org.lakehouse.config.entities.KeyEntityAbstract;
 
 import java.util.Objects;

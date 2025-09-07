@@ -1,5 +1,6 @@
 package org.lakehouse.client.api.dto.configs;
 
+import org.lakehouse.client.api.dto.configs.dataset.DataSetSourceDTO;
 import org.lakehouse.client.api.utils.Coalesce;
 
 import java.util.HashSet;

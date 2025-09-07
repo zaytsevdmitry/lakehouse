@@ -1,9 +1,9 @@
-package org.lakehouse.taskexecutor.service;
+package org.lakehouse.taskexecutor.factory;
 
 import com.hubspot.jinjava.Jinjava;
 import org.lakehouse.client.api.constant.SystemVarKeys;
-import org.lakehouse.client.api.dto.configs.DataSetDTO;
-import org.lakehouse.client.api.dto.configs.DataSetScriptDTO;
+import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
+import org.lakehouse.client.api.dto.configs.dataset.DataSetScriptDTO;
 import org.lakehouse.client.api.dto.configs.DataStoreDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
