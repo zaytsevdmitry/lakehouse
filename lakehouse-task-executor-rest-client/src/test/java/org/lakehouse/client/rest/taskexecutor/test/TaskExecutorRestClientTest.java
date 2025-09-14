@@ -6,7 +6,7 @@ import org.junit.runner.RunWith;
 import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.rest.taskexecutor.TaskExecutorRestClientApi;
 import org.lakehouse.client.rest.taskexecutor.configuration.TaskExecutorRestClientConfiguration;
-import org.lakehouse.common.api.task.processor.entity.TaskProcessorConfigDTO;
+import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
 import org.springframework.http.HttpMethod;

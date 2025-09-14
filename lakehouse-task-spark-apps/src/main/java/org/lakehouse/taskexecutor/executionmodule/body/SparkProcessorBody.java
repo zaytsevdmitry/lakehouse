@@ -1,8 +1,8 @@
 package org.lakehouse.taskexecutor.executionmodule.body;
 
 import org.apache.spark.sql.SparkSession;
-import org.lakehouse.common.api.task.processor.entity.TaskProcessorConfigDTO;
-import org.lakehouse.common.api.task.processor.exception.TaskFailedException;
+import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
+import org.lakehouse.client.api.exception.TaskFailedException;
 
 public interface SparkProcessorBody {
     public void run() throws TaskFailedException;

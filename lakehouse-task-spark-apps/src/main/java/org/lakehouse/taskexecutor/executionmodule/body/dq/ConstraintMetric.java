@@ -5,7 +5,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetConstraintDTO;
-import org.lakehouse.common.api.task.processor.exception.TaskFailedException;
+import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 
 import java.util.List;
@@ -49,6 +49,7 @@ public class ConstraintMetric implements Metric{
                 group by ${columns}
                 having count(1) > 1
                 """;
+        if constraint.
         return SparkSession.active().emptyDataFrame();
     }
     public Dataset<Row> getForeign(){
@@ -56,7 +57,8 @@ public class ConstraintMetric implements Metric{
     }
     public Dataset<Row> getUnique(){
         return SparkSession.active().emptyDataFrame();
-    }public Dataset<Row> getCheck(){
+    }
+    public Dataset<Row> getCheck(){
         return SparkSession.active().emptyDataFrame();
     }
 }

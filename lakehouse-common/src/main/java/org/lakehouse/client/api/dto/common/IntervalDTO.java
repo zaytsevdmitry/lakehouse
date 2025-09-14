@@ -1,4 +1,4 @@
-package org.lakehouse.client.api.common;
+package org.lakehouse.client.api.dto.common;
 
 import org.lakehouse.client.api.utils.DateTimeUtils;
 

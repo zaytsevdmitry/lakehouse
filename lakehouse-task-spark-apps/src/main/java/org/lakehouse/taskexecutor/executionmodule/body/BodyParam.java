@@ -1,7 +1,7 @@
 package org.lakehouse.taskexecutor.executionmodule.body;
 
 import org.apache.spark.sql.SparkSession;
-import org.lakehouse.common.api.task.processor.entity.TaskProcessorConfigDTO;
+import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
 
 public class BodyParam {
     private SparkSession sparkSession;

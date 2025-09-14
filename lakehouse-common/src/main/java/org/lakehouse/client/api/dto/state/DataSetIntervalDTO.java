@@ -1,6 +1,6 @@
 package org.lakehouse.client.api.dto.state;
 
-import org.lakehouse.client.api.common.IntervalDTO;
+import org.lakehouse.client.api.dto.common.IntervalDTO;
 
 import java.util.Objects;
 

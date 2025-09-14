@@ -3,7 +3,7 @@ package org.lakehouse.taskexecutor.service;
 import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.state.DataSetStateDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
-import org.lakehouse.common.api.task.processor.entity.TaskProcessorConfigDTO;
+import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
 
 
 public class DataSetStateDTOFactory {

@@ -2,7 +2,7 @@ package org.lakehouse.client.rest.taskexecutor;
 
 import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.rest.RestClientHelper;
-import org.lakehouse.common.api.task.processor.entity.TaskProcessorConfigDTO;
+import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
 
 public class TaskExecutorRestClientApiImpl implements TaskExecutorRestClientApi{
     private final RestClientHelper restClientHelper;

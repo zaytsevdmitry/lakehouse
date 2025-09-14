@@ -17,8 +17,8 @@ import org.lakehouse.client.api.serialization.task.ScheduledTaskMsgKafkaDeserial
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.client.rest.spark.SparkRestClientApi;
-import org.lakehouse.common.api.task.processor.entity.TaskProcessor;
-import org.lakehouse.common.api.task.processor.exception.TaskFailedException;
+import org.lakehouse.client.api.dto.task.TaskProcessor;
+import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.jinja.java.configuration.JinJavaConfiguration;
 import org.lakehouse.taskexecutor.configuration.ImportBeans;
 import org.lakehouse.taskexecutor.configuration.SparkConfigurationProperties;

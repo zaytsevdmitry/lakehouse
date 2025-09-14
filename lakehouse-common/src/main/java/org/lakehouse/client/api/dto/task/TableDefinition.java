@@ -1,4 +1,4 @@
-package org.lakehouse.common.api.task.processor.entity;
+package org.lakehouse.client.api.dto.task;
 
 import java.util.Objects;
 import java.util.Set;

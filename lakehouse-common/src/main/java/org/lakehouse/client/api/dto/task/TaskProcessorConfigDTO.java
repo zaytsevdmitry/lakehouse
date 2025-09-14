@@ -1,4 +1,4 @@
-package org.lakehouse.common.api.task.processor.entity;
+package org.lakehouse.client.api.dto.task;
 
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.DataStoreDTO;

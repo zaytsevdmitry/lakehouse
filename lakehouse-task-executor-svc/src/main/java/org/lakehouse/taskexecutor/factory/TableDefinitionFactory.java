@@ -5,7 +5,7 @@ import org.lakehouse.client.api.dto.configs.dataset.ColumnDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetConstraintDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.DataStoreDTO;
-import org.lakehouse.common.api.task.processor.entity.TableDefinition;
+import org.lakehouse.client.api.dto.task.TableDefinition;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

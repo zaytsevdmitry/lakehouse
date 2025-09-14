@@ -1,6 +1,6 @@
 package org.lakehouse.client.rest.taskexecutor;
 
-import org.lakehouse.common.api.task.processor.entity.TaskProcessorConfigDTO;
+import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
 
 public interface TaskExecutorRestClientApi {
     TaskProcessorConfigDTO getTaskProcessorConfigDto(Long lockId);

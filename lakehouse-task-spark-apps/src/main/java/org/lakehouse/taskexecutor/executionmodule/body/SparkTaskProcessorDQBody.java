@@ -6,7 +6,7 @@ import org.apache.spark.sql.Row;
 import org.lakehouse.client.api.dto.configs.QualityMetricsConfDTO;
 import org.lakehouse.client.api.dto.configs.QualityMetricsConfTestSetDTO;
 import org.lakehouse.client.api.utils.ObjectMapping;
-import org.lakehouse.common.api.task.processor.exception.TaskFailedException;
+import org.lakehouse.client.api.exception.TaskFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

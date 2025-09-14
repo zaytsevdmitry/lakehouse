@@ -4,8 +4,8 @@ package org.lakehouse.taskexecutor.executionmodule.body;
 import org.apache.spark.sql.SparkSession;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.DataStoreDTO;
-import org.lakehouse.common.api.task.processor.entity.TableDefinition;
-import org.lakehouse.common.api.task.processor.exception.TaskFailedException;
+import org.lakehouse.client.api.dto.task.TableDefinition;
+import org.lakehouse.client.api.exception.TaskFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

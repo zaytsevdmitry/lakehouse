@@ -1,7 +1,7 @@
 package org.lakehouse.taskexecutor.controller;
 
 import org.lakehouse.client.api.constant.Endpoint;
-import org.lakehouse.common.api.task.processor.entity.TaskProcessorConfigDTO;
+import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
 import org.lakehouse.taskexecutor.service.ExecuteService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;

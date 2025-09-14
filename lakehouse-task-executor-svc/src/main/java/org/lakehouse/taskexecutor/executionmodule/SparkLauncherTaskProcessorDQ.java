@@ -2,23 +2,17 @@ package org.lakehouse.taskexecutor.executionmodule;
 
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.javatuples.Tuple;
 import org.lakehouse.client.api.dto.configs.QualityMetricsConfDTO;
 import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.client.rest.spark.SparkRestClientApi;
-import org.lakehouse.client.rest.spark.standalone.CreateRequest;
-import org.lakehouse.client.rest.spark.standalone.CreateResponse;
-import org.lakehouse.client.rest.spark.standalone.StatusResponse;
-import org.lakehouse.common.api.task.processor.entity.TaskProcessorConfigDTO;
-import org.lakehouse.common.api.task.processor.exception.TaskFailedException;
+import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
+import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.taskexecutor.configuration.SparkConfigurationProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public class SparkLauncherTaskProcessorDQ extends AbstractSparkDeployTaskProcessor{
     private final Logger logger = LoggerFactory.getLogger(this.getClass());

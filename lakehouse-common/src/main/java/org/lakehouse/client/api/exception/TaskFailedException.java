@@ -1,4 +1,4 @@
-package org.lakehouse.common.api.task.processor.exception;
+package org.lakehouse.client.api.exception;
 
 public class TaskFailedException extends Exception{
     public TaskFailedException() {

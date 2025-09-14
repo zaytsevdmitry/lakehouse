@@ -1,6 +1,6 @@
 package org.lakehouse.taskexecutor.executionmodule;
 import org.lakehouse.client.rest.state.StateRestClientApi;
-import org.lakehouse.common.api.task.processor.entity.TaskProcessorConfigDTO;
+import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

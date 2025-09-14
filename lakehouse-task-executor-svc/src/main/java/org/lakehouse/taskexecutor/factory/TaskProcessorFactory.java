@@ -2,8 +2,8 @@ package org.lakehouse.taskexecutor.factory;
 
 import org.lakehouse.client.rest.spark.SparkRestClientApi;
 import org.lakehouse.client.rest.state.StateRestClientApi;
-import org.lakehouse.common.api.task.processor.entity.TaskProcessor;
-import org.lakehouse.common.api.task.processor.entity.TaskProcessorConfigDTO;
+import org.lakehouse.client.api.dto.task.TaskProcessor;
+import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
 import org.lakehouse.taskexecutor.configuration.SparkConfigurationProperties;
 import org.lakehouse.taskexecutor.exception.TaskProcessorConfigurationException;
 import org.lakehouse.taskexecutor.executionmodule.AbstractDefaultTaskProcessor;

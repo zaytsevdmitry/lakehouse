@@ -1,7 +1,7 @@
 package org.lakehouse.taskexecutor.executionmodule.datamanipulation;
 
-import org.lakehouse.common.api.task.processor.entity.TaskProcessorConfigDTO;
-import org.lakehouse.common.api.task.processor.exception.TaskFailedException;
+import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
+import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.taskexecutor.executionmodule.AbstractDefaultTaskProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

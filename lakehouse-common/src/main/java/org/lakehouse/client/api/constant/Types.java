@@ -1,6 +1,17 @@
 package org.lakehouse.client.api.constant;
 
 public class Types {
+    public enum ComputeType{
+        spark("spark"),
+        dbInternal("dbInternal");
+        public final String label;
+        ComputeType(String label){this.label = label;}
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
+
     public enum Constraint {
         primary("primary"),
         foreign("foreign"),
