@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ScenarioActTaskRepository extends JpaRepository<ScenarioActTask, Long> {
-   List<ScenarioActTask> findByScenarioActId(Long id);
-   Optional<ScenarioActTask> findByScenarioActIdAndName(Long id, String name);
+    List<ScenarioActTask> findByScenarioActId(Long id);
+
+    Optional<ScenarioActTask> findByScenarioActIdAndName(Long id, String name);
 }

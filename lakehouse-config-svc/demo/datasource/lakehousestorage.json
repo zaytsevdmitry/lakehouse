@@ -1,0 +1,16 @@
+{
+  "keyName": "lakehousestorage",
+  "dataSourceType": "filesystem",
+  "dataSourceServiceType": "localfs",
+  "services": [
+    {
+      "host": "",
+      "port": "",
+      "urn": ""
+    }
+  ],
+  "properties": {
+  },
+  "description": "Local datastore"
+}
+

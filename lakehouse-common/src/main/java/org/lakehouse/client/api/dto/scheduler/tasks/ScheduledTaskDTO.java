@@ -7,7 +7,7 @@ import java.util.Map;
 
 public class ScheduledTaskDTO extends TaskDTO {
     private Long id;
-    private Map<String,String> executionModuleArgs = new HashMap<>();
+    private Map<String, String> executionModuleArgs = new HashMap<>();
     private String scenarioActKeyName;
     private String scheduleKeyName;
     private String status;

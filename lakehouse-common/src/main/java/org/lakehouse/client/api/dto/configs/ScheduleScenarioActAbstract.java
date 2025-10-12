@@ -12,6 +12,7 @@ public class ScheduleScenarioActAbstract {
     private List<DagEdgeDTO> dagEdges = new ArrayList<>();
     private String intervalStart;
     private String intervalEnd;
+
     public ScheduleScenarioActAbstract() {
     }
 
@@ -52,6 +53,7 @@ public class ScheduleScenarioActAbstract {
                 .sorted(Comparator.comparing(DagEdgeDTO::hashCode))
                 .toList();
     }
+
     public String getIntervalStart() {
         return intervalStart;
     }

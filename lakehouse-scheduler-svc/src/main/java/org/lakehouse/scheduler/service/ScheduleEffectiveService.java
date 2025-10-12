@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
 @Service
 public class ScheduleEffectiveService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -21,32 +22,32 @@ public class ScheduleEffectiveService {
         this.configRestClientApi = configRestClientApi;
     }
 
-    public ScheduleEffectiveDTO getScheduleEffectiveDTO(String name){
-        if ( !scheduleEffectiveDTOMap.containsKey(name))
+    public ScheduleEffectiveDTO getScheduleEffectiveDTO(String name) {
+        if (!scheduleEffectiveDTOMap.containsKey(name))
             scheduleEffectiveDTOMap.put(name, configRestClientApi.getScheduleEffectiveDTO(name));
 
         return scheduleEffectiveDTOMap.get(name);
 
     }
 
-    public ScheduleEffectiveDTO setScheduleEffectiveDTO(ScheduleEffectiveDTO scheduleEffectiveDTO){
-        if ( !scheduleEffectiveDTOMap.containsKey(scheduleEffectiveDTO.getName())
-        || scheduleEffectiveDTOMap
+    public ScheduleEffectiveDTO setScheduleEffectiveDTO(ScheduleEffectiveDTO scheduleEffectiveDTO) {
+        if (!scheduleEffectiveDTOMap.containsKey(scheduleEffectiveDTO.getName())
+                || scheduleEffectiveDTOMap
                 .get(scheduleEffectiveDTO.getName()).getLastChangeNumber()
                 < scheduleEffectiveDTO.getLastChangeNumber()
         )
-            scheduleEffectiveDTOMap.put(scheduleEffectiveDTO.getName(),scheduleEffectiveDTO);
+            scheduleEffectiveDTOMap.put(scheduleEffectiveDTO.getName(), scheduleEffectiveDTO);
         return scheduleEffectiveDTOMap.get(scheduleEffectiveDTO.getName());
     }
 
-    public boolean isBefore(String intervalExpression, OffsetDateTime lastOffsetDateTime){
+    public boolean isBefore(String intervalExpression, OffsetDateTime lastOffsetDateTime) {
         try {
             OffsetDateTime now = OffsetDateTime.now();
-            OffsetDateTime next =DateTimeUtils.getNextTargetExecutionDateTime(intervalExpression, lastOffsetDateTime);
-            logger.info("interval is {}\nlastOffsetDateTime={}\n              next={}\n               now={}\n",intervalExpression,lastOffsetDateTime,next,now);
+            OffsetDateTime next = DateTimeUtils.getNextTargetExecutionDateTime(intervalExpression, lastOffsetDateTime);
+            logger.info("interval is {}\nlastOffsetDateTime={}\n              next={}\n               now={}\n", intervalExpression, lastOffsetDateTime, next, now);
             return next.isBefore(OffsetDateTime.now());
         } catch (CronParceErrorException e) {
-            logger.error("Error when parsing cron statement in intervalExpression {}",intervalExpression,e);
+            logger.error("Error when parsing cron statement in intervalExpression {}", intervalExpression, e);
             return false;
         }
     }

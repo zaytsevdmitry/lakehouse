@@ -2,6 +2,7 @@ package org.lakehouse.client.api.dto.configs;
 
 
 import java.util.Objects;
+
 public class ScheduleScenarioActDTO extends ScheduleScenarioActAbstract {
 
     private String scenarioActTemplate;

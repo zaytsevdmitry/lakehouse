@@ -10,6 +10,7 @@ public class ScenarioActTemplateDTO {
     private String description;
     private List<TaskDTO> tasks = new ArrayList<>();
     private List<DagEdgeDTO> dagEdges = new ArrayList<>();
+
     public ScenarioActTemplateDTO() {
     }
 

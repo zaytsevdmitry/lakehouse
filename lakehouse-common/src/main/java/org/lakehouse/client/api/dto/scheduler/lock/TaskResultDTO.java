@@ -6,13 +6,15 @@ public class TaskResultDTO {
     Status.Task status;
     String causes;
 
-    public TaskResultDTO(){
+    public TaskResultDTO() {
 
     }
+
     public TaskResultDTO(Status.Task status, String causes) {
         this.status = status;
         this.causes = causes;
     }
+
     public TaskResultDTO(Status.Task status) {
         this.status = status;
     }

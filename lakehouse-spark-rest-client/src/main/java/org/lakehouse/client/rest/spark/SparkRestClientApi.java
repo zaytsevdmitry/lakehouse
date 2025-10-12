@@ -6,5 +6,6 @@ import org.lakehouse.client.rest.spark.standalone.StatusResponse;
 
 public interface SparkRestClientApi {
     CreateResponse createSubmission(CreateRequest createRequest);
+
     StatusResponse getStatus(String submissionId);
 }

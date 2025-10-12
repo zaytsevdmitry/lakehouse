@@ -5,6 +5,7 @@ import java.util.Objects;
 public class DataSetScriptDTO {
     private String key;
     private Integer order;
+
     public DataSetScriptDTO() {
     }
 

@@ -1,7 +1,9 @@
 package org.lakehouse.taskexecutor.executionmodule;
 
+import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.configs.dataset.ColumnDTO;
-import org.lakehouse.client.api.dto.configs.DataStoreDTO;
+import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
+import org.lakehouse.client.api.dto.configs.datasource.ServiceDTO;
 import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
 import org.lakehouse.client.api.exception.TaskFailedException;
 import org.slf4j.Logger;
@@ -24,6 +26,26 @@ public class JdbcTaskProcessor extends AbstractDefaultTaskProcessor {
         this.taskProcessorConfigDTO = taskProcessorConfigDTO;
     }
 
+    private String buildDbUrl(DataSourceDTO dataSourceDTO) throws TaskFailedException {
+        String result = null;
+        ServiceDTO serviceDTO;
+        if (dataSourceDTO.getServices().isEmpty())
+            throw new TaskFailedException(String.format("DataSource %s with empty list of services", dataSourceDTO.getKeyName()));
+        else
+            serviceDTO = dataSourceDTO.getServices().get(0);
+
+        if (!dataSourceDTO.getDataSourceType().equals(Types.DataSourceType.database))
+            throw new TaskFailedException(String.format("DataSource %s is not database", dataSourceDTO.getKeyName()));
+        else if (dataSourceDTO.getDataSourceServiceType().equals(Types.DataSourceServiceType.postgres)) {
+            result = String.format("jdbc:postgresql://%s:%s/%s", serviceDTO.getHost(), serviceDTO.getPort(), serviceDTO.getUrn());
+        } else if (dataSourceDTO.getDataSourceServiceType().equals(Types.DataSourceServiceType.trino)) {
+            result = String.format("jdbc:trino://%s:%s/%s", serviceDTO.getHost(), serviceDTO.getPort(), serviceDTO.getUrn());
+        } else {
+            throw new TaskFailedException(String.format("DataSource %s with database %s not supported", dataSourceDTO.getKeyName(), dataSourceDTO.getDataSourceServiceType()));
+        }
+        return result;
+    }
+
     @Override
     public void runTask() throws TaskFailedException {
        /* Map<String, String> keyBind = new HashMap<>();
@@ -39,20 +61,23 @@ public class JdbcTaskProcessor extends AbstractDefaultTaskProcessor {
         try {
             logger.info("JdbcTaskProcessor.run >> dataSet={}, dataStore={}",
                     taskProcessorConfigDTO.getTargetDataSet().getKeyName(),
-                    taskProcessorConfigDTO.getTargetDataSet().getDataStoreKeyName());
+                    taskProcessorConfigDTO.getTargetDataSet().getDataSourceKeyName());
 
-            DataStoreDTO ds = taskProcessorConfigDTO
-                    .getDataStores()
+            DataSourceDTO ds = taskProcessorConfigDTO
+                    .getDataSources()
                     .get(taskProcessorConfigDTO
                             .getTargetDataSet()
-                            .getDataStoreKeyName());
+                            .getDataSourceKeyName());
 
             Properties properties = new Properties();
-            properties.putAll(ds.getProperties());
+            properties.putAll(ds.getServices().get(0).getProperties());
 
-            logger.info("Connecting to database {}...", ds.getUrl());
+            String url = buildDbUrl(ds);
+
+
+            logger.info("Connecting to database {}...", url);
             try (
-                    Connection connection = DriverManager.getConnection(ds.getUrl(), properties);
+                    Connection connection = DriverManager.getConnection(url, properties);
                     Statement statement = connection.createStatement()) {
 
                 logger.info("Take script");
@@ -76,15 +101,14 @@ public class JdbcTaskProcessor extends AbstractDefaultTaskProcessor {
                                 .collect(Collectors.joining(", "));
 
                 String sql =
-						String.format(
-								"insert into %s (%s)\n select %s\n from (\n%s\n)",
-								taskProcessorConfigDTO.getTargetDataSet().getFullTableName(),
-                        		columns,
-                        		columns,
+                        String.format(
+                                "insert into %s (%s)\n select %s\n from (\n%s\n)",
+                                taskProcessorConfigDTO.getTargetDataSet().getFullTableName(),
+                                columns,
+                                columns,
                                 taskProcessorConfigDTO.getScripts().get(0)
-						);
+                        );
                 logger.info("Creating statement...{}", sql);
-
 
 
                 Boolean isRetrieved = statement.execute(sql);
@@ -98,7 +122,7 @@ public class JdbcTaskProcessor extends AbstractDefaultTaskProcessor {
 
         } catch (Exception e) {
             logger.error("Error task execution", e);
-            throw  new TaskFailedException(e);
+            throw new TaskFailedException(e);
         }
     }
 

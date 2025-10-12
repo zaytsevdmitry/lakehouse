@@ -1,4 +1,5 @@
 package org.lakehouse.client.api.dto.configs.dataset;
+
 import org.lakehouse.client.api.dto.configs.NameDescriptionAbstract;
 
 import java.util.Objects;
@@ -6,11 +7,12 @@ import java.util.Objects;
 public class ColumnDTO extends NameDescriptionAbstract {
 
 
-	private static final long serialVersionUID = -8442899990290676056L;
-	private String dataType;
+    private static final long serialVersionUID = -8442899990290676056L;
+    private String dataType;
     private boolean nullable;
     private Integer order = null;
     private boolean sequence;
+
     public ColumnDTO() {
     }
 
@@ -61,6 +63,6 @@ public class ColumnDTO extends NameDescriptionAbstract {
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), getDataType(), isNullable(),getOrder(),isSequence());
+        return Objects.hash(super.hashCode(), getDataType(), isNullable(), getOrder(), isSequence());
     }
 }

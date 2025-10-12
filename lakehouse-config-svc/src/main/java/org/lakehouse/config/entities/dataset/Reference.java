@@ -6,7 +6,7 @@ import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(name = "reference__uk", columnNames = {
-        "data_set_constraint_id", "ref_data_set_constraint_id" }))
+        "data_set_constraint_id", "ref_data_set_constraint_id"}))
 public class Reference {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

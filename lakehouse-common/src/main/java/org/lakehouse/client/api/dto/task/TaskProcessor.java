@@ -6,5 +6,5 @@ import org.lakehouse.client.api.exception.TaskFailedException;
 public interface TaskProcessor {
 
     void runTask() throws TaskFailedException;
-	
+
 }

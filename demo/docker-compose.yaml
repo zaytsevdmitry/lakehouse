@@ -158,4 +158,4 @@ services:
       - state-svc
 
 volumes:
-  minio_storage: {}
+  minio_storage: { }

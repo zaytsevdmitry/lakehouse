@@ -6,7 +6,7 @@ import org.springframework.web.client.RestClient;
 import java.util.Map;
 import java.util.Objects;
 
-public  class RestClientHelper {
+public class RestClientHelper {
 
     private final RestClient restClient;
 
@@ -14,32 +14,35 @@ public  class RestClientHelper {
         this.restClient = Objects.requireNonNull(restClient);
     }
 
-    public RestClient getRestClient(){
+    public RestClient getRestClient() {
         return restClient;
     }
 
-    public  <T> T getDtoOne( String urn, Class<T> clazz) {
+    public <T> T getDtoOne(String urn, Class<T> clazz) {
         return restClient
                 .get()
                 .uri(urn)
                 .retrieve()
                 .body(clazz);
     }
-    public  <T> T getDtoOne(String dtoName, String urn, Class<T> clazz) {
+
+    public <T> T getDtoOne(String dtoName, String urn, Class<T> clazz) {
         return restClient
                 .get()
                 .uri(urn, dtoName)
                 .retrieve()
                 .body(clazz);
     }
-    public  <T> T getDtoOne(Map<String,?> params, String urn, Class<T> clazz) {
+
+    public <T> T getDtoOne(Map<String, ?> params, String urn, Class<T> clazz) {
         return restClient
                 .get()
                 .uri(urn, params)
                 .retrieve()
                 .body(clazz);
     }
-    public  <T> T getDtoOne(Object o, String urn, Class<T> clazz) {
+
+    public <T> T getDtoOne(Object o, String urn, Class<T> clazz) {
         return restClient
                 .post()
                 .uri(urn)
@@ -47,6 +50,7 @@ public  class RestClientHelper {
                 .retrieve()
                 .body(clazz);
     }
+
     public int putDTO(Object o, String urn) {
         return restClient.put()
                 .uri(urn)
@@ -64,6 +68,7 @@ public  class RestClientHelper {
                 .retrieve()
                 .toBodilessEntity().getStatusCode().value();
     }
+
     public <T> T postDTO(Object o, String urn, Class<T> response) {
         return restClient.post()
                 .uri(urn)
@@ -72,6 +77,7 @@ public  class RestClientHelper {
                 .retrieve()
                 .body(response);
     }
+
     public int deleteDtoByName(String id, String urn) {
         return restClient
                 .delete()

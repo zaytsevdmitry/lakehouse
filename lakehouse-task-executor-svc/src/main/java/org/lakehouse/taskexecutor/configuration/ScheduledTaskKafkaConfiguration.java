@@ -24,8 +24,8 @@ public class ScheduledTaskKafkaConfiguration {
     ScheduledTaskKafkaConfigurationProperties scheduledTaskKafkaConfigurationProperties;
 
 
-    private Map<String,Object> getConsumerProperties(){
-        Map<String,Object> props = new HashMap<>(scheduledTaskKafkaConfigurationProperties.getProperties());
+    private Map<String, Object> getConsumerProperties() {
+        Map<String, Object> props = new HashMap<>(scheduledTaskKafkaConfigurationProperties.getProperties());
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ScheduledTaskMsgKafkaDeserializer.class);
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
@@ -35,7 +35,7 @@ public class ScheduledTaskKafkaConfiguration {
 
     @Bean
     public ConcurrentKafkaListenerContainerFactory<Long, ScheduledTaskMsgDTO> containerFactory() {
-        ConcurrentKafkaListenerContainerFactory<Long,  ScheduledTaskMsgDTO> factory =
+        ConcurrentKafkaListenerContainerFactory<Long, ScheduledTaskMsgDTO> factory =
                 new ConcurrentKafkaListenerContainerFactory<Long, ScheduledTaskMsgDTO>();
         factory.setConsumerFactory(new DefaultKafkaConsumerFactory<>(getConsumerProperties()));
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);

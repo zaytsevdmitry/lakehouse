@@ -6,7 +6,8 @@
   "scripts": [
     {
       "key": "aggregation_pay_per_client_total_mart.sql"
-    }],
+    }
+  ],
   "sources": [
     {
       "name": "transaction_dds"
@@ -32,7 +33,7 @@
       "nullable": false
     }
   ],
-  "constraints":[
+  "constraints": [
     {
       "name": "aggregation_pay_per_client_total_mart_pk",
       "type": "primary",
@@ -42,7 +43,6 @@
     }
   ],
   "properties": {
-
     "location": "/demo/datamarts/aggregation_pay_per_client_total_mart",
     "using": "iceberg"
   },

@@ -16,7 +16,7 @@ public class Status {
 
     }
 
-    public enum Task{
+    public enum Task {
         NEW("NEW"),
         QUEUED("QUEUED"),
         RUNNING("RUNNING"),
@@ -31,7 +31,7 @@ public class Status {
         }
     }
 
-    public enum ScenarioAct{
+    public enum ScenarioAct {
         NEW("NEW"),
         RUNNING("RUNNING"),
         SUCCESS("SUCCESS"),
@@ -44,12 +44,14 @@ public class Status {
         }
     }
 
-    public enum DataSet{
+    public enum DataSet {
         LOCKED("LOCKED"),
         SUCCESS("SUCCESS");
 
         public final String label;
 
-        DataSet(String label){this.label = label;}
+        DataSet(String label) {
+            this.label = label;
+        }
     }
 }

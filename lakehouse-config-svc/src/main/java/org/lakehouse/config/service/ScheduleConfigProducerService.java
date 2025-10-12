@@ -33,11 +33,11 @@ public class ScheduleConfigProducerService {
 
     }
 
-    public void send (ScheduleEffectiveDTO msg){
-        scheduleEffectiveDTOKafkaTemplate.send(scheduleTopic,msg.getName(),msg);
+    public void send(ScheduleEffectiveDTO msg) {
+        scheduleEffectiveDTOKafkaTemplate.send(scheduleTopic, msg.getName(), msg);
     }
 
-    public void changeSchedule(Schedule schedule){
+    public void changeSchedule(Schedule schedule) {
         ScheduleProduceMessage scheduleProduceMessage = new ScheduleProduceMessage();
         scheduleProduceMessage.setSchedule(schedule);
         scheduleProduceMessageRepository.save(scheduleProduceMessage);

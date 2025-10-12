@@ -14,6 +14,7 @@ public class ScheduleConfigConsumerService {
     private final BuildService buildService;
 
     private final ConfigRestClientApi configRestClientApi;
+
     public ScheduleConfigConsumerService(
             BuildService buildService, ConfigRestClientApi configRestClientApi) {
         this.buildService = buildService;
@@ -21,13 +22,11 @@ public class ScheduleConfigConsumerService {
     }
 
 
-
-   @KafkaListener(
+    @KafkaListener(
             topics = "#{'${lakehouse.scheduler.config.schedule.kafka.consumer.topics}'.split(',')}",
             concurrency = "#{'${lakehouse.scheduler.config.schedule.kafka.consumer.concurrency}'}",
             containerFactory = "containerFactory")
-    public void listen(ScheduleEffectiveDTO scheduleEffectiveDTO)
-    {
+    public void listen(ScheduleEffectiveDTO scheduleEffectiveDTO) {
         logger.info("New schedule config change: {}", scheduleEffectiveDTO.getName());
         buildService.registration(scheduleEffectiveDTO);
         logger.info("findAndRegisterNewSchedules");

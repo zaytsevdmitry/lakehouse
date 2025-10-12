@@ -20,9 +20,9 @@ public class ScheduleConfigKafkaConfiguration {
     @Autowired
     ScheduleConfigConsumerKafkaConfigurationProperties scheduleConfigConsumerKafkaConfigurationProperties;
 
-     private Map<String, Object> consumerProps() {
-         Map<String, Object> props = new HashMap<>(scheduleConfigConsumerKafkaConfigurationProperties
-                 .getProperties());
+    private Map<String, Object> consumerProps() {
+        Map<String, Object> props = new HashMap<>(scheduleConfigConsumerKafkaConfigurationProperties
+                .getProperties());
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ScheduleEffectiveKafkaDeserializer.class);
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
@@ -31,7 +31,7 @@ public class ScheduleConfigKafkaConfiguration {
 
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, ScheduleEffectiveDTO> containerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String,  ScheduleEffectiveDTO> factory =
+        ConcurrentKafkaListenerContainerFactory<String, ScheduleEffectiveDTO> factory =
                 new ConcurrentKafkaListenerContainerFactory<String, ScheduleEffectiveDTO>();
         factory.setConsumerFactory(new DefaultKafkaConsumerFactory<>(consumerProps()));
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);

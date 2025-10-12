@@ -75,7 +75,7 @@ public class QualityMetricsConfDTO {
         return isEnabled() == that.isEnabled()
                 && Objects.equals(getDataSetKeyName(), that.getDataSetKeyName())
                 && Objects.equals(getKeyName(), that.getKeyName())
-                && Objects.equals(Coalesce.apply(getDescription(),""), Coalesce.apply(that.getDescription(),""))
+                && Objects.equals(Coalesce.apply(getDescription(), ""), Coalesce.apply(that.getDescription(), ""))
                 && Objects.equals(getSources(), that.getSources())
                 && Objects.equals(getQualityMetricsConfTestSets(), that.getQualityMetricsConfTestSets())
                 && Objects.equals(getThresholds(), that.getThresholds());
@@ -88,7 +88,7 @@ public class QualityMetricsConfDTO {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName()+"{" +
+        return this.getClass().getSimpleName() + "{" +
                 "dataSetKeyName='" + dataSetKeyName + '\'' +
                 ", keyName='" + keyName + '\'' +
                 ", description='" + description + '\'' +

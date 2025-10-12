@@ -49,28 +49,31 @@ import java.util.Objects;
                 "lakehouse.scheduler.config.schedule.kafka.consumer.properties.auto.offset.reset=earliest",
                 "lakehouse.scheduler.schedule.task.kafka.producer.topic=test_send_scheduled_task_topic",
                 "scheduling.enabled: false"
-})
+        })
 @EnableConfigurationProperties(value = ScheduleConfigConsumerKafkaConfigurationProperties.class)
 @ComponentScan(basePackages = {
         "org.lakehouse.scheduler"
-    }
+}
 )
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @ActiveProfiles("test")
 public class SchedulesTest {
     private static final Logger staticLogger = LoggerFactory.getLogger(SchedulesTest.class);
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
     // override bean
     @Configuration
     static class ContextConfiguration {
         @Bean
-        @Primary //may omit this if this is the only SomeBean defined/visible
+        @Primary
+            //may omit this if this is the only SomeBean defined/visible
         ConfigRestClientApi getConfigRestClientApi() throws IOException {
             return new ConfigRestClientApiTest();
         }
     }
 
-    @Autowired ConfigRestClientApi configRestClientApi;
+    @Autowired
+    ConfigRestClientApi configRestClientApi;
 
     //services
     @Autowired
@@ -119,6 +122,7 @@ public class SchedulesTest {
         registry.add("lakehouse.scheduler.config.schedule.kafka.consumer.properties.bootstrap.servers", kafka::getBootstrapServers);
         registry.add("lakehouse.scheduler.schedule.task.kafka.producer.properties.bootstrap.servers", kafka::getBootstrapServers);
     }
+
     @Container
     static final KafkaContainer kafka = new KafkaContainer(
             DockerImageName.parse("confluentinc/cp-kafka:7.6.1")
@@ -132,12 +136,13 @@ public class SchedulesTest {
     }
 
     @AfterAll
-     static void afterAll() {
+    static void afterAll() {
         kafka.stop();
         postgres.stop();
     }
+
     @BeforeEach
-    public void removeAll(){
+    public void removeAll() {
         scheduleTaskInstanceDependencyRepository.deleteAll();
         scheduleTaskInstanceExecutionLockRepository.deleteAll();
 
@@ -151,14 +156,15 @@ public class SchedulesTest {
         scheduleInstanceRepository.deleteAll();
 
     }
+
     private Producer<String, ScheduleEffectiveDTO> getKafkaProducer() {
 
         Map<String, Object> props = new HashMap<>();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getBootstrapServers());
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ScheduleEffectiveKafkaSerializer.class);
-            // more standard configuration
-        return new DefaultKafkaProducerFactory<String,ScheduleEffectiveDTO>(props).createProducer();
+        // more standard configuration
+        return new DefaultKafkaProducerFactory<String, ScheduleEffectiveDTO>(props).createProducer();
     }
 
 
@@ -170,9 +176,9 @@ public class SchedulesTest {
         List<ScheduleInstanceLastBuild> sibList = scheduleInstanceLastBuildRepository.findAll();
         assert (sibList.isEmpty());
         // Rise config
-        ScheduleEffectiveDTO sef = fileLoader.loadScheduleEffectiveDTO() ;
+        ScheduleEffectiveDTO sef = fileLoader.loadScheduleEffectiveDTO();
         Producer<String, ScheduleEffectiveDTO> producer = getKafkaProducer();
-        producer.send(new ProducerRecord<String,ScheduleEffectiveDTO>("testtopic",sef.getName(),sef));
+        producer.send(new ProducerRecord<String, ScheduleEffectiveDTO>("testtopic", sef.getName(), sef));
         producer.flush();
 
         // registration
@@ -182,7 +188,7 @@ public class SchedulesTest {
         sibList = scheduleInstanceLastBuildRepository.findAll();
         assert (sibList.size() == 1);
 
-        
+
         assert (sibList.get(0).getScheduleInstance() == null);
         assert (Objects.equals(sibList.get(0).getLastChangeNumber(), sef.getLastChangeNumber()));
         assert (sibList.get(0).getConfigScheduleKeyName().equals(sef.getName()));
@@ -190,6 +196,7 @@ public class SchedulesTest {
         assert (sibList.get(0).getLastUpdateDateTime() != null);
 
     }
+
     @Test
     @Order(2)
     public void buildTasks() throws IOException {
@@ -200,25 +207,27 @@ public class SchedulesTest {
         List<ScheduleTaskInstance> stiList = scheduleTaskInstanceRepository.findByStatus(Status.Task.NEW.label);
         assert (stiList.size() == 34);
     }
-    private void run(){
+
+    private void run() {
         int rows;
 
         rows = manageStateService.runAll();
-        logger.info("Run schedules {}", rows );
+        logger.info("Run schedules {}", rows);
 
         rows = manageStateService.runNewScenariosActs();
-        logger.info("runNewScenariosActs {}", rows );
+        logger.info("runNewScenariosActs {}", rows);
 
         rows = scheduleTaskInstanceService.addTaskToQueue();
-        logger.info("queueTasks {}", rows );
+        logger.info("queueTasks {}", rows);
 
         rows = scheduleTaskInstanceService.produceScheduledTasks();
-        logger.info("produceScheduledTasks {}", rows );
+        logger.info("produceScheduledTasks {}", rows);
 
 
         rows = manageStateService.successSchedules();
-        logger.info("Success schedules {}", rows );
+        logger.info("Success schedules {}", rows);
     }
+
     @Test
     @Order(3)
     public void lockUnLock() throws IOException {
@@ -236,22 +245,22 @@ public class SchedulesTest {
         buildService.buildAll(); // create schedule
         buildService.buildAll(); // expect ignore
         buildService.buildAll(); // expect ignore
-        assert (scheduleInstanceLastBuildRepository.findAll().size() ==1);
+        assert (scheduleInstanceLastBuildRepository.findAll().size() == 1);
 
         run(); // expect run
         run(); // expect ignore
         run(); // expect ignore
-        scheduleInstanceRepository.findAll().forEach( a ->  System.out.println(a.getConfigScheduleKeyName() + " --> " + a.getTargetExecutionDateTime() + " --> " + a.getStatus()));
+        scheduleInstanceRepository.findAll().forEach(a -> System.out.println(a.getConfigScheduleKeyName() + " --> " + a.getTargetExecutionDateTime() + " --> " + a.getStatus()));
 
-        scheduleScenarioActInstanceRepository.findAll().forEach( a ->  System.out.println(a.getName() + " --> " + a.getStatus()));
-        scheduleTaskInstanceRepository.findAll().forEach(t -> System.out.println( t.getName() + " --> " + t.getStatus()));
+        scheduleScenarioActInstanceRepository.findAll().forEach(a -> System.out.println(a.getName() + " --> " + a.getStatus()));
+        scheduleTaskInstanceRepository.findAll().forEach(t -> System.out.println(t.getName() + " --> " + t.getStatus()));
         assert (scheduleInstanceRunningRepository.findAll().size() == 1);
-        List<ScheduleInstanceRunning>  list =  scheduleInstanceRunningRepository.findAll();
+        List<ScheduleInstanceRunning> list = scheduleInstanceRunningRepository.findAll();
         List<ScheduleTaskInstance> stilq = scheduleTaskInstanceRepository.findByStatus(Status.Task.QUEUED.label);
         assert (stilq.size() == 2);
-        scheduleTaskInstanceService.lockTaskById(stilq.get(0).getId(),"test0");
-        scheduleTaskInstanceService.lockTaskById(stilq.get(1).getId(),"test1");
-        assert (scheduleTaskInstanceExecutionLockRepository.findAll().size() ==2);
+        scheduleTaskInstanceService.lockTaskById(stilq.get(0).getId(), "test0");
+        scheduleTaskInstanceService.lockTaskById(stilq.get(1).getId(), "test1");
+        assert (scheduleTaskInstanceExecutionLockRepository.findAll().size() == 2);
         //todo release task/ fail task / reset lock
     }
 
@@ -269,22 +278,21 @@ public class SchedulesTest {
         // 3) Build schedule
 
         buildService.buildAll(); // create schedule
-        assert (scheduleInstanceLastBuildRepository.findAll().size() ==1);
-        scheduleScenarioActInstanceRepository.findAll().forEach( a ->  System.out.println(a.getName() + " --> " + a.getStatus()));
-        scheduleTaskInstanceRepository.findAll().forEach(t -> System.out.println( t.getName() + " --> " + t.getStatus()));
-
+        assert (scheduleInstanceLastBuildRepository.findAll().size() == 1);
+        scheduleScenarioActInstanceRepository.findAll().forEach(a -> System.out.println(a.getName() + " --> " + a.getStatus()));
+        scheduleTaskInstanceRepository.findAll().forEach(t -> System.out.println(t.getName() + " --> " + t.getStatus()));
 
 
         int rows;
 
         rows = manageStateService.runAll();
-        logger.info("Run schedules {}", rows );
-        scheduleInstanceRepository.findAll().forEach( a ->  System.out.println(a.getConfigScheduleKeyName() + " --> " + a.getStatus()));
+        logger.info("Run schedules {}", rows);
+        scheduleInstanceRepository.findAll().forEach(a -> System.out.println(a.getConfigScheduleKeyName() + " --> " + a.getStatus()));
         assert (rows == 1);
         assert (scheduleInstanceRepository.findByScheduleName(sef.getName()).get(0).getStatus().equals(Status.Schedule.RUNNING.label));
 
         rows = manageStateService.runNewScenariosActs();
-        logger.info("runNewScenariosActs {}", rows );
+        logger.info("runNewScenariosActs {}", rows);
         List<ScheduleScenarioActInstance> ssail = scheduleScenarioActInstanceRepository
                 .findAll()
                 .stream()
@@ -296,7 +304,7 @@ public class SchedulesTest {
         assert (rows == 2);
 
         rows = scheduleTaskInstanceService.addTaskToQueue();
-        logger.info("queueTasks {}", rows );
+        logger.info("queueTasks {}", rows);
         List<ScheduleTaskInstance> sti = scheduleTaskInstanceRepository
                 .findAll()
                 .stream()
@@ -309,13 +317,14 @@ public class SchedulesTest {
 
 
         rows = scheduleTaskInstanceService.produceScheduledTasks();
-        logger.info("produceScheduledTasks {}", rows );
+        logger.info("produceScheduledTasks {}", rows);
         assert (rows == 2);
 
 
         rows = manageStateService.successSchedules();
-        logger.info("Success schedules {}", rows );
+        logger.info("Success schedules {}", rows);
     }
+
     @Test
     @Order(5)
     void scheduleEndDateTest() throws IOException {
@@ -336,7 +345,7 @@ public class SchedulesTest {
         assert (scheduleInstanceRepository.findAll().size() == 1);
         scheduleTaskInstanceRepository
                 .findAll()
-                .forEach(t-> {
+                .forEach(t -> {
                     t.setStatus(Status.Schedule.SUCCESS.label);
                     scheduleTaskInstanceRepository.save(t);
                 });

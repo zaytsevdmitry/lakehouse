@@ -15,11 +15,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
-@SpringBootTest( properties = {"spring.main.allow-bean-definition-overriding=true"})
+@SpringBootTest(properties = {"spring.main.allow-bean-definition-overriding=true"})
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class JinjavaTest {
-    @Autowired @Qualifier("jinjava")
+    @Autowired
+    @Qualifier("jinjava")
     Jinjava jinjava;
+
     @Test
     @Order(1)
     public void testJinjaAddDay() {
@@ -30,6 +32,7 @@ public class JinjavaTest {
         System.out.println(renderedTemplate);
         assert (renderedTemplate.equals(targetDateTime.plusDays(10).format(dateTimeFormatter)));
     }
+
     @Test
     @Order(2)
     public void testJinjaAddDay2() {
@@ -37,7 +40,7 @@ public class JinjavaTest {
         OffsetDateTime targetDateTime = OffsetDateTime.now();
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ISO_DATE_TIME;
         String template = "{{ adddays(" + SystemVarKeys.TARGET_DATE_TIME_TZ_KEY + ",  10)}}";
-        Map<String,String> context = new HashMap<>(Map.of(SystemVarKeys.TARGET_DATE_TIME_TZ_KEY, targetDateTime.format(dateTimeFormatter)));
+        Map<String, String> context = new HashMap<>(Map.of(SystemVarKeys.TARGET_DATE_TIME_TZ_KEY, targetDateTime.format(dateTimeFormatter)));
         String renderedTemplate = jinjava.render(template, context);
         System.out.println(renderedTemplate);
         assert (renderedTemplate.equals(targetDateTime.plusDays(10).format(dateTimeFormatter)));
@@ -49,12 +52,13 @@ public class JinjavaTest {
     public void testJinjaContextReplacement2() {
 
         String targetDateTimeStr = "2025-06-12T16:03:00.435821544+03:00";
-        String template = "{{ " + SystemVarKeys.TARGET_DATE_TIME_TZ_KEY +  " }}";
-        Map<String,String> context = new HashMap<>(Map.of(SystemVarKeys.TARGET_DATE_TIME_TZ_KEY, targetDateTimeStr));
+        String template = "{{ " + SystemVarKeys.TARGET_DATE_TIME_TZ_KEY + " }}";
+        Map<String, String> context = new HashMap<>(Map.of(SystemVarKeys.TARGET_DATE_TIME_TZ_KEY, targetDateTimeStr));
         String renderedTemplate = jinjava.render(template, context);
         System.out.println(renderedTemplate);
         assert (renderedTemplate.equals(targetDateTimeStr));
     }
+
     @Test
     @Order(2)
     public void testJinjaAddMonths() {
@@ -62,7 +66,7 @@ public class JinjavaTest {
         OffsetDateTime targetDateTime = OffsetDateTime.now();
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ISO_DATE_TIME;
         String template = "{{ addmonths(" + SystemVarKeys.TARGET_DATE_TIME_TZ_KEY + ",  10)}}";
-        Map<String,String> context = new HashMap<>(Map.of(SystemVarKeys.TARGET_DATE_TIME_TZ_KEY, targetDateTime.format(dateTimeFormatter)));
+        Map<String, String> context = new HashMap<>(Map.of(SystemVarKeys.TARGET_DATE_TIME_TZ_KEY, targetDateTime.format(dateTimeFormatter)));
         String renderedTemplate = jinjava.render(template, context);
         System.out.println(renderedTemplate);
         assert (renderedTemplate.equals(targetDateTime.plusMonths(10).format(dateTimeFormatter)));

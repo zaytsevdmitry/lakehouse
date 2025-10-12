@@ -21,18 +21,18 @@ public class StateService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final DataSetStateRepository dataSetStateRepository;
     private final StateFactory stateFactory;
+
     public StateService(DataSetStateRepository dataSetStateRepository, StateFactory stateFactory) {
         this.dataSetStateRepository = dataSetStateRepository;
         this.stateFactory = stateFactory;
     }
 
-    private void checkForPossibleChanges(DataSetState newState){
+    private void checkForPossibleChanges(DataSetState newState) {
         List<DataSetState> intersection = dataSetStateRepository
                 .findIntersection(
                         newState.getDataSetKeyName(),
                         newState.getIntervalStartDateTime(),
-                        newState.getIntervalEndDateTime())
-                ;
+                        newState.getIntervalEndDateTime());
         List<DataSetState> founds = intersection
                 .stream()
                 .filter(state -> !(state.getStatus() == null))
@@ -51,8 +51,8 @@ public class StateService {
         }
 
 
-        if(newState.getIntervalStartDateTime().isAfter(newState.getIntervalEndDateTime())
-                || newState.getIntervalStartDateTime()==null
+        if (newState.getIntervalStartDateTime().isAfter(newState.getIntervalEndDateTime())
+                || newState.getIntervalStartDateTime() == null
                 || newState.getIntervalEndDateTime() == null) {
             logger.info("Wrong interval {}", newState);
             throw new RuntimeException("Wrong interval");
@@ -65,16 +65,16 @@ public class StateService {
         checkForPossibleChanges(newState);
 
         List<DataSetState> current =
-                    dataSetStateRepository
-                            .findIntersection(
-                                    newState.getDataSetKeyName(),
-                                    newState.getIntervalStartDateTime(),
-                                    newState.getIntervalEndDateTime());
-            MergeResult mergeResult = stateFactory.merge(newState,current);
-            mergeResult.getAfterChange().forEach(dataSetState -> logger.info("merged {}",dataSetState));
-            mergeResult.getForRemove().forEach(dataSetState -> logger.info("for remove {}",dataSetState));
-            dataSetStateRepository.deleteAll(mergeResult.getForRemove());
-            dataSetStateRepository.saveAll(mergeResult.getAfterChange());
+                dataSetStateRepository
+                        .findIntersection(
+                                newState.getDataSetKeyName(),
+                                newState.getIntervalStartDateTime(),
+                                newState.getIntervalEndDateTime());
+        MergeResult mergeResult = stateFactory.merge(newState, current);
+        mergeResult.getAfterChange().forEach(dataSetState -> logger.info("merged {}", dataSetState));
+        mergeResult.getForRemove().forEach(dataSetState -> logger.info("for remove {}", dataSetState));
+        dataSetStateRepository.deleteAll(mergeResult.getForRemove());
+        dataSetStateRepository.saveAll(mergeResult.getAfterChange());
 
     }
 

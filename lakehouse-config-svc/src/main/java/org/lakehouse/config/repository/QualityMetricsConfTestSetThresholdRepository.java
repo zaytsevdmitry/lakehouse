@@ -7,9 +7,10 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.util.Set;
 
-public interface QualityMetricsConfTestSetThresholdRepository  extends JpaRepository<QualityMetricsConfTestSetThreshold,Long> {
+public interface QualityMetricsConfTestSetThresholdRepository extends JpaRepository<QualityMetricsConfTestSetThreshold, Long> {
     @Modifying
     @Query("delete from QualityMetricsConfTestSetThreshold qs where qs.qualityMetricsConf.keyName = ?1")
     int deleteByQualityMetricsConfKeyName(String QualityMetricsConfKeyName);
+
     Set<QualityMetricsConfTestSetThreshold> findByQualityMetricsConfKeyName(String QualityMetricsConfKeyName);
 }

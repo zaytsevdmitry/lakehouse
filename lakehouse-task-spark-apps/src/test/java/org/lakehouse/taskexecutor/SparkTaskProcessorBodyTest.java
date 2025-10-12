@@ -3,10 +3,11 @@ package org.lakehouse.taskexecutor;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.lakehouse.client.api.dto.configs.DataStoreDTO;
-import org.lakehouse.client.api.utils.ObjectMapping;
+import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
+import org.lakehouse.client.api.dto.configs.datasource.ServiceDTO;
 import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
 import org.lakehouse.client.api.exception.TaskFailedException;
+import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.taskexecutor.executionmodule.body.SparkProcessorBodyFactory;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -16,6 +17,9 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
+import java.util.Map;
+
 public class SparkTaskProcessorBodyTest {
     String config = "{\n" +
             "  \"executionModuleArgs\" : {\n" +
@@ -30,8 +34,8 @@ public class SparkTaskProcessorBodyTest {
             "  \"sources\" : {\n" +
             "    \"transaction_processing\" : {\n" +
             "      \"keyName\" : \"transaction_processing\",\n" +
-            "      \"project\" : \"DEMO\",\n" +
-            "      \"dataStoreKeyName\" : \"processingdb\",\n" +
+            "      \"nameSpaceKeyName\" : \"DEMO\",\n" +
+            "      \"dataSourceKeyName\" : \"processingdb\",\n" +
             "      \"fullTableName\" : \"proc.transactions\",\n" +
             "      \"sources\" : [ ],\n" +
             "      \"columnSchema\" : [ {\n" +
@@ -96,8 +100,8 @@ public class SparkTaskProcessorBodyTest {
             "    },\n" +
             "    \"client_processing\" : {\n" +
             "      \"keyName\" : \"client_processing\",\n" +
-            "      \"project\" : \"DEMO\",\n" +
-            "      \"dataStoreKeyName\" : \"processingdb\",\n" +
+            "      \"nameSpaceKeyName\" : \"DEMO\",\n" +
+            "      \"dataSourceKeyName\" : \"processingdb\",\n" +
             "      \"fullTableName\" : \"proc.client\",\n" +
             "      \"sources\" : [ ],\n" +
             "      \"columnSchema\" : [ {\n" +
@@ -150,8 +154,8 @@ public class SparkTaskProcessorBodyTest {
             "  },\n" +
             "  \"targetDataSet\" : {\n" +
             "    \"keyName\" : \"transaction_dds\",\n" +
-            "    \"project\" : \"DEMO\",\n" +
-            "    \"dataStoreKeyName\" : \"lakehousestorage\",\n" +
+            "    \"nameSpaceKeyName\" : \"DEMO\",\n" +
+            "    \"dataSourceKeyName\" : \"lakehousestorage\",\n" +
             "    \"fullTableName\" : \"transaction_dds\",\n" +
             "    \"sources\" : [ {\n" +
             "      \"name\" : \"client_processing\",\n" +
@@ -232,29 +236,36 @@ public class SparkTaskProcessorBodyTest {
             "      \"constructLevelCheck\" : true\n" +
             "    } ]\n" +
             "  },\n" +
-            "  \"dataStores\" : {\n" +
+            "  \"dataSources\" : {\n" +
             "    \"lakehousestorage\" : {\n" +
-            "      \"name\" : \"lakehousestorage\",\n" +
-            "      \"interfaceType\" : \"filesystem\",\n" +
-            "      \"vendor\" : \"localfs\",\n" +
-            "      \"properties\" : { },\n" +
-            "      \"driverClassName\" : null,\n" +
-            "      \"description\" : \"Local datastore\",\n" +
-            "      \"url\" : \"file:///tmp/lakehouse\"\n" +
+            "       \"keyName\": \"lakehousestorage\",\n" +
+            "       \"dataSourceType\": \"filesystem\",\n" +
+            "       \"dataSourceServiceType\": \"localfs\",\n" +
+            "       \"services\": [{\n" +
+            "           \"host\": \"\",\n" +
+            "           \"port\": \"\",\n" +
+            "           \"urn\": \"\"\n" +
+            "       }],\n" +
+            "        \"properties\": {\n" +
+            "       },\n" +
+            "     \"description\": \"Local datastore\"\n" +
             "    },\n" +
             "    \"processingdb\" : {\n" +
-            "      \"name\" : \"processingdb\",\n" +
-            "      \"interfaceType\" : \"jdbc\",\n" +
-            "      \"vendor\" : \"postgres\",\n" +
-            "      \"properties\" : {\n" +
-            "        \"password\" : \"postgresPW\",\n" +
-            "        \"user\" : \"postgresUser\"\n" +
-            "      },\n" +
-            "      \"driverClassName\" : null,\n" +
-            "      \"description\" : \"Remote datastore processingdb\",\n" +
-            "      \"url\" : \"jdbc:postgresql://localhost:5432/postgresDB\"\n" +
-            "    }\n" +
-            "  },\n" +
+            "       \"keyName\": \"processingdb\",\n" +
+            "       \"dataSourceType\": \"database\",\n" +
+            "       \"dataSourceServiceType\": \"postgres\",\n" +
+            "       \"services\": [{\n" +
+            "           \"host\": \"localhost\",\n" +
+            "           \"port\": \"5432\",\n" +
+            "           \"urn\": \"postgresDB\",\n" +
+            "           \"properties\": {\n" +
+            "               \"password\": \"postgresPW\",\n" +
+            "               \"user\": \"postgresUser\"\n" +
+            "           }\n" +
+            "       }],\n" +
+            "       \"description\": \"Remote datastore processingdb\"" +
+            "       }\n" +
+            "     },\n" +
             "  \"tableDefinitions\" : {\n" +
             "    \"transaction_processing\" : {\n" +
             "      \"schemaName\" : \"proc\",\n" +
@@ -298,8 +309,8 @@ public class SparkTaskProcessorBodyTest {
             "  },\n" +
             "  \"dataSetDTOSet\" : [ {\n" +
             "    \"keyName\" : \"transaction_dds\",\n" +
-            "    \"project\" : \"DEMO\",\n" +
-            "    \"dataStoreKeyName\" : \"lakehousestorage\",\n" +
+            "    \"nameSpaceKeyName\" : \"DEMO\",\n" +
+            "    \"dataSourceKeyName\" : \"lakehousestorage\",\n" +
             "    \"fullTableName\" : \"transaction_dds\",\n" +
             "    \"sources\" : [ {\n" +
             "      \"name\" : \"client_processing\",\n" +
@@ -381,8 +392,8 @@ public class SparkTaskProcessorBodyTest {
             "    } ]\n" +
             "  }, {\n" +
             "    \"keyName\" : \"transaction_processing\",\n" +
-            "    \"project\" : \"DEMO\",\n" +
-            "    \"dataStoreKeyName\" : \"processingdb\",\n" +
+            "    \"nameSpaceKeyName\" : \"DEMO\",\n" +
+            "    \"dataSourceKeyName\" : \"processingdb\",\n" +
             "    \"fullTableName\" : \"proc.transactions\",\n" +
             "    \"sources\" : [ ],\n" +
             "    \"columnSchema\" : [ {\n" +
@@ -446,8 +457,8 @@ public class SparkTaskProcessorBodyTest {
             "    } ]\n" +
             "  }, {\n" +
             "    \"keyName\" : \"client_processing\",\n" +
-            "    \"project\" : \"DEMO\",\n" +
-            "    \"dataStoreKeyName\" : \"processingdb\",\n" +
+            "    \"nameSpaceKeyName\" : \"DEMO\",\n" +
+            "    \"dataSourceKeyName\" : \"processingdb\",\n" +
             "    \"fullTableName\" : \"proc.client\",\n" +
             "    \"sources\" : [ ],\n" +
             "    \"columnSchema\" : [ {\n" +
@@ -517,39 +528,47 @@ public class SparkTaskProcessorBodyTest {
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine").withDatabaseName("test")
             .withUsername("name").withPassword("password");
 
-/*
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgres::getJdbcUrl);
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
-        registry.add("spring.kafka.bootstrap-servers", kafka::getBootstrapServers);
-        registry.add("spring.kafka.bootstrap-servers", kafka::getBootstrapServers);
-        registry.add("lakehouse.task-executor.scheduled.task.kafka.consumer.bootstrap.servers", kafka::getBootstrapServers);
+    /*
+        @DynamicPropertySource
+        static void configureProperties(DynamicPropertyRegistry registry) {
+            registry.add("spring.datasource.url", postgres::getJdbcUrl);
+            registry.add("spring.datasource.username", postgres::getUsername);
+            registry.add("spring.datasource.password", postgres::getPassword);
+            registry.add("spring.kafka.bootstrap-servers", kafka::getBootstrapServers);
+            registry.add("spring.kafka.bootstrap-servers", kafka::getBootstrapServers);
+            registry.add("lakehouse.task-executor.scheduled.task.kafka.consumer.bootstrap.servers", kafka::getBootstrapServers);
 
-    }*/
+        }*/
     @BeforeAll
-    static void beforeAllStart(){
+    static void beforeAllStart() {
         postgres.start();
     }
+
+    private ServiceDTO parceUrlToServiceDTO(String url, String user, String password) {
+        //"jdbc:postgresql://localhost:5432/mydb?sslmode=disable";
+        String[] arr = url.replaceAll("jdbc:postgresql://", "").split("/");
+        ServiceDTO result = new ServiceDTO();
+        result.setUrn(arr[1]);
+        result.setHost(arr[0].split(":")[0]);
+        result.setPort(arr[0].split(":")[1]);
+        result.setProperties(Map.of("user", user, "password", password));
+        return result;
+    }
+
     @Test
     void testAddition() throws IOException, TaskFailedException, SQLException {
         SparkSession sparkSession = SparkSession
                 .builder()
-                .config("spark.driver.extraJavaOptions","--add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED")
-                .config("spark.executor.extraJavaOptions","--add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED")
+                .config("spark.driver.extraJavaOptions", "--add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED")
+                .config("spark.executor.extraJavaOptions", "--add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED")
                 .master("local[*]")
-               // .master("spark://127.0.0.1:7077")
+                // .master("spark://127.0.0.1:7077")
                 //.config("spark.submit.deployMode", "cluster")
                 .getOrCreate();
 
         TaskProcessorConfigDTO conf = ObjectMapping.stringToObject(config, TaskProcessorConfigDTO.class);
-        DataStoreDTO pgDataStoreDTO = conf.getDataStores().get("processingdb");
-        pgDataStoreDTO.setUrl(postgres.getJdbcUrl());
-       // Map<String,String> props = new HashMap<>(pgDataStoreDTO.getProperties());
-        pgDataStoreDTO.getProperties().put("password",postgres.getPassword());
-        pgDataStoreDTO.getProperties().put("user",postgres.getUsername());
-        conf.getDataStores().put("processingdb",pgDataStoreDTO);
+        DataSourceDTO pgDataSourceDTO = conf.getDataSources().get("processingdb");
+        pgDataSourceDTO.setServices(List.of(parceUrlToServiceDTO(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword())));
 
 
         executeJdbcQuery("CREATE SCHEMA proc");
@@ -571,6 +590,7 @@ public class SparkTaskProcessorBodyTest {
         SparkTaskProcessorBody sparkTaskProcessorBody = new SparkTaskProcessorBody(sparkSession,conf);
         sparkTaskProcessorBody.run();*/
     }
+
     private void executeJdbcQuery(String sql) throws SQLException {
         String url = postgres.getJdbcUrl();
         String user = postgres.getUsername();

@@ -11,7 +11,7 @@ public class ScheduledTaskMsgKafkaDeserializer implements Deserializer<Scheduled
     @Override
     public ScheduledTaskMsgDTO deserialize(String topic, byte[] data) {
         try {
-            if (data == null){
+            if (data == null) {
                 System.out.println("Null received at deserializing");
                 return null;
             }

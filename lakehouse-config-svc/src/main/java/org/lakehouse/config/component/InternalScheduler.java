@@ -21,38 +21,40 @@ import java.util.List;
 @EnableScheduling
 @ConditionalOnProperty(value = "scheduling.enabled", havingValue = "true", matchIfMissing = true)
 public class InternalScheduler {
-	private final Logger logger = LoggerFactory.getLogger(this.getClass());
-	private final ScheduleConfigProducerService scheduleConfigProducerService;
-	private final ScheduleProduceMessageRepository scheduleProduceMessageRepository;
-	private final ScheduleService scheduleService;
-	private final Integer sendLimit;
-	public InternalScheduler(
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final ScheduleConfigProducerService scheduleConfigProducerService;
+    private final ScheduleProduceMessageRepository scheduleProduceMessageRepository;
+    private final ScheduleService scheduleService;
+    private final Integer sendLimit;
+
+    public InternalScheduler(
             ScheduleConfigProducerService scheduleConfigProducerService,
             ScheduleProduceMessageRepository scheduleProduceMessageRepository, ScheduleService scheduleService,
             @Value("${lakehouse.config.schedule.send.limit}")
-			Integer sendLimit
-			) {
+            Integer sendLimit
+    ) {
 
         this.scheduleConfigProducerService = scheduleConfigProducerService;
         this.scheduleProduceMessageRepository = scheduleProduceMessageRepository;
         this.scheduleService = scheduleService;
-		logger.info("sendLimit {}", sendLimit);
+        logger.info("sendLimit {}", sendLimit);
         this.sendLimit = sendLimit;
     }
-/**
- * Made schedule objects with status  NEW
- * */
-	@Scheduled(
-			fixedDelayString = "${lakehouse.config.schedule.send.delay-ms}",
-			initialDelayString = "${lakehouse.config.schedule.send.initial-delay-ms}")
-	public void build() {
 
-		List<ScheduleProduceMessage> scheduleProduceMessages = scheduleProduceMessageRepository.findAllWithLimit(Limit.of(sendLimit));
-		logger.info("Found {} schedule config for send", scheduleProduceMessages.size());
-		scheduleProduceMessages.forEach(scheduleProduceMessage -> {
-			ScheduleEffectiveDTO scheduleEffectiveDTO = scheduleService.findEffectiveScheduleDTOById(scheduleProduceMessage.getSchedule().getKeyName());
-			scheduleConfigProducerService.send(scheduleEffectiveDTO);
-			scheduleProduceMessageRepository.delete(scheduleProduceMessage);
-		});
-	}
+    /**
+     * Made schedule objects with status  NEW
+     */
+    @Scheduled(
+            fixedDelayString = "${lakehouse.config.schedule.send.delay-ms}",
+            initialDelayString = "${lakehouse.config.schedule.send.initial-delay-ms}")
+    public void build() {
+
+        List<ScheduleProduceMessage> scheduleProduceMessages = scheduleProduceMessageRepository.findAllWithLimit(Limit.of(sendLimit));
+        logger.info("Found {} schedule config for send", scheduleProduceMessages.size());
+        scheduleProduceMessages.forEach(scheduleProduceMessage -> {
+            ScheduleEffectiveDTO scheduleEffectiveDTO = scheduleService.findEffectiveScheduleDTOById(scheduleProduceMessage.getSchedule().getKeyName());
+            scheduleConfigProducerService.send(scheduleEffectiveDTO);
+            scheduleProduceMessageRepository.delete(scheduleProduceMessage);
+        });
+    }
 }

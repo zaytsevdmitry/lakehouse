@@ -5,5 +5,5 @@ import org.apache.spark.sql.Row;
 import org.lakehouse.client.api.exception.TaskFailedException;
 
 public interface Metric {
-    public  Dataset<Row> calculate() throws TaskFailedException;
+    public Dataset<Row> calculate() throws TaskFailedException;
 }

@@ -28,8 +28,9 @@ public class StateController {
                 DateTimeUtils.parseDateTimeFormatWithTZ(dataSetIntervalDTO.getIntervalStartDateTime()),
                 DateTimeUtils.parseDateTimeFormatWithTZ(dataSetIntervalDTO.getIntervalEndDateTime()));
     }
+
     @PutMapping(Endpoint.STATE_DATASET)
-    void setState(@RequestBody  DataSetStateDTO dataSetStateDTO) {
+    void setState(@RequestBody DataSetStateDTO dataSetStateDTO) {
         try {
             stateService.save(StateMapper.getState(dataSetStateDTO));
         } catch (Exception e) {

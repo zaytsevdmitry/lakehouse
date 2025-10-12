@@ -4,10 +4,11 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import org.lakehouse.config.entities.dataset.DataSet;
 import org.lakehouse.config.entities.KeyEntityAbstract;
+import org.lakehouse.config.entities.dataset.DataSet;
 
 import java.util.Objects;
+
 @Entity
 public class QualityMetricsConf extends KeyEntityAbstract {
 
@@ -15,7 +16,6 @@ public class QualityMetricsConf extends KeyEntityAbstract {
     @ManyToOne(optional = false)
     @JoinColumn(foreignKey = @ForeignKey(name = "quality_metrics_conf__data_set__fk"))
     private DataSet dataSet;
-
 
 
     private boolean enabled;
@@ -50,6 +50,6 @@ public class QualityMetricsConf extends KeyEntityAbstract {
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(),dataSet, enabled);
+        return Objects.hash(super.hashCode(), dataSet, enabled);
     }
 }

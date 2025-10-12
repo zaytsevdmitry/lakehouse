@@ -8,8 +8,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
-public class ScheduleEffectiveDTO extends ScheduleAbstract
-{
+public class ScheduleEffectiveDTO extends ScheduleAbstract {
     @Serial
     private static final long serialVersionUID = 2955161378713705887L;
 
@@ -19,7 +18,8 @@ public class ScheduleEffectiveDTO extends ScheduleAbstract
 
     private List<ScheduleScenarioActEffectiveDTO> scenarioActs = new ArrayList<>();
 
-    public ScheduleEffectiveDTO() {}
+    public ScheduleEffectiveDTO() {
+    }
 
 
     public List<ScheduleScenarioActEffectiveDTO> getScenarioActs() {

@@ -1,4 +1,5 @@
 # Compatible keywords
+
 Domain Driven Design (DDD)
 
 Data mesh
@@ -11,13 +12,14 @@ Scheduling
 
 Custom code
 
-SQL 
+SQL
 
 Data engineer tool
 
 United namespace
 
 # links
+
 [System design](./doc/system_design/system_design.md)
 
 [Entities design](./doc/entities_design/entities_design.md)
@@ -27,8 +29,6 @@ United namespace
 [States](doc/state_model/state-models.MD)
 
 [Command line](./lakehouse-cli/doc/commandline.MD)
-
-
 
 [Demo](./demo/README.md)
 

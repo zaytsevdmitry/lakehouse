@@ -13,21 +13,21 @@ import org.springframework.web.util.DefaultUriBuilderFactory;
 
 @Configuration
 public class StateRestClientConfiguration {
-	private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-	@Bean
-	StateRestClientApi getStateRestClientApi(
-			RestClient.Builder builder,
-			@Value("${lakehouse.client.rest.state.server.url}") String baseURI){
+    @Bean
+    StateRestClientApi getStateRestClientApi(
+            RestClient.Builder builder,
+            @Value("${lakehouse.client.rest.state.server.url}") String baseURI) {
 
-		logger.info("rest state baseURI:{}", baseURI);
-		DefaultUriBuilderFactory defaultUriBuilderFactory = new DefaultUriBuilderFactory(baseURI);
-		defaultUriBuilderFactory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.NONE);
-		return
-				new StateRestClientApiImpl(
-						new RestClientHelper(
-								builder
-										.uriBuilderFactory(defaultUriBuilderFactory)
-										.build()));
-	}
+        logger.info("rest state baseURI:{}", baseURI);
+        DefaultUriBuilderFactory defaultUriBuilderFactory = new DefaultUriBuilderFactory(baseURI);
+        defaultUriBuilderFactory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.NONE);
+        return
+                new StateRestClientApiImpl(
+                        new RestClientHelper(
+                                builder
+                                        .uriBuilderFactory(defaultUriBuilderFactory)
+                                        .build()));
+    }
 }

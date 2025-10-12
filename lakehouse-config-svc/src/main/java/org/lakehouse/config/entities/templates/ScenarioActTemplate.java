@@ -6,7 +6,7 @@ import org.lakehouse.config.entities.KeyEntityAbstract;
 @Entity
 public class ScenarioActTemplate extends KeyEntityAbstract {
 
-	public ScenarioActTemplate() {
-	}
+    public ScenarioActTemplate() {
+    }
 
 }

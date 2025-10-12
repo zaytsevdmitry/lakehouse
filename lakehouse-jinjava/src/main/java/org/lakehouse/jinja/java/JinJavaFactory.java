@@ -6,7 +6,7 @@ import org.lakehouse.jinja.java.functions.CompatibilityDBT;
 import org.lakehouse.jinja.java.functions.JinjavaDateTimeFunctions;
 
 public class JinJavaFactory {
-    public Jinjava getJinjava(){
+    public Jinjava getJinjava() {
         Jinjava jinjava = new Jinjava();
         jinjava.getGlobalContext().registerFunction(
                 new ELFunctionDefinition(

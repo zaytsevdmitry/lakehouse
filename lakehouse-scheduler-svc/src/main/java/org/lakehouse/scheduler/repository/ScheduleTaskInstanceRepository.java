@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface ScheduleTaskInstanceRepository extends JpaRepository<ScheduleTaskInstance, Long> {
 
-	@Query("""
+    @Query("""
             select  sti\s
             	from ScheduleInstanceRunning sir\s
             	join ScheduleInstanceLastBuild sil on sir.configScheduleKeyName = sil.configScheduleKeyName and sil.enabled\s
@@ -22,7 +22,7 @@ public interface ScheduleTaskInstanceRepository extends JpaRepository<ScheduleTa
             				and not stid.satisfied\s
             	)
             """)
-	List<ScheduleTaskInstance> findReadyToQueue();
+    List<ScheduleTaskInstance> findReadyToQueue();
 
-	List<ScheduleTaskInstance> findByStatus(String statusName);
+    List<ScheduleTaskInstance> findByStatus(String statusName);
 }

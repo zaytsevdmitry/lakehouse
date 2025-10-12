@@ -1,0 +1,17 @@
+{
+  "keyName": "processingdb",
+  "dataSourceType": "database",
+  "dataSourceServiceType": "postgres",
+  "services": [
+    {
+      "host": "localhost",
+      "port": "5432",
+      "urn": "postgresDB",
+      "properties": {
+        "password": "postgresPW",
+        "user": "postgresUser"
+      }
+    }
+  ],
+  "description": "Remote datastore processingdb"
+}

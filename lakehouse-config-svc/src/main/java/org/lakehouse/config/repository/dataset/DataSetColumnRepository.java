@@ -8,9 +8,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface DataSetColumnRepository extends JpaRepository<DataSetColumn, Long> {
-	@Query("select p from DataSetColumn p where p.dataSet.keyName = ?1")
-	List<DataSetColumn> findByDataSetName(String dataSetName);
+    @Query("select p from DataSetColumn p where p.dataSet.keyName = ?1")
+    List<DataSetColumn> findByDataSetName(String dataSetName);
 
-	@Query("select p from DataSetColumn p where p.dataSet.keyName = ?1 and p.name= ?2")
-	Optional<DataSetColumn> findByDataSetNameAndColumnName(String dataSetName, String columnName);
+    @Query("select p from DataSetColumn p where p.dataSet.keyName = ?1 and p.name= ?2")
+    Optional<DataSetColumn> findByDataSetNameAndColumnName(String dataSetName, String columnName);
 }

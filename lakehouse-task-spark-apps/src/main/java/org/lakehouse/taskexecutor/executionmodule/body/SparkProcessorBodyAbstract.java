@@ -3,9 +3,10 @@ package org.lakehouse.taskexecutor.executionmodule.body;
 import org.apache.spark.sql.SparkSession;
 import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
 
-public abstract class SparkProcessorBodyAbstract implements SparkProcessorBody{
+public abstract class SparkProcessorBodyAbstract implements SparkProcessorBody {
     private final BodyParam bodyParam;
-    public SparkProcessorBodyAbstract(BodyParam bodyParam)  {
+
+    public SparkProcessorBodyAbstract(BodyParam bodyParam) {
         this.bodyParam = bodyParam;
 
     }
@@ -14,13 +15,14 @@ public abstract class SparkProcessorBodyAbstract implements SparkProcessorBody{
     public TaskProcessorConfigDTO getTaskProcessorConfigDTO() {
         return bodyParam.getTaskProcessorConfigDTO();
     }
+
     @Override
-    public SparkSession getSparkSession(){
+    public SparkSession getSparkSession() {
         return bodyParam.getSparkSession();
     }
 
     @Override
-    public BodyParam getBodyParam(){
+    public BodyParam getBodyParam() {
         return bodyParam;
     }
 }

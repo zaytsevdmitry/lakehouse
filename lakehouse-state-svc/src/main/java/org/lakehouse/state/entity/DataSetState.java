@@ -4,27 +4,28 @@ import jakarta.persistence.*;
 
 import java.time.OffsetDateTime;
 import java.util.Objects;
+
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(name = "data_set_state__uk", columnNames = {
         "data_set_key_name",
         "interval_start_date_time",
-        "interval_end_date_time" }))
+        "interval_end_date_time"}))
 public class DataSetState {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column( nullable = false)
+    @Column(nullable = false)
     String dataSetKeyName;
 
-    @Column( nullable = false)
+    @Column(nullable = false)
     OffsetDateTime intervalStartDateTime;
 
-    @Column( nullable = false)
+    @Column(nullable = false)
     OffsetDateTime intervalEndDateTime;
 
-    @Column( nullable = false)
+    @Column(nullable = false)
     String status;
 
     @Column(length = 1000)

@@ -1,9 +1,9 @@
 package org.lakehouse.config.service;
 
 import jakarta.transaction.Transactional;
-import org.lakehouse.client.api.dto.configs.dataset.DataSetSourceDTO;
 import org.lakehouse.client.api.dto.configs.QualityMetricsConfDTO;
 import org.lakehouse.client.api.dto.configs.QualityMetricsConfTestSetDTO;
+import org.lakehouse.client.api.dto.configs.dataset.DataSetSourceDTO;
 import org.lakehouse.config.entities.dq.*;
 import org.lakehouse.config.exception.QualityMetricsConfNotFoundException;
 import org.lakehouse.config.repository.*;
@@ -43,7 +43,7 @@ public class QualityMetricsConfService {
             QualityMetricsConf entity,
             Set<QualityMetricsConfTestSet> qualityMetricsConfTestSets,
             Set<QualityMetricsConfTestSetThreshold> thresholds,
-            Set<QualityMetricsConfSource> sources){
+            Set<QualityMetricsConfSource> sources) {
         QualityMetricsConfDTO result = new QualityMetricsConfDTO();
         result.setKeyName(entity.getKeyName());
         result.setDescription(entity.getDescription());
@@ -56,30 +56,30 @@ public class QualityMetricsConfService {
                         .collect(Collectors.toSet()));
         result.setThresholds(
                 thresholds
-                .stream()
-                .map(this::mapQualityMetricsConfTestSetDTO)
+                        .stream()
+                        .map(this::mapQualityMetricsConfTestSetDTO)
                         .collect(Collectors.toSet()));
         result.setSources(
                 sources
-                .stream()
-                .map(e -> {
-                    DataSetSourceDTO dto = new DataSetSourceDTO();
-                    dto.setName(e.getSource().getKeyName());
-                    dto.setProperties(
-                            qualityMetricsConfSourcePropertyRepository
-                            .findByQualityMetricsConfSourceId(e.getId())
-                            .stream()
-                            .collect(
-                                    Collectors.toMap(
-                                            QualityMetricsConfSourceProperty::getKey,
-                                            QualityMetricsConfSourceProperty::getValue)));
-                    return dto;
-                }).collect(Collectors.toSet()));
+                        .stream()
+                        .map(e -> {
+                            DataSetSourceDTO dto = new DataSetSourceDTO();
+                            dto.setName(e.getSource().getKeyName());
+                            dto.setProperties(
+                                    qualityMetricsConfSourcePropertyRepository
+                                            .findByQualityMetricsConfSourceId(e.getId())
+                                            .stream()
+                                            .collect(
+                                                    Collectors.toMap(
+                                                            QualityMetricsConfSourceProperty::getKey,
+                                                            QualityMetricsConfSourceProperty::getValue)));
+                            return dto;
+                        }).collect(Collectors.toSet()));
 
         return result;
     }
 
-    public QualityMetricsConf mapQualityMetricsConf(QualityMetricsConfDTO dto){
+    public QualityMetricsConf mapQualityMetricsConf(QualityMetricsConfDTO dto) {
         QualityMetricsConf result = new QualityMetricsConf();
         result.setKeyName(dto.getKeyName());
         result.setDescription(dto.getDescription());
@@ -87,8 +87,9 @@ public class QualityMetricsConfService {
         result.setDataSet(dataSetRepository.getReferenceById(dto.getDataSetKeyName()));
         return result;
     }
+
     private QualityMetricsConfTestSetAbstract mapQualityMetricsConfTestSetAbstract(
-            QualityMetricsConfTestSetDTO dto){
+            QualityMetricsConfTestSetDTO dto) {
         QualityMetricsConfTestSetAbstract result = new QualityMetricsConfTestSetAbstract();
         result.setDqMetricsType(dto.getDqMetricsType());
         result.setSave(dto.isSave());
@@ -100,22 +101,24 @@ public class QualityMetricsConfService {
 
     public QualityMetricsConfTestSet mapQualityMetricsConfTestSet(
             QualityMetricsConf qualityMetricsConf,
-            QualityMetricsConfTestSetDTO dto){
+            QualityMetricsConfTestSetDTO dto) {
         QualityMetricsConfTestSet result = new QualityMetricsConfTestSet();
         result.of(mapQualityMetricsConfTestSetAbstract(dto));
         result.setQualityMetricsConf(qualityMetricsConf);
         return result;
     }
+
     public QualityMetricsConfTestSetThreshold mapQualityMetricsConfTestSetThreshold(
             QualityMetricsConf qualityMetricsConf,
-            QualityMetricsConfTestSetDTO dto){
-        QualityMetricsConfTestSetThreshold result =  new QualityMetricsConfTestSetThreshold();
+            QualityMetricsConfTestSetDTO dto) {
+        QualityMetricsConfTestSetThreshold result = new QualityMetricsConfTestSetThreshold();
         result.of(mapQualityMetricsConfTestSetAbstract(dto));
         result.setQualityMetricsConf(qualityMetricsConf);
         return result;
     }
+
     public QualityMetricsConfTestSetDTO mapQualityMetricsConfTestSetDTO(
-            QualityMetricsConfTestSetAbstract entity){
+            QualityMetricsConfTestSetAbstract entity) {
         QualityMetricsConfTestSetDTO result = new QualityMetricsConfTestSetDTO();
         result.setDqMetricsType(entity.getDqMetricsType());
         result.setSave(entity.isSave());
@@ -125,7 +128,7 @@ public class QualityMetricsConfService {
         return result;
     }
 
-    public QualityMetricsConfSource mapQualityMetricsConfSource(QualityMetricsConf qualityMetricsConf,DataSetSourceDTO dto){
+    public QualityMetricsConfSource mapQualityMetricsConfSource(QualityMetricsConf qualityMetricsConf, DataSetSourceDTO dto) {
         QualityMetricsConfSource result = new QualityMetricsConfSource();
         result.setQualityMetricsConf(qualityMetricsConf);
         result.setSource(dataSetRepository.getReferenceById(dto.getName()));
@@ -133,7 +136,7 @@ public class QualityMetricsConfService {
     }
 
     @Transactional
-    public QualityMetricsConfDTO save(QualityMetricsConfDTO qualityMetricsConfDTO){
+    public QualityMetricsConfDTO save(QualityMetricsConfDTO qualityMetricsConfDTO) {
         QualityMetricsConf qualityMetricsConf = qualityMetricsConfRepository.save(mapQualityMetricsConf(qualityMetricsConfDTO));
         qualityMetricsConfTestSetRepository.deleteByQualityMetricsConfKeyName(qualityMetricsConf.getKeyName());
         qualityMetricsConfTestSetThresholdRepository.deleteByQualityMetricsConfKeyName(qualityMetricsConf.getKeyName());
@@ -144,27 +147,27 @@ public class QualityMetricsConfService {
                         qualityMetricsConfDTO
                                 .getQualityMetricsConfTestSets()
                                 .stream()
-                                .map(o-> mapQualityMetricsConfTestSet(qualityMetricsConf,o)).toList());
+                                .map(o -> mapQualityMetricsConfTestSet(qualityMetricsConf, o)).toList());
 
         qualityMetricsConfTestSetThresholdRepository
                 .saveAll(
                         qualityMetricsConfDTO
                                 .getThresholds()
                                 .stream()
-                                .map(o-> mapQualityMetricsConfTestSetThreshold(qualityMetricsConf,o)).toList());
+                                .map(o -> mapQualityMetricsConfTestSetThreshold(qualityMetricsConf, o)).toList());
 
         qualityMetricsConfDTO
                 .getSources()
-                .forEach(o-> saveQualityMetricsConfSource(qualityMetricsConf,o));
+                .forEach(o -> saveQualityMetricsConfSource(qualityMetricsConf, o));
 
         return findById(qualityMetricsConfDTO.getKeyName());
     }
 
-    private void  saveQualityMetricsConfSource(
+    private void saveQualityMetricsConfSource(
             QualityMetricsConf qualityMetricsConf,
-            DataSetSourceDTO dataSetSourceDTO){
+            DataSetSourceDTO dataSetSourceDTO) {
         QualityMetricsConfSource source = qualityMetricsConfSourceRepository.save(
-                mapQualityMetricsConfSource(qualityMetricsConf,dataSetSourceDTO));
+                mapQualityMetricsConfSource(qualityMetricsConf, dataSetSourceDTO));
         dataSetSourceDTO.getProperties().entrySet().forEach(stringStringEntry -> {
             QualityMetricsConfSourceProperty dataSetSourceProperty = new QualityMetricsConfSourceProperty();
             dataSetSourceProperty.setQualityMetricsConfSource(source);
@@ -173,27 +176,28 @@ public class QualityMetricsConfService {
             qualityMetricsConfSourcePropertyRepository.save(dataSetSourceProperty);
         });
     }
-    public List<QualityMetricsConfDTO> findAll(){
+
+    public List<QualityMetricsConfDTO> findAll() {
         return qualityMetricsConfRepository
                 .findAll()
                 .stream().map(qualityMetricsConf ->
-                    mapQualityMetricsConfDTO(
-                      qualityMetricsConf,
-                      qualityMetricsConfTestSetRepository.findByQualityMetricsConfKeyName(qualityMetricsConf.getKeyName()),
-                      qualityMetricsConfTestSetThresholdRepository.findByQualityMetricsConfKeyName(qualityMetricsConf.getKeyName()),
-                      qualityMetricsConfSourceRepository.findByQualityMetricsConfKeyName(qualityMetricsConf.getKeyName()))
-                        )
+                        mapQualityMetricsConfDTO(
+                                qualityMetricsConf,
+                                qualityMetricsConfTestSetRepository.findByQualityMetricsConfKeyName(qualityMetricsConf.getKeyName()),
+                                qualityMetricsConfTestSetThresholdRepository.findByQualityMetricsConfKeyName(qualityMetricsConf.getKeyName()),
+                                qualityMetricsConfSourceRepository.findByQualityMetricsConfKeyName(qualityMetricsConf.getKeyName()))
+                )
                 .toList();
     }
 
     public QualityMetricsConfDTO findById(String name) {
         return mapQualityMetricsConfDTO(
                 qualityMetricsConfRepository
-                .findByKeyName(name)
-                .orElseThrow(() -> new QualityMetricsConfNotFoundException(name)),
-                                qualityMetricsConfTestSetRepository.findByQualityMetricsConfKeyName(name),
-                                qualityMetricsConfTestSetThresholdRepository.findByQualityMetricsConfKeyName(name),
-                                qualityMetricsConfSourceRepository.findByQualityMetricsConfKeyName(name));
+                        .findByKeyName(name)
+                        .orElseThrow(() -> new QualityMetricsConfNotFoundException(name)),
+                qualityMetricsConfTestSetRepository.findByQualityMetricsConfKeyName(name),
+                qualityMetricsConfTestSetThresholdRepository.findByQualityMetricsConfKeyName(name),
+                qualityMetricsConfSourceRepository.findByQualityMetricsConfKeyName(name));
     }
 
     public void deleteById(String name) {

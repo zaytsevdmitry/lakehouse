@@ -10,31 +10,31 @@ import java.util.List;
 
 @RestController
 public class QualityMetricsConfController {
-	private final QualityMetricsConfService qualityMetricsConfService;
+    private final QualityMetricsConfService qualityMetricsConfService;
 
-	public QualityMetricsConfController(QualityMetricsConfService qualityMetricsConfService) {
-		this.qualityMetricsConfService = qualityMetricsConfService;
-	}
+    public QualityMetricsConfController(QualityMetricsConfService qualityMetricsConfService) {
+        this.qualityMetricsConfService = qualityMetricsConfService;
+    }
 
-	@GetMapping(Endpoint.QUALITY_METRICS)
-	List<QualityMetricsConfDTO> getAll() {
-		return qualityMetricsConfService.findAll();
-	}
+    @GetMapping(Endpoint.QUALITY_METRICS)
+    List<QualityMetricsConfDTO> getAll() {
+        return qualityMetricsConfService.findAll();
+    }
 
-	@PostMapping(Endpoint.QUALITY_METRICS)
-	@ResponseStatus(HttpStatus.CREATED)
-	void post(@RequestBody QualityMetricsConfDTO qualityMetricsConfDTO) {
-		 qualityMetricsConfService.save(qualityMetricsConfDTO);
-	}
+    @PostMapping(Endpoint.QUALITY_METRICS)
+    @ResponseStatus(HttpStatus.CREATED)
+    void post(@RequestBody QualityMetricsConfDTO qualityMetricsConfDTO) {
+        qualityMetricsConfService.save(qualityMetricsConfDTO);
+    }
 
-	@GetMapping(Endpoint.QUALITY_METRICS_NAME)
-	QualityMetricsConfDTO get(@PathVariable String name) {
-		return qualityMetricsConfService.findById(name);
-	}
+    @GetMapping(Endpoint.QUALITY_METRICS_NAME)
+    QualityMetricsConfDTO get(@PathVariable String name) {
+        return qualityMetricsConfService.findById(name);
+    }
 
-	@DeleteMapping(Endpoint.QUALITY_METRICS_NAME)
-	@ResponseStatus(HttpStatus.ACCEPTED)
-	void deleteById(@PathVariable String name) {
-		qualityMetricsConfService.deleteById(name);
-	}
+    @DeleteMapping(Endpoint.QUALITY_METRICS_NAME)
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    void deleteById(@PathVariable String name) {
+        qualityMetricsConfService.deleteById(name);
+    }
 }

@@ -35,7 +35,7 @@ public class DataSetIntervalDTO extends IntervalDTO {
 
     @Override
     public String toString() {
-        return this.getClass().getName() +"{" +
+        return this.getClass().getName() + "{" +
                 "dataSetKeyName='" + dataSetKeyName + '\'' +
                 ", intervalStartDateTime='" + getIntervalStartDateTime() + '\'' +
                 ", intervalEndDateTime='" + getIntervalEndDateTime() + '\'' +

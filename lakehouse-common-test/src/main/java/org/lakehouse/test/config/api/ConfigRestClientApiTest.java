@@ -2,6 +2,7 @@ package org.lakehouse.test.config.api;
 
 import org.lakehouse.client.api.dto.configs.*;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
+import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.test.config.configuration.FileLoader;
 import org.slf4j.Logger;
@@ -17,11 +18,12 @@ public class ConfigRestClientApiTest implements ConfigRestClientApi {
     private final int HTTP_NOT_IMPLEMENTED_501 = 501;
     private final FileLoader fileLoader = new FileLoader();
     private final Map<String, TaskDTO> taskDTOEffectiveMap = new HashMap<>();
-    private final Map<String,String> scriptMap;
+    private final Map<String, String> scriptMap;
     private final Map<String, DataSetDTO> dataSetDTOMap;
-    private final Map<String,DataStoreDTO> dataStoreDTOMap;
+    private final Map<String, DataSourceDTO> dataStoreDTOMap;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
     public ConfigRestClientApiTest() throws IOException {
         scriptMap = fileLoader.loadAllModelScripts();
         ScheduleEffectiveDTO sef = fileLoader.loadScheduleEffectiveDTO();
@@ -32,22 +34,22 @@ public class ConfigRestClientApiTest implements ConfigRestClientApi {
                         sef.getName(),
                         scheduleScenarioActEffectiveDTO.getName(),
                         taskDTO.getName());
-                taskDTOEffectiveMap.put(key,taskDTO);
+                taskDTOEffectiveMap.put(key, taskDTO);
             });
         });
 
         this.dataSetDTOMap = fileLoader.loadAllDataSets();
-        this.dataStoreDTOMap = fileLoader.loadAllDataStores();
+        this.dataStoreDTOMap = fileLoader.loadAllDataSources();
 
     }
 
     @Override
-    public ProjectDTO getProjectDTO(String ProjectName) {
+    public NameSpaceDTO getNameSpaceDTO(String NameSpaceName) {
         return null;
     }
 
     @Override
-    public DataStoreDTO getDataStoreDTO(String name) {
+    public DataSourceDTO getDataSourceDTO(String name) {
         return dataStoreDTOMap.get(name);
     }
 
@@ -78,10 +80,10 @@ public class ConfigRestClientApiTest implements ConfigRestClientApi {
 
     @Override
     public TaskDTO getEffectiveTaskDTO(String schedule, String scenarioAct, String task) {
-        String key = String.format("%s %s %s",schedule,scenarioAct,task);
-        if(!taskDTOEffectiveMap.containsKey(key)) {
+        String key = String.format("%s %s %s", schedule, scenarioAct, task);
+        if (!taskDTOEffectiveMap.containsKey(key)) {
             logger.error("Wrong key {}", key);
-            taskDTOEffectiveMap.keySet().stream().sorted().forEach(string -> logger.info("Good key is {}",string));
+            taskDTOEffectiveMap.keySet().stream().sorted().forEach(string -> logger.info("Good key is {}", string));
         }
         return taskDTOEffectiveMap.get(key);
     }
@@ -102,12 +104,12 @@ public class ConfigRestClientApiTest implements ConfigRestClientApi {
     }
 
     @Override
-    public List<ProjectDTO> getProjectDTOList() {
+    public List<NameSpaceDTO> getNameSpaceDTOList() {
         return List.of();
     }
 
     @Override
-    public List<DataStoreDTO> getDataStoreDTOList() {
+    public List<DataSourceDTO> getDataSourceDTOList() {
         return List.of();
     }
 
@@ -147,64 +149,64 @@ public class ConfigRestClientApiTest implements ConfigRestClientApi {
     }
 
     @Override
-    public int deleteProjectDTO(String ProjectName) {
-         return HTTP_NOT_IMPLEMENTED_501;  
+    public int deleteNameSpaceDTO(String NameSpaceName) {
+        return HTTP_NOT_IMPLEMENTED_501;
     }
 
     @Override
     public int deleteDataStoreDTO(String name) {
-         return HTTP_NOT_IMPLEMENTED_501;  
+        return HTTP_NOT_IMPLEMENTED_501;
     }
 
     @Override
     public int deleteDataSetDTO(String name) {
-         return HTTP_NOT_IMPLEMENTED_501;  
+        return HTTP_NOT_IMPLEMENTED_501;
     }
 
     @Override
     public int deleteScenarioActTemplateDTO(String name) {
-         return HTTP_NOT_IMPLEMENTED_501;  
+        return HTTP_NOT_IMPLEMENTED_501;
     }
 
     @Override
     public int deleteScheduleDTO(String name) {
-         return HTTP_NOT_IMPLEMENTED_501;  
+        return HTTP_NOT_IMPLEMENTED_501;
     }
 
     @Override
     public int deleteTaskExecutionServiceGroupDTO(String name) {
-         return HTTP_NOT_IMPLEMENTED_501;  
+        return HTTP_NOT_IMPLEMENTED_501;
     }
 
     @Override
-    public int postProjectDTO(ProjectDTO o) {
-         return HTTP_NOT_IMPLEMENTED_501;  
+    public int postNameSpaceDTO(NameSpaceDTO o) {
+        return HTTP_NOT_IMPLEMENTED_501;
     }
 
     @Override
-    public int postDataStoreDTO(DataStoreDTO dataStoreDTO) {
-        dataStoreDTOMap.put(dataStoreDTO.getName(), dataStoreDTO);
+    public int postDataStoreDTO(DataSourceDTO dataSourceDTO) {
+        dataStoreDTOMap.put(dataSourceDTO.getKeyName(), dataSourceDTO);
         return 200;
     }
 
     @Override
     public int postDataSetDTO(DataSetDTO o) {
-         return HTTP_NOT_IMPLEMENTED_501;  
+        return HTTP_NOT_IMPLEMENTED_501;
     }
 
     @Override
     public int postScenarioActTemplateDTO(ScenarioActTemplateDTO o) {
-         return HTTP_NOT_IMPLEMENTED_501;  
+        return HTTP_NOT_IMPLEMENTED_501;
     }
 
     @Override
     public int postScheduleDTO(ScheduleDTO o) {
-         return HTTP_NOT_IMPLEMENTED_501;  
+        return HTTP_NOT_IMPLEMENTED_501;
     }
 
     @Override
     public int postTaskExecutionServiceGroupDTO(TaskExecutionServiceGroupDTO o) {
-         return HTTP_NOT_IMPLEMENTED_501;  
+        return HTTP_NOT_IMPLEMENTED_501;
     }
 
     @Override

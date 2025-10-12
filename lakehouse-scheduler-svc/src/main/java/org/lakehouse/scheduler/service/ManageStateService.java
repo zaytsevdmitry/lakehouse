@@ -32,6 +32,7 @@ public class ManageStateService {
     private final ScheduleEffectiveService scheduleEffectiveService;
     private final ScheduleScenarioActInstanceDependencyRepository scenarioActInstanceDependencyRepository;
     private final ScheduleInstanceLastBuildRepository scheduleInstanceLastBuildRepository;
+
     public ManageStateService(
             ScheduleInstanceRunningRepository scheduleInstanceRunningRepository,
             ScheduleInstanceRepository scheduleInstanceRepository,
@@ -45,6 +46,7 @@ public class ManageStateService {
         this.scenarioActInstanceDependencyRepository = scenarioActInstanceDependencyRepository;
         this.scheduleInstanceLastBuildRepository = scheduleInstanceLastBuildRepository;
     }
+
     private OffsetDateTime resolveNextDate(
             ScheduleInstance scheduleInstance,
             ScheduleEffectiveDTO scheduleEffectiveDTO) {
@@ -54,8 +56,8 @@ public class ManageStateService {
         OffsetDateTime lastOffsetDateTime = null;
 
 
-        if(scheduleInstance != null)
-            lastOffsetDateTime =  scheduleInstance.getTargetExecutionDateTime();
+        if (scheduleInstance != null)
+            lastOffsetDateTime = scheduleInstance.getTargetExecutionDateTime();
         else {
             lastOffsetDateTime = DateTimeUtils
                     .parseDateTimeFormatWithTZ(scheduleEffectiveDTO.getStartDateTime());
@@ -70,19 +72,19 @@ public class ManageStateService {
                                     .getIntervalExpression(),
                             lastOffsetDateTime);
         } catch (CronParceErrorException e) {
-                logger.warn(e.getMessage(),e);
+            logger.warn(e.getMessage(), e);
         }
 
         return result;
     }
 
     @Transactional
-    public int  runAll() {
+    public int runAll() {
         AtomicInteger result = new AtomicInteger();
         List<ScheduleInstanceRunning> sirList = new ArrayList<>();
         sirList.addAll( // new
-            scheduleInstanceRunningRepository
-                .findScheduleInstanceNull());
+                scheduleInstanceRunningRepository
+                        .findScheduleInstanceNull());
 
         sirList.addAll( // exists
                 scheduleInstanceRunningRepository.findByScheduleEnabledAndStatusSuccessAndStatusFAiled());
@@ -92,9 +94,9 @@ public class ManageStateService {
                     scheduleEffectiveService
                             .getScheduleEffectiveDTO(sir.getConfigScheduleKeyName());
 
-            ScheduleInstance scheduleInstance = findNextScheduleInstanceOrNull(sir,scheduleEffectiveDTO);
+            ScheduleInstance scheduleInstance = findNextScheduleInstanceOrNull(sir, scheduleEffectiveDTO);
             if (scheduleInstance != null
-                    && scheduleInstance.getStatus().equals(Status.Schedule.NEW.label)){
+                    && scheduleInstance.getStatus().equals(Status.Schedule.NEW.label)) {
 
                 scheduleInstance.setStatus(Status.Schedule.RUNNING.label);
                 sir.setScheduleInstance(scheduleInstance);
@@ -110,14 +112,14 @@ public class ManageStateService {
     private ScheduleInstance findNextScheduleInstanceOrNull(
             ScheduleInstanceRunning scheduleInstanceRunning,
             ScheduleEffectiveDTO scheduleEffectiveDTO
-    ){
+    ) {
         ScheduleInstance result = null;
 
         OffsetDateTime nextTargetDateTime = resolveNextDate(
                 scheduleInstanceRunning.getScheduleInstance(),
                 scheduleEffectiveDTO);
 
-        if(scheduleEffectiveService
+        if (scheduleEffectiveService
                 .isBefore(
                         scheduleEffectiveDTO
                                 .getIntervalExpression(),
@@ -179,6 +181,7 @@ public class ManageStateService {
                         .findByFrom(s)));
         return l.size();
     }
+
     @Transactional
     private void satisfyDependencies(List<ScheduleScenarioActInstanceDependency> l) {
         List<ScheduleScenarioActInstanceDependency> deps =
@@ -190,35 +193,36 @@ public class ManageStateService {
                         .toList();
         scenarioActInstanceDependencyRepository.saveAll(deps);
     }
-    public List<ScheduleInstanceDTO> findAll(){
-        return ScheduleInstanceFactory.scheduleInstanceDTOList( scheduleInstanceRepository.findAll());
+
+    public List<ScheduleInstanceDTO> findAll() {
+        return ScheduleInstanceFactory.scheduleInstanceDTOList(scheduleInstanceRepository.findAll());
     }
 
-    public List<ScheduleInstanceDTO> findAllByName(String name, int limit){
+    public List<ScheduleInstanceDTO> findAllByName(String name, int limit) {
         return ScheduleInstanceFactory.scheduleInstanceDTOList(
                 scheduleInstanceRepository.findByScheduleNameOrderByTargetExecutionDateTimeDesc(name, Limit.of(limit)));
     }
 
-    public void delete(Long id){
+    public void delete(Long id) {
         scheduleInstanceRepository.findById(id).ifPresent(
                 scheduleInstance -> {
 
-                       scheduleInstanceLastBuildRepository
-                               .findByConfigScheduleKeyName(scheduleInstance.getConfigScheduleKeyName())
-                               .ifPresent(scheduleInstanceLastBuild -> {
+                    scheduleInstanceLastBuildRepository
+                            .findByConfigScheduleKeyName(scheduleInstance.getConfigScheduleKeyName())
+                            .ifPresent(scheduleInstanceLastBuild -> {
 
 
-                                   List<ScheduleInstance> lastList =
-                                           scheduleInstanceRepository
-                                                   .findByScheduleNameOrderByTargetExecutionDateTimeDescLess(
-                                                           scheduleInstance.getConfigScheduleKeyName(),
-                                                           scheduleInstance.getTargetExecutionDateTime(),
-                                                           Limit.of(1));
-                                   ScheduleInstance last = null;
-                                   if(!lastList.isEmpty()) last = lastList.get(0);
-                                   scheduleInstanceLastBuild.setScheduleInstance(last);
-                                    scheduleInstanceLastBuildRepository.save(scheduleInstanceLastBuild);
-                               });
+                                List<ScheduleInstance> lastList =
+                                        scheduleInstanceRepository
+                                                .findByScheduleNameOrderByTargetExecutionDateTimeDescLess(
+                                                        scheduleInstance.getConfigScheduleKeyName(),
+                                                        scheduleInstance.getTargetExecutionDateTime(),
+                                                        Limit.of(1));
+                                ScheduleInstance last = null;
+                                if (!lastList.isEmpty()) last = lastList.get(0);
+                                scheduleInstanceLastBuild.setScheduleInstance(last);
+                                scheduleInstanceLastBuildRepository.save(scheduleInstanceLastBuild);
+                            });
                     scheduleInstanceRepository.deleteById(id);
                 });
 

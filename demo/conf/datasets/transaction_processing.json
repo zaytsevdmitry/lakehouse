@@ -3,10 +3,12 @@
   "project": "DEMO",
   "dataStoreKeyName": "processingdb",
   "fullTableName": "proc.transactions",
-  "scripts": [{
-    "key": "transaction_processing.sql",
-    "order": 1
-  }],
+  "scripts": [
+    {
+      "key": "transaction_processing.sql",
+      "order": 1
+    }
+  ],
   "sources": [],
   "columnSchema": [
     {
@@ -29,7 +31,6 @@
       "dataType": "integer",
       "nullable": false
     },
-
     {
       "name": "provider_id",
       "description": "To provider",
@@ -49,7 +50,7 @@
       "nullable": false
     }
   ],
-  "constraints":[
+  "constraints": [
     {
       "name": "transaction_processing_pk",
       "type": "primary",
@@ -59,7 +60,6 @@
     }
   ],
   "properties": {
-
   },
   "description": "remote transactions table placed  in db schema proc"
 }

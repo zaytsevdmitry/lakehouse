@@ -1,6 +1,6 @@
 package org.lakehouse.taskexecutor.exception;
 
-public class TaskFailedException extends Exception{
+public class TaskFailedException extends Exception {
     public TaskFailedException() {
         super();
     }

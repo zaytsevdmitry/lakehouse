@@ -5,16 +5,17 @@ import java.util.*;
 
 public class DataSetDTO implements Serializable {
     private static final long serialVersionUID = -7115041705179190105L;
-	private String keyName;
-    private String project;
-    private String dataStoreKeyName;
+    private String keyName;
+    private String nameSpaceKeyName;
+    private String dataSourceKeyName;
     private String fullTableName;
     private List<DataSetSourceDTO> sources = new ArrayList<>();
     private List<ColumnDTO> columnSchema = new ArrayList<>();
-    private Map<String,String> properties = new HashMap<>();
+    private Map<String, String> properties = new HashMap<>();
     private List<DataSetScriptDTO> scripts = new ArrayList<>();
     private String description;
     private List<DataSetConstraintDTO> constraints = new ArrayList<>();
+
     public DataSetDTO() {
     }
 
@@ -26,20 +27,20 @@ public class DataSetDTO implements Serializable {
         this.keyName = keyName;
     }
 
-    public String getProject() {
-        return project;
+    public String getNameSpaceKeyName() {
+        return nameSpaceKeyName;
     }
 
-    public void setProject(String project) {
-        this.project = project;
+    public void setNameSpaceKeyName(String nameSpaceKeyName) {
+        this.nameSpaceKeyName = nameSpaceKeyName;
     }
 
-    public String getDataStoreKeyName() {
-        return dataStoreKeyName;
+    public String getDataSourceKeyName() {
+        return dataSourceKeyName;
     }
 
-    public void setDataStoreKeyName(String dataStoreKeyName) {
-        this.dataStoreKeyName = dataStoreKeyName;
+    public void setDataSourceKeyName(String dataSourceKeyName) {
+        this.dataSourceKeyName = dataSourceKeyName;
     }
 
     public List<DataSetSourceDTO> getSources() {
@@ -64,7 +65,7 @@ public class DataSetDTO implements Serializable {
                 .forEach(result::add);
         columnSchema
                 .stream()
-                .filter(columnDTO -> columnDTO.getOrder()==null)
+                .filter(columnDTO -> columnDTO.getOrder() == null)
                 .sorted(Comparator.comparing(ColumnDTO::getName))
                 .forEach(result::add);
         this.columnSchema = result;
@@ -115,8 +116,8 @@ public class DataSetDTO implements Serializable {
         if (o == null || getClass() != o.getClass()) return false;
         DataSetDTO that = (DataSetDTO) o;
         return Objects.equals(getKeyName(), that.getKeyName())
-                && Objects.equals(getProject(), that.getProject())
-                && Objects.equals(getDataStoreKeyName(), that.getDataStoreKeyName())
+                && Objects.equals(getNameSpaceKeyName(), that.getNameSpaceKeyName())
+                && Objects.equals(getDataSourceKeyName(), that.getDataSourceKeyName())
                 && Objects.equals(getFullTableName(), that.getFullTableName())
                 && Objects.equals(getSources(), that.getSources())
                 && Objects.equals(getColumnSchema(), that.getColumnSchema())
@@ -128,7 +129,7 @@ public class DataSetDTO implements Serializable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(getKeyName(), getProject(), getDataStoreKeyName(), getFullTableName(), getSources(), getColumnSchema(),
+        return Objects.hash(getKeyName(), getNameSpaceKeyName(), getDataSourceKeyName(), getFullTableName(), getSources(), getColumnSchema(),
                 getProperties(), getScripts(), getDescription(), getConstraints());
     }
 }

@@ -6,7 +6,7 @@ import org.lakehouse.scheduler.entities.ScheduleInstance;
 import org.lakehouse.scheduler.entities.ScheduleScenarioActInstance;
 
 public class ScheduleScenarioActInstanceFactory {
-    public static  ScheduleScenarioActInstance mapToScheduleScenarioActInstance(
+    public static ScheduleScenarioActInstance mapToScheduleScenarioActInstance(
             ScheduleScenarioActEffectiveDTO scheduleScenarioActEffectiveDTO,
             ScheduleInstance scheduleInstance) {
         ScheduleScenarioActInstance result = new ScheduleScenarioActInstance();

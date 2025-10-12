@@ -1,11 +1,33 @@
 package org.lakehouse.client.api.constant;
 
 public class Types {
-    public enum ComputeType{
-        spark("spark"),
-        dbInternal("dbInternal");
+    public enum DataSourceType {
+        filesystem("filesystem"),
+        restapi("restapi"),
+        database("database");
         public final String label;
-        ComputeType(String label){this.label = label;}
+
+        DataSourceType(String label) {
+            this.label = label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
+
+    public enum DataSourceServiceType {
+        hdfs("hdfs"),
+        localfs("localfs"),
+        postgres("postgres"),
+        trino("trino");
+        public final String label;
+
+        DataSourceServiceType(String label) {
+            this.label = label;
+        }
+
         @Override
         public String toString() {
             return label;

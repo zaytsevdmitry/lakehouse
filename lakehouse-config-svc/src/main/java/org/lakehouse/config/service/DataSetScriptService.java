@@ -21,16 +21,13 @@ public class DataSetScriptService {
     }
 
     /**
-     *
      * @param dataSetName
-     * @return
-     *
-     * Note: @Transactional used by cause // Caused by: org.postgresql.util.PSQLException: Large Objects may not be used in auto-commit mode.
+     * @return Note: @Transactional used by cause // Caused by: org.postgresql.util.PSQLException: Large Objects may not be used in auto-commit mode.
      */
     @Transactional
-    public List<DataSetScriptDTO> findDataSetScriptDTOListByDataSetName(String dataSetName){
+    public List<DataSetScriptDTO> findDataSetScriptDTOListByDataSetName(String dataSetName) {
 
-       return dataSetScriptRepository.findByDataSetKeyName(dataSetName).stream().map(dataSetScript -> {
+        return dataSetScriptRepository.findByDataSetKeyName(dataSetName).stream().map(dataSetScript -> {
             DataSetScriptDTO dataSetScriptDTO = new DataSetScriptDTO();
             dataSetScriptDTO.setKey(dataSetScript.getScript().getKey());
             dataSetScriptDTO.setOrder(dataSetScript.getScriptOrder());
@@ -38,8 +35,9 @@ public class DataSetScriptService {
         }).toList();
 
     }
+
     @Transactional
-    public List<DataSetScript> findDataSetScriptListByDataSetName(String dataSetName){
+    public List<DataSetScript> findDataSetScriptListByDataSetName(String dataSetName) {
         return dataSetScriptRepository.findByDataSetKeyName(dataSetName);
     }
 

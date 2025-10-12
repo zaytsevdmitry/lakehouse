@@ -1,11 +1,13 @@
 {
   "keyName": "transaction_dds",
-  "project": "DEMO",
-  "dataStoreKeyName": "lakehousestorage",
+  "nameSpaceKeyName": "DEMO",
+  "dataSourceKeyName": "lakehousestorage",
   "fullTableName": "transaction_dds",
-  "scripts": [{
-    "key": "transaction_dds.sql"
-  }],
+  "scripts": [
+    {
+      "key": "transaction_dds.sql"
+    }
+  ],
   "sources": [
     {
       "name": "client_processing",
@@ -65,7 +67,7 @@
       "nullable": false
     }
   ],
-  "constraints":[
+  "constraints": [
     {
       "name": "transaction_dds_pk",
       "type": "primary",

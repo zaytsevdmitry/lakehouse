@@ -1,12 +1,14 @@
 {
   "keyName": "transaction_processing",
-  "project": "DEMO",
-  "dataStoreKeyName": "processingdb",
+  "nameSpaceKeyName": "DEMO",
+  "dataSourceKeyName": "processingdb",
   "fullTableName": "proc.transactions",
-  "scripts": [{
-    "key": "transaction_processing.sql",
-    "order": 1
-  }],
+  "scripts": [
+    {
+      "key": "transaction_processing.sql",
+      "order": 1
+    }
+  ],
   "sources": [],
   "columnSchema": [
     {
@@ -29,7 +31,6 @@
       "dataType": "integer",
       "nullable": false
     },
-
     {
       "name": "provider_id",
       "description": "To provider",
@@ -49,7 +50,7 @@
       "nullable": false
     }
   ],
-  "constraints":[
+  "constraints": [
     {
       "name": "transaction_processing_pk",
       "type": "primary",
@@ -62,15 +63,14 @@
       "type": "foreign",
       "columns": "client_id",
       "reference": {
-         "dataSetKeyName": "client_processing",
-         "constraintName": "client_processing_pk"
+        "dataSetKeyName": "client_processing",
+        "constraintName": "client_processing_pk"
       },
       "runtimeLevelCheck": false,
       "constructLevelCheck": true
     }
   ],
   "properties": {
-
   },
   "description": "remote transactions table placed  in db schema proc"
 }

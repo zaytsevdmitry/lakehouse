@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Primary;
 @Primary
 public class Config {
     @Bean
-    SchedulerRestClientApi getSchedulerRestClientApi(){
+    SchedulerRestClientApi getSchedulerRestClientApi() {
         return new SchedulerRestClientApiErrorTest();
     }
 

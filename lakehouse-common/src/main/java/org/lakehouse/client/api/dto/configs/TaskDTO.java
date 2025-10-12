@@ -10,7 +10,8 @@ public class TaskDTO {
     private String executionModule;
     private String importance;
     private String description;
-    private Map<String,String> executionModuleArgs = new HashMap<>();
+    private Map<String, String> executionModuleArgs = new HashMap<>();
+
     public String getName() {
         return name;
     }

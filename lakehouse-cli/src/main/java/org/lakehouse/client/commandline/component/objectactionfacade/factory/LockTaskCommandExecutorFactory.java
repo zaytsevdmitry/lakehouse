@@ -10,33 +10,33 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
+
 @Component
 public class LockTaskCommandExecutorFactory implements CommandExecutorFactory {
-	
-	
-	private final Map<String, CommandExecutor> commandExecutorMap;
-	
-	public LockTaskCommandExecutorFactory(
-			LockCommandExecutor locknew,
-			LockHearBeatCommandExecutor lockHeartBeat,
-			LockReleaseCommandExecutor  lockRelease
-	) {
 
-		this.commandExecutorMap = new HashMap<String, CommandExecutor>();
-		commandExecutorMap.put("new", locknew);
-		commandExecutorMap.put("heartbeat", lockHeartBeat);
-		commandExecutorMap.put("release", lockRelease);
-		
-	}
 
-	
+    private final Map<String, CommandExecutor> commandExecutorMap;
 
-	@Override
-	public CommandExecutor getCommandExecutor(String[] args) throws UnknownCommandCombination {
-		String name = args[1].toLowerCase();
-		if (commandExecutorMap.containsKey(name.toLowerCase()))
-			return commandExecutorMap.get(name.toLowerCase());
-		else throw new UnknownCommandCombination();
-	}
+    public LockTaskCommandExecutorFactory(
+            LockCommandExecutor locknew,
+            LockHearBeatCommandExecutor lockHeartBeat,
+            LockReleaseCommandExecutor lockRelease
+    ) {
+
+        this.commandExecutorMap = new HashMap<String, CommandExecutor>();
+        commandExecutorMap.put("new", locknew);
+        commandExecutorMap.put("heartbeat", lockHeartBeat);
+        commandExecutorMap.put("release", lockRelease);
+
+    }
+
+
+    @Override
+    public CommandExecutor getCommandExecutor(String[] args) throws UnknownCommandCombination {
+        String name = args[1].toLowerCase();
+        if (commandExecutorMap.containsKey(name.toLowerCase()))
+            return commandExecutorMap.get(name.toLowerCase());
+        else throw new UnknownCommandCombination();
+    }
 
 }

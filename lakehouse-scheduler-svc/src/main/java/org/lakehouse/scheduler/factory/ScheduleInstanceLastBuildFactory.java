@@ -4,12 +4,12 @@ import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.scheduler.entities.ScheduleInstanceLastBuild;
 
-public  class ScheduleInstanceLastBuildFactory {
+public class ScheduleInstanceLastBuildFactory {
 
 
     public static ScheduleInstanceLastBuild mapDTOToScheduleInstanceLastBuild(
             ScheduleInstanceLastBuild instanceLastBuild,
-            ScheduleEffectiveDTO scheduleEffectiveDTO){
+            ScheduleEffectiveDTO scheduleEffectiveDTO) {
 
         ScheduleInstanceLastBuild result = instanceLastBuild;
 

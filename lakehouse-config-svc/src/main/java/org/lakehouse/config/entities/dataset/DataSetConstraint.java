@@ -6,9 +6,10 @@ import org.hibernate.annotations.OnDeleteAction;
 import org.lakehouse.client.api.constant.Types;
 
 import java.util.Objects;
+
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(name = "data_set_constraint__uk", columnNames = {
-        "data_set_key_name", "name" }))
+        "data_set_key_name", "name"}))
 public class DataSetConstraint {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -121,7 +122,7 @@ public class DataSetConstraint {
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(),getDataSet(),
+        return Objects.hash(getId(), getDataSet(),
                 getName(),
                 getType(),
                 getColumns(),

@@ -3,113 +3,115 @@ package org.lakehouse.config.entities.scenario;
 import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
-import org.lakehouse.config.entities.dataset.DataSet;
 import org.lakehouse.config.entities.Schedule;
+import org.lakehouse.config.entities.dataset.DataSet;
 import org.lakehouse.config.entities.templates.ScenarioActTemplate;
 
 import java.util.Objects;
+
 /**
  * Описывает один из графов операций над датасетом.
  * Связывает датасет и расписание
- * */
+ */
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(name = "scenario_act_data_set_name_name_schedule_name_uk", columnNames = {
-		"schedule_name", "name" }))
+        "schedule_name", "name"}))
 public class ScenarioAct {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	private String name;
+    private String name;
 
-	@ManyToOne(optional = false)
-	@JoinColumn(foreignKey = @ForeignKey(name = "scenario_act_data_set_fk"))
-	private DataSet dataSet;
+    @ManyToOne(optional = false)
+    @JoinColumn(foreignKey = @ForeignKey(name = "scenario_act_data_set_fk"))
+    private DataSet dataSet;
 
-	@ManyToOne(optional = false)
-	@JoinColumn(foreignKey = @ForeignKey(name = "scenario_act__schedule_fk"))
-	@OnDelete(action = OnDeleteAction.CASCADE)
-	private Schedule schedule;
+    @ManyToOne(optional = false)
+    @JoinColumn(foreignKey = @ForeignKey(name = "scenario_act__schedule_fk"))
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private Schedule schedule;
 
-	@ManyToOne
-	@JoinColumn(foreignKey = @ForeignKey(name = "scenario_act__scenario_act_template_fk"))
-	private ScenarioActTemplate scenarioActTemplate;
+    @ManyToOne
+    @JoinColumn(foreignKey = @ForeignKey(name = "scenario_act__scenario_act_template_fk"))
+    private ScenarioActTemplate scenarioActTemplate;
 
-	@Column(nullable = false)
-	String intervalStart;
+    @Column(nullable = false)
+    String intervalStart;
 
-	@Column(nullable = false)
-	String intervalEnd;
-	public ScenarioAct() {
-	}
+    @Column(nullable = false)
+    String intervalEnd;
 
-	public Long getId() {
-		return id;
-	}
+    public ScenarioAct() {
+    }
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    public Long getId() {
+        return id;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public DataSet getDataSet() {
-		return dataSet;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public void setDataSet(DataSet dataSet) {
-		this.dataSet = dataSet;
-	}
+    public DataSet getDataSet() {
+        return dataSet;
+    }
 
-	public Schedule getSchedule() {
-		return schedule;
-	}
+    public void setDataSet(DataSet dataSet) {
+        this.dataSet = dataSet;
+    }
 
-	public void setSchedule(Schedule schedule) {
-		this.schedule = schedule;
-	}
+    public Schedule getSchedule() {
+        return schedule;
+    }
 
-	public ScenarioActTemplate getScenarioActTemplate() {
-		return scenarioActTemplate;
-	}
+    public void setSchedule(Schedule schedule) {
+        this.schedule = schedule;
+    }
 
-	public void setScenarioActTemplate(ScenarioActTemplate scenarioActTemplate) {
-		this.scenarioActTemplate = scenarioActTemplate;
-	}
+    public ScenarioActTemplate getScenarioActTemplate() {
+        return scenarioActTemplate;
+    }
 
-	public String getIntervalStart() {
-		return intervalStart;
-	}
+    public void setScenarioActTemplate(ScenarioActTemplate scenarioActTemplate) {
+        this.scenarioActTemplate = scenarioActTemplate;
+    }
 
-	public void setIntervalStart(String intervalStart) {
-		this.intervalStart = intervalStart;
-	}
+    public String getIntervalStart() {
+        return intervalStart;
+    }
 
-	public String getIntervalEnd() {
-		return intervalEnd;
-	}
+    public void setIntervalStart(String intervalStart) {
+        this.intervalStart = intervalStart;
+    }
 
-	public void setIntervalEnd(String intervalEnd) {
-		this.intervalEnd = intervalEnd;
-	}
+    public String getIntervalEnd() {
+        return intervalEnd;
+    }
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-		ScenarioAct that = (ScenarioAct) o;
-		return Objects.equals(getId(), that.getId()) && Objects.equals(getName(), that.getName()) && Objects.equals(getDataSet(), that.getDataSet()) && Objects.equals(getSchedule(), that.getSchedule()) && Objects.equals(getScenarioActTemplate(), that.getScenarioActTemplate()) && Objects.equals(getIntervalStart(), that.getIntervalStart()) && Objects.equals(getIntervalEnd(), that.getIntervalEnd());
-	}
+    public void setIntervalEnd(String intervalEnd) {
+        this.intervalEnd = intervalEnd;
+    }
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(getId(), getName(), getDataSet(), getSchedule(), getScenarioActTemplate(), getIntervalStart(), getIntervalEnd());
-	}
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ScenarioAct that = (ScenarioAct) o;
+        return Objects.equals(getId(), that.getId()) && Objects.equals(getName(), that.getName()) && Objects.equals(getDataSet(), that.getDataSet()) && Objects.equals(getSchedule(), that.getSchedule()) && Objects.equals(getScenarioActTemplate(), that.getScenarioActTemplate()) && Objects.equals(getIntervalStart(), that.getIntervalStart()) && Objects.equals(getIntervalEnd(), that.getIntervalEnd());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId(), getName(), getDataSet(), getSchedule(), getScenarioActTemplate(), getIntervalStart(), getIntervalEnd());
+    }
 }

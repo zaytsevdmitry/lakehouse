@@ -7,8 +7,8 @@ import java.util.Objects;
 
 public class DataSetSourceDTO implements Serializable {
     private static final long serialVersionUID = -2784578257851689101L;
-	private String name;
-    private Map<String,String> properties = new HashMap<>();
+    private String name;
+    private Map<String, String> properties = new HashMap<>();
 
     public DataSetSourceDTO() {
     }

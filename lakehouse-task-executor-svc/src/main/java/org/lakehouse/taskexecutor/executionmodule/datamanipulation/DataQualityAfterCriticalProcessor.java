@@ -7,14 +7,14 @@ import org.lakehouse.taskexecutor.executionmodule.AbstractDefaultTaskProcessor;
 
 public class DataQualityAfterCriticalProcessor extends AbstractDefaultTaskProcessor {
 
-	public DataQualityAfterCriticalProcessor(TaskProcessorConfigDTO taskProcessorConfigDTO) {
-		super(taskProcessorConfigDTO);
-	}
+    public DataQualityAfterCriticalProcessor(TaskProcessorConfigDTO taskProcessorConfigDTO) {
+        super(taskProcessorConfigDTO);
+    }
 
 
-	@Override
-	public void runTask()throws TaskFailedException {
+    @Override
+    public void runTask() throws TaskFailedException {
 
-	}
+    }
 
 }

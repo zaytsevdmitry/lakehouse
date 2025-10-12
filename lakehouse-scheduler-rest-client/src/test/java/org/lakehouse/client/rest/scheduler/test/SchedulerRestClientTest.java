@@ -28,17 +28,18 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 })
 public class SchedulerRestClientTest {
     @Autowired
-    SchedulerRestClientApi client ;
+    SchedulerRestClientApi client;
 
     @Autowired
     MockRestServiceServer server;
 
-    @Autowired private ObjectMapper objectMapper;
+    @Autowired
+    private ObjectMapper objectMapper;
 
 
     @Test
     public void MakesCorrectGetScheduledTasks() throws Exception {
-        List<ScheduledTaskDTO> expectedList =new ArrayList<>();
+        List<ScheduledTaskDTO> expectedList = new ArrayList<>();
         ScheduledTaskDTO task = new ScheduledTaskDTO();
         task.setName("test task");
         expectedList.add(task);
@@ -50,6 +51,6 @@ public class SchedulerRestClientTest {
 
 
         List<ScheduledTaskDTO> factList = client.getScheduledTaskDTOList();
-        assert(task.getName().equals(factList.get(0).getName()));
+        assert (task.getName().equals(factList.get(0).getName()));
     }
 }

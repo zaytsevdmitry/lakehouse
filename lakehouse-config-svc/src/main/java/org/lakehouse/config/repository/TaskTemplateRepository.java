@@ -8,9 +8,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TaskTemplateRepository extends JpaRepository<TaskTemplate, Long> {
-	//@Query("select p from TaskTemplate p where p.scenarioActTemplate.name = ?1")
-	List<TaskTemplate> findByScenarioActTemplateKeyName(String scenarioActTemplateName);
+    //@Query("select p from TaskTemplate p where p.scenarioActTemplate.name = ?1")
+    List<TaskTemplate> findByScenarioActTemplateKeyName(String scenarioActTemplateName);
 
-	@Query("select p from TaskTemplate p where p.scenarioActTemplate.keyName = ?1 and p.name = ?2")
-	Optional<TaskTemplate> findByScenarioActTemplateNameAndName(String scenarioActTemplateName, String name);
+    @Query("select p from TaskTemplate p where p.scenarioActTemplate.keyName = ?1 and p.name = ?2")
+    Optional<TaskTemplate> findByScenarioActTemplateNameAndName(String scenarioActTemplateName, String name);
 }

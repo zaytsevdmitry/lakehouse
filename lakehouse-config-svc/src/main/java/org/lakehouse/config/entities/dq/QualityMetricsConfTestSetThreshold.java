@@ -8,8 +8,8 @@ import java.util.Objects;
 
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(name = "data_set_source_data_set_name_source_name_uk", columnNames = {
-        "quality_metrics_conf_key_name", "key_name" }))
-public class QualityMetricsConfTestSetThreshold extends QualityMetricsConfTestSetAbstract{
+        "quality_metrics_conf_key_name", "key_name"}))
+public class QualityMetricsConfTestSetThreshold extends QualityMetricsConfTestSetAbstract {
     @ManyToOne(optional = false)
     @JoinColumn(foreignKey = @ForeignKey(name = "quality_metrics_conf_test_set__quality_metrics_conf__fk"))
     @OnDelete(action = OnDeleteAction.CASCADE)

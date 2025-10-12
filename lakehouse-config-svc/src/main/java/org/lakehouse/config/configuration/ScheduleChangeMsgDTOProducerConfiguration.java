@@ -18,7 +18,7 @@ import java.util.Map;
 @Configuration
 public class ScheduleChangeMsgDTOProducerConfiguration {
 
-    @Value("${lakehouse.config.schedule.kafka.producer.bootstrap-servers}" )
+    @Value("${lakehouse.config.schedule.kafka.producer.bootstrap-servers}")
     private String bootstrapServers;
 
     @Bean
@@ -34,14 +34,12 @@ public class ScheduleChangeMsgDTOProducerConfiguration {
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ScheduleEffectiveKafkaSerializer.class);
         return props;
     }
+
     @Bean
     public KafkaTemplate<String, ScheduleEffectiveDTO> kafkaTemplate() {
         Producer<String, ScheduleEffectiveDTO> p = producerFactory().createProducer();
         return new KafkaTemplate<String, ScheduleEffectiveDTO>(producerFactory());
     }
-
-
-
 
 
 }

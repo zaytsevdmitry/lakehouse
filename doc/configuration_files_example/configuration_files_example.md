@@ -1,4 +1,5 @@
 # [Not realised yet]Configuration files example
+
 ## Shared repository
 
 ```
@@ -18,7 +19,6 @@
         |--HeavyTransformGroup.yml
         |--DeafaultGroup.yml
 ```
- 
 
 ## Team project repository named myfirstproject
 
@@ -30,6 +30,7 @@
     schedules
        
 ```
+
 ## Team project repository named mysecondproject
 
 ``` 
@@ -44,7 +45,6 @@
 
 ```
 
-
 # Project is a high level definition. Main namespace
 
 ```yaml
@@ -52,14 +52,17 @@ configtype: project
 name: myfirstproject
 comment: 
 ```
+
 ```yaml
 configtype: project
 name: mysecondproject
 comment: 
 ```
+
 # data stores - database, file/object storage or else some things
+
 ```yaml
-configtype: DataStore
+configtype: DataSource
 key: mydb
 name:
 interfaceType: jdbc
@@ -70,8 +73,9 @@ properties:
   password: "****"
 comment: 
 ```
+
 ```yaml
-configtype: DataStore
+configtype: DataSource
 key: someelsedb
 interfaceType: file #http/jdbc/file etc
 vendor: s3
@@ -80,7 +84,8 @@ properties:
   user: user1
   password: ${token}
 ```
-#  DataSet declaration
+
+# DataSet declaration
 
 ```yaml
 configtype: dataSet
@@ -89,20 +94,22 @@ DataStoreKey: mydb
 endPoint: mytabs.otherTable
 projectKey: myfirstproject
 ```
+
 ```yaml
 configtype: dataSet
 key: anotherTable
 catalogSchema: mytabs
-DataStore: mydb
+DataSource: mydb
 endPoint: mytabs.anotherTable
 projectKey: myfirstproject
 ```
+
 ![localImage](./dependency.png)
 
 ```yaml
 configtype: dataSet
 key: mytabledataSet
-DataStore: mydb
+DataSource: mydb
 endPoint: mytabs.mytable
 project: mysecondproject
 dependencies:
@@ -131,11 +138,13 @@ keys:
     constructLevelCheck: true
 script: "increment.sql" 
 ```
+
 *columnSchema*  will be sorted.
- The first time fields wil be sorted  with  not empty order.
- Secondary added  other fields sorted by name
+The first time fields wil be sorted with not empty order.
+Secondary added other fields sorted by name
 
 # increment query
+
 ```sql
 select id, o.tab_value
   from otherTable o
@@ -144,9 +153,13 @@ select id, o.tab_value
 ```
 
 # ScenarioTemplate
+
 is a combination of dataSet, tasks and their execution dag
-## 
+
+##  
+
 ## A one dataset configured as dataSet can be served by multiple scenarios.
+
 ```yaml
 configtype: scenarioActTemplate
 scenarioType: dateEndPointScenarioTemplate
@@ -212,6 +225,7 @@ dag:
   - ${dataSet.name}_dataQualityCheckAfterWarn: ${dataSet.name}_finally
 
 ```
+
 ```
 scenario1
          \ internalEndPoints
@@ -222,6 +236,7 @@ scenario1
          | task3 
          \ dagedges List<String,String> / name,name           
 ```
+
 ScenarioTemplate DAG
 
 ![localImage](./taskpipeline.png)
@@ -242,7 +257,9 @@ schedule1 --> scenarioRegular ------>---> dataSet
                                    /
 schedule2 --> scenarioInintial ---/                
 ```
+
 # Schedule
+
 ```yaml
 configtype: schedule
 name: mytableRegularSchedule

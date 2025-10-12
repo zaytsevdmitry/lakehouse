@@ -1,6 +1,5 @@
 # Command types
 
-
 ```
 show one|all <object type> <name|id>
 /
@@ -21,7 +20,6 @@ help
 /
 
 ```
-
 
 show - print requested data
 

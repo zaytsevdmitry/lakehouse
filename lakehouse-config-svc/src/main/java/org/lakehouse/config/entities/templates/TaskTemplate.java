@@ -9,47 +9,45 @@ import java.util.Objects;
 
 @Entity
 @Table(uniqueConstraints =
-	@UniqueConstraint(
-			name = "task_template_scenario_act_template_name_name_uk",
-			columnNames = {"scenario_act_template_name", "name" }))
+@UniqueConstraint(
+        name = "task_template_scenario_act_template_name_name_uk",
+        columnNames = {"scenario_act_template_name", "name"}))
 public class TaskTemplate extends TaskAbstract {
 
 
-	@ManyToOne
-	@JoinColumn(foreignKey = @ForeignKey(name = "task_template__scenario_act_template_fk"))
-	@OnDelete(action = OnDeleteAction.CASCADE)
-	private ScenarioActTemplate scenarioActTemplate;
+    @ManyToOne
+    @JoinColumn(foreignKey = @ForeignKey(name = "task_template__scenario_act_template_fk"))
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private ScenarioActTemplate scenarioActTemplate;
 
 
-	
-	public TaskTemplate() {
-	}
+    public TaskTemplate() {
+    }
 
 
-	public ScenarioActTemplate getScenarioTemplate() {
-		return scenarioActTemplate;
-	}
+    public ScenarioActTemplate getScenarioTemplate() {
+        return scenarioActTemplate;
+    }
 
-	public void setScenarioTemplate(ScenarioActTemplate scenarioActTemplate) {
-		this.scenarioActTemplate = scenarioActTemplate;
-	}
+    public void setScenarioTemplate(ScenarioActTemplate scenarioActTemplate) {
+        this.scenarioActTemplate = scenarioActTemplate;
+    }
 
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        if (!super.equals(o))
+            return false;
+        TaskTemplate that = (TaskTemplate) o;
+        return Objects.equals(getScenarioTemplate(), that.getScenarioTemplate());
+    }
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o)
-			return true;
-		if (o == null || getClass() != o.getClass())
-			return false;
-		if (!super.equals(o))
-			return false;
-		TaskTemplate that = (TaskTemplate) o;
-		return  Objects.equals(getScenarioTemplate(), that.getScenarioTemplate());
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(super.hashCode(), getScenarioTemplate());
-	}
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), getScenarioTemplate());
+    }
 }

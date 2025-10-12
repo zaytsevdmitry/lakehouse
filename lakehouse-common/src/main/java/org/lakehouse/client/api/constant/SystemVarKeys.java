@@ -9,11 +9,11 @@ public class SystemVarKeys {
     public static String SOURCE_TABLE_FULL_NAME_KEY_F = SOURCE_KEY_F.concat("tableFullName");
     public static String SOURCE_KEY_NAME_KEY_F = SOURCE_KEY_F.concat("keyName");
 
-    public static String buildSourceTableFullName(String project, String dataSet){
-        return String.format(SOURCE_TABLE_FULL_NAME_KEY_F, project, dataSet);
+    public static String buildSourceTableFullName(String nameSpace, String dataSet) {
+        return String.format(SOURCE_TABLE_FULL_NAME_KEY_F, nameSpace, dataSet);
     }
 
-    public static String buildSourceKeyName(String project, String dataSet){
-        return String.format(SOURCE_KEY_NAME_KEY_F, project, dataSet);
+    public static String buildSourceKeyName(String nameSpace, String dataSet) {
+        return String.format(SOURCE_KEY_NAME_KEY_F, nameSpace, dataSet);
     }
 }

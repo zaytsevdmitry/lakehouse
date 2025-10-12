@@ -9,7 +9,7 @@ import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
 
 import java.util.List;
 
-public class SchedulerRestClientApiErrorTest implements SchedulerRestClientApi{
+public class SchedulerRestClientApiErrorTest implements SchedulerRestClientApi {
     @Override
     public ScheduledTaskMsgDTO getScheduledTaskDTO(String name) {
         return null;

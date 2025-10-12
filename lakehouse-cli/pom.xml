@@ -32,15 +32,16 @@
     </dependencies>
 
     <build>
-       <resources>
+        <resources>
             <resource>
                 <directory>src/main/resources</directory>
-       <!--         <filtering>true</filtering>
-                <excludes>
-                    <exclude>*.properties</exclude>
-                    <exclude>*.yaml</exclude>
-                </excludes>
--->            </resource>
+                <!--         <filtering>true</filtering>
+                         <excludes>
+                             <exclude>*.properties</exclude>
+                             <exclude>*.yaml</exclude>
+                         </excludes>
+         -->
+            </resource>
         </resources>
         <plugins>
             <plugin>

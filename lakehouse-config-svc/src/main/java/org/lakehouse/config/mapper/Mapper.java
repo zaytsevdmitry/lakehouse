@@ -9,15 +9,15 @@ import java.util.Map;
 @Component
 public class Mapper {
 
-	public TaskDTO mapTaskToDTO(TaskAbstract taskAbstract, Map<String,String> executionModuleArgs) {
-		TaskDTO taskDTO = new TaskDTO();
-		taskDTO.setName(taskAbstract.getName());
-		taskDTO.setDescription(taskAbstract.getDescription());
-		taskDTO.setImportance(taskAbstract.getImportance());
-		taskDTO.setExecutionModule(taskAbstract.getExecutionModule());
-		taskDTO.setTaskExecutionServiceGroupName(taskAbstract.getTaskExecutionServiceGroup().getKeyName());
-		taskDTO.setExecutionModuleArgs(executionModuleArgs);
-		return taskDTO;
-	}
+    public TaskDTO mapTaskToDTO(TaskAbstract taskAbstract, Map<String, String> executionModuleArgs) {
+        TaskDTO taskDTO = new TaskDTO();
+        taskDTO.setName(taskAbstract.getName());
+        taskDTO.setDescription(taskAbstract.getDescription());
+        taskDTO.setImportance(taskAbstract.getImportance());
+        taskDTO.setExecutionModule(taskAbstract.getExecutionModule());
+        taskDTO.setTaskExecutionServiceGroupName(taskAbstract.getTaskExecutionServiceGroup().getKeyName());
+        taskDTO.setExecutionModuleArgs(executionModuleArgs);
+        return taskDTO;
+    }
 
 }

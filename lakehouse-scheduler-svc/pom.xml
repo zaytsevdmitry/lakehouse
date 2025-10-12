@@ -24,11 +24,11 @@
             <version>0.3.0</version>
         </dependency>
         <dependency>
-        	<groupId>lakehouse</groupId>
-        	<artifactId>lakehouse-config-rest-client</artifactId>
-        	<version>0.3.0</version>
-	   </dependency>
-             <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-web -->
+            <groupId>lakehouse</groupId>
+            <artifactId>lakehouse-config-rest-client</artifactId>
+            <version>0.3.0</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -43,7 +43,7 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-tx</artifactId>
-            
+
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.postgresql/postgresql -->
@@ -91,11 +91,11 @@
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
-               <!-- <filtering>true</filtering>
-                <excludes>
-                    <exclude>*.properties</exclude>
-                    <exclude>*.yml</exclude>
-                </excludes>-->
+                <!-- <filtering>true</filtering>
+                 <excludes>
+                     <exclude>*.properties</exclude>
+                     <exclude>*.yml</exclude>
+                 </excludes>-->
             </resource>
         </resources>
         <plugins>

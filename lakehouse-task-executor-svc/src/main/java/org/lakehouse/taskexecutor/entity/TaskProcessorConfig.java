@@ -1,26 +1,27 @@
 package org.lakehouse.taskexecutor.entity;
 
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
-import org.lakehouse.client.api.dto.configs.DataStoreDTO;
+import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 
 import java.time.OffsetDateTime;
 import java.util.*;
 
 public class TaskProcessorConfig {
-    private  Map<String, String> executionModuleArgs = new HashMap<>();
-    private  List<String> scripts = new ArrayList<>();
-    private  Map<String, DataSetDTO> sources = new HashMap<>();
-    private  DataSetDTO targetDataSet;
-    private  Map<String, DataStoreDTO> dataStores = new HashMap<>();
-    private  Map<String, String> KeyBind = new HashMap<>();
-    private  Map<String, TableDefinition> tableDefinitions = new HashMap<>();
-    private  Set<DataSetDTO> dataSetDTOSet = new HashSet<>();
+    private Map<String, String> executionModuleArgs = new HashMap<>();
+    private List<String> scripts = new ArrayList<>();
+    private Map<String, DataSetDTO> sources = new HashMap<>();
+    private DataSetDTO targetDataSet;
+    private Map<String, DataSourceDTO> dataStores = new HashMap<>();
+    private Map<String, String> KeyBind = new HashMap<>();
+    private Map<String, TableDefinition> tableDefinitions = new HashMap<>();
+    private Set<DataSetDTO> dataSetDTOSet = new HashSet<>();
     private OffsetDateTime intervalStartDateTime;
     private OffsetDateTime intervalEndDateTime;
     private String lockSource;
 
 
-    public TaskProcessorConfig(){}
+    public TaskProcessorConfig() {
+    }
 
     public void setExecutionModuleArgs(Map<String, String> executionModuleArgs) {
         this.executionModuleArgs = executionModuleArgs;
@@ -38,7 +39,7 @@ public class TaskProcessorConfig {
         this.targetDataSet = targetDataSet;
     }
 
-    public void setDataStores(Map<String, DataStoreDTO> dataStores) {
+    public void setDataStores(Map<String, DataSourceDTO> dataStores) {
         this.dataStores = dataStores;
     }
 
@@ -58,7 +59,7 @@ public class TaskProcessorConfig {
         return targetDataSet;
     }
 
-    public Map<String, DataStoreDTO> getDataStores() {
+    public Map<String, DataSourceDTO> getDataStores() {
         return dataStores;
     }
 

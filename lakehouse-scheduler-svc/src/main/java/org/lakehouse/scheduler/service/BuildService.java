@@ -61,8 +61,7 @@ public class BuildService {
 
         if (!scheduleInstanceList.isEmpty()) {
             return null;
-        }
-        else
+        } else
             return scheduleInstanceList.get(0);
     }
 
@@ -83,8 +82,8 @@ public class BuildService {
                         },
                         () -> {
                             scheduleInstanceLastBuildRepository.save(
-                                ScheduleInstanceLastBuildFactory
-                                        .mapDTOToScheduleInstanceLastBuild(new ScheduleInstanceLastBuild(), sefdto));
+                                    ScheduleInstanceLastBuildFactory
+                                            .mapDTOToScheduleInstanceLastBuild(new ScheduleInstanceLastBuild(), sefdto));
                             ScheduleInstanceRunning sir = new ScheduleInstanceRunning();
                             sir.setConfigScheduleKeyName(sefdto.getName());
                             scheduleInstanceRunningRepository.save(sir);
@@ -92,11 +91,12 @@ public class BuildService {
                 );
 
     }
-// todo @Transactional cant work. change to transaction manager
+
+    // todo @Transactional cant work. change to transaction manager
     @Transactional
     private void save(
             ScheduleInstanceLastBuild scheduleInstanceLastBuild,
-            ScheduleEffectiveDTO scheduleEffectiveDTO)  {
+            ScheduleEffectiveDTO scheduleEffectiveDTO) {
 
         ScheduleInstance scheduleInstance =
                 scheduleInstanceRepository
@@ -119,11 +119,11 @@ public class BuildService {
 
 
                     Map<String, ScheduleTaskInstance> taskInstanceMap =
-                            scheduleScenarioActEffectiveDTO.getTasks().stream().map( taskDTO -> {
+                            scheduleScenarioActEffectiveDTO.getTasks().stream().map(taskDTO -> {
                                 ScheduleTaskInstance sti =
                                         scheduleTaskInstanceRepository
                                                 .save(ScheduleTaskInstanceFactory
-                                                        .mapToNewScheduleTaskInstance(taskDTO,ssai));
+                                                        .mapToNewScheduleTaskInstance(taskDTO, ssai));
 
                                 return sti;
                             }).collect(Collectors.toMap(ScheduleTaskInstance::getName, sti -> sti));
@@ -134,7 +134,7 @@ public class BuildService {
                         scheduleTaskInstanceDependencyRepository.save(stid);
                     });
                     return ssai;
-                }).collect(Collectors.toMap(ScheduleScenarioActInstance::getName,ssai -> ssai));
+                }).collect(Collectors.toMap(ScheduleScenarioActInstance::getName, ssai -> ssai));
 
         scheduleEffectiveDTO.getScenarioActEdges().forEach(dagEdgeDTO -> {
             ScheduleScenarioActInstanceDependency ssaid = new ScheduleScenarioActInstanceDependency();
@@ -158,10 +158,10 @@ public class BuildService {
         OffsetDateTime nextOffsetDateTime = null;
         OffsetDateTime stopOffsetDateTime = DateTimeUtils.parseDateTimeFormatWithTZ(scheduleEffectiveDTO.getStopDateTime());
 
-        if( lastBuild.getScheduleInstance() == null){
+        if (lastBuild.getScheduleInstance() == null) {
             lastOffsetDateTime = DateTimeUtils.parseDateTimeFormatWithTZ(
                     scheduleEffectiveDTO.getStartDateTime());
-        }else {
+        } else {
             lastOffsetDateTime = lastBuild.getScheduleInstance().getTargetExecutionDateTime();
         }
         try {
@@ -172,8 +172,8 @@ public class BuildService {
                     && (
                     stopOffsetDateTime == null || stopOffsetDateTime.isAfter(nextOffsetDateTime)
             );
-        }catch (CronParceErrorException e){
-            logger.warn( e.getMessage());
+        } catch (CronParceErrorException e) {
+            logger.warn(e.getMessage());
             result = false;
         }
         return result;
@@ -195,13 +195,13 @@ public class BuildService {
                                             lastBuild
                                                     .getScheduleInstance()
                                                     .getStatus()))
-                    try {
-                        save(lastBuild, scheduleEffectiveService.getScheduleEffectiveDTO(lastBuild.getConfigScheduleKeyName()));
-                        result.addAndGet(1);
-                    } catch (Exception e) {
-                        logger.warn("Error when build schedule",e);
-                        throw new RuntimeException(e);
-                    }
+                        try {
+                            save(lastBuild, scheduleEffectiveService.getScheduleEffectiveDTO(lastBuild.getConfigScheduleKeyName()));
+                            result.addAndGet(1);
+                        } catch (Exception e) {
+                            logger.warn("Error when build schedule", e);
+                            throw new RuntimeException(e);
+                        }
                 });
         return result.get();
     }

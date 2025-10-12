@@ -8,16 +8,17 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
-public class ScheduleAbstract extends NameDescriptionAbstract
-{
+public class ScheduleAbstract extends NameDescriptionAbstract {
     @Serial
     private static final long serialVersionUID = 5872306801909970542L;
-	private String intervalExpression;
+    private String intervalExpression;
     private String startDateTime; // use DateTimeUtils.strEquals to compare
     private String stopDateTime;
     private List<DagEdgeDTO> scenarioActEdges = new ArrayList<>();
     private boolean enabled;
-    public ScheduleAbstract() {}
+
+    public ScheduleAbstract() {
+    }
 
     public String getIntervalExpression() {
         return intervalExpression;
@@ -86,7 +87,7 @@ public class ScheduleAbstract extends NameDescriptionAbstract
                 getScenarioActEdges(),
                 isEnabled());
     }
-    
+
     public ScheduleAbstract copy() throws Exception {
         ScheduleAbstract result = new ScheduleAbstract();
         result.setEnabled(isEnabled());

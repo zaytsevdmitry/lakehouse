@@ -5,6 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-public interface QualityMetricsConfRepository extends JpaRepository<QualityMetricsConf,String> {
+public interface QualityMetricsConfRepository extends JpaRepository<QualityMetricsConf, String> {
     Optional<QualityMetricsConf> findByKeyName(String keyName);
 }

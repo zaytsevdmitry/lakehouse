@@ -23,6 +23,7 @@ public class QualityMetricsConfTestSetAbstract {
 
     public QualityMetricsConfTestSetAbstract() {
     }
+
     public void of(QualityMetricsConfTestSetAbstract a) {
         this.id = a.getId();
         this.keyName = a.getKeyName();

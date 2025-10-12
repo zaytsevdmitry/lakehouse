@@ -41,13 +41,13 @@ services:
       KAFKA_NUM_PARTITIONS: 100
   #docker run -d -p 9083:9083 --env SERVICE_NAME=metastore --name metastore-standalone apache/hive:${HIVE_VERSION}
 
-#  hms:
-#    image: apache/hive:3.1.3
-#    container_name: hms
-#    ports:
-#      - "9083:9083"
-#    environment:
-#      SERVICE_NAME: metastore
+  #  hms:
+  #    image: apache/hive:3.1.3
+  #    container_name: hms
+  #    ports:
+  #      - "9083:9083"
+  #    environment:
+  #      SERVICE_NAME: metastore
 
 
   minio-dev:
@@ -62,25 +62,25 @@ services:
       MINIO_ROOT_PASSWORD: Strong#Pass#2022
     command: server --console-address ":9001" /data
 
-# spark-master:
-#    image: lakehouse-spark:0.3.0
-#    container_name: spark-master
-#    hostname: spark-master
-#    environment:
-#      - SPARK_MODE=master
-#      - SPARK_MASTER_WEBUI_PORT=8400
-#      - SPARK_MASTER_HOSTNAME=spark-master
-#      - SPARK_MASTER_PORT=7077
-#    ports:
-#      - "4040:4040"
-#      - "6066:6066"
-#      - "7077:7077"
-#      - "8400:8400"
-#    deploy:
-#      resources:
-#        limits:
-#          cpus: "1" # Adjust as needed
-#          memory: 2g  # Adjust as needed
+    # spark-master:
+    #    image: lakehouse-spark:0.3.0
+    #    container_name: spark-master
+    #    hostname: spark-master
+    #    environment:
+    #      - SPARK_MODE=master
+    #      - SPARK_MASTER_WEBUI_PORT=8400
+    #      - SPARK_MASTER_HOSTNAME=spark-master
+    #      - SPARK_MASTER_PORT=7077
+    #    ports:
+    #      - "4040:4040"
+    #      - "6066:6066"
+    #      - "7077:7077"
+    #      - "8400:8400"
+    #    deploy:
+    #      resources:
+    #        limits:
+    #          cpus: "1" # Adjust as needed
+    #          memory: 2g  # Adjust as needed
     # command: bin/spark-class org.apache.spark.deploy.master.Master
 
 
@@ -103,6 +103,6 @@ services:
 
 
 volumes:
-  minio_storage: {}
+  minio_storage: { }
   spark-logs:
 

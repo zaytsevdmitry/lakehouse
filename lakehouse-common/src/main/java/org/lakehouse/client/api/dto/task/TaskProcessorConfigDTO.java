@@ -1,7 +1,7 @@
 package org.lakehouse.client.api.dto.task;
 
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
-import org.lakehouse.client.api.dto.configs.DataStoreDTO;
+import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -11,7 +11,7 @@ public class TaskProcessorConfigDTO {
     private List<String> scripts = new ArrayList<>();
     private Map<String, DataSetDTO> sources = new HashMap<>();
     private DataSetDTO targetDataSet;
-    private Map<String, DataStoreDTO> dataStores = new HashMap<>();
+    private Map<String, DataSourceDTO> dataSources = new HashMap<>();
     private Map<String, String> KeyBind = new HashMap<>();
     private Map<String, TableDefinition> tableDefinitions = new HashMap<>();
     private Set<DataSetDTO> dataSetDTOSet = new HashSet<>();
@@ -21,7 +21,8 @@ public class TaskProcessorConfigDTO {
     private String lockSource;
 
 
-    public TaskProcessorConfigDTO(){}
+    public TaskProcessorConfigDTO() {
+    }
 
     public void setExecutionModuleArgs(Map<String, String> executionModuleArgs) {
         this.executionModuleArgs = executionModuleArgs;
@@ -39,8 +40,8 @@ public class TaskProcessorConfigDTO {
         this.targetDataSet = targetDataSet;
     }
 
-    public void setDataStores(Map<String, DataStoreDTO> dataStores) {
-        this.dataStores = dataStores;
+    public void setDataSources(Map<String, DataSourceDTO> dataSources) {
+        this.dataSources = dataSources;
     }
 
     public Map<String, String> getExecutionModuleArgs() {
@@ -59,8 +60,8 @@ public class TaskProcessorConfigDTO {
         return targetDataSet;
     }
 
-    public Map<String, DataStoreDTO> getDataStores() {
-        return dataStores;
+    public Map<String, DataSourceDTO> getDataSources() {
+        return dataSources;
     }
 
     public Map<String, String> getKeyBind() {
@@ -128,7 +129,7 @@ public class TaskProcessorConfigDTO {
                 && Objects.equals(scripts, that.scripts)
                 && Objects.equals(sources, that.sources)
                 && Objects.equals(targetDataSet, that.targetDataSet)
-                && Objects.equals(dataStores, that.dataStores)
+                && Objects.equals(dataSources, that.dataSources)
                 && Objects.equals(KeyBind, that.KeyBind)
                 && Objects.equals(tableDefinitions, that.tableDefinitions)
                 && Objects.equals(dataSetDTOSet, that.dataSetDTOSet)
@@ -145,7 +146,7 @@ public class TaskProcessorConfigDTO {
                 scripts,
                 sources,
                 targetDataSet,
-                dataStores,
+                dataSources,
                 KeyBind,
                 tableDefinitions,
                 dataSetDTOSet,

@@ -16,6 +16,7 @@ import java.util.List;
 
 public class ScheduleInstanceFactory {
     private final static Logger logger = LoggerFactory.getLogger(ScheduleInstanceFactory.class);
+
     public static ScheduleInstance newScheduleInstance(
             ScheduleInstanceLastBuild scheduleInstanceLast,
             ScheduleEffectiveDTO scheduleEffectiveDTO) {
@@ -25,7 +26,7 @@ public class ScheduleInstanceFactory {
         OffsetDateTime lastTargetExecutionDate;
 
         if (scheduleInstanceLast.getScheduleInstance() == null) {
-            lastTargetExecutionDate =  DateTimeUtils.parseDateTimeFormatWithTZ( scheduleEffectiveDTO.getStartDateTime()); //scheduleInstanceLast.getSchedule().getStartDateTime();
+            lastTargetExecutionDate = DateTimeUtils.parseDateTimeFormatWithTZ(scheduleEffectiveDTO.getStartDateTime()); //scheduleInstanceLast.getSchedule().getStartDateTime();
         } else {
             lastTargetExecutionDate = scheduleInstanceLast.getScheduleInstance().getTargetExecutionDateTime();
         }
@@ -44,7 +45,7 @@ public class ScheduleInstanceFactory {
         return scheduleInstance;
     }
 
-    public static ScheduleInstanceDTO mapScheduleInstanceDTO(ScheduleInstance scheduleInstance){
+    public static ScheduleInstanceDTO mapScheduleInstanceDTO(ScheduleInstance scheduleInstance) {
         ScheduleInstanceDTO result = new ScheduleInstanceDTO();
         result.setId(scheduleInstance.getId());
         result.setStatus(scheduleInstance.getStatus());
@@ -53,10 +54,10 @@ public class ScheduleInstanceFactory {
         return result;
     }
 
-    public static List<ScheduleInstanceDTO> scheduleInstanceDTOList(List<ScheduleInstance> scheduleInstanceList){
-        return  scheduleInstanceList
-                        .stream()
-                        .map(ScheduleInstanceFactory::mapScheduleInstanceDTO)
-                        .toList();
+    public static List<ScheduleInstanceDTO> scheduleInstanceDTOList(List<ScheduleInstance> scheduleInstanceList) {
+        return scheduleInstanceList
+                .stream()
+                .map(ScheduleInstanceFactory::mapScheduleInstanceDTO)
+                .toList();
     }
 }

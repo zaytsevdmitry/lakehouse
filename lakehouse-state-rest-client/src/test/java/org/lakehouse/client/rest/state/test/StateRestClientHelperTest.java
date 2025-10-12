@@ -25,68 +25,71 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {StateRestClientConfiguration.class})
 @RestClientTest(properties = {
-		"lakehouse.client.rest.state.server.url=",
+        "lakehouse.client.rest.state.server.url=",
 })
 public class StateRestClientHelperTest {
 
-	@Autowired
-	StateRestClientApi client ;
+    @Autowired
+    StateRestClientApi client;
 
-	@Autowired MockRestServiceServer server;
+    @Autowired
+    MockRestServiceServer server;
 
-	@Autowired private ObjectMapper objectMapper;
+    @Autowired
+    private ObjectMapper objectMapper;
 
-	private DataSetStateDTO getDataSetStateDTOExpect(){
-		DataSetStateDTO dataSetStateDTOExpect = new DataSetStateDTO();
-		dataSetStateDTOExpect.setDataSetKeyName("test");
-		dataSetStateDTOExpect.setStatus(Status.DataSet.SUCCESS.label);
-		dataSetStateDTOExpect.setIntervalStartDateTime("2025-03-01T00:00:00.0Z");
-		dataSetStateDTOExpect.setIntervalEndDateTime("2025-03-02T00:00:00.0Z");
-		return dataSetStateDTOExpect;
-	}
+    private DataSetStateDTO getDataSetStateDTOExpect() {
+        DataSetStateDTO dataSetStateDTOExpect = new DataSetStateDTO();
+        dataSetStateDTOExpect.setDataSetKeyName("test");
+        dataSetStateDTOExpect.setStatus(Status.DataSet.SUCCESS.label);
+        dataSetStateDTOExpect.setIntervalStartDateTime("2025-03-01T00:00:00.0Z");
+        dataSetStateDTOExpect.setIntervalEndDateTime("2025-03-02T00:00:00.0Z");
+        return dataSetStateDTOExpect;
+    }
 
-	private DataSetStateDTO getRequestDataSetStateDTO(){
-		DataSetStateDTO dataSetStateDTOExpect = getDataSetStateDTOExpect();
-		DataSetStateDTO dataSetStateDTORequest = new DataSetStateDTO();
-		dataSetStateDTORequest.setDataSetKeyName(dataSetStateDTOExpect.getDataSetKeyName());
-		dataSetStateDTORequest.setStatus(null);
-		dataSetStateDTORequest.setIntervalStartDateTime(dataSetStateDTOExpect.getIntervalStartDateTime());
-		dataSetStateDTORequest.setIntervalEndDateTime(dataSetStateDTOExpect.getIntervalEndDateTime());
-		return dataSetStateDTORequest;
-	}
+    private DataSetStateDTO getRequestDataSetStateDTO() {
+        DataSetStateDTO dataSetStateDTOExpect = getDataSetStateDTOExpect();
+        DataSetStateDTO dataSetStateDTORequest = new DataSetStateDTO();
+        dataSetStateDTORequest.setDataSetKeyName(dataSetStateDTOExpect.getDataSetKeyName());
+        dataSetStateDTORequest.setStatus(null);
+        dataSetStateDTORequest.setIntervalStartDateTime(dataSetStateDTOExpect.getIntervalStartDateTime());
+        dataSetStateDTORequest.setIntervalEndDateTime(dataSetStateDTOExpect.getIntervalEndDateTime());
+        return dataSetStateDTORequest;
+    }
 
-	@Test
-	public void MakesCorrectCallPutDataSetState() throws Exception {
+    @Test
+    public void MakesCorrectCallPutDataSetState() throws Exception {
 
 
-		DataSetStateDTO dataSetStateDTOExpect = getDataSetStateDTOExpect();
+        DataSetStateDTO dataSetStateDTOExpect = getDataSetStateDTOExpect();
 
-		server.expect(requestTo(Endpoint.STATE_DATASET))
-				.andExpect(method(HttpMethod.PUT))
-				.andExpect(content().json(objectMapper.writeValueAsString(dataSetStateDTOExpect)))
-				.andRespond(withSuccess());
+        server.expect(requestTo(Endpoint.STATE_DATASET))
+                .andExpect(method(HttpMethod.PUT))
+                .andExpect(content().json(objectMapper.writeValueAsString(dataSetStateDTOExpect)))
+                .andRespond(withSuccess());
 
-		client.setDataSetStateDTO(dataSetStateDTOExpect);
-	}
-	@Test
-	public void MakesCorrectCallGetDataSetState() throws Exception {
+        client.setDataSetStateDTO(dataSetStateDTOExpect);
+    }
 
-		DataSetIntervalDTO interval = new DataSetIntervalDTO();
-		interval.setDataSetKeyName("test");
-		interval.setIntervalStartDateTime("2025-03-01T00:00:00.0Z");
-		interval.setIntervalEndDateTime("2025-03-02T00:00:00.0Z");
+    @Test
+    public void MakesCorrectCallGetDataSetState() throws Exception {
 
-		DataSetStateResponseDTO expectResponse = new DataSetStateResponseDTO();
+        DataSetIntervalDTO interval = new DataSetIntervalDTO();
+        interval.setDataSetKeyName("test");
+        interval.setIntervalStartDateTime("2025-03-01T00:00:00.0Z");
+        interval.setIntervalEndDateTime("2025-03-02T00:00:00.0Z");
 
-		server.expect(ExpectedCount.manyTimes(),
-						requestTo(Endpoint.STATE_DATASET))
-				.andExpect(method(HttpMethod.POST))
-				.andExpect(content().json(objectMapper.writeValueAsString(interval)))
-				.andRespond(withSuccess(objectMapper.writeValueAsString(expectResponse), MediaType.APPLICATION_JSON));
+        DataSetStateResponseDTO expectResponse = new DataSetStateResponseDTO();
 
-		DataSetStateResponseDTO result = client.getDataSetStateResponseDTO(interval);
+        server.expect(ExpectedCount.manyTimes(),
+                        requestTo(Endpoint.STATE_DATASET))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(content().json(objectMapper.writeValueAsString(interval)))
+                .andRespond(withSuccess(objectMapper.writeValueAsString(expectResponse), MediaType.APPLICATION_JSON));
 
-		assert (result.equals(expectResponse));
-	}
+        DataSetStateResponseDTO result = client.getDataSetStateResponseDTO(interval);
+
+        assert (result.equals(expectResponse));
+    }
 
 }

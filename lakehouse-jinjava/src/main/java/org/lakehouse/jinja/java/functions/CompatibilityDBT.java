@@ -3,15 +3,15 @@ package org.lakehouse.jinja.java.functions;
 import org.lakehouse.client.api.constant.SystemVarKeys;
 
 /**
- * DBT style {{source(projectKey,dataSetKey)}} returns table
- * */
+ * DBT style {{source(nameSpaceKey,dataSetKey)}} returns table
+ */
 public class CompatibilityDBT {
-    public static String source(String project, String dataSet){
-        if ( project == null || project.isBlank()
-            || dataSet == null || dataSet.isBlank())
+    public static String source(String nameSpace, String dataSet) {
+        if (nameSpace == null || nameSpace.isBlank()
+                || dataSet == null || dataSet.isBlank())
             return "";
         else {
-            return "{{ " + SystemVarKeys.buildSourceTableFullName(project, dataSet).replace(".","") + " }}";
+            return "{{ " + SystemVarKeys.buildSourceTableFullName(nameSpace, dataSet).replace(".", "") + " }}";
         }
     }
 }

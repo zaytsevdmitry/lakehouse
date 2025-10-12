@@ -15,6 +15,7 @@ public class TableDefinition {
     private String tableDDL;
     private String columnsSelectWithCast;
     private Set<String> primaryKeys;
+
     public TableDefinition() {
     }
 

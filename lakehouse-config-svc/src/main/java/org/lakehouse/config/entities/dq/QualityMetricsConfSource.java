@@ -6,6 +6,7 @@ import org.hibernate.annotations.OnDeleteAction;
 import org.lakehouse.config.entities.dataset.DataSet;
 
 import java.util.Objects;
+
 @Entity
 public class QualityMetricsConfSource {
     @ManyToOne(optional = false)

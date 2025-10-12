@@ -1,5 +1,5 @@
 logging:
-  level: 
+  level:
     org:
       springframework:
         transaction:

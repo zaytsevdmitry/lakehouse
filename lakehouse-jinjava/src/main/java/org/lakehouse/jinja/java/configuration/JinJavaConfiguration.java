@@ -8,8 +8,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class JinJavaConfiguration {
 
-	@Bean(name = "jinjava")
-	public Jinjava getJinjava(){
-		return new JinJavaFactory().getJinjava();
-	}
+    @Bean(name = "jinjava")
+    public Jinjava getJinjava() {
+        return new JinJavaFactory().getJinjava();
+    }
 }

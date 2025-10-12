@@ -7,16 +7,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class MergeProcessor extends AbstractDefaultTaskProcessor {
-	final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-	public MergeProcessor(TaskProcessorConfigDTO taskProcessorConfigDTO) {
-		super(taskProcessorConfigDTO);
-		// TODO Auto-generated constructor stub
-	}
+    public MergeProcessor(TaskProcessorConfigDTO taskProcessorConfigDTO) {
+        super(taskProcessorConfigDTO);
+        // TODO Auto-generated constructor stub
+    }
 
-	@Override
-	public void runTask() throws TaskFailedException {
+    @Override
+    public void runTask() throws TaskFailedException {
 
-	}
+    }
 
 }

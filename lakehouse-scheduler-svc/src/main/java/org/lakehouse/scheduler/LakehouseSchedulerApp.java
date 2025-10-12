@@ -5,9 +5,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
-@SpringBootApplication(scanBasePackages= {
-				"org.lakehouse.scheduler",
-				"org.lakehouse.client.rest.config"})
+@SpringBootApplication(scanBasePackages = {
+        "org.lakehouse.scheduler",
+        "org.lakehouse.client.rest.config"})
 
 @EnableConfigurationProperties(value = ScheduleConfigConsumerKafkaConfigurationProperties.class)
 public class LakehouseSchedulerApp {

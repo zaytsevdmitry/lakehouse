@@ -26,7 +26,6 @@ public class SparkRestClientApiTest implements SparkRestClientApi {
             "}", CreateRequest.class);*/
 
 
-
     @Override
     public CreateResponse createSubmission(CreateRequest createRequest) {
         try {

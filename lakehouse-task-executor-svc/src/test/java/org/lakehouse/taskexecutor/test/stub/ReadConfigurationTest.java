@@ -31,7 +31,7 @@ public class ReadConfigurationTest {
 
     @Test
     @Order(2)
-    void testRestStateConfigurationProperties(){
+    void testRestStateConfigurationProperties() {
         assert (restClientStateConfigurationProperties.getServer().getUrl().equals("http://state.test.lakehouse.org:12345"));
     }
 }

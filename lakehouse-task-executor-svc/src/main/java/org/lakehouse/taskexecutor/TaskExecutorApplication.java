@@ -15,7 +15,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableScheduling
-@EnableConfigurationProperties(value =  {
+@EnableConfigurationProperties(value = {
         ScheduledTaskKafkaConfigurationProperties.class,
         SparkConfigurationProperties.class})
 @ComponentScan(
@@ -25,7 +25,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
         },
         basePackageClasses = {
                 ConfigRestClientConfiguration.class,
-                SchedulerRestClientConfiguration.class ,
+                SchedulerRestClientConfiguration.class,
                 StateRestClientConfiguration.class,
                 SparkRestConfiguration.class,
                 JinJavaConfiguration.class})

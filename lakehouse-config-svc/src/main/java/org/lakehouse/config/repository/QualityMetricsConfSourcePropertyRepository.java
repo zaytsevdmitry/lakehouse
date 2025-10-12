@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Set;
 
-public interface QualityMetricsConfSourcePropertyRepository extends JpaRepository<QualityMetricsConfSourceProperty,Long> {
+public interface QualityMetricsConfSourcePropertyRepository extends JpaRepository<QualityMetricsConfSourceProperty, Long> {
 
     //@Query("select t from QualityMetricsConfSourceProperty t where t.QualityMetricsConfSource.id=?1")
     Set<QualityMetricsConfSourceProperty> findByQualityMetricsConfSourceId(Long id);

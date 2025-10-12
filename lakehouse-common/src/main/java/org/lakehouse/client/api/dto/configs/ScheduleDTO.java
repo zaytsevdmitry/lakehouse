@@ -5,8 +5,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
-public class ScheduleDTO extends ScheduleAbstract
-{
+public class ScheduleDTO extends ScheduleAbstract {
     private static final long serialVersionUID = 5259060075468520559L;
 
     private List<ScheduleScenarioActDTO> scenarioActs = new ArrayList<>();
@@ -35,7 +34,7 @@ public class ScheduleDTO extends ScheduleAbstract
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(),  getScenarioActs());
+        return Objects.hash(super.hashCode(), getScenarioActs());
     }
 
     @Override

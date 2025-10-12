@@ -1,4 +1,5 @@
 package org.lakehouse.config.test.configutation;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -6,8 +7,8 @@ import org.springframework.context.annotation.Configuration;
 
 public class Beans {
 
-	@Bean(name = "restManipulator")
+    @Bean(name = "restManipulator")
     RestManipulator getRestManipulator() {
-		return new RestManipulator();
-	}
+        return new RestManipulator();
+    }
 }

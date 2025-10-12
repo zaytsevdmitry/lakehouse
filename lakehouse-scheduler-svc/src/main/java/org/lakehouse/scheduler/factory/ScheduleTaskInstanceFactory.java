@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 public class ScheduleTaskInstanceFactory {
     private final ConfigRestClientApi configRestClientApi;
     private final ScheduleEffectiveService scheduleEffectiveService;
+
     public ScheduleTaskInstanceFactory(
             ConfigRestClientApi configRestClientApi,
             ScheduleEffectiveService scheduleEffectiveService) {
@@ -49,7 +50,7 @@ public class ScheduleTaskInstanceFactory {
         result.setStatus(sti.getStatus());
         result.setTaskExecutionServiceGroupName(taskDTO.getTaskExecutionServiceGroupName());
 
-        ScheduleScenarioActEffectiveDTO actDTO =  scheduleEffectiveService
+        ScheduleScenarioActEffectiveDTO actDTO = scheduleEffectiveService
                 .getScheduleEffectiveDTO(
                         sti.getScheduleScenarioActInstance()
                                 .getScheduleInstance()

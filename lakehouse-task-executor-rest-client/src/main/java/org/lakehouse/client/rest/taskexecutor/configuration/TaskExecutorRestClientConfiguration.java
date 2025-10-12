@@ -13,21 +13,21 @@ import org.springframework.web.util.DefaultUriBuilderFactory;
 
 @Configuration
 public class TaskExecutorRestClientConfiguration {
-	private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-	@Bean
-	TaskExecutorRestClientApi getTaskExecutorRestClientApi(
-			RestClient.Builder builder,
-			@Value("${lakehouse.client.rest.taskexecutor.server.url}") String baseURI){
+    @Bean
+    TaskExecutorRestClientApi getTaskExecutorRestClientApi(
+            RestClient.Builder builder,
+            @Value("${lakehouse.client.rest.taskexecutor.server.url}") String baseURI) {
 
-		logger.info("rest state baseURI:{}", baseURI);
-		DefaultUriBuilderFactory defaultUriBuilderFactory = new DefaultUriBuilderFactory(baseURI);
-		defaultUriBuilderFactory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.NONE);
-		return
-				new TaskExecutorRestClientApiImpl(
-						new RestClientHelper(
-								builder
-										.uriBuilderFactory(defaultUriBuilderFactory)
-										.build()));
-	}
+        logger.info("rest state baseURI:{}", baseURI);
+        DefaultUriBuilderFactory defaultUriBuilderFactory = new DefaultUriBuilderFactory(baseURI);
+        defaultUriBuilderFactory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.NONE);
+        return
+                new TaskExecutorRestClientApiImpl(
+                        new RestClientHelper(
+                                builder
+                                        .uriBuilderFactory(defaultUriBuilderFactory)
+                                        .build()));
+    }
 }

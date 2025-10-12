@@ -3,10 +3,10 @@ package org.lakehouse.taskexecutor.executionmodule.state;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.state.DataSetIntervalDTO;
 import org.lakehouse.client.api.dto.state.DataSetStateDTO;
-import org.lakehouse.client.api.utils.DateTimeUtils;
-import org.lakehouse.client.rest.state.StateRestClientApi;
 import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
 import org.lakehouse.client.api.exception.TaskFailedException;
+import org.lakehouse.client.api.utils.DateTimeUtils;
+import org.lakehouse.client.rest.state.StateRestClientApi;
 import org.lakehouse.taskexecutor.executionmodule.AbstractStateTaskProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +30,7 @@ public class DependencyCheckStateTaskProcessor extends AbstractStateTaskProcesso
     @Override
     public void runTask() throws TaskFailedException {
         List<DataSetStateDTO> dataSetStateDTOs = new ArrayList<>();
-        for (String dataSetKeyName: getTaskProcessorConfig()
+        for (String dataSetKeyName : getTaskProcessorConfig()
                 .getSources()
                 .values()
                 .stream()
@@ -53,10 +53,10 @@ public class DependencyCheckStateTaskProcessor extends AbstractStateTaskProcesso
                                     .toList());
         }
 
-        if (!dataSetStateDTOs.isEmpty() ){
+        if (!dataSetStateDTOs.isEmpty()) {
             StringJoiner rows = new StringJoiner(",");
             dataSetStateDTOs.forEach(d -> rows.add(d.toString() + "\n"));
-            logger.info("wrong interval\n {}",rows);
+            logger.info("wrong interval\n {}", rows);
             throw new TaskFailedException(rows.toString());
         }
 

@@ -8,32 +8,34 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 
-public  class ObjectMapping {
-	private static final ObjectMapper objectMapper = new ObjectMapperTS();
-    
-	public static <T> T stringToObject(String string, Class<T> clazz) throws IOException {
+public class ObjectMapping {
+    private static final ObjectMapper objectMapper = new ObjectMapperTS();
+
+    public static <T> T stringToObject(String string, Class<T> clazz) throws IOException {
         return objectMapper.readValue(
                 string,
                 clazz);
     }
 
-	public static <T> T stringToObject(byte[] data, Class<T> clazz) throws IOException {
-		return objectMapper.readValue(
-				new String(data, StandardCharsets.UTF_8),
-				clazz);
-	}
+    public static <T> T stringToObject(byte[] data, Class<T> clazz) throws IOException {
+        return objectMapper.readValue(
+                new String(data, StandardCharsets.UTF_8),
+                clazz);
+    }
+
     public static <T> T fileToObject(File file, Class<T> clazz) throws IOException {
         return objectMapper.readValue(file, clazz);
     }
-    
+
     public static void objectToFile(String filePath, Object o) throws IOException {
-    	objectMapper
-    		.writerWithDefaultPrettyPrinter()
-    		.writeValue(new File(filePath),o);
+        objectMapper
+                .writerWithDefaultPrettyPrinter()
+                .writeValue(new File(filePath), o);
     }
-	public static String asJsonString(final Object obj) throws JsonProcessingException {
-			return objectMapper
-					.writerWithDefaultPrettyPrinter()
-					.writeValueAsString(obj);	
-	}
+
+    public static String asJsonString(final Object obj) throws JsonProcessingException {
+        return objectMapper
+                .writerWithDefaultPrettyPrinter()
+                .writeValueAsString(obj);
+    }
 }

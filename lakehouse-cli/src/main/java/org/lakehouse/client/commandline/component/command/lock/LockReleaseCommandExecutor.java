@@ -5,20 +5,21 @@ import org.lakehouse.client.commandline.component.CommandExecutor;
 import org.lakehouse.client.commandline.component.objectactionfacade.TaskLockObjectActions;
 import org.lakehouse.client.commandline.model.CommandResult;
 import org.springframework.stereotype.Component;
+
 @Component
-public class LockReleaseCommandExecutor implements CommandExecutor{
+public class LockReleaseCommandExecutor implements CommandExecutor {
 
-	private final TaskLockObjectActions taskLockObjectActions;
-	
-	public LockReleaseCommandExecutor(TaskLockObjectActions taskLockObjectActions) {
-		this.taskLockObjectActions = taskLockObjectActions;
+    private final TaskLockObjectActions taskLockObjectActions;
 
-	}
-	
-	@Override
-	public CommandResult execute(String[] commandAttrs) throws Exception {
-		
-		return  taskLockObjectActions.lockRelease(commandAttrs);
-	}
+    public LockReleaseCommandExecutor(TaskLockObjectActions taskLockObjectActions) {
+        this.taskLockObjectActions = taskLockObjectActions;
+
+    }
+
+    @Override
+    public CommandResult execute(String[] commandAttrs) throws Exception {
+
+        return taskLockObjectActions.lockRelease(commandAttrs);
+    }
 
 }

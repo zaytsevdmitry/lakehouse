@@ -24,7 +24,7 @@ import org.springframework.stereotype.Service;
  * Connects to a Kubernetes cluster. This specifies the API server endpoint of your Kubernetes cluster.
  * Example Usage:
  * You can set spark.master in various ways: During spark-submit.
- * */
+ */
 @Service
 public class SparkRestClientApiImpl implements SparkRestClientApi {
     private final RestClientHelper restClientHelper;
@@ -35,7 +35,7 @@ public class SparkRestClientApiImpl implements SparkRestClientApi {
 
     @Override
     public CreateResponse createSubmission(CreateRequest createRequest) {
-        return  restClientHelper
+        return restClientHelper
                 .postDTO(
                         createRequest,
                         "/create",
@@ -45,6 +45,6 @@ public class SparkRestClientApiImpl implements SparkRestClientApi {
     @Override
     public StatusResponse getStatus(String submissionId) {
         return restClientHelper
-                .getDtoOne(String.format("/status/%s",submissionId), StatusResponse.class);
+                .getDtoOne(String.format("/status/%s", submissionId), StatusResponse.class);
     }
 }

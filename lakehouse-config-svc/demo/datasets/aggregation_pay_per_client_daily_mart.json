@@ -1,12 +1,13 @@
 {
   "keyName": "aggregation_pay_per_client_daily_mart",
-  "project": "DEMO",
-  "dataStoreKeyName": "lakehousestorage",
+  "nameSpaceKeyName": "DEMO",
+  "dataSourceKeyName": "lakehousestorage",
   "fullTableName": "aggregation_pay_per_client_daily_mart",
   "scripts": [
     {
       "key": "aggregation_pay_per_client_daily_mart.sql"
-    }],
+    }
+  ],
   "sources": [
     {
       "name": "transaction_dds"
@@ -18,7 +19,8 @@
       "description": "Truncated reg date time for daily aggregation",
       "dataType": "date",
       "nullable": false
-    },    {
+    },
+    {
       "name": "client_name",
       "description": "Name of client",
       "dataType": "string",
@@ -37,7 +39,7 @@
       "nullable": false
     }
   ],
-  "constraints":[
+  "constraints": [
     {
       "name": "aggregation_pay_per_client_daily_mart_pk",
       "type": "primary",

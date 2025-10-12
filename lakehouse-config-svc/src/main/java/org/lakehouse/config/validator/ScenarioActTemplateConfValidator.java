@@ -10,16 +10,16 @@ import java.util.stream.Collectors;
 public class ScenarioActTemplateConfValidator {
 //todo move to common and apply in client
 
-    public static ValidationResult validate(ScenarioActTemplateDTO scenarioActTemplateDTO){
+    public static ValidationResult validate(ScenarioActTemplateDTO scenarioActTemplateDTO) {
         List<String> descriptions = new ArrayList<>();
         descriptions.addAll(ScheduleConfValidator.validateEdges(
-                String.format("ScenarioActTemplate %s",scenarioActTemplateDTO.getName()),
+                String.format("ScenarioActTemplate %s", scenarioActTemplateDTO.getName()),
                 scenarioActTemplateDTO
                         .getTasks()
                         .stream()
                         .map(TaskDTO::getName).collect(Collectors.toSet()), scenarioActTemplateDTO.getDagEdges()
 
         ));
-        return new ValidationResult(descriptions.isEmpty(),descriptions);
+        return new ValidationResult(descriptions.isEmpty(), descriptions);
     }
 }

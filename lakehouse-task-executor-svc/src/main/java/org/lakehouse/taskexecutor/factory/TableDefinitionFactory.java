@@ -4,7 +4,7 @@ import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.configs.dataset.ColumnDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetConstraintDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
-import org.lakehouse.client.api.dto.configs.DataStoreDTO;
+import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.task.TableDefinition;
 import org.springframework.stereotype.Service;
 
@@ -17,11 +17,11 @@ import java.util.stream.Stream;
 
 @Service
 public class TableDefinitionFactory {
-    public TableDefinition buildTableDefinition(DataSetDTO dataSetDTO, DataStoreDTO dataStoreDTO){
+    public TableDefinition buildTableDefinition(DataSetDTO dataSetDTO, DataSourceDTO dataSourceDTO) {
         TableDefinition result = new TableDefinition();
         String[] table = dataSetDTO.getFullTableName().split("\\.");
 
-        if(table.length == 1)
+        if (table.length == 1)
             result.setTableName(table[0]);
         if (table.length == 2) {
             result.setSchemaName(table[0]);
@@ -49,49 +49,51 @@ public class TableDefinitionFactory {
     }
 
 
-    private String getMergeOn(List<DataSetConstraintDTO> constraints){
+    private String getMergeOn(List<DataSetConstraintDTO> constraints) {
         //todo aliases of table queryed in merge - t it's target q is a model script
         return getPrimaryKeys(constraints).stream()
-                .map(key->
+                .map(key ->
                         String.format("t.".concat(key).concat(" = q.").concat(key)))
                 .collect(Collectors.joining(" and "));
 
     }
 
-    private String getColumnsUpdateSet(List<ColumnDTO> columns){
+    private String getColumnsUpdateSet(List<ColumnDTO> columns) {
         //todo aliases of table queryed in merge - t it's target q is a model script
         return columns
                 .stream()
-                .map(col -> String.format("t.%s = q.%s\n", col.getName(),col.getName()))
+                .map(col -> String.format("t.%s = q.%s\n", col.getName(), col.getName()))
                 .collect(Collectors.joining(", "));
     }
-    private String getColumnsMergeInsertValues(List<ColumnDTO> columns){
+
+    private String getColumnsMergeInsertValues(List<ColumnDTO> columns) {
         //todo aliases of table queryed in merge - t it's target q is a model script
         return columns
                 .stream()
                 .map(col -> String.format("q.%s", col.getName()))
                 .collect(Collectors.joining(", "));
     }
-    private Set<String> getPrimaryKeys(List<DataSetConstraintDTO> constraints){
 
-       return   constraints.stream()
+    private Set<String> getPrimaryKeys(List<DataSetConstraintDTO> constraints) {
+
+        return constraints.stream()
                 .filter(c ->
-                         c.getType().equals(Types.Constraint.primary))
+                        c.getType().equals(Types.Constraint.primary))
                 .flatMap(dataSetConstraintDTO ->
-                        Stream.of( dataSetConstraintDTO.getColumns().split("\\,")))
+                        Stream.of(dataSetConstraintDTO.getColumns().split("\\,")))
                 .collect(Collectors.toSet());
     }
 
     private String columnsCS(List<ColumnDTO> columnSchema) {
         return columnSchema
                 .stream()
-         // todo skip identity col      .filter(columnDTO -> !columnDTO.getDataType().equalsIgnoreCase("serial"))
+                // todo skip identity col      .filter(columnDTO -> !columnDTO.getDataType().equalsIgnoreCase("serial"))
                 .map(ColumnDTO::getName)
-                 .collect(Collectors.joining(", "));
+                .collect(Collectors.joining(", "));
     }
 
 
-    private String columnsDDL(List<ColumnDTO> columnSchema){
+    private String columnsDDL(List<ColumnDTO> columnSchema) {
         StringJoiner columns = new StringJoiner(",");
 
         columnSchema.stream().map(columnDTO ->
@@ -100,21 +102,21 @@ public class TableDefinitionFactory {
         return columns.toString();
     }
 
-    private String columnsCast(List<ColumnDTO> columnSchema){
+    private String columnsCast(List<ColumnDTO> columnSchema) {
         StringJoiner columns = new StringJoiner(",");
 
         columnSchema.stream().map(columnDTO ->
-                String.format(
-                        "cast( %s as  %s) as %s",
-                        columnDTO.getName(),
-                        columnDTO.getDataType(),
-                        columnDTO.getName()))
+                        String.format(
+                                "cast( %s as  %s) as %s",
+                                columnDTO.getName(),
+                                columnDTO.getDataType(),
+                                columnDTO.getName()))
                 .forEach(columns::add);
 
         return columns.toString();
     }
 
-    private String tableDDL(String tableName, List<ColumnDTO> columnSchema, Map<String,String> properties){
+    private String tableDDL(String tableName, List<ColumnDTO> columnSchema, Map<String, String> properties) {
         // todo storage parameters ?
         // todo constraints
         return String.format(
@@ -126,7 +128,7 @@ public class TableDefinitionFactory {
                 properties
                         .entrySet()
                         .stream()
-                        .map(sse -> String.format("%s %s",sse.getKey(),sse.getValue()))
+                        .map(sse -> String.format("%s %s", sse.getKey(), sse.getValue()))
         );
     }
 }

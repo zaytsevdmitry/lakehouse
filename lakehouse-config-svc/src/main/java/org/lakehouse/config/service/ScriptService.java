@@ -20,18 +20,19 @@ public class ScriptService {
     }
 
     public Map<String, String> findAll() {
-        return scriptRepository.findAll().stream().collect(Collectors.toMap(Script::getKey,Script::getValue));
+        return scriptRepository.findAll().stream().collect(Collectors.toMap(Script::getKey, Script::getValue));
     }
 
 
     public String findScriptBodyByKey(String key) {
         return findScriptByKey(key).getValue();
     }
+
     public Script findScriptByKey(String key) {
         return scriptRepository.findById(key).orElseThrow(() -> {
-           logger.info("Script {} not found", key );
-           scriptRepository.findAll().forEach(script ->  logger.info("Found script key={}", script.getKey()));
-           return new ScriptNotFoundException(key);
+            logger.info("Script {} not found", key);
+            scriptRepository.findAll().forEach(script -> logger.info("Found script key={}", script.getKey()));
+            return new ScriptNotFoundException(key);
         });
     }
 

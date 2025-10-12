@@ -1,8 +1,8 @@
 {
-"dataSetKeyName": "transaction_dds",
-"keyName": "transaction_dds_qm",
-"description": "",
-"enabled": true,
+  "dataSetKeyName": "transaction_dds",
+  "keyName": "transaction_dds_qm",
+  "description": "",
+  "enabled": true,
   "sources": [
     {
       "name": "client_processing",

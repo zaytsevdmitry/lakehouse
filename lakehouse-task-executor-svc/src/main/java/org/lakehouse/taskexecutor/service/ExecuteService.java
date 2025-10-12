@@ -5,10 +5,10 @@ import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskExecutionHeartBeatDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskInstanceReleaseDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskResultDTO;
-import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
 import org.lakehouse.client.api.dto.task.TaskProcessor;
 import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
 import org.lakehouse.client.api.exception.TaskFailedException;
+import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
 import org.lakehouse.taskexecutor.exception.TaskProcessorConfigurationException;
 import org.lakehouse.taskexecutor.factory.TaskProcessorConfigFactory;
 import org.lakehouse.taskexecutor.factory.TaskProcessorFactory;
@@ -26,9 +26,10 @@ public class ExecuteService {
     private final SchedulerRestClientApi schedulerRestClientApi;
     private final TaskProcessorFactory taskProcessorFactory;
     private final TaskProcessorConfigFactory taskProcessorConfigFactory;
-    private final Map<Long,TaskProcessorConfigDTO> taskProcessorConfigDTOMap = new HashMap<>();
+    private final Map<Long, TaskProcessorConfigDTO> taskProcessorConfigDTOMap = new HashMap<>();
 
     private final HeardBeatService heardBeatService;
+
     public ExecuteService(
             SchedulerRestClientApi schedulerRestClientApi,
             TaskProcessorFactory taskProcessorFactory,
@@ -41,7 +42,7 @@ public class ExecuteService {
     }
 
 
-    public void takeAndRunTask(ScheduledTaskLockDTO scheduledTaskLockDTO)  {
+    public void takeAndRunTask(ScheduledTaskLockDTO scheduledTaskLockDTO) {
         TaskProcessorConfigDTO taskProcessorConfigDTO = taskProcessorConfigFactory.buildTaskProcessorConfig(scheduledTaskLockDTO);
         taskProcessorConfigDTOMap.put(scheduledTaskLockDTO.getLockId(), taskProcessorConfigDTO);
         TaskInstanceReleaseDTO taskInstanceReleaseDTO = new TaskInstanceReleaseDTO();
@@ -57,11 +58,12 @@ public class ExecuteService {
                             scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getExecutionModule());
             heardBeatService.start(taskExecutionHeartBeatDTO);
             p.runTask();
-            taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.SUCCESS));;
+            taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.SUCCESS));
+            ;
         } catch (TaskProcessorConfigurationException e) {
             logger.error("Task creation error ", e);
-            taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.CONF_ERROR,e.toString()));
-        } catch (TaskFailedException  e) {
+            taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.CONF_ERROR, e.toString()));
+        } catch (TaskFailedException e) {
             logger.error("Task execution error {}", e.getMessage());
             taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.FAILED, e.toString()));
         } catch (RuntimeException e) {
@@ -85,7 +87,7 @@ public class ExecuteService {
         }
     }
 
-    public TaskProcessorConfigDTO getTaskProcessorConfigDTO(Long lockId){
+    public TaskProcessorConfigDTO getTaskProcessorConfigDTO(Long lockId) {
         return taskProcessorConfigDTOMap.get(lockId);
     }
 

@@ -2,7 +2,7 @@ debug: enabled
 server:
   port: 8081
 logging:
-  level: 
+  level:
     org:
       springframework:
         transaction:

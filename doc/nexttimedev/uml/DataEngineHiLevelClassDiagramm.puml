@@ -26,10 +26,12 @@ interface DataStoreManipulator{
   +read(readDataSetProperties)
   +write(writeDataSetProperties)
   +truncate(location)
-  +exchangePartitions(locationFrom,locationTo)
+  +truncatePartitions(location, partitions)
+  +exchangePartitions(partitions, locationFrom, locationTo, options)
   +removeConstraints(location)
   +addConstraints(location, locationOrigin)
   +compact(location, locationBuff)
+  +compactPartitions(location, partitions)
 }
 
 DataStoreManipulatorConfiguration o-- DataStoreManipulator

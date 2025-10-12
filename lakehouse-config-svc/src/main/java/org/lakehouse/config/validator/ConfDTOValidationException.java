@@ -11,7 +11,7 @@ public class ConfDTOValidationException extends RuntimeException {
 
     public ConfDTOValidationException(List<String> strings) {
 
-        super(String.join("\n",strings));
+        super(String.join("\n", strings));
     }
 
 }
