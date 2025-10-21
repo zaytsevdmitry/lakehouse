@@ -42,8 +42,8 @@ public class DataSourceService {
         DataSourceDTO result = new DataSourceDTO();
         result.setKeyName(dataSource.getKeyName());
         result.setDescription(dataSource.getDescription());
-        result.setDataSourceType(dataSource.getDataSourceType());
-        result.setDataSourceServiceType(dataSource.getDataSourceServiceType());
+        result.setEngineType(dataSource.getDataSourceType());
+        result.setEngine(dataSource.getDataSourceServiceType());
         Map<String, String> properties = new HashMap<>();
         dataSourcePropertyRepository.findByDataSourceKeyName(dataSource.getKeyName())
                 .forEach(dataSourceProperty -> properties.put(dataSourceProperty.getKey(), dataSourceProperty.getValue()));
@@ -70,8 +70,8 @@ public class DataSourceService {
         DataSource result = new DataSource();
         result.setKeyName(dataSource.getKeyName());
         result.setDescription(dataSource.getDescription());
-        result.setDataSourceType(dataSource.getDataSourceType());
-        result.setDataSourceServiceType(dataSource.getDataSourceServiceType());
+        result.setDataSourceType(dataSource.getEngineType());
+        result.setDataSourceServiceType(dataSource.getEngine());
         return result;
     }
 

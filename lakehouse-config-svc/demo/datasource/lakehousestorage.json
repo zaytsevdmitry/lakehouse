@@ -1,7 +1,7 @@
 {
   "keyName": "lakehousestorage",
-  "dataSourceType": "filesystem",
-  "dataSourceServiceType": "localfs",
+  "engineType": "spark",
+  "engine": "localfs",
   "services": [
     {
       "host": "",

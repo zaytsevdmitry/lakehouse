@@ -1,13 +1,13 @@
 package org.lakehouse.client.api.constant;
 
 public class Types {
-    public enum DataSourceType {
-        filesystem("filesystem"),
+    public enum EngineType {
+        spark("spark"),
         restapi("restapi"),
         database("database");
         public final String label;
 
-        DataSourceType(String label) {
+        EngineType(String label) {
             this.label = label;
         }
 
@@ -17,14 +17,19 @@ public class Types {
         }
     }
 
-    public enum DataSourceServiceType {
-        hdfs("hdfs"),
+    public enum Engine {
+        json("json"),
+        parquet("parquet"),
+        orc("orc"),
+        csv("csv"),
+        text("text"),
+        iceberg("iceberg"),
         localfs("localfs"),
         postgres("postgres"),
         trino("trino");
         public final String label;
 
-        DataSourceServiceType(String label) {
+        Engine(String label) {
             this.label = label;
         }
 

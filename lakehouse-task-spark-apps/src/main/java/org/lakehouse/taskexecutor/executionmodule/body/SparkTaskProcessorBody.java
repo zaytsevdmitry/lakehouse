@@ -65,14 +65,14 @@ public class SparkTaskProcessorBody extends SparkProcessorBodyAbstract {
         else
             serviceDTO = dataSourceDTO.getServices().get(0);
 
-        if (!dataSourceDTO.getDataSourceType().equals(Types.DataSourceType.database))
+        if (!dataSourceDTO.getEngineType().equals(Types.EngineType.database))
             throw new TaskFailedException(String.format("DataSource %s is not database", dataSourceDTO.getKeyName()));
-        else if (dataSourceDTO.getDataSourceServiceType().equals(Types.DataSourceServiceType.postgres)) {
+        else if (dataSourceDTO.getEngine().equals(Types.Engine.postgres)) {
             result = String.format("jdbc:postgresql://%s:%s/%s", serviceDTO.getHost(), serviceDTO.getPort(), serviceDTO.getUrn());
-        } else if (dataSourceDTO.getDataSourceServiceType().equals(Types.DataSourceServiceType.trino)) {
+        } else if (dataSourceDTO.getEngine().equals(Types.Engine.trino)) {
             result = String.format("jdbc:trino://%s:%s/%s", serviceDTO.getHost(), serviceDTO.getPort(), serviceDTO.getUrn());
         } else {
-            throw new TaskFailedException(String.format("DataSource %s with database %s not supported", dataSourceDTO.getKeyName(), dataSourceDTO.getDataSourceServiceType()));
+            throw new TaskFailedException(String.format("DataSource %s with database %s not supported", dataSourceDTO.getKeyName(), dataSourceDTO.getEngine()));
         }
         return result;
     }
@@ -89,9 +89,9 @@ public class SparkTaskProcessorBody extends SparkProcessorBodyAbstract {
             String location = null;
             DataSourceDTO targetSource = getTaskProcessorConfigDTO().getDataSources().get(
                     getTaskProcessorConfigDTO().getTargetDataSet().getDataSourceKeyName());
-            if (!targetSource.getDataSourceType().equals(Types.DataSourceType.filesystem))
+            if (!targetSource.getEngineType().equals(Types.EngineType.spark))
                 throw new TaskFailedException("Wrong type of dataSource");
-            else if (targetSource.getDataSourceServiceType().equals(Types.DataSourceServiceType.localfs)) {
+            else if (targetSource.getEngine().equals(Types.Engine.localfs)) {
                 location = targetSource.getServices().get(0).getUrn();
             } else throw new TaskFailedException("Wrong File system service");
             sparkSession = getSparkSession(location);
@@ -157,7 +157,7 @@ public class SparkTaskProcessorBody extends SparkProcessorBodyAbstract {
             Map<String, DataSourceDTO> dataStoreDTOMap) throws ClassNotFoundException, TaskFailedException {
         for (DataSetDTO dataSetDTO : datasets) {
             DataSourceDTO dataSourceDTO = dataStoreDTOMap.get(dataSetDTO.getDataSourceKeyName());
-            if (dataSourceDTO.getDataSourceType().equals(Types.DataSourceType.database)) {
+            if (dataSourceDTO.getEngineType().equals(Types.EngineType.database)) {
                 String jdbcUrl = buildDbUrl(dataSourceDTO);
                 logger.info("jdbc url {} user {} password {}",
                         jdbcUrl,

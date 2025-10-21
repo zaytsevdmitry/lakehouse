@@ -33,8 +33,8 @@ public class DataStoreObjectActions implements ConfigObjectActions {
                 l.stream().map(o -> new String[]{
                         o.getKeyName(),
                         o.getDescription(),
-                        o.getDataSourceType().label,
-                        o.getDataSourceServiceType().label
+                        o.getEngineType().label,
+                        o.getEngine().label
 
                 }).toList());
     }

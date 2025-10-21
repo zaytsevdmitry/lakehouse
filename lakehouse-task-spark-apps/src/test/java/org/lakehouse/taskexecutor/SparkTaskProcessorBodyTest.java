@@ -239,8 +239,8 @@ public class SparkTaskProcessorBodyTest {
             "  \"dataSources\" : {\n" +
             "    \"lakehousestorage\" : {\n" +
             "       \"keyName\": \"lakehousestorage\",\n" +
-            "       \"dataSourceType\": \"filesystem\",\n" +
-            "       \"dataSourceServiceType\": \"localfs\",\n" +
+            "       \"engineType\": \"spark\",\n" +
+            "       \"engine\": \"localfs\",\n" +
             "       \"services\": [{\n" +
             "           \"host\": \"\",\n" +
             "           \"port\": \"\",\n" +
@@ -252,8 +252,8 @@ public class SparkTaskProcessorBodyTest {
             "    },\n" +
             "    \"processingdb\" : {\n" +
             "       \"keyName\": \"processingdb\",\n" +
-            "       \"dataSourceType\": \"database\",\n" +
-            "       \"dataSourceServiceType\": \"postgres\",\n" +
+            "       \"engineType\": \"database\",\n" +
+            "       \"engine\": \"postgres\",\n" +
             "       \"services\": [{\n" +
             "           \"host\": \"localhost\",\n" +
             "           \"port\": \"5432\",\n" +
@@ -585,7 +585,7 @@ public class SparkTaskProcessorBodyTest {
                 "reg_date_time  timestamptz" +
                 ")");
 
-        SparkProcessorBodyFactory.buildSparkProcessorBody(sparkSession, new String[]{config}).run();
+        SparkProcessorBodyFactory.buildSparkProcessorBody(sparkSession, new String[]{ObjectMapping.asJsonString(conf)}).run();
         /*org.lakehouse.taskexecutor.executionmodule.body.SparkTaskProcessorBody;
         SparkTaskProcessorBody sparkTaskProcessorBody = new SparkTaskProcessorBody(sparkSession,conf);
         sparkTaskProcessorBody.run();*/

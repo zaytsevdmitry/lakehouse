@@ -4,20 +4,19 @@ import org.apache.spark.sql.SparkSession;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.JdbcUtils;
 import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.exception.TruncateException;
-import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.jdbc.JdbcSparkDataStoreManipulator;
+import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.jdbc.JdbcSparkDataSourceManipulatorAbstract;
 
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
-public abstract class TrinoSparkDataStoreManipulator extends JdbcSparkDataStoreManipulator {
+public abstract class TrinoSparkDataSourceManipulatorAbstract extends JdbcSparkDataSourceManipulatorAbstract {
 
-    public TrinoSparkDataStoreManipulator(
+    public TrinoSparkDataSourceManipulatorAbstract(
             SparkSession sparkSession,
-            String format,
             DataSourceDTO dataSourceDTO,
             JdbcUtils jdbcUtils) {
-        super(sparkSession, format, dataSourceDTO, jdbcUtils);
+        super(sparkSession, dataSourceDTO, jdbcUtils);
     }
 
 

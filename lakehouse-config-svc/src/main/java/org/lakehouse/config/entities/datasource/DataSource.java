@@ -9,28 +9,28 @@ import java.util.Objects;
 @Entity
 public class DataSource extends KeyEntityAbstract {
 
-    private Types.DataSourceType dataSourceType;
-    private Types.DataSourceServiceType dataSourceServiceType;
+    private Types.EngineType engineType;
+    private Types.Engine engine;
 
 
     public DataSource() {
     }
 
 
-    public Types.DataSourceType getDataSourceType() {
-        return dataSourceType;
+    public Types.EngineType getDataSourceType() {
+        return engineType;
     }
 
-    public void setDataSourceType(Types.DataSourceType dataSourceType) {
-        this.dataSourceType = dataSourceType;
+    public void setDataSourceType(Types.EngineType engineType) {
+        this.engineType = engineType;
     }
 
-    public Types.DataSourceServiceType getDataSourceServiceType() {
-        return dataSourceServiceType;
+    public Types.Engine getDataSourceServiceType() {
+        return engine;
     }
 
-    public void setDataSourceServiceType(Types.DataSourceServiceType dataSourceServiceType) {
-        this.dataSourceServiceType = dataSourceServiceType;
+    public void setDataSourceServiceType(Types.Engine engine) {
+        this.engine = engine;
     }
 
     @Override

@@ -1,7 +1,7 @@
 {
   "keyName": "processingdb",
-  "dataSourceType": "database",
-  "dataSourceServiceType": "postgres",
+  "engineType": "database",
+  "engine": "postgres",
   "services": [
     {
       "host": "localhost",

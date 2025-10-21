@@ -6,8 +6,8 @@ import java.util.*;
 
 public class DataSourceDTO {
     private String keyName;
-    private Types.DataSourceType dataSourceType;
-    private Types.DataSourceServiceType dataSourceServiceType;
+    private Types.EngineType engineType;
+    private Types.Engine engine;
     private List<ServiceDTO> services = new ArrayList<>();
     private Map<String, String> properties = new HashMap<>();
     private String description;
@@ -41,20 +41,20 @@ public class DataSourceDTO {
         this.description = description;
     }
 
-    public Types.DataSourceType getDataSourceType() {
-        return dataSourceType;
+    public Types.EngineType getEngineType() {
+        return engineType;
     }
 
-    public void setDataSourceType(Types.DataSourceType dataSourceType) {
-        this.dataSourceType = dataSourceType;
+    public void setEngineType(Types.EngineType engineType) {
+        this.engineType = engineType;
     }
 
-    public Types.DataSourceServiceType getDataSourceServiceType() {
-        return dataSourceServiceType;
+    public Types.Engine getEngine() {
+        return engine;
     }
 
-    public void setDataSourceServiceType(Types.DataSourceServiceType dataSourceServiceType) {
-        this.dataSourceServiceType = dataSourceServiceType;
+    public void setEngine(Types.Engine engine) {
+        this.engine = engine;
     }
 
     public List<ServiceDTO> getServices() {
@@ -70,11 +70,11 @@ public class DataSourceDTO {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DataSourceDTO that = (DataSourceDTO) o;
-        return Objects.equals(getKeyName(), that.getKeyName()) && getDataSourceType() == that.getDataSourceType() && getDataSourceServiceType() == that.getDataSourceServiceType() && Objects.equals(getServices(), that.getServices()) && Objects.equals(getProperties(), that.getProperties()) && Objects.equals(getDescription(), that.getDescription());
+        return Objects.equals(getKeyName(), that.getKeyName()) && getEngineType() == that.getEngineType() && getEngine() == that.getEngine() && Objects.equals(getServices(), that.getServices()) && Objects.equals(getProperties(), that.getProperties()) && Objects.equals(getDescription(), that.getDescription());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getKeyName(), getDataSourceType(), getDataSourceServiceType(), getServices(), getProperties(), getDescription());
+        return Objects.hash(getKeyName(), getEngineType(), getEngine(), getServices(), getProperties(), getDescription());
     }
 }

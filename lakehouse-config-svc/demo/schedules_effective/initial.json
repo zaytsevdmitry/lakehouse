@@ -83,7 +83,7 @@
           "executionModuleArgs": {
             "spark.executor.memory": "5g",
             "spark.driver.memory": "2g",
-            "executionBody": "org.lakehouse.taskexecutor.executionmodule.body.SparkTaskProcessorBody"
+            "executionBody": "org.lakehouse.taskexecutor.executionmodule.body.TransformationSparkProcessorBody"
           }
         },
         {
@@ -205,7 +205,7 @@
           "executionModuleArgs": {
             "spark.executor.memory": "5g",
             "spark.driver.memory": "2g",
-            "executionBody": "org.lakehouse.taskexecutor.executionmodule.body.SparkTaskProcessorBody"
+            "executionBody": "org.lakehouse.taskexecutor.executionmodule.body.TransformationSparkProcessorBody"
           }
         },
         {
@@ -357,7 +357,7 @@
             "spark.executor.memory": "1g",
             "spark.driver.memory": "2g",
             "spark.executor.cores": "2",
-            "executionBody": "org.lakehouse.taskexecutor.executionmodule.body.SparkTaskProcessorBody"
+            "executionBody": "org.lakehouse.taskexecutor.executionmodule.body.TransformationSparkProcessorBody"
           }
         },
         {
@@ -393,7 +393,7 @@
           "executionModuleArgs": {
             "spark.executor.memory": "5g",
             "spark.driver.memory": "2g",
-            "executionBody": "org.lakehouse.taskexecutor.executionmodule.body.SparkTaskProcessorBody"
+            "executionBody": "org.lakehouse.taskexecutor.executionmodule.body.TransformationSparkProcessorBody"
           }
         },
         {

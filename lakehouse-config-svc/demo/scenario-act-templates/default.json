@@ -25,7 +25,7 @@
       "executionModuleArgs": {
         "spark.executor.memory": "5g",
         "spark.driver.memory": "2g",
-        "executionBody": "org.lakehouse.taskexecutor.executionmodule.body.SparkTaskProcessorBody"
+        "executionBody": "org.lakehouse.taskexecutor.executionmodule.body.TransformationSparkProcessorBody"
       }
     },
     {

@@ -488,7 +488,7 @@ public class TestWithPostgres {
         loadExpectArgs.put("spark.executor.memory", "1g");
         loadExpectArgs.put("spark.executor.cores", "2");
         loadExpectArgs.put("spark.driver.memory", "2g");
-        loadExpectArgs.put("executionBody", "org.lakehouse.taskexecutor.executionmodule.body.SparkTaskProcessorBody");
+        loadExpectArgs.put("executionBody", "org.lakehouse.taskexecutor.executionmodule.body.TransformationSparkProcessorBody");
         loadTaskDTOExpected.setExecutionModuleArgs(loadExpectArgs);
         loadTaskDTOExpected.setName("load");
         loadTaskDTOExpected.setTaskExecutionServiceGroupName("default");
@@ -503,7 +503,7 @@ public class TestWithPostgres {
         Map<String, String> extendTaskDTOExpectedArgs = new HashMap<>();
         extendTaskDTOExpectedArgs.put("spark.executor.memory", "5g");
         extendTaskDTOExpectedArgs.put("spark.driver.memory", "2g");
-        extendTaskDTOExpectedArgs.put("executionBody", "org.lakehouse.taskexecutor.executionmodule.body.SparkTaskProcessorBody");
+        extendTaskDTOExpectedArgs.put("executionBody", "org.lakehouse.taskexecutor.executionmodule.body.TransformationSparkProcessorBody");
         extendTaskDTOExpected.setExecutionModuleArgs(extendTaskDTOExpectedArgs);
         extendTaskDTOExpected.setName("extend");
         extendTaskDTOExpected.setTaskExecutionServiceGroupName("default");

@@ -34,14 +34,14 @@ public class JdbcTaskProcessor extends AbstractDefaultTaskProcessor {
         else
             serviceDTO = dataSourceDTO.getServices().get(0);
 
-        if (!dataSourceDTO.getDataSourceType().equals(Types.DataSourceType.database))
+        if (!dataSourceDTO.getEngineType().equals(Types.EngineType.database))
             throw new TaskFailedException(String.format("DataSource %s is not database", dataSourceDTO.getKeyName()));
-        else if (dataSourceDTO.getDataSourceServiceType().equals(Types.DataSourceServiceType.postgres)) {
+        else if (dataSourceDTO.getEngine().equals(Types.Engine.postgres)) {
             result = String.format("jdbc:postgresql://%s:%s/%s", serviceDTO.getHost(), serviceDTO.getPort(), serviceDTO.getUrn());
-        } else if (dataSourceDTO.getDataSourceServiceType().equals(Types.DataSourceServiceType.trino)) {
+        } else if (dataSourceDTO.getEngine().toString().startsWith("trino")) {
             result = String.format("jdbc:trino://%s:%s/%s", serviceDTO.getHost(), serviceDTO.getPort(), serviceDTO.getUrn());
         } else {
-            throw new TaskFailedException(String.format("DataSource %s with database %s not supported", dataSourceDTO.getKeyName(), dataSourceDTO.getDataSourceServiceType()));
+            throw new TaskFailedException(String.format("DataSource %s with database %s not supported", dataSourceDTO.getKeyName(), dataSourceDTO.getEngine()));
         }
         return result;
     }

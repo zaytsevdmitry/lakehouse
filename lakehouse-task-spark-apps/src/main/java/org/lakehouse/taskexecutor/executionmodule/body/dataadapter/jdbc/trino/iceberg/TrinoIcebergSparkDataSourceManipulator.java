@@ -1,23 +1,24 @@
 package org.lakehouse.taskexecutor.executionmodule.body.dataadapter.jdbc.trino.iceberg;
 
 import org.apache.spark.sql.SparkSession;
+import org.lakehouse.client.api.constant.Configuration;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.JdbcUtils;
 import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.exception.CompactException;
-import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.jdbc.trino.TrinoSparkDataStoreManipulator;
+import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.jdbc.trino.TrinoSparkDataSourceManipulatorAbstract;
 
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
-public class TrinoIcebergSparkDataStoreManipulator extends TrinoSparkDataStoreManipulator {
+public class TrinoIcebergSparkDataSourceManipulator extends TrinoSparkDataSourceManipulatorAbstract {
 
-    public TrinoIcebergSparkDataStoreManipulator(
+    public TrinoIcebergSparkDataSourceManipulator(
             SparkSession sparkSession,
-            String format,
+
             DataSourceDTO dataSourceDTO,
             JdbcUtils jdbcUtils) {
-        super(sparkSession, format, dataSourceDTO, jdbcUtils);
+        super(sparkSession,  dataSourceDTO, jdbcUtils);
     }
 
 
@@ -27,7 +28,7 @@ public class TrinoIcebergSparkDataStoreManipulator extends TrinoSparkDataStoreMa
             String locationFrom,
             String locationTo,
             Map<String, String> options,
-            ModificationRule modificationRule) {
+            Configuration.ModificationRule modificationRule) {
         throw new UnsupportedOperationException("exchangePartitions un supported in Iceberg");
     }
 
