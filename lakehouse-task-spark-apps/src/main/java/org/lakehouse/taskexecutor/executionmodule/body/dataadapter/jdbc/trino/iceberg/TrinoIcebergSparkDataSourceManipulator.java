@@ -5,6 +5,7 @@ import org.lakehouse.client.api.constant.Configuration;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.JdbcUtils;
 import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.exception.CompactException;
+import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.exception.DropException;
 import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.jdbc.trino.TrinoSparkDataSourceManipulatorAbstract;
 
 import java.sql.SQLException;
@@ -21,6 +22,16 @@ public class TrinoIcebergSparkDataSourceManipulator extends TrinoSparkDataSource
         super(sparkSession,  dataSourceDTO, jdbcUtils);
     }
 
+
+    @Override
+    public void drop(String location, Map<String, String> options) throws DropException {
+
+    }
+
+    @Override
+    public void dropPartitions(String location, List<String> partitions, Map<String, String> options) throws DropException {
+
+    }
 
     @Override
     public void exchangePartitions(

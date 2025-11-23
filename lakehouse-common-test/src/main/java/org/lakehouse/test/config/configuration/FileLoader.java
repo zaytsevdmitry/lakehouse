@@ -19,7 +19,7 @@ public class FileLoader {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final String rootPath = "../lakehouse-config-svc/demo";
     public final String modelsDir = rootPath.concat("/dataset-sql-model");
-    public final String dataSourcesDir = rootPath.concat("/datasource");
+    public final String dataSourcesDir = rootPath.concat("/datasources");
 
 
     private List<String> getFilenames(String directoryName) {

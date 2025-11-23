@@ -15,7 +15,11 @@ public interface DataSourceManipulator {
 
     void write(Dataset<Row> dataset, String location, Map<String, String> options, Configuration.ModificationRule modificationRule) throws WriteException;
 
+    void drop(String location, Map<String, String> options) throws DropException;
+
     void truncate(String location, Map<String, String> options) throws TruncateException;
+
+    void dropPartitions(String location, List<String> partitions, Map<String, String> options) throws DropException;
 
     void truncatePartitions(String location, List<String> partitions, Map<String, String> options) throws TruncateException;
 

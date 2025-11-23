@@ -175,16 +175,16 @@
             </resource>
         </resources>
         <plugins>
-            <plugin>
+           <!-- <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <argLine>
-                        --add-exports=java.base/sun.nio.ch=ALL-UNNAMED
-                        --add-opens=java.base/java.nio=ALL-UNNAMED
+                        &#45;&#45;add-exports=java.base/sun.nio.ch=ALL-UNNAMED
+                        &#45;&#45;add-opens=java.base/java.nio=ALL-UNNAMED
                     </argLine>
                 </configuration>
-            </plugin>
+            </plugin>-->
             <!-- <plugin>
                  <artifactId>maven-assembly-plugin</artifactId>
                  <configuration>
@@ -233,6 +233,7 @@
                         </goals>
                         <configuration>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
                             <shadedClassifierName>jar-with-dependencies</shadedClassifierName>
                             <transformers>
                                 <transformer

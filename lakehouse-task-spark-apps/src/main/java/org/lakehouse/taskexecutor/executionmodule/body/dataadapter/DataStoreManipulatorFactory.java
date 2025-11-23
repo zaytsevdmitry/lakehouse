@@ -5,6 +5,9 @@ import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.jdbc.postgres.PostgresJdbcSparkDataSourceManipulator;
 import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.jdbc.trino.iceberg.TrinoIcebergSparkDataSourceManipulator;
+import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.spark.IcebergSparkDataSourceManipulator;
+import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.spark.ParquetSparkDataSourceManipulator;
+import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.spark.SparkDataSourceManipulatorAbstract;
 
 public class DataStoreManipulatorFactory {
     public DataSourceManipulator buildDataStoreManipulator(
@@ -28,7 +31,11 @@ public class DataStoreManipulatorFactory {
                         ));
             }
         } else if (dataSourceDTO.getEngineType().equals(Types.EngineType.spark)){
-
+            if (dataSourceDTO.getEngine().equals(Types.Engine.iceberg)){
+                result = new IcebergSparkDataSourceManipulator(sparkSession,dataSourceDTO);
+            } else if (dataSourceDTO.getEngine().equals(Types.Engine.parquet)) {
+                result = new ParquetSparkDataSourceManipulator(sparkSession,dataSourceDTO);
+            }
         } else {
                 throw new UnsuportedDataSourceException(
                         String.format(

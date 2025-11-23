@@ -1,0 +1,16 @@
+{
+  "keyName": "lakehousestorage",
+  "engineType": "spark",
+  "engine": "localfs",
+  "services": [
+    {
+      "host": "",
+      "port": "",
+      "urn": ""
+    }
+  ],
+  "properties": {
+  },
+  "description": "Local datastore"
+}
+

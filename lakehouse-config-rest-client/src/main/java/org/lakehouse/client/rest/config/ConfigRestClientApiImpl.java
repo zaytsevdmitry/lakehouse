@@ -24,7 +24,7 @@ public class ConfigRestClientApiImpl implements ConfigRestClientApi {
 
 
     public NameSpaceDTO getNameSpaceDTO(String NameSpaceName) {
-        return restClientHelper.getDtoOne(NameSpaceName, Endpoint.PROJECTS_NAME, NameSpaceDTO.class);
+        return restClientHelper.getDtoOne(NameSpaceName, Endpoint.NAME_SPACES_NAME, NameSpaceDTO.class);
     }
 
     public DataSourceDTO getDataSourceDTO(String name) {
@@ -80,7 +80,7 @@ public class ConfigRestClientApiImpl implements ConfigRestClientApi {
     public List<NameSpaceDTO> getNameSpaceDTOList() {
         return Arrays.asList(restClientHelper.getRestClient()
                 .get()
-                .uri(Endpoint.PROJECTS)
+                .uri(Endpoint.NAME_SPACES)
                 .retrieve()
                 .body(NameSpaceDTO[].class)); //getDtoByName("",  Endpoint.PROJECTS, List.class);
     }
@@ -147,7 +147,7 @@ public class ConfigRestClientApiImpl implements ConfigRestClientApi {
 
 
     public int deleteNameSpaceDTO(String NameSpaceName) {
-        return restClientHelper.deleteDtoByName(NameSpaceName, Endpoint.PROJECTS_NAME);
+        return restClientHelper.deleteDtoByName(NameSpaceName, Endpoint.NAME_SPACES_NAME);
     }
 
     public int deleteDataStoreDTO(String name) {
@@ -172,7 +172,7 @@ public class ConfigRestClientApiImpl implements ConfigRestClientApi {
 
 
     public int postNameSpaceDTO(NameSpaceDTO o) {
-        return restClientHelper.postDTO(o, Endpoint.PROJECTS);
+        return restClientHelper.postDTO(o, Endpoint.NAME_SPACES);
     }
 
     public int postDataStoreDTO(DataSourceDTO o) {

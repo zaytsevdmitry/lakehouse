@@ -4,8 +4,8 @@ public class Endpoint {
     public final static String ROOT_API_V1_0 = "/v1_0";
     public final static String CONFIGS = ROOT_API_V1_0 + "/configs";
 
-    public final static String PROJECTS = CONFIGS + "/nameSpaces";
-    public final static String PROJECTS_NAME = PROJECTS + "/{name}";
+    public final static String NAME_SPACES = CONFIGS + "/nameSpaces";
+    public final static String NAME_SPACES_NAME = NAME_SPACES + "/{name}";
 
     public final static String TASK_EXECUTION_SERVICE_GROUPS = CONFIGS + "/taskexecutionservicegroups";
     public final static String TASK_EXECUTION_SERVICE_GROUPS_NAME = TASK_EXECUTION_SERVICE_GROUPS + "/{name}";

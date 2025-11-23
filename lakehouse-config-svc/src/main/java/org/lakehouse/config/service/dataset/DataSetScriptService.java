@@ -1,4 +1,4 @@
-package org.lakehouse.config.service;
+package org.lakehouse.config.service.dataset;
 
 import org.lakehouse.client.api.dto.configs.dataset.DataSetScriptDTO;
 import org.lakehouse.config.entities.dataset.DataSetScript;

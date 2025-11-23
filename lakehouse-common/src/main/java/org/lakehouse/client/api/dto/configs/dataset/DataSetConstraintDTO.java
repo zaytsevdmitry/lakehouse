@@ -8,9 +8,9 @@ public class DataSetConstraintDTO {
     private String name;
     private Types.Constraint type;
     private String columns;
-    private boolean enabled;
-    private boolean runtimeLevelCheck;
-    private boolean constructLevelCheck;
+    private boolean enabled = true;
+    private boolean runtimeLevelCheck = true;
+    private boolean constructLevelCheck = true;
     private ReferenceDTO reference;
 
     public DataSetConstraintDTO() {

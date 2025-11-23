@@ -42,6 +42,7 @@ import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.web.client.RestClient;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -95,7 +96,7 @@ public class TaskExecutorTest {
     @Autowired
     @Qualifier("jinjava")
     Jinjava jinjava;
-
+    @Autowired RestClient.Builder restClientBuilder;
     @Autowired
     SparkRestClientApi sparkRestClientApi;
 
@@ -206,7 +207,7 @@ public class TaskExecutorTest {
         t.setScheduledTaskEffectiveDTO(scheduledTaskDTO);
         TableDefinitionFactory tdf = new TableDefinitionFactory();
         TaskProcessorConfigFactory pcf = new TaskProcessorConfigFactory(configRestClientApi, tdf, jinjava);
-        TaskProcessorFactory pf = new TaskProcessorFactory(new StateRestClientApiTest(), sparkRestClientApi, sparkConfigurationProperties);
+        TaskProcessorFactory pf = new TaskProcessorFactory(new StateRestClientApiTest(), restClientBuilder);
         return pf.buildProcessor(pcf.buildTaskProcessorConfig(t), t.getScheduledTaskEffectiveDTO().getExecutionModule());
     }
 

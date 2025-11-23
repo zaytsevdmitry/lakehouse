@@ -1,10 +1,18 @@
 @startuml
 interface TaskProcessor extends Runnable
 class AbstractTaskProcessor implements TaskProcessor
-class SparkTaskProcessor extends AbstractTaskProcessor 
-class JDBCTaskProcessor extends AbstractTaskProcessor 
-class HTTPTaskProcessor extends AbstractTaskProcessor 
-class ShellTaskProcessor extends AbstractTaskProcessor 
+class AbstractSparkDeployTaskProcessor implements AbstractTaskProcessor
+class AbstractDefaultTaskProcessor implements AbstractTaskProcessor
+class SparkLauncherTaskProcessor implements AbstractSparkDeployTaskProcessor
+class SparkLauncherTaskProcessorDQ implements AbstractSparkDeployTaskProcessor
+class AbstractStateTaskProcessor implements AbstractTaskProcessor
+class DependencyCheckStateTaskProcessor implements AbstractStateTaskProcessor
+class LockedStateTaskProcessor implements AbstractStateTaskProcessor
+class SuccessStateTaskProcessor implements AbstractStateTaskProcessor
+'class SparkTaskProcessor extends AbstractTaskProcessor
+class JDBCTaskProcessor extends AbstractDefaultTaskProcessor
+'class HTTPTaskProcessor extends AbstractTaskProcessor
+'class ShellTaskProcessor extends AbstractTaskProcessor
 
  
 '{} <- AbstractTaskProcessor{}

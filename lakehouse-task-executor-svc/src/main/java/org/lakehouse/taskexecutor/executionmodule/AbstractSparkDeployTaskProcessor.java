@@ -2,13 +2,16 @@ package org.lakehouse.taskexecutor.executionmodule;
 
 import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
 import org.lakehouse.client.api.exception.TaskFailedException;
+import org.lakehouse.client.rest.RestClientHelper;
 import org.lakehouse.client.rest.spark.SparkRestClientApi;
+import org.lakehouse.client.rest.spark.SparkRestClientApiImpl;
 import org.lakehouse.client.rest.spark.standalone.CreateRequest;
 import org.lakehouse.client.rest.spark.standalone.CreateResponse;
 import org.lakehouse.client.rest.spark.standalone.StatusResponse;
-import org.lakehouse.taskexecutor.configuration.SparkConfigurationProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.util.DefaultUriBuilderFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -18,22 +21,25 @@ import java.util.stream.Collectors;
 
 public abstract class AbstractSparkDeployTaskProcessor extends AbstractTaskProcessor {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final SparkRestClientApi sparkRestClientApi;
-    private final SparkConfigurationProperties sparkConfigurationProperties;
+    private final RestClient.Builder builder;
+    //private final SparkRestClientApi sparkRestClientApi;
+    //private final SparkConfigurationProperties sparkConfigurationProperties;
 
     public AbstractSparkDeployTaskProcessor(
-            TaskProcessorConfigDTO taskProcessorConfigDTO,
-            SparkConfigurationProperties sparkConfigurationProperties,
-            SparkRestClientApi sparkRestClientApi) {
+            TaskProcessorConfigDTO taskProcessorConfigDTO, RestClient.Builder builder//,
+            //      SparkConfigurationProperties sparkConfigurationProperties,
+            //        SparkRestClientApi sparkRestClientApi
+    ) {
         super(taskProcessorConfigDTO);
-        this.sparkConfigurationProperties = sparkConfigurationProperties;
-        this.sparkRestClientApi = sparkRestClientApi;
+   //     this.sparkConfigurationProperties = sparkConfigurationProperties;
+   //     this.sparkRestClientApi = sparkRestClientApi;
 
+        this.builder = builder;
     }
 
     //todo other final status
-    List<String> finalStatusNames = List.of("FINISHED", "KILLED", "FAILED");
-    List<String> negativeStatusNames = List.of("KILLED", "FAILED");
+    List<String> finalStatusNames = List.of("FINISHED", "KILLED", "FAILED", "ERROR");
+    List<String> negativeStatusNames = List.of("KILLED", "FAILED" , "ERROR");
 
     public boolean isStatusFinal(String statusName) {
         return finalStatusNames.contains(statusName);
@@ -43,28 +49,31 @@ public abstract class AbstractSparkDeployTaskProcessor extends AbstractTaskProce
         return negativeStatusNames.contains(statusName);
     }
 
-    public SparkRestClientApi getSparkRestClientApi() {
-        return sparkRestClientApi;
+
+    public SparkRestClientApi getSparkRestClientApi(String baseURI) {
+        DefaultUriBuilderFactory defaultUriBuilderFactory = new DefaultUriBuilderFactory(baseURI);
+        defaultUriBuilderFactory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.NONE);
+        return new SparkRestClientApiImpl(
+                new
+                        RestClientHelper(
+                        builder.uriBuilderFactory(defaultUriBuilderFactory).build()));
     }
 
-    public SparkConfigurationProperties getSparkConfigurationProperties() {
+
+    /*public SparkConfigurationProperties getSparkConfigurationProperties() {
         return sparkConfigurationProperties;
     }
-
-    public Map<String, String> extractConfSpark(Map<String, String> props) {
-        logger.info("Use service spark properties");
-        Map<String, String> result = new HashMap<>(getSparkConfigurationProperties().getProperties());
+*/
+    public Map<String, String> filterSparkProperties(Map<String, String> properties) {
+        Map<String, String> result = new HashMap<>(/*getSparkConfigurationProperties().getProperties()*/);
         logger.info("Set task name to spark property spark.app.name");
         result.put("spark.app.name", getTaskProcessorConfig().getLockSource());
-        logger.info("Override service spark properties from task properties");
         result.putAll(
-                getTaskProcessorConfig()
-                        .getExecutionModuleArgs()
+                properties
                         .entrySet()
                         .stream()
-                        .filter(sse -> sse.getValue().startsWith("spark."))
+                        .filter(sse -> sse.getKey().startsWith("spark."))
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
-        result.putAll(props);
         return result;
     }
 
@@ -85,6 +94,7 @@ public abstract class AbstractSparkDeployTaskProcessor extends AbstractTaskProce
     public void deploy(
             String mainClass,
             String appResource,
+            String severUrl,
             Map<String, String> sparkProperties,
             List<String> sparkArgs) throws TaskFailedException {
         CreateRequest createRequest = new CreateRequest();
@@ -98,7 +108,7 @@ public abstract class AbstractSparkDeployTaskProcessor extends AbstractTaskProce
         createRequest.setAppArgs(sparkArgs);
 
         CreateResponse createResponse =
-                getSparkRestClientApi().createSubmission(createRequest);
+                getSparkRestClientApi(severUrl).createSubmission(createRequest);
 
         logger.info(
                 "Task {} submitted as {}",
@@ -110,7 +120,7 @@ public abstract class AbstractSparkDeployTaskProcessor extends AbstractTaskProce
         while (!isFinished) {
             sleep(1000L);
             status =
-                    getSparkRestClientApi()
+                    getSparkRestClientApi(severUrl)
                             .getStatus(createResponse.getSubmissionId());
             logger.info("Spark job status {}", status.getDriverState());
             if (isStatusFinal(status.getDriverState()))

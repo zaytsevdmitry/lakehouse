@@ -14,7 +14,7 @@ public abstract class KeyValueAbstract {
     @Column(nullable = false)
     private String key;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 4000)
     private String value;
 
     public KeyValueAbstract() {

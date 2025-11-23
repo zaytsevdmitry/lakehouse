@@ -120,7 +120,7 @@ public class TestWithPostgres {
         NameSpaceDTO dto = fileLoader.loadNameSpaceDTO();
 
         return ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getKeyName(),
-                ObjectMapping.asJsonString(dto), Endpoint.PROJECTS, Endpoint.PROJECTS_NAME), NameSpaceDTO.class);
+                ObjectMapping.asJsonString(dto), Endpoint.NAME_SPACES, Endpoint.NAME_SPACES_NAME), NameSpaceDTO.class);
     }
 
     @Test
@@ -128,7 +128,7 @@ public class TestWithPostgres {
     void shouldTestNameSpaceDTO() throws Exception {
         NameSpaceDTO dto = fileLoader.loadNameSpaceDTO();
         NameSpaceDTO resultDTO = putNameSpaceDTO();
-        restManipulator.deleteDTO(dto.getKeyName(), Endpoint.PROJECTS_NAME);
+        restManipulator.deleteDTO(dto.getKeyName(), Endpoint.NAME_SPACES_NAME);
         assert (resultDTO.equals(dto));
     }
 
@@ -226,7 +226,7 @@ public class TestWithPostgres {
     }
 
     @Test
-    @Order(5)
+    @Order(6)
     void shouldTestDataSetDTO() throws Exception {
         String name = "client_processing";
 
@@ -240,12 +240,43 @@ public class TestWithPostgres {
                 ObjectMapping.asJsonString(dto), Endpoint.DATA_SETS, Endpoint.DATA_SETS_NAME), DataSetDTO.class);
         restManipulator.deleteDTO(dto.getKeyName(), Endpoint.DATA_SETS_NAME);
         restManipulator.deleteDTO(dataSourceDTO.getKeyName(), Endpoint.DATA_SOURCES_NAME);
-        restManipulator.deleteDTO(nameSpaceDTO.getKeyName(), Endpoint.PROJECTS_NAME);
+        restManipulator.deleteDTO(nameSpaceDTO.getKeyName(), Endpoint.NAME_SPACES_NAME);
         assert (resultDTO.equals(dto));
     }
 
     @Test
-    @Order(6)
+    @Order(7)
+    void shouldTestDataSetDTORepeatLoad() throws Exception {
+        String name = "transaction_processing";
+        String dictName = "client_processing";
+
+        DataSourceDTO dataSourceDTO = putDataSourceDTO("processingdb");
+
+        NameSpaceDTO nameSpaceDTO = putNameSpaceDTO();
+        DataSetDTO dictDto = putDataSetDTO(dictName);
+        DataSetDTO dto = putDataSetDTO(name);
+
+
+      /*  //write dict table
+        restManipulator.writeAndReadDTOTest(dictDto.getKeyName(),
+                ObjectMapping.asJsonString(dictDto), Endpoint.DATA_SETS, Endpoint.DATA_SETS_NAME);
+        // write reference table
+        restManipulator.writeAndReadDTOTest(dto.getKeyName(),
+                ObjectMapping.asJsonString(dto), Endpoint.DATA_SETS, Endpoint.DATA_SETS_NAME);*/
+        // again
+        DataSetDTO resultDTO = ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getKeyName(),
+                ObjectMapping.asJsonString(dto), Endpoint.DATA_SETS, Endpoint.DATA_SETS_NAME), DataSetDTO.class);
+
+
+        restManipulator.deleteDTO(dto.getKeyName(), Endpoint.DATA_SETS_NAME);
+        restManipulator.deleteDTO(dictDto.getKeyName(), Endpoint.DATA_SETS_NAME);
+        restManipulator.deleteDTO(dataSourceDTO.getKeyName(), Endpoint.DATA_SOURCES_NAME);
+        restManipulator.deleteDTO(nameSpaceDTO.getKeyName(), Endpoint.NAME_SPACES_NAME);
+        assert (resultDTO.equals(dto));
+    }
+
+    @Test
+    @Order(8)
     void scenarioActTemplateChange() throws Exception {
 
         putTaskExecutionServiceGroupDTO();
@@ -274,7 +305,7 @@ public class TestWithPostgres {
     }
 
     @Test
-    @Order(7)
+    @Order(9)
     void scenarioActRepositoryFindByScheduleName() throws Exception {
         Schedule schedule = new Schedule();
         ScenarioAct sa = new ScenarioAct();
@@ -314,7 +345,7 @@ public class TestWithPostgres {
         scheduleRepository.delete(resultSchedule);
         restManipulator.deleteDTO(dto.getKeyName(), Endpoint.DATA_SETS_NAME);
         restManipulator.deleteDTO(dataSourceDTO.getKeyName(), Endpoint.DATA_SOURCES_NAME);
-        restManipulator.deleteDTO(nameSpaceDTO.getKeyName(), Endpoint.PROJECTS_NAME);
+        restManipulator.deleteDTO(nameSpaceDTO.getKeyName(), Endpoint.NAME_SPACES_NAME);
 
     }
 
@@ -338,7 +369,7 @@ public class TestWithPostgres {
     }
 
     @Test()
-    @Order(8)
+    @Order(10)
     void shouldTestColumnOrdering() {
         DataSetDTO dataSetDTO = new DataSetDTO();
         ArrayList<ColumnDTO> columnDTOListEstimate = new ArrayList<>();
@@ -359,7 +390,7 @@ public class TestWithPostgres {
     }
 
     @Test
-    @Order(9)
+    @Order(11)
     void shouldTestAllDTO() throws Exception {
 
         logger.info("{} {} {}", postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
@@ -453,11 +484,11 @@ public class TestWithPostgres {
                 Endpoint.TASK_EXECUTION_SERVICE_GROUPS_NAME);
         restManipulator.deleteDTO(mydbDataSourceDTO.getKeyName(), Endpoint.DATA_SOURCES_NAME);
         restManipulator.deleteDTO(someelsedbDataSourceDTO.getKeyName(), Endpoint.DATA_SOURCES_NAME);
-        restManipulator.deleteDTO(nameSpaceDTO.getKeyName(), Endpoint.PROJECTS_NAME);
+        restManipulator.deleteDTO(nameSpaceDTO.getKeyName(), Endpoint.NAME_SPACES_NAME);
 
     }
 
-    @Order(10)
+    @Order(12)
     @Test
     void shouldTestEffectiveTask() throws Exception {
         //prepare
@@ -541,12 +572,12 @@ public class TestWithPostgres {
                 Endpoint.TASK_EXECUTION_SERVICE_GROUPS_NAME);
         restManipulator.deleteDTO(mydbDataSourceDTO.getKeyName(), Endpoint.DATA_SOURCES_NAME);
         restManipulator.deleteDTO(someelsedbDataSourceDTO.getKeyName(), Endpoint.DATA_SOURCES_NAME);
-        restManipulator.deleteDTO(nameSpaceDTO.getKeyName(), Endpoint.PROJECTS_NAME);
+        restManipulator.deleteDTO(nameSpaceDTO.getKeyName(), Endpoint.NAME_SPACES_NAME);
 
     }
 
     @Test
-    @Order(11)
+    @Order(13)
     void saveQualityMetricsService() throws Exception {
         putNameSpaceDTO();
         putDataSourceDTO("lakehousestorage");

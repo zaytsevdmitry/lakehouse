@@ -2,7 +2,7 @@ package org.lakehouse.config.controller;
 
 import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
-import org.lakehouse.config.service.DataSetService;
+import org.lakehouse.config.service.dataset.DataSetService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 

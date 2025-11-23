@@ -8,8 +8,8 @@ import org.lakehouse.config.entities.KeyValueAbstract;
 import java.util.Objects;
 
 @Entity
-@Table(uniqueConstraints = @UniqueConstraint(name = "data_set_property_data_set_name_key_uk", columnNames = {
-        "data_set_name", "key"}))
+@Table(uniqueConstraints = @UniqueConstraint(name = "data_set_property_data_set_key_name_key_uk", columnNames = {
+        "data_set_key_name", "key"}))
 public class DataSetProperty extends KeyValueAbstract {
 
     @ManyToOne(optional = false)

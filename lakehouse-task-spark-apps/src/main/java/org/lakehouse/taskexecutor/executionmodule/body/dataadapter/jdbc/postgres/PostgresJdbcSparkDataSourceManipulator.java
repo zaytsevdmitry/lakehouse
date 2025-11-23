@@ -6,6 +6,7 @@ import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.JdbcUtils;
 import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.exception.CompactException;
 import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.exception.ConstraintException;
+import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.exception.DropException;
 import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.exception.TruncateException;
 import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.jdbc.JdbcSparkDataSourceManipulatorAbstract;
 import org.slf4j.Logger;
@@ -23,6 +24,16 @@ public class PostgresJdbcSparkDataSourceManipulator extends JdbcSparkDataSourceM
             DataSourceDTO dataSourceDTO,
             JdbcUtils jdbcUtils) {
         super(sparkSession,  dataSourceDTO, jdbcUtils);
+    }
+
+    @Override
+    public void drop(String location, Map<String, String> options) throws DropException {
+
+    }
+
+    @Override
+    public void dropPartitions(String location, List<String> partitions, Map<String, String> options) throws DropException {
+
     }
 
     @Override

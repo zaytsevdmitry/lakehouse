@@ -16,23 +16,23 @@ public class NameSpaceController {
         this.nameSpaceService = nameSpaceService;
     }
 
-    @GetMapping(Endpoint.PROJECTS)
+    @GetMapping(Endpoint.NAME_SPACES)
     List<NameSpaceDTO> findAll() {
         return nameSpaceService.getFindAll();
     }
 
-    @PostMapping(Endpoint.PROJECTS)
+    @PostMapping(Endpoint.NAME_SPACES)
     @ResponseStatus(HttpStatus.CREATED)
     NameSpaceDTO put(@RequestBody NameSpaceDTO nameSpaceDTO) {
         return nameSpaceService.save(nameSpaceDTO);
     }
 
-    @GetMapping(Endpoint.PROJECTS_NAME)
+    @GetMapping(Endpoint.NAME_SPACES_NAME)
     NameSpaceDTO get(@PathVariable String name) {
         return nameSpaceService.findByName(name);
     }
 
-    @DeleteMapping(Endpoint.PROJECTS_NAME)
+    @DeleteMapping(Endpoint.NAME_SPACES_NAME)
     @ResponseStatus(HttpStatus.ACCEPTED)
     void deleteById(@PathVariable String name) {
         nameSpaceService.deleteById(name);

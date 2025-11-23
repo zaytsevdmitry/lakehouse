@@ -2,9 +2,10 @@ package org.lakehouse.client.api.constant;
 
 public class Configuration {
     public enum ModificationRule {
-        write("w"),
-        overwrite("o"),
-        errorIfExists("e");
+        append("append"),
+        overwrite("overwrite"),
+        errorIfExists("errorifexists"),
+        ignore("ignore");
         private String value;
 
         private ModificationRule(String value) {

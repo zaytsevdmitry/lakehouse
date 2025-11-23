@@ -8,8 +8,8 @@ import java.util.Objects;
 
 @Entity
 @Table(uniqueConstraints = {
-        @UniqueConstraint(name = "data_set_column_dataset_name_name_uk", columnNames = {"data_set_name", "name"}),
-        @UniqueConstraint(name = "data_set_column_dataset_name_column_order_uk", columnNames = {"data_set_name", "column_order"})
+        @UniqueConstraint(name = "data_set_column_dataset_name_name_uk", columnNames = {"data_set_key_name", "name"}),
+        @UniqueConstraint(name = "data_set_column_dataset_name_column_order_uk", columnNames = {"data_set_key_name", "column_order"})
 }
 )
 public class DataSetColumn {

@@ -15,7 +15,7 @@ public class DataSet extends KeyEntityAbstract {
     private NameSpace nameSpace;
 
     @ManyToOne(optional = false)
-    @JoinColumn(foreignKey = @ForeignKey(name = "data_set__data_store_fk"))
+    @JoinColumn(foreignKey = @ForeignKey(name = "data_set__data_source_fk"))
     private DataSource dataSource;
 
     @Column(nullable = false)

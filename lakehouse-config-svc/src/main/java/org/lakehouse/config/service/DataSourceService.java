@@ -88,37 +88,41 @@ public class DataSourceService {
         return dataSourceRepository.findAll().stream().map(this::mapDataSourceToDTO).toList();
     }
 
-    @Transactional
-    public DataSourceDTO save(DataSourceDTO dataSourceDTO) {
-        DataSource dataSource = dataSourceRepository.save(mapDataSourceToEntity(dataSourceDTO));
+    private void mergeDataSourceProperties(DataSource dataSource, Map<String,String> properties){
         List<DataSourceProperty> dataSourcePropertiesBeforeChange = dataSourcePropertyRepository
                 .findByDataSourceKeyName(dataSource.getKeyName());
 
+        // delete when key isnt present in DTO
+        Map<String,DataSourceProperty> dataSourcePropertyIoU = new HashMap<>();
         dataSourcePropertiesBeforeChange.forEach(dataSourceProperty -> {
-            if (!dataSourceDTO.getProperties().containsKey(dataSourceProperty.getKey())) {
+            if (!properties.containsKey(dataSourceProperty.getKey())) {
                 dataSourcePropertyRepository.delete(dataSourceProperty);
             }
-        });
-        // properties
-        dataSourceDTO.getProperties().entrySet().stream().map(stringStringEntry -> {
-            Optional<DataSourceProperty> optionalDataStoreProperty = dataSourcePropertyRepository
-                    .findByKeyAndDataSourceKeyName(stringStringEntry.getKey(), dataSourceDTO.getKeyName());
-            if (optionalDataStoreProperty.isPresent()) {
-                if (!optionalDataStoreProperty.get().getValue().equals(stringStringEntry.getValue())) {
-                    return optionalDataStoreProperty.get(); // dataSourcePropertyRepository.save(optionalDataStoreProperty.get());
-                } else {
-                    DataSourceProperty dataSourceProperty = optionalDataStoreProperty.get();
-                    dataSourceProperty.setValue(stringStringEntry.getValue());
-                    return dataSourceProperty;
-                }
-            } else {
-                DataSourceProperty dataSourceProperty = new DataSourceProperty();
-                dataSourceProperty.setDataSource(dataSource);
-                dataSourceProperty.setKey(stringStringEntry.getKey());
-                dataSourceProperty.setValue(stringStringEntry.getValue());
-                return dataSourceProperty;
+            else {
+                dataSourceProperty.setValue(properties.get(dataSourceProperty.getKey()));
+                dataSourcePropertyIoU.put(dataSourceProperty.getKey(),dataSourceProperty);
             }
-        }).toList().forEach(dataSourcePropertyRepository::save);
+        });
+        // properties for insert or update
+        properties.entrySet()
+                .stream()
+                .filter(stringStringEntry -> dataSourcePropertyIoU.containsKey(stringStringEntry.getKey()))
+                .forEach(stringStringEntry -> {
+                    DataSourceProperty dataSourceProperty = new DataSourceProperty();
+                    dataSourceProperty.setDataSource(dataSource);
+                    dataSourceProperty.setKey(stringStringEntry.getKey());
+                    dataSourceProperty.setValue(stringStringEntry.getValue());
+                    dataSourcePropertyRepository.save(dataSourceProperty);
+                });
+        dataSourcePropertyIoU.values().forEach(dataSourcePropertyRepository::save);
+
+    }
+    @Transactional
+    public DataSourceDTO save(DataSourceDTO dataSourceDTO) {
+        DataSource dataSource = dataSourceRepository.save(mapDataSourceToEntity(dataSourceDTO));
+
+        mergeDataSourceProperties(dataSource,dataSourceDTO.getProperties());
+
         // services
         dataSourceServiceRepository
                 .deleteAll(

@@ -45,7 +45,7 @@ public class ConfigRestClientHelperTest {
     public void MakesCorrectCallNameSpaceDTO() throws Exception {
         NameSpaceDTO expectNameSpaceDTO = fileLoader.loadNameSpaceDTO();
         server.expect(ExpectedCount.manyTimes(),
-                        requestTo(String.format("%s/%s", Endpoint.PROJECTS, expectNameSpaceDTO.getKeyName())))
+                        requestTo(String.format("%s/%s", Endpoint.NAME_SPACES, expectNameSpaceDTO.getKeyName())))
                 .andRespond(withSuccess(objectMapper.writeValueAsString(expectNameSpaceDTO), MediaType.APPLICATION_JSON));
         System.out.println("NameSpace is loaded");
 

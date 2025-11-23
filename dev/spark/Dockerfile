@@ -1,7 +1,14 @@
-FROM bitnami/spark:3.5
-
+FROM eclipse-temurin:17
 ENV LHVERSION=0.3.0
-ENV SPARK_VERSION=3.5
-COPY lakehouse-task-spark-apps-$LHVERSION-jar-with-dependencies.jar /opt/bitnami/spark/jars/
-COPY iceberg-spark-runtime-3.5_2.12-1.9.2.jar /opt/bitnami/spark/jars/
-
+ENV SPARK_VERSION=3.5.7
+ENV SPARK_NAME=spark-$SPARK_VERSION-bin-hadoop3
+ENV SPARK_HOME=/opt/$SPARK_NAME
+ENV SPARK_JARS=$SPARK_HOME/jars
+ENV ENTRYPOINT_FILE="entrypoint.sh"
+RUN mkdir /opt/$SPARK_NAME
+COPY $SPARK_NAME /opt/$SPARK_NAME/
+COPY lakehouse-task-spark-apps-$LHVERSION-jar-with-dependencies.jar $SPARK_JARS/
+COPY iceberg-spark-runtime-3.5_2.12-1.9.2.jar $SPARK_JARS/
+add ./$ENTRYPOINT_FILE /
+RUN chmod +x $ENTRYPOINT_FILE
+ENTRYPOINT /$ENTRYPOINT_FILE

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.lakehouse.client.api.utils.ObjectMapping;
-import org.lakehouse.client.rest.spark.configuration.SparkRestConfiguration;
 import org.lakehouse.client.rest.spark.standalone.CreateRequest;
 import org.lakehouse.client.rest.spark.standalone.CreateResponse;
 import org.lakehouse.test.config.configuration.FileLoader;
@@ -20,7 +19,6 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {SparkRestConfiguration.class})
 @RestClientTest(properties = {
         "lakehouse.client.rest.spark.server.url=",
 })

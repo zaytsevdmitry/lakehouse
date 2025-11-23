@@ -1,19 +1,20 @@
 #!/usr/bin/env bash
+set -e -x -v
 export url=$1
 pwd
 ls ./
 echo "server is 127.0.0.1:8080/v1_0/configs"
 
-curl -i -X POST 127.0.0.1:8080/v1_0/configs/projects \
+curl -i -X POST 127.0.0.1:8080/v1_0/configs/nameSpaces \
   -H "Content-Type: application/json" \
-  --data-binary "@./projects/demo.json"
+  --data-binary "@./name-spaces/demo.json"
 
 
 for s in "processingdb" "lakehousestorage"
 do
-   curl -i -X POST 127.0.0.1:8080/v1_0/configs/datastores \
+   curl -i -X POST 127.0.0.1:8080/v1_0/configs/datasources \
      -H "Content-Type: application/json" \
-     --data-binary "@./datastores/$s.json"
+     --data-binary "@./datasources/$s.json"
 done
 
 

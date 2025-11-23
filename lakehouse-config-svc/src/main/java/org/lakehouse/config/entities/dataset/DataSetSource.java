@@ -7,8 +7,8 @@ import org.hibernate.annotations.OnDeleteAction;
 import java.util.Objects;
 
 @Entity
-@Table(uniqueConstraints = @UniqueConstraint(name = "data_set_source_data_set_name_source_name_uk", columnNames = {
-        "data_set_name", "source_name"}))
+@Table(uniqueConstraints = @UniqueConstraint(name = "data_set_source_data_set_key_name_source_key_name_uk", columnNames = {
+        "data_set_key_name", "source_key_name"}))
 public class DataSetSource {
 
     @ManyToOne(optional = false)

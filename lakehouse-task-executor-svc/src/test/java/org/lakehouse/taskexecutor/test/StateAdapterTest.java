@@ -12,7 +12,7 @@ import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.rest.spark.SparkRestClientApi;
 import org.lakehouse.taskexecutor.executionmodule.state.DependencyCheckStateTaskProcessor;
-import org.lakehouse.taskexecutor.executionmodule.state.RunningStateTaskProcessor;
+import org.lakehouse.taskexecutor.executionmodule.state.LockedStateTaskProcessor;
 import org.lakehouse.taskexecutor.executionmodule.state.SuccessStateTaskProcessor;
 import org.lakehouse.taskexecutor.test.stub.SparkRestClientApiTest;
 import org.lakehouse.taskexecutor.test.stub.StateRestClientApiTest;
@@ -134,7 +134,7 @@ public class StateAdapterTest {
         tpc.setDataSetDTOSet(Set.of(testDataSet));
 
         StateRestClientApiTest stateRestClientApi = new StateRestClientApiTest();
-        RunningStateTaskProcessor processor = new RunningStateTaskProcessor(tpc, stateRestClientApi);
+        LockedStateTaskProcessor processor = new LockedStateTaskProcessor(tpc, stateRestClientApi);
         processor.runTask();
     }
 }

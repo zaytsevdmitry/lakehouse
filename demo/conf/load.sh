@@ -4,16 +4,16 @@ pwd
 ls ./
 echo "server is 127.0.0.1:8080/v1_0/configs"
 
-curl -i -X POST 127.0.0.1:8080/v1_0/configs/projects \
+curl -i -X POST 127.0.0.1:8080/v1_0/configs/nameSpaces \
   -H "Content-Type: application/json" \
-  --data-binary "@./projects/demo.json"
+  --data-binary "@./name-spaces/demo.json"
 
 
 for s in "processingdb" "lakehousestorage"
 do
-   curl -i -X POST 127.0.0.1:8080/v1_0/configs/datastores \
+   curl -i -X POST 127.0.0.1:8080/v1_0/configs/datasources \
      -H "Content-Type: application/json" \
-     --data-binary "@./datastores/$s.json"
+     --data-binary "@./datasources/$s.json"
 done
 
 
@@ -30,7 +30,7 @@ do
      -H "Content-Type: application/json" \
      --data-binary "@./datasets/$s.json"
 done
-
+curl -i -X POST 127.0.0.1:8080/v1_0/configs/datasets -H "Content-Type: application/json" --data-binary "@./datasets/client_processing.json"
 for s in "default" "state-exe"
 do
    curl -i -X POST 127.0.0.1:8080/v1_0/configs/taskexecutionservicegroups \
@@ -55,3 +55,9 @@ done
 
 curl -i -X GET 127.0.0.1:8080/v1_0/configs/effective/schedules/name/initial
 
+for s in "transaction_dds_qm"
+do
+   curl -i -X POST 127.0.0.1:8080/v1_0/configs/qualityMetrics \
+     -H "Content-Type: application/json" \
+     --data-binary "@./quality-metrics/$s.json"
+done

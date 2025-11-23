@@ -11,10 +11,10 @@ import org.lakehouse.taskexecutor.service.DataSetStateDTOFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RunningStateTaskProcessor extends AbstractStateTaskProcessor {
+public class LockedStateTaskProcessor extends AbstractStateTaskProcessor {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public RunningStateTaskProcessor(
+    public LockedStateTaskProcessor(
             TaskProcessorConfigDTO taskProcessorConfigDTO,
             StateRestClientApi stateRestClientApi) {
         super(taskProcessorConfigDTO, stateRestClientApi);
