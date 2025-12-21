@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.lakehouse.client.api.dto.configs.*;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.DataInputStream;
 import java.io.File;
@@ -15,6 +17,7 @@ import java.util.stream.Collectors;
 
 
 public class FileLoader {
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final String rootPath = "../lakehouse-config-svc/demo";
@@ -67,6 +70,7 @@ public class FileLoader {
     private final String dataSetDir = rootPath.concat("/datasets");
 
     public DataSetDTO loadDataSetDTO(String name) throws IOException {
+        logger.info("Load file of DataSetDTO {}", name);
         return objectMapper.readValue(new File(String.format(dataSetDir.concat("/%s.json"), name)), DataSetDTO.class);
     }
 

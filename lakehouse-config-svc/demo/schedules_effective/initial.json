@@ -69,7 +69,7 @@
         {
           "name": "begin",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.RunningStateTaskProcessor",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.LockedStateTaskProcessor",
           "importance": "critical",
           "description": "Made interval status RUNNING",
           "executionModuleArgs": {}
@@ -191,7 +191,7 @@
         {
           "name": "begin",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.RunningStateTaskProcessor",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.LockedStateTaskProcessor",
           "importance": "critical",
           "description": "Made interval status RUNNING",
           "executionModuleArgs": {}
@@ -277,7 +277,7 @@
         {
           "name": "begin",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.RunningStateTaskProcessor",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.LockedStateTaskProcessor",
           "importance": "critical",
           "description": "Made interval status RUNNING",
           "executionModuleArgs": {}
@@ -371,7 +371,7 @@
         {
           "name": "begin",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.RunningStateTaskProcessor",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.LockedStateTaskProcessor",
           "importance": "critical",
           "description": "Made interval status RUNNING",
           "executionModuleArgs": {}
@@ -461,7 +461,7 @@
         {
           "name": "begin",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.RunningStateTaskProcessor",
+          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.LockedStateTaskProcessor",
           "importance": "critical",
           "description": "Made interval status RUNNING",
           "executionModuleArgs": {}

@@ -10,13 +10,13 @@
   ],
   "sources": [
     {
-      "name": "client_processing",
+      "dataSetKeyName": "client_processing",
       "properties": {
         "fetchSize": "10000"
       }
     },
     {
-      "name": "transaction_processing",
+      "dataSetKeyName": "transaction_processing",
       "properties": {
         "fetchSize": "10000"
       }

@@ -21,12 +21,11 @@ import java.util.stream.Collectors;
 
 public abstract class AbstractSparkDeployTaskProcessor extends AbstractTaskProcessor {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final RestClient.Builder builder;
     //private final SparkRestClientApi sparkRestClientApi;
     //private final SparkConfigurationProperties sparkConfigurationProperties;
 
     public AbstractSparkDeployTaskProcessor(
-            TaskProcessorConfigDTO taskProcessorConfigDTO, RestClient.Builder builder//,
+            TaskProcessorConfigDTO taskProcessorConfigDTO
             //      SparkConfigurationProperties sparkConfigurationProperties,
             //        SparkRestClientApi sparkRestClientApi
     ) {
@@ -34,7 +33,6 @@ public abstract class AbstractSparkDeployTaskProcessor extends AbstractTaskProce
    //     this.sparkConfigurationProperties = sparkConfigurationProperties;
    //     this.sparkRestClientApi = sparkRestClientApi;
 
-        this.builder = builder;
     }
 
     //todo other final status
@@ -50,13 +48,11 @@ public abstract class AbstractSparkDeployTaskProcessor extends AbstractTaskProce
     }
 
 
-    public SparkRestClientApi getSparkRestClientApi(String baseURI) {
+    public SparkRestClientApi buildSparkRestClientApi(String baseURI) {
         DefaultUriBuilderFactory defaultUriBuilderFactory = new DefaultUriBuilderFactory(baseURI);
         defaultUriBuilderFactory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.NONE);
-        return new SparkRestClientApiImpl(
-                new
-                        RestClientHelper(
-                        builder.uriBuilderFactory(defaultUriBuilderFactory).build()));
+        RestClient restClient = RestClient.builder().uriBuilderFactory(defaultUriBuilderFactory).build();
+        return new SparkRestClientApiImpl(new RestClientHelper(restClient));
     }
 
 
@@ -108,7 +104,7 @@ public abstract class AbstractSparkDeployTaskProcessor extends AbstractTaskProce
         createRequest.setAppArgs(sparkArgs);
 
         CreateResponse createResponse =
-                getSparkRestClientApi(severUrl).createSubmission(createRequest);
+                buildSparkRestClientApi(severUrl).createSubmission(createRequest);
 
         logger.info(
                 "Task {} submitted as {}",
@@ -120,7 +116,7 @@ public abstract class AbstractSparkDeployTaskProcessor extends AbstractTaskProce
         while (!isFinished) {
             sleep(1000L);
             status =
-                    getSparkRestClientApi(severUrl)
+                    buildSparkRestClientApi(severUrl)
                             .getStatus(createResponse.getSubmissionId());
             logger.info("Spark job status {}", status.getDriverState());
             if (isStatusFinal(status.getDriverState()))

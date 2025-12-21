@@ -5,7 +5,6 @@ import org.lakehouse.client.rest.scheduler.configuration.SchedulerRestClientConf
 import org.lakehouse.client.rest.state.configuration.StateRestClientConfiguration;
 import org.lakehouse.jinja.java.configuration.JinJavaConfiguration;
 import org.lakehouse.taskexecutor.configuration.ScheduledTaskKafkaConfigurationProperties;
-import org.lakehouse.taskexecutor.configuration.SparkConfigurationProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -15,8 +14,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 @EnableScheduling
 @EnableConfigurationProperties(value = {
-        ScheduledTaskKafkaConfigurationProperties.class,
-        SparkConfigurationProperties.class})
+        ScheduledTaskKafkaConfigurationProperties.class})
 @ComponentScan(
         basePackages = {
                 "org.lakehouse.taskexecutor",

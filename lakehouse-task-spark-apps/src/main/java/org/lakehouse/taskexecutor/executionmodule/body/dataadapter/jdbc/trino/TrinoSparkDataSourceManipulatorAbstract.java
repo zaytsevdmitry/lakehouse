@@ -1,7 +1,9 @@
 package org.lakehouse.taskexecutor.executionmodule.body.dataadapter.jdbc.trino;
 
 import org.apache.spark.sql.SparkSession;
+import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
+import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.DataSourceManipulatorParameter;
 import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.JdbcUtils;
 import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.exception.TruncateException;
 import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.jdbc.JdbcSparkDataSourceManipulatorAbstract;
@@ -13,10 +15,8 @@ import java.util.Map;
 public abstract class TrinoSparkDataSourceManipulatorAbstract extends JdbcSparkDataSourceManipulatorAbstract {
 
     public TrinoSparkDataSourceManipulatorAbstract(
-            SparkSession sparkSession,
-            DataSourceDTO dataSourceDTO,
-            JdbcUtils jdbcUtils) {
-        super(sparkSession, dataSourceDTO, jdbcUtils);
+            DataSourceManipulatorParameter dataSourceManipulatorParameter) {
+        super(dataSourceManipulatorParameter);
     }
 
 

@@ -1,12 +1,17 @@
-package org.lakehouse.config.service;
+package org.lakehouse.config.service.datasource;
 
 import jakarta.transaction.Transactional;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.configs.datasource.ServiceDTO;
+import org.lakehouse.config.entities.KeyValueAbstract;
 import org.lakehouse.config.entities.datasource.DataSource;
 import org.lakehouse.config.entities.datasource.DataSourceProperty;
 import org.lakehouse.config.entities.datasource.DataSourceServiceProperty;
 import org.lakehouse.config.exception.DataStoreNotFoundException;
+import org.lakehouse.config.mapper.Mapper;
+import org.lakehouse.config.mapper.keyvalue.KeyValueEntityMerger;
+import org.lakehouse.config.mapper.keyvalue.KeyValueEntitySpecifier;
+import org.lakehouse.config.mapper.keyvalue.PropertiesIUDCase;
 import org.lakehouse.config.repository.datasource.DataSourcePropertyRepository;
 import org.lakehouse.config.repository.datasource.DataSourceRepository;
 import org.lakehouse.config.repository.datasource.DataSourceServicePropertyRepository;
@@ -18,20 +23,20 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 public class DataSourceService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
+    private final Mapper mapper;
     private final DataSourceRepository dataSourceRepository;
     private final DataSourcePropertyRepository dataSourcePropertyRepository;
     private final DataSourceServiceRepository dataSourceServiceRepository;
     private final DataSourceServicePropertyRepository dataSourceServicePropertyRepository;
 
-    public DataSourceService(DataSourceRepository dataSourceRepository,
+    public DataSourceService(Mapper mapper, DataSourceRepository dataSourceRepository,
                              DataSourcePropertyRepository dataSourcePropertyRepository, DataSourceServiceRepository dataSourceServiceRepository, DataSourceServicePropertyRepository dataSourceServicePropertyRepository) {
+        this.mapper = mapper;
         this.dataSourceRepository = dataSourceRepository;
         this.dataSourcePropertyRepository = dataSourcePropertyRepository;
         this.dataSourceServiceRepository = dataSourceServiceRepository;
@@ -89,37 +94,21 @@ public class DataSourceService {
     }
 
     private void mergeDataSourceProperties(DataSource dataSource, Map<String,String> properties){
-        List<DataSourceProperty> dataSourcePropertiesBeforeChange = dataSourcePropertyRepository
-                .findByDataSourceKeyName(dataSource.getKeyName());
 
-        // delete when key isnt present in DTO
-        Map<String,DataSourceProperty> dataSourcePropertyIoU = new HashMap<>();
-        dataSourcePropertiesBeforeChange.forEach(dataSourceProperty -> {
-            if (!properties.containsKey(dataSourceProperty.getKey())) {
-                dataSourcePropertyRepository.delete(dataSourceProperty);
-            }
-            else {
-                dataSourceProperty.setValue(properties.get(dataSourceProperty.getKey()));
-                dataSourcePropertyIoU.put(dataSourceProperty.getKey(),dataSourceProperty);
-            }
-        });
-        // properties for insert or update
-        properties.entrySet()
-                .stream()
-                .filter(stringStringEntry -> dataSourcePropertyIoU.containsKey(stringStringEntry.getKey()))
-                .forEach(stringStringEntry -> {
-                    DataSourceProperty dataSourceProperty = new DataSourceProperty();
-                    dataSourceProperty.setDataSource(dataSource);
-                    dataSourceProperty.setKey(stringStringEntry.getKey());
-                    dataSourceProperty.setValue(stringStringEntry.getValue());
-                    dataSourcePropertyRepository.save(dataSourceProperty);
-                });
-        dataSourcePropertyIoU.values().forEach(dataSourcePropertyRepository::save);
-
+        new KeyValueEntityMerger(
+                new DataSourcePropertyKeyValueEntitySpecifier(dataSourcePropertyRepository,dataSource))
+                .mergeAbstractKeyValues(
+                        dataSourcePropertyRepository
+                                .findByDataSourceKeyName(dataSource.getKeyName())
+                                .stream()
+                                .map(dataSourceProperty -> (KeyValueAbstract) dataSourceProperty )
+                                .toList(),
+                        properties);
     }
     @Transactional
     public DataSourceDTO save(DataSourceDTO dataSourceDTO) {
         DataSource dataSource = dataSourceRepository.save(mapDataSourceToEntity(dataSourceDTO));
+
 
         mergeDataSourceProperties(dataSource,dataSourceDTO.getProperties());
 

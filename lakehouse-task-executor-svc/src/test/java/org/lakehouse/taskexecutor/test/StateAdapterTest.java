@@ -48,7 +48,7 @@ public class StateAdapterTest {
 
         TaskProcessorConfigDTO tpc = new TaskProcessorConfigDTO();
         DataSetDTO testDataSet = fileLoader.loadDataSetDTO("client_processing");
-        tpc.setTargetDataSet(testDataSet);
+        tpc.setTargetDataSetKeyName(testDataSet.getKeyName());
         tpc.setIntervalStartDateTime(start);
         tpc.setIntervalEndDateTime(end);
 
@@ -72,11 +72,14 @@ public class StateAdapterTest {
 
         //config
         TaskProcessorConfigDTO tpc = new TaskProcessorConfigDTO();
-        tpc.setTargetDataSet(testTargetDataSet);
+        tpc.setTargetDataSetKeyName(testTargetDataSet.getKeyName());
         tpc.setIntervalStartDateTime(start);
         tpc.setIntervalEndDateTime(end);
-        tpc.setDataSetDTOSet(Set.of(testTargetDataSet, testDependencyDataSet));
-        tpc.setSources(Map.of(testDependencyDataSet.getKeyName(), testDependencyDataSet));
+        tpc.setDataSetDTOs(Map.of(
+                testTargetDataSet.getKeyName(),testTargetDataSet,
+                testDependencyDataSet.getKeyName(),testDependencyDataSet));
+
+        //tpc.setSources(Map.of(testDependencyDataSet.getKeyName(), testDependencyDataSet));
 
         //History locked record
         DataSetStateDTO dataSetStateDTOLocked = new DataSetStateDTO();
@@ -106,11 +109,11 @@ public class StateAdapterTest {
 
         TaskProcessorConfigDTO tpc = new TaskProcessorConfigDTO();
         DataSetDTO testDataSet = fileLoader.loadDataSetDTO("client_processing");
-        tpc.setTargetDataSet(testDataSet);
+        tpc.setTargetDataSetKeyName(testDataSet.getKeyName());
         tpc.setIntervalStartDateTime(start);
         tpc.setIntervalEndDateTime(end);
 
-        tpc.setDataSetDTOSet(Set.of(testDataSet));
+        tpc.setDataSetDTOs(Map.of(testDataSet.getKeyName(),testDataSet));
 
         StateRestClientApiTest stateRestClientApi = new StateRestClientApiTest();
         DependencyCheckStateTaskProcessor processor = new DependencyCheckStateTaskProcessor(tpc, stateRestClientApi);
@@ -127,11 +130,11 @@ public class StateAdapterTest {
 
         TaskProcessorConfigDTO tpc = new TaskProcessorConfigDTO();
         DataSetDTO testDataSet = fileLoader.loadDataSetDTO("client_processing");
-        tpc.setTargetDataSet(testDataSet);
+        tpc.setTargetDataSetKeyName(testDataSet.getKeyName());
         tpc.setIntervalStartDateTime(start);
         tpc.setIntervalEndDateTime(end);
 
-        tpc.setDataSetDTOSet(Set.of(testDataSet));
+        tpc.setDataSetDTOs(Map.of(testDataSet.getKeyName(),testDataSet));
 
         StateRestClientApiTest stateRestClientApi = new StateRestClientApiTest();
         LockedStateTaskProcessor processor = new LockedStateTaskProcessor(tpc, stateRestClientApi);

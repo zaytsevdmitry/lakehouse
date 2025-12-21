@@ -1,15 +1,14 @@
 package org.lakehouse.config.service.dataset;
 
 import jakarta.transaction.Transactional;
-import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.configs.dataset.*;
 import org.lakehouse.config.entities.dataset.*;
-import org.lakehouse.config.exception.DataSetConstraintNotFoundException;
 import org.lakehouse.config.exception.DataSetNotFoundException;
 import org.lakehouse.config.repository.NameSpaceRepository;
 import org.lakehouse.config.repository.dataset.*;
 import org.lakehouse.config.repository.datasource.DataSourceRepository;
 import org.lakehouse.config.service.ScriptService;
+import org.lakehouse.config.service.dataset.source.DataSetSourceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -24,8 +23,7 @@ public class DataSetService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final DataSetRepository dataSetRepository;
     private final DataSetPropertyRepository dataSetPropertyRepository;
-    private final DataSetSourceRepository dataSetSourceRepository;
-    private final DataSetSourcePropertyRepository dataSetSourcePropertyRepository;
+    private final DataSetSourceService dataSetSourceService;
     private final NameSpaceRepository nameSpaceRepository;
     private final DataSourceRepository dataSourceRepository;
     private final DataSetScriptRepository dataSetScriptRepository;
@@ -33,11 +31,11 @@ public class DataSetService {
     private final DataSetScriptService dataSetScriptService;
     private final DataSetColumnService dataSetColumnService;
     private final DataSetConstraintService dataSetConstraintService;
+
     public DataSetService(
             DataSetRepository dataSetRepository,
             DataSetPropertyRepository dataSetPropertyRepository,
-            DataSetSourceRepository dataSetSourceRepository,
-            DataSetSourcePropertyRepository dataSetSourcePropertyRepository,
+            DataSetSourceService dataSetSourceService,
             NameSpaceRepository nameSpaceRepository,
             DataSourceRepository dataSourceRepository,
             DataSetScriptRepository dataSetScriptRepository,
@@ -46,8 +44,7 @@ public class DataSetService {
             DataSetColumnService dataSetColumnService, DataSetConstraintService dataSetConstraintService) {
         this.dataSetRepository = dataSetRepository;
         this.dataSetPropertyRepository = dataSetPropertyRepository;
-        this.dataSetSourceRepository = dataSetSourceRepository;
-        this.dataSetSourcePropertyRepository = dataSetSourcePropertyRepository;
+        this.dataSetSourceService = dataSetSourceService;
         this.nameSpaceRepository = nameSpaceRepository;
         this.dataSourceRepository = dataSourceRepository;
         this.dataSetScriptRepository = dataSetScriptRepository;
@@ -67,16 +64,7 @@ public class DataSetService {
 
         result.setScripts(dataSetScriptService.findDataSetScriptDTOListByDataSetName(dataSet.getKeyName()));
         result.setConstraints(dataSetConstraintService.mapDataSetConstraintsToDTOList(dataSet.getKeyName()));
-        result.setSources(dataSetSourceRepository.findByDataSetKeyName(dataSet.getKeyName()).stream().map(dataSetSource -> {
-            DataSetSourceDTO dataSetSourceDTO = new DataSetSourceDTO();
-            dataSetSourceDTO.setName(dataSetSource.getSource().getKeyName());
-            Map<String, String> props = new HashMap<>();
-            dataSetSourcePropertyRepository.findBySourceId(dataSetSource.getId()).forEach(dataSetSourceProperty -> props
-                    .put(dataSetSourceProperty.getKey(), dataSetSourceProperty.getValue()));
-            dataSetSourceDTO.setProperties(props);
-            return dataSetSourceDTO;
-        }).toList());
-
+        result.setSources(dataSetSourceService.getDataSetSourceDTOsByDataSetKeyName(dataSet.getKeyName()));
         Map<String, String> properties = new HashMap<>();
         dataSetPropertyRepository.findByDataSetKeyName(dataSet.getKeyName())
                 .forEach(dataStoreProperty -> properties.put(dataStoreProperty.getKey(), dataStoreProperty.getValue()));
@@ -129,8 +117,6 @@ public class DataSetService {
 
         dataSetPropertyRepository.findByDataSetKeyName(dataSetDTO.getKeyName())
                 .forEach(dataSetPropertyRepository::delete);
-        dataSetSourceRepository.findByDataSetKeyName(dataSetDTO.getKeyName())
-                .forEach(dataSetSourceRepository::delete);
         dataSetScriptService.findDataSetScriptListByDataSetName(dataSetDTO.getKeyName())
                 .forEach(dataSetScriptRepository::delete);
 
@@ -143,22 +129,7 @@ public class DataSetService {
         logger.info("Saving dataSetDTO={} properties", dataSetDTO.getKeyName());
         mapPropertyEntities(dataSetDTO).forEach(dataSetPropertyRepository::save);
 
-        logger.info("Saving dataSetDTO={} sources", dataSetDTO.getKeyName());
-        dataSetDTO.getSources().forEach(dataSetSourceDTO -> {
-            DataSetSource dataSetSource = new DataSetSource();
-            dataSetSource.setSource(dataSetRepository.findById(dataSetSourceDTO.getName()).orElseThrow(
-                    () -> new RuntimeException(String.format("DataSet %s not found", dataSetSourceDTO.getName()))));
-
-            dataSetSource.setDataSet(dataSet);
-            DataSetSource resultDataSetSource = dataSetSourceRepository.save(dataSetSource);
-            dataSetSourceDTO.getProperties().entrySet().forEach(stringStringEntry -> {
-                DataSetSourceProperty dataSetSourceProperty = new DataSetSourceProperty();
-                dataSetSourceProperty.setDataSetSource(resultDataSetSource);
-                dataSetSourceProperty.setKey(stringStringEntry.getKey());
-                dataSetSourceProperty.setValue(stringStringEntry.getValue());
-                dataSetSourcePropertyRepository.save(dataSetSourceProperty);
-            });
-        });
+        dataSetSourceService.save(dataSet, dataSetDTO.getSources());
 
         logger.info("Saving dataSetDTO={} scripts", dataSetDTO.getKeyName());
         dataSetDTO.getScripts().stream().map(dataSetScriptDTO -> {

@@ -1,40 +1,19 @@
 package org.lakehouse.taskexecutor.executionmodule.body;
-
 import org.apache.spark.sql.SparkSession;
-import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
+import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.DataSourceManipulator;
+import java.util.List;
+import java.util.Map;
 
-public class BodyParam {
-    private SparkSession sparkSession;
-    private TaskProcessorConfigDTO taskProcessorConfigDTO;
-    private String[] otherArgs;
+interface BodyParam {
 
-    public BodyParam(SparkSession sparkSession, TaskProcessorConfigDTO taskProcessorConfigDTO, String[] otherArgs) {
-        this.sparkSession = sparkSession;
-        this.taskProcessorConfigDTO = taskProcessorConfigDTO;
-        this.otherArgs = otherArgs;
-    }
 
-    public SparkSession getSparkSession() {
-        return sparkSession;
-    }
+    SparkSession getSparkSession();
 
-    public void setSparkSession(SparkSession sparkSession) {
-        this.sparkSession = sparkSession;
-    }
+    Map<String, DataSourceManipulator> getSourceDataSourceManipulatorMap();
+    DataSourceManipulator getTargetDataSourceManipulator();
+    Map<String, String> getExecutionArgs();
+    List<String> getScripts();
+    Map<String, String> getKeyBind();
 
-    public TaskProcessorConfigDTO getTaskProcessorConfigDTO() {
-        return taskProcessorConfigDTO;
-    }
 
-    public void setTaskProcessorConfigDTO(TaskProcessorConfigDTO taskProcessorConfigDTO) {
-        this.taskProcessorConfigDTO = taskProcessorConfigDTO;
-    }
-
-    public String[] getOtherArgs() {
-        return otherArgs;
-    }
-
-    public void setOtherArgs(String[] otherArgs) {
-        this.otherArgs = otherArgs;
-    }
 }

@@ -4,9 +4,9 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
 import org.lakehouse.client.api.constant.Configuration;
-import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
+import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.DataSourceManipulatorParameter;
+import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.SparkDataSourceManipulatorAbstract;
 import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.exception.CompactException;
 import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.exception.ConstraintException;
 import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.exception.TruncateException;
@@ -19,16 +19,27 @@ import java.util.Map;
 public abstract class FileSparkDataSourceManipulatorAbstract extends SparkDataSourceManipulatorAbstract {
 
 
-    public FileSparkDataSourceManipulatorAbstract(SparkSession sparkSession, String format, DataSourceDTO dataSourceDTO) {
-        super(sparkSession, format, dataSourceDTO);
+    public FileSparkDataSourceManipulatorAbstract(
+            DataSourceManipulatorParameter dataSourceManipulatorParameter) {
+        super(dataSourceManipulatorParameter);
     }
+
     @Override
-    public void write(Dataset<Row> dataset, String location, Map<String, String> options, Configuration.ModificationRule modificationRule) throws WriteException {
-        dataset.write().mode(modificationRule.getValue()).format(getFormat()).save();
+    public void write(
+            Dataset<Row> dataset,
+            Map<String, String> options,
+            Configuration.ModificationRule modificationRule) throws WriteException {
+        try {
+            dataset.write().mode(modificationRule.getValue()).format(getFormat()).save();
+        } catch (Exception e) {
+            throw new WriteException(e);
+        }
     }
 
     private void deleteFSDirectory(String location, boolean isRecursively) throws IOException {
-        FileSystem fs =  FileSystem.get(getSparkSession().sparkContext().hadoopConfiguration());
+        FileSystem fs =  FileSystem.get(getSparkSession()
+                        .sparkContext()
+                        .hadoopConfiguration());
         Path filePath = new Path(location.concat("/"));
         fs.delete(filePath, isRecursively); // `false` for not recursively deleting a directory
     }
@@ -69,7 +80,7 @@ public abstract class FileSparkDataSourceManipulatorAbstract extends SparkDataSo
     }
 
     @Override
-    public void compact(String location, Map<String, String> options) throws CompactException {
+    public void compact(Map<String, String> options) throws CompactException {
 
     }
 

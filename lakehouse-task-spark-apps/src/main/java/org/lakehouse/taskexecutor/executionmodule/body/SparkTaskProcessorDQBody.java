@@ -19,14 +19,14 @@ public class SparkTaskProcessorDQBody extends SparkProcessorBodyAbstract {
         super(bodyParam);
     }
 
-
+/*
     private QualityMetricsConfDTO getQualityMetricsConfDTO() throws TaskFailedException {
         try {
             return ObjectMapping.stringToObject(getBodyParam().getOtherArgs()[0], QualityMetricsConfDTO.class);
         } catch (IOException e) {
             throw new TaskFailedException(e);
         }
-    }
+    }*/
 
     private void writeMetric(Dataset<Row> dataSet) {
         //???
@@ -48,8 +48,8 @@ public class SparkTaskProcessorDQBody extends SparkProcessorBodyAbstract {
     @Override
     public void run() throws TaskFailedException {
 
-        QualityMetricsConfDTO confDTO = getQualityMetricsConfDTO();
-        confDTO.getQualityMetricsConfTestSets().forEach(this::makeMetricTestSet);
+       // QualityMetricsConfDTO confDTO = getQualityMetricsConfDTO();
+       // confDTO.getQualityMetricsConfTestSets().forEach(this::makeMetricTestSet);
 
     }
 }

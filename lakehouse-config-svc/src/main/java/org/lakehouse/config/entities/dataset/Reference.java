@@ -3,6 +3,7 @@ package org.lakehouse.config.entities.dataset;
 import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.lakehouse.client.api.constant.Types;
 
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(name = "reference__uk", columnNames = {
@@ -19,6 +20,9 @@ public class Reference {
     @ManyToOne(optional = false)
     @JoinColumn(foreignKey = @ForeignKey(name = "data_set_reference__ref_data_set_constraint__fk"))
     private DataSetConstraint refDataSetConstraint;
+
+    private Types.ReferenceAction onDelete;
+    private Types.ReferenceAction onUpdate;
 
     public Reference() {
     }
@@ -45,5 +49,21 @@ public class Reference {
 
     public DataSetConstraint getRefDataSetConstraint() {
         return refDataSetConstraint;
+    }
+
+    public Types.ReferenceAction getOnDelete() {
+        return onDelete;
+    }
+
+    public void setOnDelete(Types.ReferenceAction onDelete) {
+        this.onDelete = onDelete;
+    }
+
+    public Types.ReferenceAction getOnUpdate() {
+        return onUpdate;
+    }
+
+    public void setOnUpdate(Types.ReferenceAction onUpdate) {
+        this.onUpdate = onUpdate;
     }
 }

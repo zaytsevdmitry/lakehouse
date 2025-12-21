@@ -1,6 +1,8 @@
 package org.lakehouse.taskexecutor.executionmodule.state;
 
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
+import org.lakehouse.client.api.dto.configs.dataset.DataSetSourceDTO;
+import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.state.DataSetIntervalDTO;
 import org.lakehouse.client.api.dto.state.DataSetStateDTO;
 import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
@@ -30,11 +32,12 @@ public class DependencyCheckStateTaskProcessor extends AbstractStateTaskProcesso
     @Override
     public void runTask() throws TaskFailedException {
         List<DataSetStateDTO> dataSetStateDTOs = new ArrayList<>();
-        for (String dataSetKeyName : getTaskProcessorConfig()
+
+        for (String dataSetKeyName : getTaskProcessorConfig().getDataSetDTOs().get(
+                getTaskProcessorConfig().getTargetDataSetKeyName())
                 .getSources()
-                .values()
                 .stream()
-                .map(DataSetDTO::getKeyName)
+                .map(DataSetSourceDTO::getDataSetKeyName)
                 .collect(Collectors.toSet())) {
             DataSetIntervalDTO dataSetIntervalDTO = new DataSetIntervalDTO();
             dataSetIntervalDTO.setDataSetKeyName(dataSetKeyName);

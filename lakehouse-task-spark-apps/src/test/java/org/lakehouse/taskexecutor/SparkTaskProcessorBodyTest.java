@@ -1,14 +1,23 @@
 package org.lakehouse.taskexecutor;
 
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
-import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
+import org.lakehouse.client.api.constant.Configuration;
+
+
 import org.lakehouse.client.api.dto.configs.datasource.ServiceDTO;
 import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
 import org.lakehouse.client.api.exception.TaskFailedException;
-import org.lakehouse.client.api.utils.ObjectMapping;
-import org.lakehouse.taskexecutor.executionmodule.body.SparkProcessorBodyFactory;
+import org.lakehouse.taskexecutor.api.factory.TaskConfigBuildException;
+import org.lakehouse.taskexecutor.executionmodule.body.BodyParamImpl;
+import org.lakehouse.taskexecutor.executionmodule.body.TransformationSparkProcessorBody;
+import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.DataSourceManipulator;
+import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.exception.*;
+import org.lakehouse.taskexecutor.executionmodule.body.transformer.TransformationException;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 
@@ -17,528 +26,19 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
 public class SparkTaskProcessorBodyTest {
-    String config = "{\n" +
-            "  \"executionModuleArgs\" : {\n" +
-            "    \"spark.executor.memory\" : \"1g\",\n" +
-            "    \"spark.driver.memory\" : \"1g\",\n" +
-            "    \"spark.deploy.maxExecutorRetries\" : \"10\",\n" +
-            "    \"spark.driver.extraJavaOptions\" : \"--add-opens java.base/sun.nio.ch=ALL-UNNAMED\",\n" +
-            "    \"spark.executor.extraJavaOptions\" : \"--add-opens java.base/sun.nio.ch=ALL-UNNAMED\",\n" +
-            "    \"executionBody\" : \"org.lakehouse.taskexecutor.executionmodule.body.SparkTaskProcessorBody\"\n" +
-            "  },\n" +
-            "  \"scripts\" : [ \"select t.id id\\n     , t.reg_date_time\\n     , c.id   as client_id\\n     , c.name as client_name\\n     , t.provider_id\\n     , t.amount\\n     , t.commission\\nfrom transaction_processing t\\njoin client_processing c\\n  on t.client_id = c.id\\n where\\n   t.reg_date_time >= timestamp '2025-01-01T00:00:00Z' and\\n   t.reg_date_time < timestamp '2025-01-02T00:00:00Z'\\n-- NB spark sql\\n\" ],\n" +
-            "  \"sources\" : {\n" +
-            "    \"transaction_processing\" : {\n" +
-            "      \"keyName\" : \"transaction_processing\",\n" +
-            "      \"nameSpaceKeyName\" : \"DEMO\",\n" +
-            "      \"dataSourceKeyName\" : \"processingdb\",\n" +
-            "      \"fullTableName\" : \"proc.transactions\",\n" +
-            "      \"sources\" : [ ],\n" +
-            "      \"columnSchema\" : [ {\n" +
-            "        \"name\" : \"id\",\n" +
-            "        \"description\" : \"tx id\",\n" +
-            "        \"dataType\" : \"serial\",\n" +
-            "        \"nullable\" : false,\n" +
-            "        \"order\" : 0,\n" +
-            "        \"sequence\" : false\n" +
-            "      }, {\n" +
-            "        \"name\" : \"amount\",\n" +
-            "        \"description\" : \"Amount paid by the client\",\n" +
-            "        \"dataType\" : \"decimal\",\n" +
-            "        \"nullable\" : false,\n" +
-            "        \"order\" : null,\n" +
-            "        \"sequence\" : false\n" +
-            "      }, {\n" +
-            "        \"name\" : \"client_id\",\n" +
-            "        \"description\" : \"from client\",\n" +
-            "        \"dataType\" : \"integer\",\n" +
-            "        \"nullable\" : false,\n" +
-            "        \"order\" : null,\n" +
-            "        \"sequence\" : false\n" +
-            "      }, {\n" +
-            "        \"name\" : \"commission\",\n" +
-            "        \"description\" : \"Commission due to us\",\n" +
-            "        \"dataType\" : \"decimal\",\n" +
-            "        \"nullable\" : false,\n" +
-            "        \"order\" : null,\n" +
-            "        \"sequence\" : false\n" +
-            "      }, {\n" +
-            "        \"name\" : \"provider_id\",\n" +
-            "        \"description\" : \"To provider\",\n" +
-            "        \"dataType\" : \"integer\",\n" +
-            "        \"nullable\" : false,\n" +
-            "        \"order\" : null,\n" +
-            "        \"sequence\" : false\n" +
-            "      }, {\n" +
-            "        \"name\" : \"reg_date_time\",\n" +
-            "        \"description\" : \"Transaction registration\",\n" +
-            "        \"dataType\" : \"timestamp\",\n" +
-            "        \"nullable\" : false,\n" +
-            "        \"order\" : null,\n" +
-            "        \"sequence\" : false\n" +
-            "      } ],\n" +
-            "      \"properties\" : {\n" +
-            "        \"fetchSize\" : \"10000\"\n" +
-            "      },\n" +
-            "      \"scripts\" : [ {\n" +
-            "        \"key\" : \"transaction_processing.sql\",\n" +
-            "        \"order\" : 1\n" +
-            "      } ],\n" +
-            "      \"description\" : \"remote transactions table placed  in db schema proc\",\n" +
-            "      \"constraints\" : [ {\n" +
-            "        \"name\" : \"transaction_processing_pk\",\n" +
-            "        \"type\" : \"primary\",\n" +
-            "        \"columns\" : \"id\",\n" +
-            "        \"enabled\" : false,\n" +
-            "        \"runtimeLevelCheck\" : false,\n" +
-            "        \"constructLevelCheck\" : true\n" +
-            "      } ]\n" +
-            "    },\n" +
-            "    \"client_processing\" : {\n" +
-            "      \"keyName\" : \"client_processing\",\n" +
-            "      \"nameSpaceKeyName\" : \"DEMO\",\n" +
-            "      \"dataSourceKeyName\" : \"processingdb\",\n" +
-            "      \"fullTableName\" : \"proc.client\",\n" +
-            "      \"sources\" : [ ],\n" +
-            "      \"columnSchema\" : [ {\n" +
-            "        \"name\" : \"id\",\n" +
-            "        \"description\" : \"Client id\",\n" +
-            "        \"dataType\" : \"integer\",\n" +
-            "        \"nullable\" : false,\n" +
-            "        \"order\" : null,\n" +
-            "        \"sequence\" : false\n" +
-            "      }, {\n" +
-            "        \"name\" : \"name\",\n" +
-            "        \"description\" : \"Client name\",\n" +
-            "        \"dataType\" : \"varchar(255)\",\n" +
-            "        \"nullable\" : false,\n" +
-            "        \"order\" : null,\n" +
-            "        \"sequence\" : false\n" +
-            "      }, {\n" +
-            "        \"name\" : \"reg_date_time\",\n" +
-            "        \"description\" : \"Client registration\",\n" +
-            "        \"dataType\" : \"timestamp\",\n" +
-            "        \"nullable\" : false,\n" +
-            "        \"order\" : null,\n" +
-            "        \"sequence\" : false\n" +
-            "      } ],\n" +
-            "      \"properties\" : {\n" +
-            "        \"data-end-point\" : \"proc.client\",\n" +
-            "        \"fetchSize\" : \"10000\"\n" +
-            "      },\n" +
-            "      \"scripts\" : [ {\n" +
-            "        \"key\" : \"client_processing.sql\",\n" +
-            "        \"order\" : null\n" +
-            "      } ],\n" +
-            "      \"description\" : \"remote dataset with clients\",\n" +
-            "      \"constraints\" : [ {\n" +
-            "        \"name\" : \"client_processing_pk\",\n" +
-            "        \"type\" : \"primary\",\n" +
-            "        \"columns\" : \"id\",\n" +
-            "        \"enabled\" : true,\n" +
-            "        \"runtimeLevelCheck\" : false,\n" +
-            "        \"constructLevelCheck\" : true\n" +
-            "      }, {\n" +
-            "        \"name\" : \"client_processing_pk\",\n" +
-            "        \"type\" : \"unique\",\n" +
-            "        \"columns\" : \"name\",\n" +
-            "        \"enabled\" : true,\n" +
-            "        \"runtimeLevelCheck\" : false,\n" +
-            "        \"constructLevelCheck\" : true\n" +
-            "      } ]\n" +
-            "    }\n" +
-            "  },\n" +
-            "  \"targetDataSet\" : {\n" +
-            "    \"keyName\" : \"transaction_dds\",\n" +
-            "    \"nameSpaceKeyName\" : \"DEMO\",\n" +
-            "    \"dataSourceKeyName\" : \"lakehousestorage\",\n" +
-            "    \"fullTableName\" : \"transaction_dds\",\n" +
-            "    \"sources\" : [ {\n" +
-            "      \"name\" : \"client_processing\",\n" +
-            "      \"properties\" : {\n" +
-            "        \"fetchSize\" : \"10000\"\n" +
-            "      }\n" +
-            "    }, {\n" +
-            "      \"name\" : \"transaction_processing\",\n" +
-            "      \"properties\" : {\n" +
-            "        \"fetchSize\" : \"10000\"\n" +
-            "      }\n" +
-            "    } ],\n" +
-            "    \"columnSchema\" : [ {\n" +
-            "      \"name\" : \"id\",\n" +
-            "      \"description\" : \"tx id\",\n" +
-            "      \"dataType\" : \"bigint\",\n" +
-            "      \"nullable\" : false,\n" +
-            "      \"order\" : 0,\n" +
-            "      \"sequence\" : false\n" +
-            "    }, {\n" +
-            "      \"name\" : \"amount\",\n" +
-            "      \"description\" : \"Amount paid by the client\",\n" +
-            "      \"dataType\" : \"decimal\",\n" +
-            "      \"nullable\" : false,\n" +
-            "      \"order\" : null,\n" +
-            "      \"sequence\" : false\n" +
-            "    }, {\n" +
-            "      \"name\" : \"client_id\",\n" +
-            "      \"description\" : \"from client\",\n" +
-            "      \"dataType\" : \"string\",\n" +
-            "      \"nullable\" : false,\n" +
-            "      \"order\" : null,\n" +
-            "      \"sequence\" : false\n" +
-            "    }, {\n" +
-            "      \"name\" : \"client_name\",\n" +
-            "      \"description\" : \"Client name\",\n" +
-            "      \"dataType\" : \"string\",\n" +
-            "      \"nullable\" : false,\n" +
-            "      \"order\" : null,\n" +
-            "      \"sequence\" : false\n" +
-            "    }, {\n" +
-            "      \"name\" : \"commission\",\n" +
-            "      \"description\" : \"Commission due to us\",\n" +
-            "      \"dataType\" : \"string\",\n" +
-            "      \"nullable\" : false,\n" +
-            "      \"order\" : null,\n" +
-            "      \"sequence\" : false\n" +
-            "    }, {\n" +
-            "      \"name\" : \"provider_id\",\n" +
-            "      \"description\" : \"To provider\",\n" +
-            "      \"dataType\" : \"string\",\n" +
-            "      \"nullable\" : false,\n" +
-            "      \"order\" : null,\n" +
-            "      \"sequence\" : false\n" +
-            "    }, {\n" +
-            "      \"name\" : \"reg_date_time\",\n" +
-            "      \"description\" : \"Transaction registration\",\n" +
-            "      \"dataType\" : \"timestamp\",\n" +
-            "      \"nullable\" : false,\n" +
-            "      \"order\" : null,\n" +
-            "      \"sequence\" : false\n" +
-            "    } ],\n" +
-            "    \"properties\" : {\n" +
-            "      \"using\" : \"iceberg\",\n" +
-            "      \"location\" : \"/mytabs/transaction_dds\"\n" +
-            "    },\n" +
-            "    \"scripts\" : [ {\n" +
-            "      \"key\" : \"transaction_dds.sql\",\n" +
-            "      \"order\" : null\n" +
-            "    } ],\n" +
-            "    \"description\" : \"Details\",\n" +
-            "    \"constraints\" : [ {\n" +
-            "      \"name\" : \"transaction_dds_pk\",\n" +
-            "      \"type\" : \"primary\",\n" +
-            "      \"columns\" : \"id\",\n" +
-            "      \"enabled\" : false,\n" +
-            "      \"runtimeLevelCheck\" : false,\n" +
-            "      \"constructLevelCheck\" : true\n" +
-            "    } ]\n" +
-            "  },\n" +
-            "  \"dataSources\" : {\n" +
-            "    \"lakehousestorage\" : {\n" +
-            "       \"keyName\": \"lakehousestorage\",\n" +
-            "       \"engineType\": \"spark\",\n" +
-            "       \"engine\": \"localfs\",\n" +
-            "       \"services\": [{\n" +
-            "           \"host\": \"\",\n" +
-            "           \"port\": \"\",\n" +
-            "           \"urn\": \"\"\n" +
-            "       }],\n" +
-            "        \"properties\": {\n" +
-            "       },\n" +
-            "     \"description\": \"Local datastore\"\n" +
-            "    },\n" +
-            "    \"processingdb\" : {\n" +
-            "       \"keyName\": \"processingdb\",\n" +
-            "       \"engineType\": \"database\",\n" +
-            "       \"engine\": \"postgres\",\n" +
-            "       \"services\": [{\n" +
-            "           \"host\": \"localhost\",\n" +
-            "           \"port\": \"5432\",\n" +
-            "           \"urn\": \"postgresDB\",\n" +
-            "           \"properties\": {\n" +
-            "               \"password\": \"postgresPW\",\n" +
-            "               \"user\": \"postgresUser\"\n" +
-            "           }\n" +
-            "       }],\n" +
-            "       \"description\": \"Remote datastore processingdb\"" +
-            "       }\n" +
-            "     },\n" +
-            "  \"tableDefinitions\" : {\n" +
-            "    \"transaction_processing\" : {\n" +
-            "      \"schemaName\" : \"proc\",\n" +
-            "      \"tableName\" : \"transactions\",\n" +
-            "      \"fullTableName\" : \"proc.transactions\",\n" +
-            "      \"columnsComaSeparated\" : \"id, amount, client_id, commission, provider_id, reg_date_time\",\n" +
-            "      \"columnsDDL\" : \"id serial,amount decimal,client_id integer,commission decimal,provider_id integer,reg_date_time timestamp\",\n" +
-            "      \"columnsUpdateSet\" : \"t.id = q.id\\n, t.amount = q.amount\\n, t.client_id = q.client_id\\n, t.commission = q.commission\\n, t.provider_id = q.provider_id\\n, t.reg_date_time = q.reg_date_time\\n\",\n" +
-            "      \"columnsMergeInsertValues\" : \"q.id, q.amount, q.client_id, q.commission, q.provider_id, q.reg_date_time\",\n" +
-            "      \"columnsMergeOn\" : \"t.id = q.id\",\n" +
-            "      \"tableDDL\" : \"create table proc.transactions\\n (id serial,amount decimal,client_id integer,commission decimal,provider_id integer,reg_date_time timestamp)\\n java.util.stream.ReferencePipeline$3@64325682\",\n" +
-            "      \"columnsSelectWithCast\" : \"cast( id as  serial) as id,cast( amount as  decimal) as amount,cast( client_id as  integer) as client_id,cast( commission as  decimal) as commission,cast( provider_id as  integer) as provider_id,cast( reg_date_time as  timestamp) as reg_date_time\",\n" +
-            "      \"primaryKeys\" : [ \"id\" ]\n" +
-            "    },\n" +
-            "    \"client_processing\" : {\n" +
-            "      \"schemaName\" : \"proc\",\n" +
-            "      \"tableName\" : \"client\",\n" +
-            "      \"fullTableName\" : \"proc.client\",\n" +
-            "      \"columnsComaSeparated\" : \"id, name, reg_date_time\",\n" +
-            "      \"columnsDDL\" : \"id integer,name varchar(255),reg_date_time timestamp\",\n" +
-            "      \"columnsUpdateSet\" : \"t.id = q.id\\n, t.name = q.name\\n, t.reg_date_time = q.reg_date_time\\n\",\n" +
-            "      \"columnsMergeInsertValues\" : \"q.id, q.name, q.reg_date_time\",\n" +
-            "      \"columnsMergeOn\" : \"t.id = q.id\",\n" +
-            "      \"tableDDL\" : \"create table proc.client\\n (id integer,name varchar(255),reg_date_time timestamp)\\n java.util.stream.ReferencePipeline$3@6b5b4cda\",\n" +
-            "      \"columnsSelectWithCast\" : \"cast( id as  integer) as id,cast( name as  varchar(255)) as name,cast( reg_date_time as  timestamp) as reg_date_time\",\n" +
-            "      \"primaryKeys\" : [ \"id\" ]\n" +
-            "    },\n" +
-            "    \"transaction_dds\" : {\n" +
-            "      \"schemaName\" : null,\n" +
-            "      \"tableName\" : \"transaction_dds\",\n" +
-            "      \"fullTableName\" : \"transaction_dds\",\n" +
-            "      \"columnsComaSeparated\" : \"id, amount, client_id, client_name, commission, provider_id, reg_date_time\",\n" +
-            "      \"columnsDDL\" : \"id bigint,amount decimal,client_id string,client_name string,commission string,provider_id string,reg_date_time timestamp\",\n" +
-            "      \"columnsUpdateSet\" : \"t.id = q.id\\n, t.amount = q.amount\\n, t.client_id = q.client_id\\n, t.client_name = q.client_name\\n, t.commission = q.commission\\n, t.provider_id = q.provider_id\\n, t.reg_date_time = q.reg_date_time\\n\",\n" +
-            "      \"columnsMergeInsertValues\" : \"q.id, q.amount, q.client_id, q.client_name, q.commission, q.provider_id, q.reg_date_time\",\n" +
-            "      \"columnsMergeOn\" : \"t.id = q.id\",\n" +
-            "      \"tableDDL\" : \"create table transaction_dds\\n (id bigint,amount decimal,client_id string,client_name string,commission string,provider_id string,reg_date_time timestamp)\\n java.util.stream.ReferencePipeline$3@2f0c40f7\",\n" +
-            "      \"columnsSelectWithCast\" : \"cast( id as  bigint) as id,cast( amount as  decimal) as amount,cast( client_id as  string) as client_id,cast( client_name as  string) as client_name,cast( commission as  string) as commission,cast( provider_id as  string) as provider_id,cast( reg_date_time as  timestamp) as reg_date_time\",\n" +
-            "      \"primaryKeys\" : [ \"id\" ]\n" +
-            "    }\n" +
-            "  },\n" +
-            "  \"dataSetDTOSet\" : [ {\n" +
-            "    \"keyName\" : \"transaction_dds\",\n" +
-            "    \"nameSpaceKeyName\" : \"DEMO\",\n" +
-            "    \"dataSourceKeyName\" : \"lakehousestorage\",\n" +
-            "    \"fullTableName\" : \"transaction_dds\",\n" +
-            "    \"sources\" : [ {\n" +
-            "      \"name\" : \"client_processing\",\n" +
-            "      \"properties\" : {\n" +
-            "        \"fetchSize\" : \"10000\"\n" +
-            "      }\n" +
-            "    }, {\n" +
-            "      \"name\" : \"transaction_processing\",\n" +
-            "      \"properties\" : {\n" +
-            "        \"fetchSize\" : \"10000\"\n" +
-            "      }\n" +
-            "    } ],\n" +
-            "    \"columnSchema\" : [ {\n" +
-            "      \"name\" : \"id\",\n" +
-            "      \"description\" : \"tx id\",\n" +
-            "      \"dataType\" : \"bigint\",\n" +
-            "      \"nullable\" : false,\n" +
-            "      \"order\" : 0,\n" +
-            "      \"sequence\" : false\n" +
-            "    }, {\n" +
-            "      \"name\" : \"amount\",\n" +
-            "      \"description\" : \"Amount paid by the client\",\n" +
-            "      \"dataType\" : \"decimal\",\n" +
-            "      \"nullable\" : false,\n" +
-            "      \"order\" : null,\n" +
-            "      \"sequence\" : false\n" +
-            "    }, {\n" +
-            "      \"name\" : \"client_id\",\n" +
-            "      \"description\" : \"from client\",\n" +
-            "      \"dataType\" : \"string\",\n" +
-            "      \"nullable\" : false,\n" +
-            "      \"order\" : null,\n" +
-            "      \"sequence\" : false\n" +
-            "    }, {\n" +
-            "      \"name\" : \"client_name\",\n" +
-            "      \"description\" : \"Client name\",\n" +
-            "      \"dataType\" : \"string\",\n" +
-            "      \"nullable\" : false,\n" +
-            "      \"order\" : null,\n" +
-            "      \"sequence\" : false\n" +
-            "    }, {\n" +
-            "      \"name\" : \"commission\",\n" +
-            "      \"description\" : \"Commission due to us\",\n" +
-            "      \"dataType\" : \"string\",\n" +
-            "      \"nullable\" : false,\n" +
-            "      \"order\" : null,\n" +
-            "      \"sequence\" : false\n" +
-            "    }, {\n" +
-            "      \"name\" : \"provider_id\",\n" +
-            "      \"description\" : \"To provider\",\n" +
-            "      \"dataType\" : \"string\",\n" +
-            "      \"nullable\" : false,\n" +
-            "      \"order\" : null,\n" +
-            "      \"sequence\" : false\n" +
-            "    }, {\n" +
-            "      \"name\" : \"reg_date_time\",\n" +
-            "      \"description\" : \"Transaction registration\",\n" +
-            "      \"dataType\" : \"timestamp\",\n" +
-            "      \"nullable\" : false,\n" +
-            "      \"order\" : null,\n" +
-            "      \"sequence\" : false\n" +
-            "    } ],\n" +
-            "    \"properties\" : {\n" +
-            "      \"using\" : \"iceberg\",\n" +
-            "      \"location\" : \"/mytabs/transaction_dds\"\n" +
-            "    },\n" +
-            "    \"scripts\" : [ {\n" +
-            "      \"key\" : \"transaction_dds.sql\",\n" +
-            "      \"order\" : null\n" +
-            "    } ],\n" +
-            "    \"description\" : \"Details\",\n" +
-            "    \"constraints\" : [ {\n" +
-            "      \"name\" : \"transaction_dds_pk\",\n" +
-            "      \"type\" : \"primary\",\n" +
-            "      \"columns\" : \"id\",\n" +
-            "      \"enabled\" : false,\n" +
-            "      \"runtimeLevelCheck\" : false,\n" +
-            "      \"constructLevelCheck\" : true\n" +
-            "    } ]\n" +
-            "  }, {\n" +
-            "    \"keyName\" : \"transaction_processing\",\n" +
-            "    \"nameSpaceKeyName\" : \"DEMO\",\n" +
-            "    \"dataSourceKeyName\" : \"processingdb\",\n" +
-            "    \"fullTableName\" : \"proc.transactions\",\n" +
-            "    \"sources\" : [ ],\n" +
-            "    \"columnSchema\" : [ {\n" +
-            "      \"name\" : \"id\",\n" +
-            "      \"description\" : \"tx id\",\n" +
-            "      \"dataType\" : \"serial\",\n" +
-            "      \"nullable\" : false,\n" +
-            "      \"order\" : 0,\n" +
-            "      \"sequence\" : false\n" +
-            "    }, {\n" +
-            "      \"name\" : \"amount\",\n" +
-            "      \"description\" : \"Amount paid by the client\",\n" +
-            "      \"dataType\" : \"decimal\",\n" +
-            "      \"nullable\" : false,\n" +
-            "      \"order\" : null,\n" +
-            "      \"sequence\" : false\n" +
-            "    }, {\n" +
-            "      \"name\" : \"client_id\",\n" +
-            "      \"description\" : \"from client\",\n" +
-            "      \"dataType\" : \"integer\",\n" +
-            "      \"nullable\" : false,\n" +
-            "      \"order\" : null,\n" +
-            "      \"sequence\" : false\n" +
-            "    }, {\n" +
-            "      \"name\" : \"commission\",\n" +
-            "      \"description\" : \"Commission due to us\",\n" +
-            "      \"dataType\" : \"decimal\",\n" +
-            "      \"nullable\" : false,\n" +
-            "      \"order\" : null,\n" +
-            "      \"sequence\" : false\n" +
-            "    }, {\n" +
-            "      \"name\" : \"provider_id\",\n" +
-            "      \"description\" : \"To provider\",\n" +
-            "      \"dataType\" : \"integer\",\n" +
-            "      \"nullable\" : false,\n" +
-            "      \"order\" : null,\n" +
-            "      \"sequence\" : false\n" +
-            "    }, {\n" +
-            "      \"name\" : \"reg_date_time\",\n" +
-            "      \"description\" : \"Transaction registration\",\n" +
-            "      \"dataType\" : \"timestamp\",\n" +
-            "      \"nullable\" : false,\n" +
-            "      \"order\" : null,\n" +
-            "      \"sequence\" : false\n" +
-            "    } ],\n" +
-            "    \"properties\" : {\n" +
-            "      \"fetchSize\" : \"10000\"\n" +
-            "    },\n" +
-            "    \"scripts\" : [ {\n" +
-            "      \"key\" : \"transaction_processing.sql\",\n" +
-            "      \"order\" : 1\n" +
-            "    } ],\n" +
-            "    \"description\" : \"remote transactions table placed  in db schema proc\",\n" +
-            "    \"constraints\" : [ {\n" +
-            "      \"name\" : \"transaction_processing_pk\",\n" +
-            "      \"type\" : \"primary\",\n" +
-            "      \"columns\" : \"id\",\n" +
-            "      \"enabled\" : false,\n" +
-            "      \"runtimeLevelCheck\" : false,\n" +
-            "      \"constructLevelCheck\" : true\n" +
-            "    } ]\n" +
-            "  }, {\n" +
-            "    \"keyName\" : \"client_processing\",\n" +
-            "    \"nameSpaceKeyName\" : \"DEMO\",\n" +
-            "    \"dataSourceKeyName\" : \"processingdb\",\n" +
-            "    \"fullTableName\" : \"proc.client\",\n" +
-            "    \"sources\" : [ ],\n" +
-            "    \"columnSchema\" : [ {\n" +
-            "      \"name\" : \"id\",\n" +
-            "      \"description\" : \"Client id\",\n" +
-            "      \"dataType\" : \"integer\",\n" +
-            "      \"nullable\" : false,\n" +
-            "      \"order\" : null,\n" +
-            "      \"sequence\" : false\n" +
-            "    }, {\n" +
-            "      \"name\" : \"name\",\n" +
-            "      \"description\" : \"Client name\",\n" +
-            "      \"dataType\" : \"varchar(255)\",\n" +
-            "      \"nullable\" : false,\n" +
-            "      \"order\" : null,\n" +
-            "      \"sequence\" : false\n" +
-            "    }, {\n" +
-            "      \"name\" : \"reg_date_time\",\n" +
-            "      \"description\" : \"Client registration\",\n" +
-            "      \"dataType\" : \"timestamp\",\n" +
-            "      \"nullable\" : false,\n" +
-            "      \"order\" : null,\n" +
-            "      \"sequence\" : false\n" +
-            "    } ],\n" +
-            "    \"properties\" : {\n" +
-            "      \"data-end-point\" : \"proc.client\",\n" +
-            "      \"fetchSize\" : \"10000\"\n" +
-            "    },\n" +
-            "    \"scripts\" : [ {\n" +
-            "      \"key\" : \"client_processing.sql\",\n" +
-            "      \"order\" : null\n" +
-            "    } ],\n" +
-            "    \"description\" : \"remote dataset with clients\",\n" +
-            "    \"constraints\" : [ {\n" +
-            "      \"name\" : \"client_processing_pk\",\n" +
-            "      \"type\" : \"primary\",\n" +
-            "      \"columns\" : \"id\",\n" +
-            "      \"enabled\" : true,\n" +
-            "      \"runtimeLevelCheck\" : false,\n" +
-            "      \"constructLevelCheck\" : true\n" +
-            "    }, {\n" +
-            "      \"name\" : \"client_processing_pk\",\n" +
-            "      \"type\" : \"unique\",\n" +
-            "      \"columns\" : \"name\",\n" +
-            "      \"enabled\" : true,\n" +
-            "      \"runtimeLevelCheck\" : false,\n" +
-            "      \"constructLevelCheck\" : true\n" +
-            "    } ]\n" +
-            "  } ],\n" +
-            "  \"targetDateTime\" : \"2025-01-02T00:00:00Z\",\n" +
-            "  \"intervalStartDateTime\" : \"2025-01-01T00:00:00Z\",\n" +
-            "  \"intervalEndDateTime\" : \"2025-01-02T00:00:00Z\",\n" +
-            "  \"lockSource\" : \"regular.transaction_dds.2025-01-02T00:00:00Z\",\n" +
-            "  \"keyBind\" : {\n" +
-            "    \"source_DEMO_transaction_dds_keyName\" : \"transaction_dds\",\n" +
-            "    \"source_DEMO_client_processing_tableFullName\" : \"proc.client\",\n" +
-            "    \"targetIntervalEndTZ\" : \"2025-01-02T00:00:00Z\",\n" +
-            "    \"targetIntervalStartTZ\" : \"2025-01-01T00:00:00Z\",\n" +
-            "    \"source_DEMO_transaction_processing_keyName\" : \"transaction_processing\",\n" +
-            "    \"targetDateTimeTZ\" : \"2025-01-02T00:00:00Z\",\n" +
-            "    \"source_DEMO_transaction_dds_tableFullName\" : \"transaction_dds\",\n" +
-            "    \"source_DEMO_transaction_processing_tableFullName\" : \"proc.transactions\",\n" +
-            "    \"source_DEMO_client_processing_keyName\" : \"client_processing\"\n" +
-            "  }\n" +
-            "}";
+     DataManipulators dataManipulators = new DataManipulators();
+
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine").withDatabaseName("test")
             .withUsername("name").withPassword("password");
 
-    /*
-        @DynamicPropertySource
-        static void configureProperties(DynamicPropertyRegistry registry) {
-            registry.add("spring.datasource.url", postgres::getJdbcUrl);
-            registry.add("spring.datasource.username", postgres::getUsername);
-            registry.add("spring.datasource.password", postgres::getPassword);
-            registry.add("spring.kafka.bootstrap-servers", kafka::getBootstrapServers);
-            registry.add("spring.kafka.bootstrap-servers", kafka::getBootstrapServers);
-            registry.add("lakehouse.task-executor.scheduled.task.kafka.consumer.bootstrap.servers", kafka::getBootstrapServers);
+    public SparkTaskProcessorBodyTest() {
+    }
 
-        }*/
     @BeforeAll
     static void beforeAllStart() {
         postgres.start();
@@ -555,42 +55,165 @@ public class SparkTaskProcessorBodyTest {
         return result;
     }
 
-    @Test
-    void testAddition() throws IOException, TaskFailedException, SQLException {
-        SparkSession sparkSession = SparkSession
-                .builder()
-                .config("spark.driver.extraJavaOptions", "--add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED")
-                .config("spark.executor.extraJavaOptions", "--add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED")
-                .master("local[*]")
-                // .master("spark://127.0.0.1:7077")
-                //.config("spark.submit.deployMode", "cluster")
-                .getOrCreate();
 
-        TaskProcessorConfigDTO conf = ObjectMapping.stringToObject(config, TaskProcessorConfigDTO.class);
-        DataSourceDTO pgDataSourceDTO = conf.getDataSources().get("processingdb");
-        pgDataSourceDTO.setServices(List.of(parceUrlToServiceDTO(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword())));
+    private Dataset<Row> getClientDataSet(SparkSession sparkSession){
+        return sparkSession.sql("select 1 as id,'Client Name' as name, current_timestamp as reg_date_time\n" +
+                "union all\n" +
+                "select 2,'Client2 Name2', current_timestamp \n");
 
+    }
+    private Dataset<Row> getTrnDataSet(SparkSession sparkSession){
+        return sparkSession.sql("select 1 id ,TIMESTAMP '"+ TaskConfigTestFactory.intervalStart + "' reg_date_time, 1 client_id, 1 provider_id, 10.2 amount, 0.5 commission \n" +
+                "union all\n" +
+                "select 2,TIMESTAMP '"+ TaskConfigTestFactory.intervalStart + "', 1, 1,11.2,0.4 \n" +
+                "union all\n" +
+                "select 3,TIMESTAMP '"+ TaskConfigTestFactory.intervalStart + "', 2, 1,13.9,0.8 \n"
+        );
 
-        executeJdbcQuery("CREATE SCHEMA proc");
-        executeJdbcQuery("CREATE table proc.transactions( " +
-                "id  BIGSERIAL,  " +
-                "reg_date_time  timestamptz,  " +
-                "client_id integer," +
-                "provider_id integer, " +
-                "amount numeric(10,1), " +
-                "commission numeric(10,1))");
-        executeJdbcQuery("CREATE table proc.client(" +
-                "id integer," +
-                "name varchar(255)," +
-                "reg_date_time  timestamptz" +
-                ")");
-
-        SparkProcessorBodyFactory.buildSparkProcessorBody(sparkSession, new String[]{ObjectMapping.asJsonString(conf)}).run();
-        /*org.lakehouse.taskexecutor.executionmodule.body.SparkTaskProcessorBody;
-        SparkTaskProcessorBody sparkTaskProcessorBody = new SparkTaskProcessorBody(sparkSession,conf);
-        sparkTaskProcessorBody.run();*/
     }
 
+    private DataSourceManipulator createClientDSM(SparkSession sparkSession) throws CreateException, ReadException, WriteException, TaskFailedException, TaskConfigBuildException, IOException {
+        DataSourceManipulator clientDSM = dataManipulators.getPgDataSourceManipulator("client_processing",sparkSession, postgres);
+        clientDSM.createIfNotExists();
+        clientDSM.read(new HashMap<>()).show();
+        clientDSM.write(getClientDataSet(sparkSession), new HashMap<>(), Configuration.ModificationRule.append);
+        clientDSM.read(new HashMap<>()).show();
+        return clientDSM;
+    }
+
+    private DataSourceManipulator createTrnDSM(SparkSession sparkSession) throws TaskFailedException, TaskConfigBuildException, IOException, CreateException, ReadException, WriteException {
+        DataSourceManipulator trnDSM = dataManipulators.getPgDataSourceManipulator("transaction_processing",sparkSession, postgres);
+        trnDSM.createIfNotExists();
+        trnDSM.read(new HashMap<>());
+        trnDSM.write(getTrnDataSet(sparkSession), new HashMap<>(), Configuration.ModificationRule.append);
+        trnDSM.read(new HashMap<>()).show();
+        return trnDSM;
+    }
+
+    @Test
+    @Order(1)
+    void
+    testPostgres() throws IOException, CreateException, WriteException, ReadException, DropException, CompactException, TaskFailedException, TaskConfigBuildException {
+        SparkSession sparkSession = SparkSession.builder().master("local").getOrCreate();
+        DataSourceManipulator  clientDSM = createClientDSM(sparkSession);
+        long rows = clientDSM.read(new HashMap<>()).count();
+        clientDSM.compact(new HashMap<>());
+        clientDSM.drop();
+        sparkSession.stop();
+        assert (rows == 2);
+    }
+
+
+    @Test
+    @Order(2)
+    void
+    testPostgresViolateConstraint() throws IOException, CreateException, ReadException, TaskFailedException, DropException, TaskConfigBuildException {
+        SparkSession sparkSession = SparkSession.builder().master("local").getOrCreate();
+        DataSourceManipulator clientDSM = null;
+
+
+        try {
+            clientDSM = createClientDSM(sparkSession);
+        }catch (WriteException e){
+            e.printStackTrace();
+        }
+        //wrong write expect fail by pk
+        boolean writeError = false;
+        try {
+            clientDSM.write(getClientDataSet(sparkSession), new HashMap<>(), Configuration.ModificationRule.append);
+        }catch (WriteException e){
+            writeError = true;
+        }
+
+        clientDSM.read(new HashMap<>()).show();
+        clientDSM.drop();
+        sparkSession.stop();
+        assert (writeError);
+    }
+
+    @Test
+    @Order(3)
+    void
+    testPostgresFk() throws IOException, CreateException, WriteException, ReadException, DropException, CompactException, TaskFailedException, TaskConfigBuildException {
+        SparkSession sparkSession = SparkSession.builder().master("local").getOrCreate();
+        DataSourceManipulator clientDSM = createClientDSM(sparkSession);
+        DataSourceManipulator trnDSM = createTrnDSM(sparkSession);
+
+
+        long rows = clientDSM.read(new HashMap<>()).count();
+        boolean dropErr = false;
+        try {
+            clientDSM.drop();
+            trnDSM.drop();
+        } catch (DropException e) {
+            dropErr = true;
+            trnDSM.drop();
+            clientDSM.drop();
+        }
+        sparkSession.stop();
+        assert (rows == 2);
+        assert (dropErr);
+    }
+
+    @Test
+    void testIcebergTable() throws TaskFailedException, IOException, CreateException, ReadException, WriteException, TransformationException, TaskConfigBuildException, DropException {
+        SparkSession sparkSession = SparkSession.builder().master("local").getOrCreate();
+
+            DataSourceManipulator clientDSM = createClientDSM(sparkSession);
+        DataSourceManipulator trnDSM = createTrnDSM(sparkSession);
+        DataSourceManipulator trnddsDSM = dataManipulators.getIcebergDataSourceManipulator("transaction_dds",sparkSession);
+        TaskProcessorConfigDTO taskProcessorConfigDTO = new TaskConfigTestFactory().loadTaskProcessorConfigDTO(trnddsDSM.getDataSetDTO().getKeyName(),"load");
+
+
+        BodyParamImpl bodyParam = new BodyParamImpl(
+                sparkSession,
+                Map.of(
+                        trnDSM.getDataSetDTO().getKeyName(), trnDSM,
+                        clientDSM.getDataSetDTO().getKeyName(),clientDSM
+                ),
+                trnddsDSM,
+                new HashMap<>(),
+                taskProcessorConfigDTO.getScripts(),
+                taskProcessorConfigDTO.getKeyBind()
+                );
+        TransformationSparkProcessorBody tb = new TransformationSparkProcessorBody(bodyParam);
+        tb.run();
+        /*DataTransformer dt = new SQLDataTransformer(
+                taskProcessorConfigDTO.getScripts().get(0),
+                SQLDataTransformer.defaultDelimiter);
+        Dataset<Row> dataset = dt.transform(Map.of(
+           clientDSM.getDataSetDTO().getKeyName(),clientDSM,
+           trnDSM.getDataSetDTO().getKeyName(),trnDSM
+        ),
+        trnddsDSM);
+*/
+  //      dataset.show();
+
+    //    trnddsDSM.write(dataset, new HashMap<>(), Configuration.ModificationRule.overwrite);
+        trnddsDSM.read(new HashMap<>()).show();
+        long rows = trnddsDSM.read(new HashMap<>()).count();
+        trnDSM.drop();
+        clientDSM.drop();
+        trnddsDSM.drop();
+        assert (rows==3);
+    }
+
+    @Test
+    @Order(4)
+    void tetsDropTableIceberg() throws ReadException, WriteException, TaskFailedException, TaskConfigBuildException, IOException, CreateException, DropException {
+        SparkSession sparkSession = SparkSession.builder().master("local[*]").getOrCreate();
+        DataSourceManipulator dsm = dataManipulators.getIcebergDataSourceManipulator("transaction_dds",sparkSession);
+        boolean isExists = sparkSession.catalog().tableExists( dsm.getCatalogTableFullName());
+        dsm.createIfNotExists();
+        isExists = sparkSession.catalog().tableExists( dsm.getCatalogTableFullName());
+        if ( !isExists )
+            throw new CreateException("Table not found");
+        dsm.drop();
+        isExists = sparkSession.catalog().tableExists( dsm.getCatalogTableFullName());
+        sparkSession.stop();
+        assert  ( !isExists);
+
+    }
     private void executeJdbcQuery(String sql) throws SQLException {
         String url = postgres.getJdbcUrl();
         String user = postgres.getUsername();

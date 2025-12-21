@@ -13,5 +13,8 @@
       }
     }
   ],
+  "properties": {
+    "fetchSize": "10000"
+  },
   "description": "Remote datastore processingdb"
 }

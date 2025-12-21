@@ -1,15 +1,18 @@
-package org.lakehouse.taskexecutor.factory;
+package org.lakehouse.taskexecutor.api.factory;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.hubspot.jinjava.Jinjava;
 import org.lakehouse.client.api.constant.SystemVarKeys;
+import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetScriptDTO;
+import org.lakehouse.client.api.dto.configs.dataset.DataSetSourceDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
-import org.lakehouse.client.api.dto.task.TableDefinition;
 import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.api.utils.LogPasswdRespectively;
+import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,19 +28,23 @@ public class TaskProcessorConfigFactory {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final ConfigRestClientApi configRestClientApi;
-    private final TableDefinitionFactory tableDefinitionFactory;
     private final Jinjava jinjava;
 
     public TaskProcessorConfigFactory(
             ConfigRestClientApi configRestClientApi,
-            TableDefinitionFactory tableDefinitionFactory,
             Jinjava jinjava) {
         this.configRestClientApi = configRestClientApi;
-        this.tableDefinitionFactory = tableDefinitionFactory;
         this.jinjava = jinjava;
     }
+    private void validateScheduledTaskLockDTO(ScheduledTaskLockDTO scheduledTaskLockDTO) throws TaskConfigBuildException{
+        if (scheduledTaskLockDTO == null) throw new TaskConfigBuildException("scheduledTaskLockDTO can't be null");
+        if (scheduledTaskLockDTO.getScheduledTaskEffectiveDTO() == null) throw new TaskConfigBuildException("scheduledTaskLockDTO.getScheduledTaskEffectiveDTO can't be null");
+        if (scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getIntervalStartDateTime() == null) throw new TaskConfigBuildException("scheduledTaskLockDTO.getScheduledTaskEffectiveDTO.getIntervalStartDateTime can't be null");
+        if (scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getIntervalEndDateTime() == null) throw new TaskConfigBuildException("scheduledTaskLockDTO.getScheduledTaskEffectiveDTO.getIntervalEndDateTime can't be null");
 
-    public TaskProcessorConfigDTO buildTaskProcessorConfig(ScheduledTaskLockDTO scheduledTaskLockDTO) {
+    }
+    public TaskProcessorConfigDTO buildTaskProcessorConfig(ScheduledTaskLockDTO scheduledTaskLockDTO) throws TaskConfigBuildException {
+        validateScheduledTaskLockDTO(scheduledTaskLockDTO);
         logger.info("Build config");
 
         TaskProcessorConfigDTO result = new TaskProcessorConfigDTO();
@@ -58,46 +65,44 @@ public class TaskProcessorConfigFactory {
                         scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getScenarioActKeyName(),
                         scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getTargetDateTime()));
 
-        result.setTargetDataSet(
-                configRestClientApi.getDataSetDTO(
-                        scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getDataSetKeyName()));
+        result.setTargetDataSetKeyName(scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getDataSetKeyName());
 
         result.setExecutionModuleArgs(
                 scheduledTaskLockDTO
                         .getScheduledTaskEffectiveDTO()
                         .getExecutionModuleArgs());
 
-        result.setSources(
-                result.getTargetDataSet().getSources().stream()
-                        .map(dataSetSourceDTO -> {
-                            DataSetDTO srcds = configRestClientApi.getDataSetDTO(dataSetSourceDTO.getName());
-                            srcds.getProperties().putAll(dataSetSourceDTO.getProperties());
-                            return srcds;
-                        }).collect(Collectors.toMap(DataSetDTO::getKeyName, Function.identity())));
 
-        result.setDataSources(getDataStores(result.getTargetDataSet(), result.getSources().values()));
-
-        Set<DataSetDTO> dataSets = collapseDataSetDTOs(result.getTargetDataSet(), result.getSources());
-
-        result.setDataSetDTOSet(dataSets);
+        result.setDataSetDTOs(collapseDataSetDTOs(scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getDataSetKeyName()));
+        result.setDataSources(
+                result.getDataSetDTOs()
+                        .values().stream()
+                        .map(DataSetDTO::getDataSourceKeyName)
+                        .collect(Collectors.toSet()).stream().map(configRestClientApi::getDataSourceDTO)
+                        .collect(Collectors.toMap(DataSourceDTO::getKeyName, Function.identity()))
+        );
 
 
-        result.setTableDefinitions(getTableDefinitionMap(dataSets, result.getDataSources()));
 
         keyBind.putAll(configToContext(result));
         result.setKeyBind(keyBind);
 
-        result.setScripts(result.getTargetDataSet()
-                .getScripts()
-                .stream()
-                .sorted(Comparator.comparingInt(DataSetScriptDTO::getOrder))
-                .map(DataSetScriptDTO::getKey)
-                .map(configRestClientApi::getScript)
-                .map(script -> jinjava.render(script, result.getKeyBind()))
-                .toList());
-
+        result.setScripts(
+                result.getDataSetDTOs()
+                        .get(result.getTargetDataSetKeyName())
+                        .getScripts()
+                        .stream()
+                        .sorted(Comparator.comparingInt(DataSetScriptDTO::getOrder))
+                        .map(DataSetScriptDTO::getKey)
+                        .map(configRestClientApi::getScript)
+                        .toList());
 
         logger.info("Config ready");
+        try {
+            logger.info(ObjectMapping.asJsonString(result));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
         return result;
     }
 
@@ -105,7 +110,7 @@ public class TaskProcessorConfigFactory {
             TaskProcessorConfigDTO taskProcessorConfigDTO) {
         Map<String, String> result = new HashMap<>();
         result.putAll(taskProcessorConfigDTO.getKeyBind());
-        taskProcessorConfigDTO.getDataSetDTOSet().forEach(dataSetDTO -> {
+        taskProcessorConfigDTO.getDataSetDTOs().values().forEach(dataSetDTO -> {
             result.put(SystemVarKeys.buildSourceTableFullName(dataSetDTO.getNameSpaceKeyName(), dataSetDTO.getKeyName()), dataSetDTO.getFullTableName());
             result.put(SystemVarKeys.buildSourceKeyName(dataSetDTO.getNameSpaceKeyName(), dataSetDTO.getKeyName()), dataSetDTO.getKeyName());
         });
@@ -123,43 +128,29 @@ public class TaskProcessorConfigFactory {
         return DateTimeUtils.parseDateTimeFormatWithTZ(jinjava.render(template, context));
     }
 
-    private Set<DataSetDTO> collapseDataSetDTOs(
-            DataSetDTO dataSetDTO,
-            Map<String, DataSetDTO> sources) {
+    private Map<String,DataSetDTO> collapseDataSetDTOs(String targetDataSetKeyName) {
+        Map<String,DataSetDTO> result = new HashMap<>();
+        DataSetDTO targetDataSetDTO = configRestClientApi.getDataSetDTO(targetDataSetKeyName);
+        Set<String> dataSetKeyNames = new HashSet<>();
 
-        Set<DataSetDTO> result = new HashSet<>();
-        result.addAll(sources.values());
-        result.add(dataSetDTO);
+        result.put(targetDataSetDTO.getKeyName(),targetDataSetDTO);
+        dataSetKeyNames.addAll(
+            targetDataSetDTO.getConstraints()
+                    .stream()
+                    .filter(c-> c.getType().equals(Types.Constraint.foreign))
+                    .map(c -> c.getReference().getDataSetKeyName())
+                    .toList()
+                );
+        dataSetKeyNames.addAll(
+                targetDataSetDTO
+                        .getSources()
+                        .stream()
+                        .map(DataSetSourceDTO::getDataSetKeyName)
+                        .toList());
+        result.putAll(dataSetKeyNames.stream()
+                        .map(configRestClientApi::getDataSetDTO)
+                        .collect(Collectors.toMap(DataSetDTO::getKeyName, Function.identity())));
         return result;
     }
 
-    private Map<String, DataSourceDTO> getDataStores(DataSetDTO targetDataSet, Collection<DataSetDTO> sourceDatasets) {
-        Set<String> dataStoreNames = new HashSet<>();
-        dataStoreNames.add(targetDataSet.getDataSourceKeyName());
-        dataStoreNames.addAll(sourceDatasets
-                .stream()
-                .map(DataSetDTO::getDataSourceKeyName)
-                .collect(Collectors.toSet())
-        );
-
-        return dataStoreNames
-                .stream()
-                .map(configRestClientApi::getDataSourceDTO)
-                .collect(Collectors.toMap(DataSourceDTO::getKeyName, Function.identity()));
-    }
-
-    private Map<String, TableDefinition> getTableDefinitionMap(
-            Set<DataSetDTO> dataSetDTOS,
-            Map<String, DataSourceDTO> dataStoreDTOMap) {
-        return dataSetDTOS
-                .stream()
-                .collect(
-                        Collectors.toMap(
-                                DataSetDTO::getKeyName,
-                                dataSetDTO -> tableDefinitionFactory
-                                        .buildTableDefinition(
-                                                dataSetDTO,
-                                                dataStoreDTOMap.get(
-                                                        dataSetDTO.getDataSourceKeyName()))));
-    }
 }

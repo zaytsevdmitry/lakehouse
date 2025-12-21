@@ -7,3 +7,6 @@ demodebug
 .gigaide
 .project
 .classpath
+spark-warehouse
+
+/lakehouse-task-spark-apps/wh

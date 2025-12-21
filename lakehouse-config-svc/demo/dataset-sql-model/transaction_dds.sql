@@ -5,8 +5,8 @@ select t.id id
      , t.provider_id
      , t.amount
      , t.commission
-from transaction_processing t
-join client_processing c
+from {{ source('DEMO', 'transaction_processing') }} t
+join {{ source('DEMO', 'client_processing') }} c
   on t.client_id = c.id
  where
    t.reg_date_time >= timestamp '{{ targetIntervalStartTZ }}' and

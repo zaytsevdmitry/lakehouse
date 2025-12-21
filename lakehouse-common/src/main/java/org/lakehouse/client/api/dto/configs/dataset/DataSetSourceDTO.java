@@ -7,18 +7,19 @@ import java.util.Objects;
 
 public class DataSetSourceDTO implements Serializable {
     private static final long serialVersionUID = -2784578257851689101L;
-    private String name;
+
+    private String dataSetKeyName;
     private Map<String, String> properties = new HashMap<>();
 
     public DataSetSourceDTO() {
     }
 
-    public String getName() {
-        return name;
+    public String getDataSetKeyName() {
+        return dataSetKeyName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setDataSetKeyName(String dataSetKeyName) {
+        this.dataSetKeyName = dataSetKeyName;
     }
 
     public Map<String, String> getProperties() {
@@ -34,11 +35,19 @@ public class DataSetSourceDTO implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DataSetSourceDTO that = (DataSetSourceDTO) o;
-        return Objects.equals(getName(), that.getName()) && Objects.equals(getProperties(), that.getProperties());
+        return Objects.equals(getDataSetKeyName(), that.getDataSetKeyName()) && Objects.equals(getProperties(), that.getProperties());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getName(), getProperties());
+        return Objects.hash(getDataSetKeyName(), getProperties());
+    }
+
+    @Override
+    public String toString() {
+        return "\nDataSetSourceDTO{" +
+                "\ndataSetKeyName='" + dataSetKeyName + '\'' +
+                "\n, properties=" + properties +
+                '}';
     }
 }

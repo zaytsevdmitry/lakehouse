@@ -5,7 +5,7 @@
     {
       "name": "begin",
       "taskExecutionServiceGroupName": "state-exe",
-      "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.RunningStateTaskProcessor",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.LockedStateTaskProcessor",
       "importance": "critical",
       "description": "Made dataset interval status Locked"
     },

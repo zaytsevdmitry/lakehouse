@@ -1,7 +1,7 @@
 {
   "keyName": "lakehousestorage",
   "engineType": "spark",
-  "engine": "localfs",
+  "engine": "iceberg",
   "services": [
     {
       "host": "127.0.0.1",

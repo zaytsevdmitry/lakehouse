@@ -2,7 +2,9 @@ package org.lakehouse.taskexecutor.executionmodule.body.dataadapter.jdbc.trino.i
 
 import org.apache.spark.sql.SparkSession;
 import org.lakehouse.client.api.constant.Configuration;
+import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
+import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.DataSourceManipulatorParameter;
 import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.JdbcUtils;
 import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.exception.CompactException;
 import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.exception.DropException;
@@ -15,16 +17,18 @@ import java.util.Map;
 public class TrinoIcebergSparkDataSourceManipulator extends TrinoSparkDataSourceManipulatorAbstract {
 
     public TrinoIcebergSparkDataSourceManipulator(
-            SparkSession sparkSession,
-
-            DataSourceDTO dataSourceDTO,
-            JdbcUtils jdbcUtils) {
-        super(sparkSession,  dataSourceDTO, jdbcUtils);
+            DataSourceManipulatorParameter dataSourceManipulatorParameter) {
+        super(dataSourceManipulatorParameter);
     }
 
 
     @Override
-    public void drop(String location, Map<String, String> options) throws DropException {
+    public void createIfNotExists() {
+
+    }
+
+    @Override
+    public void drop() throws DropException {
 
     }
 
@@ -44,9 +48,9 @@ public class TrinoIcebergSparkDataSourceManipulator extends TrinoSparkDataSource
     }
 
     @Override
-    public void compact(String location, Map<String, String> options) throws CompactException {
+    public void compact(Map<String, String> options) throws CompactException {
         //todo file_size_threshold => '100MB' is an option
-        String compactSQL = String.format("ALTER TABLE %s EXECUTE optimize(file_size_threshold => '100MB')", location);
+        String compactSQL = String.format("ALTER TABLE %s EXECUTE optimize(file_size_threshold => '100MB')", getDataSetDTO().getFullTableName());
         try {
             getJdbcUtils().execute(compactSQL, options);
         } catch (SQLException e) {

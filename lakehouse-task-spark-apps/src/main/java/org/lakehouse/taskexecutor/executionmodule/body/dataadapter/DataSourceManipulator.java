@@ -2,20 +2,27 @@ package org.lakehouse.taskexecutor.executionmodule.body.dataadapter;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
 import org.lakehouse.client.api.constant.Configuration;
+import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
+import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
+import org.lakehouse.client.api.factory.dialect.TableDialect;
 import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.exception.*;
 
 import java.util.List;
 import java.util.Map;
 
-public interface DataSourceManipulator {
+public interface
+DataSourceManipulator extends DataSourceManipulatorParameter {
 
 
-    Dataset<Row> read(String location, Map<String, String> options) throws ReadException;
+    Dataset<Row> read(Map<String, String> options)  throws ReadException;
 
-    void write(Dataset<Row> dataset, String location, Map<String, String> options, Configuration.ModificationRule modificationRule) throws WriteException;
+    void createIfNotExists() throws CreateException;
 
-    void drop(String location, Map<String, String> options) throws DropException;
+    void write(Dataset<Row> dataset, Map<String, String> options, Configuration.ModificationRule modificationRule) throws WriteException;
+
+    void drop() throws DropException;
 
     void truncate(String location, Map<String, String> options) throws TruncateException;
 
@@ -29,9 +36,11 @@ public interface DataSourceManipulator {
 
     void addConstraints() throws ConstraintException;
 
-    void compact(String location, Map<String, String> options) throws CompactException;
+    void compact(Map<String, String> options) throws CompactException;
 
     void compactPartitions(String location, List<String> partitions, Map<String, String> options) throws CompactException;
 
-    Dataset<Row> executeQuery(String query,  boolean enablePushDown);
+    Dataset<Row> executeQuery(String query, boolean enablePushDown);
+
+    String getCatalogTableFullName();
 }

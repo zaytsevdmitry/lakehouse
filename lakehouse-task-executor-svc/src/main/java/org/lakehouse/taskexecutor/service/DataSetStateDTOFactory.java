@@ -9,7 +9,7 @@ import org.lakehouse.client.api.utils.DateTimeUtils;
 public class DataSetStateDTOFactory {
     public static DataSetStateDTO buildtDataSetStateDTO(Status.DataSet status, TaskProcessorConfigDTO taskProcessorConfigDTO) {
         DataSetStateDTO result = new DataSetStateDTO();
-        result.setDataSetKeyName(taskProcessorConfigDTO.getTargetDataSet().getKeyName());
+        result.setDataSetKeyName(taskProcessorConfigDTO.getTargetDataSetKeyName());
         result.setIntervalStartDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(taskProcessorConfigDTO.getIntervalStartDateTime()));
         result.setIntervalEndDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(taskProcessorConfigDTO.getIntervalEndDateTime()));
         result.setStatus(status.label);

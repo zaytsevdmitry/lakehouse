@@ -8,8 +8,14 @@ import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.api.utils.ObjectMapping;
+import org.lakehouse.config.entities.KeyValueAbstract;
 import org.lakehouse.config.entities.Schedule;
+import org.lakehouse.config.entities.datasource.DataSource;
+import org.lakehouse.config.entities.datasource.DataSourceProperty;
 import org.lakehouse.config.entities.scenario.ScenarioAct;
+import org.lakehouse.config.mapper.Mapper;
+import org.lakehouse.config.mapper.keyvalue.KeyValueEntityMerger;
+import org.lakehouse.config.mapper.keyvalue.PropertiesIUDCase;
 import org.lakehouse.config.repository.ScenarioActRepository;
 import org.lakehouse.config.repository.ScheduleRepository;
 import org.lakehouse.config.repository.ScriptRepository;
@@ -18,6 +24,7 @@ import org.lakehouse.config.repository.dataset.DataSetSourceRepository;
 import org.lakehouse.config.service.QualityMetricsConfService;
 import org.lakehouse.config.service.ScenarioActTemplateService;
 import org.lakehouse.config.service.ScheduleService;
+import org.lakehouse.config.service.datasource.DataSourcePropertyKeyValueEntitySpecifier;
 import org.lakehouse.config.test.configutation.RestManipulator;
 import org.lakehouse.test.config.configuration.FileLoader;
 import org.slf4j.Logger;
@@ -591,5 +598,37 @@ public class TestWithPostgres {
         System.out.println(ObjectMapping.asJsonString(expected));
         System.out.println(ObjectMapping.asJsonString(resulted));
         assert (expected.equals(resulted));
+    }
+    @Test
+    @Order(13)
+    void mergePropertiesMapper() throws Exception {
+        DataSource dataSource = new DataSource();
+        dataSource.setKeyName("testDataSource");
+        Mapper mapper = new Mapper();
+        DataSourceProperty kveForDelete = new DataSourceProperty();
+        kveForDelete.setId(1L);
+        kveForDelete.setDataSource(dataSource);
+        kveForDelete.setKey("deleteKey");
+        kveForDelete.setValue("some value");
+        DataSourceProperty kveForUpdate = new DataSourceProperty();
+        kveForUpdate.setId(2L);
+        kveForUpdate.setDataSource(dataSource);
+        kveForUpdate.setKey("keyForUpdate");
+        kveForUpdate.setValue("old value");
+        Map<String,String> newKV = Map.of(
+                "insertKey1", "insert value1",
+                "insertKey2", "insertValue",
+                kveForUpdate.getKey(),"new update value");
+
+
+        List<KeyValueAbstract> exists = List.of(kveForDelete,kveForUpdate);
+
+        KeyValueEntityMerger keyValueEntityMerger = new KeyValueEntityMerger(new DataSourcePropertyKeyValueEntitySpecifier(null,dataSource));
+        PropertiesIUDCase propertiesIUDCase =  keyValueEntityMerger.splitAbstractKeyValues(exists,newKV);
+
+        assert (propertiesIUDCase.getToBeDeleted().size() == 1);
+        assert (propertiesIUDCase.getToBeInserted().size() == 2);
+        assert (propertiesIUDCase.getToBeUpdated().size() == 1);
+        assert (propertiesIUDCase.getToBeSaved().size() == 3);
     }
 }

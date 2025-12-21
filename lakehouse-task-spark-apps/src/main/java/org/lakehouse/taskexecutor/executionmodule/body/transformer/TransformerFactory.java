@@ -4,9 +4,10 @@ import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
 
 public class TransformerFactory {
 
-    public DataTransformer buildDataTransformer(TaskProcessorConfigDTO taskProcessorConfigDTO){
+    public DataTransformer buildDataTransformer(String script){
 
-        // todo delimiter
-        return new SQLDataTransformer(taskProcessorConfigDTO.getScripts().get(0), "^/$");
+        return new SQLDataTransformer(script,
+                //todo move delimiter to property
+                "^/$");
     }
 }

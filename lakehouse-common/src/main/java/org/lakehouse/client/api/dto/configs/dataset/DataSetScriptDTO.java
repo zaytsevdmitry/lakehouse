@@ -36,4 +36,12 @@ public class DataSetScriptDTO {
     public int hashCode() {
         return Objects.hash(getKey(), getOrder());
     }
+
+    @Override
+    public String toString() {
+        return "\nDataSetScriptDTO{" +
+                "\nkey='" + key + '\'' +
+                "\n, order=" + order +
+                '}';
+    }
 }

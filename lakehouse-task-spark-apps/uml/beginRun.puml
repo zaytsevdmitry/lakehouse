@@ -1,0 +1,22 @@
+@startuml
+class SparkProcessorBodyStarter
+class SparkProcessorBodyFactory{
+public static SparkProcessorBody buildSparkProcessorBody(
+            SparkSession sparkSession,
+            String[] args)
+            throws TaskFailedException
+}
+interface SparkProcessorBody{
+ void run() throws TaskFailedException;
+}
+SparkProcessorBodyStarter *-- SparkProcessorBodyFactory
+SparkProcessorBodyStarter *-- SparkProcessorBody
+SparkProcessorBodyFactory *-- SparkProcessorBody
+
+class CatalogActivator{
+private final SparkSession sparkSession;
+    public  void activate(DataSourceDTO dataSourceDTO)
+    public  void activate(List<DataSourceDTO> dataSourceDTOS)
+}
+SparkProcessorBodyFactory *--CatalogActivator
+@enduml

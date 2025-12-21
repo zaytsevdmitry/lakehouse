@@ -1,4 +1,4 @@
-{
+  {
   "keyName": "transaction_processing",
   "nameSpaceKeyName": "DEMO",
   "dataSourceKeyName": "processingdb",

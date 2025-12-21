@@ -24,7 +24,6 @@ public class Types {
         csv("csv"),
         text("text"),
         iceberg("iceberg"),
-        localfs("localfs"),
         postgres("postgres"),
         trino("trino");
         public final String label;
@@ -57,6 +56,22 @@ public class Types {
         }
     }
 
+    public enum ReferenceAction{
+        SET_NULL("SET NULL"),
+        DEFAULT("SET DEFAULT"),
+        RESTRICT("RESTRICT"),
+        NO_ACTION("NO ACTION"),
+        CASCADE("CASCADE");
+
+        private final String value;
+        ReferenceAction(String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
+    }
     public enum DQMetricsType {
         constraint("constraint"),
         sparkSQL("sparkSQL"),

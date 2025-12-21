@@ -116,6 +116,8 @@ public class DataSetConstraintService {
                 referenceRepository.findByConstraintId(dataSetConstraint.getId()).ifPresent(reference -> {
                     referenceDTO.setDataSetKeyName(reference.getDataSetConstraint().getDataSet().getKeyName());
                     referenceDTO.setConstraintName(reference.getDataSetConstraint().getName());
+                    referenceDTO.setOnDelete(reference.getOnDelete());
+                    referenceDTO.setOnUpdate(reference.getOnUpdate());
                     result.setReference(referenceDTO);
                 });
             }

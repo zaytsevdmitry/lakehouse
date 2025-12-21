@@ -1,10 +1,17 @@
 package org.lakehouse.config.mapper;
 
 import org.lakehouse.client.api.dto.configs.TaskDTO;
+import org.lakehouse.config.entities.KeyValueAbstract;
 import org.lakehouse.config.entities.TaskAbstract;
+import org.lakehouse.config.entities.datasource.DataSource;
+import org.lakehouse.config.entities.datasource.DataSourceProperty;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 public class Mapper {
@@ -19,5 +26,7 @@ public class Mapper {
         taskDTO.setExecutionModuleArgs(executionModuleArgs);
         return taskDTO;
     }
+
+
 
 }

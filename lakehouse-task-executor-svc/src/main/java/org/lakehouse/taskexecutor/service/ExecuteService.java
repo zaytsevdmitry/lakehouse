@@ -9,8 +9,9 @@ import org.lakehouse.client.api.dto.task.TaskProcessor;
 import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
 import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
+import org.lakehouse.taskexecutor.api.factory.TaskConfigBuildException;
 import org.lakehouse.taskexecutor.exception.TaskProcessorConfigurationException;
-import org.lakehouse.taskexecutor.factory.TaskProcessorConfigFactory;
+import org.lakehouse.taskexecutor.api.factory.TaskProcessorConfigFactory;
 import org.lakehouse.taskexecutor.factory.TaskProcessorFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +43,7 @@ public class ExecuteService {
     }
 
 
-    public void takeAndRunTask(ScheduledTaskLockDTO scheduledTaskLockDTO) {
+    public void takeAndRunTask(ScheduledTaskLockDTO scheduledTaskLockDTO) throws TaskConfigBuildException {
         TaskProcessorConfigDTO taskProcessorConfigDTO = taskProcessorConfigFactory.buildTaskProcessorConfig(scheduledTaskLockDTO);
         taskProcessorConfigDTOMap.put(scheduledTaskLockDTO.getLockId(), taskProcessorConfigDTO);
         TaskInstanceReleaseDTO taskInstanceReleaseDTO = new TaskInstanceReleaseDTO();

@@ -2,8 +2,9 @@ package org.lakehouse.taskexecutor.executionmodule.body.transformer;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.DataSourceManipulator;
 import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.exception.ReadException;
-import org.lakehouse.taskexecutor.executionmodule.body.entity.DataSetItem;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,6 +15,7 @@ public class SQLDataTransformer extends DataTransformerAbstract {
     private final String script;
     private final String scriptCommandDelimiter;
 
+    public static String defaultDelimiter = "\n;";
     public SQLDataTransformer(
          //   SparkSession sparkSession,
             String script,
@@ -24,31 +26,44 @@ public class SQLDataTransformer extends DataTransformerAbstract {
     }
     private List<String> splitScripts(){
         String delimiter = scriptCommandDelimiter;
-        if (scriptCommandDelimiter == null || scriptCommandDelimiter.isBlank()) delimiter = "\n;";
+        if (scriptCommandDelimiter == null || scriptCommandDelimiter.isBlank()) delimiter = defaultDelimiter;
         return List.of(script.split(delimiter));
     }
-    private Map<String, Dataset<Row>> loadDataSets(List<DataSetItem> dataSetItems) throws ReadException {
+  /*  private Map<String, Dataset<Row>> loadDataSets(List<DataSourceManipulator> dataSourceManipulators) throws ReadException {
         Map<String, Dataset<Row>> result = new HashMap<>();
-        for (DataSetItem dataSetItem:dataSetItems) {
-            Dataset<Row> dataset = dataSetItem.getDataSourceManipulator().read("", new HashMap<>());
-            result.put(dataSetItem.getDataSetDTO().getKeyName(), dataset);
+        for (DataSourceManipulator dataSourceManipulator:dataSourceManipulators) {
+            String catalogName = dataSourceManipulator.getDataSourceDTO().getKeyName();
+            String catalogDesc = dataSourceManipulator.getDataSourceDTO().getDescription();
+            SparkSession sparkSession = dataSourceManipulator.getSparkSession();
+            sparkSession
+                    .catalog()
+                    .listCatalogs();
+
+            sparkSession
+                    .catalog()
+                    .listCatalogs().show();
+            Dataset<Row> dataset = dataSourceManipulator.read(new HashMap<>());
+            result.put(
+                    dataSourceManipulator
+                            .getDataSetDTO()
+                            .getKeyName(),
+                    dataset);
         }
 
         return result;
     }
-
+*/
     private void loadViews(Map<String, Dataset<Row>> datasetMap){
         for( String key:datasetMap.keySet()){
             datasetMap.get(key).createOrReplaceTempView(key);
         }
     }
     @Override
-    public Dataset<Row> transform(List<DataSetItem> sourceDataSetItems, DataSetItem targetDataSetItem) throws TransformationException {
-        try {
-            loadViews(loadDataSets(sourceDataSetItems));
-        } catch (ReadException e) {
-            throw new TransformationException(e);
-        }
+    public Dataset<Row> transform(
+            Map<String,DataSourceManipulator> sourceDataSourceManipulators,
+            DataSourceManipulator targetDataSourceManipulator) throws TransformationException {
+
+
         List<String> commands =  splitScripts();
         String mainSQL = commands.get(commands.size()-1);
         List<String> preSQLs = new ArrayList<>();
@@ -59,10 +74,18 @@ public class SQLDataTransformer extends DataTransformerAbstract {
         }
 
         for (String preSQL:preSQLs){
-            targetDataSetItem.getDataSourceManipulator().executeQuery(preSQL, false);
+            targetDataSourceManipulator.executeQuery(preSQL, false);
         }
 
-        Dataset<Row> result = targetDataSetItem.getDataSourceManipulator().executeQuery(mainSQL, false);
+        Dataset<Row> result = targetDataSourceManipulator.executeQuery(mainSQL, false);
+        sourceDataSourceManipulators.values().forEach(dataSourceManipulator -> {
+            try {
+                dataSourceManipulator.read(new HashMap<>()).show();
+            } catch (ReadException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        result.show();
         return result;
     }
 }

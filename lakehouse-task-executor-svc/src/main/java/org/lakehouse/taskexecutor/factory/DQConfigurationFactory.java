@@ -16,6 +16,9 @@ public class DQConfigurationFactory {
     }
 
     public List<QualityMetricsConfDTO> buildDQConf(TaskProcessorConfigDTO taskProcessorConfigDTO) {
-        return configRestClientApi.getQualityMetricsConfList(taskProcessorConfigDTO.getTargetDataSet().getKeyName());
+        return configRestClientApi.getQualityMetricsConfList(
+        taskProcessorConfigDTO.getDataSetDTOs().get(
+                taskProcessorConfigDTO.getTargetDataSetKeyName()).getKeyName()
+        );
     }
 }

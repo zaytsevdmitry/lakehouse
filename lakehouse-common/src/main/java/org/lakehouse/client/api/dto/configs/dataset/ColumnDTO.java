@@ -65,4 +65,14 @@ public class ColumnDTO extends NameDescriptionAbstract {
     public int hashCode() {
         return Objects.hash(super.hashCode(), getDataType(), isNullable(), getOrder(), isSequence());
     }
+
+    @Override
+    public String toString() {
+        return "\nColumnDTO{" +
+                "\ndataType='" + dataType + '\'' +
+                "\n, nullable=" + nullable +
+                "\n, order=" + order +
+                "\n, sequence=" + sequence +
+                '}';
+    }
 }

@@ -97,4 +97,17 @@ public class DataSetConstraintDTO {
                 getReference()
         );
     }
+
+    @Override
+    public String toString() {
+        return "\nDataSetConstraintDTO{" +
+                "\nname='" + name + '\'' +
+                "\n, type=" + type +
+                "\n, columns='" + columns + '\'' +
+                "\n, enabled=" + enabled +
+                "\n, runtimeLevelCheck=" + runtimeLevelCheck +
+                "\n, constructLevelCheck=" + constructLevelCheck +
+                "\n, reference=" + reference +
+                '}';
+    }
 }

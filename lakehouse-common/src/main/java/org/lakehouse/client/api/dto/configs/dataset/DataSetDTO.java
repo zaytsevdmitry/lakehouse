@@ -4,7 +4,16 @@ import java.io.Serializable;
 import java.util.*;
 
 public class DataSetDTO implements Serializable {
-    private static final long serialVersionUID = -7115041705179190105L;
+
+    /*
+    * TODO LIST
+    *  Constraint check need "condition"
+    *  Constraint unique/foreign optionally  need index
+    *  Some column groups optionally  need index
+    *  Some datasource's optionally need storage statement
+    *       storage statement may contents projections , tablets , buckets , partitions and etc
+    * */
+
     private String keyName;
     private String nameSpaceKeyName;
     private String dataSourceKeyName;
@@ -129,7 +138,32 @@ public class DataSetDTO implements Serializable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(getKeyName(), getNameSpaceKeyName(), getDataSourceKeyName(), getFullTableName(), getSources(), getColumnSchema(),
-                getProperties(), getScripts(), getDescription(), getConstraints());
+        return Objects.hash(getKeyName(),
+                getNameSpaceKeyName(),
+                getDataSourceKeyName(),
+                getFullTableName(),
+                getSources(),
+                getColumnSchema(),
+                getProperties(),
+                getScripts(),
+                getDescription(),
+                getConstraints()
+        );
+    }
+
+    @Override
+    public String toString() {
+        return "\nDataSetDTO{" +
+                "\nkeyName='" + keyName + '\'' +
+                "\n, nameSpaceKeyName='" + nameSpaceKeyName + '\'' +
+                "\n, dataSourceKeyName='" + dataSourceKeyName + '\'' +
+                "\n, fullTableName='" + fullTableName + '\'' +
+                "\n, sources=" + sources +
+                "\n, columnSchema=" + columnSchema +
+                "\n, properties=" + properties +
+                "\n, scripts=" + scripts +
+                "\n, description='" + description + '\'' +
+                "\n, constraints=" + constraints +
+                '}';
     }
 }

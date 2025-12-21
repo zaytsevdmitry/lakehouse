@@ -20,12 +20,9 @@ import java.lang.reflect.InvocationTargetException;
 public class TaskProcessorFactory {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final StateRestClientApi stateRestClientApi;
-    private final RestClient.Builder restClientBuilder;
     public TaskProcessorFactory(
-            StateRestClientApi stateRestClientApi, RestClient.Builder restClientBuilder) {
+            StateRestClientApi stateRestClientApi) {
         this.stateRestClientApi = stateRestClientApi;
-
-        this.restClientBuilder = restClientBuilder;
     }
 
     private TaskProcessor constructTaskProcessor(
@@ -49,8 +46,8 @@ public class TaskProcessorFactory {
                 result = (TaskProcessor) constructor.newInstance(taskProcessorConfigDTO);
             } else if (AbstractSparkDeployTaskProcessor.class.isAssignableFrom(processorClass)) {
                 logger.info("Making Spark deployment processor class instance {}", processorClass.getName());
-                constructor = processorClass.getConstructor(TaskProcessorConfigDTO.class, RestClient.Builder.class);
-                result = (TaskProcessor) constructor.newInstance(taskProcessorConfigDTO, restClientBuilder);
+                constructor = processorClass.getConstructor(TaskProcessorConfigDTO.class);
+                result = (TaskProcessor) constructor.newInstance(taskProcessorConfigDTO);
             } else {
                 throw new TaskProcessorConfigurationException(
                         String.format("Processor class found, but has unexpected type : class name  %s", processorClass.getName()));
@@ -66,8 +63,8 @@ public class TaskProcessorFactory {
     public TaskProcessor buildProcessor(TaskProcessorConfigDTO taskProcessorConfigDTO, String executionModule)
             throws TaskProcessorConfigurationException {
 
-        logger.info("Get class for name");
         Class<?> processorClass = null;
+        logger.info("Try load class:{}", executionModule);
         try {
             processorClass = Class.forName(executionModule);
         } catch (ClassNotFoundException e) {

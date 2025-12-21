@@ -1,7 +1,7 @@
 {
   "keyName": "lakehousestorage",
   "engineType": "spark",
-  "engine": "localfs",
+  "engine": "iceberg",
   "services": [
     {
       "host": "",
@@ -10,6 +10,10 @@
     }
   ],
   "properties": {
+    "spark.sql.extensions": "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
+    "spark.sql.catalog.lakehousestorage": "org.apache.iceberg.spark.SparkCatalog",
+    "spark.sql.catalog.lakehousestorage.type": "hadoop",
+    "spark.sql.catalog.lakehousestorage.warehouse": "$PWD/warehouse"
   },
   "description": "Local datastore"
 }

@@ -8,7 +8,6 @@ import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.client.api.utils.ObjectMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.client.RestClient;
 
 import java.util.HashMap;
 import java.util.List;
@@ -18,16 +17,15 @@ public class SparkLauncherTaskProcessor extends AbstractSparkDeployTaskProcessor
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public SparkLauncherTaskProcessor(
-            TaskProcessorConfigDTO taskProcessorConfigDTO,
-            RestClient.Builder builder) {
-        super(taskProcessorConfigDTO, builder);
+            TaskProcessorConfigDTO taskProcessorConfigDTO) {
+        super(taskProcessorConfigDTO);
     }
 
     @Override
     public void runTask() throws TaskFailedException {
         TaskProcessorConfigDTO unSparkedConfig = getTaskProcessorConfig();
 
-        DataSourceDTO dataSourceDTO = unSparkedConfig.getDataSources().get(unSparkedConfig.getTargetDataSet().getDataSourceKeyName());
+        DataSourceDTO dataSourceDTO = unSparkedConfig.getDataSources().get(unSparkedConfig.getTargetDataSetKeyName());
         String serverUrl = String.format(
                 "http://%s:%s/%s",
                 dataSourceDTO.getServices().get(0).getHost(),

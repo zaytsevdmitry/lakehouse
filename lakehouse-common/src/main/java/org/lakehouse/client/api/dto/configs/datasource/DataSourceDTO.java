@@ -77,4 +77,16 @@ public class DataSourceDTO {
     public int hashCode() {
         return Objects.hash(getKeyName(), getEngineType(), getEngine(), getServices(), getProperties(), getDescription());
     }
+
+    @Override
+    public String toString() {
+        return "DataSourceDTO{" +
+                "keyName='" + keyName + '\'' +
+                ", engineType=" + engineType +
+                ", engine=" + engine +
+                ", services=" + services +
+                ", properties=" + properties +
+                ", description='" + description + '\'' +
+                '}';
+    }
 }

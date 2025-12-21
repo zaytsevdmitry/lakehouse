@@ -21,6 +21,7 @@
         <module name="lakehouse-task-spark-apps" />
         <module name="lakehouse-config-rest-client" />
         <module name="lakehouse-cli" />
+        <module name="lakehouse-task-executor-api" />
         <module name="lakehouse-task-executor-rest-client" />
       </profile>
     </annotationProcessing>
@@ -40,6 +41,7 @@
       <module name="lakehouse-spark-rest-client" options="-parameters" />
       <module name="lakehouse-state-rest-client" options="-parameters" />
       <module name="lakehouse-state-svc" options="-parameters" />
+      <module name="lakehouse-task-executor-api" options="-parameters" />
       <module name="lakehouse-task-executor-rest-client" options="-parameters" />
       <module name="lakehouse-task-executor-svc" options="-parameters" />
       <module name="lakehouse-task-spark-apps" options="-parameters" />

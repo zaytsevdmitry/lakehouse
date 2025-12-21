@@ -1,20 +1,22 @@
 package org.lakehouse.client.api.dto.task;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class TaskProcessorConfigDTO {
     private Map<String, String> executionModuleArgs = new HashMap<>();
     private List<String> scripts = new ArrayList<>();
-    private Map<String, DataSetDTO> sources = new HashMap<>();
-    private DataSetDTO targetDataSet;
+    private String targetDataSetKeyName;
     private Map<String, DataSourceDTO> dataSources = new HashMap<>();
     private Map<String, String> KeyBind = new HashMap<>();
-    private Map<String, TableDefinition> tableDefinitions = new HashMap<>();
-    private Set<DataSetDTO> dataSetDTOSet = new HashSet<>();
+    private Map<String,DataSetDTO> dataSetDTOs = new HashMap<>();
     private OffsetDateTime targetDateTime;
     private OffsetDateTime intervalStartDateTime;
     private OffsetDateTime intervalEndDateTime;
@@ -32,12 +34,9 @@ public class TaskProcessorConfigDTO {
         this.scripts = scripts;
     }
 
-    public void setSources(Map<String, DataSetDTO> sources) {
-        this.sources = sources;
-    }
 
-    public void setTargetDataSet(DataSetDTO targetDataSet) {
-        this.targetDataSet = targetDataSet;
+    public void setTargetDataSetKeyName(String targetDataSetKeyName) {
+        this.targetDataSetKeyName = targetDataSetKeyName;
     }
 
     public void setDataSources(Map<String, DataSourceDTO> dataSources) {
@@ -52,12 +51,28 @@ public class TaskProcessorConfigDTO {
         return scripts;
     }
 
-    public Map<String, DataSetDTO> getSources() {
-        return sources;
+    @JsonIgnore
+    public DataSetDTO getTargetDataSet() {
+        return getDataSetDTOs().get(getTargetDataSetKeyName());
     }
 
-    public DataSetDTO getTargetDataSet() {
-        return targetDataSet;
+    @JsonIgnore
+    public DataSourceDTO getTargetDataSourceDTO() {
+        return
+                getDataSources().get(getTargetDataSet().getDataSourceKeyName());
+    }
+    @JsonIgnore
+    public Map<String, DataSetDTO> getForeignDataSetDTOMap(){
+        return getTargetDataSet()
+                .getConstraints()
+                .stream()
+                .filter(dataSetConstraintDTO -> dataSetConstraintDTO.getType().equals(Types.Constraint.foreign))
+                .map(dataSetConstraintDTO -> getDataSetDTOs().get( dataSetConstraintDTO.getReference().getDataSetKeyName()))
+                .collect(Collectors.toMap(DataSetDTO::getKeyName, Function.identity()));
+    }
+
+    public String getTargetDataSetKeyName() {
+        return targetDataSetKeyName;
     }
 
     public Map<String, DataSourceDTO> getDataSources() {
@@ -72,20 +87,12 @@ public class TaskProcessorConfigDTO {
         KeyBind = keyBind;
     }
 
-    public Map<String, TableDefinition> getTableDefinitions() {
-        return tableDefinitions;
+    public Map<String,DataSetDTO> getDataSetDTOs() {
+        return dataSetDTOs;
     }
 
-    public void setTableDefinitions(Map<String, TableDefinition> tableDefinitions) {
-        this.tableDefinitions = tableDefinitions;
-    }
-
-    public Set<DataSetDTO> getDataSetDTOSet() {
-        return dataSetDTOSet;
-    }
-
-    public void setDataSetDTOSet(Set<DataSetDTO> dataSetDTOSet) {
-        this.dataSetDTOSet = dataSetDTOSet;
+    public void setDataSetDTOs(Map<String,DataSetDTO> dataSetDTOs) {
+        this.dataSetDTOs = dataSetDTOs;
     }
 
     public OffsetDateTime getIntervalStartDateTime() {
@@ -127,12 +134,10 @@ public class TaskProcessorConfigDTO {
         TaskProcessorConfigDTO that = (TaskProcessorConfigDTO) o;
         return Objects.equals(executionModuleArgs, that.executionModuleArgs)
                 && Objects.equals(scripts, that.scripts)
-                && Objects.equals(sources, that.sources)
-                && Objects.equals(targetDataSet, that.targetDataSet)
+                && Objects.equals(targetDataSetKeyName, that.targetDataSetKeyName)
                 && Objects.equals(dataSources, that.dataSources)
                 && Objects.equals(KeyBind, that.KeyBind)
-                && Objects.equals(tableDefinitions, that.tableDefinitions)
-                && Objects.equals(dataSetDTOSet, that.dataSetDTOSet)
+                && Objects.equals(dataSetDTOs, that.dataSetDTOs)
                 && Objects.equals(targetDateTime, that.targetDateTime)
                 && Objects.equals(intervalStartDateTime, that.intervalStartDateTime)
                 && Objects.equals(intervalEndDateTime, that.intervalEndDateTime)
@@ -144,12 +149,10 @@ public class TaskProcessorConfigDTO {
         return Objects.hash(
                 executionModuleArgs,
                 scripts,
-                sources,
-                targetDataSet,
+                targetDataSetKeyName,
                 dataSources,
                 KeyBind,
-                tableDefinitions,
-                dataSetDTOSet,
+                dataSetDTOs,
                 targetDateTime,
                 intervalStartDateTime,
                 intervalEndDateTime,

@@ -1,0 +1,24 @@
+@startuml
+interface DataTransformer{
+Dataset<Row> transform(
+List<DataSourceManipulator> sourceDataSourceManipulators,
+DataSourceManipulator targetDataSourceManipulator)
+}
+
+class TransformationSparkProcessorBody extends SparkProcessorBodyAbstract
+class TransformerFactory {
+    DataTransformer buildDataTransformer(
+    TaskProcessorConfigDTO taskProcessorConfigDTO)
+}
+class DataTransformerAbstract implements DataTransformer
+class SQLDataTransformer extends DataTransformerAbstract
+class TaskProcessorConfigDTO
+interface DataSourceManipulator
+
+TransformerFactory *-- SQLDataTransformer
+TransformerFactory *-- TaskProcessorConfigDTO
+SQLDataTransformer *- DataSourceManipulator
+TransformationSparkProcessorBody *- TransformerFactory
+TransformationSparkProcessorBody *- DataSourceManipulator
+
+@enduml

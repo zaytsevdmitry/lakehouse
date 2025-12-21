@@ -1,88 +1,85 @@
 package org.lakehouse.taskexecutor.executionmodule.body;
 
+import com.hubspot.jinjava.Jinjava;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.lakehouse.client.api.constant.Configuration;
 import org.lakehouse.client.api.constant.DataSetPropertyKeys;
+import org.lakehouse.client.api.constant.SystemVarKeys;
+import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.exception.TaskFailedException;
-import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.DataStoreManipulatorFactory;
+import org.lakehouse.jinja.java.JinJavaFactory;
+import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.DataSourceManipulator;
 import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.UnsuportedDataSourceException;
-import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.exception.ReadException;
 import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.exception.WriteException;
-import org.lakehouse.taskexecutor.executionmodule.body.entity.DataSetItem;
 import org.lakehouse.taskexecutor.executionmodule.body.transformer.DataTransformer;
 import org.lakehouse.taskexecutor.executionmodule.body.transformer.TransformationException;
 import org.lakehouse.taskexecutor.executionmodule.body.transformer.TransformerFactory;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class TransformationSparkProcessorBody extends SparkProcessorBodyAbstract{
     public TransformationSparkProcessorBody(BodyParam bodyParam) {
         super(bodyParam);
     }
+    private final Jinjava jinjava = new JinJavaFactory().getJinjava();
 
+    private void rebuildKeyBind(Map<String, DataSourceManipulator> sources, DataSourceManipulator targetDataSourceManipulator){
+            Set<DataSourceManipulator> dataSourceManipulators = new HashSet<>(sources.values());
+            dataSourceManipulators.add(targetDataSourceManipulator);
 
+        dataSourceManipulators.forEach(dsm ->
+        getBodyParam().getKeyBind().put(
+                SystemVarKeys
+                        .buildSourceTableFullName(
+                                dsm.getDataSetDTO().getNameSpaceKeyName(),
+                                dsm.getDataSetDTO().getKeyName()),
+                dsm.getCatalogTableFullName()));
+
+    }
     @Override
     public void run() throws TaskFailedException {
 
         try {
             //input
-            List<DataSetItem> dataSetItems = getDataSetItems();
-            DataSetItem resultDataSetItem = getResultDataSetItem(dataSetItems);
+            Map<String,DataSourceManipulator> sourceDataSourceManipulators = getBodyParam().getSourceDataSourceManipulatorMap();
 
+            DataSourceManipulator resultDataSourceManipulator = getBodyParam().getTargetDataSourceManipulator();
+
+            // reset keybinds
+            rebuildKeyBind(sourceDataSourceManipulators,resultDataSourceManipulator);
             //transformation
             TransformerFactory f = new TransformerFactory();
-            DataTransformer t = f.buildDataTransformer(getTaskProcessorConfigDTO());
-            Dataset<Row> transformResult = t.transform(dataSetItems,resultDataSetItem);
-
+            DataTransformer t = f.buildDataTransformer(
+                    jinjava.render(
+                        getBodyParam().getScripts().get(0)
+                            ,getBodyParam().getKeyBind()));
+            Dataset<Row> transformResult = t.transform(sourceDataSourceManipulators,resultDataSourceManipulator);
+            transformResult.show();
             //save
-            resultDataSetItem.getDataSourceManipulator().write(
+            resultDataSourceManipulator.write(
                     transformResult,
-                    getTransformLocation(resultDataSetItem),
-                    getTransformOptions(resultDataSetItem),
-                    getModificationRule(resultDataSetItem)
+                    new HashMap<>(),
+                    getModificationRule(resultDataSourceManipulator.getDataSetDTO())
                     );
-        }catch (UnsuportedDataSourceException | ReadException | TransformationException | WriteException ue){
+        }catch ( TransformationException | WriteException ue){
             throw  new TaskFailedException(ue);
         }
     }
 
-    private List<DataSetItem> getDataSetItems() throws ReadException, UnsuportedDataSourceException {
-        return new DataSetItemFactory(
-                new DataStoreManipulatorFactory(),
-                getBodyParam()
-                        .getSparkSession())
-                .buildDataSetItems(getTaskProcessorConfigDTO());
 
-    }
-
-    private DataSetItem getResultDataSetItem(List<DataSetItem> dataSetItems){
-        return dataSetItems
-                .stream()
-                .filter(dataSetItem -> dataSetItem.getDataSetDTO().equals(getTaskProcessorConfigDTO().getTargetDataSet()))
-                .findFirst().get();
-
-    }
-    private Configuration.ModificationRule getModificationRule(DataSetItem dataSetItem){
+    private Configuration.ModificationRule getModificationRule(DataSetDTO dataSetDTO){
         return Configuration
                 .ModificationRule
-                .valueOf(dataSetItem
-                        .getDataSetDTO()
+                .valueOf(dataSetDTO
                         .getProperties()
-                        .get(DataSetPropertyKeys.Key.TRANSFORM_LOCATION_MODE));
+                        .getOrDefault(
+                                DataSetPropertyKeys.Key.TRANSFORM_LOCATION_MODE.label,
+                                Configuration.ModificationRule.append.getValue()));
     }
-    private String getTransformLocation(DataSetItem dataSetItem){
-        return dataSetItem.getDataSetDTO().getProperties().get(DataSetPropertyKeys.Key.TRANSFORM_LOCATION);
-    }
-    private Map<String,String> getTransformOptions(DataSetItem dataSetItem){
-        return dataSetItem
-                .getDataSetDTO()
-                .getProperties()
-                .entrySet()
-                .stream()
-                .filter(stringStringEntry -> stringStringEntry.getKey().startsWith(DataSetPropertyKeys.Prefix.transform.toString()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    }
+
 }

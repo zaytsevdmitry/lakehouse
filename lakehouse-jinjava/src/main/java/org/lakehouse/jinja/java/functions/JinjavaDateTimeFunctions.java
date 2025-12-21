@@ -3,7 +3,7 @@ package org.lakehouse.jinja.java.functions;
 
 import org.lakehouse.client.api.utils.DateTimeUtils;
 
-public class JinjavaDateTimeFunctions {
+public class  JinjavaDateTimeFunctions {
     public static String addDaysISO(String dateTimeStr, Integer days) {
         if (dateTimeStr == null)
             return "";

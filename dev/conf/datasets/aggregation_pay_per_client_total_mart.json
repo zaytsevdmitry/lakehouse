@@ -10,7 +10,7 @@
   ],
   "sources": [
     {
-      "name": "transaction_dds"
+      "dataSetKeyName": "transaction_dds"
     }
   ],
   "columnSchema": [

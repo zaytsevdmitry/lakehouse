@@ -21,11 +21,10 @@ import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.client.rest.spark.SparkRestClientApi;
 import org.lakehouse.jinja.java.configuration.JinJavaConfiguration;
+import org.lakehouse.taskexecutor.api.factory.TaskConfigBuildException;
 import org.lakehouse.taskexecutor.configuration.ImportBeans;
-import org.lakehouse.taskexecutor.configuration.SparkConfigurationProperties;
 import org.lakehouse.taskexecutor.exception.TaskProcessorConfigurationException;
-import org.lakehouse.taskexecutor.factory.TableDefinitionFactory;
-import org.lakehouse.taskexecutor.factory.TaskProcessorConfigFactory;
+import org.lakehouse.taskexecutor.api.factory.TaskProcessorConfigFactory;
 import org.lakehouse.taskexecutor.factory.TaskProcessorFactory;
 import org.lakehouse.taskexecutor.test.stub.ConfigRestClientApiTest;
 import org.lakehouse.taskexecutor.test.stub.SparkRestClientApiTest;
@@ -33,7 +32,6 @@ import org.lakehouse.taskexecutor.test.stub.StateRestClientApiTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -42,7 +40,6 @@ import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.web.client.RestClient;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -90,18 +87,13 @@ import java.util.Map;
         JinJavaConfiguration.class,
         SparkRestClientApiTest.class
 })
-@EnableConfigurationProperties(value = {
-        SparkConfigurationProperties.class})
 public class TaskExecutorTest {
     @Autowired
     @Qualifier("jinjava")
     Jinjava jinjava;
-    @Autowired RestClient.Builder restClientBuilder;
     @Autowired
     SparkRestClientApi sparkRestClientApi;
 
-    @Autowired
-    SparkConfigurationProperties sparkConfigurationProperties;
 
     @Value("${lakehouse.task-executor.scheduled.task.kafka.consumer.topics}")
     String topic;
@@ -133,34 +125,6 @@ public class TaskExecutorTest {
     static final KafkaContainer kafka = new KafkaContainer(
             DockerImageName.parse("confluentinc/cp-kafka:7.6.1")
     );
-
-
-    private static Network network = Network.newNetwork();
-/*
-
-    @Container
-    public LocalStackContainer localstack = new LocalStackContainer(DockerImageName.parse("localstack/localstack:0.12.13"))
-            .withNetwork(network)
-            .withNetworkAliases("localstack")
-            .withServices(SQS);
-*/
-
-/*
-    @Container
-    public GenericContainer spark = new GenericContainer(DockerImageName.parse("bitnami/spark:3.5"))
-            .withCopyFileToContainer(MountableFile.forHostPath("build/resources/test/.", 0744), "/home/")
-            .withCopyFileToContainer(MountableFile.forHostPath(
-                    "lakehouse-task-spark-apps-0.3.0-jar-with-dependencies.jar",
-                    0744),
-                    "/opt/bitnami/spark/jars/")
-            .withCopyFileToContainer(MountableFile.forHostPath("build/libs/.", 0555), "/home/")
-            .withNetwork(network)
-            .withEnv("AWS_ACCESS_KEY_ID", "test")
-            .withEnv("AWS_SECRET_KEY", "test")
-            .withEnv("SPARK_MODE", "master");
-
-*/
-
 
     @BeforeAll
     static void beforeAll() {
@@ -201,13 +165,12 @@ public class TaskExecutorTest {
 
     private TaskProcessor buildTaskProcessor(
             ScheduledTaskDTO scheduledTaskDTO)
-            throws TaskProcessorConfigurationException {
+            throws TaskProcessorConfigurationException, TaskConfigBuildException {
         ScheduledTaskLockDTO t = new ScheduledTaskLockDTO();
         t.setLockId(1L);
         t.setScheduledTaskEffectiveDTO(scheduledTaskDTO);
-        TableDefinitionFactory tdf = new TableDefinitionFactory();
-        TaskProcessorConfigFactory pcf = new TaskProcessorConfigFactory(configRestClientApi, tdf, jinjava);
-        TaskProcessorFactory pf = new TaskProcessorFactory(new StateRestClientApiTest(), restClientBuilder);
+        TaskProcessorConfigFactory pcf = new TaskProcessorConfigFactory(configRestClientApi, jinjava);
+        TaskProcessorFactory pf = new TaskProcessorFactory(new StateRestClientApiTest());
         return pf.buildProcessor(pcf.buildTaskProcessorConfig(t), t.getScheduledTaskEffectiveDTO().getExecutionModule());
     }
 
@@ -247,8 +210,8 @@ public class TaskExecutorTest {
 
     @Test
     @Order(1)
-    void testExecutionModules()
-            throws TaskProcessorConfigurationException, TaskFailedException {
+    void  testExecutionModules()
+            throws TaskProcessorConfigurationException, TaskFailedException, TaskConfigBuildException {
         ScheduleEffectiveDTO scheduleEffectiveDTO = configRestClientApi.getScheduleEffectiveDTO(null);
         DataSetDTO ds = configRestClientApi.getDataSetDTO("client_processing");
         DataSourceDTO pgDs = configRestClientApi.getDataSourceDTO(ds.getDataSourceKeyName());
@@ -279,7 +242,7 @@ public class TaskExecutorTest {
 
     @Test
     @Order(2)
-    void shouldBuildStateTaskProcessor() throws TaskProcessorConfigurationException, ClassNotFoundException, InvocationTargetException, InstantiationException, IllegalAccessException, NoSuchMethodException, TaskFailedException {
+    void shouldBuildStateTaskProcessor() throws TaskProcessorConfigurationException, ClassNotFoundException, InvocationTargetException, InstantiationException, IllegalAccessException, NoSuchMethodException, TaskFailedException, TaskConfigBuildException {
         ScheduleEffectiveDTO scheduleEffectiveDTO = configRestClientApi.getScheduleEffectiveDTO(null);
         DataSetDTO ds = configRestClientApi.getDataSetDTO("transaction_dds");
         DataSourceDTO pgDs = configRestClientApi.getDataSourceDTO(ds.getDataSourceKeyName());

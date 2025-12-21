@@ -64,7 +64,7 @@ public class QualityMetricsConfService {
                         .stream()
                         .map(e -> {
                             DataSetSourceDTO dto = new DataSetSourceDTO();
-                            dto.setName(e.getSource().getKeyName());
+                            dto.setDataSetKeyName(e.getSource().getKeyName());
                             dto.setProperties(
                                     qualityMetricsConfSourcePropertyRepository
                                             .findByQualityMetricsConfSourceId(e.getId())
@@ -131,7 +131,7 @@ public class QualityMetricsConfService {
     public QualityMetricsConfSource mapQualityMetricsConfSource(QualityMetricsConf qualityMetricsConf, DataSetSourceDTO dto) {
         QualityMetricsConfSource result = new QualityMetricsConfSource();
         result.setQualityMetricsConf(qualityMetricsConf);
-        result.setSource(dataSetRepository.getReferenceById(dto.getName()));
+        result.setSource(dataSetRepository.getReferenceById(dto.getDataSetKeyName()));
         return result;
     }
 
