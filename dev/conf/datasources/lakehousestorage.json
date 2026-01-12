@@ -1,12 +1,11 @@
 {
   "keyName": "lakehousestorage",
-  "engineType": "spark",
-  "engine": "iceberg",
+  "driverKeyName":"spark_iceberg",
   "services": [
     {
-      "host": "127.0.0.1",
+      "host": "localhost",
       "port": "6066",
-      "urn": "/v1/submissions"
+      "urn": ""
     }
   ],
   "properties": {
@@ -15,8 +14,18 @@
     "spark.driver.extraJavaOptions": "--add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/java.sql=ALL-UNNAMED --add-opens=java.sql/java.sql=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/jdk.internal.ref=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/sun.security.action=ALL-UNNAMED --add-opens=java.base/sun.util.calendar=ALL-UNNAMED --add-opens=java.security.jgss/sun.security.krb5=ALL-UNNAMED --add-opens=jdk.unsupported/sun.misc=ALL-UNNAMED -Djdk.reflect.useDirectMethodHandle=false -XX:+IgnoreUnrecognizedVMOptions",
     "spark.executor.extraJavaOptions": "--add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/java.sql=ALL-UNNAMED --add-opens=java.sql/java.sql=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/jdk.internal.ref=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/sun.security.action=ALL-UNNAMED --add-opens=java.base/sun.util.calendar=ALL-UNNAMED --add-opens=java.security.jgss/sun.security.krb5=ALL-UNNAMED --add-opens=jdk.unsupported/sun.misc=ALL-UNNAMED -Djdk.reflect.useDirectMethodHandle=false -XX:+IgnoreUnrecognizedVMOptions",
     "spark.driver.extraClassPath": "/opt/spark-3.5.7-bin-hadoop3/jars/iceberg-spark-runtime-3.5_2.12-1.9.2.jar",
-    "spark.executor.extraClassPath": "/opt/spark-3.5.7-bin-hadoop3/jars/iceberg-spark-runtime-3.5_2.12-1.9.2.jar"
+    "spark.executor.extraClassPath": "/opt/spark-3.5.7-bin-hadoop3/jars/iceberg-spark-runtime-3.5_2.12-1.9.2.jar",
+    "spark.sql.extensions": "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
+    "spark.sql.catalog.lakehousestorage": "org.apache.iceberg.spark.SparkCatalog",
+    "spark.sql.catalog.lakehousestorage.type": "hadoop",
+    "spark.sql.catalog.lakehousestorage.warehouse": "$PWD/warehouse"
   },
-  "description": "Local datastore"
+  "description": "Local datastore",
+  "sqlTemplate" : {
+    "tableDDLCompact": "{%set catalog_name=dataSets[targetDataSetKeyName].dataSourceKeyName%}CALL {{catalog_name}}.system.rewrite_data_files(table => 'db_name.table_name', options => map('min-input-files', '2', 'target-file-size-bytes', '134217728'))"
+  }
+
+
+
 }
 

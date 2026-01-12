@@ -1,0 +1,7 @@
+{
+  "databaseSchemaDDLCreate": "{%set schema=dataSets[currentDataSetKeyName].dataSourceKeyName~'.'~dataSets[currentDataSetKeyName].databaseSchemaName%}CREATE SCHEMA {{ schema }}",
+  "tableDDLCreate": "{%set currentDataSet=dataSets[currentDataSetKeyName]%}CREATE TABLE {{ refCat(currentDataSetKeyName) }} (\n {{ extractColumnsDDL(currentDataSet.columnSchema) }} \n)",
+  "tableDDLDrop": "DROP TABLE {{ refCat(currentDataSetKeyName) }}",
+  "databaseSchemaName": "{%set schema=dataSets[currentDataSetKeyName].databaseSchemaName%}",
+  "tableFullName": "{{ refCat(currentDataSetKeyName) }}"
+}

@@ -1,5 +1,6 @@
 package org.lakehouse.client.api.dto.configs.dataset;
 
+
 import org.lakehouse.client.api.dto.configs.NameDescriptionAbstract;
 
 import java.util.Objects;
@@ -7,7 +8,6 @@ import java.util.Objects;
 public class ColumnDTO extends NameDescriptionAbstract {
 
 
-    private static final long serialVersionUID = -8442899990290676056L;
     private String dataType;
     private boolean nullable;
     private Integer order = null;
@@ -51,19 +51,14 @@ public class ColumnDTO extends NameDescriptionAbstract {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
         ColumnDTO columnDTO = (ColumnDTO) o;
-        return isNullable() == columnDTO.isNullable()
-                && isSequence() == columnDTO.isSequence()
-                && Objects.equals(getDataType(), columnDTO.getDataType())
-                && Objects.equals(getOrder(), columnDTO.getOrder());
+        return isNullable() == columnDTO.isNullable() && isSequence() == columnDTO.isSequence() && Objects.equals(getDataType(), columnDTO.getDataType()) && Objects.equals(getOrder(), columnDTO.getOrder()) && Objects.equals(getDescription(), columnDTO.getDescription());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), getDataType(), isNullable(), getOrder(), isSequence());
+        return Objects.hash(getDataType(), isNullable(), getOrder(), isSequence(), getDescription());
     }
 
     @Override

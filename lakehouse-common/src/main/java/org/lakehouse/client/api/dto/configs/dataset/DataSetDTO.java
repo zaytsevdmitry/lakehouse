@@ -1,5 +1,7 @@
 package org.lakehouse.client.api.dto.configs.dataset;
 
+import org.lakehouse.client.api.dto.common.SQLTemplateDTO;
+
 import java.io.Serializable;
 import java.util.*;
 
@@ -17,13 +19,17 @@ public class DataSetDTO implements Serializable {
     private String keyName;
     private String nameSpaceKeyName;
     private String dataSourceKeyName;
-    private String fullTableName;
-    private List<DataSetSourceDTO> sources = new ArrayList<>();
+    private String databaseSchemaName;
+    private String tableName;
+
+    private Map<String,DataSetSourceDTO> sources = new HashMap<>();
     private List<ColumnDTO> columnSchema = new ArrayList<>();
     private Map<String, String> properties = new HashMap<>();
     private List<DataSetScriptDTO> scripts = new ArrayList<>();
     private String description;
-    private List<DataSetConstraintDTO> constraints = new ArrayList<>();
+    private Map<String, DataSetConstraintDTO> constraints = new HashMap<>();
+    private SQLTemplateDTO sqlTemplate = new SQLTemplateDTO();
+    private String partitionStmt;
 
     public DataSetDTO() {
     }
@@ -52,11 +58,11 @@ public class DataSetDTO implements Serializable {
         this.dataSourceKeyName = dataSourceKeyName;
     }
 
-    public List<DataSetSourceDTO> getSources() {
+    public Map<String,DataSetSourceDTO> getSources() {
         return sources;
     }
 
-    public void setSources(List<DataSetSourceDTO> sources) {
+    public void setSources(Map<String,DataSetSourceDTO> sources) {
         this.sources = sources;
     }
 
@@ -104,66 +110,74 @@ public class DataSetDTO implements Serializable {
         this.scripts = scripts;
     }
 
-    public List<DataSetConstraintDTO> getConstraints() {
+    public Map<String,DataSetConstraintDTO> getConstraints() {
         return constraints;
     }
 
-    public void setConstraints(List<DataSetConstraintDTO> constraints) {
+    public void setConstraints(Map<String,DataSetConstraintDTO> constraints) {
         this.constraints = constraints;
     }
 
-    public String getFullTableName() {
-        return fullTableName;
+    public String getDatabaseSchemaName() {
+        return databaseSchemaName;
     }
 
-    public void setFullTableName(String fullTableName) {
-        this.fullTableName = fullTableName;
+    public void setDatabaseSchemaName(String databaseSchemaName) {
+        this.databaseSchemaName = databaseSchemaName;
+    }
+
+    public String getTableName() {
+        return tableName;
+    }
+
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
+    }
+
+    public SQLTemplateDTO getSqlTemplate() {
+        return sqlTemplate;
+    }
+
+    public void setSqlTemplate(SQLTemplateDTO sqlTemplate) {
+        this.sqlTemplate = sqlTemplate;
     }
 
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         DataSetDTO that = (DataSetDTO) o;
-        return Objects.equals(getKeyName(), that.getKeyName())
-                && Objects.equals(getNameSpaceKeyName(), that.getNameSpaceKeyName())
-                && Objects.equals(getDataSourceKeyName(), that.getDataSourceKeyName())
-                && Objects.equals(getFullTableName(), that.getFullTableName())
-                && Objects.equals(getSources(), that.getSources())
-                && Objects.equals(getColumnSchema(), that.getColumnSchema())
-                && Objects.equals(getProperties(), that.getProperties())
-                && Objects.equals(getScripts(), that.getScripts())
-                && Objects.equals(getDescription(), that.getDescription())
-                && Objects.equals(getConstraints(), that.getConstraints());
+        return Objects.equals(getKeyName(), that.getKeyName()) && Objects.equals(getNameSpaceKeyName(), that.getNameSpaceKeyName()) && Objects.equals(getDataSourceKeyName(), that.getDataSourceKeyName()) && Objects.equals(getDatabaseSchemaName(), that.getDatabaseSchemaName()) && Objects.equals(getTableName(), that.getTableName()) && Objects.equals(getSources(), that.getSources()) && Objects.equals(getColumnSchema(), that.getColumnSchema()) && Objects.equals(getProperties(), that.getProperties()) && Objects.equals(getScripts(), that.getScripts()) && Objects.equals(getDescription(), that.getDescription()) && Objects.equals(getConstraints(), that.getConstraints()) && Objects.equals(getSqlTemplate(), that.getSqlTemplate()) && Objects.equals(getPartitionStmt(), that.getPartitionStmt());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getKeyName(),
-                getNameSpaceKeyName(),
-                getDataSourceKeyName(),
-                getFullTableName(),
-                getSources(),
-                getColumnSchema(),
-                getProperties(),
-                getScripts(),
-                getDescription(),
-                getConstraints()
-        );
+        return Objects.hash(getKeyName(), getNameSpaceKeyName(), getDataSourceKeyName(), getDatabaseSchemaName(), getTableName(), getSources(), getColumnSchema(), getProperties(), getScripts(), getDescription(), getConstraints(), getSqlTemplate(), getPartitionStmt());
     }
 
     @Override
     public String toString() {
-        return "\nDataSetDTO{" +
-                "\nkeyName='" + keyName + '\'' +
-                "\n, nameSpaceKeyName='" + nameSpaceKeyName + '\'' +
-                "\n, dataSourceKeyName='" + dataSourceKeyName + '\'' +
-                "\n, fullTableName='" + fullTableName + '\'' +
-                "\n, sources=" + sources +
-                "\n, columnSchema=" + columnSchema +
-                "\n, properties=" + properties +
-                "\n, scripts=" + scripts +
-                "\n, description='" + description + '\'' +
-                "\n, constraints=" + constraints +
+        return "DataSetDTO{" +
+                "keyName='" + keyName + '\'' +
+                ", nameSpaceKeyName='" + nameSpaceKeyName + '\'' +
+                ", dataSourceKeyName='" + dataSourceKeyName + '\'' +
+                ", databaseSchemaName='" + databaseSchemaName + '\'' +
+                ", tableName='" + tableName + '\'' +
+                ", sources=" + sources +
+                ", columnSchema=" + columnSchema +
+                ", properties=" + properties +
+                ", scripts=" + scripts +
+                ", description='" + description + '\'' +
+                ", constraints=" + constraints +
+                ", sqlTemplate=" + sqlTemplate +
+                ", partitionStmt='" + partitionStmt + '\'' +
                 '}';
+    }
+
+    public String getPartitionStmt() {
+        return partitionStmt;
+    }
+
+    public void setPartitionStmt(String partitionStmt) {
+        this.partitionStmt = partitionStmt;
     }
 }

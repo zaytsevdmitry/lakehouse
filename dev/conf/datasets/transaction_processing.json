@@ -1,15 +1,16 @@
-{
+  {
   "keyName": "transaction_processing",
   "nameSpaceKeyName": "DEMO",
   "dataSourceKeyName": "processingdb",
-  "fullTableName": "proc.transactions",
+  "databaseSchemaName":  "proc",
+  "tableName": "transactions",
   "scripts": [
     {
       "key": "transaction_processing.sql",
       "order": 1
     }
   ],
-  "sources": [],
+  "sources": {},
   "columnSchema": [
     {
       "name": "id",
@@ -50,26 +51,25 @@
       "nullable": false
     }
   ],
-  "constraints": [
+  "constraints":
     {
-      "name": "transaction_processing_pk",
-      "type": "primary",
-      "columns": "id",
-      "runtimeLevelCheck": false,
-      "constructLevelCheck": true
-    },
-    {
-      "name": "transaction_processing_client_fk",
-      "type": "foreign",
-      "columns": "client_id",
-      "reference": {
-        "dataSetKeyName": "client_processing",
-        "constraintName": "client_processing_pk"
+      "transaction_processing_pk": {
+        "type": "primary",
+        "columns": "id",
+        "enabled": true,
+        "constraintLevelCheck": "construct"
       },
-      "runtimeLevelCheck": false,
-      "constructLevelCheck": true
-    }
-  ],
+      "transaction_processing_client_fk": {
+        "type": "foreign",
+        "columns": "client_id",
+        "reference": {
+          "dataSetKeyName": "client_processing",
+          "constraintName": "client_processing_pk"
+        },
+        "enabled": true,
+        "constraintLevelCheck": "construct"
+      }
+    },
   "properties": {
   },
   "description": "remote transactions table placed  in db schema proc"

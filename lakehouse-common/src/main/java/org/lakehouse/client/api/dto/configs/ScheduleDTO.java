@@ -1,26 +1,21 @@
 package org.lakehouse.client.api.dto.configs;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 public class ScheduleDTO extends ScheduleAbstract {
     private static final long serialVersionUID = 5259060075468520559L;
 
-    private List<ScheduleScenarioActDTO> scenarioActs = new ArrayList<>();
+    private Set<ScheduleScenarioActDTO> scenarioActs = new HashSet<>();
 
-    public List<ScheduleScenarioActDTO> getScenarioActs() {
+    public Set<ScheduleScenarioActDTO> getScenarioActs() {
         return scenarioActs;
     }
 
-    public void setScenarioActs(List<ScheduleScenarioActDTO> scenarioActs) {
-        this.scenarioActs = scenarioActs
-                .stream() // sort for stable list comparison
-                .sorted(Comparator.comparing(ScheduleScenarioActDTO::hashCode))
-                .toList();
+    public void setScenarioActs(Set<ScheduleScenarioActDTO> scenarioActs) {
+        this.scenarioActs = scenarioActs;
     }
-
 
     @Override
     public boolean equals(Object o) {

@@ -5,14 +5,25 @@
     {
       "name": "begin",
       "taskExecutionServiceGroupName": "default",
-      "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.LockedStateTaskProcessor",
+      "taskProcessor": "org.lakehouse.taskexecutor.processor.state.LockedStateTaskProcessor",
       "importance": "critical",
       "description": "Made dataset interval status Locked"
     },
     {
+      "name": "prepare",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "org.lakehouse.taskexecutor.processor.jdbc.JdbcTaskProcessor",
+      "taskProcessorBody": "org.lakehouse.taskexecutor.api.processor.body.sql.CreateTableSQLProcessorBody",
+      "importance": "critical",
+      "description": "Create table if not exists",
+      "executionModuleArgs": {
+      }
+    },
+    {
       "name": "load",
       "taskExecutionServiceGroupName": "default",
-      "executionModule": "org.lakehouse.taskexecutor.executionmodule.JdbcTaskProcessor",
+      "taskProcessor": "org.lakehouse.taskexecutor.processor.jdbc.JdbcTaskProcessor",
+      "taskProcessorBody": "org.lakehouse.taskexecutor.api.processor.body.sql.MergeSQLProcessorBody",
       "importance": "critical",
       "description": "load data",
       "executionModuleArgs": {
@@ -21,7 +32,7 @@
     {
       "name": "finally",
       "taskExecutionServiceGroupName": "default",
-      "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.SuccessStateTaskProcessor",
+      "taskProcessor": "org.lakehouse.taskexecutor.processor.state.SuccessStateTaskProcessor",
       "importance": "critical",
       "description": "Made dataset interval status SUCCESS"
     }
@@ -29,6 +40,10 @@
   "dagEdges": [
     {
       "from": "begin",
+      "to": "prepare"
+    },
+    {
+      "from": "prepare",
       "to": "load"
     },
     {

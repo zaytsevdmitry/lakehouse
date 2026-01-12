@@ -39,7 +39,7 @@ public class ScheduledTaskObjectActions implements ObjectActions {
                         o.getScenarioActKeyName(),
                         o.getName(),
                         o.getStatus(),
-                        o.getExecutionModule(),
+                        o.getTaskProcessor(),
                         o.getTaskExecutionServiceGroupName()
                 }).toList());
     }

@@ -1,8 +1,10 @@
 package org.lakehouse.test.config.api;
 
+import org.apache.hc.core5.http.HttpStatus;
 import org.lakehouse.client.api.dto.configs.*;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
+import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.test.config.configuration.FileLoader;
 import org.slf4j.Logger;
@@ -15,13 +17,12 @@ import java.util.List;
 import java.util.Map;
 
 public class ConfigRestClientApiTest implements ConfigRestClientApi {
-    private final int HTTP_NOT_IMPLEMENTED_501 = 501;
     private final FileLoader fileLoader = new FileLoader();
     private final Map<String, TaskDTO> taskDTOEffectiveMap = new HashMap<>();
     private final Map<String, String> scriptMap;
     private final Map<String, DataSetDTO> dataSetDTOMap;
     private final Map<String, DataSourceDTO> dataStoreDTOMap;
-
+    private final Map<String, DriverDTO> driverDTOMap;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public ConfigRestClientApiTest() throws IOException {
@@ -40,7 +41,12 @@ public class ConfigRestClientApiTest implements ConfigRestClientApi {
 
         this.dataSetDTOMap = fileLoader.loadAllDataSets();
         this.dataStoreDTOMap = fileLoader.loadAllDataSources();
+        this.driverDTOMap = fileLoader.loadAllDrivers();
+    }
 
+    @Override
+    public DriverDTO getDriverDTO(String name) {
+        return driverDTOMap.get(name);
     }
 
     @Override
@@ -103,6 +109,15 @@ public class ConfigRestClientApiTest implements ConfigRestClientApi {
         return scriptMap.get(key);
     }
 
+
+
+
+
+    @Override
+    public List<DriverDTO> getDriverDTOList() {
+        return driverDTOMap.values().stream().toList();
+    }
+
     @Override
     public List<NameSpaceDTO> getNameSpaceDTOList() {
         return List.of();
@@ -149,38 +164,48 @@ public class ConfigRestClientApiTest implements ConfigRestClientApi {
     }
 
     @Override
+    public int deleteDriverDTO(String name) {
+        return 0;
+    }
+
+    @Override
     public int deleteNameSpaceDTO(String NameSpaceName) {
-        return HTTP_NOT_IMPLEMENTED_501;
+        return HttpStatus.SC_NOT_IMPLEMENTED;
     }
 
     @Override
     public int deleteDataStoreDTO(String name) {
-        return HTTP_NOT_IMPLEMENTED_501;
+        return HttpStatus.SC_NOT_IMPLEMENTED;
     }
 
     @Override
     public int deleteDataSetDTO(String name) {
-        return HTTP_NOT_IMPLEMENTED_501;
+        return HttpStatus.SC_NOT_IMPLEMENTED;
     }
 
     @Override
     public int deleteScenarioActTemplateDTO(String name) {
-        return HTTP_NOT_IMPLEMENTED_501;
+        return HttpStatus.SC_NOT_IMPLEMENTED;
     }
 
     @Override
     public int deleteScheduleDTO(String name) {
-        return HTTP_NOT_IMPLEMENTED_501;
+        return HttpStatus.SC_NOT_IMPLEMENTED;
     }
 
     @Override
     public int deleteTaskExecutionServiceGroupDTO(String name) {
-        return HTTP_NOT_IMPLEMENTED_501;
+        return HttpStatus.SC_NOT_IMPLEMENTED;
+    }
+
+    @Override
+    public int postDriverDTO(DriverDTO o) {
+        return 0;
     }
 
     @Override
     public int postNameSpaceDTO(NameSpaceDTO o) {
-        return HTTP_NOT_IMPLEMENTED_501;
+        return HttpStatus.SC_NOT_IMPLEMENTED;
     }
 
     @Override
@@ -191,27 +216,27 @@ public class ConfigRestClientApiTest implements ConfigRestClientApi {
 
     @Override
     public int postDataSetDTO(DataSetDTO o) {
-        return HTTP_NOT_IMPLEMENTED_501;
+        return HttpStatus.SC_NOT_IMPLEMENTED;
     }
 
     @Override
     public int postScenarioActTemplateDTO(ScenarioActTemplateDTO o) {
-        return HTTP_NOT_IMPLEMENTED_501;
+        return HttpStatus.SC_NOT_IMPLEMENTED;
     }
 
     @Override
     public int postScheduleDTO(ScheduleDTO o) {
-        return HTTP_NOT_IMPLEMENTED_501;
+        return HttpStatus.SC_NOT_IMPLEMENTED;
     }
 
     @Override
     public int postTaskExecutionServiceGroupDTO(TaskExecutionServiceGroupDTO o) {
-        return HTTP_NOT_IMPLEMENTED_501;
+        return HttpStatus.SC_NOT_IMPLEMENTED;
     }
 
     @Override
     public int postQualityMetricsConf(QualityMetricsConfDTO o) {
-        return 0;
+        return HttpStatus.SC_NOT_IMPLEMENTED;
     }
 
 

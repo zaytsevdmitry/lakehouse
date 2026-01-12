@@ -124,13 +124,13 @@
             <version>5.11.4</version> <!-- Use the latest stable version -->
             <scope>test</scope>
         </dependency>
-        <dependency>
+   <!--     <dependency>
             <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>5.11.4</version> <!-- Use the latest stable version -->
+            <artifactId>junit-jupiter-dataSourceType</artifactId>
+            <version>5.11.4</version> &lt;!&ndash; Use the latest stable version &ndash;&gt;
             <scope>test</scope>
         </dependency>
-
+-->
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -146,7 +146,6 @@
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-task-executor-api</artifactId>
             <version>0.3.0</version>
-            <scope>test</scope>
         </dependency>
 
         <dependency>

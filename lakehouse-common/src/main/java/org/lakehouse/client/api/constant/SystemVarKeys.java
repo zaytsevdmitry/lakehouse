@@ -1,20 +1,28 @@
 package org.lakehouse.client.api.constant;
 
 public class SystemVarKeys {
-    public static String TARGET_DATE_TIME_TZ_KEY = "targetDateTimeTZ";
-    public static String TARGET_INTERVAL_START_TZ_KEY = "targetIntervalStartTZ";
-    public static String TARGET_INTERVAL_END_TZ_KEY = "targetIntervalEndTZ";
+
+    /**
+     * global context keys
+     * */
+    public static String TARGET_DATE_TIME_TZ_KEY = "targetDateTime";
+    public static String TARGET_INTERVAL_START_TZ_KEY = "intervalStartDateTime";
+    public static String TARGET_INTERVAL_END_TZ_KEY = "intervalEndDateTime";
+
+    public static String TARGET_DATASET_KEY_NAME = "targetDataSetKeyName"; //
 
 
-    public static String SOURCE_KEY_F = "source_%s_%s_";
-    public static String SOURCE_TABLE_FULL_NAME_KEY_F = SOURCE_KEY_F.concat("tableFullName");
-    public static String SOURCE_KEY_NAME_KEY_F = SOURCE_KEY_F.concat("keyName");
-
-    public static String buildSourceTableFullName(String nameSpace, String dataSet) {
-        return String.format(SOURCE_TABLE_FULL_NAME_KEY_F, nameSpace, dataSet);
-    }
-
-    public static String buildSourceKeyName(String nameSpace, String dataSet) {
-        return String.format(SOURCE_KEY_NAME_KEY_F, nameSpace, dataSet);
-    }
+    /**
+    * localContext keys
+    */
+    public static String CURRENT_DATASET_KEY_NAME = "currentDataSetKeyName";
+    public static String CONSTRAINT_NAME = "constraintName";
+    public static String PARTITION_NAME = "partitionName";
+    public static String SCRIPT = "script";
+    public static String CONNECTION_STRING_PROTOCOL_NAME = "protocol"; // jdbc:[*]/spark/http[s] etc
+    public static String SERVICE_KEY = "service";
+    /**
+     * internal use constants
+     * */
+    public static String SCRIPT_DELIMITER = "\n;";
 }

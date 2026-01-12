@@ -1,7 +1,6 @@
 {
   "keyName": "processingdb",
-  "engineType": "database",
-  "engine": "postgres",
+  "driverKeyName":"postgres",
   "services": [
     {
       "host": "localhost",
@@ -13,5 +12,11 @@
       }
     }
   ],
+  "properties": {
+    "fetchSize": "10000"
+  },
   "description": "Remote datastore processingdb"
+
 }
+
+

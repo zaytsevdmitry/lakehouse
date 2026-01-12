@@ -9,10 +9,11 @@ import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.jinja.java.JinJavaFactory;
-import org.lakehouse.taskexecutor.api.factory.TaskConfigBuildException;
+import org.lakehouse.taskexecutor.api.factory.taskconf.TaskConfigBuildException;
+import org.lakehouse.taskexecutor.api.factory.taskconf.TaskProcessorConfigFactory;
 import org.lakehouse.test.config.api.ConfigRestClientApiTest;
 import org.lakehouse.test.config.configuration.FileLoader;
-import org.lakehouse.taskexecutor.api.factory.TaskProcessorConfigFactory;
+
 import java.io.IOException;
 
 public class TaskConfigTestFactory {
@@ -87,7 +88,8 @@ public class TaskConfigTestFactory {
         scheduledTaskLockDTO.setScheduledTaskEffectiveDTO(findScheduledTaskDTO(dataSetKeyName,taskName));
         return taskProcessorConfigFactory.buildTaskProcessorConfig(scheduledTaskLockDTO);
     }
-    public static String intervalStart = "2025-12-20T00:00:00Z";
+    public static String targetDateTime = "2025-12-20T00:00:00Z";
+    public static String intervalStart = targetDateTime;
     public static String intervalEnd = "2025-12-21T00:00:00Z";
     private ScheduledTaskDTO findScheduledTaskDTO(String dataSetKeyName, String taskName) throws IOException {
         FileLoader fileLoader = new FileLoader();
@@ -102,10 +104,11 @@ public class TaskConfigTestFactory {
                 .filter(taskDTO -> taskDTO.getName().equals(taskName))
                 .toList().get(0);
         result.setDataSetKeyName(dataSetKeyName);
-        result.setExecutionModule(t.getExecutionModule());
         result.setScheduleKeyName("unknown");
-        result.setExecutionModuleArgs(t.getExecutionModuleArgs());
-        result.setTargetDateTime(DateTimeUtils.nowStr());
+        result.setTaskProcessor(t.getTaskProcessor());
+        result.setTaskProcessorBody(t.getTaskProcessorBody());
+        result.setTaskProcessorArgs(t.getTaskProcessorArgs());
+        result.setTargetDateTime(targetDateTime);
         result.setIntervalStartDateTime(intervalStart);
         result.setIntervalEndDateTime(intervalEnd);
         result.setId(1L);

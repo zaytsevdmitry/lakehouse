@@ -2,12 +2,8 @@ package org.lakehouse.client.api.dto.scheduler.tasks;
 
 import org.lakehouse.client.api.dto.configs.TaskDTO;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class ScheduledTaskDTO extends TaskDTO {
     private Long id;
-    private Map<String, String> executionModuleArgs = new HashMap<>();
     private String scenarioActKeyName;
     private String scheduleKeyName;
     private String status;
@@ -46,16 +42,6 @@ public class ScheduledTaskDTO extends TaskDTO {
 
     public String getIntervalStartDateTime() {
         return intervalStartDateTime;
-    }
-
-    @Override
-    public Map<String, String> getExecutionModuleArgs() {
-        return executionModuleArgs;
-    }
-
-    @Override
-    public void setExecutionModuleArgs(Map<String, String> executionModuleArgs) {
-        this.executionModuleArgs = executionModuleArgs;
     }
 
     public String getTargetDateTime() {

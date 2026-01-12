@@ -3,10 +3,8 @@ package org.lakehouse.client.api.dto.configs;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 
 import java.io.Serial;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ScheduleEffectiveDTO extends ScheduleAbstract {
     @Serial
@@ -16,21 +14,18 @@ public class ScheduleEffectiveDTO extends ScheduleAbstract {
 
     private String lastChangedDateTime;
 
-    private List<ScheduleScenarioActEffectiveDTO> scenarioActs = new ArrayList<>();
+    private Set<ScheduleScenarioActEffectiveDTO> scenarioActs = new HashSet<>();
 
     public ScheduleEffectiveDTO() {
     }
 
 
-    public List<ScheduleScenarioActEffectiveDTO> getScenarioActs() {
+    public Set<ScheduleScenarioActEffectiveDTO> getScenarioActs() {
         return scenarioActs;
     }
 
-    public void setScenarioActs(List<ScheduleScenarioActEffectiveDTO> scenarioActs) {
-        this.scenarioActs = scenarioActs
-                .stream() // sort for stable list comparison
-                .sorted(Comparator.comparing(ScheduleScenarioActEffectiveDTO::hashCode))
-                .toList();
+    public void setScenarioActs(Set<ScheduleScenarioActEffectiveDTO> scenarioActs) {
+        this.scenarioActs = scenarioActs.stream().sorted(Comparator.comparing(ScheduleScenarioActAbstract::getName)).collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     public void setLastChangeNumber(Long lastChangeNumber) {

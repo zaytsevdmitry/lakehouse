@@ -5,10 +5,10 @@ select t.id id
      , t.provider_id
      , t.amount
      , t.commission
-from ${source(transaction_processing)} t
-join ${source(client_processing)} c
+from {{ refCat('transaction_processing') }} t   -- refCat returns table name with catalog
+join {{ refCat('client_processing') }} c
   on t.client_id = c.id
  where
-   t.reg_date_time >= timestamp '{{ targetIntervalStartTZ }}' and
-   t.reg_date_time < timestamp '{{ targetIntervalEndTZ }}'
+   t.reg_date_time >= timestamp '{{ intervalStartDateTime }}' and
+   t.reg_date_time < timestamp '{{ intervalEndDateTime }}'
 -- NB spark sql

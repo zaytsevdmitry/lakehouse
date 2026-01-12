@@ -18,7 +18,9 @@ public abstract class TaskAbstract {
 
 
     @Column(nullable = false)
-    private String executionModule;
+    private String taskProcessor;
+
+    private String taskProcessorBody;
 
     @Column(nullable = false)
     private String importance;
@@ -62,12 +64,12 @@ public abstract class TaskAbstract {
     }
 
 
-    public String getExecutionModule() {
-        return executionModule;
+    public String getTaskProcessor() {
+        return taskProcessor;
     }
 
-    public void setExecutionModule(String executionModule) {
-        this.executionModule = executionModule;
+    public void setTaskProcessor(String taskProcessor) {
+        this.taskProcessor = taskProcessor;
     }
 
     public String getImportance() {
@@ -86,27 +88,23 @@ public abstract class TaskAbstract {
         this.taskExecutionServiceGroup = taskExecutionServiceGroup;
     }
 
+    public String getTaskProcessorBody() {
+        return taskProcessorBody;
+    }
+
+    public void setTaskProcessorBody(String taskProcessorBody) {
+        this.taskProcessorBody = taskProcessorBody;
+    }
+
     @Override
     public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-        if (!super.equals(o))
-            return false;
+        if (o == null || getClass() != o.getClass()) return false;
         TaskAbstract that = (TaskAbstract) o;
-        return Objects.equals(getName(), that.getName())
-                && Objects.equals(getId(), that.getId())
-                && Objects.equals(getDescription(), that.getDescription())
-                && Objects.equals(getExecutionModule(), that.getExecutionModule())
-                && Objects.equals(getImportance(), that.getImportance())
-                && Objects.equals(getTaskExecutionServiceGroup(), that.getTaskExecutionServiceGroup());
+        return Objects.equals(getId(), that.getId()) && Objects.equals(getName(), that.getName()) && Objects.equals(getDescription(), that.getDescription()) && Objects.equals(getTaskProcessor(), that.getTaskProcessor()) && Objects.equals(getTaskProcessorBody(), that.getTaskProcessorBody()) && Objects.equals(getImportance(), that.getImportance()) && Objects.equals(getTaskExecutionServiceGroup(), that.getTaskExecutionServiceGroup());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), getId(), getName(), getDescription(),
-                getExecutionModule(), getImportance(),
-                getTaskExecutionServiceGroup());
+        return Objects.hash(getId(), getName(), getDescription(), getTaskProcessor(), getTaskProcessorBody(), getImportance(), getTaskExecutionServiceGroup());
     }
 }

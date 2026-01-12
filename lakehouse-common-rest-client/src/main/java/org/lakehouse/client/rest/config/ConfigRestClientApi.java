@@ -3,6 +3,7 @@ package org.lakehouse.client.rest.config;
 import org.lakehouse.client.api.dto.configs.*;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
+import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -11,69 +12,76 @@ import java.util.List;
 public interface ConfigRestClientApi {
 
 
-    public NameSpaceDTO getNameSpaceDTO(String NameSpaceName);
+    DriverDTO getDriverDTO(String name);
 
-    public DataSourceDTO getDataSourceDTO(String name);
+    NameSpaceDTO getNameSpaceDTO(String NameSpaceName);
 
-    public DataSetDTO getDataSetDTO(String name);
+    DataSourceDTO getDataSourceDTO(String name);
 
-    public ScenarioActTemplateDTO getScenarioActTemplateDTO(String name);
+    DataSetDTO getDataSetDTO(String name);
 
-    public ScheduleDTO getScheduleDTO(String name);
+    ScenarioActTemplateDTO getScenarioActTemplateDTO(String name);
 
-    public ScheduleEffectiveDTO getScheduleEffectiveDTO(String name);
+    ScheduleDTO getScheduleDTO(String name);
 
-    public TaskDTO getEffectiveTaskDTO(String schedule, String scenarioAct, String task);
+    ScheduleEffectiveDTO getScheduleEffectiveDTO(String name);
 
-    public TaskExecutionServiceGroupDTO getTaskExecutionServiceGroupDTO(String name);
+    TaskDTO getEffectiveTaskDTO(String schedule, String scenarioAct, String task);
 
-    public QualityMetricsConfDTO getQualityMetricsConf(String key);
+    TaskExecutionServiceGroupDTO getTaskExecutionServiceGroupDTO(String name);
 
-    public String getScript(String key);
+    QualityMetricsConfDTO getQualityMetricsConf(String key);
 
-    public List<NameSpaceDTO> getNameSpaceDTOList();
+    String getScript(String key);
 
-    public List<DataSourceDTO> getDataSourceDTOList();
+    List<DriverDTO> getDriverDTOList();
 
-    public List<DataSetDTO> getDataSetDTOList();
+    List<NameSpaceDTO> getNameSpaceDTOList();
 
-    public List<ScenarioActTemplateDTO> getScenarioActTemplateDTOList();
+    List<DataSourceDTO> getDataSourceDTOList();
 
-    public List<ScheduleDTO> getScheduleDTOList();
+    List<DataSetDTO> getDataSetDTOList();
 
-    public List<ScheduleEffectiveDTO> getScheduleEffectiveDTOList(OffsetDateTime dt);
+    List<ScenarioActTemplateDTO> getScenarioActTemplateDTOList();
 
-    public List<TaskExecutionServiceGroupDTO> getTaskExecutionServiceGroupDTOList();
+    List<ScheduleDTO> getScheduleDTOList();
 
-    public List<QualityMetricsConfDTO> getQualityMetricsConfList();
+    List<ScheduleEffectiveDTO> getScheduleEffectiveDTOList(OffsetDateTime dt);
 
-    public List<QualityMetricsConfDTO> getQualityMetricsConfList(String dataSetKeyName);
+    List<TaskExecutionServiceGroupDTO> getTaskExecutionServiceGroupDTOList();
 
-    public int deleteNameSpaceDTO(String NameSpaceName);
+    List<QualityMetricsConfDTO> getQualityMetricsConfList();
 
-    public int deleteDataStoreDTO(String name);
+    List<QualityMetricsConfDTO> getQualityMetricsConfList(String dataSetKeyName);
 
-    public int deleteDataSetDTO(String name);
+    int deleteDriverDTO(String name);
 
-    public int deleteScenarioActTemplateDTO(String name);
+    int deleteNameSpaceDTO(String NameSpaceName);
 
-    public int deleteScheduleDTO(String name);
+    int deleteDataStoreDTO(String name);
 
-    public int deleteTaskExecutionServiceGroupDTO(String name);
+    int deleteDataSetDTO(String name);
 
+    int deleteScenarioActTemplateDTO(String name);
 
-    public int postNameSpaceDTO(NameSpaceDTO o);
+    int deleteScheduleDTO(String name);
 
-    public int postDataStoreDTO(DataSourceDTO o);
+    int deleteTaskExecutionServiceGroupDTO(String name);
 
-    public int postDataSetDTO(DataSetDTO o);
+    int postDriverDTO(DriverDTO o);
 
-    public int postScenarioActTemplateDTO(ScenarioActTemplateDTO o);
+    int postNameSpaceDTO(NameSpaceDTO o);
 
-    public int postScheduleDTO(ScheduleDTO o);
+    int postDataStoreDTO(DataSourceDTO o);
 
-    public int postTaskExecutionServiceGroupDTO(TaskExecutionServiceGroupDTO o);
+    int postDataSetDTO(DataSetDTO o);
 
-    public int postQualityMetricsConf(QualityMetricsConfDTO o);
+    int postScenarioActTemplateDTO(ScenarioActTemplateDTO o);
+
+    int postScheduleDTO(ScheduleDTO o);
+
+    int postTaskExecutionServiceGroupDTO(TaskExecutionServiceGroupDTO o);
+
+    int postQualityMetricsConf(QualityMetricsConfDTO o);
 }
 

@@ -205,7 +205,7 @@ public class SchedulesTest {
         List<ScheduleInstance> siList = scheduleInstanceRepository.findAll();
         assert (siList.size() == 1);
         List<ScheduleTaskInstance> stiList = scheduleTaskInstanceRepository.findByStatus(Status.Task.NEW.label);
-        assert (stiList.size() == 34);
+        assert (stiList.size() == 36);
     }
 
     private void run() {

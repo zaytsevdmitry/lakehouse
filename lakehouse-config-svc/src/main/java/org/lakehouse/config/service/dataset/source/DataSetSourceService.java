@@ -10,15 +10,14 @@ import org.lakehouse.config.mapper.keyvalue.KeyValueEntityMerger;
 import org.lakehouse.config.repository.dataset.DataSetRepository;
 import org.lakehouse.config.repository.dataset.DataSetSourcePropertyRepository;
 import org.lakehouse.config.repository.dataset.DataSetSourceRepository;
+import org.lakehouse.config.specifier.DataSetSourcePropertyKeyValueEntitySpecifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class DataSetSourceService {
@@ -39,23 +38,28 @@ public class DataSetSourceService {
         this.dataSetSourcePropertyRepository = dataSetSourcePropertyRepository;
     }
 
-    public List<DataSetSourceDTO> getDataSetSourceDTOsByDataSetKeyName(String dataSetKeyName){
-        return dataSetSourceRepository.findByDataSetKeyName(dataSetKeyName).stream().map(dataSetSource -> {
-            DataSetSourceDTO dataSetSourceDTO = new DataSetSourceDTO();
-            dataSetSourceDTO.setDataSetKeyName(dataSetSource.getSource().getKeyName());
-            Map<String, String> props = new HashMap<>();
-            dataSetSourcePropertyRepository.findBySourceId(dataSetSource.getId()).forEach(dataSetSourceProperty -> props
-                    .put(dataSetSourceProperty.getKey(), dataSetSourceProperty.getValue()));
-            dataSetSourceDTO.setProperties(props);
-            return dataSetSourceDTO;
-        }).toList();
+    public Map<String,DataSetSourceDTO> getDataSetSourceDTOsByDataSetKeyName(String dataSetKeyName){
+        Map<String,DataSetSourceDTO> result = new HashMap<>();
+        dataSetSourceRepository
+                .findByDataSetKeyName(dataSetKeyName)
+                .forEach(dataSetSource -> {
+                    DataSetSourceDTO dataSetSourceDTO = new DataSetSourceDTO();
+                    Map<String, String> props = new HashMap<>();
+                    dataSetSourcePropertyRepository
+                            .findBySourceId(dataSetSource.getId())
+                            .forEach(dataSetSourceProperty ->
+                                    props.put(dataSetSourceProperty.getKey(), dataSetSourceProperty.getValue()));
+                    dataSetSourceDTO.setProperties(props);
+                    result.put(dataSetSource.getSource().getKeyName(),dataSetSourceDTO);
+                });
+        return result;
     }
 
 
-    public void save(DataSet dataSet, List<DataSetSourceDTO> dataSetSourceDTOSs){
+    public void save(DataSet dataSet, Map<String,DataSetSourceDTO> dataSetSourceDTOSs){
         logger.info("Saving dataSet={} sources", dataSet.getKeyName());
 
-        Set<String> sourceNames = dataSetSourceDTOSs.stream().map(DataSetSourceDTO::getDataSetKeyName).collect(Collectors.toSet());
+        Set<String> sourceNames = dataSetSourceDTOSs.keySet();
         dataSetSourceRepository
                 .findByDataSetKeyName(dataSet.getKeyName())
                 .stream()
@@ -63,10 +67,10 @@ public class DataSetSourceService {
                 .forEach(dataSetSourceRepository::delete);
 
 
-        dataSetSourceDTOSs.forEach(dataSetSourceDTO -> {
+        sourceNames.forEach(sourceKeyName -> {
 
             DataSetSource dataSetSource = dataSetSourceRepository
-                    .findByDataSetKeyNameAndSource(dataSet.getKeyName(),dataSetSourceDTO.getDataSetKeyName())
+                    .findByDataSetKeyNameAndSource(dataSet.getKeyName(),sourceKeyName)
                     .orElse( new DataSetSource());
 
             dataSetSource.setDataSet(dataSet);
@@ -74,13 +78,13 @@ public class DataSetSourceService {
             dataSetSource
                     .setSource(
                             dataSetRepository
-                                    .findById(dataSetSourceDTO.getDataSetKeyName())
+                                    .findById(sourceKeyName)
                                     .orElseThrow(() -> new DataSetNotFoundException(
-                                            String.format("DataSet %s not found", dataSetSourceDTO.getDataSetKeyName()))));
+                                            String.format("DataSet %s not found", sourceKeyName))));
 
 
             DataSetSource resultDataSetSource = dataSetSourceRepository.save(dataSetSource);
-            mergeDataSourceProperties(resultDataSetSource, dataSetSourceDTO.getProperties());
+            mergeDataSourceProperties(resultDataSetSource, dataSetSourceDTOSs.get(sourceKeyName).getProperties());
         });
     }
     private void mergeDataSourceProperties(DataSetSource dataSetSource, Map<String,String> properties){

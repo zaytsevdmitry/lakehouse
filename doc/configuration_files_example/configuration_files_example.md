@@ -161,7 +161,7 @@ is a combination of dataSet, tasks and their execution dag
 ## A one dataset configured as dataSet can be served by multiple scenarios.
 
 ```yaml
-configtype: scenarioActTemplate
+configtype: templateScenarioAct
 scenarioType: dateEndPointScenarioTemplate
 
 name: scenario1
@@ -265,7 +265,7 @@ configtype: schedule
 name: mytableRegularSchedule
 dataSet: mytabledataSet
 scheduleExpr: "*8***"
-scenarioActTemplate: scenario1
+templateScenarioAct: scenario1
 dependencyIntervalType: Daily #montly/hourly/minutely/
 keepDependencyInterval: true #false
 ```

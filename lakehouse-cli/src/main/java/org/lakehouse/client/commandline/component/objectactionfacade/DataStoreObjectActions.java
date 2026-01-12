@@ -29,13 +29,11 @@ public class DataStoreObjectActions implements ConfigObjectActions {
         List<DataSourceDTO> l = configRestClientApi.getDataSourceDTOList();
 
         return ObjectActionsHelper.table(
-                new String[]{"name", "description", "type", "serviceType"},
+                new String[]{"name", "description", "driver"},
                 l.stream().map(o -> new String[]{
                         o.getKeyName(),
                         o.getDescription(),
-                        o.getEngineType().label,
-                        o.getEngine().label
-
+                        o.getDriverKeyName()
                 }).toList());
     }
 

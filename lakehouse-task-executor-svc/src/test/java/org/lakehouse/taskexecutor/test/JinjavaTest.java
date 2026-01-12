@@ -6,10 +6,20 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.lakehouse.client.api.constant.SystemVarKeys;
+import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
+import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
+import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
+import org.lakehouse.client.api.utils.DateTimeUtils;
+import org.lakehouse.client.api.utils.ObjectMapping;
+import org.lakehouse.taskexecutor.api.factory.taskconf.TaskConfigBuildException;
+import org.lakehouse.taskexecutor.api.factory.taskconf.TaskProcessorConfigFactory;
+import org.lakehouse.test.config.api.ConfigRestClientApiTest;
+import org.lakehouse.test.config.configuration.FileLoader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -70,5 +80,49 @@ public class JinjavaTest {
         String renderedTemplate = jinjava.render(template, context);
         System.out.println(renderedTemplate);
         assert (renderedTemplate.equals(targetDateTime.plusMonths(10).format(dateTimeFormatter)));
+    }
+
+
+    @Test
+    @Order(6)
+    public void testLoadDataSet() throws IOException, TaskConfigBuildException {
+        ConfigRestClientApiTest configRestClientApiTest = new ConfigRestClientApiTest();
+        ScheduledTaskLockDTO scheduledTaskLockDTO = new ScheduledTaskLockDTO();
+        scheduledTaskLockDTO.setLockId(1L);
+        scheduledTaskLockDTO.setServiceId("testService");
+        ScheduledTaskDTO taskDTO = configRestClientApiTest
+                .getScheduleEffectiveDTO(null)
+                .getScenarioActs()
+                .stream()
+                .filter(a-> a.getDataSet().equals("transaction_dds"))
+                .flatMap(s-> s.getTasks()
+                        .stream()
+                        .filter(t-> t.getName().equals("load"))
+                        .map(t-> {
+                            ScheduledTaskDTO st = new ScheduledTaskDTO();
+                            st.setStatus("NEW");
+                            st.setId(1L);
+                            st.setScenarioActKeyName("testAct");
+                            st.setTargetDateTime(DateTimeUtils.nowStr());
+                            st.setIntervalStartDateTime(DateTimeUtils.nowStr());
+                            st.setIntervalEndDateTime(DateTimeUtils.nowStr());
+                            st.setDataSetKeyName("transaction_dds");
+                            return st;
+                        })
+                ).toList()
+                .get(0);
+        scheduledTaskLockDTO.setScheduledTaskEffectiveDTO(taskDTO);
+        TaskProcessorConfigFactory tpcf = new TaskProcessorConfigFactory(
+                new ConfigRestClientApiTest(),  jinjava);
+        TaskProcessorConfigDTO conf =  tpcf.buildTaskProcessorConfig(scheduledTaskLockDTO);
+
+        FileLoader fileLoader = new FileLoader();
+        String dataSetKeyName = "transaction_dds";
+        Map<String, Object> context = ObjectMapping.asMap(conf);//ObjectMapping.asMap(fileLoader.loadDataSetDTO(dataSetKeyName));
+        String rendered = jinjava.render("{{ targetDataSetKeyName }}",context);
+        String renderedMap = jinjava.render("{{ dataSets['transaction_dds'].fullTableName }}",context);
+        String rendered2 = jinjava.render("",context);
+        assert (dataSetKeyName.equals(rendered));
+
     }
 }

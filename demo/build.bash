@@ -4,7 +4,7 @@ set -v
 export VERSION=0.3.0
 cd  ../
 pwd
-#mvn clean package
+mvn clean package
 rm -rf distr
 mkdir -p distr/opt
 

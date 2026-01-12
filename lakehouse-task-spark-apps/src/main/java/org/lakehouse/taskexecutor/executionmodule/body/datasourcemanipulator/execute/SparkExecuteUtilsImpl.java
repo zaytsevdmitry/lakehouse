@@ -1,0 +1,74 @@
+package org.lakehouse.taskexecutor.executionmodule.body.datasourcemanipulator.execute;
+
+import com.hubspot.jinjava.Jinjava;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
+import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
+import org.lakehouse.taskexecutor.api.datasource.exception.ExecuteException;
+import org.lakehouse.taskexecutor.api.datasource.execute.ExecuteUtilsAbstract;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class SparkExecuteUtilsImpl
+        extends ExecuteUtilsAbstract
+        implements SparkExecuteUtils{
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    private final SparkSession sparkSession;
+    public SparkExecuteUtilsImpl(
+            Jinjava jinjava, DataSourceDTO dataSourceDTO, DriverDTO driverDTO,
+            SparkSession sparkSession) {
+        super(jinjava, dataSourceDTO, driverDTO);
+        this.sparkSession = sparkSession;
+    }
+
+    @Override
+    public void execute(String sql, Map<String,Object> localContext) throws ExecuteException {
+        executeQuery(sql,localContext);
+    }
+
+    @Override
+    public void execute(String sql) throws ExecuteException {
+        execute(sql, new HashMap<>());
+    }
+
+    @Override
+    public Integer executeGetResultInt(String sql, Map<String,Object> localContext) throws ExecuteException {
+
+        List<Row> resultList = executeQuery(sql,localContext)
+                 .select(RESULT_COLUMN_NAME)
+                 .collectAsList();
+
+         if (resultList.size() != 1) {
+             throw new ExecuteException(String.format("Expected only one row, but %d entries were found", resultList.size()));
+         }
+
+         int result = resultList.get(0).getInt(0);
+
+         if (result > 1 || result < 0 ) {
+             throw new ExecuteException(" result, when expected one");
+         }
+         return result;
+    }
+
+    @Override
+    public Dataset<Row> executeQuery(String sql)throws ExecuteException {
+        return executeQuery(sql, new HashMap<>());
+    }
+
+    @Override
+    public Dataset<Row> executeQuery(String sql, Map<String, Object> localContext) throws ExecuteException {
+
+        logger.info("Render query  {}", sql);
+        String renderedSQL = getJinjava().render(sql,localContext);
+
+        logger.info("Execute query {}", renderedSQL);
+        return sparkSession.sql(renderedSQL);
+    }
+}

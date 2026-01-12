@@ -18,8 +18,12 @@ public class DataSet extends KeyEntityAbstract {
     @JoinColumn(foreignKey = @ForeignKey(name = "data_set__data_source_fk"))
     private DataSource dataSource;
 
+
     @Column(nullable = false)
-    private String fullTableName;
+    private String databaseSchemaName;
+
+    @Column(nullable = false)
+    private String tableName;
 
     public DataSet() {
     }
@@ -32,38 +36,40 @@ public class DataSet extends KeyEntityAbstract {
         this.nameSpace = nameSpace;
     }
 
-    public DataSource getDataStore() {
+    public DataSource getDataSource() {
         return dataSource;
     }
 
-    public void setDataStore(DataSource dataSource) {
+    public void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
-    public String getFullTableName() {
-        return fullTableName;
+    public String getDatabaseSchemaName() {
+        return databaseSchemaName;
     }
 
-    public void setFullTableName(String fullTableName) {
-        this.fullTableName = fullTableName;
+    public void setDatabaseSchemaName(String databaseSchemaName) {
+        this.databaseSchemaName = databaseSchemaName;
+    }
+
+    public String getTableName() {
+        return tableName;
+    }
+
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-        if (!super.equals(o))
-            return false;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
         DataSet dataSet = (DataSet) o;
-        return Objects.equals(getNameSpace(), dataSet.getNameSpace())
-                && Objects.equals(getDataStore(), dataSet.getDataStore())
-                && Objects.equals(getFullTableName(), dataSet.getFullTableName());
+        return Objects.equals(getNameSpace(), dataSet.getNameSpace()) && Objects.equals(getDataSource(), dataSet.getDataSource()) && Objects.equals(getDatabaseSchemaName(), dataSet.getDatabaseSchemaName()) && Objects.equals(getTableName(), dataSet.getTableName());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), getNameSpace(), getDataStore(), getFullTableName());
+        return Objects.hash(super.hashCode(), getNameSpace(), getDataSource(), getDatabaseSchemaName(), getTableName());
     }
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.lakehouse.client.api.dto.configs.*;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
+import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +24,7 @@ public class FileLoader {
     private final String rootPath = "../lakehouse-config-svc/demo";
     public final String modelsDir = rootPath.concat("/dataset-sql-model");
     public final String dataSourcesDir = rootPath.concat("/datasources");
+    public final String driversDir = rootPath.concat("/drivers");
 
 
     private List<String> getFilenames(String directoryName) {
@@ -47,8 +49,24 @@ public class FileLoader {
         return objectMapper.readValue(new File(String.format(dataSourcesDir.concat("/%s.json"), name)), DataSourceDTO.class);
 
     }
-
-    public Map<String, DataSourceDTO> loadAllDataSources() {
+    public DriverDTO loadDriverDTO(String name) throws IOException {
+        return objectMapper
+                .readValue(
+                        new File(String.format(driversDir.concat("/%s.json"), name)), DriverDTO.class);
+    }
+    public Map<String, DriverDTO> loadAllDrivers() {
+        return getFilenames(driversDir)
+                .stream()
+                .map(name -> {
+                            try {
+                              return   loadDriverDTO(name);
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+                ).collect(Collectors.toMap(DriverDTO::getKeyName,Function.identity()));
+    }
+        public Map<String, DataSourceDTO> loadAllDataSources() {
         return getFilenames(dataSourcesDir)
                 .stream()
                 .map(name -> {

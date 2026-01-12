@@ -3,16 +3,14 @@ package org.lakehouse.client.api.dto.configs;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetSourceDTO;
 import org.lakehouse.client.api.utils.Coalesce;
 
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 public class QualityMetricsConfDTO {
     private String dataSetKeyName;
     private String keyName;
     private String description;
     private boolean enabled;
-    private Set<DataSetSourceDTO> sources = new HashSet<>();
+    private Map<String,DataSetSourceDTO> sources = new HashMap<>();
     private Set<QualityMetricsConfTestSetDTO> qualityMetricsConfTestSets = new HashSet<>();
     private Set<QualityMetricsConfTestSetDTO> thresholds = new HashSet<>();
 
@@ -51,11 +49,11 @@ public class QualityMetricsConfDTO {
         this.enabled = enabled;
     }
 
-    public Set<DataSetSourceDTO> getSources() {
+    public Map<String,DataSetSourceDTO> getSources() {
         return sources;
     }
 
-    public void setSources(Set<DataSetSourceDTO> sources) {
+    public void setSources(Map<String,DataSetSourceDTO> sources) {
         this.sources = sources;
     }
 

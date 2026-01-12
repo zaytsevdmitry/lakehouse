@@ -19,6 +19,9 @@ public class Endpoint {
     public final static String QUALITY_METRICS = CONFIGS + "/qualityMetrics";
     public final static String QUALITY_METRICS_NAME = QUALITY_METRICS + "/{name}";
 
+    public final static String DRIVERS = CONFIGS + "/drivers";
+    public final static String DRIVERS_NAME = DRIVERS + "/{name}";
+
     public final static String DATA_SOURCES = CONFIGS + "/datasources";
     public final static String DATA_SOURCES_NAME = DATA_SOURCES + "/{name}";
 
@@ -32,7 +35,6 @@ public class Endpoint {
 
     public final static String SCENARIOS = CONFIGS + "/scenarios";
     public final static String SCENARIOS_NAME = SCENARIOS + "/{name}";
-
 
     public final static String SCHEDULE = ROOT_API_V1_0 + "/schedule";
     public final static String SCHEDULE_NAME = ROOT_API_V1_0 + "/schedule/name={name}/limit={limit}";

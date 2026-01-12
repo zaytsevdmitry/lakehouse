@@ -10,3 +10,10 @@ demodebug
 spark-warehouse
 
 /lakehouse-task-spark-apps/wh
+/lakehouse-task-spark-apps/metastore_db/
+/lakehouse-task-spark-apps/$PWD/
+/lakehouse-task-spark-apps/derby.log
+/lakehouse-task-spark-apps/dependency-reduced-pom.xml
+
+
+/dev/log.log

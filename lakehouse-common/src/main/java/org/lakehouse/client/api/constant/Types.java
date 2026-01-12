@@ -1,13 +1,14 @@
 package org.lakehouse.client.api.constant;
 
 public class Types {
-    public enum EngineType {
-        spark("spark"),
-        restapi("restapi"),
+
+    public enum DataSourceType {
+        file("file"),
+        iceberg("iceberg"),
         database("database");
         public final String label;
 
-        EngineType(String label) {
+        DataSourceType(String label) {
             this.label = label;
         }
 
@@ -16,19 +17,13 @@ public class Types {
             return label;
         }
     }
+    public enum ConnectionType {
+        spark("spark"),
+        jdbc("jdbc");
 
-    public enum Engine {
-        json("json"),
-        parquet("parquet"),
-        orc("orc"),
-        csv("csv"),
-        text("text"),
-        iceberg("iceberg"),
-        postgres("postgres"),
-        trino("trino");
         public final String label;
 
-        Engine(String label) {
+        ConnectionType(String label) {
             this.label = label;
         }
 
@@ -37,7 +32,6 @@ public class Types {
             return label;
         }
     }
-
     public enum Constraint {
         primary("primary"),
         foreign("foreign"),
@@ -53,6 +47,19 @@ public class Types {
         @Override
         public String toString() {
             return label;
+        }
+    }
+
+    public enum ConstraintLevelCheck{
+        dataQuality("dataQuality"), // used only with DQ
+        construct("construct"), // try to perform construct on the table
+        none("none"); // ignored
+        public final String label;
+        ConstraintLevelCheck(String label){this.label = label;}
+
+        @Override
+        public String toString() {
+            return  label;
         }
     }
 

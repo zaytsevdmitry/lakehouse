@@ -33,10 +33,9 @@ public class DataSetConstraint {
     private boolean enabled;
 
     @Column(nullable = false)
-    private boolean runtimeLevelCheck;
+    private Types.ConstraintLevelCheck constraintLevelCheck;
 
-    @Column(nullable = false)
-    private boolean constructLevelCheck;
+    private String createConstraintDDLOverride;
 
     public DataSetConstraint() {
     }
@@ -89,45 +88,45 @@ public class DataSetConstraint {
         this.enabled = enabled;
     }
 
-    public boolean isRuntimeLevelCheck() {
-        return runtimeLevelCheck;
+    public Types.ConstraintLevelCheck getConstraintLevelCheck() {
+        return constraintLevelCheck;
     }
 
-    public void setRuntimeLevelCheck(boolean runtimeLevelCheck) {
-        this.runtimeLevelCheck = runtimeLevelCheck;
+    public void setConstraintLevelCheck(Types.ConstraintLevelCheck constraintLevelCheck) {
+        this.constraintLevelCheck = constraintLevelCheck;
     }
 
-    public boolean isConstructLevelCheck() {
-        return constructLevelCheck;
-    }
-
-    public void setConstructLevelCheck(boolean constructLevelCheck) {
-
-        this.constructLevelCheck = constructLevelCheck;
+    public String getCreateConstraintDDLOverride() {
+        return createConstraintDDLOverride;
     }
 
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         DataSetConstraint that = (DataSetConstraint) o;
-        return isEnabled() == that.isEnabled()
-                && isRuntimeLevelCheck() == that.isRuntimeLevelCheck()
-                && isConstructLevelCheck() == that.isConstructLevelCheck()
-                && Objects.equals(getId(), that.getId())
-                && Objects.equals(getDataSet(), that.getDataSet())
-                && Objects.equals(getName(), that.getName())
-                && Objects.equals(getType(), that.getType())
-                && Objects.equals(getColumns(), that.getColumns());
+        return isEnabled() == that.isEnabled() && Objects.equals(getId(), that.getId()) && Objects.equals(getDataSet(), that.getDataSet()) && Objects.equals(getName(), that.getName()) && getType() == that.getType() && Objects.equals(getColumns(), that.getColumns()) && getConstraintLevelCheck() == that.getConstraintLevelCheck() && Objects.equals(getCreateConstraintDDLOverride(), that.getCreateConstraintDDLOverride());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getDataSet(),
-                getName(),
-                getType(),
-                getColumns(),
-                isEnabled(),
-                isRuntimeLevelCheck(),
-                isConstructLevelCheck());
+        return Objects.hash(getId(), getDataSet(), getName(), getType(), getColumns(), isEnabled(), getConstraintLevelCheck(), getCreateConstraintDDLOverride());
+    }
+
+    public void setCreateConstraintDDLOverride(String createConstraintDDLOverride) {
+        this.createConstraintDDLOverride = createConstraintDDLOverride;
+    }
+
+    @Override
+    public String toString() {
+        return "DataSetConstraint{" +
+                "id=" + id +
+                ", dataSet=" + dataSet +
+                ", name='" + name + '\'' +
+                ", type=" + type +
+                ", columns='" + columns + '\'' +
+                ", enabled=" + enabled +
+                ", constraintLevelCheck=" + constraintLevelCheck +
+                ", createConstraintDDLOverride='" + createConstraintDDLOverride + '\'' +
+                '}';
     }
 }

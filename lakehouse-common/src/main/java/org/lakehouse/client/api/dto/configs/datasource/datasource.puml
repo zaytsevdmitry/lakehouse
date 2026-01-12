@@ -1,0 +1,8 @@
+@startuml
+(dataset)->(datasource)
+(datasource)->(type)
+(type)-->(database)
+(database)-->(database_driver)
+(type)-->(spark)
+(dataManipulator)
+@enduml

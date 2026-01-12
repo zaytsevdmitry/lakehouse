@@ -10,22 +10,22 @@
       "name": "transaction_dds",
       "dataSet": "transaction_dds",
       "scenarioActTemplate": "default",
-      "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
+      "intervalStart": "{{ adddays(targetDateTime, -1) }}",
       "intervalEnd": "{{ targetDateTimeTZ }}"
     },
     {
       "name": "aggregation_pay_per_client_daily_mart",
       "dataSet": "aggregation_pay_per_client_daily_mart",
       "scenarioActTemplate": "default",
-      "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
+      "intervalStart": "{{ adddays(targetDateTime, -1) }}",
       "intervalEnd": "{{ targetDateTimeTZ }}"
     },
     {
       "name": "aggregation_pay_per_client_total_mart",
       "dataSet": "aggregation_pay_per_client_total_mart",
       "scenarioActTemplate": "default",
-      "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
-      "intervalEnd": "{{ targetDateTimeTZ }}"
+      "intervalStart": "{{ adddays(targetDateTime, -1) }}",
+      "intervalEnd": "{{ targetDateTime }}"
     }
   ],
   "scenarioActEdges": [

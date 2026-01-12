@@ -7,11 +7,11 @@ import org.lakehouse.client.api.dto.scheduler.lock.TaskInstanceReleaseDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskResultDTO;
 import org.lakehouse.client.api.dto.task.TaskProcessor;
 import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
+import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
-import org.lakehouse.taskexecutor.api.factory.TaskConfigBuildException;
-import org.lakehouse.taskexecutor.exception.TaskProcessorConfigurationException;
-import org.lakehouse.taskexecutor.api.factory.TaskProcessorConfigFactory;
+import org.lakehouse.taskexecutor.api.factory.taskconf.TaskConfigBuildException;
+import org.lakehouse.taskexecutor.api.factory.taskconf.TaskProcessorConfigFactory;
 import org.lakehouse.taskexecutor.factory.TaskProcessorFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,12 +56,12 @@ public class ExecuteService {
             TaskProcessor p = taskProcessorFactory
                     .buildProcessor(
                             taskProcessorConfigDTO,
-                            scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getExecutionModule());
+                            scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getTaskProcessor());
             heardBeatService.start(taskExecutionHeartBeatDTO);
             p.runTask();
             taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.SUCCESS));
             ;
-        } catch (TaskProcessorConfigurationException e) {
+        } catch (TaskConfigurationException e) {
             logger.error("Task creation error ", e);
             taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.CONF_ERROR, e.toString()));
         } catch (TaskFailedException e) {

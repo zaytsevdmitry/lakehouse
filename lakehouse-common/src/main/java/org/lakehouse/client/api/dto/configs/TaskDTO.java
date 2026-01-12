@@ -7,10 +7,11 @@ import java.util.Objects;
 public class TaskDTO {
     private String name;
     private String taskExecutionServiceGroupName;
-    private String executionModule;
+    private String taskProcessor;
+    private String taskProcessorBody;
     private String importance;
     private String description;
-    private Map<String, String> executionModuleArgs = new HashMap<>();
+    private Map<String, String> taskProcessorArgs = new HashMap<>();
 
     public String getName() {
         return name;
@@ -28,12 +29,12 @@ public class TaskDTO {
         this.taskExecutionServiceGroupName = taskExecutionServiceGroupkey;
     }
 
-    public String getExecutionModule() {
-        return executionModule;
+    public String getTaskProcessor() {
+        return taskProcessor;
     }
 
-    public void setExecutionModule(String executionModule) {
-        this.executionModule = executionModule;
+    public void setTaskProcessor(String taskProcessor) {
+        this.taskProcessor = taskProcessor;
     }
 
     public String getImportance() {
@@ -52,24 +53,36 @@ public class TaskDTO {
         this.description = description;
     }
 
-    public Map<String, String> getExecutionModuleArgs() {
-        return executionModuleArgs;
+    public Map<String, String> getTaskProcessorArgs() {
+        return taskProcessorArgs;
     }
 
-    public void setExecutionModuleArgs(Map<String, String> executionModuleArgs) {
-        this.executionModuleArgs = executionModuleArgs;
+    public void setTaskProcessorArgs(Map<String, String> taskProcessorArgs) {
+        this.taskProcessorArgs = taskProcessorArgs;
+    }
+
+    public String getTaskProcessorBody() {
+        return taskProcessorBody;
+    }
+
+    public void setTaskProcessorBody(String taskProcessorBody) {
+        this.taskProcessorBody = taskProcessorBody;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TaskDTO taskDTO = (TaskDTO) o;
-        return Objects.equals(getName(), taskDTO.getName()) && Objects.equals(getTaskExecutionServiceGroupName(), taskDTO.getTaskExecutionServiceGroupName()) && Objects.equals(getExecutionModule(), taskDTO.getExecutionModule()) && Objects.equals(getImportance(), taskDTO.getImportance()) && Objects.equals(getDescription(), taskDTO.getDescription()) && Objects.equals(getExecutionModuleArgs(), taskDTO.getExecutionModuleArgs());
+        return Objects.equals(getName(), taskDTO.getName()) && Objects.equals(getTaskExecutionServiceGroupName(), taskDTO.getTaskExecutionServiceGroupName()) && Objects.equals(getTaskProcessor(), taskDTO.getTaskProcessor()) && Objects.equals(getTaskProcessorBody(), taskDTO.getTaskProcessorBody()) && Objects.equals(getImportance(), taskDTO.getImportance()) && Objects.equals(getDescription(), taskDTO.getDescription()) && Objects.equals(getTaskProcessorArgs(), taskDTO.getTaskProcessorArgs());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getName(), getTaskExecutionServiceGroupName(), getExecutionModule(), getImportance(), getDescription(), getExecutionModuleArgs());
+        return Objects.hash(getName(), getTaskExecutionServiceGroupName(), getTaskProcessor(), getTaskProcessorBody(), getImportance(), getDescription(), getTaskProcessorArgs());
+    }
+
+    @Override
+    public String toString() {
+        return "TaskDTO{" + "name='" + name + '\'' + ", taskExecutionServiceGroupName='" + taskExecutionServiceGroupName + '\'' + ", taskProcessor='" + taskProcessor + '\'' + ", taskProcessorBody='" + taskProcessorBody + '\'' + ", importance='" + importance + '\'' + ", description='" + description + '\'' + ", taskProcessorArgs=" + taskProcessorArgs + '}';
     }
 }

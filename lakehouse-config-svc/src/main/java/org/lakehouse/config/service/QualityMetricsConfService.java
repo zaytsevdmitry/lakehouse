@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class QualityMetricsConfService {
@@ -45,7 +44,7 @@ public class QualityMetricsConfService {
             Set<QualityMetricsConfTestSetThreshold> thresholds,
             Set<QualityMetricsConfSource> sources) {
         QualityMetricsConfDTO result = new QualityMetricsConfDTO();
-        result.setKeyName(entity.getKeyName());
+       /* result.setKeyName(entity.getKeyName());
         result.setDescription(entity.getDescription());
         result.setEnabled(entity.isEnabled());
         result.setDataSetKeyName(entity.getDataSet().getKeyName());
@@ -61,10 +60,11 @@ public class QualityMetricsConfService {
                         .collect(Collectors.toSet()));
         result.setSources(
                 sources
+                        .entrySet()
                         .stream()
                         .map(e -> {
                             DataSetSourceDTO dto = new DataSetSourceDTO();
-                            dto.setDataSetKeyName(e.getSource().getKeyName());
+             //todo fix it               dto.setDataSetKeyName(e.getSource().getKeyName());
                             dto.setProperties(
                                     qualityMetricsConfSourcePropertyRepository
                                             .findByQualityMetricsConfSourceId(e.getId())
@@ -74,7 +74,7 @@ public class QualityMetricsConfService {
                                                             QualityMetricsConfSourceProperty::getKey,
                                                             QualityMetricsConfSourceProperty::getValue)));
                             return dto;
-                        }).collect(Collectors.toSet()));
+                        }).collect(Collectors.toSet()));*/
 
         return result;
     }
@@ -131,7 +131,7 @@ public class QualityMetricsConfService {
     public QualityMetricsConfSource mapQualityMetricsConfSource(QualityMetricsConf qualityMetricsConf, DataSetSourceDTO dto) {
         QualityMetricsConfSource result = new QualityMetricsConfSource();
         result.setQualityMetricsConf(qualityMetricsConf);
-        result.setSource(dataSetRepository.getReferenceById(dto.getDataSetKeyName()));
+      //todo fix it  result.setSource(dataSetRepository.getReferenceById(dto.getDataSetKeyName()));
         return result;
     }
 
@@ -155,9 +155,10 @@ public class QualityMetricsConfService {
                                 .getThresholds()
                                 .stream()
                                 .map(o -> mapQualityMetricsConfTestSetThreshold(qualityMetricsConf, o)).toList());
-
+//todo fix it
         qualityMetricsConfDTO
                 .getSources()
+                .values()
                 .forEach(o -> saveQualityMetricsConfSource(qualityMetricsConf, o));
 
         return findById(qualityMetricsConfDTO.getKeyName());

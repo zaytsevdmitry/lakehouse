@@ -15,17 +15,21 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class DataSetConstraintService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final DataSetConstraintRepository dataSetConstraintRepository;
     private final ReferenceRepository referenceRepository;
-    public DataSetConstraintService(DataSetConstraintRepository dataSetConstraintRepository, ReferenceRepository referenceRepository) {
+    public DataSetConstraintService(
+            DataSetConstraintRepository dataSetConstraintRepository,
+            ReferenceRepository referenceRepository) {
         this.dataSetConstraintRepository = dataSetConstraintRepository;
         this.referenceRepository = referenceRepository;
     }
-    public void applyConstraints(DataSet dataSet, List<DataSetConstraintDTO> dataSetConstraintDTOList) throws DataSetConstraintReferenceConfigNotFoundException{
+    public void applyConstraints(DataSet dataSet, Map<String,DataSetConstraintDTO> dataSetConstraintDTOList) throws DataSetConstraintReferenceConfigNotFoundException{
         List<DataSetConstraint> current = dataSetConstraintRepository.findByDataSetKeyName(dataSet.getKeyName());
         List<DataSetConstraint> newConst = mapListDTOsToEntities(dataSet,dataSetConstraintDTOList).stream().map(dataSetConstraint -> {
             List<DataSetConstraint> found = current.stream().filter(c-> c.getName().equals(dataSetConstraint.getName())).toList();
@@ -60,25 +64,32 @@ public class DataSetConstraintService {
 
 
     }
-    private List<DataSetConstraint> mapListDTOsToEntities( DataSet dataSet, List<DataSetConstraintDTO> dataSetConstraintDTOList){
-        return dataSetConstraintDTOList.stream().map(dataSetConstraintDTO -> mapDTOtoEntity(dataSet,dataSetConstraintDTO)).toList();
+    private List<DataSetConstraint> mapListDTOsToEntities( DataSet dataSet, Map<String, DataSetConstraintDTO> dataSetConstraintDTOs){
+        return dataSetConstraintDTOs
+                .entrySet()
+                .stream()
+                .map(dataSetConstraintDTO -> mapDTOtoEntity(dataSet,dataSetConstraintDTO))
+                .toList();
     }
 
-    private DataSetConstraint mapDTOtoEntity(DataSet dataSet, DataSetConstraintDTO dataSetConstraintDTO){
+    private DataSetConstraint mapDTOtoEntity(DataSet dataSet, Map.Entry<String,DataSetConstraintDTO> dataSetConstraintDTO){
         DataSetConstraint result = new DataSetConstraint();
         result.setDataSet(dataSet);
-        result.setColumns(dataSetConstraintDTO.getColumns());
-        result.setType(dataSetConstraintDTO.getType());
-        result.setName(dataSetConstraintDTO.getName());
-        result.setEnabled(dataSetConstraintDTO.isEnabled());
-        result.setConstructLevelCheck(dataSetConstraintDTO.isConstructLevelCheck());
-        result.setRuntimeLevelCheck(dataSetConstraintDTO.isRuntimeLevelCheck());
+        result.setColumns(dataSetConstraintDTO.getValue().getColumns());
+        result.setType(dataSetConstraintDTO.getValue().getType());
+        result.setName(dataSetConstraintDTO.getKey());
+        result.setEnabled(dataSetConstraintDTO.getValue().isEnabled());
+        result.setConstraintLevelCheck(dataSetConstraintDTO.getValue().getConstraintLevelCheck());
+        result.setCreateConstraintDDLOverride(dataSetConstraintDTO.getValue().getTableConstraintDDLCreateOverride());
         return result;
     }
-    private Reference findReference(DataSetConstraint dataSetConstraint, List<DataSetConstraintDTO> dataSetConstraintDTOList){
-        List<DataSetConstraintDTO> found = dataSetConstraintDTOList
+    private Reference findReference(DataSetConstraint dataSetConstraint, Map<String,DataSetConstraintDTO> dataSetConstraintDTOs){
+        List<DataSetConstraintDTO> found = dataSetConstraintDTOs
+                .entrySet()
                 .stream()
-                .filter(dataSetConstraintDTO -> dataSetConstraintDTO.getName().equals( dataSetConstraint.getName())).toList();
+                .filter(e -> e.getKey().equals( dataSetConstraint.getName()))
+                .map(Map.Entry::getValue)
+                .toList();
         if (found.isEmpty()){
            throw  new DataSetConstraintReferenceConfigNotFoundException(dataSetConstraint.getName(),dataSetConstraint.getDataSet().getKeyName());
         }else {
@@ -95,22 +106,21 @@ public class DataSetConstraintService {
             return result;
         }
     }
-    public List<DataSetConstraintDTO> mapDataSetConstraintsToDTOList(String dataSetKeyName){
+    public Map<String,DataSetConstraintDTO> mapDataSetConstraintsToDTOList(String dataSetKeyName){
         return dataSetConstraintRepository
                 .findByDataSetKeyName(dataSetKeyName)
                 .stream()
                 .map(this::mapEntityToDataSetConstraintDTO)
-                .toList();
+                .collect(Collectors.toMap(Map.Entry::getKey,Map.Entry::getValue));
     }
 
-    private DataSetConstraintDTO mapEntityToDataSetConstraintDTO(DataSetConstraint dataSetConstraint){
+    private Map.Entry<String,DataSetConstraintDTO> mapEntityToDataSetConstraintDTO(DataSetConstraint dataSetConstraint){
             DataSetConstraintDTO result = new DataSetConstraintDTO();
             result.setColumns(dataSetConstraint.getColumns());
             result.setType(dataSetConstraint.getType());
-            result.setName(dataSetConstraint.getName());
             result.setEnabled(dataSetConstraint.isEnabled());
-            result.setRuntimeLevelCheck(dataSetConstraint.isRuntimeLevelCheck());
-            result.setConstructLevelCheck(dataSetConstraint.isConstructLevelCheck());
+            result.setConstraintLevelCheck(dataSetConstraint.getConstraintLevelCheck());
+            result.setTableConstraintDDLCreateOverride(dataSetConstraint.getCreateConstraintDDLOverride());
             if (dataSetConstraint.getType().equals(Types.Constraint.foreign)) {
                 ReferenceDTO referenceDTO = new ReferenceDTO();
                 referenceRepository.findByConstraintId(dataSetConstraint.getId()).ifPresent(reference -> {
@@ -121,6 +131,7 @@ public class DataSetConstraintService {
                     result.setReference(referenceDTO);
                 });
             }
-            return result;
+
+            return Map.entry(dataSetConstraint.getName(),result);
     }
 }

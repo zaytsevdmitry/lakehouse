@@ -57,4 +57,9 @@ public class ServiceDTO {
     public void setProperties(Map<String, String> properties) {
         this.properties = properties;
     }
+
+    @Override
+    public String toString() {
+        return "ServiceDTO{" + "host='" + host + '\'' + ", port='" + port + '\'' + ", urn='" + urn + '\'' + ", properties=" + properties + '}';
+    }
 }

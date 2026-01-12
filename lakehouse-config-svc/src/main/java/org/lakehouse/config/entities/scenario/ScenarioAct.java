@@ -5,7 +5,7 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.lakehouse.config.entities.Schedule;
 import org.lakehouse.config.entities.dataset.DataSet;
-import org.lakehouse.config.entities.templates.ScenarioActTemplate;
+import org.lakehouse.config.entities.templates.TemplateScenarioAct;
 
 import java.util.Objects;
 
@@ -35,7 +35,7 @@ public class ScenarioAct {
 
     @ManyToOne
     @JoinColumn(foreignKey = @ForeignKey(name = "scenario_act__scenario_act_template_fk"))
-    private ScenarioActTemplate scenarioActTemplate;
+    private TemplateScenarioAct templateScenarioAct;
 
     @Column(nullable = false)
     String intervalStart;
@@ -78,12 +78,12 @@ public class ScenarioAct {
         this.schedule = schedule;
     }
 
-    public ScenarioActTemplate getScenarioActTemplate() {
-        return scenarioActTemplate;
+    public TemplateScenarioAct getScenarioActTemplate() {
+        return templateScenarioAct;
     }
 
-    public void setScenarioActTemplate(ScenarioActTemplate scenarioActTemplate) {
-        this.scenarioActTemplate = scenarioActTemplate;
+    public void setScenarioActTemplate(TemplateScenarioAct templateScenarioAct) {
+        this.templateScenarioAct = templateScenarioAct;
     }
 
     public String getIntervalStart() {

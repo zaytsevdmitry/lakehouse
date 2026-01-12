@@ -5,7 +5,9 @@ public class DataSetPropertyKeys {
         LOCATION("location"),
         TRANSFORM_LOCATION ( "transform.location"),
         TRANSFORM_LOCATION_MODE ("transform.location.mode"),
+        FORMAT("format"),
         USING("using");
+
 
         Key(String label) {
             this.label = label;

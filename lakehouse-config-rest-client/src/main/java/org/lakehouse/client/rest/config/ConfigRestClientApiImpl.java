@@ -4,6 +4,7 @@ import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.api.dto.configs.*;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
+import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskMsgDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
@@ -22,6 +23,11 @@ public class ConfigRestClientApiImpl implements ConfigRestClientApi {
         this.restClientHelper = restClientHelper;
     }
 
+
+    @Override
+    public DriverDTO getDriverDTO(String name) {
+        return restClientHelper.getDtoOne(name, Endpoint.DRIVERS_NAME, DriverDTO.class);
+    }
 
     public NameSpaceDTO getNameSpaceDTO(String NameSpaceName) {
         return restClientHelper.getDtoOne(NameSpaceName, Endpoint.NAME_SPACES_NAME, NameSpaceDTO.class);
@@ -75,6 +81,15 @@ public class ConfigRestClientApiImpl implements ConfigRestClientApi {
 
     public String getScript(String key) {
         return restClientHelper.getDtoOne(key, Endpoint.SCRIPT_BY_KEY, String.class);
+    }
+
+    @Override
+    public List<DriverDTO> getDriverDTOList() {
+        return Arrays.asList(restClientHelper.getRestClient()
+                .get()
+                .uri(Endpoint.DRIVERS)
+                .retrieve()
+                .body(DriverDTO[].class));
     }
 
     public List<NameSpaceDTO> getNameSpaceDTOList() {
@@ -145,6 +160,11 @@ public class ConfigRestClientApiImpl implements ConfigRestClientApi {
         return List.of();
     }
 
+    @Override
+    public int deleteDriverDTO(String name) {
+        return restClientHelper.deleteDtoByName(name, Endpoint.DRIVERS_NAME);
+    }
+
 
     public int deleteNameSpaceDTO(String NameSpaceName) {
         return restClientHelper.deleteDtoByName(NameSpaceName, Endpoint.NAME_SPACES_NAME);
@@ -168,6 +188,11 @@ public class ConfigRestClientApiImpl implements ConfigRestClientApi {
 
     public int deleteTaskExecutionServiceGroupDTO(String name) {
         return restClientHelper.deleteDtoByName(name, Endpoint.TASK_EXECUTION_SERVICE_GROUPS_NAME);
+    }
+
+    @Override
+    public int postDriverDTO(DriverDTO o) {
+        return restClientHelper.postDTO(o, Endpoint.DRIVERS);
     }
 
 

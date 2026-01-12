@@ -9,6 +9,11 @@ public class Coalesce {
         if (s1 == null || s1.trim().isBlank()) return s2;
         else return s1;
     }
+    public static String apply(String s1, String s2, String s3) {
+        String string1 = apply(s1,s2);
+        if (string1 == null || string1.trim().isBlank()) return s3;
+        else return string1;
+    }
 
     /**
      * <p>

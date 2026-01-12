@@ -81,7 +81,7 @@ public class ScheduleService {
                 .stream()
                 .map(sat -> mapper
                         .mapTaskToDTO(sat, getScenarioActTaskExecutionModuleArgsByScenarioActTask(sat.getId())))
-                .toList()
+                .collect(Collectors.toSet())
         );
         result.setDagEdges(
                 scenarioActTaskEdgeRepository
@@ -94,7 +94,7 @@ public class ScheduleService {
 
                             return dagEdgeDTO;
                         })
-                        .toList()
+                        .collect(Collectors.toSet())
         );
         return result;
     }
@@ -135,9 +135,9 @@ public class ScheduleService {
         result.setStartDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(schedule.getStartDateTime()));
         result.setEnabled(schedule.isEnabled());
         result.setScenarioActs(scenarioActRepository.findByScheduleKeyName(schedule.getKeyName()).stream()
-                .map(this::mapScheduleScenarioActToDTO).toList());
+                .map(this::mapScheduleScenarioActToDTO).collect(Collectors.toSet()));
         result.setScenarioActEdges(scenarioActEdgeRepository.findByScheduleKeyName(schedule.getKeyName()).stream()
-                .map(this::mapScenarioActEdgesToDTO).toList());
+                .map(this::mapScenarioActEdgesToDTO).collect(Collectors.toSet()));
         return result;
 
     }
@@ -219,7 +219,8 @@ public class ScheduleService {
                 task.setScenarioAct(scenarioAct);
                 task.setName(taskDTO.getName());
                 task.setImportance(taskDTO.getImportance());
-                task.setExecutionModule(taskDTO.getExecutionModule());
+                task.setTaskProcessor(taskDTO.getTaskProcessor());
+                task.setTaskProcessorBody(taskDTO.getTaskProcessorBody());
                 task.setTaskExecutionServiceGroup(taskExecutionServiceGroupRepository
                         .getReferenceById(taskDTO.getTaskExecutionServiceGroupName()));
 
@@ -229,8 +230,8 @@ public class ScheduleService {
 
                 scenarioActTaskMap.put(resultTask.getName(), resultTask);
 
-                taskDTO.getExecutionModuleArgs().forEach((k, v) -> {
-                    ScenarioActTaskExecutionModuleArg executionModuleArg = new ScenarioActTaskExecutionModuleArg();
+                taskDTO.getTaskProcessorArgs().forEach((k, v) -> {
+                    ScenarioActTaskProcessorArg executionModuleArg = new ScenarioActTaskProcessorArg();
                     executionModuleArg.setScenarioActTask(resultTask);
                     executionModuleArg.setKey(k);
                     executionModuleArg.setValue(v);
@@ -289,8 +290,8 @@ public class ScheduleService {
                 .collect(
                         Collectors
                                 .toMap(
-                                        ScenarioActTaskExecutionModuleArg::getKey,
-                                        ScenarioActTaskExecutionModuleArg::getValue));
+                                        ScenarioActTaskProcessorArg::getKey,
+                                        ScenarioActTaskProcessorArg::getValue));
 
     }
 
@@ -311,8 +312,9 @@ public class ScheduleService {
         result.setName(Coalesce.apply(taskDTO.getName(), taskTemplate.getName()));
         result.setDescription(Coalesce.apply(taskDTO.getDescription(), taskTemplate.getDescription()));
         result.setImportance(Coalesce.apply(taskDTO.getImportance(), taskTemplate.getImportance()));
-        result.setExecutionModuleArgs(Coalesce.applyStringMap(taskDTO.getExecutionModuleArgs(), taskTemplate.getExecutionModuleArgs()));
-        result.setExecutionModule(Coalesce.apply(taskDTO.getExecutionModule(), taskTemplate.getExecutionModule()));
+        result.setTaskProcessorArgs(Coalesce.applyStringMap(taskDTO.getTaskProcessorArgs(), taskTemplate.getTaskProcessorArgs()));
+        result.setTaskProcessor(Coalesce.apply(taskDTO.getTaskProcessor(), taskTemplate.getTaskProcessor()));
+        result.setTaskProcessorBody(Coalesce.apply(taskDTO.getTaskProcessorBody(),taskTemplate.getTaskProcessorBody()));
         result.setTaskExecutionServiceGroupName(Coalesce.apply(taskDTO.getTaskExecutionServiceGroupName(), taskTemplate.getTaskExecutionServiceGroupName()));
         return result;
     }
@@ -394,7 +396,7 @@ public class ScheduleService {
                             scenarioActTemplateService
                                     .getDagEdgeDTOListNullSafe(
                                             actTemplateDTOMap.get(sa.getScenarioActTemplate())));
-                    resultAct.setDagEdges(edgeDTOSet.stream().toList());
+                    resultAct.setDagEdges(edgeDTOSet.stream().collect(Collectors.toSet()));
 
                     //vertices
                     Map<String, TaskDTO> taskDTOmap =
@@ -417,10 +419,10 @@ public class ScheduleService {
                     resultAct.setTasks(taskNames
                             .stream()
                             .map(string -> matchTaskWithTemplate(taskDTOmap.get(string), taskDTOTemplatesMap.get(string)))
-                            .toList());
+                            .collect(Collectors.toSet()));
 
                     return resultAct;
-                }).toList()
+                }).collect(Collectors.toSet())
         );
         return result;
     }

@@ -3,28 +3,29 @@
   "description": "Default scenario",
   "tasks": [
     {
-      "name": "check",
-      "taskExecutionServiceGroupName": "state-exe",
-      "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.DependencyCheckStateTaskProcessor",
-      "importance": "critical",
-      "description": "Dependency check"
-    },
-    {
       "name": "begin",
-      "taskExecutionServiceGroupName": "state-exe",
+      "taskExecutionServiceGroupName": "default",
       "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.LockedStateTaskProcessor",
       "importance": "critical",
       "description": "Made interval status RUNNING"
     },
     {
+      "name": "check",
+      "taskExecutionServiceGroupName": "default",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.DependencyCheckStateTaskProcessor",
+      "importance": "critical",
+      "description": "Dependency check"
+    },
+    {
       "name": "load",
       "taskExecutionServiceGroupName": "default",
-      "executionModule": "org.lakehouse.taskexecutor.executionmodule.SparkTaskProcessor",
+      "executionModule": "org.lakehouse.taskexecutor.executionmodule.SparkLauncherTaskProcessor",
       "importance": "critical",
       "description": "load from remote datastore",
       "executionModuleArgs": {
         "spark.executor.memory": "5g",
-        "spark.driver.memory": "2g"
+        "spark.driver.memory": "2g",
+        "executionBody": "org.lakehouse.taskexecutor.executionmodule.body.TransformationSparkProcessorBody"
       }
     },
     {

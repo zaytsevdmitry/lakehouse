@@ -54,7 +54,7 @@ public class ScenarioActTask extends TaskAbstract {
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), getExecutionModule(), getImportance(), getScenarioAct(),
+        return Objects.hash(super.hashCode(), getTaskProcessor(), getImportance(), getScenarioAct(),
                 getTaskExecutionServiceGroup());
     }
 }

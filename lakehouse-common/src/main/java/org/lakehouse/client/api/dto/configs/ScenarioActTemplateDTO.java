@@ -1,15 +1,14 @@
 package org.lakehouse.client.api.dto.configs;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 public class ScenarioActTemplateDTO {
     private String name;
     private String description;
-    private List<TaskDTO> tasks = new ArrayList<>();
-    private List<DagEdgeDTO> dagEdges = new ArrayList<>();
+    private Set<TaskDTO> tasks = new HashSet<>();
+    private Set<DagEdgeDTO> dagEdges = new HashSet<>();
 
     public ScenarioActTemplateDTO() {
     }
@@ -30,26 +29,20 @@ public class ScenarioActTemplateDTO {
         this.description = description;
     }
 
-    public List<TaskDTO> getTasks() {
+    public Set<TaskDTO> getTasks() {
         return tasks;
     }
 
-    public void setTasks(List<TaskDTO> tasks) {
-        this.tasks = tasks
-                .stream()
-                .sorted(Comparator.comparing(TaskDTO::hashCode))
-                .toList();
+    public void setTasks(Set<TaskDTO> tasks) {
+        this.tasks = tasks;
     }
 
-    public List<DagEdgeDTO> getDagEdges() {
+    public Set<DagEdgeDTO> getDagEdges() {
         return dagEdges;
     }
 
-    public void setDagEdges(List<DagEdgeDTO> dagEdges) {
-        this.dagEdges = dagEdges
-                .stream() // sort for stable list comparison
-                .sorted(Comparator.comparing(DagEdgeDTO::hashCode))
-                .toList();
+    public void setDagEdges(Set<DagEdgeDTO> dagEdges) {
+        this.dagEdges = dagEdges;
     }
 
     @Override

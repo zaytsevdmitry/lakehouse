@@ -16,7 +16,7 @@ public class ScheduleConfValidator {
     public static List<String> validateEdges(
             String objectDescription,
             Set<String> vertices,
-            List<DagEdgeDTO> edges) {
+            Set<DagEdgeDTO> edges) {
         List<String> descriptions = new ArrayList<>();
         edges.forEach(dagEdgeDTO -> {
             if (!vertices.contains(dagEdgeDTO.getFrom()))

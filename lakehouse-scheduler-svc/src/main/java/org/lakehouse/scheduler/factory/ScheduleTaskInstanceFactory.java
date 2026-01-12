@@ -44,8 +44,8 @@ public class ScheduleTaskInstanceFactory {
                 sti.getScheduleScenarioActInstance().getName(),
                 sti.getName());
 
-        result.setExecutionModule(taskDTO.getExecutionModule());
-        result.setExecutionModuleArgs(taskDTO.getExecutionModuleArgs());
+        result.setTaskProcessor(taskDTO.getTaskProcessor());
+        result.setTaskProcessorArgs(taskDTO.getTaskProcessorArgs());
         result.setName(sti.getName());
         result.setStatus(sti.getStatus());
         result.setTaskExecutionServiceGroupName(taskDTO.getTaskExecutionServiceGroupName());

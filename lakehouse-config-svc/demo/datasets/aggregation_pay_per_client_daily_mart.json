@@ -2,17 +2,16 @@
   "keyName": "aggregation_pay_per_client_daily_mart",
   "nameSpaceKeyName": "DEMO",
   "dataSourceKeyName": "lakehousestorage",
-  "fullTableName": "aggregation_pay_per_client_daily_mart",
+  "databaseSchemaName": "default",
+  "tableName": "aggregation_pay_per_client_daily_mart",
   "scripts": [
     {
       "key": "aggregation_pay_per_client_daily_mart.sql"
     }
   ],
-  "sources": [
-    {
-      "dataSetKeyName": "transaction_dds"
-    }
-  ],
+  "sources": {
+    "transaction_dds": {}
+  },
   "columnSchema": [
     {
       "name": "reg_date",
@@ -39,15 +38,14 @@
       "nullable": false
     }
   ],
-  "constraints": [
-    {
-      "name": "aggregation_pay_per_client_daily_mart_pk",
+  "constraints": {
+    "aggregation_pay_per_client_daily_mart_pk": {
       "type": "primary",
       "columns": "client_name,reg_date",
-      "runtimeLevelCheck": false,
-      "constructLevelCheck": true
+      "enabled": true,
+      "constraintLevelCheck": "dataQuality"
     }
-  ],
+  },
   "properties": {
     "location": "/demo/datamarts/aggregation_pay_per_client_daily_mart",
     "using": "iceberg"

@@ -3,10 +3,9 @@ package org.lakehouse.client.api.dto.configs;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 
 import java.io.Serial;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 public class ScheduleAbstract extends NameDescriptionAbstract {
     @Serial
@@ -14,7 +13,7 @@ public class ScheduleAbstract extends NameDescriptionAbstract {
     private String intervalExpression;
     private String startDateTime; // use DateTimeUtils.strEquals to compare
     private String stopDateTime;
-    private List<DagEdgeDTO> scenarioActEdges = new ArrayList<>();
+    private Set<DagEdgeDTO> scenarioActEdges = new HashSet<>();
     private boolean enabled;
 
     public ScheduleAbstract() {
@@ -53,15 +52,12 @@ public class ScheduleAbstract extends NameDescriptionAbstract {
         this.enabled = enabled;
     }
 
-    public List<DagEdgeDTO> getScenarioActEdges() {
+    public Set<DagEdgeDTO> getScenarioActEdges() {
         return scenarioActEdges;
     }
 
-    public void setScenarioActEdges(List<DagEdgeDTO> scenarioActEdges) {
-        this.scenarioActEdges = scenarioActEdges
-                .stream() // sort for stable list comparison
-                .sorted(Comparator.comparing(DagEdgeDTO::hashCode))
-                .toList();
+    public void setScenarioActEdges(Set<DagEdgeDTO> scenarioActEdges) {
+        this.scenarioActEdges = scenarioActEdges;
     }
 
     @Override

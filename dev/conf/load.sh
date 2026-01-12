@@ -23,6 +23,10 @@ function curlGet() {
 }
 curlPost 127.0.0.1:8080/v1_0/configs/nameSpaces "name-spaces/demo.json"
 
+for s in "postgres" "spark_iceberg"
+do
+   curlPost 127.0.0.1:8080/v1_0/configs/drivers "drivers/$s.json"
+done
 
 for s in "processingdb" "lakehousestorage"
 do

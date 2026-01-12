@@ -11,9 +11,9 @@ import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
 import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.rest.spark.SparkRestClientApi;
-import org.lakehouse.taskexecutor.executionmodule.state.DependencyCheckStateTaskProcessor;
-import org.lakehouse.taskexecutor.executionmodule.state.LockedStateTaskProcessor;
-import org.lakehouse.taskexecutor.executionmodule.state.SuccessStateTaskProcessor;
+import org.lakehouse.taskexecutor.processor.state.DependencyCheckStateTaskProcessor;
+import org.lakehouse.taskexecutor.processor.state.LockedStateTaskProcessor;
+import org.lakehouse.taskexecutor.processor.state.SuccessStateTaskProcessor;
 import org.lakehouse.taskexecutor.test.stub.SparkRestClientApiTest;
 import org.lakehouse.taskexecutor.test.stub.StateRestClientApiTest;
 import org.lakehouse.test.config.configuration.FileLoader;
@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @SpringBootTest(properties = {"spring.main.allow-bean-definition-overriding=true"})
 @ContextConfiguration(classes = {
@@ -75,7 +74,7 @@ public class StateAdapterTest {
         tpc.setTargetDataSetKeyName(testTargetDataSet.getKeyName());
         tpc.setIntervalStartDateTime(start);
         tpc.setIntervalEndDateTime(end);
-        tpc.setDataSetDTOs(Map.of(
+        tpc.setDataSets(Map.of(
                 testTargetDataSet.getKeyName(),testTargetDataSet,
                 testDependencyDataSet.getKeyName(),testDependencyDataSet));
 
@@ -113,7 +112,7 @@ public class StateAdapterTest {
         tpc.setIntervalStartDateTime(start);
         tpc.setIntervalEndDateTime(end);
 
-        tpc.setDataSetDTOs(Map.of(testDataSet.getKeyName(),testDataSet));
+        tpc.setDataSets(Map.of(testDataSet.getKeyName(),testDataSet));
 
         StateRestClientApiTest stateRestClientApi = new StateRestClientApiTest();
         DependencyCheckStateTaskProcessor processor = new DependencyCheckStateTaskProcessor(tpc, stateRestClientApi);
@@ -134,7 +133,7 @@ public class StateAdapterTest {
         tpc.setIntervalStartDateTime(start);
         tpc.setIntervalEndDateTime(end);
 
-        tpc.setDataSetDTOs(Map.of(testDataSet.getKeyName(),testDataSet));
+        tpc.setDataSets(Map.of(testDataSet.getKeyName(),testDataSet));
 
         StateRestClientApiTest stateRestClientApi = new StateRestClientApiTest();
         LockedStateTaskProcessor processor = new LockedStateTaskProcessor(tpc, stateRestClientApi);

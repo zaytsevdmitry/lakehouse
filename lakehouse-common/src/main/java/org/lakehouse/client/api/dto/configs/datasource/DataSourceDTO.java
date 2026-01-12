@@ -1,17 +1,16 @@
 package org.lakehouse.client.api.dto.configs.datasource;
 
-import org.lakehouse.client.api.constant.Types;
+import org.lakehouse.client.api.dto.common.SQLTemplateDTO;
 
 import java.util.*;
 
 public class DataSourceDTO {
     private String keyName;
-    private Types.EngineType engineType;
-    private Types.Engine engine;
     private List<ServiceDTO> services = new ArrayList<>();
     private Map<String, String> properties = new HashMap<>();
     private String description;
-
+    private SQLTemplateDTO sqlTemplate = new SQLTemplateDTO();
+    private String driverKeyName;
 
     public DataSourceDTO() {
     }
@@ -41,22 +40,6 @@ public class DataSourceDTO {
         this.description = description;
     }
 
-    public Types.EngineType getEngineType() {
-        return engineType;
-    }
-
-    public void setEngineType(Types.EngineType engineType) {
-        this.engineType = engineType;
-    }
-
-    public Types.Engine getEngine() {
-        return engine;
-    }
-
-    public void setEngine(Types.Engine engine) {
-        this.engine = engine;
-    }
-
     public List<ServiceDTO> getServices() {
         return services;
     }
@@ -65,28 +48,37 @@ public class DataSourceDTO {
         this.services = services;
     }
 
+    public SQLTemplateDTO getSqlTemplate() {
+        return sqlTemplate;
+    }
+
+    public void setSqlTemplate(SQLTemplateDTO sqlTemplate) {
+        this.sqlTemplate = sqlTemplate;
+    }
+
+    public String getDriverKeyName() {
+        return driverKeyName;
+    }
+
+    public void setDriverKeyName(String driverKeyName) {
+        this.driverKeyName = driverKeyName;
+    }
+
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DataSourceDTO that = (DataSourceDTO) o;
-        return Objects.equals(getKeyName(), that.getKeyName()) && getEngineType() == that.getEngineType() && getEngine() == that.getEngine() && Objects.equals(getServices(), that.getServices()) && Objects.equals(getProperties(), that.getProperties()) && Objects.equals(getDescription(), that.getDescription());
+        return Objects.equals(getKeyName(), that.getKeyName()) && Objects.equals(getServices(), that.getServices()) && Objects.equals(getProperties(), that.getProperties()) && Objects.equals(getDescription(), that.getDescription()) && Objects.equals(getSqlTemplate(), that.getSqlTemplate()) && Objects.equals(getDriverKeyName(), that.getDriverKeyName());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getKeyName(), getEngineType(), getEngine(), getServices(), getProperties(), getDescription());
+        return Objects.hash(getKeyName(), getServices(), getProperties(), getDescription(), getSqlTemplate(), getDriverKeyName());
     }
 
     @Override
     public String toString() {
-        return "DataSourceDTO{" +
-                "keyName='" + keyName + '\'' +
-                ", engineType=" + engineType +
-                ", engine=" + engine +
-                ", services=" + services +
-                ", properties=" + properties +
-                ", description='" + description + '\'' +
-                '}';
+        return "DataSourceDTO{" + "keyName='" + keyName + '\'' + ", services=" + services + ", properties=" + properties + ", description='" + description + '\'' + ", sqlTemplate=" + sqlTemplate + ", driverKeyName='" + driverKeyName + '\'' + '}';
     }
 }

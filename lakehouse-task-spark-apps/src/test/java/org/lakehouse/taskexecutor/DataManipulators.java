@@ -1,67 +1,50 @@
 package org.lakehouse.taskexecutor;
 
+import com.hubspot.jinjava.Jinjava;
 import org.apache.spark.sql.SparkSession;
-import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
+import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
 import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
-import org.lakehouse.client.api.exception.TaskFailedException;
-import org.lakehouse.client.api.factory.TableDialectFactory;
-import org.lakehouse.taskexecutor.api.factory.TaskConfigBuildException;
 import org.lakehouse.taskexecutor.executionmodule.body.CatalogActivator;
-import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.DataSourceManipulator;
-import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.DataSourceManipulatorParameter;
-import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.DataSourceManipulatorParameterImpl;
-import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.jdbc.postgres.PostgresJdbcSparkDataSourceManipulator;
-import org.lakehouse.taskexecutor.executionmodule.body.dataadapter.spark.IcebergSparkDataSourceManipulator;
-import org.lakehouse.test.config.configuration.FileLoader;
+import org.lakehouse.taskexecutor.executionmodule.body.datasourcemanipulator.SparkDataSourceManipulatorFactory;
+import org.lakehouse.taskexecutor.executionmodule.body.datasourcemanipulator.SparkSQLDataSourceManipulator;
+import org.lakehouse.taskexecutor.executionmodule.body.datasourcemanipulator.UnsuportedDataSourceException;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.io.IOException;
-import java.lang.annotation.Target;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class DataManipulators {
-    FileLoader fileLoader = new FileLoader();
-    TaskConfigTestFactory taskConfigTestFactory = new TaskConfigTestFactory();
-
-
-    private DataSourceManipulatorParameter getDataSourceManipulatorParameter(String keyName, SparkSession sparkSession)
-            throws TaskConfigBuildException, IOException, TaskFailedException {
-        TaskProcessorConfigDTO t = taskConfigTestFactory.loadTaskProcessorConfigDTO(keyName,"load");
-        DataSetDTO dataSetDTO = t.getTargetDataSet();
-        DataSourceDTO dataSourceDTO = t.getTargetDataSourceDTO();
-
-        Map<String,DataSetDTO> foreignDataSets = t.getForeignDataSetDTOMap();
-        return  new DataSourceManipulatorParameterImpl(
-                sparkSession,
-                dataSourceDTO,
-                dataSetDTO,
-                new TableDialectFactory().buildTableDialect(dataSourceDTO,dataSetDTO, foreignDataSets),
-                t.getKeyBind()
-        );
-    }
-    public  DataSourceManipulator getIcebergDataSourceManipulator(
-            String keyName,
-            SparkSession sparkSession) throws TaskFailedException, IOException, TaskConfigBuildException {
-        DataSourceManipulatorParameter parameter = getDataSourceManipulatorParameter(keyName,sparkSession);
-        new CatalogActivator(sparkSession).activate(parameter.getDataSourceDTO());
-        return new IcebergSparkDataSourceManipulator(parameter);
-    }
-
-    public  DataSourceManipulator getPgDataSourceManipulator(
-            String keyName,
+    public static SparkSQLDataSourceManipulator getIcebergDataSourceManipulator(
+            Jinjava jinjava,
             SparkSession sparkSession,
-            PostgreSQLContainer<?> postgres) throws IOException, TaskFailedException, TaskConfigBuildException {
+            String dataSetKeyName,
+            TaskProcessorConfigDTO taskProcessorConfigDTO) throws IOException,  UnsuportedDataSourceException {
 
-        DataSourceManipulatorParameter parameter = getDataSourceManipulatorParameter(keyName,sparkSession);
+        SparkDataSourceManipulatorFactory manipulatorFactory =
+                new SparkDataSourceManipulatorFactory(sparkSession, jinjava);
+        DataSetDTO dataSetDTO = taskProcessorConfigDTO.getDataSets().get(dataSetKeyName);
+        DataSourceDTO dataSourceDT0 = taskProcessorConfigDTO.getDataSources().get(dataSetDTO.getDataSourceKeyName());
+        DriverDTO driverDTO = taskProcessorConfigDTO.getDrivers().get(dataSourceDT0.getDriverKeyName());
+        new CatalogActivator(sparkSession).activate(dataSourceDT0);
+        return manipulatorFactory.buildDataSourceManipulator(driverDTO,dataSourceDT0,dataSetDTO);
 
-        DataSourceDTO dataSourceDTO = parameter.getDataSourceDTO();
-        DataSetDTO dataSetDTO = parameter.getDataSetDTO();
+    }
 
+        public static SparkSQLDataSourceManipulator getSparkSQLDataSourceManipulatorPg(
+            Jinjava jinjava,
+            PostgreSQLContainer<?> postgres,
+            SparkSession sparkSession,
+            String dataSetKeyName,
+            TaskProcessorConfigDTO taskProcessorConfigDTO) throws IOException, UnsuportedDataSourceException {
+        SparkDataSourceManipulatorFactory manipulatorFactory =
+                new SparkDataSourceManipulatorFactory(sparkSession, jinjava);
+
+        DataSetDTO dataSetDTO = taskProcessorConfigDTO.getDataSets().get(dataSetKeyName);
+        DataSourceDTO dataSourceDTO = taskProcessorConfigDTO.getDataSources().get(dataSetDTO.getDataSourceKeyName());
+        DriverDTO driverDTO = taskProcessorConfigDTO.getDrivers().get(dataSourceDTO.getDriverKeyName());
         // pg dynamic test properties
         Map<String,String> props = new HashMap<>();
         props.putAll(Map.of(
@@ -70,7 +53,6 @@ public class DataManipulators {
                 "spark.sql.catalog.processingdb.user", postgres.getUsername(), // Replace with your username
                 "spark.sql.catalog.processingdb.password", postgres.getPassword() // Replace with your password
         ));
-        parameter.getDataSourceDTO().getProperties().putAll(props);
 
         dataSourceDTO.setProperties(props);
         dataSourceDTO.getServices().get(0).setHost(postgres.getHost());
@@ -79,7 +61,7 @@ public class DataManipulators {
         dataSourceDTO.getServices().get(0).getProperties().put("user", postgres.getUsername());
         dataSourceDTO.getServices().get(0).getProperties().put("password", postgres.getPassword());
 
-        new CatalogActivator(sparkSession).activate(parameter.getDataSourceDTO());
-        return new PostgresJdbcSparkDataSourceManipulator(parameter);
+        new CatalogActivator(sparkSession).activate(dataSourceDTO);
+        return manipulatorFactory.buildDataSourceManipulator(driverDTO,dataSourceDTO,dataSetDTO);
     }
 }

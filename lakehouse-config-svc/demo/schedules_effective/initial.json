@@ -33,10 +33,10 @@
         {
           "name": "merge",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.MergeProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.datamanipulation.MergeProcessor",
           "importance": "critical",
           "description": "load from remote datastore",
-          "executionModuleArgs": {
+          "taskProcessorArgs": {
             "spark.executor.memory": "5g",
             "spark.driver.memory": "2g",
             "spark.driver.cores": "3"
@@ -45,70 +45,70 @@
         {
           "name": "apply",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.ApplyProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.datamanipulation.ApplyProcessor",
           "importance": "critical",
           "description": "load from remote datastore",
-          "executionModuleArgs": {}
+          "taskProcessorArgs": {}
         },
         {
           "name": "check",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.DependencyCheckStateTaskProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.state.DependencyCheckStateTaskProcessor",
           "importance": "critical",
           "description": "Dependency check",
-          "executionModuleArgs": {}
+          "taskProcessorArgs": {}
         },
         {
           "name": "finally",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.SuccessStateTaskProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.state.SuccessStateTaskProcessor",
           "importance": "critical",
           "description": "DataSet success",
-          "executionModuleArgs": {}
+          "taskProcessorArgs": {}
         },
         {
           "name": "begin",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.LockedStateTaskProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.state.LockedStateTaskProcessor",
           "importance": "critical",
           "description": "Made interval status RUNNING",
-          "executionModuleArgs": {}
+          "taskProcessorArgs": {}
         },
         {
           "name": "load",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.SparkLauncherTaskProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.SparkLauncherTaskProcessor",
+          "taskProcessorBody": "org.lakehouse.taskexecutor.api.processor.body.sql.MergeSQLProcessorBody",
           "importance": "critical",
           "description": "load from remote datastore",
-          "executionModuleArgs": {
+          "taskProcessorArgs": {
             "spark.executor.memory": "5g",
-            "spark.driver.memory": "2g",
-            "executionBody": "org.lakehouse.taskexecutor.executionmodule.body.TransformationSparkProcessorBody"
-          }
+            "spark.driver.memory": "2g"
+            }
         },
         {
           "name": "dataQualityAfterCritical",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.DataQualityAfterCriticalProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.datamanipulation.DataQualityAfterCriticalProcessor",
           "importance": "critical",
           "description": "load from remote datastore",
-          "executionModuleArgs": {}
+          "taskProcessorArgs": {}
         },
         {
           "name": "dataQualityAfterWarn",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.DataQualityAfterWarnProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.datamanipulation.DataQualityAfterWarnProcessor",
           "importance": "critical",
           "description": "load from remote datastore",
-          "executionModuleArgs": {}
+          "taskProcessorArgs": {}
         },
         {
           "name": "dataQualityBeforeApply",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.DataQualityBeforeProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.datamanipulation.DataQualityBeforeProcessor",
           "importance": "warn",
           "description": "load from remote datastore",
-          "executionModuleArgs": {}
+          "taskProcessorArgs": {}
         }
       ],
       "dagEdges": [
@@ -155,10 +155,10 @@
         {
           "name": "merge",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.MergeProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.datamanipulation.MergeProcessor",
           "importance": "critical",
           "description": "load from remote datastore",
-          "executionModuleArgs": {
+          "taskProcessorArgs": {
             "spark.executor.memory": "5g",
             "spark.driver.memory": "2g",
             "spark.driver.cores": "3"
@@ -167,70 +167,70 @@
         {
           "name": "apply",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.ApplyProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.datamanipulation.ApplyProcessor",
           "importance": "critical",
           "description": "load from remote datastore",
-          "executionModuleArgs": {}
+          "taskProcessorArgs": {}
         },
         {
           "name": "check",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.DependencyCheckStateTaskProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.state.DependencyCheckStateTaskProcessor",
           "importance": "critical",
           "description": "Dependency check",
-          "executionModuleArgs": {}
+          "taskProcessorArgs": {}
         },
         {
           "name": "finally",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.SuccessStateTaskProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.state.SuccessStateTaskProcessor",
           "importance": "critical",
           "description": "DataSet success",
-          "executionModuleArgs": {}
+          "taskProcessorArgs": {}
         },
         {
           "name": "begin",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.LockedStateTaskProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.state.LockedStateTaskProcessor",
           "importance": "critical",
           "description": "Made interval status RUNNING",
-          "executionModuleArgs": {}
+          "taskProcessorArgs": {}
         },
         {
           "name": "load",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.SparkLauncherTaskProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.SparkLauncherTaskProcessor",
+          "taskProcessorBody": "org.lakehouse.taskexecutor.api.processor.body.sql.MergeSQLProcessorBody",
           "importance": "critical",
           "description": "load from remote datastore",
-          "executionModuleArgs": {
+          "taskProcessorArgs": {
             "spark.executor.memory": "5g",
-            "spark.driver.memory": "2g",
-            "executionBody": "org.lakehouse.taskexecutor.executionmodule.body.TransformationSparkProcessorBody"
-          }
+            "spark.driver.memory": "2g"
+            }
         },
         {
           "name": "dataQualityAfterCritical",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.DataQualityAfterCriticalProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.datamanipulation.DataQualityAfterCriticalProcessor",
           "importance": "critical",
           "description": "load from remote datastore",
-          "executionModuleArgs": {}
+          "taskProcessorArgs": {}
         },
         {
           "name": "dataQualityAfterWarn",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.DataQualityAfterWarnProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.datamanipulation.DataQualityAfterWarnProcessor",
           "importance": "critical",
           "description": "load from remote datastore",
-          "executionModuleArgs": {}
+          "taskProcessorArgs": {}
         },
         {
           "name": "dataQualityBeforeApply",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.DataQualityBeforeProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.datamanipulation.DataQualityBeforeProcessor",
           "importance": "warn",
           "description": "load from remote datastore",
-          "executionModuleArgs": {}
+          "taskProcessorArgs": {}
         }
       ],
       "dagEdges": [
@@ -277,18 +277,29 @@
         {
           "name": "begin",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.LockedStateTaskProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.state.LockedStateTaskProcessor",
           "importance": "critical",
           "description": "Made interval status RUNNING",
-          "executionModuleArgs": {}
+          "taskProcessorArgs": {}
+        },
+        {
+          "name": "prepare",
+          "taskExecutionServiceGroupName": "default",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.jdbc.JdbcTaskProcessor",
+          "taskProcessorBody": "org.lakehouse.taskexecutor.api.processor.body.sql.CreateTableSQLProcessorBody",
+          "importance": "critical",
+          "description": "Create table if not exists",
+          "taskProcessorArgs": {
+          }
         },
         {
           "name": "load",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.JdbcTaskProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.jdbc.JdbcTaskProcessor",
+          "taskProcessorBody": "org.lakehouse.taskexecutor.api.processor.body.sql.MergeSQLProcessorBody",
           "importance": "critical",
           "description": "override load",
-          "executionModuleArgs": {
+          "taskProcessorArgs": {
             "spark.executor.memory": "1g",
             "spark.executor.cores": "2"
           }
@@ -296,19 +307,23 @@
         {
           "name": "success",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.SuccessStateTaskProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.state.SuccessStateTaskProcessor",
           "importance": "critical",
           "description": "DataSet success",
-          "executionModuleArgs": {}
+          "taskProcessorArgs": {}
         }
       ],
       "dagEdges": [
+        {
+          "from": "begin",
+          "to": "prepare"
+        },
         {
           "from": "load",
           "to": "success"
         },
         {
-          "from": "begin",
+          "from": "prepare",
           "to": "load"
         }
       ],
@@ -322,10 +337,10 @@
         {
           "name": "merge",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.MergeProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.datamanipulation.MergeProcessor",
           "importance": "critical",
           "description": "load from remote datastore",
-          "executionModuleArgs": {
+          "taskProcessorArgs": {
             "spark.executor.memory": "5g",
             "spark.driver.memory": "2g",
             "spark.driver.cores": "3"
@@ -334,83 +349,82 @@
         {
           "name": "apply",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.ApplyProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.datamanipulation.ApplyProcessor",
           "importance": "critical",
           "description": "load from remote datastore",
-          "executionModuleArgs": {}
+          "taskProcessorArgs": {}
         },
         {
           "name": "check",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.DependencyCheckStateTaskProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.state.DependencyCheckStateTaskProcessor",
           "importance": "critical",
           "description": "Dependency check",
-          "executionModuleArgs": {}
+          "taskProcessorArgs": {}
         },
         {
           "name": "load",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.SparkLauncherTaskProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.SparkLauncherTaskProcessor",
+          "taskProcessorBody": "org.lakehouse.taskexecutor.api.processor.body.sql.MergeSQLProcessorBody",
           "importance": "critical",
           "description": "override load",
-          "executionModuleArgs": {
+          "taskProcessorArgs": {
             "spark.executor.memory": "1g",
             "spark.driver.memory": "2g",
-            "spark.executor.cores": "2",
-            "executionBody": "org.lakehouse.taskexecutor.executionmodule.body.TransformationSparkProcessorBody"
-          }
+            "spark.executor.cores": "2"
+            }
         },
         {
           "name": "finally",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.SuccessStateTaskProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.state.SuccessStateTaskProcessor",
           "importance": "critical",
           "description": "DataSet success",
-          "executionModuleArgs": {}
+          "taskProcessorArgs": {}
         },
         {
           "name": "begin",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.LockedStateTaskProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.state.LockedStateTaskProcessor",
           "importance": "critical",
           "description": "Made interval status RUNNING",
-          "executionModuleArgs": {}
+          "taskProcessorArgs": {}
         },
         {
           "name": "dataQualityAfterCritical",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.DataQualityAfterCriticalProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.datamanipulation.DataQualityAfterCriticalProcessor",
           "importance": "critical",
           "description": "load from remote datastore",
-          "executionModuleArgs": {}
+          "taskProcessorArgs": {}
         },
         {
           "name": "extend",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.SparkLauncherTaskProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.SparkLauncherTaskProcessor",
+          "taskProcessorBody": "org.lakehouse.taskexecutor.api.processor.body.sql.MergeSQLProcessorBody",
           "importance": "critical",
           "description": "Not exists in template",
-          "executionModuleArgs": {
+          "taskProcessorArgs": {
             "spark.executor.memory": "5g",
-            "spark.driver.memory": "2g",
-            "executionBody": "org.lakehouse.taskexecutor.executionmodule.body.TransformationSparkProcessorBody"
-          }
+            "spark.driver.memory": "2g"}
         },
         {
           "name": "dataQualityAfterWarn",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.DataQualityAfterWarnProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.datamanipulation.DataQualityAfterWarnProcessor",
           "importance": "critical",
           "description": "load from remote datastore",
-          "executionModuleArgs": {}
+          "taskProcessorArgs": {}
         },
         {
           "name": "dataQualityBeforeApply",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.datamanipulation.DataQualityBeforeProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.datamanipulation.DataQualityBeforeProcessor",
           "importance": "warn",
           "description": "load from remote datastore",
-          "executionModuleArgs": {}
+          "taskProcessorArgs": {}
         }
       ],
       "dagEdges": [
@@ -461,18 +475,29 @@
         {
           "name": "begin",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.LockedStateTaskProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.state.LockedStateTaskProcessor",
           "importance": "critical",
           "description": "Made interval status RUNNING",
-          "executionModuleArgs": {}
+          "taskProcessorArgs": {}
+        },
+        {
+          "name": "prepare",
+          "taskExecutionServiceGroupName": "default",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.jdbc.JdbcTaskProcessor",
+          "taskProcessorBody": "org.lakehouse.taskexecutor.api.processor.body.sql.CreateTableSQLProcessorBody",
+          "importance": "critical",
+          "description": "Create table if not exists",
+          "taskProcessorArgs": {
+          }
         },
         {
           "name": "load",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.JdbcTaskProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.jdbc.JdbcTaskProcessor",
+          "taskProcessorBody": "org.lakehouse.taskexecutor.api.processor.body.sql.AppendSQLProcessorBody",
           "importance": "critical",
           "description": "override load",
-          "executionModuleArgs": {
+          "taskProcessorArgs": {
             "spark.executor.memory": "1g",
             "spark.executor.cores": "2"
           }
@@ -480,20 +505,24 @@
         {
           "name": "success",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.SuccessStateTaskProcessor",
+          "taskProcessor": "org.lakehouse.taskexecutor.processor.state.SuccessStateTaskProcessor",
           "importance": "critical",
           "description": "DataSet success",
-          "executionModuleArgs": {}
+          "taskProcessorArgs": {}
         }
       ],
       "dagEdges": [
         {
-          "from": "load",
-          "to": "success"
+          "from": "begin",
+          "to": "prepare"
         },
         {
-          "from": "begin",
+          "from": "prepare",
           "to": "load"
+        },
+        {
+          "from": "load",
+          "to": "success"
         }
       ],
       "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",

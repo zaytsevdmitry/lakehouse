@@ -5,6 +5,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.api.dto.configs.*;
+import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.client.rest.config.configuration.ConfigRestClientConfiguration;
 import org.lakehouse.test.config.configuration.FileLoader;
@@ -40,6 +41,19 @@ public class ConfigRestClientHelperTest {
 
 
     private final FileLoader fileLoader = new FileLoader();
+
+    @Test
+    public void MakesCorrectCallDriverDTO() throws Exception {
+        DriverDTO expectDriverDTO = fileLoader.loadDriverDTO("postgres");
+        server.expect(ExpectedCount.manyTimes(),
+                        requestTo(String.format("%s/%s", Endpoint.DRIVERS, expectDriverDTO.getKeyName())))
+                .andRespond(withSuccess(objectMapper.writeValueAsString(expectDriverDTO), MediaType.APPLICATION_JSON));
+        System.out.println("Driver is loaded");
+
+
+        DriverDTO driverDTO = this.client.getDriverDTO(expectDriverDTO.getKeyName());
+        assert (expectDriverDTO.equals(driverDTO));
+    }
 
     @Test
     public void MakesCorrectCallNameSpaceDTO() throws Exception {
@@ -100,10 +114,10 @@ public class ConfigRestClientHelperTest {
         mergeTaskDTOExpectedArgs.put("spark.executor.memory", "5g");
         mergeTaskDTOExpectedArgs.put("spark.driver.memory", "2g");
         mergeTaskDTOExpectedArgs.put("spark.driver.cores", "3");
-        mergeTaskDTOExpected.setExecutionModuleArgs(mergeTaskDTOExpectedArgs);
+        mergeTaskDTOExpected.setTaskProcessorArgs(mergeTaskDTOExpectedArgs);
         mergeTaskDTOExpected.setName("merge");
         mergeTaskDTOExpected.setTaskExecutionServiceGroupName("default");
-        mergeTaskDTOExpected.setExecutionModule("org.lakehouse.taskexecutor.executionmodule.datamanipulation.MergeProcessor");
+        mergeTaskDTOExpected.setTaskProcessor("org.lakehouse.taskexecutor.executionmodule.datamanipulation.MergeProcessor");
         mergeTaskDTOExpected.setImportance("critical");
         mergeTaskDTOExpected.setDescription("load from remote datastore");
 
