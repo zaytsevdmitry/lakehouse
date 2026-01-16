@@ -79,6 +79,7 @@ public class TaskProcessorConfigFactory {
                         .getTaskProcessorArgs());
 
 
+
         result.setDataSets(collapseDataSetDTOs(scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getDataSetKeyName()));
         result.setDataSources(
                 result.getDataSets()

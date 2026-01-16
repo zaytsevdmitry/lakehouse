@@ -105,10 +105,10 @@
     },
     {
       "from": "begin",
-      "to": "prepare"
+      "to": "check"
     },
     {
-      "from": "prepare",
+      "from": "check",
       "to": "load"
     },
     {

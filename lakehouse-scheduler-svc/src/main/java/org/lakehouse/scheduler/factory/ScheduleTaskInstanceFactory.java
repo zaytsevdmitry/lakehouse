@@ -45,6 +45,7 @@ public class ScheduleTaskInstanceFactory {
                 sti.getName());
 
         result.setTaskProcessor(taskDTO.getTaskProcessor());
+        result.setTaskProcessorBody(taskDTO.getTaskProcessorBody());
         result.setTaskProcessorArgs(taskDTO.getTaskProcessorArgs());
         result.setName(sti.getName());
         result.setStatus(sti.getStatus());

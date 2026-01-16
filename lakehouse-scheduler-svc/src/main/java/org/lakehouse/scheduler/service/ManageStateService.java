@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -94,26 +95,35 @@ public class ManageStateService {
                     scheduleEffectiveService
                             .getScheduleEffectiveDTO(sir.getConfigScheduleKeyName());
 
-            ScheduleInstance scheduleInstance = findNextScheduleInstanceOrNull(sir, scheduleEffectiveDTO);
-            if (scheduleInstance != null
-                    && scheduleInstance.getStatus().equals(Status.Schedule.NEW.label)) {
+            findNextScheduleInstanceOrNull(sir, scheduleEffectiveDTO).ifPresentOrElse((scheduleInstance -> {
 
-                scheduleInstance.setStatus(Status.Schedule.RUNNING.label);
-                sir.setScheduleInstance(scheduleInstance);
+                if (scheduleInstance.getStatus().equals(Status.Schedule.NEW.label)) {
+                    logger.info("Next schedule of {} is found", scheduleEffectiveDTO.getName());
+                    scheduleInstance.setStatus(Status.Schedule.RUNNING.label);
+                    sir.setScheduleInstance(scheduleInstance);
 
-                scheduleInstanceRepository.save(scheduleInstance);
-                scheduleInstanceRunningRepository.save(sir);
-                result.addAndGet(1);
-            }
+                    scheduleInstanceRepository.save(scheduleInstance);
+                    scheduleInstanceRunningRepository.save(sir);
+                    result.addAndGet(1);
+                }else {
+                    logger.info("Next schedule of {} found but status not {}. Current status {}",
+                            scheduleEffectiveDTO.getName(),
+                            Status.Schedule.RUNNING.label,
+                            scheduleInstance.getStatus()
+                    );
+                }
+
+            }),
+                    () -> logger.info("Next schedule of {} not found", scheduleEffectiveDTO.getName()));
         });
         return result.get();
     }
 
-    private ScheduleInstance findNextScheduleInstanceOrNull(
+    private Optional<ScheduleInstance> findNextScheduleInstanceOrNull(
             ScheduleInstanceRunning scheduleInstanceRunning,
             ScheduleEffectiveDTO scheduleEffectiveDTO
     ) {
-        ScheduleInstance result = null;
+        Optional<ScheduleInstance> result = Optional.empty();
 
         OffsetDateTime nextTargetDateTime = resolveNextDate(
                 scheduleInstanceRunning.getScheduleInstance(),
@@ -124,7 +134,12 @@ public class ManageStateService {
                         scheduleEffectiveDTO
                                 .getIntervalExpression(),
                         nextTargetDateTime)) {
-            try {
+            result = scheduleInstanceRepository
+                    .findByScheduleNameAndTargetDateTime(
+                            scheduleInstanceRunning
+                                    .getConfigScheduleKeyName(),
+                            nextTargetDateTime);
+           /* try {
                 result = scheduleInstanceRepository
                         .findByScheduleNameAndTargetDateTime(
                                 scheduleInstanceRunning
@@ -137,7 +152,7 @@ public class ManageStateService {
             } catch (Throwable e) {
                 logger.warn(e.getMessage());
                 throw new RuntimeException(e);
-            }
+            }*/
         }
         return result;
     }

@@ -118,7 +118,10 @@ public class FileLoader {
         return objectMapper.readValue(new File(rootPath.concat("/scenario-act-templates/default.json")), ScenarioActTemplateDTO.class);
 
     }
+    public ScenarioActTemplateDTO loadScenarioActTemplateDTOcycled() throws IOException {
+        return objectMapper.readValue(new File(rootPath.concat("/scenario-act-templates/cycled.json")), ScenarioActTemplateDTO.class);
 
+    }
     public ScheduleEffectiveDTO loadScheduleEffectiveDTO() throws IOException {
         return objectMapper.readValue(new File(rootPath.concat("/schedules_effective/initial.json")), ScheduleEffectiveDTO.class);
     }

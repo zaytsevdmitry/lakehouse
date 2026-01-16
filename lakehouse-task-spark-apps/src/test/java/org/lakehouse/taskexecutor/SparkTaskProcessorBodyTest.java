@@ -197,7 +197,8 @@ public class SparkTaskProcessorBodyTest {
                 SparkProcessorBodyParamFactory
                         .buildSparkProcessorBodyParameter(
                                 sparkSession,
-                                conf),
+                                conf,
+                                jinjava),
                 conf.getTaskProcessorBody());
         tb.run();
         trnddsDSM.read(new HashMap<>()).show();

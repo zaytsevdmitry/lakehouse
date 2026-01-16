@@ -28,6 +28,8 @@ import org.lakehouse.config.service.ScenarioActTemplateService;
 import org.lakehouse.config.service.ScheduleService;
 import org.lakehouse.config.specifier.DataSourcePropertyKeyValueEntitySpecifier;
 import org.lakehouse.config.test.configutation.RestManipulator;
+import org.lakehouse.config.validator.ScheduleConfValidator;
+import org.lakehouse.config.validator.ValidationResult;
 import org.lakehouse.test.config.configuration.FileLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +49,9 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @AutoConfigureMockMvc
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -680,5 +684,58 @@ public class TestWithPostgres {
         assert (propertiesIUDCase.getToBeInserted().size() == 2);
         assert (propertiesIUDCase.getToBeUpdated().size() == 1);
         assert (propertiesIUDCase.getToBeSaved().size() == 3);
+    }
+    @Test
+    void testCycleGraph() throws IOException {
+        ScenarioActTemplateDTO t = new ScenarioActTemplateDTO();
+        DagEdgeDTO e1 = new DagEdgeDTO();
+        e1.setFrom("1");
+        e1.setTo("2");
+        DagEdgeDTO e2 = new DagEdgeDTO();
+        e2.setFrom("2");
+        e2.setTo("3");
+        DagEdgeDTO e3 = new DagEdgeDTO();
+        e3.setFrom("3");
+        e3.setTo("1");
+        t.setDagEdges(Set.of(e1,e2,e3));
+        List<String> /*stringList = ScheduleConfValidator
+                .validateEdges(ScheduleConfValidator.EdgesToMap(t.getDagEdges()));
+
+        assert (!stringList.isEmpty());
+        stringList = ScheduleConfValidator
+                .validateEdges(ScheduleConfValidator.EdgesToMap(fileLoader.loadScenarioActTemplateDTO().getDagEdges()));
+        assert (stringList.isEmpty());*/
+        stringList = ScheduleConfValidator
+                .validateEdges(ScheduleConfValidator.EdgesToMap(fileLoader.loadScenarioActTemplateDTOcycled().getDagEdges()));
+        assert (!stringList.isEmpty());
+
+
+        /*Set<String> vertices =
+                t.getDagEdges()
+                        .stream()
+                        .map(dagEdgeDTO -> Arrays.asList(dagEdgeDTO.getFrom(), dagEdgeDTO.getTo()))
+                        .flatMap(Collection::stream).collect(Collectors.toSet());
+        Map<String,String> edges =
+                t.getDagEdges()
+                        .stream()
+                        .map(dagEdgeDTO -> Map.entry(dagEdgeDTO.getFrom(), dagEdgeDTO.getTo()))
+                        .collect(Collectors.toMap(Map.Entry::getKey,Map.Entry::getValue));
+
+
+        for (String vertice:vertices){
+            assert (isCycle(vertice,vertice,edges));
+        }
+*/
+    }
+    private boolean isCycle(String verticeTarget,String verticeCurr, Map<String,String> edges){
+        if(edges.containsKey(verticeCurr)){
+            if (edges.get(verticeCurr).equals(verticeTarget)){
+                return true;
+            }else {
+                return isCycle(verticeTarget, edges.get(verticeCurr), edges);
+            }
+        }else {
+            return false;
+        }
     }
 }

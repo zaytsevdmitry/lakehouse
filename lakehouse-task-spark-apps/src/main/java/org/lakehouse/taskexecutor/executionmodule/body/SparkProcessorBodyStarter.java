@@ -1,9 +1,11 @@
 package org.lakehouse.taskexecutor.executionmodule.body;
 
+import com.hubspot.jinjava.Jinjava;
 import org.apache.spark.sql.SparkSession;
 import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
 import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.client.api.utils.ObjectMapping;
+import org.lakehouse.jinja.java.JinJavaFactory;
 import org.lakehouse.taskexecutor.api.processor.body.ProcessorBody;
 import org.lakehouse.taskexecutor.api.processor.body.ProcessorBodyFactory;
 import org.lakehouse.taskexecutor.api.processor.body.SparkProcessorBodyParamFactory;
@@ -27,11 +29,22 @@ public class  SparkProcessorBodyStarter {
     public static void main(String[] args) throws Exception {
         Logger logger = LoggerFactory.getLogger(SparkProcessorBodyStarter.class);
         if (args.length >= 1) {
-
+            logger.info(args[0]);
             TaskProcessorConfigDTO taskProcessorConfigDTO = mapTaskProcessorConfigDTO(args[0]);
+            Jinjava jinjava = JinJavaFactory.getJinjava(taskProcessorConfigDTO);
+
             SparkSession sparkSession = SparkSession.builder().getOrCreate();
+
+
+            CatalogActivator catalogActivator = new CatalogActivator(sparkSession,jinjava);
+            catalogActivator.activate(
+                    taskProcessorConfigDTO.getDataSources().values().stream().toList(),
+                    taskProcessorConfigDTO.getDrivers()
+            );
+
+
             ProcessorBody body = ProcessorBodyFactory.build(
-                    SparkProcessorBodyParamFactory.buildSparkProcessorBodyParameter(sparkSession, taskProcessorConfigDTO),
+                    SparkProcessorBodyParamFactory.buildSparkProcessorBodyParameter(sparkSession, taskProcessorConfigDTO,jinjava),
                     taskProcessorConfigDTO.getTaskProcessorBody());
             body.run();
 

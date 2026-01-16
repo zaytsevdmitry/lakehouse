@@ -26,10 +26,10 @@ public class DataManipulators {
         SparkDataSourceManipulatorFactory manipulatorFactory =
                 new SparkDataSourceManipulatorFactory(sparkSession, jinjava);
         DataSetDTO dataSetDTO = taskProcessorConfigDTO.getDataSets().get(dataSetKeyName);
-        DataSourceDTO dataSourceDT0 = taskProcessorConfigDTO.getDataSources().get(dataSetDTO.getDataSourceKeyName());
-        DriverDTO driverDTO = taskProcessorConfigDTO.getDrivers().get(dataSourceDT0.getDriverKeyName());
-        new CatalogActivator(sparkSession).activate(dataSourceDT0);
-        return manipulatorFactory.buildDataSourceManipulator(driverDTO,dataSourceDT0,dataSetDTO);
+        DataSourceDTO dataSourceDTO = taskProcessorConfigDTO.getDataSources().get(dataSetDTO.getDataSourceKeyName());
+        DriverDTO driverDTO = taskProcessorConfigDTO.getDrivers().get(dataSourceDTO.getDriverKeyName());
+        new CatalogActivator(sparkSession,jinjava).activate(driverDTO,dataSourceDTO);
+        return manipulatorFactory.buildDataSourceManipulator(driverDTO,dataSourceDTO,dataSetDTO);
 
     }
 
@@ -61,7 +61,7 @@ public class DataManipulators {
         dataSourceDTO.getServices().get(0).getProperties().put("user", postgres.getUsername());
         dataSourceDTO.getServices().get(0).getProperties().put("password", postgres.getPassword());
 
-        new CatalogActivator(sparkSession).activate(dataSourceDTO);
+        new CatalogActivator(sparkSession,jinjava).activate(driverDTO,dataSourceDTO);
         return manipulatorFactory.buildDataSourceManipulator(driverDTO,dataSourceDTO,dataSetDTO);
     }
 }

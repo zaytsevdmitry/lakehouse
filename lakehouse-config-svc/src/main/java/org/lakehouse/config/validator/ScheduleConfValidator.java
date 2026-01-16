@@ -5,9 +5,7 @@ import org.lakehouse.client.api.dto.configs.ScheduleDTO;
 import org.lakehouse.client.api.dto.configs.ScheduleScenarioActAbstract;
 import org.lakehouse.client.api.dto.configs.TaskDTO;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ScheduleConfValidator {
@@ -73,4 +71,54 @@ public class ScheduleConfValidator {
         });
         return new ValidationResult(descriptions.isEmpty(), descriptions);
     }
+    public static Map<String,List<String>> EdgesToMap(Set<DagEdgeDTO> dagEdgeDTOs) {
+        Map<String,List<String>> result = new HashMap<>();
+
+        dagEdgeDTOs.forEach(dagEdgeDTO -> {
+            if(result.containsKey(dagEdgeDTO.getFrom())){
+                List<String> l = new ArrayList<>();
+                l.addAll(result.get(dagEdgeDTO.getFrom()));
+                l.add(dagEdgeDTO.getTo());
+                result.put(dagEdgeDTO.getFrom(), l);
+            }else {
+                result.put(dagEdgeDTO.getFrom(),Arrays.asList(dagEdgeDTO.getTo()));
+            }
+        });
+        return result;
+    }
+    public static List<String> validateEdges(Map<String,List<String>> edges){
+        List<String> result = new ArrayList<>();
+        Set<String> vertices =
+                edges.entrySet()
+                        .stream()
+                        .map(e ->{
+                            List<String> l = new ArrayList<>();
+                            l.addAll(e.getValue());
+                            l.add(e.getKey());
+                            return l;})
+                        .flatMap(Collection::stream).collect(Collectors.toSet());
+
+        for (String vertice:vertices){
+            if (isCycle(vertice,vertice,edges)) {
+                result.add(String.format("Vertices %s аre cycled",vertice));
+            }
+        }
+        return result;
+    }
+    public static boolean isCycle(String verticeTarget,String verticeCurr, Map<String,List<String>> edges){
+        if(edges.containsKey(verticeCurr)){
+            for(String v:edges.get(verticeCurr)){
+                System.out.println(verticeTarget +" >>--> key=" + verticeCurr + " >>---> value=" + v);
+                if (v.equals(verticeTarget)){
+                    return true;
+                }else {
+                    if ( isCycle(verticeTarget, v, edges)){
+                        return true;
+                    };
+                }
+            }
+        }
+        return false;
+    }
+
 }

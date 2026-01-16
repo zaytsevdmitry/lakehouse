@@ -1,7 +1,6 @@
 version: '3.9'
 
 services:
-
   db:
     image: postgres
     container_name: db-dev
@@ -20,11 +19,18 @@ services:
       POSTGRES_USER: postgresUser
       POSTGRES_PASSWORD: postgresPW
       POSTGRES_DB: postgresDB
+    networks:
+      lakehouse_net:
+        ipv4_address: 192.1.193.10
+
   broker:
     image: apache/kafka:latest
     container_name: broker-dev
     ports:
       - 9092:9092
+    networks:
+      lakehouse_net:
+        ipv4_address: 192.1.193.20
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
@@ -55,6 +61,9 @@ services:
     ports:
       - "9000:9000"
       - "9001:9001"
+    networks:
+      lakehouse_net:
+        ipv4_address: 192.1.193.30
     volumes:
       - minio_storage:/data
     environment:
@@ -77,6 +86,9 @@ services:
          - "6066:6066"
          - "7077:7077"
          - "8400:8400"
+       networks:
+         lakehouse_net:
+            ipv4_address: 192.1.193.40
        deploy:
          resources:
            limits:
@@ -90,9 +102,14 @@ services:
     environment:
       - SPARK_MODE=worker
       - SPARK_WORKER_WEBUI_PORT=8401
-      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_MASTER_URL=spark://192.1.193.40:7077
       - SPARK_WORKER_MEMORY = 3g
       - SPARK_WORKER_CORES = 2
+    ports:
+      - "8401:8401"
+    networks:
+      lakehouse_net:
+        ipv4_address: 192.1.193.50
     deploy:
       resources:
         limits:
@@ -106,3 +123,9 @@ volumes:
   minio_storage: { }
   spark-logs:
 
+networks:
+  lakehouse_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.1.193.0/24

@@ -7,7 +7,7 @@ echo "pwd is $PWD"
 function curlPost() {
     URL=$1
     JSON_FILE=$2
-    curl -f -i -X POST $URL -H "Content-Type: application/json" --data-binary "@./$JSON_FILE"
+    curl -f -i -X POST $URL -H "Content-Type: application/json" --show-error  --data-binary "@./$JSON_FILE"
     if [ $? -ne 0 ]; then
       echo "Curl failed with an HTTP error. URL=$URL JSON_FILE=$JSON_FILE"
       exit 1
@@ -15,7 +15,7 @@ function curlPost() {
 }
 function curlGet() {
     URL=$1
-    curl -f -i -X GET $URL
+    curl -f -i -X GET $URL --show-error
     if [ $? -ne 0 ]; then
       echo "Curl failed with an HTTP error. URL=$URL JSON_FILE=$JSON_FILE"
       exit 1

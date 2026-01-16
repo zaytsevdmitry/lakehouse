@@ -21,6 +21,10 @@ public class SystemVarKeys {
     public static String SCRIPT = "script";
     public static String CONNECTION_STRING_PROTOCOL_NAME = "protocol"; // jdbc:[*]/spark/http[s] etc
     public static String SERVICE_KEY = "service";
+    public static String DRIVER_KEY = "driver";
+    public static String DATASOURCE_KEY = "dataSource";
+
+
     /**
      * internal use constants
      * */

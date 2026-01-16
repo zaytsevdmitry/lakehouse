@@ -89,6 +89,7 @@ public class SparkLauncherTaskProcessor extends AbstractSparkDeployTaskProcessor
                     appArgs
             );
         }catch (TaskFailedException e){
+            logger.info("");
             tryDeploy(tryNum+1,dataSourceDTO,sparkConfMap,appArgs);
         }
     }

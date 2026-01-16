@@ -13,7 +13,12 @@
     }
   ],
   "properties": {
-    "fetchSize": "10000"
+    "fetchSize": "10000",
+    "spark.sql.catalog.processingdb": "org.apache.spark.sql.execution.datasources.v2.jdbc.JDBCTableCatalog",
+    "spark.sql.catalog.processingdb.url": "{{driver.connectionTemplates['jdbc']}}",
+    "spark.sql.catalog.processingdb.user": "{{service.properties['user']}}",
+    "spark.sql.catalog.processingdb.password": "{{service.properties['password']}}"
+
   },
   "description": "Remote datastore processingdb"
 

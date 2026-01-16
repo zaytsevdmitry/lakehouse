@@ -20,14 +20,14 @@ import java.util.stream.Collectors;
 public class SparkProcessorBodyParamFactory {
 
     private final static Logger logger = LoggerFactory.getLogger(SparkProcessorBodyParamFactory.class);
-    public static BodyParam buildSparkProcessorBodyParameter(SparkSession sparkSession,
-                                                             TaskProcessorConfigDTO taskProcessorConfigDTO ) throws TaskFailedException {
+    public static BodyParam buildSparkProcessorBodyParameter(
+            SparkSession sparkSession,
+            TaskProcessorConfigDTO taskProcessorConfigDTO,
+            Jinjava jinjava) throws TaskFailedException {
 
-        CatalogActivator catalogActivator = new CatalogActivator(sparkSession);
-        catalogActivator.activate(taskProcessorConfigDTO.getDataSources().values().stream().toList());
+
         BodyParam bodyParam = null;
         try {
-            Jinjava jinjava = JinJavaFactory.getJinjava(taskProcessorConfigDTO);
             SparkDataSourceManipulatorFactory sparkDataSourceManipulatorFactory =
                     new SparkDataSourceManipulatorFactory(sparkSession,jinjava);
             String fullScript = taskProcessorConfigDTO
