@@ -10,6 +10,13 @@ curl -i -X POST 127.0.0.1:8080/v1_0/configs/nameSpaces \
   --data-binary "@./name-spaces/demo.json"
 
 
+for s in "postgres" "spark_iceberg"
+do
+   curl -i -X POST 127.0.0.1:8080/v1_0/configs/drivers \
+     -H "Content-Type: application/json" \
+     --data-binary "@./drivers/$s.json"
+done
+
 for s in "processingdb" "lakehousestorage"
 do
    curl -i -X POST 127.0.0.1:8080/v1_0/configs/datasources \

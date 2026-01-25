@@ -40,7 +40,7 @@ public class ScheduleInstanceFactory {
                     scheduleEffectiveDTO.getName()), e);
         }
 
-        scheduleInstance.setStatus(Status.Schedule.NEW.label);
+        scheduleInstance.setStatus(Status.Schedule.NEW);
 
         return scheduleInstance;
     }

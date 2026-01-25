@@ -113,7 +113,7 @@ public class TaskConfigTestFactory {
         result.setIntervalEndDateTime(intervalEnd);
         result.setId(1L);
         result.setScenarioActKeyName("unknown");
-        result.setStatus(Status.Task.RUNNING.label);
+        result.setStatus(Status.Task.RUNNING);
         result.setTaskExecutionServiceGroupName("unknown");
         return result;
     }

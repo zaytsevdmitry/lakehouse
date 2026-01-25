@@ -3,6 +3,7 @@ package org.lakehouse.scheduler.entities;
 import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.lakehouse.client.api.constant.Status;
 
 import java.util.Objects;
 
@@ -24,8 +25,9 @@ public class ScheduleScenarioActInstance {
     @Column(nullable = false)
     private String confDataSetKeyName;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String status;
+    private Status.ScenarioAct status;
 
     public ScheduleScenarioActInstance() {
     }
@@ -54,11 +56,11 @@ public class ScheduleScenarioActInstance {
         this.confDataSetKeyName = confDataSetKeyName;
     }
 
-    public String getStatus() {
+    public Status.ScenarioAct getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(Status.ScenarioAct status) {
         this.status = status;
     }
 

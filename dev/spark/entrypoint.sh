@@ -2,11 +2,13 @@
 start() {
   echo "Starting application..."
   if [ $SPARK_MODE = "master" ];then
-    $SPARK_HOME/sbin/start-master.sh
+    $SPARK_HOME/sbin/start-master.sh --host $SPARK_MASTER_HOSTNAME
   elif [ $SPARK_MODE = "worker" ];then
-    $SPARK_HOME/sbin/start-worker.sh $SPARK_MASTER_URL
+    $SPARK_HOME/sbin/start-worker.sh $SPARK_MASTER_URL --host $SPARK_WORKER_HOSTNAME
+  elif [ $SPARK_MODE = "history" ];then
+      $SPARK_HOME/sbin/start-history-server.sh
   else
-    echo "SPARK_MODE value '$SPARK_MODE' is not in master,worker"
+    echo "SPARK_MODE value '$SPARK_MODE' is not in master, worker, history"
     exit 1
   fi
   echo "Started application..."

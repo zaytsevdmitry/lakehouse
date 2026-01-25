@@ -1,6 +1,7 @@
 package org.lakehouse.scheduler.exception;
 
 
+import org.lakehouse.client.api.constant.Status;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
@@ -12,11 +13,11 @@ public class ScheduledTaskNotFoundException extends RuntimeException {
         super(String.format("Schedule with id %d not found", id));
     }
 
-    public ScheduledTaskNotFoundException(String taskExecutionServiceGroup, String status) {
+    public ScheduledTaskNotFoundException(String taskExecutionServiceGroup, Status.Task status) {
         super(String.format("Scheduled task with taskExecutionServiceGroup %s and status %s not found", taskExecutionServiceGroup, status));
     }
 
-    public ScheduledTaskNotFoundException(Long taskId, String status) {
+    public ScheduledTaskNotFoundException(Long taskId, Status.Task status) {
         super(String.format("Scheduled task with id %s and status %s not found", taskId, status));
     }
 }

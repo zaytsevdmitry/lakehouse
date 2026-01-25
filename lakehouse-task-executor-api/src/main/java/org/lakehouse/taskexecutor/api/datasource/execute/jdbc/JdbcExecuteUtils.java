@@ -4,6 +4,7 @@ import com.hubspot.jinjava.Jinjava;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
+import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.taskexecutor.api.datasource.exception.ExecuteException;
 import org.lakehouse.taskexecutor.api.datasource.execute.ExecuteUtilsAbstract;
 import org.slf4j.Logger;
@@ -30,17 +31,13 @@ public class JdbcExecuteUtils extends ExecuteUtilsAbstract {
 
     
 
-    private Connection retryableConnection(Integer tryNum) throws TaskConfigurationException {
-        Map<String,String> props = dtoToProps(tryNum);
+    public Connection getConnection() throws TaskConfigurationException,ExecuteException {
+        Map<String,String> props = dtoToProps();
         try {
             return JdbcConnectionFactory.getConnection(props);
         } catch (SQLException e) {
-            return retryableConnection(tryNum+1);
+            throw new ExecuteException(e);
         }
-    }
-
-    public Connection getConnection() throws TaskConfigurationException {
-        return retryableConnection(0);
     }
 
     @Override
@@ -52,7 +49,7 @@ public class JdbcExecuteUtils extends ExecuteUtilsAbstract {
             String renderedSQL = getJinjava().render(sql,localContext);
             logger.info("Execute renderedSQL command: {}", renderedSQL);
             statement.execute(renderedSQL);
-        } catch (SQLException | TaskConfigurationException e) {
+        } catch (SQLException | TaskConfigurationException  e) {
             logger.info(e.getLocalizedMessage());
             throw new ExecuteException(e);
         }
@@ -82,18 +79,6 @@ public class JdbcExecuteUtils extends ExecuteUtilsAbstract {
             logger.info(e.getLocalizedMessage());
             throw new ExecuteException(e);
         }
-        return result;
-    }
-
-    public Map<String,String> dtoToProps(Integer tryNum) throws TaskConfigurationException {
-        if (getDataSourceDTO().getServices().size() <= tryNum) {
-            throw new TaskConfigurationException(
-                    String.format("No more values in Service's list. Try num %d",  tryNum));
-        }
-        Map<String,String> result = new HashMap<>();
-        result.putAll(getDataSourceDTO().getProperties());
-        result.putAll(getDataSourceDTO().getServices().get(tryNum).getProperties());
-        result.put("url", getConnectionString( tryNum));
         return result;
     }
 }

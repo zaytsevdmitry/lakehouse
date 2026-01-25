@@ -97,9 +97,9 @@ public class ManageStateService {
 
             findNextScheduleInstanceOrNull(sir, scheduleEffectiveDTO).ifPresentOrElse((scheduleInstance -> {
 
-                if (scheduleInstance.getStatus().equals(Status.Schedule.NEW.label)) {
+                if (scheduleInstance.getStatus().equals(Status.Schedule.NEW)) {
                     logger.info("Next schedule of {} is found", scheduleEffectiveDTO.getName());
-                    scheduleInstance.setStatus(Status.Schedule.RUNNING.label);
+                    scheduleInstance.setStatus(Status.Schedule.RUNNING);
                     sir.setScheduleInstance(scheduleInstance);
 
                     scheduleInstanceRepository.save(scheduleInstance);
@@ -108,7 +108,7 @@ public class ManageStateService {
                 }else {
                     logger.info("Next schedule of {} found but status not {}. Current status {}",
                             scheduleEffectiveDTO.getName(),
-                            Status.Schedule.RUNNING.label,
+                            Status.Schedule.RUNNING,
                             scheduleInstance.getStatus()
                     );
                 }
@@ -139,20 +139,6 @@ public class ManageStateService {
                             scheduleInstanceRunning
                                     .getConfigScheduleKeyName(),
                             nextTargetDateTime);
-           /* try {
-                result = scheduleInstanceRepository
-                        .findByScheduleNameAndTargetDateTime(
-                                scheduleInstanceRunning
-                                        .getConfigScheduleKeyName(),
-                                nextTargetDateTime)
-                        .orElseThrow(() ->
-                                new ScheduledNotFoundException(
-                                        scheduleInstanceRunning.getConfigScheduleKeyName(),
-                                        nextTargetDateTime));
-            } catch (Throwable e) {
-                logger.warn(e.getMessage());
-                throw new RuntimeException(e);
-            }*/
         }
         return result;
     }
@@ -160,7 +146,7 @@ public class ManageStateService {
     @Transactional
     public void successSchedule(ScheduleInstanceRunning sir) {
         ScheduleInstance si = sir.getScheduleInstance();
-        si.setStatus(Status.Schedule.SUCCESS.label);
+        si.setStatus(Status.Schedule.SUCCESS);
         scheduleInstanceRepository.save(si);
     }
 
@@ -175,7 +161,7 @@ public class ManageStateService {
                 scheduleScenarioActInstanceRepository
                         .findScenarioActReadyToRun();
         l.forEach(ssai -> {
-            ssai.setStatus(Status.ScenarioAct.RUNNING.label);
+            ssai.setStatus(Status.ScenarioAct.RUNNING);
             scheduleScenarioActInstanceRepository.save(ssai);
         });
         return l.size();
@@ -187,7 +173,7 @@ public class ManageStateService {
                         .findScenarioActReadyToSuccess();
 
         l.forEach(ssai -> {
-            ssai.setStatus(Status.ScenarioAct.SUCCESS.label);
+            ssai.setStatus(Status.ScenarioAct.SUCCESS);
             scheduleScenarioActInstanceRepository.save(ssai);
         });
 

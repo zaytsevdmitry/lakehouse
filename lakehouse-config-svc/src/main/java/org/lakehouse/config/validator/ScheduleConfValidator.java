@@ -23,7 +23,30 @@ public class ScheduleConfValidator {
                 descriptions.add(String.format("Error in %s. Scenario  'To' of %s not found", objectDescription, dagEdgeDTO));
         });
 
+        descriptions.addAll(validateEdgesCycling(objectDescription,edgesToMap(edges)));
         return descriptions;
+    }
+
+    public static List<String> validateEdgesCycling(
+            String objectDescription,
+            Map<String,List<String>> edges){
+        List<String> result = new ArrayList<>();
+        Set<String> vertices =
+                edges.entrySet()
+                        .stream()
+                        .map(e ->{
+                            List<String> l = new ArrayList<>();
+                            l.addAll(e.getValue());
+                            l.add(e.getKey());
+                            return l;})
+                        .flatMap(Collection::stream).collect(Collectors.toSet());
+
+        for (String vertice:vertices){
+            if (isCycle(vertice,vertice,edges)) {
+                result.add(String.format("Vertice with name '%s' аre cycled in object ",vertice,objectDescription));
+            }
+        }
+        return result;
     }
 
     public static ValidationResult validate(ScheduleDTO scheduleDTO) {
@@ -71,7 +94,7 @@ public class ScheduleConfValidator {
         });
         return new ValidationResult(descriptions.isEmpty(), descriptions);
     }
-    public static Map<String,List<String>> EdgesToMap(Set<DagEdgeDTO> dagEdgeDTOs) {
+    public static Map<String,List<String>> edgesToMap(Set<DagEdgeDTO> dagEdgeDTOs) {
         Map<String,List<String>> result = new HashMap<>();
 
         dagEdgeDTOs.forEach(dagEdgeDTO -> {
@@ -86,29 +109,10 @@ public class ScheduleConfValidator {
         });
         return result;
     }
-    public static List<String> validateEdges(Map<String,List<String>> edges){
-        List<String> result = new ArrayList<>();
-        Set<String> vertices =
-                edges.entrySet()
-                        .stream()
-                        .map(e ->{
-                            List<String> l = new ArrayList<>();
-                            l.addAll(e.getValue());
-                            l.add(e.getKey());
-                            return l;})
-                        .flatMap(Collection::stream).collect(Collectors.toSet());
 
-        for (String vertice:vertices){
-            if (isCycle(vertice,vertice,edges)) {
-                result.add(String.format("Vertices %s аre cycled",vertice));
-            }
-        }
-        return result;
-    }
     public static boolean isCycle(String verticeTarget,String verticeCurr, Map<String,List<String>> edges){
         if(edges.containsKey(verticeCurr)){
             for(String v:edges.get(verticeCurr)){
-                System.out.println(verticeTarget +" >>--> key=" + verticeCurr + " >>---> value=" + v);
                 if (v.equals(verticeTarget)){
                     return true;
                 }else {

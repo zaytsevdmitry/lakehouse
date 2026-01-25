@@ -5,6 +5,7 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.constant.SystemVarKeys;
 import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
@@ -100,7 +101,7 @@ public class JinjavaTest {
                         .filter(t-> t.getName().equals("load"))
                         .map(t-> {
                             ScheduledTaskDTO st = new ScheduledTaskDTO();
-                            st.setStatus("NEW");
+                            st.setStatus(Status.Task.NEW);
                             st.setId(1L);
                             st.setScenarioActKeyName("testAct");
                             st.setTargetDateTime(DateTimeUtils.nowStr());

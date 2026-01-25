@@ -22,33 +22,16 @@ public class JdbcSparkSQLDataSourceManipulator extends SparkSQLDataSourceManipul
         
     }
 
-    /**
-     * read data from source
-     * @param tryNum - number of try to connect starts of 0
-     * @return dataset
-     * @throws ReadException when all tries exceed
-     */
-    private Dataset<Row>  readFaultTolerance(Map<String,String> options, Integer tryNum) throws ReadException {
-
-        try {
-            Map<String, String> o = new HashMap<>();
-            o.putAll(executeUtils().dtoToProps(tryNum));
-            o.put("dbtable", getTableName());
-            return sparkSession().read().format("jdbc").options(o).load();
-        }catch (TaskConfigurationException e){
-            logger.error(e.getMessage());
-            throw new ReadException(e.getLocalizedMessage(), e);
-        }
-        catch (Exception  e) {
-            logger.info(e.getMessage());
-            // todo use override this to use SQL ERR CODE for each database to take connection timeout
-            return readFaultTolerance(options,tryNum+1);
-        }
-    }
-
     @Override
     public Dataset<Row>  read(Map<String,String> options) throws ReadException {
-        return readFaultTolerance(options, 0);
+        Map<String, String> o = new HashMap<>();
+        try {
+            o.putAll(executeUtils().dtoToProps());
+        } catch (TaskConfigurationException e) {
+            throw new ReadException(e);
+        }
+        o.put("dbtable", getTableName());
+        return sparkSession().read().format("jdbc").options(o).load();
     }
 
     @Override

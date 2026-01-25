@@ -1,6 +1,7 @@
 package org.lakehouse.state.entity;
 
 import jakarta.persistence.*;
+import org.lakehouse.client.api.constant.Status;
 
 import java.time.OffsetDateTime;
 import java.util.Objects;
@@ -25,8 +26,9 @@ public class DataSetState {
     @Column(nullable = false)
     OffsetDateTime intervalEndDateTime;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    String status;
+    Status.DataSet status;
 
     @Column(length = 1000)
     String lockSource;
@@ -66,11 +68,11 @@ public class DataSetState {
         this.intervalEndDateTime = intervalEndDateTime;
     }
 
-    public String getStatus() {
+    public Status.DataSet getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(Status.DataSet status) {
         this.status = status;
     }
 

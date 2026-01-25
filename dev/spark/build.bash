@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+source ../bashfunctions.bash
 set -e
 export LH_VERSION=0.3.0
 
@@ -22,43 +23,6 @@ mkdir -p $APP_DIR
 #rm -rf $DRIVERS_DIR
 mkdir -p $DRIVERS_DIR
 
-
-function downloadHTTP() {
-    FILE_NAME=$1
-    FILE_SOURCE=$2
-    FILE_DEST=$3
-    echo "Download from '$FILE_SOURCE'"
-    wget -P $FILE_DEST "$FILE_SOURCE/$FILE_NAME"
-}
-function downloadLocal() {
-    FILE_NAME=$1
-    FILE_SOURCE=$2
-    FILE_DEST=$3
-
-    echo "Copy from '$FILE_SOURCE'"
-    cp "$FILE_SOURCE/$FILE_NAME" $FILE_DEST
-}
-
-function downloadIfNotExists() {
-  FILE_NAME=$1
-  FILE_SOURCE=$2
-  FILE_DEST=$3
-  SOURCE_TYPE=$4
-  if [ -f "$FILE_DEST/$FILE_NAME" ]; then
-    echo "File '$FILE_DEST/$FILE_NAME' exists and is a regular file."
-  else
-    echo "File '$FILE_DEST/$FILE_NAME' does not exist or is not a regular file"
-
-    if [[ "$SOURCE_TYPE" == "local" ]]; then
-      downloadLocal $FILE_NAME $FILE_SOURCE $FILE_DEST
-    elif [[ "$SOURCE_TYPE" == "http" ]]; then
-      downloadHTTP $FILE_NAME $FILE_SOURCE $FILE_DEST
-    else
-      exit 1
-    fi
-  fi
-
-}
 downloadIfNotExists  lakehouse-task-spark-apps-$LH_VERSION-jar-with-dependencies.jar \
                       "../../lakehouse-task-spark-apps/target" \
                       "$APP_DIR" \
@@ -74,6 +38,18 @@ downloadIfNotExists $SPARK_DISTR \
                     "http"
 downloadIfNotExists postgresql-42.7.8.jar \
                     https://repo1.maven.org/maven2/org/postgresql/postgresql/42.7.8 \
+                    "$DRIVERS_DIR" \
+                    "http"
+downloadIfNotExists hadoop-aws-3.3.4.jar \
+                    https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.4 \
+                    "$DRIVERS_DIR" \
+                    "http"
+downloadIfNotExists aws-java-sdk-bundle-1.12.262.jar \
+                    https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.262 \
+                    "$DRIVERS_DIR" \
+                    "http"
+downloadIfNotExists wildfly-openssl-1.0.7.Final.jar \
+                    https://repo1.maven.org/maven2/org/wildfly/openssl/wildfly-openssl/1.0.7.Final \
                     "$DRIVERS_DIR" \
                     "http"
 mkdir -p opt

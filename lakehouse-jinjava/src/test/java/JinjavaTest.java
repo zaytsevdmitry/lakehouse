@@ -159,7 +159,7 @@ public class JinjavaTest {
         DataSetDTO  dataSetDTO = fileLoader.loadDataSetDTO(dataSetKeyName);
         conf.getDataSets().put(dataSetKeyName,dataSetDTO);
         Map<String, Object> context = ObjectMapping.asMap(conf);
-        Jinjava jinjava1 = new JinJavaFactory().getJinjava();
+        Jinjava jinjava1 = JinJavaFactory.getJinjava();
         jinjava1.getGlobalContext().putAll(context);
         String template =  "CREATE TABLE {{ ref(targetDataSetKeyName) }} (";
         String rendered = jinjava1.render(template, new HashMap<>());
@@ -346,5 +346,19 @@ public class JinjavaTest {
         String result = jinjava.render(template,context);
 
         assert (expected.equals(result));
+    }
+    @Test
+    void dataSourcePropsRender() throws IOException {
+        FileLoader fileLoader = new FileLoader();
+        DataSourceDTO dataSourceDTO = fileLoader.loadDataSourceDTO("processingdb");
+        DriverDTO driverDTO = fileLoader.loadDriverDTO(dataSourceDTO.getDriverKeyName());
+
+        Map<String,Object> localContext = new HashMap<>();
+        localContext.put(SystemVarKeys.DRIVER_KEY, driverDTO);
+        localContext.put(SystemVarKeys.SERVICE_KEY,dataSourceDTO.getService());
+        String expected = "jdbc:postgresql://localhost:5432/postgresDB";
+        String template = "{{driver.connectionTemplates['jdbc']}}";//dataSourceDTO.getServices().get(0).getProperties().get("spark.sql.catalog.processingdb.url");
+        String result = jinjava.render(template,localContext);
+        assert expected.equals(result);
     }
 }

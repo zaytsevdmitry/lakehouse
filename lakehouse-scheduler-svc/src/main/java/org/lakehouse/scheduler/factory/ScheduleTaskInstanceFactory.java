@@ -29,7 +29,7 @@ public class ScheduleTaskInstanceFactory {
         ScheduleTaskInstance result = new ScheduleTaskInstance();
         result.setName(taskDTO.getName());
         result.setScheduleScenarioActInstance(scheduleScenarioActInstance);
-        result.setStatus(Status.Task.NEW.label);
+        result.setStatus(Status.Task.NEW);
         return result;
     }
 

@@ -83,7 +83,7 @@ public class StateAdapterTest {
         //History locked record
         DataSetStateDTO dataSetStateDTOLocked = new DataSetStateDTO();
         dataSetStateDTOLocked.setDataSetKeyName(testDependencyDataSet.getKeyName());
-        dataSetStateDTOLocked.setStatus(Status.DataSet.LOCKED.label);
+        dataSetStateDTOLocked.setStatus(Status.DataSet.LOCKED);
         dataSetStateDTOLocked.setIntervalStartDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(tpc.getIntervalStartDateTime()));
         dataSetStateDTOLocked.setIntervalEndDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(tpc.getIntervalEndDateTime()));
         StateRestClientApiTest stateRestClientApi = new StateRestClientApiTest(List.of(dataSetStateDTOLocked));

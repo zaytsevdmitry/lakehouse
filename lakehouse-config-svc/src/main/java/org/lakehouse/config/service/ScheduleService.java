@@ -6,6 +6,7 @@ import org.lakehouse.client.api.utils.Coalesce;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.config.entities.Schedule;
 import org.lakehouse.config.entities.scenario.*;
+import org.lakehouse.config.exception.DataSetNotFoundException;
 import org.lakehouse.config.exception.ScenarioActNotFoundException;
 import org.lakehouse.config.exception.ScheduleNotFoundException;
 import org.lakehouse.config.exception.TaskEffectiveNotFoundException;
@@ -107,7 +108,7 @@ public class ScheduleService {
         result.setName(scheduleScenarioActDTO.getName());
         result.setSchedule(schedule);
         result.setDataSet(
-                dataSetRepository.findById(scheduleScenarioActDTO.getDataSet()).orElseThrow(() -> new RuntimeException(
+                dataSetRepository.findById(scheduleScenarioActDTO.getDataSet()).orElseThrow(() -> new DataSetNotFoundException(
                         String.format("Data set name %s not found", scheduleScenarioActDTO.getDataSet()))));
 
         if (scheduleScenarioActDTO.getScenarioActTemplate() != null)
@@ -424,6 +425,10 @@ public class ScheduleService {
                     return resultAct;
                 }).collect(Collectors.toSet())
         );
+
+        ValidationResult vr = ScheduleConfValidator.validate(scheduleDTO);
+        if (!vr.isValid())
+            throw new ConfDTOValidationException(vr.getDescriptions());
         return result;
     }
 }

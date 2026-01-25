@@ -25,17 +25,21 @@ public class DependencyCheckStateTaskProcessor extends AbstractStateTaskProcesso
         super(taskProcessorConfigDTO, stateRestClientApi);
     }
 
-    private List<DataSetStateDTO> getStates(String dataSetKeyName){
+    private List<DataSetStateDTO> getStates(String dataSetKeyName) throws TaskFailedException {
 
         DataSetIntervalDTO dataSetIntervalDTO = new DataSetIntervalDTO();
         dataSetIntervalDTO.setDataSetKeyName(dataSetKeyName);
         dataSetIntervalDTO.setIntervalStartDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(getTaskProcessorConfig().getIntervalStartDateTime()));
         dataSetIntervalDTO.setIntervalEndDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(getTaskProcessorConfig().getIntervalEndDateTime()));
-
+        logger.info("get interval {}", dataSetIntervalDTO);
+        if(dataSetIntervalDTO.getIntervalStartDateTime() == null
+        || dataSetIntervalDTO.getIntervalEndDateTime() ==null
+        ||dataSetIntervalDTO.getDataSetKeyName() == null){
+            throw new TaskFailedException("DataSetInterval fields can't be null");
+        }
         return getStateRestClientApi()
                 .getDataSetStateResponseDTO(dataSetIntervalDTO)
                 .getWrongStates().stream()
-                .filter(this::pass)
                 .sorted(
                         Comparator
                                 .comparing(DataSetStateDTO::getDataSetKeyName)
@@ -44,37 +48,41 @@ public class DependencyCheckStateTaskProcessor extends AbstractStateTaskProcesso
                 .toList();
     }
     private boolean pass(DataSetStateDTO dataSetStateDTO){
-        if(
-                dataSetStateDTO.getDataSetKeyName().equals(getTaskProcessorConfig().getTargetDataSetKeyName())
-                        && dataSetStateDTO.getLockSource().equals(getTaskProcessorConfig().getLockSource())
-                        && dataSetStateDTO.getStatus().equals(Status.DataSet.LOCKED.label)
-                && DateTimeUtils.parseDateTimeFormatWithTZ(dataSetStateDTO.getIntervalStartDateTime()).equals(getTaskProcessorConfig().getIntervalStartDateTime())
-                && DateTimeUtils.parseDateTimeFormatWithTZ(dataSetStateDTO.getIntervalEndDateTime()).equals(getTaskProcessorConfig().getIntervalEndDateTime())
-        )
-            return false;
-        else
-            return true;
+        return !dataSetStateDTO.getDataSetKeyName().equals(getTaskProcessorConfig().getTargetDataSetKeyName())
+                || !dataSetStateDTO.getLockSource().equals(getTaskProcessorConfig().getLockSource())
+                || !dataSetStateDTO.getStatus().equals(Status.DataSet.LOCKED)
+                || !DateTimeUtils.parseDateTimeFormatWithTZ(dataSetStateDTO.getIntervalStartDateTime()).equals(getTaskProcessorConfig().getIntervalStartDateTime())
+                || !DateTimeUtils.parseDateTimeFormatWithTZ(dataSetStateDTO.getIntervalEndDateTime()).equals(getTaskProcessorConfig().getIntervalEndDateTime());
     }
     @Override
     public void runTask() throws TaskFailedException {
         List<DataSetStateDTO> dataSetStateDTOs = new ArrayList<>();
 
-
+        // check dependencies
         for (String dataSetKeyName : getTaskProcessorConfig()
                 .getTargetDataSet()
                 .getSources()
                 .keySet()
-                .stream().filter(s -> !s.equals(getTaskProcessorConfig().getTargetDataSetKeyName()))
-                .toList()
-                ) {
+                .stream()
+                .filter(s -> !s.equals(getTaskProcessorConfig().getTargetDataSetKeyName()))
+                .toList()) {
             dataSetStateDTOs
-                    .addAll(getStates(dataSetKeyName));
-
+                    .addAll(
+                            getStates(dataSetKeyName)
+                                    .stream()
+                                    .filter(this::pass)
+                                    .toList());
         }
+        // check target for concurrent lock
         getStates(getTaskProcessorConfig().getTargetDataSetKeyName())
                 .stream()
-                .filter(this::pass)
+                .filter(dataSetStateDTO -> (
+                        dataSetStateDTO.getLockSource() != null &&
+                                !dataSetStateDTO.getLockSource().equals(getTaskProcessorConfig().getLockSource()) &&
+                                dataSetStateDTO.getStatus()!= null &&
+                                dataSetStateDTO.getStatus().equals(Status.DataSet.LOCKED)))
                 .forEach(dataSetStateDTOs::add);
+
         if (!dataSetStateDTOs.isEmpty()) {
             StringJoiner rows = new StringJoiner(",");
             dataSetStateDTOs.forEach(d -> rows.add(d.toString() + "\n"));

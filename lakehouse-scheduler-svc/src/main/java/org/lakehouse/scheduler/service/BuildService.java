@@ -189,8 +189,8 @@ public class BuildService {
                     if (lastBuild.getScheduleInstance() == null ||
                             Arrays
                                     .asList(
-                                            Status.Schedule.SUCCESS.label,
-                                            Status.Schedule.FAILED.label)
+                                            Status.Schedule.SUCCESS,
+                                            Status.Schedule.FAILED)
                                     .contains(
                                             lastBuild
                                                     .getScheduleInstance()

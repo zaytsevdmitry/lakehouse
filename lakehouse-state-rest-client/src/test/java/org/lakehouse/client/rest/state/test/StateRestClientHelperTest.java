@@ -41,7 +41,7 @@ public class StateRestClientHelperTest {
     private DataSetStateDTO getDataSetStateDTOExpect() {
         DataSetStateDTO dataSetStateDTOExpect = new DataSetStateDTO();
         dataSetStateDTOExpect.setDataSetKeyName("test");
-        dataSetStateDTOExpect.setStatus(Status.DataSet.SUCCESS.label);
+        dataSetStateDTOExpect.setStatus(Status.DataSet.SUCCESS);
         dataSetStateDTOExpect.setIntervalStartDateTime("2025-03-01T00:00:00.0Z");
         dataSetStateDTOExpect.setIntervalEndDateTime("2025-03-02T00:00:00.0Z");
         return dataSetStateDTOExpect;

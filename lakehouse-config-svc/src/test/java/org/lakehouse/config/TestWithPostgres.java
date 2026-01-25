@@ -29,7 +29,6 @@ import org.lakehouse.config.service.ScheduleService;
 import org.lakehouse.config.specifier.DataSourcePropertyKeyValueEntitySpecifier;
 import org.lakehouse.config.test.configutation.RestManipulator;
 import org.lakehouse.config.validator.ScheduleConfValidator;
-import org.lakehouse.config.validator.ValidationResult;
 import org.lakehouse.test.config.configuration.FileLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +50,6 @@ import org.testcontainers.utility.DockerImageName;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @AutoConfigureMockMvc
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -297,13 +295,6 @@ public class TestWithPostgres {
         DataSetDTO dictDto = putDataSetDTO(dictName);
         DataSetDTO dto = putDataSetDTO(name);
 
-
-      /*  //write dict table
-        restManipulator.writeAndReadDTOTest(dictDto.getKeyName(),
-                ObjectMapping.asJsonString(dictDto), Endpoint.DATA_SETS, Endpoint.DATA_SETS_NAME);
-        // write reference table
-        restManipulator.writeAndReadDTOTest(dto.getKeyName(),
-                ObjectMapping.asJsonString(dto), Endpoint.DATA_SETS, Endpoint.DATA_SETS_NAME);*/
         // again
         DataSetDTO resultDTO = ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getKeyName(),
                 ObjectMapping.asJsonString(dto), Endpoint.DATA_SETS, Endpoint.DATA_SETS_NAME), DataSetDTO.class);
@@ -637,22 +628,6 @@ public class TestWithPostgres {
         restManipulator.deleteDTO(sparkDriverDTO.getKeyName(), Endpoint.DRIVERS_NAME);
     }
 
-  /*  @Test
-    @Order(13)
-    void saveQualityMetricsService() throws Exception {
-        putNameSpaceDTO();
-        putDataSourceDTO("lakehousestorage");
-        putDataSourceDTO("processingdb");
-        putDataSetDTO("client_processing");
-        putDataSetDTO("transaction_processing");
-        putDataSetDTO("transaction_dds");
-        QualityMetricsConfDTO expected = fileLoader.loaQualityMetricsConfDTO("transaction_dds_qm");
-        QualityMetricsConfDTO resulted = qualityMetricsConfService.save(expected);
-
-        System.out.println(ObjectMapping.asJsonString(expected));
-        System.out.println(ObjectMapping.asJsonString(resulted));
-        assert (expected.equals(resulted));
-    }*/
     @Test
     @Order(13)
     void mergePropertiesMapper() throws Exception {
@@ -698,34 +673,25 @@ public class TestWithPostgres {
         e3.setFrom("3");
         e3.setTo("1");
         t.setDagEdges(Set.of(e1,e2,e3));
-        List<String> /*stringList = ScheduleConfValidator
-                .validateEdges(ScheduleConfValidator.EdgesToMap(t.getDagEdges()));
-
-        assert (!stringList.isEmpty());
-        stringList = ScheduleConfValidator
-                .validateEdges(ScheduleConfValidator.EdgesToMap(fileLoader.loadScenarioActTemplateDTO().getDagEdges()));
-        assert (stringList.isEmpty());*/
-        stringList = ScheduleConfValidator
-                .validateEdges(ScheduleConfValidator.EdgesToMap(fileLoader.loadScenarioActTemplateDTOcycled().getDagEdges()));
+        List<String> stringList = ScheduleConfValidator
+                .validateEdgesCycling(
+                        "cycle 1,2,3",
+                        ScheduleConfValidator.edgesToMap(t.getDagEdges()));
         assert (!stringList.isEmpty());
 
+        stringList = ScheduleConfValidator
+                .validateEdgesCycling(
+                        "Without cycle",
+                        ScheduleConfValidator.edgesToMap(fileLoader.loadScenarioActTemplateDTO().getDagEdges()));
+        assert (stringList.isEmpty());
+        stringList = ScheduleConfValidator
+                .validateEdgesCycling(
+                        "With cycle",
+                        ScheduleConfValidator.edgesToMap(fileLoader.loadScenarioActTemplateDTOcycled().getDagEdges()));
+        assert (!stringList.isEmpty());
 
-        /*Set<String> vertices =
-                t.getDagEdges()
-                        .stream()
-                        .map(dagEdgeDTO -> Arrays.asList(dagEdgeDTO.getFrom(), dagEdgeDTO.getTo()))
-                        .flatMap(Collection::stream).collect(Collectors.toSet());
-        Map<String,String> edges =
-                t.getDagEdges()
-                        .stream()
-                        .map(dagEdgeDTO -> Map.entry(dagEdgeDTO.getFrom(), dagEdgeDTO.getTo()))
-                        .collect(Collectors.toMap(Map.Entry::getKey,Map.Entry::getValue));
 
 
-        for (String vertice:vertices){
-            assert (isCycle(vertice,vertice,edges));
-        }
-*/
     }
     private boolean isCycle(String verticeTarget,String verticeCurr, Map<String,String> edges){
         if(edges.containsKey(verticeCurr)){

@@ -12,13 +12,17 @@ import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.client.api.utils.ObjectMapping;
+import org.lakehouse.client.api.utils.SparkConfUtil;
 import org.lakehouse.jinja.java.JinJavaFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
 /**
  * Based on spark restapi
  * @apiNote  https://spark.apache.org/docs/3.5.7/spark-standalone.html#rest-api
@@ -69,54 +73,47 @@ public class SparkLauncherTaskProcessor extends AbstractSparkDeployTaskProcessor
         } catch (JsonProcessingException e) {
             throw new TaskConfigurationException(e);
         }
-
     }
 
-    private void tryDeploy(
-            Integer tryNum,
-            DataSourceDTO dataSourceDTO,
-            Map<String,String> sparkConfMap,
-            List<String> appArgs) throws TaskFailedException, TaskConfigurationException {
-        if (tryNum >= getTaskProcessorConfig().getTargetDataSourceDTO().getServices().size()){
-            throw new TaskConfigurationException("The number of connection attempts has been exceeded") ;
-        }
-        try{
-            deploy(
-                    dataSourceDTO.getProperties().get("deploy.mainClass"),
-                    dataSourceDTO.getProperties().get("deploy.appResource"),
-                    getServerUrl(dataSourceDTO.getServices().get(tryNum)),
-                    sparkConfMap,
-                    appArgs
-            );
-        }catch (TaskFailedException e){
-            logger.info("");
-            tryDeploy(tryNum+1,dataSourceDTO,sparkConfMap,appArgs);
-        }
-    }
     @Override
     public void runTask() throws TaskFailedException, TaskConfigurationException {
         TaskProcessorConfigDTO unSparkedConfig = getTaskProcessorConfig();
 
         DataSourceDTO dataSourceDTO = unSparkedConfig.getTargetDataSourceDTO();
 
-
-
-
         Map<String,String> sparkConfMap = new HashMap<>();
-        sparkConfMap.putAll(filterSparkProperties( dataSourceDTO.getProperties()));
-        sparkConfMap.putAll(filterSparkProperties( getTaskProcessorConfig().getTaskProcessorArgs()));
+        //first datasource level spark properties
+        new HashSet<>(
+                        getTaskProcessorConfig()
+                                .getDataSources()
+                                .values())
+                        .forEach(d -> sparkConfMap.putAll(SparkConfUtil.startWithSpark(d.getService().getProperties())));
+        // second task args level spark properties
+        sparkConfMap.putAll(SparkConfUtil.startWithSpark( getTaskProcessorConfig().getTaskProcessorArgs()));
 
-        unSparkedConfig.setTaskProcessorArgs(extractAppConf(new HashMap<>()));
+        // least task args
+        unSparkedConfig
+                .setTaskProcessorArgs(
+                        SparkConfUtil
+                                .extractAppConf(
+                                        getTaskProcessorConfig()
+                                                .getTaskProcessorArgs()));
 
 
         List<String> appArgs = null;
+
         try {
             appArgs = List.of(ObjectMapping.asJsonString(unSparkedConfig));
         } catch (JsonProcessingException e) {
             throw new TaskConfigurationException(e);
         }
 
-        tryDeploy(0,dataSourceDTO,sparkConfMap,appArgs);
-
+        deploy(
+                dataSourceDTO.getService().getProperties().get("deploy.mainClass"),
+                dataSourceDTO.getService().getProperties().get("deploy.appResource"),
+                getServerUrl(dataSourceDTO.getService()),
+                sparkConfMap,
+                appArgs
+        );
     }
 }

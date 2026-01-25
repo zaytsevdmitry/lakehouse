@@ -23,6 +23,7 @@ public class DataSetConstraint {
     @Column(nullable = false)
     private String name;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Types.Constraint type;
 

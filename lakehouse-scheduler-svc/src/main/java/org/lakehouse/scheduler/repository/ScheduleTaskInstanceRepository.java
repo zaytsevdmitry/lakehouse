@@ -1,5 +1,6 @@
 package org.lakehouse.scheduler.repository;
 
+import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.scheduler.entities.ScheduleTaskInstance;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -24,5 +25,5 @@ public interface ScheduleTaskInstanceRepository extends JpaRepository<ScheduleTa
             """)
     List<ScheduleTaskInstance> findReadyToQueue();
 
-    List<ScheduleTaskInstance> findByStatus(String statusName);
+    List<ScheduleTaskInstance> findByStatus(Status.Task status);
 }

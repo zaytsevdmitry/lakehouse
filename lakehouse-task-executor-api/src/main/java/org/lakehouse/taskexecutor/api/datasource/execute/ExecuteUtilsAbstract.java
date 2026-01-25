@@ -61,34 +61,25 @@ public abstract class ExecuteUtilsAbstract implements ExecuteUtils {
     }
 
     /**
-     * @param tryNum equal from list of services index
      * @return String value of template of type Types.ConnectionType.jdbc
      * */
 
-    public String getConnectionString(Integer tryNum) throws TaskConfigurationException {
-        ServiceDTO serviceDTO = null;
-        if (dataSourceDTO.getServices().isEmpty()){
+    public String getConnectionString() throws TaskConfigurationException {
+        if (dataSourceDTO.getService()==null){
             throw new TaskConfigurationException(String.format("DataSource %s with empty list of services", dataSourceDTO.getKeyName()));
         }
-        else {
-            if (dataSourceDTO.getServices().size() >= tryNum) {
-                serviceDTO = dataSourceDTO.getServices().get(tryNum);
-            }
-            else{
-                throw new TaskConfigurationException(String.format("Insufficient list of DataSource %s services", dataSourceDTO.getKeyName()));
-            }
-        }
-        return jinjava.render(driverDTO.getConnectionTemplates().get(Types.ConnectionType.jdbc), Map.of("service",serviceDTO));
+        return jinjava.render(
+                driverDTO.getConnectionTemplates().get(Types.ConnectionType.jdbc),
+                Map.of("service",dataSourceDTO.getService())
+        );
     }
-    public Map<String,String> dtoToProps(Integer tryNum) throws TaskConfigurationException {
-        if (dataSourceDTO.getServices().size() < tryNum) {
-            throw new TaskConfigurationException(
-                    String.format("No more values in Service's list. Try num %d",  tryNum));
+    public Map<String,String> dtoToProps() throws TaskConfigurationException {
+        if (dataSourceDTO.getService()==null){
+            throw new TaskConfigurationException(String.format("DataSource %s with empty list of services", dataSourceDTO.getKeyName()));
         }
         Map<String,String> result = new HashMap<>();
-        result.putAll(dataSourceDTO.getProperties());
-        result.putAll(dataSourceDTO.getServices().get(tryNum).getProperties());
-        result.put("url", getConnectionString(tryNum));
+        result.putAll(dataSourceDTO.getService().getProperties());
+        result.put("url", getConnectionString());
         return result;
     }
 

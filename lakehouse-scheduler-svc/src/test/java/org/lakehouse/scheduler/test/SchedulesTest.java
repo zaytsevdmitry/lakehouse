@@ -204,7 +204,7 @@ public class SchedulesTest {
         buildService.buildAll();
         List<ScheduleInstance> siList = scheduleInstanceRepository.findAll();
         assert (siList.size() == 1);
-        List<ScheduleTaskInstance> stiList = scheduleTaskInstanceRepository.findByStatus(Status.Task.NEW.label);
+        List<ScheduleTaskInstance> stiList = scheduleTaskInstanceRepository.findByStatus(Status.Task.NEW);
         assert (stiList.size() == 36);
     }
 
@@ -256,7 +256,7 @@ public class SchedulesTest {
         scheduleTaskInstanceRepository.findAll().forEach(t -> System.out.println(t.getName() + " --> " + t.getStatus()));
         assert (scheduleInstanceRunningRepository.findAll().size() == 1);
         List<ScheduleInstanceRunning> list = scheduleInstanceRunningRepository.findAll();
-        List<ScheduleTaskInstance> stilq = scheduleTaskInstanceRepository.findByStatus(Status.Task.QUEUED.label);
+        List<ScheduleTaskInstance> stilq = scheduleTaskInstanceRepository.findByStatus(Status.Task.QUEUED);
         assert (stilq.size() == 2);
         scheduleTaskInstanceService.lockTaskById(stilq.get(0).getId(), "test0");
         scheduleTaskInstanceService.lockTaskById(stilq.get(1).getId(), "test1");
@@ -289,7 +289,7 @@ public class SchedulesTest {
         logger.info("Run schedules {}", rows);
         scheduleInstanceRepository.findAll().forEach(a -> System.out.println(a.getConfigScheduleKeyName() + " --> " + a.getStatus()));
         assert (rows == 1);
-        assert (scheduleInstanceRepository.findByScheduleName(sef.getName()).get(0).getStatus().equals(Status.Schedule.RUNNING.label));
+        assert (scheduleInstanceRepository.findByScheduleName(sef.getName()).get(0).getStatus().equals(Status.Schedule.RUNNING));
 
         rows = manageStateService.runNewScenariosActs();
         logger.info("runNewScenariosActs {}", rows);
@@ -298,7 +298,7 @@ public class SchedulesTest {
                 .stream()
                 .filter(instance -> instance
                         .getStatus()
-                        .equals(Status.ScenarioAct.RUNNING.label))
+                        .equals(Status.ScenarioAct.RUNNING))
                 .toList();
         assert (rows == ssail.size());
         assert (rows == 2);
@@ -310,7 +310,7 @@ public class SchedulesTest {
                 .stream()
                 .filter(instance -> instance
                         .getStatus()
-                        .equals(Status.Task.QUEUED.label))
+                        .equals(Status.Task.QUEUED))
                 .toList();
         assert (rows == sti.size());
         assert (rows == 2);
@@ -341,12 +341,12 @@ public class SchedulesTest {
         buildService.buildAll(); // create schedule
         manageStateService.runAll();
 
-        assert (scheduleInstanceRepository.findAll().get(0).getStatus().equals(Status.Schedule.RUNNING.label));
+        assert (scheduleInstanceRepository.findAll().get(0).getStatus().equals(Status.Schedule.RUNNING));
         assert (scheduleInstanceRepository.findAll().size() == 1);
         scheduleTaskInstanceRepository
                 .findAll()
                 .forEach(t -> {
-                    t.setStatus(Status.Schedule.SUCCESS.label);
+                    t.setStatus(Status.Task.SUCCESS);
                     scheduleTaskInstanceRepository.save(t);
                 });
         // first wave
@@ -360,7 +360,7 @@ public class SchedulesTest {
         manageStateService.setScenariosActsStatusToSuccess();
 
         assert (manageStateService.successSchedules() == 1);
-        assert (scheduleInstanceRepository.findAll().get(0).getStatus().equals(Status.Schedule.SUCCESS.label));
+        assert (scheduleInstanceRepository.findAll().get(0).getStatus().equals(Status.Schedule.SUCCESS));
         assert (scheduleInstanceRepository.findAll().size() == 1);
         buildService.buildAll();
         assert (scheduleInstanceRepository.findAll().size() == 1);

@@ -14,6 +14,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class DataManipulators {
@@ -28,7 +29,10 @@ public class DataManipulators {
         DataSetDTO dataSetDTO = taskProcessorConfigDTO.getDataSets().get(dataSetKeyName);
         DataSourceDTO dataSourceDTO = taskProcessorConfigDTO.getDataSources().get(dataSetDTO.getDataSourceKeyName());
         DriverDTO driverDTO = taskProcessorConfigDTO.getDrivers().get(dataSourceDTO.getDriverKeyName());
-        new CatalogActivator(sparkSession,jinjava).activate(driverDTO,dataSourceDTO);
+
+        new CatalogActivator(
+                sparkSession)
+                .activate(List.of(dataSourceDTO));
         return manipulatorFactory.buildDataSourceManipulator(driverDTO,dataSourceDTO,dataSetDTO);
 
     }
@@ -49,19 +53,22 @@ public class DataManipulators {
         Map<String,String> props = new HashMap<>();
         props.putAll(Map.of(
                 "spark.sql.catalog.processingdb", "org.apache.spark.sql.execution.datasources.v2.jdbc.JDBCTableCatalog",
-                "spark.sql.catalog.processingdb.url", postgres.getJdbcUrl(), // Replace with your JDBC URL
-                "spark.sql.catalog.processingdb.user", postgres.getUsername(), // Replace with your username
-                "spark.sql.catalog.processingdb.password", postgres.getPassword() // Replace with your password
+                "spark.sql.catalog.processingdb.url", postgres.getJdbcUrl(),
+                "spark.sql.catalog.processingdb.user", postgres.getUsername(),
+                "spark.sql.catalog.processingdb.password", postgres.getPassword()
         ));
+        props.forEach((k, v) -> sparkSession.conf().set(k,v));
 
-        dataSourceDTO.setProperties(props);
-        dataSourceDTO.getServices().get(0).setHost(postgres.getHost());
-        dataSourceDTO.getServices().get(0).setPort(postgres.getMappedPort(5432).toString());
-        dataSourceDTO.getServices().get(0).setUrn(postgres.getDatabaseName());
-        dataSourceDTO.getServices().get(0).getProperties().put("user", postgres.getUsername());
-        dataSourceDTO.getServices().get(0).getProperties().put("password", postgres.getPassword());
+        dataSourceDTO.getService().setProperties(props);
+        dataSourceDTO.getService().setHost(postgres.getHost());
+        dataSourceDTO.getService().setPort(postgres.getMappedPort(5432).toString());
+        dataSourceDTO.getService().setUrn(postgres.getDatabaseName());
+        dataSourceDTO.getService().getProperties().put("user", postgres.getUsername());
+        dataSourceDTO.getService().getProperties().put("password", postgres.getPassword());
 
-        new CatalogActivator(sparkSession,jinjava).activate(driverDTO,dataSourceDTO);
+        new CatalogActivator(
+                sparkSession)
+                .activate(List.of(dataSourceDTO));
         return manipulatorFactory.buildDataSourceManipulator(driverDTO,dataSourceDTO,dataSetDTO);
     }
 }

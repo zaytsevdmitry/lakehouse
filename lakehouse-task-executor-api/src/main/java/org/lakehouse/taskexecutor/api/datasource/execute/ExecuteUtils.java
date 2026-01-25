@@ -41,9 +41,9 @@ public interface ExecuteUtils {
      */
     Integer executeGetResultInt(String sql,Map<String,Object> localContext) throws ExecuteException;
 
-    String getConnectionString(Integer tryNum) throws TaskConfigurationException;
+    String getConnectionString() throws TaskConfigurationException;
 
-    Map<String, String> dtoToProps(Integer tryNum) throws TaskConfigurationException;
+    Map<String, String> dtoToProps() throws TaskConfigurationException;
 
 }
 

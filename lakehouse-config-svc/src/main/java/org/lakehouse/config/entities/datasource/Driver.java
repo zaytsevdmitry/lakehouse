@@ -1,6 +1,9 @@
 package org.lakehouse.config.entities.datasource;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.config.entities.KeyEntityAbstract;
 
@@ -9,6 +12,11 @@ import java.util.Objects;
 @Entity
 public class Driver extends KeyEntityAbstract {
 
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Types.DataSourceType dataSourceType;
+
     public Types.DataSourceType getDataSourceType() {
         return dataSourceType;
     }
@@ -16,8 +24,6 @@ public class Driver extends KeyEntityAbstract {
     public void setDataSourceType(Types.DataSourceType dataSourceType) {
         this.dataSourceType = dataSourceType;
     }
-
-    private Types.DataSourceType dataSourceType;
 
     @Override
     public boolean equals(Object o) {

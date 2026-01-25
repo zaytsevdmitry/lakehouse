@@ -36,10 +36,9 @@ public class  SparkProcessorBodyStarter {
             SparkSession sparkSession = SparkSession.builder().getOrCreate();
 
 
-            CatalogActivator catalogActivator = new CatalogActivator(sparkSession,jinjava);
+            CatalogActivator catalogActivator = new CatalogActivator(sparkSession);
             catalogActivator.activate(
-                    taskProcessorConfigDTO.getDataSources().values().stream().toList(),
-                    taskProcessorConfigDTO.getDrivers()
+                    taskProcessorConfigDTO.getDataSources().values().stream().toList()
             );
 
 

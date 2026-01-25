@@ -67,7 +67,7 @@ public class ScheduleTaskInstanceService {
 
     private void putToQueue(List<ScheduleTaskInstance> list) {
         list.forEach(sti -> {
-            sti.setStatus(Status.Task.QUEUED.label);
+            sti.setStatus(Status.Task.QUEUED);
 
             ScheduledTaskForProducerMessage message = new ScheduledTaskForProducerMessage();
             message.setScheduleTaskInstance(sti);
@@ -154,7 +154,7 @@ public class ScheduleTaskInstanceService {
     }
 
     private ScheduledTaskLockDTO lockTask(ScheduleTaskInstance sti, String serviceId) {
-        sti.setStatus(Status.Task.RUNNING.label);
+        sti.setStatus(Status.Task.RUNNING);
         sti.setBeginDateTime(DateTimeUtils.now());
         sti.setEndDateTime(null);
         sti.setServiceId(serviceId);
@@ -171,12 +171,12 @@ public class ScheduleTaskInstanceService {
     @Transactional
     public ScheduledTaskLockDTO lockTaskById(Long taskId, String serviceId) {
         ScheduleTaskInstance sti = repository.findById(taskId).orElseThrow(() ->
-                new ScheduledTaskNotFoundException(taskId, Status.Task.QUEUED.label));
+                new ScheduledTaskNotFoundException(taskId, Status.Task.QUEUED));
 
-        if (sti.getStatus().equals(Status.Task.QUEUED.label))
+        if (sti.getStatus().equals(Status.Task.QUEUED))
             return lockTask(sti, serviceId);
         else
-            throw new ScheduledTaskNotFoundException(taskId, Status.Task.QUEUED.label);
+            throw new ScheduledTaskNotFoundException(taskId, Status.Task.QUEUED);
     }
 
     public ScheduleTaskInstanceExecutionLock heartBeat(TaskExecutionHeartBeatDTO taskExecutionHeardBeat) {
@@ -206,7 +206,7 @@ public class ScheduleTaskInstanceService {
                                     new ScheduledTaskInstanceLockNotFoundException(taskInstanceReleaseDTO.getLockId()));
 
             ScheduleTaskInstance sti = executionLock.getScheduleTaskInstance();
-            sti.setStatus(t.label);
+            sti.setStatus(t);
             sti.setEndDateTime(DateTimeUtils.now());
             sti.setReTryCount(sti.getReTryCount() + 1);
             sti.setCauses(taskInstanceReleaseDTO.getTaskResult().getCauses());
@@ -259,7 +259,7 @@ public class ScheduleTaskInstanceService {
         List<ScheduleTaskInstance> l = new ArrayList<>();
         l.addAll(
                 repository
-                        .findByStatus(Status.Task.FAILED.label)
+                        .findByStatus(Status.Task.FAILED)
                         .stream()
                         .filter(sti -> DateTimeUtils.now().minusSeconds(10) //todo move to application properties
                                 .isAfter(
@@ -269,7 +269,7 @@ public class ScheduleTaskInstanceService {
                         .toList());
         l.addAll(
                 repository
-                        .findByStatus(Status.Task.CONF_ERROR.label)
+                        .findByStatus(Status.Task.CONF_ERROR)
                         .stream()
                         .filter(sti -> DateTimeUtils.now().minusMinutes(4) //todo move to application properties
                                 .isAfter(
@@ -280,7 +280,7 @@ public class ScheduleTaskInstanceService {
 
         l.forEach(t -> {
             t.setReTryCount(t.getReTryCount() + 1);
-            t.setStatus(Status.Task.NEW.label);
+            t.setStatus(Status.Task.NEW);
             t.setBeginDateTime(null);
             t.setEndDateTime(null);
             t.setCauses(null);

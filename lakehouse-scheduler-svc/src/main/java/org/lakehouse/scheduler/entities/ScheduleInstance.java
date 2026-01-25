@@ -1,6 +1,7 @@
 package org.lakehouse.scheduler.entities;
 
 import jakarta.persistence.*;
+import org.lakehouse.client.api.constant.Status;
 
 import java.time.OffsetDateTime;
 import java.util.Objects;
@@ -20,8 +21,9 @@ public class ScheduleInstance {
     @Column(nullable = false)
     private OffsetDateTime targetExecutionDateTime;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String status;
+    private Status.Schedule status;
 
     public ScheduleInstance() {
     }
@@ -50,11 +52,11 @@ public class ScheduleInstance {
         this.targetExecutionDateTime = targetExecutionDateTime;
     }
 
-    public String getStatus() {
+    public Status.Schedule getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(Status.Schedule status) {
         this.status = status;
     }
 

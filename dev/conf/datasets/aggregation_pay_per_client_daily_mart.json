@@ -47,7 +47,7 @@
     }
   },
   "properties": {
-    "location": "/demo/datamarts/aggregation_pay_per_client_daily_mart",
+    "location": "s3a://data/warehouse/default/aggregation_pay_per_client_daily_mart",
     "using": "iceberg"
   },
   "description": "We want to know who our most profitable clients are"

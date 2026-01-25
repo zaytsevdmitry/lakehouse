@@ -1,12 +1,13 @@
 package org.lakehouse.client.api.dto.scheduler.tasks;
 
+import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.configs.TaskDTO;
 
 public class ScheduledTaskDTO extends TaskDTO {
     private Long id;
     private String scenarioActKeyName;
     private String scheduleKeyName;
-    private String status;
+    private Status.Task status;
     private String targetDateTime;
     private String intervalStartDateTime;
     private String intervalEndDateTime;
@@ -64,11 +65,11 @@ public class ScheduledTaskDTO extends TaskDTO {
         this.intervalEndDateTime = intervalEndDateTime;
     }
 
-    public String getStatus() {
+    public Status.Task getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(Status.Task status) {
         this.status = status;
     }
 

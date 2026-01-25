@@ -60,7 +60,6 @@ public class ExecuteService {
             heardBeatService.start(taskExecutionHeartBeatDTO);
             p.runTask();
             taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.SUCCESS));
-            ;
         } catch (TaskConfigurationException e) {
             logger.error("Task creation error ", e);
             taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.CONF_ERROR, e.toString()));

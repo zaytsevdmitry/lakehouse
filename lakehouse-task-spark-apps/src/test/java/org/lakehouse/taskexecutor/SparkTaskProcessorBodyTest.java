@@ -1,5 +1,6 @@
 package org.lakehouse.taskexecutor;
 
+import com.amazonaws.services.dynamodbv2.xspec.S;
 import com.hubspot.jinjava.Jinjava;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -13,6 +14,7 @@ import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
 import org.lakehouse.client.api.exception.DDLDIalectException;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.exception.TaskFailedException;
+import org.lakehouse.client.api.utils.SparkConfUtil;
 import org.lakehouse.jinja.java.JinJavaFactory;
 import org.lakehouse.taskexecutor.api.datasource.DataSourceManipulator;
 import org.lakehouse.taskexecutor.api.datasource.DataSourceManipulatorFactory;
@@ -32,6 +34,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
+import java.util.Map;
 
 public class SparkTaskProcessorBodyTest {
     String clientDatasetName = "client_processing";
@@ -49,6 +52,14 @@ public class SparkTaskProcessorBodyTest {
         postgres.start();
     }
 
+    public SparkSession buildSparkSession(TaskProcessorConfigDTO t){
+        Map<String, Object> conf = new HashMap<>();
+        t.getDataSources().forEach((s, dataSourceDTO) -> {
+            conf.putAll(SparkConfUtil.startWithSpark(dataSourceDTO.getService().getProperties()));
+        });
+        conf.putAll(SparkConfUtil.extractAppConf(t.getTaskProcessorArgs()));
+        return SparkSession.builder().master("local").config(conf).getOrCreate();
+    }
 
     private Dataset<Row> getClientDataSet(SparkSession sparkSession){
         return sparkSession.sql("select 1 as id,'Client Name' as name, TIMESTAMP '"+ TaskConfigTestFactory.intervalStart + "' as reg_date_time\n" +
@@ -95,11 +106,11 @@ public class SparkTaskProcessorBodyTest {
         TaskProcessorConfigDTO conf = new TaskConfigTestFactory().loadTaskProcessorConfigDTO(dataSetKeyName, "prepare");
         Jinjava jinjava = JinJavaFactory.getJinjava(conf);
         DataSourceDTO dataSourceDTO = conf.getTargetDataSourceDTO();
-        dataSourceDTO.getServices().get(0).setHost(postgres.getHost());
-        dataSourceDTO.getServices().get(0).setPort(postgres.getMappedPort(5432).toString());
-        dataSourceDTO.getServices().get(0).setUrn(postgres.getDatabaseName());
-        dataSourceDTO.getServices().get(0).getProperties().put("user", postgres.getUsername());
-        dataSourceDTO.getServices().get(0).getProperties().put("password", postgres.getPassword());
+        dataSourceDTO.getService().setHost(postgres.getHost());
+        dataSourceDTO.getService().setPort(postgres.getMappedPort(5432).toString());
+        dataSourceDTO.getService().setUrn(postgres.getDatabaseName());
+        dataSourceDTO.getService().getProperties().put("user", postgres.getUsername());
+        dataSourceDTO.getService().getProperties().put("password", postgres.getPassword());
 
         DataSourceManipulator jdbcManipulator = DataSourceManipulatorFactory.buildDataSourceManipulator(conf,jinjava);
         jdbcManipulator.drop();
@@ -108,10 +119,10 @@ public class SparkTaskProcessorBodyTest {
     @Test
     @Order(1)
     void testPostgres() throws IOException, ReadException, DropException, TaskConfigBuildException, UnsuportedDataSourceException, WriteException, DDLDIalectException, CreateException, ExecuteException {
-        SparkSession sparkSession = SparkSession.builder().master("local").getOrCreate();
         TaskProcessorConfigDTO conf = new TaskConfigTestFactory().loadTaskProcessorConfigDTO(trnddsDatasetName,"load");
+        SparkSession sparkSession = buildSparkSession(conf);
 
-        Jinjava jinjava = JinJavaFactory.getJinjava(conf);
+       // Jinjava jinjava = JinJavaFactory.getJinjava(conf);
 
         SparkSQLDataSourceManipulator clientDSM = createPgDSM(sparkSession,clientDatasetName,getClientDataSet(sparkSession));
 
@@ -123,66 +134,15 @@ public class SparkTaskProcessorBodyTest {
     }
 
 
-    /*@Test
-    @Order(2)
-    void
-    testPostgresViolateConstraint() throws UnsuportedDataSourceException, IOException, CreateException, ReadException, DDLDIalectException, DropException, TaskConfigBuildException {
-        SparkSession sparkSession = SparkSession.builder().master("local").getOrCreate();
-        SparkSQLDataSourceManipulator clientDSM = null;
-
-
-        try {
-            clientDSM = createPgDSM(sparkSession,clientDatasetName,getClientDataSet(sparkSession) );;
-        }catch (WriteException e){
-            e.printStackTrace();
-        }
-        //wrong write expect fail by pk
-        boolean writeError = false;
-        try {
-            clientDSM.write(getClientDataSet(sparkSession), Configuration.ModificationRule.append);
-        }catch (WriteException e){
-            writeError = true;
-        }
-
-        clientDSM.read(new HashMap<>()).show();
-        clientDSM.drop();
-        sparkSession.stop();
-        assert (writeError);
-    }
-*/
-  /*  @Test
-    @Order(3)
-    void
-    testPostgresFk() throws IOException, CreateException, WriteException, ReadException, DropException, DDLDIalectException, TaskConfigBuildException, UnsuportedDataSourceException {
-        SparkSession sparkSession = SparkSession.builder().master("local").getOrCreate();
-        SparkSQLDataSourceManipulator clientDSM = createPgDSM(sparkSession,clientDatasetName,getClientDataSet(sparkSession) );;
-        SparkSQLDataSourceManipulator trnDSM = createPgDSM(sparkSession,trnDatasetName,getTrnDataSet(sparkSession) );;
-
-
-        long rows = clientDSM.read(new HashMap<>()).count();
-        boolean dropErr = false;
-        try {
-            clientDSM.drop();
-            trnDSM.drop();
-        } catch (DropException e) {
-            dropErr = true;
-            trnDSM.drop();
-            clientDSM.drop();
-        }
-        sparkSession.stop();
-        assert (rows == 2);
-        assert (dropErr);
-    }
-
-*/
 
     @Test
     void testIcebergTable() throws TaskFailedException, IOException, CreateException, ReadException, WriteException, TaskConfigBuildException, DropException, DDLDIalectException, UnsuportedDataSourceException, ExecuteException, TaskConfigurationException {
-        SparkSession sparkSession = SparkSession.builder().master("local").getOrCreate();
 
 
 
         TaskProcessorConfigDTO conf = new TaskConfigTestFactory().loadTaskProcessorConfigDTO(trnddsDatasetName,"load");
+        SparkSession sparkSession = buildSparkSession(conf);
+
         Jinjava jinjava = JinJavaFactory.getJinjava(conf);
 
         SparkSQLDataSourceManipulator clientDSM = createPgDSM(sparkSession,clientDatasetName,getClientDataSet(sparkSession));// DataManipulators.getSparkSQLDataSourceManipulatorPg(jinjava,postgres,sparkSession,clientDatasetName,conf);
@@ -212,9 +172,10 @@ public class SparkTaskProcessorBodyTest {
     @Test
     @Order(4)
     void testDropTableIceberg() throws DDLDIalectException, TaskConfigBuildException, IOException, CreateException, DropException, UnsuportedDataSourceException {
-        SparkSession sparkSession = SparkSession.builder().master("local[*]").getOrCreate();
         String trnddsDatasetName = "transaction_dds";
         TaskProcessorConfigDTO conf = new TaskConfigTestFactory().loadTaskProcessorConfigDTO(trnddsDatasetName,"load");
+        SparkSession sparkSession = buildSparkSession(conf);
+
         Jinjava jinjava = JinJavaFactory.getJinjava(conf);
 
         SparkSQLDataSourceManipulator dsm = DataManipulators.getIcebergDataSourceManipulator(jinjava,sparkSession,trnddsDatasetName,conf);

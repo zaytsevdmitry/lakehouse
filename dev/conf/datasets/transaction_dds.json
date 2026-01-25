@@ -74,7 +74,7 @@
     }
   },
   "properties": {
-    "location": "/mytabs/transaction_dds",
+    "location": "s3a://data/warehouse/default/transaction_dds",
     "using": "iceberg"
   },
   "description": "Details"

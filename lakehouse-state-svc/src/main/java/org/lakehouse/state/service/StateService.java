@@ -37,7 +37,7 @@ public class StateService {
                 .stream()
                 .filter(state -> !(state.getStatus() == null))
                 .filter(state -> !state.getLockSource().equals(newState.getLockSource()))
-                .filter(state -> !state.getStatus().equals(Status.DataSet.SUCCESS.label))
+                .filter(state -> !state.getStatus().equals(Status.DataSet.SUCCESS))
                 .toList();
 
         if (!founds.isEmpty()) {
@@ -108,7 +108,7 @@ public class StateService {
                                     )
                             )
                             .stream()
-                            .filter(state -> state.getStatus() == null || !state.getStatus().equals(Status.DataSet.SUCCESS.label))
+                            .filter(state -> state.getStatus() == null || !state.getStatus().equals(Status.DataSet.SUCCESS))
                             .map(StateMapper::getDataSetStateDTO)
                             .toList());
         }

@@ -1,5 +1,7 @@
 package org.lakehouse.client.api.dto.scheduler;
 
+import org.lakehouse.client.api.constant.Status;
+
 import java.util.Objects;
 
 public class ScheduleInstanceDTO {
@@ -9,7 +11,7 @@ public class ScheduleInstanceDTO {
 
     private String targetExecutionDateTime;
 
-    private String status;
+    private Status.Schedule status;
 
     public ScheduleInstanceDTO() {
     }
@@ -38,11 +40,11 @@ public class ScheduleInstanceDTO {
         this.targetExecutionDateTime = targetExecutionDateTime;
     }
 
-    public String getStatus() {
+    public Status.Schedule getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(Status.Schedule status) {
         this.status = status;
     }
 

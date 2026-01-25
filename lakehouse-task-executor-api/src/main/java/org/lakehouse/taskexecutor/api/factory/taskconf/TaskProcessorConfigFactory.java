@@ -8,8 +8,10 @@ import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetScriptDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
+import org.lakehouse.client.api.dto.configs.datasource.ServiceDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
+import org.lakehouse.client.api.utils.Coalesce;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
@@ -99,6 +101,7 @@ public class TaskProcessorConfigFactory {
                     .collect(Collectors.toMap(DriverDTO::getKeyName,Function.identity()))
         );
 
+
         result.setScripts(
                 result.getDataSets()
                         .get(result.getTargetDataSetKeyName())
@@ -107,6 +110,9 @@ public class TaskProcessorConfigFactory {
                         .sorted(Comparator.comparingInt(DataSetScriptDTO::getOrder))
                         .map(DataSetScriptDTO::getKey)
                         .collect(Collectors.toMap(Function.identity(), configRestClientApi::getScript)));
+
+        resolveTemplates(result);
+
 
         logger.info("Config ready");
         try {
@@ -118,6 +124,29 @@ public class TaskProcessorConfigFactory {
     }
 
 
+
+    private void resolveTemplates(
+            TaskProcessorConfigDTO taskProcessorConfigDTO){
+        taskProcessorConfigDTO.getDataSources().forEach((s, dataSourceDTO) ->
+        {
+            Map<String,Object> localContext = new HashMap<>();
+            localContext.put(SystemVarKeys.DRIVER_KEY, taskProcessorConfigDTO.getDrivers().get(dataSourceDTO.getDriverKeyName()));
+            localContext.put(SystemVarKeys.DATASOURCE_KEY, dataSourceDTO);
+            localContext.put(SystemVarKeys.SERVICE_KEY, dataSourceDTO.getService());
+
+            dataSourceDTO.getService().setProperties(rerenderMap(dataSourceDTO.getService().getProperties(), localContext));
+
+        });
+    }
+
+    private Map<String,String> rerenderMap(Map<String,String> map, Map<String,Object> localContext){
+        return map.entrySet().stream().map(e->
+                Map.entry(
+                        jinjava.render(e.getKey(), localContext),
+                        jinjava.render(e.getValue(),localContext))
+
+        ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
 
     private Map<String,DataSetDTO> collapseDataSetDTOs(String targetDataSetKeyName) {
         Map<String,DataSetDTO> result = new HashMap<>();

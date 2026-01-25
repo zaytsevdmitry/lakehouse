@@ -215,7 +215,7 @@ public class TaskExecutorTest {
         ScheduleEffectiveDTO scheduleEffectiveDTO = configRestClientApi.getScheduleEffectiveDTO(null);
         DataSetDTO ds = configRestClientApi.getDataSetDTO("client_processing");
         DataSourceDTO pgDs = configRestClientApi.getDataSourceDTO(ds.getDataSourceKeyName());
-        pgDs.setServices(List.of(parceUrlToServiceDTO(pgUrl, pgUser, pgPwd)));
+        pgDs.setService(parceUrlToServiceDTO(pgUrl, pgUser, pgPwd));
         configRestClientApi.postDataStoreDTO(pgDs);
 
         //first postgres
@@ -246,7 +246,7 @@ public class TaskExecutorTest {
         ScheduleEffectiveDTO scheduleEffectiveDTO = configRestClientApi.getScheduleEffectiveDTO(null);
         DataSetDTO ds = configRestClientApi.getDataSetDTO("transaction_dds");
         DataSourceDTO pgDs = configRestClientApi.getDataSourceDTO(ds.getDataSourceKeyName());
-        pgDs.setServices(List.of(parceUrlToServiceDTO(pgUrl, pgUser, pgPwd)));
+        pgDs.setService(parceUrlToServiceDTO(pgUrl, pgUser, pgPwd));
         configRestClientApi.postDataStoreDTO(pgDs);
 
         TaskProcessor begin =

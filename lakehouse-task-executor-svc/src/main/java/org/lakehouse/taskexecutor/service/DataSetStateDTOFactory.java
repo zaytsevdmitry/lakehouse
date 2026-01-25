@@ -12,7 +12,7 @@ public class DataSetStateDTOFactory {
         result.setDataSetKeyName(taskProcessorConfigDTO.getTargetDataSetKeyName());
         result.setIntervalStartDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(taskProcessorConfigDTO.getIntervalStartDateTime()));
         result.setIntervalEndDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(taskProcessorConfigDTO.getIntervalEndDateTime()));
-        result.setStatus(status.label);
+        result.setStatus(status);
         result.setLockSource(taskProcessorConfigDTO.getLockSource());
 
         return result;

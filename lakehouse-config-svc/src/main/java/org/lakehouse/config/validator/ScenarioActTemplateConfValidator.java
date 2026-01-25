@@ -11,25 +11,27 @@ public class ScenarioActTemplateConfValidator {
 //todo move to common and apply in client
 
     public static ValidationResult validate(ScenarioActTemplateDTO scenarioActTemplateDTO) {
-        ValidationResult result;
 
         List<String> descriptions = new ArrayList<>();
+
         descriptions.addAll(ScheduleConfValidator.validateEdges(
                 String.format("ScenarioActTemplate %s", scenarioActTemplateDTO.getName()),
                 scenarioActTemplateDTO
                         .getTasks()
                         .stream()
                         .map(TaskDTO::getName).collect(Collectors.toSet()), scenarioActTemplateDTO.getDagEdges()
-
         ));
-        result = new ValidationResult(descriptions.isEmpty(), descriptions);
+
+        ValidationResult result = new ValidationResult(descriptions.isEmpty(), descriptions);
 
         ScheduleConfValidator
                 .validateEdges(
-                        ScheduleConfValidator
-                                .EdgesToMap(scenarioActTemplateDTO.getDagEdges())).forEach(s -> {
-                                    result.setValid(false);
-                                    result.getDescriptions().add(s);
+                        String.format("scenario template '%s'", scenarioActTemplateDTO.getName()),
+                        scenarioActTemplateDTO.getTasks().stream().map(TaskDTO::getName).collect(Collectors.toSet()),
+                        scenarioActTemplateDTO.getDagEdges())
+                .forEach(s -> {
+                    result.setValid(false);
+                    result.getDescriptions().add(s);
                 });
 
         return result;

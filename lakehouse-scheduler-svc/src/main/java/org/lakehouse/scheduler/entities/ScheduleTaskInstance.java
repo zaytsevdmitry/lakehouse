@@ -3,6 +3,7 @@ package org.lakehouse.scheduler.entities;
 import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.lakehouse.client.api.constant.Status;
 
 import java.time.OffsetDateTime;
 import java.util.Objects;
@@ -30,8 +31,9 @@ public class ScheduleTaskInstance {
     @Column()
     private OffsetDateTime endDateTime;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String status;
+    private Status.Task status;
 
     @Column(nullable = false, columnDefinition = "int default 0")
     private int reTryCount = 0;
@@ -76,11 +78,11 @@ public class ScheduleTaskInstance {
         this.endDateTime = endDateTime;
     }
 
-    public String getStatus() {
+    public Status.Task getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(Status.Task status) {
         this.status = status;
     }
 

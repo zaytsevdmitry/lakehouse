@@ -11,14 +11,14 @@
       "dataSet": "transaction_dds",
       "scenarioActTemplate": "default",
       "intervalStart": "{{ adddays(targetDateTime, -1) }}",
-      "intervalEnd": "{{ targetDateTimeTZ }}"
+      "intervalEnd": "{{ targetDateTime }}"
     },
     {
       "name": "aggregation_pay_per_client_daily_mart",
       "dataSet": "aggregation_pay_per_client_daily_mart",
       "scenarioActTemplate": "default",
       "intervalStart": "{{ adddays(targetDateTime, -1) }}",
-      "intervalEnd": "{{ targetDateTimeTZ }}"
+      "intervalEnd": "{{ targetDateTime }}"
     },
     {
       "name": "aggregation_pay_per_client_total_mart",

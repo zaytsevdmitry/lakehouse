@@ -120,7 +120,7 @@ public class DataSetStateTest {
         newState.setDataSetKeyName("test1");
         newState.setIntervalStartDateTime(DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-10T00:00Z"));
         newState.setIntervalEndDateTime(DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-11T00:00Z"));
-        newState.setStatus(Status.DataSet.LOCKED.label);
+        newState.setStatus(Status.DataSet.LOCKED);
 
         int count = dataSetStateRepository.findAll().size();
         stateService.save(newState);
@@ -140,7 +140,7 @@ public class DataSetStateTest {
         newState.setDataSetKeyName("test1");
         newState.setIntervalStartDateTime(DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-08T00:00Z"));
         newState.setIntervalEndDateTime(DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-09T00:00Z"));
-        newState.setStatus(Status.DataSet.LOCKED.label);
+        newState.setStatus(Status.DataSet.LOCKED);
         newState.setLockSource("test");
 
         int count = dataSetStateRepository.findAll().size();
@@ -161,7 +161,7 @@ public class DataSetStateTest {
         newState.setDataSetKeyName("test1");
         newState.setIntervalStartDateTime(DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-08T00:00Z"));
         newState.setIntervalEndDateTime(DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-08T01:00Z"));
-        newState.setStatus(Status.DataSet.LOCKED.label);
+        newState.setStatus(Status.DataSet.LOCKED);
 
         int count = dataSetStateRepository.findAll().size();
         stateService.save(newState);
@@ -183,7 +183,7 @@ public class DataSetStateTest {
         newState.setDataSetKeyName("test1");
         newState.setIntervalStartDateTime(DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-08T17:00Z"));
         newState.setIntervalEndDateTime(DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-09T00:00Z"));
-        newState.setStatus(Status.DataSet.LOCKED.label);
+        newState.setStatus(Status.DataSet.LOCKED);
 
         int count = dataSetStateRepository.findAll().size();
         stateService.save(newState);
@@ -205,7 +205,7 @@ public class DataSetStateTest {
         newState.setDataSetKeyName("test1");
         newState.setIntervalStartDateTime(DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-01T00:00Z"));
         newState.setIntervalEndDateTime(DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-31T00:00Z"));
-        newState.setStatus(Status.DataSet.LOCKED.label);
+        newState.setStatus(Status.DataSet.LOCKED);
 
 
         stateService.save(newState);
@@ -229,7 +229,7 @@ public class DataSetStateTest {
         newState.setDataSetKeyName("test1");
         newState.setIntervalStartDateTime(DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-02T08:00Z"));
         newState.setIntervalEndDateTime(DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-02T16:00Z"));
-        newState.setStatus(Status.DataSet.LOCKED.label);
+        newState.setStatus(Status.DataSet.LOCKED);
 
         int count = dataSetStateRepository.findAll().size();
 
@@ -256,7 +256,7 @@ public class DataSetStateTest {
 
         DataSetState failedState = new DataSetState();
         failedState.setDataSetKeyName(dataSetKeyName);
-        failedState.setStatus(Status.DataSet.LOCKED.label);
+        failedState.setStatus(Status.DataSet.LOCKED);
         failedState.setIntervalStartDateTime(intervalFailedStateStartDateTime);
         failedState.setIntervalEndDateTime(intervalFailedStateStartDateTime.plusDays(1));
         failedState.setLockSource("testSchedule.testAct.testTask");
@@ -330,14 +330,14 @@ public class DataSetStateTest {
         dataSetStateRepository.deleteAll();
         DataSetStateDTO fromFirstClient = new DataSetStateDTO();
         fromFirstClient.setDataSetKeyName("DataSetTest");
-        fromFirstClient.setStatus(Status.DataSet.LOCKED.label);
+        fromFirstClient.setStatus(Status.DataSet.LOCKED);
         fromFirstClient.setIntervalStartDateTime("2025-01-01T00:00:00z");
         fromFirstClient.setIntervalEndDateTime("2025-01-02T00:00:00z");
         fromFirstClient.setLockSource(String.valueOf(Objects.hashCode("first")));
 
         DataSetStateDTO fromSecondClient = new DataSetStateDTO();
         fromSecondClient.setDataSetKeyName(fromFirstClient.getDataSetKeyName());
-        fromSecondClient.setStatus(Status.DataSet.SUCCESS.label);
+        fromSecondClient.setStatus(Status.DataSet.SUCCESS);
         fromSecondClient.setLockSource(String.valueOf(Objects.hashCode("second")));
         fromSecondClient.setIntervalStartDateTime(fromFirstClient.getIntervalStartDateTime());
         fromSecondClient.setIntervalEndDateTime(fromFirstClient.getIntervalEndDateTime());
@@ -362,14 +362,14 @@ public class DataSetStateTest {
 
         DataSetStateDTO fromFirstClient = new DataSetStateDTO();
         fromFirstClient.setDataSetKeyName("DataSetTest");
-        fromFirstClient.setStatus(Status.DataSet.LOCKED.label);
+        fromFirstClient.setStatus(Status.DataSet.LOCKED);
         fromFirstClient.setIntervalStartDateTime("2025-01-01T00:00:00z");
         fromFirstClient.setIntervalEndDateTime("2025-01-02T00:00:00z");
         fromFirstClient.setLockSource(lockSource);
 
         DataSetStateDTO fromSecondClient = new DataSetStateDTO();
         fromSecondClient.setDataSetKeyName(fromFirstClient.getDataSetKeyName());
-        fromSecondClient.setStatus(Status.DataSet.SUCCESS.label);
+        fromSecondClient.setStatus(Status.DataSet.SUCCESS);
         fromSecondClient.setLockSource(fromFirstClient.getLockSource());
         fromSecondClient.setIntervalStartDateTime(fromFirstClient.getIntervalStartDateTime());
         fromSecondClient.setIntervalEndDateTime(fromFirstClient.getIntervalEndDateTime());
@@ -395,7 +395,7 @@ public class DataSetStateTest {
 
         DataSetState start = new DataSetState();
         start.setDataSetKeyName("DataSetTest");
-        start.setStatus(Status.DataSet.SUCCESS.label);
+        start.setStatus(Status.DataSet.SUCCESS);
         start.setIntervalStartDateTime(DateTimeUtils.parseDateTimeFormatWithTZ("2024-12-31T00:00:00z"));
         start.setIntervalEndDateTime(DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-01T00:00:00z"));
         start.setLockSource(lockSource);
@@ -403,7 +403,7 @@ public class DataSetStateTest {
         for (long i = 1; i <= 35; i++) {
             DataSetState state = new DataSetState();
             state.setDataSetKeyName(start.getDataSetKeyName());
-            state.setStatus(Status.DataSet.SUCCESS.label);
+            state.setStatus(Status.DataSet.SUCCESS);
             state.setIntervalStartDateTime(start.getIntervalStartDateTime().plusDays(i));
             state.setIntervalEndDateTime(start.getIntervalEndDateTime().plusDays(i));
             state.setLockSource(lockSource);
@@ -411,7 +411,7 @@ public class DataSetStateTest {
         }
         DataSetState month = new DataSetState();
         month.setDataSetKeyName(start.getDataSetKeyName());
-        month.setStatus(Status.DataSet.LOCKED.label);
+        month.setStatus(Status.DataSet.LOCKED);
         month.setIntervalStartDateTime(DateTimeUtils.parseDateTimeFormatWithTZ("2025-01-01T00:00:00z"));
         month.setIntervalEndDateTime(DateTimeUtils.parseDateTimeFormatWithTZ("2025-02-01T00:00:00z"));
         month.setLockSource(lockSource);

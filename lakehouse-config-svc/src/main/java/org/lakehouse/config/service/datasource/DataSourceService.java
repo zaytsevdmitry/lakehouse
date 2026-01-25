@@ -8,6 +8,7 @@ import org.lakehouse.config.entities.datasource.DataSource;
 import org.lakehouse.config.entities.datasource.DataSourceSvcItem;
 import org.lakehouse.config.entities.datasource.DataSourceSvcItemProperty;
 import org.lakehouse.config.exception.DataSourceNotFoundException;
+import org.lakehouse.config.exception.DataSourceServiceNotFoundException;
 import org.lakehouse.config.mapper.Mapper;
 import org.lakehouse.config.mapper.keyvalue.KeyValueEntityMerger;
 import org.lakehouse.config.repository.SQLTemplateRepository;
@@ -24,34 +25,49 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 public class DataSourceService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final Mapper mapper;
     private final DataSourceRepository dataSourceRepository;
     private final DataSourcePropertyRepository dataSourcePropertyRepository;
     private final DataSourceSvcItemRepository dataSourceSvcItemRepository;
     private final DataSourceSvcItemPropertyRepository dataSourceSvcItemPropertyRepository;
-    private final SQLTemplateRepository sqlTemplateRepository;
     private final DriverService driverService;
     private final SQLTemplateService sqlTemplateService;
-    public DataSourceService(Mapper mapper,
-                             DataSourceRepository dataSourceRepository,
-                             DataSourcePropertyRepository dataSourcePropertyRepository,
-                             DataSourceSvcItemRepository dataSourceSvcItemRepository,
-                             DataSourceSvcItemPropertyRepository dataSourceSvcItemPropertyRepository,
-                             SQLTemplateRepository sqlTemplateRepository,
-                             DriverService driverService, SQLTemplateService sqlTemplateService) {
-        this.mapper = mapper;
+    public DataSourceService(
+            DataSourceRepository dataSourceRepository,
+            DataSourcePropertyRepository dataSourcePropertyRepository,
+            DataSourceSvcItemRepository dataSourceSvcItemRepository,
+            DataSourceSvcItemPropertyRepository dataSourceSvcItemPropertyRepository,
+            DriverService driverService,
+            SQLTemplateService sqlTemplateService) {
         this.dataSourceRepository = dataSourceRepository;
         this.dataSourcePropertyRepository = dataSourcePropertyRepository;
         this.dataSourceSvcItemRepository = dataSourceSvcItemRepository;
         this.dataSourceSvcItemPropertyRepository = dataSourceSvcItemPropertyRepository;
-        this.sqlTemplateRepository = sqlTemplateRepository;
         this.driverService = driverService;
         this.sqlTemplateService = sqlTemplateService;
+    }
+
+    private ServiceDTO findDataSourceService(String dataSourceKeyName){
+        DataSourceSvcItem dataSourceSvcItem = dataSourceSvcItemRepository
+                .findByDataSourceKeyName(dataSourceKeyName)
+                .orElseThrow(() -> new DataSourceServiceNotFoundException(dataSourceKeyName));
+
+        ServiceDTO serviceDTO = new ServiceDTO();
+        serviceDTO.setHost(dataSourceSvcItem.getHost());
+        serviceDTO.setPort(dataSourceSvcItem.getPort());
+        serviceDTO.setUrn(dataSourceSvcItem.getUrn());
+        serviceDTO.setProperties(
+                dataSourceSvcItemPropertyRepository
+                        .findByDataSourceSvcItemId(dataSourceSvcItem.getId())
+                        .stream()
+                        .collect(Collectors.toMap(DataSourceSvcItemProperty::getKey, DataSourceSvcItemProperty::getValue))
+        );
+        return serviceDTO;
     }
 
     private DataSourceDTO mapDataSourceToDTO(DataSource dataSource) {
@@ -59,25 +75,7 @@ public class DataSourceService {
         result.setKeyName(dataSource.getKeyName());
         result.setDescription(dataSource.getDescription());
         result.setDriverKeyName(dataSource.getDriver().getKeyName());
-        Map<String, String> properties = new HashMap<>();
-        dataSourcePropertyRepository.findByDataSourceKeyName(dataSource.getKeyName())
-                .forEach(dataSourceProperty -> properties.put(dataSourceProperty.getKey(), dataSourceProperty.getValue()));
-        result.setProperties(properties);
-        result.setServices(dataSourceSvcItemRepository
-                .findByDataSourceKeyName(dataSource.getKeyName())
-                .stream().map(dataSourceService -> {
-                    ServiceDTO serviceDTO = new ServiceDTO();
-                    serviceDTO.setHost(dataSourceService.getHost());
-                    serviceDTO.setPort(dataSourceService.getPort());
-                    serviceDTO.setUrn(dataSourceService.getUrn());
-                    serviceDTO.setProperties(
-                            dataSourceSvcItemPropertyRepository
-                                    .findByDataSourceSvcItemId(dataSourceService.getId())
-                                    .stream()
-                                    .collect(Collectors.toMap(DataSourceSvcItemProperty::getKey, DataSourceSvcItemProperty::getValue))
-                    );
-                    return serviceDTO;
-                }).toList());
+        result.setService(findDataSourceService(dataSource.getKeyName()));
         result.setSqlTemplate(sqlTemplateService.getSqlTemplateDTO(dataSource));
         return result;
     }
@@ -91,8 +89,12 @@ public class DataSourceService {
         return result;
     }
 
-    private DataSourceSvcItem mapServiceToEntity(DataSource dataSource, ServiceDTO serviceDTO) {
-        DataSourceSvcItem result = new DataSourceSvcItem();
+    private DataSourceSvcItem mapServiceToEntity(
+            DataSource dataSource,
+            ServiceDTO serviceDTO) {
+        DataSourceSvcItem result = dataSourceSvcItemRepository
+                .findByDataSourceKeyName(dataSource.getKeyName()).orElse(new DataSourceSvcItem());
+
         result.setHost(serviceDTO.getHost());
         result.setPort(serviceDTO.getPort());
         result.setUrn(serviceDTO.getUrn());
@@ -138,27 +140,17 @@ public class DataSourceService {
     public DataSourceDTO save(DataSourceDTO dataSourceDTO) {
         DataSource dataSource = dataSourceRepository.save(mapDataSourceToEntity(dataSourceDTO));
 
-        saveProperties(dataSource,dataSourceDTO.getProperties());
-
         // services
         //todo rewrite to merge
-        dataSourceSvcItemRepository
-                .deleteAll(
-                        dataSourceSvcItemRepository
-                                .findByDataSourceKeyName(dataSourceDTO.getKeyName()));
+        DataSourceSvcItem dataSourceSvcItem =
+                dataSourceSvcItemRepository.save(
+                        mapServiceToEntity(dataSource,dataSourceDTO.getService()));
 
-        // property
-        dataSourceDTO
-                .getServices()
-                .forEach(serviceDTO -> {
-                    DataSourceSvcItem dataSourceSvcItem =
-                            dataSourceSvcItemRepository.save(mapServiceToEntity(dataSource, serviceDTO));
-                    saveSvcProperty(dataSourceSvcItem,serviceDTO.getProperties());
-                });
+
+         saveSvcProperty(dataSourceSvcItem,dataSourceDTO.getService().getProperties());
 
         //sql templates
         sqlTemplateService.save(dataSource,dataSourceDTO.getSqlTemplate());
-
 
         return mapDataSourceToDTO(dataSource);
     }

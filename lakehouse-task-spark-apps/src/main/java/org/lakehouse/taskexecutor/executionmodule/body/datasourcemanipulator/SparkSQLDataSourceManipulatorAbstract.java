@@ -35,13 +35,13 @@ public abstract class SparkSQLDataSourceManipulatorAbstract
 
     @Override
     public void createTableIfNotExists() throws CreateException {
-
         String tableName = getCatTableName();
-
+        logger.info("Try to create table {}",tableName);
         boolean isTableExists = sparkSession().catalog().tableExists(tableName);
 
         if(!isTableExists){
             String schemaName = getCatDbSchemaName();
+            logger.info("Try to create table {}", schemaName);
             boolean isDBSchemaExists = sparkSession().catalog().databaseExists(schemaName);
 
             try {
