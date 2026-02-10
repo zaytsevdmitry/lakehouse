@@ -1,27 +1,26 @@
 package org.lakehouse.taskexecutor.api.processor.body;
 
+import org.apache.spark.sql.SparkSession;
 import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.taskexecutor.api.datasource.exception.CreateException;
-import org.lakehouse.taskexecutor.executionmodule.body.datasourcemanipulator.SparkSQLDataSourceManipulator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
-import java.util.Set;
-
+@Service
 public class CreateTableSparkProcessorBody extends SparkProcessorBodyAbstract{
     private final  Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public CreateTableSparkProcessorBody(SparkBodyParam bodyParam) {
-        super(bodyParam);
+    public CreateTableSparkProcessorBody(SparkSession sparkSession) {
+        super(sparkSession);
     }
 
 
     @Override
-    public void run() throws TaskFailedException {
+    public void run(BodyParam bodyParam) throws TaskFailedException {
 
         try {
-            getBodyParam()
+            bodyParam
                     .targetDataSourceManipulator().createTableIfNotExists();
 
 

@@ -42,7 +42,7 @@ public class RestManipulator {
 
     public String writeAndReadTextTestByKey(String keyName, String fileExt, String text, String urlTemplate, String urlTemplateName)
             throws Exception {
-        String k = keyName.concat(".").concat(fileExt);
+        String k = keyName.concat(".").concat(fileExt).replaceAll("/",".");
         this.mockMvc
                 .perform(post(urlTemplate, k)
                         .content(text)

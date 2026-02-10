@@ -1,0 +1,7 @@
+@startuml
+autonumber
+Scheduler --> taskExecutor :run task to build DQ task
+taskExecutor --> dqBuildTasksProcessor
+dqBuildTasksProcessor -> Scheduler: makeAdditional tasks
+Scheduler -> taskExecutor: run DQ task
+@enduml

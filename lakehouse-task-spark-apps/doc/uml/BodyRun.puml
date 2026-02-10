@@ -10,15 +10,9 @@ interface SparkProcessorBody{
  void run() throws TaskFailedException;
 }
 interface BodyParam {
-
-    SparkSession getSparkSession();
     Map<String, DataSourceManipulator> getSourceDataSourceManipulatorMap();
     DataSourceManipulator getTargetDataSourceManipulator();
     Map<String, String> getExecutionArgs();
-    List<String> getScripts();
-    Map<String, String> getKeyBind();
-
-
 }
 class BodyParamImpl implements BodyParam
 
@@ -43,7 +37,19 @@ SparkProcessorBodyFactory *--CatalogActivator
 '-------------------------------------
 ' DataSourceManipulator
 '-------------------------------------
-interface DataSourceManipulator
+interface DataSourceManipulator extends DataSourceManipulatorParameter {
+
+    void addConstraints(Map<String,DataSetConstraintDTO> constraints) throws ConstraintException;
+    void compact() throws CompactException;
+    void compactPartitions(List<String> partitions) throws CompactException;
+    void createTableIfNotExists() throws CreateException;
+    void drop() throws DropException;
+    void dropPartitions(List<String> partitions) throws DropException;
+    void removeConstraintByName(String constraintName) throws ConstraintException;
+    void removeConstraints(Map<String,DataSetConstraintDTO> constraints) throws ConstraintException;
+    void truncate() throws TruncateException;
+    void truncatePartitions(List<String> partitions) throws TruncateException;
+}
 class SparkSession
 class JdbcSparkSQLDataSourceManipulator extends SparkSQLDataSourceManipulatorAbstract
 abstract class SparkSQLDataSourceManipulatorAbstract extends JdbcDataSourceManipulator implements DataSourceManipulator{
@@ -62,7 +68,7 @@ class IcebergSparkSQLDataSourceManipulator extends SparkSQLDataSourceManipulator
 class FileSparkSQLDataSourceManipulator extends SparkSQLDataSourceManipulatorAbstract
 '-------------------------------------
 ' END DataSourceManipulator
-'-------------------------------------
+'--------------------------------------
 BodyParam *-- DataSourceManipulator
 TransformationSparkProcessorBody *--- TransformerFactory
 interface DataTransformer{

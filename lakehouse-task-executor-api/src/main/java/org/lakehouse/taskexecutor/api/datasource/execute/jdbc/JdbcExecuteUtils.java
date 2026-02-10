@@ -5,6 +5,7 @@ import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.exception.TaskFailedException;
+import org.lakehouse.jinja.java.JinJavaUtils;
 import org.lakehouse.taskexecutor.api.datasource.exception.ExecuteException;
 import org.lakehouse.taskexecutor.api.datasource.execute.ExecuteUtilsAbstract;
 import org.slf4j.Logger;
@@ -22,11 +23,11 @@ public class JdbcExecuteUtils extends ExecuteUtilsAbstract {
 
 
     public JdbcExecuteUtils(
-            Jinjava jinjava,
+            JinJavaUtils jinJavaUtils,
             DataSourceDTO dataSourceDTO,
             DriverDTO driverDTO
             ) {
-        super(jinjava, dataSourceDTO, driverDTO);
+        super(jinJavaUtils, dataSourceDTO, driverDTO);
     }
 
     
@@ -46,7 +47,7 @@ public class JdbcExecuteUtils extends ExecuteUtilsAbstract {
 
         try (Connection connection = getConnection();
              Statement statement = connection.createStatement()) {
-            String renderedSQL = getJinjava().render(sql,localContext);
+            String renderedSQL = getjinJavaUtils().render(sql,localContext);
             logger.info("Execute renderedSQL command: {}", renderedSQL);
             statement.execute(renderedSQL);
         } catch (SQLException | TaskConfigurationException  e) {
@@ -66,8 +67,8 @@ public class JdbcExecuteUtils extends ExecuteUtilsAbstract {
 
         Integer result = null;
 
-        String renderedSQL = getJinjava().render(sql, localContext);
-        logger.info("Execute SQL command: {}", renderedSQL);
+        String renderedSQL = getjinJavaUtils().render(sql, localContext);
+
         try (Connection connection = getConnection();
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(renderedSQL))

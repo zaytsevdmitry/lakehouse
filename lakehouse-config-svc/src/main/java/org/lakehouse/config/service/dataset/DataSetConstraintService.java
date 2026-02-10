@@ -2,14 +2,14 @@ package org.lakehouse.config.service.dataset;
 
 import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetConstraintDTO;
-import org.lakehouse.client.api.dto.configs.dataset.ReferenceDTO;
+import org.lakehouse.client.api.dto.configs.dataset.ForeignKeyReferenceDTO;
 import org.lakehouse.config.entities.dataset.DataSet;
 import org.lakehouse.config.entities.dataset.DataSetConstraint;
-import org.lakehouse.config.entities.dataset.Reference;
+import org.lakehouse.config.entities.dataset.ForeignKeyReference;
 import org.lakehouse.config.exception.DataSetConstraintNotFoundException;
 import org.lakehouse.config.exception.DataSetConstraintReferenceConfigNotFoundException;
 import org.lakehouse.config.repository.dataset.DataSetConstraintRepository;
-import org.lakehouse.config.repository.dataset.ReferenceRepository;
+import org.lakehouse.config.repository.dataset.ForeignKeyReferenceRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -22,12 +22,12 @@ import java.util.stream.Collectors;
 public class DataSetConstraintService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final DataSetConstraintRepository dataSetConstraintRepository;
-    private final ReferenceRepository referenceRepository;
+    private final ForeignKeyReferenceRepository foreignKeyReferenceRepository;
     public DataSetConstraintService(
             DataSetConstraintRepository dataSetConstraintRepository,
-            ReferenceRepository referenceRepository) {
+            ForeignKeyReferenceRepository foreignKeyReferenceRepository) {
         this.dataSetConstraintRepository = dataSetConstraintRepository;
-        this.referenceRepository = referenceRepository;
+        this.foreignKeyReferenceRepository = foreignKeyReferenceRepository;
     }
     public void applyConstraints(DataSet dataSet, Map<String,DataSetConstraintDTO> dataSetConstraintDTOList) throws DataSetConstraintReferenceConfigNotFoundException{
         List<DataSetConstraint> current = dataSetConstraintRepository.findByDataSetKeyName(dataSet.getKeyName());
@@ -54,11 +54,11 @@ public class DataSetConstraintService {
         for (DataSetConstraint dataSetConstraint: newConst){
             dataSetConstraintRepository.save(dataSetConstraint);
             if (dataSetConstraint.getType().equals(Types.Constraint.foreign)) {
-                Reference newReference = findReference(dataSetConstraint,dataSetConstraintDTOList);
+                ForeignKeyReference newForeignKeyReference = findReference(dataSetConstraint,dataSetConstraintDTOList);
                 if(dataSetConstraint.getId() != null && dataSetConstraint.getId() > 0){
-                    referenceRepository.findByConstraintId(dataSetConstraint.getId()).ifPresent(reference -> newReference.setId(reference.getId()));
+                    foreignKeyReferenceRepository.findByDataSetConstraintId(dataSetConstraint.getId()).ifPresent(foreignKeyReference -> newForeignKeyReference.setId(foreignKeyReference.getId()));
                 }
-                referenceRepository.save(newReference);
+                foreignKeyReferenceRepository.save(newForeignKeyReference);
             }
         }
 
@@ -83,7 +83,7 @@ public class DataSetConstraintService {
         result.setCreateConstraintDDLOverride(dataSetConstraintDTO.getValue().getTableConstraintDDLCreateOverride());
         return result;
     }
-    private Reference findReference(DataSetConstraint dataSetConstraint, Map<String,DataSetConstraintDTO> dataSetConstraintDTOs){
+    private ForeignKeyReference findReference(DataSetConstraint dataSetConstraint, Map<String,DataSetConstraintDTO> dataSetConstraintDTOs){
         List<DataSetConstraintDTO> found = dataSetConstraintDTOs
                 .entrySet()
                 .stream()
@@ -93,15 +93,15 @@ public class DataSetConstraintService {
         if (found.isEmpty()){
            throw  new DataSetConstraintReferenceConfigNotFoundException(dataSetConstraint.getName(),dataSetConstraint.getDataSet().getKeyName());
         }else {
-            ReferenceDTO referenceDTO =  found.get(0).getReference();
-            Reference result = new Reference();
+            ForeignKeyReferenceDTO foreignKeyReferenceDTO =  found.get(0).getReference();
+            ForeignKeyReference result = new ForeignKeyReference();
             result.setDataSetConstraint(dataSetConstraint);
             DataSetConstraint ref = dataSetConstraintRepository.findByDataSetKeyNameAndName(
-                            referenceDTO.getDataSetKeyName(),
-                            referenceDTO.getConstraintName())
+                            foreignKeyReferenceDTO.getDataSetKeyName(),
+                            foreignKeyReferenceDTO.getConstraintName())
                     .orElseThrow(() -> new DataSetConstraintNotFoundException(
-                            referenceDTO.getConstraintName(),
-                            referenceDTO.getDataSetKeyName()));
+                            foreignKeyReferenceDTO.getConstraintName(),
+                            foreignKeyReferenceDTO.getDataSetKeyName()));
             result.setRefDataSetConstraint(ref);
             return result;
         }
@@ -122,13 +122,13 @@ public class DataSetConstraintService {
             result.setConstraintLevelCheck(dataSetConstraint.getConstraintLevelCheck());
             result.setTableConstraintDDLCreateOverride(dataSetConstraint.getCreateConstraintDDLOverride());
             if (dataSetConstraint.getType().equals(Types.Constraint.foreign)) {
-                ReferenceDTO referenceDTO = new ReferenceDTO();
-                referenceRepository.findByConstraintId(dataSetConstraint.getId()).ifPresent(reference -> {
-                    referenceDTO.setDataSetKeyName(reference.getDataSetConstraint().getDataSet().getKeyName());
-                    referenceDTO.setConstraintName(reference.getDataSetConstraint().getName());
-                    referenceDTO.setOnDelete(reference.getOnDelete());
-                    referenceDTO.setOnUpdate(reference.getOnUpdate());
-                    result.setReference(referenceDTO);
+                ForeignKeyReferenceDTO foreignKeyReferenceDTO = new ForeignKeyReferenceDTO();
+                foreignKeyReferenceRepository.findByDataSetConstraintId(dataSetConstraint.getId()).ifPresent(foreignKeyReference -> {
+                    foreignKeyReferenceDTO.setDataSetKeyName(foreignKeyReference.getDataSetConstraint().getDataSet().getKeyName());
+                    foreignKeyReferenceDTO.setConstraintName(foreignKeyReference.getDataSetConstraint().getName());
+                    foreignKeyReferenceDTO.setOnDelete(foreignKeyReference.getOnDelete());
+                    foreignKeyReferenceDTO.setOnUpdate(foreignKeyReference.getOnUpdate());
+                    result.setReference(foreignKeyReferenceDTO);
                 });
             }
 

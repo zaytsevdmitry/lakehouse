@@ -30,6 +30,7 @@
         <module>lakehouse-task-executor-rest-client</module>
         <module>lakehouse-spark-rest-client</module>
         <module>lakehouse-task-executor-api</module>
+        <module>lakehouse-validators</module>
 
     </modules>
     <properties>

@@ -1,0 +1,44 @@
+{
+  "dataSetKeyName": "transaction_dds",
+  "keyName": "transaction_dds_qm_const",
+  "description": "",
+  "enabled": true,
+  "dqThresholdViolationLevel": "error",
+  "sources": {
+    "client_processing": {
+      "properties": {
+        "fetchSize": "10000"
+      }
+    },
+    "transaction_processing": {
+      "properties": {
+        "fetchSize": "10000"
+      }
+    }
+  },
+  "testSets": {
+    "non_zero_count": {
+      "description": "count rows of every increment more than 0",
+      "dqMetricsType": "sparkSQL",
+      "save": false,
+      "scripts": [
+        {
+          "key": "dq.non_zero_count.sql"
+        }
+      ]
+    }
+  },
+  "thresholds": {
+    "non_zero_count_th": {
+      "description": "",
+      "dqMetricsType": "sparkSQL",
+      "save": false,
+      "scripts": [
+        {
+          "key": "dq.non_zero_count_th.sql"
+        }
+      ]
+    }
+  }
+}
+

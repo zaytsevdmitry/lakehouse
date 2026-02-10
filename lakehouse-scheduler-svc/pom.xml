@@ -28,6 +28,11 @@
             <artifactId>lakehouse-config-rest-client</artifactId>
             <version>0.3.0</version>
         </dependency>
+        <dependency>
+            <groupId>lakehouse</groupId>
+            <artifactId>lakehouse-jinjava</artifactId>
+            <version>0.3.0</version>
+        </dependency>
         <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

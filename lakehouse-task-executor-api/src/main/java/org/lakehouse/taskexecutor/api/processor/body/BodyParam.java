@@ -6,6 +6,7 @@ import java.util.Map;
 
 public interface BodyParam {
     DataSourceManipulator targetDataSourceManipulator();
+    Map<String, DataSourceManipulator> sourceDataSourceManipulatorMap();
     Map<String, String> taskProcessorArgs();
-    String fullScript();
+
 }

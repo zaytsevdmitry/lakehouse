@@ -1,7 +1,7 @@
 package org.lakehouse.taskexecutor.factory;
 
-import org.lakehouse.client.api.dto.configs.QualityMetricsConfDTO;
-import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
+import org.lakehouse.client.api.dto.configs.dq.QualityMetricsConfDTO;
+import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.springframework.stereotype.Service;
 
@@ -15,10 +15,11 @@ public class DQConfigurationFactory {
         this.configRestClientApi = configRestClientApi;
     }
 
-    public List<QualityMetricsConfDTO> buildDQConf(TaskProcessorConfigDTO taskProcessorConfigDTO) {
-        return configRestClientApi.getQualityMetricsConfList(
+    public List<QualityMetricsConfDTO> buildDQConf(ScheduledTaskLockDTO scheduledTaskLockDTO) {
+        /*return configRestClientApi.getQualityMetricsConfList(
         taskProcessorConfigDTO.getDataSets().get(
                 taskProcessorConfigDTO.getTargetDataSetKeyName()).getKeyName()
-        );
+        );*/
+        return null;
     }
 }

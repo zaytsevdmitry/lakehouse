@@ -3,7 +3,9 @@ package org.lakehouse.jinja.java;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.hubspot.jinjava.Jinjava;
 import com.hubspot.jinjava.lib.fn.ELFunctionDefinition;
-import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
+import org.lakehouse.client.api.constant.SystemVarKeys;
+import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
+import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.jinja.java.functions.JinjavaDateTimeFunctions;
 import org.lakehouse.jinja.java.functions.TaskProcessConfigExtractor;
@@ -12,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 public class JinJavaFactory {
-    public static Jinjava getJinjava() {
+    public static JinJavaUtils getJinJavaUtils() {
         Jinjava jinjava = new Jinjava();
         jinjava.getGlobalContext().registerFunction(
                 new ELFunctionDefinition(
@@ -78,11 +80,6 @@ public class JinJavaFactory {
                         "extractColumnsCS",
                         Map.class));
 
-        return jinjava;
-    }
-    public static Jinjava getJinjava(TaskProcessorConfigDTO taskProcessorConfigDTO) throws JsonProcessingException {
-        Jinjava jinjava = getJinjava();
-        jinjava.getGlobalContext().putAll(ObjectMapping.asMap(taskProcessorConfigDTO));
-        return jinjava;
+        return new JinJavaUtils(jinjava);
     }
 }

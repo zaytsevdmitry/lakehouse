@@ -8,6 +8,4 @@ import org.lakehouse.taskexecutor.api.datasource.execute.ExecuteUtils;
 import java.util.Map;
 
 public interface SparkExecuteUtils extends ExecuteUtils {
-    Dataset<Row> executeQuery(String sql)throws ExecuteException;
-    Dataset<Row> executeQuery(String sql, Map<String,Object> localContext)throws ExecuteException ;
-}
+ }

@@ -5,6 +5,11 @@ import org.lakehouse.client.api.dto.configs.*;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
+import org.lakehouse.client.api.dto.configs.dq.QualityMetricsConfDTO;
+import org.lakehouse.client.api.dto.configs.schedule.ScenarioActTemplateDTO;
+import org.lakehouse.client.api.dto.configs.schedule.ScheduleDTO;
+import org.lakehouse.client.api.dto.configs.schedule.ScheduleEffectiveDTO;
+import org.lakehouse.client.api.dto.configs.schedule.TaskExecutionServiceGroupDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,21 +24,24 @@ import java.util.stream.Collectors;
 
 public class FileLoader {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final String rootPath = "../lakehouse-config-svc/demo";
-    public final String modelsDir = rootPath.concat("/dataset-sql-model");
+    public final String modelsDir = rootPath.concat("/sql-scripts");
     public final String dataSourcesDir = rootPath.concat("/datasources");
     public final String driversDir = rootPath.concat("/drivers");
 
 
     private List<String> getFilenames(String directoryName) {
-        return Arrays
-                .stream(Objects.requireNonNull(new File(directoryName).listFiles()))
-                .map(File::getName)
-                .map(fullName -> fullName.split("\\.")[0])
-                .toList();
-
+        List<String> result = new ArrayList<>();
+        for (File file: Objects.requireNonNull(new File(directoryName).listFiles())){
+            if (file.isFile()){
+                result.add(file.getName().split("\\.")[0]);
+            }else{
+                List<String> dirfiles = getFilenames(directoryName + "/" +file.getName());
+                dirfiles.forEach(s -> result.add(file.getName().split("\\.")[0] + "/" + s ));
+            }
+        }
+        return result;
     }
 
     public NameSpaceDTO loadNameSpaceDTO() throws IOException {
@@ -146,9 +154,10 @@ public class FileLoader {
 
     public Map<String, String> loadAllModelScripts() throws IOException {
         Map<String, String> result = new HashMap<>();
+
         for (String name : getFilenames(modelsDir)
         ) {
-            result.put(name.concat(".sql"), loadModelScript(name));
+            result.put(name.concat(".sql").replaceAll("/","."), loadModelScript(name));
         }
         return result;
     }

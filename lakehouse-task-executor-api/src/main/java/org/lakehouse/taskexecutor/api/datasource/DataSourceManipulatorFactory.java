@@ -1,35 +1,39 @@
 package org.lakehouse.taskexecutor.api.datasource;
 
-import com.hubspot.jinjava.Jinjava;
 import org.lakehouse.client.api.dto.common.SQLTemplateDTO;
+import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
+import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
-import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
 import org.lakehouse.client.api.factory.SQLTemplateFactory;
+import org.lakehouse.jinja.java.JinJavaUtils;
 import org.lakehouse.taskexecutor.api.datasource.execute.ExecuteUtils;
 import org.lakehouse.taskexecutor.api.datasource.execute.jdbc.JdbcExecuteUtils;
 
 import java.io.IOException;
 
 public class DataSourceManipulatorFactory {
-    public static DataSourceManipulator buildDataSourceManipulator(TaskProcessorConfigDTO taskProcessorConfigDTO, Jinjava jinjava) throws IOException {
+    public static DataSourceManipulator buildDataSourceManipulator(
+            DriverDTO driverDTO,
+            DataSourceDTO dataSourceDTO,
+            DataSetDTO dataSetDTO,
+            JinJavaUtils jinJavaUtils) throws IOException {
         //still one way
-        DriverDTO driverDTO = taskProcessorConfigDTO.getDrivers().get(taskProcessorConfigDTO.getTargetDataSourceDTO().getDriverKeyName());
         ExecuteUtils jdbcUtils = new JdbcExecuteUtils(
-                jinjava,
-                taskProcessorConfigDTO.getTargetDataSourceDTO(),
+                jinJavaUtils,
+                dataSourceDTO,
                 driverDTO);
 
         SQLTemplateDTO sqlTemplateDTO = SQLTemplateFactory.mergeSqlTemplate(
                 driverDTO,
-                taskProcessorConfigDTO.getTargetDataSourceDTO(),
-                taskProcessorConfigDTO.getTargetDataSet());
+                dataSourceDTO,
+                dataSetDTO);
 
         DataSourceManipulatorParameter parameter = new DataSourceManipulatorParameterImpl(
                 jdbcUtils,
                 sqlTemplateDTO,
-                taskProcessorConfigDTO.getTargetDataSet());
+                dataSetDTO);
 
-        return new JdbcDataSourceManipulator(parameter);
+        return new  JdbcDataSourceManipulator(parameter);
     }
 
 }

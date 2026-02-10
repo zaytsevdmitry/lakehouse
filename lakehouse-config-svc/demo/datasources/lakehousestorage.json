@@ -3,8 +3,8 @@
   "driverKeyName":"spark_iceberg",
   "service":
     {
-      "host": "",
-      "port": "",
+      "host": "localhost",
+      "port": "6066",
       "urn": "",
       "properties": {
         "spark.sql.extensions": "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",

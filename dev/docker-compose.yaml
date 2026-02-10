@@ -21,7 +21,6 @@ services:
   db-dev:
     image: postgres
     container_name: db-dev
-    restart: always
     # set shared memory limit when using docker-compose
     shm_size: 128mb
     # or set shared memory limit when deploy via swarm stack
@@ -74,7 +73,7 @@ services:
     restart: on-failure
     entrypoint: >
       /bin/sh -c "
-      sleep 5;
+      sleep 15;
       /usr/bin/mc alias set lakehosusestorage http://192.1.193.30:9000 spark_user spark_pwd;
       /usr/bin/mc mb --ignore-existing lakehosusestorage/data;
       /usr/bin/mc mb --ignore-existing lakehosusestorage/sparklogs;
@@ -160,7 +159,6 @@ services:
   spark-history:
     image: lakehouse-spark:0.3.0
     container_name: spark-history
-    restart: always
     environment:
       AWS_ACCESS_KEY_ID: spark_user
       AWS_SECRET_ACCESS_KEY: spark_pwd

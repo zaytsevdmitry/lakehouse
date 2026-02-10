@@ -1,5 +1,6 @@
 package org.lakehouse.client.api.dto.scheduler.lock;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 
 public class ScheduledTaskLockDTO {
@@ -44,6 +45,7 @@ public class ScheduledTaskLockDTO {
     public void setServiceId(String serviceId) {
         this.serviceId = serviceId;
     }
+
 
 
 }

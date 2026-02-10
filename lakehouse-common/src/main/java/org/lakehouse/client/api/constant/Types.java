@@ -97,4 +97,19 @@ public class Types {
         }
     }
 
+    public enum DQThresholdViolationLevel {
+        error("error"),
+        info("info");
+        public final String label;
+
+        DQThresholdViolationLevel(String label) {
+            this.label = label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
+
 }

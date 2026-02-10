@@ -5,10 +5,11 @@ import org.apache.spark.sql.SparkSession;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
-import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
+import org.lakehouse.client.api.dto.task.SourceConfDTO;
+import org.lakehouse.jinja.java.JinJavaUtils;
+import org.lakehouse.taskexecutor.api.datasource.DataSourceManipulator;
 import org.lakehouse.taskexecutor.executionmodule.body.CatalogActivator;
 import org.lakehouse.taskexecutor.executionmodule.body.datasourcemanipulator.SparkDataSourceManipulatorFactory;
-import org.lakehouse.taskexecutor.executionmodule.body.datasourcemanipulator.SparkSQLDataSourceManipulator;
 import org.lakehouse.taskexecutor.executionmodule.body.datasourcemanipulator.UnsuportedDataSourceException;
 import org.testcontainers.containers.PostgreSQLContainer;
 
@@ -18,17 +19,17 @@ import java.util.List;
 import java.util.Map;
 
 public class DataManipulators {
-    public static SparkSQLDataSourceManipulator getIcebergDataSourceManipulator(
-            Jinjava jinjava,
+    public static DataSourceManipulator getIcebergDataSourceManipulator(
+            JinJavaUtils jinJavaUtils,
             SparkSession sparkSession,
             String dataSetKeyName,
-            TaskProcessorConfigDTO taskProcessorConfigDTO) throws IOException,  UnsuportedDataSourceException {
+            SourceConfDTO sourceConfDTO) throws IOException,  UnsuportedDataSourceException {
 
         SparkDataSourceManipulatorFactory manipulatorFactory =
-                new SparkDataSourceManipulatorFactory(sparkSession, jinjava);
-        DataSetDTO dataSetDTO = taskProcessorConfigDTO.getDataSets().get(dataSetKeyName);
-        DataSourceDTO dataSourceDTO = taskProcessorConfigDTO.getDataSources().get(dataSetDTO.getDataSourceKeyName());
-        DriverDTO driverDTO = taskProcessorConfigDTO.getDrivers().get(dataSourceDTO.getDriverKeyName());
+                new SparkDataSourceManipulatorFactory(sparkSession, jinJavaUtils);
+        DataSetDTO dataSetDTO = sourceConfDTO.getDataSets().get(dataSetKeyName);
+        DataSourceDTO dataSourceDTO = sourceConfDTO.getDataSources().get(dataSetDTO.getDataSourceKeyName());
+        DriverDTO driverDTO = sourceConfDTO.getDrivers().get(dataSourceDTO.getDriverKeyName());
 
         new CatalogActivator(
                 sparkSession)
@@ -37,18 +38,18 @@ public class DataManipulators {
 
     }
 
-        public static SparkSQLDataSourceManipulator getSparkSQLDataSourceManipulatorPg(
-            Jinjava jinjava,
+        public static DataSourceManipulator getSparkSQLDataSourceManipulatorPg(
+            JinJavaUtils jinJavaUtils,
             PostgreSQLContainer<?> postgres,
             SparkSession sparkSession,
             String dataSetKeyName,
-            TaskProcessorConfigDTO taskProcessorConfigDTO) throws IOException, UnsuportedDataSourceException {
+            SourceConfDTO sourceConfDTO) throws IOException, UnsuportedDataSourceException {
         SparkDataSourceManipulatorFactory manipulatorFactory =
-                new SparkDataSourceManipulatorFactory(sparkSession, jinjava);
+                new SparkDataSourceManipulatorFactory(sparkSession, jinJavaUtils);
 
-        DataSetDTO dataSetDTO = taskProcessorConfigDTO.getDataSets().get(dataSetKeyName);
-        DataSourceDTO dataSourceDTO = taskProcessorConfigDTO.getDataSources().get(dataSetDTO.getDataSourceKeyName());
-        DriverDTO driverDTO = taskProcessorConfigDTO.getDrivers().get(dataSourceDTO.getDriverKeyName());
+        DataSetDTO dataSetDTO = sourceConfDTO.getDataSets().get(dataSetKeyName);
+        DataSourceDTO dataSourceDTO = sourceConfDTO.getDataSources().get(dataSetDTO.getDataSourceKeyName());
+        DriverDTO driverDTO = sourceConfDTO.getDrivers().get(dataSourceDTO.getDriverKeyName());
         // pg dynamic test properties
         Map<String,String> props = new HashMap<>();
         props.putAll(Map.of(

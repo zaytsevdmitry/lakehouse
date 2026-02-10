@@ -56,7 +56,7 @@ public class JdbcDataSourceManipulator implements DataSourceManipulator {
 
 
         } catch (ExecuteException e) {
-            throw new RuntimeException(e);
+            throw new CreateException(e);
         }
     }
 

@@ -6,7 +6,7 @@
   "tableName": "transactions",
   "scripts": [
     {
-      "key": "transaction_processing.sql",
+      "key": "dataset-sql-model.transaction_processing.sql",
       "order": 1
     }
   ],

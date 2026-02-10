@@ -1,12 +1,11 @@
 package org.lakehouse.taskexecutor.executionmodule.body.datasourcemanipulator;
 
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.lakehouse.client.api.constant.SystemVarKeys;
 import org.lakehouse.client.api.dto.common.SQLTemplateDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetConstraintDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
+import org.lakehouse.taskexecutor.api.datasource.DataSourceManipulator;
 import org.lakehouse.taskexecutor.api.datasource.exception.*;
 import org.lakehouse.taskexecutor.executionmodule.body.datasourcemanipulator.execute.SparkExecuteUtils;
 import org.lakehouse.taskexecutor.executionmodule.body.datasourcemanipulator.parameter.SparkSQLDataSourceManipulatorParameter;
@@ -17,19 +16,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public abstract class SparkSQLDataSourceManipulatorAbstract
-
-        implements SparkSQLDataSourceManipulator {
+public abstract class SparkSQLDataSourceManipulatorAbstract implements DataSourceManipulator {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final SparkSQLDataSourceManipulatorParameter sparkSQLDataSourceManipulatorParameter;
 
 
 
-    private final Map<String,Object> localContext = new HashMap<>();
+    private final Map<String,Object> classContext = new HashMap<>();
     public SparkSQLDataSourceManipulatorAbstract(SparkSQLDataSourceManipulatorParameter sparkSQLDataSourceManipulatorParameter) {
         this.sparkSQLDataSourceManipulatorParameter = sparkSQLDataSourceManipulatorParameter;
-        localContext.put(SystemVarKeys.CURRENT_DATASET_KEY_NAME, dataSetDTO().getKeyName());
+        classContext.put(SystemVarKeys.CURRENT_DATASET_KEY_NAME, dataSetDTO().getKeyName());
 
     }
 
@@ -47,10 +44,10 @@ public abstract class SparkSQLDataSourceManipulatorAbstract
             try {
 
                 if (!isDBSchemaExists) {
-                    executeUtils().execute(sqlTemplateDTO().getDatabaseSchemaDDLCreate(), localContext);
+                    executeUtils().execute(sqlTemplateDTO().getDatabaseSchemaDDLCreate(), classContext);
                 }
 
-                executeUtils().execute(sqlTemplateDTO().getTableDDLCreate(), localContext);
+                executeUtils().execute(sqlTemplateDTO().getTableDDLCreate(), classContext);
             }catch (ExecuteException e){
                 throw new CreateException(e);
             }
@@ -65,25 +62,8 @@ public abstract class SparkSQLDataSourceManipulatorAbstract
                 dataSetDTO().getDatabaseSchemaName();
     }
 
-    @Override
-    public Dataset<Row> read(Map<String,String> options) throws ReadException {
-
-        try {
-            return sparkSQLDataSourceManipulatorParameter
-                    .sparkSession()
-                    .read()
-                    .load();
-        } catch (Exception e) {
-            String msg = "Error when read dataSet "
-                    + e.getMessage();
-            throw new ReadException(msg,e);
-        }
-    }
 
 
-    public Map<String, Object> getLocalContext() {
-        return localContext;
-    }
 
     public SparkSession sparkSession() {
         return sparkSQLDataSourceManipulatorParameter.sparkSession();
@@ -91,7 +71,7 @@ public abstract class SparkSQLDataSourceManipulatorAbstract
     @Override
     public void drop() throws DropException {
         try {
-            executeUtils().execute(sqlTemplateDTO().getTableDDLDrop(), localContext);
+            executeUtils().execute(sqlTemplateDTO().getTableDDLDrop(), classContext);
         } catch (ExecuteException e) {
             throw new DropException(e);
         }
@@ -106,7 +86,7 @@ public abstract class SparkSQLDataSourceManipulatorAbstract
     @Override
     public void compact() throws CompactException {
         try {
-            executeUtils().execute(sqlTemplateDTO().getTableDDLCompact(),localContext);
+            executeUtils().execute(sqlTemplateDTO().getTableDDLCompact());
         } catch (ExecuteException e) {
             throw new CompactException(e);
         }
@@ -114,7 +94,7 @@ public abstract class SparkSQLDataSourceManipulatorAbstract
 
     private void partitionOperation(String template,String partition) throws ExecuteException {
         Map<String, Object> context = new HashMap<>();
-        context.putAll(localContext);
+        context.putAll(classContext);
         context.put(SystemVarKeys.PARTITION_NAME, partition);
         executeUtils().execute(sqlTemplateDTO().getPartitionDDLDrop(), context);
     }
@@ -153,7 +133,7 @@ public abstract class SparkSQLDataSourceManipulatorAbstract
     @Override
     public void truncate() throws TruncateException {
         try {
-            executeUtils().executeQuery(sqlTemplateDTO().getTableDDLTruncate());
+            executeUtils().execute(sqlTemplateDTO().getTableDDLTruncate());
         } catch (ExecuteException e) {
             throw new TruncateException(e);
         }

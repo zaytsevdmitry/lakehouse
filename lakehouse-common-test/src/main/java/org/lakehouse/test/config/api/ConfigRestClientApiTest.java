@@ -1,20 +1,30 @@
 package org.lakehouse.test.config.api;
 
 import org.apache.hc.core5.http.HttpStatus;
+import org.lakehouse.client.api.constant.SystemVarKeys;
 import org.lakehouse.client.api.dto.configs.*;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
+import org.lakehouse.client.api.dto.configs.ScriptReferenceDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
+import org.lakehouse.client.api.dto.configs.dq.QualityMetricsConfDTO;
+import org.lakehouse.client.api.dto.configs.schedule.*;
+import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
+import org.lakehouse.jinja.java.JinJavaFactory;
+import org.lakehouse.jinja.java.JinJavaUtils;
+import org.lakehouse.jinja.java.util.SourceConfUtil;
 import org.lakehouse.test.config.configuration.FileLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ConfigRestClientApiTest implements ConfigRestClientApi {
     private final FileLoader fileLoader = new FileLoader();
@@ -25,7 +35,9 @@ public class ConfigRestClientApiTest implements ConfigRestClientApi {
     private final Map<String, DriverDTO> driverDTOMap;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    private final JinJavaUtils jinJavaUtils = JinJavaFactory.getJinJavaUtils();
     public ConfigRestClientApiTest() throws IOException {
+
         scriptMap = fileLoader.loadAllModelScripts();
         ScheduleEffectiveDTO sef = fileLoader.loadScheduleEffectiveDTO();
         sef.getScenarioActs().forEach(scheduleScenarioActEffectiveDTO -> {
@@ -109,8 +121,41 @@ public class ConfigRestClientApiTest implements ConfigRestClientApi {
         return scriptMap.get(key);
     }
 
+    @Override
+    public SourceConfDTO getSourceConfDTO(String dataSetKeyName) {
+        SourceConfDTO sourceConfDTO = new SourceConfDTO();
+        sourceConfDTO.setTargetDataSetKeyName(dataSetKeyName);
+        DataSetDTO dataSetDTO = getDataSetDTO(dataSetKeyName);
+        Map<String,DataSetDTO> datasets = new HashMap<>();
+        datasets.put(dataSetDTO.getKeyName(),dataSetDTO);
+        dataSetDTO.getSources().keySet().stream().map(this::getDataSetDTO).forEach(d -> datasets.put(d.getKeyName(),d));
+        sourceConfDTO.setDataSets(datasets);
 
+        sourceConfDTO.setDataSources(
+        datasets.values().stream().map(DataSetDTO::getDataSourceKeyName).collect(Collectors.toSet())
+                .stream().map(this::getDataSourceDTO)
+                .collect(Collectors.toMap(DataSourceDTO::getKeyName, dataSourceDTO -> dataSourceDTO))
+        );
 
+        sourceConfDTO.setDrivers(
+        sourceConfDTO.getDataSources().values().stream().map(DataSourceDTO::getDriverKeyName).collect(Collectors.toSet())
+                .stream().map(this::getDriverDTO)
+                .collect(Collectors.toMap(DriverDTO::getKeyName,driverDTO -> driverDTO))
+        );
+         new SourceConfUtil(jinJavaUtils).renderProperties(sourceConfDTO);
+        return sourceConfDTO;
+    }
+
+    @Override
+    public String getDataSetModelScript(String dataSetKeyName) {
+        return getDataSetDTO(dataSetKeyName)
+                .getScripts()
+                .stream()
+                .sorted(Comparator.comparingInt(ScriptReferenceDTO::getOrder))
+                .map(ScriptReferenceDTO::getKey)
+                .map(this::getScript)
+                .collect(Collectors.joining(SystemVarKeys.SCRIPT_DELIMITER));
+    }
 
 
     @Override

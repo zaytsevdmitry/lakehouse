@@ -22,7 +22,7 @@ downloadIfNotExists hadoop-${HADOOP_VERSION}.tar.gz \
                     "http"
 
 tar xzvf  hadoop-${HADOOP_VERSION}.tar.gz -C ./opt
-
+rm -rf opt/hadoop-3.3.4/share/doc
 
 downloadIfNotExists hive-standalone-metastore-${METASTORE_VERSION}-bin.tar.gz \
                     https://repo1.maven.org/maven2/org/apache/hive/hive-standalone-metastore/${METASTORE_VERSION} \

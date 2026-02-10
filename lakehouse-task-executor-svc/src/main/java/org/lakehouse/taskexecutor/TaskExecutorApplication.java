@@ -23,8 +23,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
         basePackageClasses = {
                 ConfigRestClientConfiguration.class,
                 SchedulerRestClientConfiguration.class,
-                StateRestClientConfiguration.class,
-                JinJavaConfiguration.class})
+                StateRestClientConfiguration.class})
 public class TaskExecutorApplication {
 
     public static void main(String[] args) {

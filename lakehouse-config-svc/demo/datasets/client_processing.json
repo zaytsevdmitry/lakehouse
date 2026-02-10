@@ -6,7 +6,7 @@
   "tableName": "client",
   "scripts": [
     {
-      "key": "client_processing.sql"
+      "key": "dataset-sql-model.client_processing.sql"
     }
   ],
   "sources": {},

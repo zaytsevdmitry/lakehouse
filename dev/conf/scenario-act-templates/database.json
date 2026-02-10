@@ -1,0 +1,54 @@
+{
+  "name": "database",
+  "description": "Default scenario",
+  "tasks": [
+    {
+      "name": "begin",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "lockedStateTaskProcessor",
+      "importance": "critical",
+      "description": "Made dataset interval status Locked"
+    },
+    {
+      "name": "prepare",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "jdbcTaskProcessor",
+      "taskProcessorBody": "createTableSQLProcessorBody",
+      "importance": "critical",
+      "description": "Create table if not exists",
+      "executionModuleArgs": {
+      }
+    },
+    {
+      "name": "load",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "jdbcTaskProcessor",
+      "taskProcessorBody": "mergeSQLProcessorBody",
+      "importance": "critical",
+      "description": "load data",
+      "executionModuleArgs": {
+      }
+    },
+    {
+      "name": "finally",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "successStateTaskProcessor",
+      "importance": "critical",
+      "description": "Made dataset interval status SUCCESS"
+    }
+  ],
+  "dagEdges": [
+    {
+      "from": "begin",
+      "to": "prepare"
+    },
+    {
+      "from": "prepare",
+      "to": "load"
+    },
+    {
+      "from": "load",
+      "to": "finally"
+    }
+  ]
+}

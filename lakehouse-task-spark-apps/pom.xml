@@ -33,6 +33,12 @@
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-jinjava</artifactId>
             <version>0.3.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>lakehouse</groupId>
@@ -71,20 +77,6 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
-          <!--  <exclusions>
-                 <exclusion>
-                     <groupId>org.apache.logging.log4j</groupId>
-                     <artifactId>log4j-slf4j-impl</artifactId>
-                 </exclusion>
-                <exclusion>
-                     <groupId>org.apache.logging.log4j</groupId>
-                     <artifactId>log4j-slf4j2-impl</artifactId>
-                 </exclusion>
-                 <exclusion>
-                     <groupId>org.apache.logging.log4j</groupId>
-                     <artifactId>log4j-to-slf4j</artifactId>
-                 </exclusion>
-             </exclusions>-->
             <scope>provided</scope>
         </dependency>
 
@@ -125,13 +117,6 @@
             <version>5.11.4</version> <!-- Use the latest stable version -->
             <scope>test</scope>
         </dependency>
-   <!--     <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-dataSourceType</artifactId>
-            <version>5.11.4</version> &lt;!&ndash; Use the latest stable version &ndash;&gt;
-            <scope>test</scope>
-        </dependency>
--->
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -155,6 +140,12 @@
             <scope>test</scope>
             <version>1.20.0</version> <!-- Use the latest version -->
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
     <build>
         <resources>
@@ -163,37 +154,6 @@
             </resource>
         </resources>
         <plugins>
-           <!-- <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <argLine>
-                        &#45;&#45;add-exports=java.base/sun.nio.ch=ALL-UNNAMED
-                        &#45;&#45;add-opens=java.base/java.nio=ALL-UNNAMED
-                    </argLine>
-                </configuration>
-            </plugin>-->
-            <!-- <plugin>
-                 <artifactId>maven-assembly-plugin</artifactId>
-                 <configuration>
-                     <descriptorRefs>
-                         <descriptorRef>jar-with-dependencies</descriptorRef>
-                     </descriptorRefs>
-                     &lt;!&ndash;<archive>
-                         <manifest>
-                             <mainClass>${start-class}</mainClass>
-                         </manifest>
-                     </archive>&ndash;&gt;
-                 </configuration>
-                 <executions>
-                     <execution>
-                         <goals>
-                             <goal>single</goal>
-                         </goals>
-                         <phase>package</phase>
-                     </execution>
-                 </executions>
-             </plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -234,33 +194,12 @@
                                         implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <!--<mainClass>${start-class}</mainClass>-->
                                 </transformer>
                             </transformers>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
-
-            <!--<plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>2.3</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-                            </transformers>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>-->
         </plugins>
-
     </build>
 </project>

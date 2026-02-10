@@ -1,7 +1,7 @@
 package org.lakehouse.scheduler.factory;
 
 import org.lakehouse.client.api.constant.Status;
-import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
+import org.lakehouse.client.api.dto.configs.schedule.ScheduleEffectiveDTO;
 import org.lakehouse.client.api.dto.scheduler.ScheduleInstanceDTO;
 import org.lakehouse.client.api.exception.CronParceErrorException;
 import org.lakehouse.client.api.utils.DateTimeUtils;

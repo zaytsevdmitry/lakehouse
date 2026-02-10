@@ -7,6 +7,9 @@ import org.lakehouse.client.api.dto.configs.dataset.ColumnDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
+import org.lakehouse.client.api.dto.configs.dq.QualityMetricsConfDTO;
+import org.lakehouse.client.api.dto.configs.schedule.*;
+import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.config.entities.KeyValueAbstract;
@@ -22,20 +25,25 @@ import org.lakehouse.config.repository.ScheduleRepository;
 import org.lakehouse.config.repository.ScriptRepository;
 import org.lakehouse.config.repository.dataset.DataSetRepository;
 import org.lakehouse.config.repository.dataset.DataSetSourceRepository;
-import org.lakehouse.config.repository.dataset.ReferenceRepository;
-import org.lakehouse.config.service.QualityMetricsConfService;
+import org.lakehouse.config.repository.dataset.ForeignKeyReferenceRepository;
+import org.lakehouse.config.service.dq.QualityMetricsConfService;
 import org.lakehouse.config.service.ScenarioActTemplateService;
 import org.lakehouse.config.service.ScheduleService;
+import org.lakehouse.config.service.compound.SourcesCompoundService;
 import org.lakehouse.config.specifier.DataSourcePropertyKeyValueEntitySpecifier;
 import org.lakehouse.config.test.configutation.RestManipulator;
-import org.lakehouse.config.validator.ScheduleConfValidator;
+import org.lakehouse.jinja.java.JinJavaUtils;
+import org.lakehouse.jinja.java.configuration.JinJavaConfiguration;
+import org.lakehouse.validator.config.ScheduleConfValidator;
 import org.lakehouse.test.config.configuration.FileLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.kafka.core.KafkaAdmin;
@@ -53,11 +61,19 @@ import java.util.*;
 
 @AutoConfigureMockMvc
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ComponentScan(
+        basePackages = {
+                "org.lakehouse.config", "org.lakehouse.test"
+        },
+        basePackageClasses = {JinJavaConfiguration.class})
 @Import({FileLoader.class, RestManipulator.class})
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @EnableJpaRepositories
 public class TestWithPostgres {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    @Autowired
+    @Qualifier("jinJavaUtils")
+    JinJavaUtils jinJavaUtils;
 
     //services
     @Autowired
@@ -77,7 +93,7 @@ public class TestWithPostgres {
     ScriptRepository scriptRepository;
 
     @Autowired
-    ReferenceRepository referenceRepository;
+    ForeignKeyReferenceRepository foreignKeyReferenceRepository;
     //repository
     @Autowired
     ScenarioActRepository scenarioActRepository;
@@ -90,6 +106,8 @@ public class TestWithPostgres {
     @Autowired
     RestManipulator restManipulator;
 
+    @Autowired
+    SourcesCompoundService sourcesCompoundService;
     @SuppressWarnings("resource")
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine").withDatabaseName("test")
@@ -108,7 +126,7 @@ public class TestWithPostgres {
 
     @BeforeEach
     void beforeEach(){
-        referenceRepository.deleteAll();
+        foreignKeyReferenceRepository.deleteAll();
     }
     @BeforeAll
     static void beforeAll() {
@@ -236,7 +254,7 @@ public class TestWithPostgres {
     @Test()
     @Order(5)
     void ShouldTestScriptConfig() throws Exception {
-        String name = "client_processing";
+        String name = "dataset-sql-model/client_processing";
         String estimate = fileLoader.loadModelScript(name);
         String result =
                 restManipulator.writeAndReadTextTestByKey(
@@ -251,16 +269,20 @@ public class TestWithPostgres {
 
     private DataSetDTO putDataSetDTO(String name) throws Exception {
         String sqlFileExt = "sql";
+        String sqlFilePref = "dataset-sql-model/";
+
         try {
-            loadScript(name, sqlFileExt);
+            loadScript(sqlFilePref + name, sqlFileExt);
         } catch (FileNotFoundException e) {
-            logger.warn("File {}.{} not found", name, sqlFileExt);
+            logger.warn("File {}{}.{} not found", sqlFilePref, name, sqlFileExt);
         }
 
         DataSetDTO dto = fileLoader.loadDataSetDTO(name);
         return ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getKeyName(),
                 ObjectMapping.asJsonString(dto), Endpoint.DATA_SETS, Endpoint.DATA_SETS_NAME), DataSetDTO.class);
     }
+
+
 
     @Test
     @Order(6)
@@ -570,8 +592,8 @@ public class TestWithPostgres {
         loadTaskDTOExpected.setTaskProcessorArgs(loadExpectArgs);
         loadTaskDTOExpected.setName("load");
         loadTaskDTOExpected.setTaskExecutionServiceGroupName("default");
-        loadTaskDTOExpected.setTaskProcessor("org.lakehouse.taskexecutor.processor.SparkLauncherTaskProcessor");
-        loadTaskDTOExpected.setTaskProcessorBody("org.lakehouse.taskexecutor.api.processor.body.sql.MergeSQLProcessorBody");
+        loadTaskDTOExpected.setTaskProcessor("sparkLauncherTaskProcessor");
+        loadTaskDTOExpected.setTaskProcessorBody("mergeSQLProcessorBody");
         loadTaskDTOExpected.setImportance("critical");
         loadTaskDTOExpected.setDescription("override load");
         TaskDTO loadTaskDTO = scheduleService.getEffectiveTaskDTO(initialScheduleDTO.getName(), "transaction_dds", "load");
@@ -588,8 +610,8 @@ public class TestWithPostgres {
         extendTaskDTOExpected.setTaskProcessorArgs(extendTaskDTOExpectedArgs);
         extendTaskDTOExpected.setName("extend");
         extendTaskDTOExpected.setTaskExecutionServiceGroupName("default");
-        extendTaskDTOExpected.setTaskProcessor("org.lakehouse.taskexecutor.processor.SparkLauncherTaskProcessor");
-        extendTaskDTOExpected.setTaskProcessorBody("org.lakehouse.taskexecutor.api.processor.body.sql.MergeSQLProcessorBody");
+        extendTaskDTOExpected.setTaskProcessor("sparkLauncherTaskProcessor");
+        extendTaskDTOExpected.setTaskProcessorBody("mergeSQLProcessorBody");
         extendTaskDTOExpected.setImportance("critical");
         extendTaskDTOExpected.setDescription("Not exists in template");
         TaskDTO extendTaskDTO = scheduleService.getEffectiveTaskDTO(initialScheduleDTO.getName(), "transaction_dds", "extend");
@@ -599,16 +621,13 @@ public class TestWithPostgres {
         // exists only in template
         TaskDTO mergeTaskDTOExpected = new TaskDTO();
         Map<String, String> mergeTaskDTOExpectedArgs = new HashMap<>();
-        mergeTaskDTOExpectedArgs.put("spark.executor.memory", "5g");
-        mergeTaskDTOExpectedArgs.put("spark.driver.memory", "2g");
-        mergeTaskDTOExpectedArgs.put("spark.driver.cores", "3");
-        mergeTaskDTOExpected.setTaskProcessorArgs(mergeTaskDTOExpectedArgs);
-        mergeTaskDTOExpected.setName("merge");
+
+        mergeTaskDTOExpected.setName("check");
         mergeTaskDTOExpected.setTaskExecutionServiceGroupName("default");
-        mergeTaskDTOExpected.setTaskProcessor("org.lakehouse.taskexecutor.processor.datamanipulation.MergeProcessor");
+        mergeTaskDTOExpected.setTaskProcessor("dependencyCheckStateTaskProcessor");
         mergeTaskDTOExpected.setImportance("critical");
-        mergeTaskDTOExpected.setDescription("load from remote datastore");
-        TaskDTO mergeTaskDTO = scheduleService.getEffectiveTaskDTO(initialScheduleDTO.getName(), "transaction_dds", "merge");
+        mergeTaskDTOExpected.setDescription("Dependency check");
+        TaskDTO mergeTaskDTO = scheduleService.getEffectiveTaskDTO(initialScheduleDTO.getName(), "transaction_dds", "check");
         assert (mergeTaskDTO.equals(mergeTaskDTOExpected));
 
         // delete
@@ -661,6 +680,7 @@ public class TestWithPostgres {
         assert (propertiesIUDCase.getToBeSaved().size() == 3);
     }
     @Test
+    @Order(14)
     void testCycleGraph() throws IOException {
         ScenarioActTemplateDTO t = new ScenarioActTemplateDTO();
         DagEdgeDTO e1 = new DagEdgeDTO();
@@ -703,5 +723,136 @@ public class TestWithPostgres {
         }else {
             return false;
         }
+    }
+    public static String generateDotString() {
+        // Use a StringBuilder to construct the DOT string
+        StringBuilder dot = new StringBuilder();
+
+        // Start the directed graph definition
+        dot.append("digraph G {\n");
+
+        // Add graph attributes (optional)
+        dot.append("  node [shape=box];\n"); // Set a default node shape
+
+        // Define nodes and edges
+        dot.append("  A -> B;\n"); // Edge from A to B
+        dot.append("  A -> C;\n"); // Edge from A to C
+        dot.append("  B [label=\"Node B\"];\n"); // Define node B with a custom label
+        dot.append("  C [label=\"Node C\"];\n"); // Define node C with a custom label
+
+        // End the graph definition
+        dot.append("}\n");
+
+        return dot.toString();
+    }
+    @Test
+    @Order(15)
+    public void printGraph2() throws IOException {
+        ScheduleEffectiveDTO dto = fileLoader.loadScheduleEffectiveDTO();
+
+        GraphBuilder.build2(dto);
+    }
+    @Test
+    @Order(16)
+    public void printGraph() throws IOException {
+        ScheduleEffectiveDTO dto = fileLoader.loadScheduleEffectiveDTO();
+        Set<DagEdgeDTO> dagEdgeDTOS = new HashSet<>();
+
+        for (DagEdgeDTO edge:dto.getScenarioActEdges()){
+            DagEdgeDTO dagEdgeDTO = new DagEdgeDTO();
+            dagEdgeDTO.setFrom( edge.getFrom()+".finally");
+            dagEdgeDTO.setTo( edge.getTo() + ".begin");
+            dagEdgeDTOS.add(dagEdgeDTO);
+        }
+
+        for (ScheduleScenarioActEffectiveDTO a : dto.getScenarioActs()){
+            for(DagEdgeDTO edge :a.getDagEdges()){
+                DagEdgeDTO dagEdgeDTO = new DagEdgeDTO();
+                dagEdgeDTO.setFrom(a.getName() + "." + edge.getFrom());
+                dagEdgeDTO.setTo(a.getName() + "." + edge.getTo());
+                dagEdgeDTOS.add(dagEdgeDTO);
+            }
+
+        }
+        GraphBuilder.build(dagEdgeDTOS);
+
+    }
+    @Test
+    @Order(17)
+    public void testRender() throws Exception {
+
+        String name = "client_processing";
+
+        DriverDTO driverDTO = putDriverDTO("postgres");
+        DataSourceDTO dataSourceDTO = putDataSourceDTO("processingdb");
+
+        NameSpaceDTO nameSpaceDTO = putNameSpaceDTO();
+        DataSetDTO dto = putDataSetDTO(name);
+
+        DataSetDTO resultDTO = ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getKeyName(),
+                ObjectMapping.asJsonString(dto), Endpoint.DATA_SETS, Endpoint.DATA_SETS_NAME), DataSetDTO.class);
+
+        SourceConfDTO conf = sourcesCompoundService.getSourceConfDTO(name);
+
+        restManipulator.deleteDTO(dto.getKeyName(), Endpoint.DATA_SETS_NAME);
+        restManipulator.deleteDTO(dataSourceDTO.getKeyName(), Endpoint.DATA_SOURCES_NAME);
+        restManipulator.deleteDTO(nameSpaceDTO.getKeyName(), Endpoint.NAME_SPACES_NAME);
+        restManipulator.deleteDTO(driverDTO.getKeyName(), Endpoint.DRIVERS_NAME);
+
+        String expected = "jdbc:postgresql://localhost:5432/postgresDB";
+        String found = conf
+                .getDataSources()
+                .get("processingdb")
+                .getService()
+                .getProperties()
+                .get("spark.sql.catalog.processingdb.url");
+        assert (found.equals(expected));
+    }
+
+    @Test
+    @Order(18)
+    void shouldLoadDQConfig() throws Exception {
+        //prepare
+        scenarioActRepository.deleteAll();
+        scheduleRepository.deleteAll();
+        dataSetSourceRepository.deleteAll();
+        dataSetRepository.deleteAll();
+
+        NameSpaceDTO nameSpaceDTO = putNameSpaceDTO();
+        // datastores
+        DriverDTO pgDriverDTO = putDriverDTO("postgres");
+        DriverDTO sparkDriverDTO = putDriverDTO("spark_iceberg");
+        DataSourceDTO someelsedbDataSourceDTO = putDataSourceDTO("processingdb");
+        DataSourceDTO mydbDataSourceDTO = putDataSourceDTO("lakehousestorage");
+        // datasets
+        DataSetDTO clientProcessingDTO = putDataSetDTO("client_processing");
+        DataSetDTO transactionProcessingDTO = putDataSetDTO("transaction_processing");
+        DataSetDTO resultTransactionddsDTO = putDataSetDTO("transaction_dds");
+        TaskExecutionServiceGroupDTO defaultTaskExecutionServiceGroupDTO = putTaskExecutionServiceGroupDTO();
+        DataSetDTO resultAggdaily = putDataSetDTO("aggregation_pay_per_client_daily_mart");
+        DataSetDTO resultAggTotal = putDataSetDTO("aggregation_pay_per_client_total_mart");
+        //DQ
+        loadScript("dq/non_zero_count", "sql");
+        loadScript("dq/non_zero_count_th","sql");
+
+        QualityMetricsConfDTO expected = fileLoader.loaQualityMetricsConfDTO("transaction_dds_qm");
+        QualityMetricsConfDTO result = qualityMetricsConfService.save(expected);
+
+        // delete
+        restManipulator.deleteDTO(expected.getKeyName(), Endpoint.QUALITY_METRICS_NAME);
+        restManipulator.deleteDTO(resultAggdaily.getKeyName(), Endpoint.DATA_SETS_NAME);
+        restManipulator.deleteDTO(resultAggTotal.getKeyName(), Endpoint.DATA_SETS_NAME);
+        restManipulator.deleteDTO(resultTransactionddsDTO.getKeyName(), Endpoint.DATA_SETS_NAME);
+        restManipulator.deleteDTO(transactionProcessingDTO.getKeyName(), Endpoint.DATA_SETS_NAME);
+        restManipulator.deleteDTO(clientProcessingDTO.getKeyName(), Endpoint.DATA_SETS_NAME);
+        restManipulator.deleteDTO(defaultTaskExecutionServiceGroupDTO.getName(), Endpoint.TASK_EXECUTION_SERVICE_GROUPS_NAME);
+        restManipulator.deleteDTO(mydbDataSourceDTO.getKeyName(), Endpoint.DATA_SOURCES_NAME);
+        restManipulator.deleteDTO(someelsedbDataSourceDTO.getKeyName(), Endpoint.DATA_SOURCES_NAME);
+        restManipulator.deleteDTO(nameSpaceDTO.getKeyName(), Endpoint.NAME_SPACES_NAME);
+        restManipulator.deleteDTO(pgDriverDTO.getKeyName(), Endpoint.DRIVERS_NAME);
+        restManipulator.deleteDTO(sparkDriverDTO.getKeyName(), Endpoint.DRIVERS_NAME);
+        System.out.println("expected ->> \n" + ObjectMapping.asJsonString(expected));
+        System.out.println("result ->> \n" +ObjectMapping.asJsonString(result));
+        assert(expected.equals(result));
     }
 }

@@ -1,17 +1,10 @@
 package org.lakehouse.taskexecutor;
 
-import com.hubspot.jinjava.Jinjava;
 import org.lakehouse.client.api.constant.Status;
-import org.lakehouse.client.api.dto.configs.TaskDTO;
+import org.lakehouse.client.api.dto.configs.schedule.TaskDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
-import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
-import org.lakehouse.client.rest.config.ConfigRestClientApi;
-import org.lakehouse.jinja.java.JinJavaFactory;
-import org.lakehouse.taskexecutor.api.factory.taskconf.TaskConfigBuildException;
-import org.lakehouse.taskexecutor.api.factory.taskconf.TaskProcessorConfigFactory;
-import org.lakehouse.test.config.api.ConfigRestClientApiTest;
 import org.lakehouse.test.config.configuration.FileLoader;
 
 import java.io.IOException;
@@ -76,17 +69,14 @@ public class TaskConfigTestFactory {
                 }).toList());
         return result;
     }*/
-    public TaskProcessorConfigDTO loadTaskProcessorConfigDTO(String dataSetKeyName, String taskName) throws IOException, TaskConfigBuildException {
-        ConfigRestClientApi configRestClientApi = new ConfigRestClientApiTest();
-        Jinjava jinjava = new JinJavaFactory().getJinjava();
-        TaskProcessorConfigFactory taskProcessorConfigFactory = new TaskProcessorConfigFactory(configRestClientApi, jinjava);
+    public ScheduledTaskLockDTO loadScheduledTaskLockDTO(String dataSetKeyName, String taskName) throws IOException {
 
         ScheduledTaskLockDTO scheduledTaskLockDTO = new ScheduledTaskLockDTO();
         scheduledTaskLockDTO.setLockId(-1L);
         scheduledTaskLockDTO.setServiceId("test");
         scheduledTaskLockDTO.setLastHeartBeatDateTime(DateTimeUtils.nowStr());
         scheduledTaskLockDTO.setScheduledTaskEffectiveDTO(findScheduledTaskDTO(dataSetKeyName,taskName));
-        return taskProcessorConfigFactory.buildTaskProcessorConfig(scheduledTaskLockDTO);
+        return scheduledTaskLockDTO;
     }
     public static String targetDateTime = "2025-12-20T00:00:00Z";
     public static String intervalStart = targetDateTime;

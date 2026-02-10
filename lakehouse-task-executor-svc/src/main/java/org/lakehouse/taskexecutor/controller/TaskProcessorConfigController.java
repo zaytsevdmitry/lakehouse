@@ -1,7 +1,6 @@
 package org.lakehouse.taskexecutor.controller;
 
 import org.lakehouse.client.api.constant.Endpoint;
-import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
 import org.lakehouse.taskexecutor.service.ExecuteService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -14,8 +13,8 @@ public class TaskProcessorConfigController {
         this.executeService = executeService;
     }
 
-    @GetMapping(Endpoint.TASK_EXECUTOR_PROCESSOR_GET_BY_LOCK_ID)
+/*    @GetMapping(Endpoint.TASK_EXECUTOR_PROCESSOR_GET_BY_LOCK_ID)
     public TaskProcessorConfigDTO getTaskProcessorConfigDTO(Long lockId) {
         return executeService.getTaskProcessorConfigDTO(lockId);
-    }
+    }*/
 }

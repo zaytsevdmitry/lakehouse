@@ -1,9 +1,7 @@
 package org.lakehouse.config.entities.dq;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.ForeignKey;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
+import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.config.entities.KeyEntityAbstract;
 import org.lakehouse.config.entities.dataset.DataSet;
 
@@ -18,6 +16,16 @@ public class QualityMetricsConf extends KeyEntityAbstract {
     private DataSet dataSet;
 
 
+    @Column(nullable = false, unique = true)
+    private String keyName;
+    @Column(nullable = true)
+    private String description;
+
+    @Column(nullable = false)
+    private Types.DQThresholdViolationLevel dqThresholdViolationLevel;
+
+
+    @Column(nullable = false)
     private boolean enabled;
 
     public QualityMetricsConf() {
@@ -40,16 +48,43 @@ public class QualityMetricsConf extends KeyEntityAbstract {
     }
 
     @Override
+    public String getKeyName() {
+        return keyName;
+    }
+
+    @Override
+    public void setKeyName(String keyName) {
+        this.keyName = keyName;
+    }
+
+    @Override
+    public String getDescription() {
+        return description;
+    }
+
+    @Override
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Types.DQThresholdViolationLevel getDqThresholdViolationLevel() {
+        return dqThresholdViolationLevel;
+    }
+
+    public void setDqThresholdViolationLevel(Types.DQThresholdViolationLevel dqThresholdViolationLevel) {
+        this.dqThresholdViolationLevel = dqThresholdViolationLevel;
+    }
+
+    @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
         QualityMetricsConf that = (QualityMetricsConf) o;
-        return enabled == that.enabled
-                && Objects.equals(dataSet, that.dataSet) && super.equals(that);
+        return isEnabled() == that.isEnabled() && Objects.equals(getDataSet(), that.getDataSet()) && Objects.equals(getKeyName(), that.getKeyName()) && Objects.equals(getDescription(), that.getDescription()) && dqThresholdViolationLevel == that.dqThresholdViolationLevel;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), dataSet, enabled);
+        return Objects.hash(super.hashCode(), getDataSet(), getKeyName(), getDescription(), dqThresholdViolationLevel, isEnabled());
     }
 }

@@ -6,7 +6,7 @@
   "tableName": "transaction_dds",
   "scripts": [
     {
-      "key": "transaction_dds.sql"
+      "key": "dataset-sql-model.transaction_dds.sql"
     }
   ],
   "sources": {

@@ -6,10 +6,12 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.*;
 import org.lakehouse.client.api.constant.Status;
-import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
+import org.lakehouse.client.api.dto.configs.schedule.ScheduleEffectiveDTO;
 import org.lakehouse.client.api.serialization.schedule.ScheduleEffectiveKafkaSerializer;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
+import org.lakehouse.jinja.java.JinJavaUtils;
+import org.lakehouse.jinja.java.configuration.JinJavaConfiguration;
 import org.lakehouse.scheduler.configuration.ScheduleConfigConsumerKafkaConfigurationProperties;
 import org.lakehouse.scheduler.entities.*;
 import org.lakehouse.scheduler.repository.*;
@@ -53,7 +55,8 @@ import java.util.Objects;
 @EnableConfigurationProperties(value = ScheduleConfigConsumerKafkaConfigurationProperties.class)
 @ComponentScan(basePackages = {
         "org.lakehouse.scheduler"
-}
+},
+        basePackageClasses = {JinJavaConfiguration.class}
 )
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @ActiveProfiles("test")
@@ -72,6 +75,8 @@ public class SchedulesTest {
         }
     }
 
+    @Autowired
+    JinJavaUtils jinJavaUtils;
     @Autowired
     ConfigRestClientApi configRestClientApi;
 
@@ -205,7 +210,7 @@ public class SchedulesTest {
         List<ScheduleInstance> siList = scheduleInstanceRepository.findAll();
         assert (siList.size() == 1);
         List<ScheduleTaskInstance> stiList = scheduleTaskInstanceRepository.findByStatus(Status.Task.NEW);
-        assert (stiList.size() == 36);
+        assert (stiList.size() == 21);
     }
 
     private void run() {

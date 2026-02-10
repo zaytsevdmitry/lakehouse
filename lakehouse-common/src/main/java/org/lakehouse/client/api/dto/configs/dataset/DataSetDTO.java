@@ -1,6 +1,7 @@
 package org.lakehouse.client.api.dto.configs.dataset;
 
 import org.lakehouse.client.api.dto.common.SQLTemplateDTO;
+import org.lakehouse.client.api.dto.configs.ScriptReferenceDTO;
 
 import java.io.Serializable;
 import java.util.*;
@@ -25,7 +26,7 @@ public class DataSetDTO implements Serializable {
     private Map<String,DataSetSourceDTO> sources = new HashMap<>();
     private List<ColumnDTO> columnSchema = new ArrayList<>();
     private Map<String, String> properties = new HashMap<>();
-    private List<DataSetScriptDTO> scripts = new ArrayList<>();
+    private List<ScriptReferenceDTO> scripts = new ArrayList<>();
     private String description;
     private Map<String, DataSetConstraintDTO> constraints = new HashMap<>();
     private SQLTemplateDTO sqlTemplate = new SQLTemplateDTO();
@@ -102,11 +103,11 @@ public class DataSetDTO implements Serializable {
         this.description = description;
     }
 
-    public List<DataSetScriptDTO> getScripts() {
+    public List<ScriptReferenceDTO> getScripts() {
         return scripts;
     }
 
-    public void setScripts(List<DataSetScriptDTO> scripts) {
+    public void setScripts(List<ScriptReferenceDTO> scripts) {
         this.scripts = scripts;
     }
 

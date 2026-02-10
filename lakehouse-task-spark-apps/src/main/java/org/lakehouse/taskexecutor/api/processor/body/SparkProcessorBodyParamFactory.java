@@ -1,47 +1,62 @@
 package org.lakehouse.taskexecutor.api.processor.body;
 
-import com.hubspot.jinjava.Jinjava;
-import org.apache.spark.sql.SparkSession;
-import org.lakehouse.client.api.dto.configs.dataset.DataSetScriptDTO;
-import org.lakehouse.client.api.dto.task.TaskProcessorConfigDTO;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
+import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.api.exception.DDLDIalectException;
+import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.exception.TaskFailedException;
-import org.lakehouse.jinja.java.JinJavaFactory;
+import org.lakehouse.client.api.utils.ObjectMapping;
+import org.lakehouse.client.rest.config.ConfigRestClientApi;
+import org.lakehouse.jinja.java.JinJavaUtils;
 import org.lakehouse.taskexecutor.executionmodule.body.CatalogActivator;
 import org.lakehouse.taskexecutor.executionmodule.body.datasourcemanipulator.SparkDataSourceManipulatorFactory;
 import org.lakehouse.taskexecutor.executionmodule.body.datasourcemanipulator.UnsuportedDataSourceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.Comparator;
-import java.util.stream.Collectors;
 
+@Service
 public class SparkProcessorBodyParamFactory {
 
-    private final static Logger logger = LoggerFactory.getLogger(SparkProcessorBodyParamFactory.class);
-    public static BodyParam buildSparkProcessorBodyParameter(
-            SparkSession sparkSession,
-            TaskProcessorConfigDTO taskProcessorConfigDTO,
-            Jinjava jinjava) throws TaskFailedException {
+    private final SparkDataSourceManipulatorFactory sparkDataSourceManipulatorFactory;
+    private final ConfigRestClientApi configRestClientApi;
+    private final CatalogActivator catalogActivator;
+    private final JinJavaUtils jinJavaUtils;
+    private final  Logger logger = LoggerFactory.getLogger(SparkProcessorBodyParamFactory.class);
+
+    public SparkProcessorBodyParamFactory(
+            SparkDataSourceManipulatorFactory sparkDataSourceManipulatorFactory,
+            ConfigRestClientApi configRestClientApi, CatalogActivator catalogActivator, JinJavaUtils jinJavaUtils) {
+        this.sparkDataSourceManipulatorFactory = sparkDataSourceManipulatorFactory;
+        this.configRestClientApi = configRestClientApi;
+        this.catalogActivator = catalogActivator;
+        this.jinJavaUtils = jinJavaUtils;
+    }
+
+
+    public  BodyParam buildSparkProcessorBodyParameter(ScheduledTaskLockDTO scheduledTaskLockDTO) throws TaskFailedException {
+
+        SourceConfDTO sourceConfDTO = configRestClientApi.getSourceConfDTO(scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getDataSetKeyName());
+
+        catalogActivator.activate(
+                sourceConfDTO.getDataSources().values().stream().toList()
+        );
 
 
         BodyParam bodyParam = null;
         try {
-            SparkDataSourceManipulatorFactory sparkDataSourceManipulatorFactory =
-                    new SparkDataSourceManipulatorFactory(sparkSession,jinjava);
-            String fullScript = taskProcessorConfigDTO
-                    .getTargetDataSet()
-                    .getScripts().stream()
-                    .sorted(Comparator.comparing(DataSetScriptDTO::getOrder))
-                    .map(dataSetScriptDTO -> taskProcessorConfigDTO.getScripts().get(dataSetScriptDTO.getKey()))
-                    .collect(Collectors.joining("\n;"));
+            jinJavaUtils
+                    .injectGlobalContext(ObjectMapping.asMap(sourceConfDTO))
+                    .injectGlobalContext(ObjectMapping.asMap(scheduledTaskLockDTO));
 
-            bodyParam = new SparkBodyParamImpl(
-                    sparkDataSourceManipulatorFactory.buildDataSourceManipulators(taskProcessorConfigDTO),
-                    sparkDataSourceManipulatorFactory.buildTargetDataSourceManipulator(taskProcessorConfigDTO),
-                    taskProcessorConfigDTO.getTaskProcessorArgs(),
-                    fullScript
+            bodyParam = new BodyParamImpl(
+                    sparkDataSourceManipulatorFactory.buildTargetDataSourceManipulator(sourceConfDTO),
+                    sparkDataSourceManipulatorFactory.buildDataSourceManipulators(sourceConfDTO),
+                    scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getTaskProcessorArgs()
+
             );
         }catch (UnsuportedDataSourceException | DDLDIalectException | IOException e){
             throw new TaskFailedException(e);

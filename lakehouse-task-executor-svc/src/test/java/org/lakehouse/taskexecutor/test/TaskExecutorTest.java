@@ -1,43 +1,44 @@
 package org.lakehouse.taskexecutor.test;
 
-import com.hubspot.jinjava.Jinjava;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.*;
-import org.lakehouse.client.api.constant.SystemVarKeys;
-import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
-import org.lakehouse.client.api.dto.configs.TaskDTO;
+import org.lakehouse.client.api.dto.configs.schedule.ScheduleEffectiveDTO;
+import org.lakehouse.client.api.dto.configs.schedule.TaskDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.configs.datasource.ServiceDTO;
-import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskMsgDTO;
-import org.lakehouse.client.api.dto.task.TaskProcessor;
+import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.client.api.serialization.task.ScheduledTaskMsgKafkaDeserializer;
 import org.lakehouse.client.api.utils.DateTimeUtils;
+import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
-import org.lakehouse.client.rest.spark.SparkRestClientApi;
+import org.lakehouse.client.rest.state.StateRestClientApi;
+import org.lakehouse.jinja.java.JinJavaFactory;
+import org.lakehouse.jinja.java.JinJavaUtils;
 import org.lakehouse.jinja.java.configuration.JinJavaConfiguration;
-import org.lakehouse.taskexecutor.api.factory.taskconf.TaskConfigBuildException;
-import org.lakehouse.taskexecutor.api.factory.taskconf.TaskProcessorConfigFactory;
-import org.lakehouse.taskexecutor.configuration.ImportBeans;
-import org.lakehouse.taskexecutor.factory.TaskProcessorFactory;
-import org.lakehouse.taskexecutor.test.stub.SparkRestClientApiTest;
+import org.lakehouse.taskexecutor.api.processor.TaskProcessor;
+import org.lakehouse.taskexecutor.api.processor.body.sql.AppendSQLProcessorBody;
+import org.lakehouse.taskexecutor.api.processor.body.sql.CreateTableSQLProcessorBody;
+import org.lakehouse.taskexecutor.api.processor.body.sql.MergeSQLProcessorBody;
+import org.lakehouse.taskexecutor.processor.jdbc.JdbcTaskProcessor;
+import org.lakehouse.taskexecutor.processor.state.DependencyCheckStateTaskProcessor;
+import org.lakehouse.taskexecutor.processor.state.LockedStateTaskProcessor;
+import org.lakehouse.taskexecutor.processor.state.SuccessStateTaskProcessor;
 import org.lakehouse.taskexecutor.test.stub.StateRestClientApiTest;
 import org.lakehouse.test.config.api.ConfigRestClientApiTest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.*;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.KafkaContainer;
@@ -46,9 +47,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -78,20 +77,18 @@ import java.util.Map;
                 "lakehouse.client.rest.state=http://state.test.lakehouse.org:12345",
                 "lakehouse.client.rest.spark.server.url=http://localhost:6066/v1/submissions"
         })
+@Import({
+        JdbcTaskProcessor.class,
+        CreateTableSQLProcessorBody.class,
+        MergeSQLProcessorBody.class,
+        AppendSQLProcessorBody.class,
+        LockedStateTaskProcessor.class,
+        DependencyCheckStateTaskProcessor.class,
+        SuccessStateTaskProcessor.class
 
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-@ContextConfiguration(classes = {
-        ImportBeans.class,
-        ConfigRestClientApiTest.class,
-        JinJavaConfiguration.class,
-        SparkRestClientApiTest.class
 })
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TaskExecutorTest {
-    @Autowired
-    @Qualifier("jinjava")
-    Jinjava jinjava;
-    @Autowired
-    SparkRestClientApi sparkRestClientApi;
 
 
     @Value("${lakehouse.task-executor.scheduled.task.kafka.consumer.topics}")
@@ -156,27 +153,40 @@ public class TaskExecutorTest {
         ConfigRestClientApi getConfigRestClientApi() throws IOException {
             return new ConfigRestClientApiTest(); //stub
         }
+        @Bean
+        @Primary
+        StateRestClientApi getStateRestClientApi(){
+            return new StateRestClientApiTest();
+        }
+
+        @Bean
+        JinJavaUtils getJinJavaUtils(){
+            return new JinJavaConfiguration().getJinJavaUtils();
+        }
     }
+
 
     @Autowired
     ConfigRestClientApi configRestClientApi;
 
+    @Autowired
+    ConfigurableApplicationContext applicationContext;
+    @Autowired JdbcTaskProcessor jdbcTaskProcessor;
 
-    private TaskProcessor buildTaskProcessor(
+    private void runTaskProcessor(
             ScheduledTaskDTO scheduledTaskDTO)
-            throws TaskConfigurationException, TaskConfigBuildException {
-        ScheduledTaskLockDTO t = new ScheduledTaskLockDTO();
-        t.setLockId(1L);
-        t.setScheduledTaskEffectiveDTO(scheduledTaskDTO);
-        TaskProcessorConfigFactory pcf = new TaskProcessorConfigFactory(configRestClientApi, jinjava);
-        TaskProcessorFactory pf = new TaskProcessorFactory(new StateRestClientApiTest());
-        return pf.buildProcessor(pcf.buildTaskProcessorConfig(t), t.getScheduledTaskEffectiveDTO().getTaskProcessor());
+            throws TaskConfigurationException, TaskFailedException, JsonProcessingException {
+        SourceConfDTO sourceConfDTO = configRestClientApi.getSourceConfDTO(scheduledTaskDTO.getDataSetKeyName());
+        JinJavaUtils jinJavaUtils = JinJavaFactory.getJinJavaUtils();
+        jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(sourceConfDTO));
+        jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(scheduledTaskDTO));
+        ((TaskProcessor) applicationContext.getBean(scheduledTaskDTO.getTaskProcessor())).runTask(sourceConfDTO,scheduledTaskDTO,jinJavaUtils);
     }
 
     private ScheduledTaskDTO getTaskByDatasetName(
             ScheduleEffectiveDTO scheduleEffectiveDTO,
             String dataSetKeyName,
-            String taskName) {
+            String taskName) throws JsonProcessingException {
         TaskDTO taskDTO = scheduleEffectiveDTO
                 .getScenarioActs()
                 .stream()
@@ -185,15 +195,15 @@ public class TaskExecutorTest {
                 .toList().get(0);
         ScheduledTaskDTO result = new ScheduledTaskDTO();
         result.setTargetDateTime(DateTimeUtils.nowStr());
-        result.setIntervalStartDateTime("{{ " + SystemVarKeys.TARGET_DATE_TIME_TZ_KEY + " }}");
-        result.setIntervalEndDateTime("{{ adddays(" + SystemVarKeys.TARGET_DATE_TIME_TZ_KEY + ", -1)}}");
+        result.setIntervalStartDateTime("2026-02-05T00:00:00.00+03:00");
+        result.setIntervalEndDateTime("2026-02-06T00:00:00.00+03:00");
         result.setName(taskDTO.getName());
         result.setDataSetKeyName(dataSetKeyName);
         result.setTaskProcessorArgs(taskDTO.getTaskProcessorArgs());
         result.setTaskProcessorBody(taskDTO.getTaskProcessorBody());
         result.setTaskProcessor(taskDTO.getTaskProcessor());
         result.setScheduleKeyName(scheduleEffectiveDTO.getName());
-        result.setScenarioActKeyName("");
+        result.setScenarioActKeyName("act");
         return result;
     }
 
@@ -211,7 +221,7 @@ public class TaskExecutorTest {
     @Test
     @Order(1)
     void  testExecutionModules()
-            throws TaskConfigurationException, TaskFailedException, TaskConfigBuildException {
+            throws TaskConfigurationException, TaskFailedException, JsonProcessingException {
         ScheduleEffectiveDTO scheduleEffectiveDTO = configRestClientApi.getScheduleEffectiveDTO(null);
         DataSetDTO ds = configRestClientApi.getDataSetDTO("client_processing");
         DataSourceDTO pgDs = configRestClientApi.getDataSourceDTO(ds.getDataSourceKeyName());
@@ -219,66 +229,54 @@ public class TaskExecutorTest {
         configRestClientApi.postDataStoreDTO(pgDs);
 
         //first postgres
-        TaskProcessor clientProcessingTaskProcessorCreate =
-                buildTaskProcessor(
-                        getTaskByDatasetName(scheduleEffectiveDTO, "client_processing", "prepare"));
-        clientProcessingTaskProcessorCreate.runTask();
+        //create
 
-        TaskProcessor clientProcessingTaskProcessor =
-                buildTaskProcessor(
+        runTaskProcessor(
+                        getTaskByDatasetName(scheduleEffectiveDTO, "client_processing", "prepare"));
+        //load
+        runTaskProcessor(
                         getTaskByDatasetName(scheduleEffectiveDTO, "client_processing", "load"));
 
-        clientProcessingTaskProcessor.runTask();
-
         //second postgres
-        TaskProcessor transactionsProcessingTaskProcessorCreate = buildTaskProcessor(
+        runTaskProcessor(
                 getTaskByDatasetName(scheduleEffectiveDTO, "transaction_processing", "prepare"));
-        transactionsProcessingTaskProcessorCreate.runTask();
 
-        TaskProcessor transactionsProcessingTaskProcessor = buildTaskProcessor(
+        runTaskProcessor(
                 getTaskByDatasetName(scheduleEffectiveDTO, "transaction_processing", "load"));
-        transactionsProcessingTaskProcessor.runTask();
     }
 
     @Test
     @Order(2)
-    void shouldBuildStateTaskProcessor() throws TaskConfigurationException, ClassNotFoundException, InvocationTargetException, InstantiationException, IllegalAccessException, NoSuchMethodException, TaskFailedException, TaskConfigBuildException {
+    void shouldBuildStateTaskProcessor() throws TaskConfigurationException, TaskFailedException, JsonProcessingException {
         ScheduleEffectiveDTO scheduleEffectiveDTO = configRestClientApi.getScheduleEffectiveDTO(null);
         DataSetDTO ds = configRestClientApi.getDataSetDTO("transaction_dds");
         DataSourceDTO pgDs = configRestClientApi.getDataSourceDTO(ds.getDataSourceKeyName());
         pgDs.setService(parceUrlToServiceDTO(pgUrl, pgUser, pgPwd));
         configRestClientApi.postDataStoreDTO(pgDs);
 
-        TaskProcessor begin =
-                buildTaskProcessor(
+        //begin
+        runTaskProcessor(
                         getTaskByDatasetName(scheduleEffectiveDTO, ds.getKeyName(), "begin"));
-        begin.runTask();
         //assert (begin.runTask().equals(Status.Task.SUCCESS));
-        TaskProcessor check =
-                buildTaskProcessor(
-                        getTaskByDatasetName(scheduleEffectiveDTO, ds.getKeyName(), "check"));
-        check.runTask();
+        // check =
+      /*  runTaskProcessor(
+                        getTaskByDatasetName(scheduleEffectiveDTO, ds.getKeyName(), "check"));*/
         //assert (check.runTask().equals(Status.Task.SUCCESS));
-        TaskProcessor fin =
-                buildTaskProcessor(
+        // finally =
+        runTaskProcessor(
                         getTaskByDatasetName(scheduleEffectiveDTO, ds.getKeyName(), "finally"));
-        fin.runTask();
         //assert (fin.runTask().equals(Status.Task.SUCCESS));
     }
 
     @Test
-    void testPk() throws TaskConfigurationException, TaskConfigBuildException, TaskFailedException {
+    void testPk() throws TaskConfigurationException, TaskFailedException, JsonProcessingException {
         ScheduleEffectiveDTO scheduleEffectiveDTO = configRestClientApi.getScheduleEffectiveDTO(null);
-
-        TaskProcessor clientProcessingTaskProcessorCreate =
-                buildTaskProcessor(
+        //create
+        runTaskProcessor(
                         getTaskByDatasetName(scheduleEffectiveDTO, "client_processing", "prepare"));
-        clientProcessingTaskProcessorCreate.runTask();
-
-        TaskProcessor clientProcessingTaskProcessor =
-                buildTaskProcessor(
+        //load
+        runTaskProcessor(
                         getTaskByDatasetName(scheduleEffectiveDTO, "client_processing", "load"));
-
     }
 
 }

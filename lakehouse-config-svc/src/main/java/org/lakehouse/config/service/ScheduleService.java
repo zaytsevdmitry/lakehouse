@@ -2,6 +2,7 @@ package org.lakehouse.config.service;
 
 import jakarta.transaction.Transactional;
 import org.lakehouse.client.api.dto.configs.*;
+import org.lakehouse.client.api.dto.configs.schedule.*;
 import org.lakehouse.client.api.utils.Coalesce;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.config.entities.Schedule;
@@ -13,9 +14,9 @@ import org.lakehouse.config.exception.TaskEffectiveNotFoundException;
 import org.lakehouse.config.mapper.Mapper;
 import org.lakehouse.config.repository.*;
 import org.lakehouse.config.repository.dataset.DataSetRepository;
-import org.lakehouse.config.validator.ConfDTOValidationException;
-import org.lakehouse.config.validator.ScheduleConfValidator;
-import org.lakehouse.config.validator.ValidationResult;
+import org.lakehouse.validator.exception.DTOValidationException;
+import org.lakehouse.validator.config.ScheduleConfValidator;
+import org.lakehouse.validator.config.ValidationResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -175,7 +176,7 @@ public class ScheduleService {
 
         ValidationResult vr = ScheduleConfValidator.validate(scheduleDTO);
         if (!vr.isValid())
-            throw new ConfDTOValidationException(vr.getDescriptions());
+            throw new DTOValidationException(vr.getDescriptions());
 
         Schedule currentScheduleVersion =
                 scheduleRepository
@@ -428,7 +429,7 @@ public class ScheduleService {
 
         ValidationResult vr = ScheduleConfValidator.validate(scheduleDTO);
         if (!vr.isValid())
-            throw new ConfDTOValidationException(vr.getDescriptions());
+            throw new DTOValidationException(vr.getDescriptions());
         return result;
     }
 }

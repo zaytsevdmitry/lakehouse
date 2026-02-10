@@ -1,6 +1,6 @@
 package org.lakehouse.config.mapper;
 
-import org.lakehouse.client.api.dto.configs.TaskDTO;
+import org.lakehouse.client.api.dto.configs.schedule.TaskDTO;
 import org.lakehouse.config.entities.TaskAbstract;
 import org.springframework.stereotype.Component;
 

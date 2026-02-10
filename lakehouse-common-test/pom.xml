@@ -35,6 +35,12 @@
             <artifactId>httpclient5</artifactId>
             <version>5.6</version> <!-- Use the latest version available -->
         </dependency>
+        <dependency>
+            <groupId>lakehouse</groupId>
+            <artifactId>lakehouse-jinjava</artifactId>
+            <version>0.3.0</version>
+            <scope>compile</scope>
+        </dependency>
 
     </dependencies>
 </project>

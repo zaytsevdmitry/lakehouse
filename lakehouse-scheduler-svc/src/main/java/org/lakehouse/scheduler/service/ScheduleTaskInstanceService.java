@@ -2,7 +2,7 @@ package org.lakehouse.scheduler.service;
 
 import org.apache.kafka.common.KafkaException;
 import org.lakehouse.client.api.constant.Status;
-import org.lakehouse.client.api.dto.configs.TaskDTO;
+import org.lakehouse.client.api.dto.configs.schedule.TaskDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskExecutionHeartBeatDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskInstanceReleaseDTO;

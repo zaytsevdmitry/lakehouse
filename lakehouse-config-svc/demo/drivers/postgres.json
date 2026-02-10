@@ -21,7 +21,7 @@
     "checkConstraintDDL" : "CONSTRAINT {{ constraint.name }} CHECK ({{ constraint.checkExpr }})",
     "columnsCastDML" : null,
     "mergeDML" : "{%set targetDataSet=dataSets[targetDataSetKeyName]%}MERGE INTO  {{ ref(targetDataSetKeyName) }} t\n\tUSING ({{ script }}) q\n\tON ({{ extractMergeOn(targetDataSet,'t','q') }})\n\tWHEN MATCHED THEN\n\t\tUPDATE SET {{ extractMergeUpdate(targetDataSet,'q') }}\n\tWHEN NOT MATCHED THEN\n\t\tINSERT({{ extractColumnsCS(targetDataSet) }})\n\t\tVALUES ({{ extractMergeInsertValues(targetDataSet,'q') }})",
-    "insertDML": "{%set targetDataSet=dataSets[targetDataSetKeyName]%}\nINSERT INTO  {{ ref(targetDataSetKeyName) }} ({{ extractColumnsCS(targetDataSet) }})\nSELECT {{ extractColumnsCS(targetDataSet)}}\nFROM ({{scripts[targetDataSet.scripts[0].key]}})",
+    "insertDML": "{%set targetDataSet=dataSets[targetDataSetKeyName]%}\nINSERT INTO  {{ ref(targetDataSetKeyName) }} ({{ extractColumnsCS(targetDataSet) }})\nSELECT {{ extractColumnsCS(targetDataSet)}}\nFROM ({{ script }})",
     "databaseSchemaDDLCreate" : "{%set targetDataSet=dataSets[targetDataSetKeyName]%}create schema {{ targetDataSet.databaseSchemaName }}",
     "databaseSchemaExistsSQL" : "{%set targetDataSet=dataSets[targetDataSetKeyName]%}select case when exists (select * from pg_catalog.pg_namespace where nspname = '{{ targetDataSet.databaseSchemaName }}') then 1 else 0 end  as result",
     "tableDDLCreate" : "{%set targetDataSet=dataSets[targetDataSetKeyName]%}CREATE TABLE {{ ref(targetDataSetKeyName) }} (\n {{ extractColumnsDDL(targetDataSet.columnSchema) }} \n) {{targetDataSet.partitionStmt}}\n",

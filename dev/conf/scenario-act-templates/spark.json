@@ -1,0 +1,75 @@
+{
+  "name": "spark",
+  "description": "Default scenario",
+  "tasks": [
+    {
+      "name": "check",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "dependencyCheckStateTaskProcessor",
+      "importance": "critical",
+      "description": "Dependency check"
+    },
+    {
+      "name": "begin",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "lockedStateTaskProcessor",
+      "importance": "critical",
+      "description": "Made interval status RUNNING"
+    },
+    {
+      "name": "prepare",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "sparkLauncherTaskProcessor",
+      "taskProcessorBody": "createTableSQLProcessorBody",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "taskProcessorArgs": {
+        "spark.executor.memory": "1g",
+        "spark.driver.memory": "1g",
+        "protocol": "http",
+        "spark.driver.extraClassPath": "/opt/drivers/postgresql-42.7.8.jar:/opt/drivers/iceberg-spark-runtime-3.5_2.12-1.9.2.jar:/opt/drivers/hadoop-aws-3.3.4.jar:/opt/drivers/aws-java-sdk-bundle-1.12.262.jar:/opt/drivers/wildfly-openssl-1.0.7.Final.jar",
+        "spark.executor.extraClassPath": "/opt/drivers/postgresql-42.7.8.jar:/opt/drivers/iceberg-spark-runtime-3.5_2.12-1.9.2.jar:/opt/drivers/hadoop-aws-3.3.4.jar:/opt/drivers/aws-java-sdk-bundle-1.12.262.jar:/opt/drivers/wildfly-openssl-1.0.7.Final.jar"
+      }
+    },
+    {
+      "name": "load",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "sparkLauncherTaskProcessor",
+      "taskProcessorBody": "mergeSQLProcessorBody",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "taskProcessorArgs": {
+        "spark.executor.memory": "1g",
+        "spark.driver.memory": "1g",
+        "protocol": "http",
+        "spark.driver.extraClassPath": "/opt/drivers/postgresql-42.7.8.jar:/opt/drivers/iceberg-spark-runtime-3.5_2.12-1.9.2.jar:/opt/drivers/hadoop-aws-3.3.4.jar:/opt/drivers/aws-java-sdk-bundle-1.12.262.jar:/opt/drivers/wildfly-openssl-1.0.7.Final.jar",
+        "spark.executor.extraClassPath": "/opt/drivers/postgresql-42.7.8.jar:/opt/drivers/iceberg-spark-runtime-3.5_2.12-1.9.2.jar:/opt/drivers/hadoop-aws-3.3.4.jar:/opt/drivers/aws-java-sdk-bundle-1.12.262.jar:/opt/drivers/wildfly-openssl-1.0.7.Final.jar"
+      }
+    },
+    {
+      "name": "finally",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "successStateTaskProcessor",
+      "importance": "critical",
+      "description": "DataSet success"
+    }
+  ],
+  "dagEdges": [
+    {
+      "from": "check",
+      "to": "begin"
+    },
+    {
+      "from": "begin",
+      "to": "prepare"
+    },
+    {
+      "from": "prepare",
+      "to": "load"
+    },
+    {
+      "from": "load",
+      "to": "finally"
+    }
+  ]
+}

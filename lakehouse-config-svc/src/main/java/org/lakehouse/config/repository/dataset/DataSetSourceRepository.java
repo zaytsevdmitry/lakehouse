@@ -8,8 +8,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface DataSetSourceRepository extends JpaRepository<DataSetSource, Long> {
-    //@Query("select p from DataSetSource p where p.dataSet.name = ?1")
+
     List<DataSetSource> findByDataSetKeyName(String dataSetName);
+    List<DataSetSource> findByQualityMetricsConfKeyName(String keyName);
 
 	@Query("select p from DataSetSource p where p.dataSet.keyName = ?1 and p.source.keyName = ?2")
     Optional<DataSetSource> findByDataSetKeyNameAndSource(String dataSetKeyName, String sourceName);

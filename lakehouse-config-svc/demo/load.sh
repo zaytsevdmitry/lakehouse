@@ -25,11 +25,17 @@ do
 done
 
 
-for s in "client_processing" "transaction_processing" "transaction_dds" "aggregation_pay_per_client_daily_mart" "aggregation_pay_per_client_total_mart"
+for s in "dataset-sql-model/client_processing" \
+  "dataset-sql-model/transaction_processing" \
+  "dataset-sql-model/transaction_dds" \
+  "dataset-sql-model/aggregation_pay_per_client_daily_mart" \
+  "dataset-sql-model/aggregation_pay_per_client_total_mart" \
+  "dq/non_zero_count.sql" \
+  "dq/non_zero_count_th.sql" \
 do
    curl -i -X POST 127.0.0.1:8080/v1_0/configs/scripts/"$s.sql" \
      -H "Content-Type: text/plain" \
-     --data-binary "@./dataset-sql-model/$s.sql"
+     --data-binary "@./sql-scripts/$s.sql"
 done
 
 for s in "client_processing" "transaction_processing" "transaction_dds" "aggregation_pay_per_client_daily_mart" "aggregation_pay_per_client_total_mart"

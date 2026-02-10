@@ -21,43 +21,4 @@ public class JdbcSparkSQLDataSourceManipulator extends SparkSQLDataSourceManipul
         super(sparkSQLDataSourceManipulatorParameter);
         
     }
-
-    @Override
-    public Dataset<Row>  read(Map<String,String> options) throws ReadException {
-        Map<String, String> o = new HashMap<>();
-        try {
-            o.putAll(executeUtils().dtoToProps());
-        } catch (TaskConfigurationException e) {
-            throw new ReadException(e);
-        }
-        o.put("dbtable", getTableName());
-        return sparkSession().read().format("jdbc").options(o).load();
-    }
-
-    @Override
-    public void write(
-            Dataset<Row> dataset,
-            Configuration.ModificationRule modificationRule) throws WriteException {
-        try {
-            dataset
-                    .writeTo(getCatTableName())
-                    .append();
-        } catch (Exception e) {
-            throw new WriteException(e);
-        }
-
-    }
-
-
-    public String getTableName(){
-        if (getDbSchemaName().isBlank())
-            return dataSetDTO().getTableName();
-
-        return getDbSchemaName() + "." +
-                dataSetDTO().getTableName();
-    }
-
-    public String getDbSchemaName(){
-        return  dataSetDTO().getDatabaseSchemaName();
-    }
 }

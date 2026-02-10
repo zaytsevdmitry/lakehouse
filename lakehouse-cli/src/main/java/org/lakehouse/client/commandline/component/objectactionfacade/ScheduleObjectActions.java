@@ -1,6 +1,6 @@
 package org.lakehouse.client.commandline.component.objectactionfacade;
 
-import org.lakehouse.client.api.dto.configs.ScheduleDTO;
+import org.lakehouse.client.api.dto.configs.schedule.ScheduleDTO;
 import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.client.commandline.model.CommandResult;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;

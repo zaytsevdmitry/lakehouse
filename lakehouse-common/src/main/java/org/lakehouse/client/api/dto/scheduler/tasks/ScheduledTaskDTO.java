@@ -1,7 +1,8 @@
 package org.lakehouse.client.api.dto.scheduler.tasks;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.lakehouse.client.api.constant.Status;
-import org.lakehouse.client.api.dto.configs.TaskDTO;
+import org.lakehouse.client.api.dto.configs.schedule.TaskDTO;
 
 public class ScheduledTaskDTO extends TaskDTO {
     private Long id;
@@ -79,5 +80,20 @@ public class ScheduledTaskDTO extends TaskDTO {
 
     public void setDataSetKeyName(String dataSetKeyName) {
         this.dataSetKeyName = dataSetKeyName;
+    }
+    @JsonIgnore
+    public String getTaskFullName(){
+        return String.format("%s.%s.%s.%s",
+                getScheduleKeyName(),
+                getScenarioActKeyName(),
+                getName(),
+                getTargetDateTime());
+    }
+    @JsonIgnore
+    public String getLockSource(){
+        return String.format("%s.%s.%s",
+                getScheduleKeyName(),
+                getScenarioActKeyName(),
+                getTargetDateTime());
     }
 }

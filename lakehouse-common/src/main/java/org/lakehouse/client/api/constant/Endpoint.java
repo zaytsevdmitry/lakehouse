@@ -25,6 +25,11 @@ public class Endpoint {
     public final static String DATA_SOURCES = CONFIGS + "/datasources";
     public final static String DATA_SOURCES_NAME = DATA_SOURCES + "/{name}";
 
+    public final static String COMPOUND = CONFIGS + "/compound";
+    public final static String SOURCES_CONF_BY_DATASET_KEY_NAME = COMPOUND + "/sources/dataset/{dataSetKeyName}";
+    public final static String DATASET_MODEL_SCRIPT_BY_DATASET_KEY_NAME = COMPOUND + "/dataset/model/script/dataset/{dataSetKeyName}";
+
+
     public final static String SCHEDULES = CONFIGS + "/schedules";
     public final static String SCHEDULES_NAME = SCHEDULES + "/{name}";
     public final static String EFFECTIVE_SCHEDULES_ROOT = CONFIGS + "/effective/schedules";

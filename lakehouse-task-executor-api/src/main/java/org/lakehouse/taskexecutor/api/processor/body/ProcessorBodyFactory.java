@@ -6,9 +6,9 @@ import org.lakehouse.taskexecutor.api.processor.body.sql.SQLProcessorBodyAbstrac
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-
+// todo remove file
 public class ProcessorBodyFactory {
-    protected static  Class<?> getClassForName(String bodyClassName) throws TaskConfigurationException {
+  /*  protected static  Class<?> getClassForName(String bodyClassName) throws TaskConfigurationException {
         if (bodyClassName == null || bodyClassName.isBlank())
             throw new TaskConfigurationException("Argument taskProcessorBody is empty");
 
@@ -53,5 +53,5 @@ public class ProcessorBodyFactory {
         );
 
 
-    }
+    }*/
 }

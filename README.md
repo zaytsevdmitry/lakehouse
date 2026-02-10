@@ -46,9 +46,9 @@ United namespace
 | [lakehouse-scheduler-svc](lakehouse-scheduler-svc)                 | Candidate    |
 | [lakehouse-state-rest-client](lakehouse-state-rest-client)         | Candidate    |
 | [lakehouse-state-svc](lakehouse-state-svc)                         | Candidate    |
-| [lakehouse-task-coordinator-svc](lakehouse-task-coordinator-svc)   | Not designed |
 | [lakehouse-task-executor-api](lakehouse-task-executor-api)         | Prototype    |
 | [lakehouse-task-executor-rest-client](lakehouse-task-executor-rest-client)         | Prototype    |
 | [lakehouse-task-executor-svc](lakehouse-task-executor-svc)         | Prototype    |
+| [lakehouse-task-spark-apps](lakehouse-task-spark-apps)         | Prototype    |
 | [lakehouse-ui-svc](lakehouse-ui-svc)                               | Not designed |
 | Authorization & security                                           | Not designed |

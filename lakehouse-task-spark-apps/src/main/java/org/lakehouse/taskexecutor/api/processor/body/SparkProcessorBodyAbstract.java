@@ -1,41 +1,16 @@
 package org.lakehouse.taskexecutor.api.processor.body;
 
-import org.lakehouse.taskexecutor.executionmodule.body.datasourcemanipulator.SparkSQLDataSourceManipulator;
+import org.apache.spark.sql.SparkSession;
 
-import java.util.Map;
+public abstract class SparkProcessorBodyAbstract implements ProcessorBody {
+    private final SparkSession sparkSession;
+    public SparkProcessorBodyAbstract(SparkSession sparkSession) {
 
-public abstract class SparkProcessorBodyAbstract implements SparkProcessorBody {
-    private final SparkBodyParam bodyParam;
 
-    public SparkProcessorBodyAbstract(SparkBodyParam bodyParam) {
-        this.bodyParam = bodyParam;
-
+        this.sparkSession = sparkSession;
     }
 
-
-    @Override
-    public SparkBodyParam getBodyParam() {
-        return bodyParam;
+    public SparkSession getSparkSession() {
+        return sparkSession;
     }
-
-    @Override
-    public SparkSQLDataSourceManipulator targetDataSourceManipulator() {
-        return targetDataSourceManipulator();
-    }
-
-    @Override
-    public Map<String, String> taskProcessorArgs() {
-        return taskProcessorArgs();
-    }
-
-    @Override
-    public String fullScript() {
-        return fullScript();
-    }
-
-    @Override
-    public Map<String, SparkSQLDataSourceManipulator> sourceDataSourceManipulatorMap() {
-        return sourceDataSourceManipulatorMap();
-    }
-
 }

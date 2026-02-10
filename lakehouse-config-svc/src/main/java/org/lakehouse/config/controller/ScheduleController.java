@@ -1,9 +1,9 @@
 package org.lakehouse.config.controller;
 
 import org.lakehouse.client.api.constant.Endpoint;
-import org.lakehouse.client.api.dto.configs.ScheduleDTO;
-import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
-import org.lakehouse.client.api.dto.configs.TaskDTO;
+import org.lakehouse.client.api.dto.configs.schedule.ScheduleDTO;
+import org.lakehouse.client.api.dto.configs.schedule.ScheduleEffectiveDTO;
+import org.lakehouse.client.api.dto.configs.schedule.TaskDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.config.service.ScheduleService;
 import org.springframework.http.HttpStatus;

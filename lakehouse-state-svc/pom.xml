@@ -37,6 +37,12 @@
             <version>0.3.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>lakehouse</groupId>
+            <artifactId>lakehouse-validators</artifactId>
+            <version>0.3.0</version>
+        </dependency>
+
         <!--Test-->
         <dependency>
             <groupId>org.springframework.boot</groupId>

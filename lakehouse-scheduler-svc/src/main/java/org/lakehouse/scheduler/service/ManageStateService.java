@@ -2,7 +2,7 @@ package org.lakehouse.scheduler.service;
 
 import jakarta.transaction.Transactional;
 import org.lakehouse.client.api.constant.Status;
-import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
+import org.lakehouse.client.api.dto.configs.schedule.ScheduleEffectiveDTO;
 import org.lakehouse.client.api.dto.scheduler.ScheduleInstanceDTO;
 import org.lakehouse.client.api.exception.CronParceErrorException;
 import org.lakehouse.client.api.utils.DateTimeUtils;
@@ -10,7 +10,6 @@ import org.lakehouse.scheduler.entities.ScheduleInstance;
 import org.lakehouse.scheduler.entities.ScheduleInstanceRunning;
 import org.lakehouse.scheduler.entities.ScheduleScenarioActInstance;
 import org.lakehouse.scheduler.entities.ScheduleScenarioActInstanceDependency;
-import org.lakehouse.scheduler.exception.ScheduledNotFoundException;
 import org.lakehouse.scheduler.factory.ScheduleInstanceFactory;
 import org.lakehouse.scheduler.repository.*;
 import org.slf4j.Logger;

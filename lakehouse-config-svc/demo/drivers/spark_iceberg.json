@@ -28,6 +28,6 @@
   },
   "dataSourceType": "iceberg",
   "connectionTemplates": {
-    "spark": "{{taskProcessorArgs['protocol']}}://{{service.host}}:{{service.port}}"
+    "spark": "{%set service=dataSources[dataSets[targetDataSetKeyName].dataSourceKeyName].service%}{{taskProcessorArgs.protocol}}://{{service.host}}:{{service.port}}"
   }
 }

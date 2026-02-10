@@ -5,14 +5,14 @@ import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.config.entities.KeyValueAbstract;
 import org.lakehouse.config.entities.dataset.DataSet;
 import org.lakehouse.config.entities.dataset.DataSetProperty;
-import org.lakehouse.config.entities.dataset.DataSetScript;
 import org.lakehouse.config.exception.DataSetNotFoundException;
 import org.lakehouse.config.mapper.keyvalue.KeyValueEntityMerger;
 import org.lakehouse.config.repository.NameSpaceRepository;
 import org.lakehouse.config.repository.dataset.DataSetPropertyRepository;
 import org.lakehouse.config.repository.dataset.DataSetRepository;
-import org.lakehouse.config.repository.dataset.DataSetScriptRepository;
+import org.lakehouse.config.repository.ScriptReferenceRepository;
 import org.lakehouse.config.repository.datasource.DataSourceRepository;
+import org.lakehouse.config.service.ScriptReferenceService;
 import org.lakehouse.config.service.ScriptService;
 import org.lakehouse.config.service.dataset.source.DataSetSourceService;
 import org.lakehouse.config.service.datasource.SQLTemplateService;
@@ -34,9 +34,7 @@ public class DataSetService {
     private final DataSetSourceService dataSetSourceService;
     private final NameSpaceRepository nameSpaceRepository;
     private final DataSourceRepository dataSourceRepository;
-    private final DataSetScriptRepository dataSetScriptRepository;
-    private final ScriptService scriptService;
-    private final DataSetScriptService dataSetScriptService;
+    private final ScriptReferenceService scriptReferenceService;
     private final DataSetColumnService dataSetColumnService;
     private final DataSetConstraintService dataSetConstraintService;
     private final SQLTemplateService sqlTemplateService;
@@ -46,18 +44,16 @@ public class DataSetService {
             DataSetSourceService dataSetSourceService,
             NameSpaceRepository nameSpaceRepository,
             DataSourceRepository dataSourceRepository,
-            DataSetScriptRepository dataSetScriptRepository,
-            ScriptService scriptService,
-            DataSetScriptService dataSetScriptService,
-            DataSetColumnService dataSetColumnService, DataSetConstraintService dataSetConstraintService, SQLTemplateService sqlTemplateService) {
+            ScriptReferenceService scriptReferenceService,
+            DataSetColumnService dataSetColumnService,
+            DataSetConstraintService dataSetConstraintService,
+            SQLTemplateService sqlTemplateService) {
         this.dataSetRepository = dataSetRepository;
         this.dataSetPropertyRepository = dataSetPropertyRepository;
         this.dataSetSourceService = dataSetSourceService;
         this.nameSpaceRepository = nameSpaceRepository;
         this.dataSourceRepository = dataSourceRepository;
-        this.dataSetScriptRepository = dataSetScriptRepository;
-        this.scriptService = scriptService;
-        this.dataSetScriptService = dataSetScriptService;
+        this.scriptReferenceService = scriptReferenceService;
         this.dataSetColumnService = dataSetColumnService;
         this.dataSetConstraintService = dataSetConstraintService;
         this.sqlTemplateService = sqlTemplateService;
@@ -71,9 +67,9 @@ public class DataSetService {
         result.setNameSpaceKeyName(dataSet.getNameSpace().getKeyName());
         result.setDatabaseSchemaName(dataSet.getDatabaseSchemaName());
         result.setTableName(dataSet.getTableName());
-        result.setScripts(dataSetScriptService.findDataSetScriptDTOListByDataSetName(dataSet.getKeyName()));
+        result.setScripts(scriptReferenceService.findDataSetScriptDTOListByDataSetName(dataSet.getKeyName()));
         result.setConstraints(dataSetConstraintService.mapDataSetConstraintsToDTOList(dataSet.getKeyName()));
-        result.setSources(dataSetSourceService.getDataSetSourceDTOsByDataSetKeyName(dataSet.getKeyName()));
+        result.setSources(dataSetSourceService.findDataSetSourceDTOsByDataSetKeyName(dataSet.getKeyName()));
         Map<String, String> properties = new HashMap<>();
         dataSetPropertyRepository.findByDataSetKeyName(dataSet.getKeyName())
                 .forEach(dataStoreProperty -> properties.put(dataStoreProperty.getKey(), dataStoreProperty.getValue()));
@@ -97,6 +93,7 @@ public class DataSetService {
 
 
 
+/*
     private List<DataSetProperty> mapPropertyEntities(DataSetDTO dataSetDTO) {
         DataSet dataSet = mapDataSetToEntity(dataSetDTO);
         return dataSetDTO.getProperties().entrySet().stream().map(stringStringEntry -> {
@@ -108,6 +105,7 @@ public class DataSetService {
         }).toList();
 
     }
+*/
 
     private DataSet findByName(String name) {
         return dataSetRepository.findById(name).orElseThrow(() -> {
@@ -135,10 +133,6 @@ public class DataSetService {
 
         logger.info("Saving dataSetDTO={}: cleanUp", dataSetDTO.getKeyName());
 
-
-        dataSetScriptService.findDataSetScriptListByDataSetName(dataSetDTO.getKeyName())
-                .forEach(dataSetScriptRepository::delete);
-
         logger.info("Saving dataSetDTO={}", dataSetDTO.getKeyName());
         DataSet dataSet = dataSetRepository.save(mapDataSetToEntity(dataSetDTO));
 
@@ -150,13 +144,8 @@ public class DataSetService {
 
         dataSetSourceService.save(dataSet, dataSetDTO.getSources());
         logger.info("Saving dataSetDTO={} scripts", dataSetDTO.getKeyName());
-        dataSetDTO.getScripts().stream().map(dataSetScriptDTO -> {
-            DataSetScript dataSetScript = new DataSetScript();
-            dataSetScript.setDataSet(dataSet);
-            dataSetScript.setScript(scriptService.findScriptByKey(dataSetScriptDTO.getKey()));
-            dataSetScript.setScriptOrder(dataSetScriptDTO.getOrder());
-            return dataSetScript;
-        }).forEach(dataSetScriptRepository::save);
+
+        scriptReferenceService.saveDataSetScript(dataSet,dataSetDTO.getScripts());
 
         logger.info("Saving dataSetDTO={} constraints", dataSetDTO.getKeyName());
         dataSetConstraintService.applyConstraints(dataSet,dataSetDTO.getConstraints());

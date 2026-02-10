@@ -19,21 +19,6 @@ public  class FileSparkSQLDataSourceManipulator extends SparkSQLDataSourceManipu
         super(sparkSQLDataSourceManipulatorParameter);
     }
 
-    @Override
-    public void write(
-            Dataset<Row> dataset,
-            Configuration.ModificationRule modificationRule) throws WriteException {
-        try {
-            dataset
-                    .write()
-                    .mode(modificationRule.getValue())
-               //     .format(getDataSetDTO().getProperties().get(DataSetPropertyKeys.Key.FORMAT.label))
-                    .save();
-        } catch (Exception e) {
-            throw new WriteException(e);
-        }
-    }
-
     private void deleteFSDirectory(String location, boolean isRecursively) throws IOException {
         FileSystem fs =  FileSystem.get(sparkSession()
                         .sparkContext()

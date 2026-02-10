@@ -9,7 +9,7 @@ public class DataSetConstraintDTO {
     private String columns = "";
     private boolean enabled = true;
     private Types.ConstraintLevelCheck constraintLevelCheck;
-    private ReferenceDTO reference;
+    private ForeignKeyReferenceDTO reference;
     private String checkExpr = "";
     private String tableConstraintDDLCreateOverride;
     private String tableConstraintDDLAddOverride;
@@ -57,11 +57,11 @@ public class DataSetConstraintDTO {
         this.tableConstraintDDLCreateOverride = tableConstraintDDLCreateOverride;
     }
 
-    public ReferenceDTO getReference() {
+    public ForeignKeyReferenceDTO getReference() {
         return reference;
     }
 
-    public void setReference(ReferenceDTO reference) {
+    public void setReference(ForeignKeyReferenceDTO reference) {
         this.reference = reference;
     }
 

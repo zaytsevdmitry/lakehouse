@@ -5,8 +5,11 @@ import org.lakehouse.client.api.dto.configs.*;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
+import org.lakehouse.client.api.dto.configs.dq.QualityMetricsConfDTO;
+import org.lakehouse.client.api.dto.configs.schedule.*;
 import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskMsgDTO;
+import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.rest.RestClientHelper;
 
@@ -81,6 +84,15 @@ public class ConfigRestClientApiImpl implements ConfigRestClientApi {
 
     public String getScript(String key) {
         return restClientHelper.getDtoOne(key, Endpoint.SCRIPT_BY_KEY, String.class);
+    }
+    public SourceConfDTO getSourceConfDTO(String dataSetKeyName) {
+        return restClientHelper.getDtoOne(dataSetKeyName, Endpoint.SOURCES_CONF_BY_DATASET_KEY_NAME, SourceConfDTO.class);
+    }
+
+    @Override
+    public String getDataSetModelScript(String dataSetKeyName) {
+        return restClientHelper.getDtoOne(dataSetKeyName, Endpoint.DATASET_MODEL_SCRIPT_BY_DATASET_KEY_NAME, String.class);
+
     }
 
     @Override

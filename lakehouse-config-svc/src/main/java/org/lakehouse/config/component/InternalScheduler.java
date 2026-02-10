@@ -1,7 +1,7 @@
 package org.lakehouse.config.component;
 
 
-import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
+import org.lakehouse.client.api.dto.configs.schedule.ScheduleEffectiveDTO;
 import org.lakehouse.config.entities.ScheduleProduceMessage;
 import org.lakehouse.config.repository.ScheduleProduceMessageRepository;
 import org.lakehouse.config.service.ScheduleConfigProducerService;

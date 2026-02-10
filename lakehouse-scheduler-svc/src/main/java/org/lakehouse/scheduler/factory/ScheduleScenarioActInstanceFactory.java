@@ -1,7 +1,7 @@
 package org.lakehouse.scheduler.factory;
 
 import org.lakehouse.client.api.constant.Status;
-import org.lakehouse.client.api.dto.configs.ScheduleScenarioActEffectiveDTO;
+import org.lakehouse.client.api.dto.configs.schedule.ScheduleScenarioActEffectiveDTO;
 import org.lakehouse.scheduler.entities.ScheduleInstance;
 import org.lakehouse.scheduler.entities.ScheduleScenarioActInstance;
 

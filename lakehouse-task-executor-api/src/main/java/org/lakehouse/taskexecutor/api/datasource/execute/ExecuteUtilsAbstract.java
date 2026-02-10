@@ -1,11 +1,13 @@
 package org.lakehouse.taskexecutor.api.datasource.execute;
 
 import com.hubspot.jinjava.Jinjava;
+import org.lakehouse.client.api.constant.SystemVarKeys;
 import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
 import org.lakehouse.client.api.dto.configs.datasource.ServiceDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
+import org.lakehouse.jinja.java.JinJavaUtils;
 import org.lakehouse.taskexecutor.api.datasource.exception.ExecuteException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,17 +18,17 @@ import java.util.Map;
 public abstract class ExecuteUtilsAbstract implements ExecuteUtils {
     public static String RESULT_COLUMN_NAME = "result";
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final Jinjava jinjava;
+    private final JinJavaUtils jinJavaUtils;
     private final DataSourceDTO dataSourceDTO;
     private final DriverDTO driverDTO;
-    public ExecuteUtilsAbstract(Jinjava jinjava, DataSourceDTO dataSourceDTO, DriverDTO driverDTO) {
-        this.jinjava = jinjava;
+    public ExecuteUtilsAbstract(JinJavaUtils jinJavaUtils, DataSourceDTO dataSourceDTO, DriverDTO driverDTO) {
+        this.jinJavaUtils = jinJavaUtils;
         this.dataSourceDTO = dataSourceDTO;
         this.driverDTO = driverDTO;
     }
 
-    public Jinjava getJinjava() {
-        return jinjava;
+    public JinJavaUtils getjinJavaUtils() {
+        return jinJavaUtils;
     }
 
     public DriverDTO getDriverDTO() {
@@ -68,9 +70,9 @@ public abstract class ExecuteUtilsAbstract implements ExecuteUtils {
         if (dataSourceDTO.getService()==null){
             throw new TaskConfigurationException(String.format("DataSource %s with empty list of services", dataSourceDTO.getKeyName()));
         }
-        return jinjava.render(
+        return jinJavaUtils.render(
                 driverDTO.getConnectionTemplates().get(Types.ConnectionType.jdbc),
-                Map.of("service",dataSourceDTO.getService())
+                Map.of(SystemVarKeys.SERVICE_KEY, dataSourceDTO.getService())
         );
     }
     public Map<String,String> dtoToProps() throws TaskConfigurationException {

@@ -2,8 +2,8 @@ package org.lakehouse.config.service;
 
 import jakarta.transaction.Transactional;
 import org.lakehouse.client.api.dto.configs.DagEdgeDTO;
-import org.lakehouse.client.api.dto.configs.ScenarioActTemplateDTO;
-import org.lakehouse.client.api.dto.configs.TaskDTO;
+import org.lakehouse.client.api.dto.configs.schedule.ScenarioActTemplateDTO;
+import org.lakehouse.client.api.dto.configs.schedule.TaskDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.config.entities.scenario.ScenarioAct;
 import org.lakehouse.config.entities.templates.TemplateScenarioAct;
@@ -12,9 +12,9 @@ import org.lakehouse.config.entities.templates.TemplateTaskEdge;
 import org.lakehouse.config.entities.templates.TemplateTaskProcessorArg;
 import org.lakehouse.config.mapper.Mapper;
 import org.lakehouse.config.repository.*;
-import org.lakehouse.config.validator.ConfDTOValidationException;
-import org.lakehouse.config.validator.ScenarioActTemplateConfValidator;
-import org.lakehouse.config.validator.ValidationResult;
+import org.lakehouse.validator.config.ScenarioActTemplateConfValidator;
+import org.lakehouse.validator.config.ValidationResult;
+import org.lakehouse.validator.exception.DTOValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -125,7 +125,7 @@ public class ScenarioActTemplateService {
         ValidationResult vr = ScenarioActTemplateConfValidator.validate(scenarioActTemplateDTO);
 
         if (!vr.isValid())
-            throw new ConfDTOValidationException(vr.getDescriptions());
+            throw new DTOValidationException(vr.getDescriptions());
 
         TemplateScenarioAct templateScenarioAct = mapScenarioToEntity(scenarioActTemplateDTO);
         templateTaskEdgeRepository.findByTemplateScenarioActKeyName(templateScenarioAct.getKeyName()).forEach(templateTaskEdgeRepository::delete);

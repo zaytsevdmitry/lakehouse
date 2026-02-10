@@ -8,7 +8,6 @@ public class SystemVarKeys {
     public static String TARGET_DATE_TIME_TZ_KEY = "targetDateTime";
     public static String TARGET_INTERVAL_START_TZ_KEY = "intervalStartDateTime";
     public static String TARGET_INTERVAL_END_TZ_KEY = "intervalEndDateTime";
-
     public static String TARGET_DATASET_KEY_NAME = "targetDataSetKeyName"; //
 
 
@@ -23,6 +22,7 @@ public class SystemVarKeys {
     public static String SERVICE_KEY = "service";
     public static String DRIVER_KEY = "driver";
     public static String DATASOURCE_KEY = "dataSource";
+    public static String DATASET_KEY = "dataSet";
 
 
     /**

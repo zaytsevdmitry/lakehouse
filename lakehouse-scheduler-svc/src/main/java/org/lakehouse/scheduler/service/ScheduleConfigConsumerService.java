@@ -1,6 +1,6 @@
 package org.lakehouse.scheduler.service;
 
-import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
+import org.lakehouse.client.api.dto.configs.schedule.ScheduleEffectiveDTO;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
