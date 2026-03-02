@@ -2,7 +2,6 @@ package org.lakehouse.taskexecutor.processor.state;
 
 import org.apache.http.HttpStatus;
 import org.lakehouse.client.api.constant.Status;
-import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.state.DataSetStateDTO;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;

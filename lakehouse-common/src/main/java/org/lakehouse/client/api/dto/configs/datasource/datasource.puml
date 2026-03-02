@@ -1,8 +1,5 @@
 @startuml
-(dataset)->(datasource)
-(datasource)->(type)
-(type)-->(database)
-(database)-->(database_driver)
-(type)-->(spark)
-(dataManipulator)
+(DriverDTO)<--(DataSourceDTO)
+(Catalog)<..(DataSourceDTO)
+(DataSetDTO)->(DataSourceDTO)
 @enduml

@@ -2,9 +2,9 @@ package org.lakehouse.test.config.api;
 
 import org.apache.hc.core5.http.HttpStatus;
 import org.lakehouse.client.api.constant.SystemVarKeys;
-import org.lakehouse.client.api.dto.configs.*;
-import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
+import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
 import org.lakehouse.client.api.dto.configs.ScriptReferenceDTO;
+import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
 import org.lakehouse.client.api.dto.configs.dq.QualityMetricsConfDTO;
@@ -113,7 +113,11 @@ public class ConfigRestClientApiTest implements ConfigRestClientApi {
 
     @Override
     public QualityMetricsConfDTO getQualityMetricsConf(String key) {
-        return null;
+        try {
+            return fileLoader.loadQualityMetricsConfDTO(key);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

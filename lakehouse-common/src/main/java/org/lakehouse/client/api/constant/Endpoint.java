@@ -16,7 +16,7 @@ public class Endpoint {
 
     public final static String DATA_SETS = CONFIGS + "/datasets";
     public final static String DATA_SETS_NAME = CONFIGS + "/datasets" + "/{name}";
-    public final static String QUALITY_METRICS = CONFIGS + "/qualityMetrics";
+    public final static String QUALITY_METRICS = CONFIGS + "/quality/metrics";
     public final static String QUALITY_METRICS_NAME = QUALITY_METRICS + "/{name}";
 
     public final static String DRIVERS = CONFIGS + "/drivers";

@@ -76,11 +76,4 @@ Dataset<Row> transform(
 List<DataSourceManipulator> sourceDataSourceManipulators,
 DataSourceManipulator targetDataSourceManipulator)
 }
-TransformerFactory *-- SQLDataTransformer
-TransformerFactory *-- TaskProcessorConfigDTO
-interface DataTransformer{
-Dataset<Row> transform(
-List<DataSourceManipulator> sourceDataSourceManipulators,
-DataSourceManipulator targetDataSourceManipulator)
-}
 @enduml

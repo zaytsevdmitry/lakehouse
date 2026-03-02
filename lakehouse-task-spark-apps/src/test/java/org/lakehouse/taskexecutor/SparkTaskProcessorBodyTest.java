@@ -4,6 +4,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.catalyst.analysis.NoSuchTableException;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -11,6 +12,7 @@ import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
+import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.api.exception.DDLDIalectException;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
@@ -24,9 +26,11 @@ import org.lakehouse.jinja.java.configuration.JinJavaConfiguration;
 import org.lakehouse.taskexecutor.api.datasource.DataSourceManipulator;
 import org.lakehouse.taskexecutor.api.datasource.DataSourceManipulatorFactory;
 import org.lakehouse.taskexecutor.api.datasource.exception.*;
-import org.lakehouse.taskexecutor.api.processor.body.*;
+import org.lakehouse.taskexecutor.api.processor.body.BodyParam;
+import org.lakehouse.taskexecutor.api.processor.body.BodyParamImpl;
+import org.lakehouse.taskexecutor.api.processor.body.ProcessorBody;
+import org.lakehouse.taskexecutor.api.processor.body.body.datasourcemanipulator.UnsuportedDataSourceException;
 import org.lakehouse.taskexecutor.api.processor.body.sql.MergeSQLProcessorBody;
-import org.lakehouse.taskexecutor.executionmodule.body.datasourcemanipulator.UnsuportedDataSourceException;
 import org.lakehouse.test.config.api.ConfigRestClientApiTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -35,12 +39,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
+import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.utility.DockerImageName;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+
 @SpringBootTest
 @Import({MergeSQLProcessorBody.class})
 public class SparkTaskProcessorBodyTest {
@@ -68,21 +75,32 @@ public class SparkTaskProcessorBodyTest {
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine").withDatabaseName("test")
             .withUsername("name").withPassword("password");
 
+    @Container
+    static final KafkaContainer kafka = new KafkaContainer(
+            DockerImageName.parse("confluentinc/cp-kafka:7.6.1")
+    );
     ConfigRestClientApi configRestClientApi = new ConfigRestClientApiTest();
     public SparkTaskProcessorBodyTest() throws IOException {
     }
 
     @BeforeAll
     static void beforeAllStart() {
+        kafka.start();
         postgres.start();
     }
 
-    public SparkSession buildSparkSession(ScheduledTaskLockDTO t, SourceConfDTO sourceConfDTO){
+    @AfterAll
+    static void afterAllDown(){
+        kafka.stop();
+        postgres.stop();
+    }
+
+    public SparkSession buildSparkSession(ScheduledTaskDTO t, SourceConfDTO sourceConfDTO){
         Map<String, Object> conf = new HashMap<>();
         sourceConfDTO.getDataSources().forEach((s, dataSourceDTO) -> {
             conf.putAll(SparkConfUtil.startWithSpark(dataSourceDTO.getService().getProperties()));
         });
-        conf.putAll(SparkConfUtil.extractAppConf(t.getScheduledTaskEffectiveDTO().getTaskProcessorArgs()));
+        conf.putAll(SparkConfUtil.extractAppConf(t.getTaskProcessorArgs()));
         return SparkSession.builder().master("local").config(conf).getOrCreate();
     }
 
@@ -161,7 +179,7 @@ public class SparkTaskProcessorBodyTest {
         SourceConfDTO sourceConfDTO = configRestClientApi.getSourceConfDTO(trnddsDatasetName);
         ScheduledTaskLockDTO scheduledTaskLockDTO = new  TaskConfigTestFactory().loadScheduledTaskLockDTO(trnddsDatasetName,"load");
         //TaskProcessorConfigDTO conf = new TaskConfigTestFactory().loadScheduledTaskLockDTO(trnddsDatasetName,"load");
-        SparkSession sparkSession = buildSparkSession(scheduledTaskLockDTO, sourceConfDTO);
+        SparkSession sparkSession = buildSparkSession(scheduledTaskLockDTO.getScheduledTaskEffectiveDTO(), sourceConfDTO);
 
        JinJavaUtils jinJavaUtils = JinJavaFactory.getJinJavaUtils();
        jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(sourceConfDTO));
@@ -183,7 +201,7 @@ public class SparkTaskProcessorBodyTest {
     void testIcebergTable() throws TaskFailedException, IOException, CreateException, ReadException, WriteException, DropException, DDLDIalectException, UnsuportedDataSourceException, ExecuteException, TaskConfigurationException, NoSuchTableException {
         SourceConfDTO sourceConfDTO = configRestClientApi.getSourceConfDTO(trnddsDatasetName);
         ScheduledTaskLockDTO scheduledTaskLockDTO = new  TaskConfigTestFactory().loadScheduledTaskLockDTO(trnddsDatasetName,"load");
-        SparkSession sparkSession = buildSparkSession(scheduledTaskLockDTO, sourceConfDTO);
+        SparkSession sparkSession = buildSparkSession(scheduledTaskLockDTO.getScheduledTaskEffectiveDTO(), sourceConfDTO);
         jinJavaUtils.cleanGlobalContext();
         jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(sourceConfDTO));
         jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(scheduledTaskLockDTO.getScheduledTaskEffectiveDTO()));
@@ -217,7 +235,7 @@ public class SparkTaskProcessorBodyTest {
         String trnddsDatasetName = "transaction_dds";
         SourceConfDTO sourceConfDTO = configRestClientApi.getSourceConfDTO(trnddsDatasetName);
         ScheduledTaskLockDTO scheduledTaskLockDTO = new  TaskConfigTestFactory().loadScheduledTaskLockDTO(trnddsDatasetName,"load");
-        SparkSession sparkSession = buildSparkSession(scheduledTaskLockDTO, sourceConfDTO);
+        SparkSession sparkSession = buildSparkSession(scheduledTaskLockDTO.getScheduledTaskEffectiveDTO(), sourceConfDTO);
         jinJavaUtils.cleanGlobalContext();
         jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(sourceConfDTO));
 
@@ -225,10 +243,13 @@ public class SparkTaskProcessorBodyTest {
         DataSourceManipulator dsm = DataManipulators.getIcebergDataSourceManipulator(jinJavaUtils,sparkSession,trnddsDatasetName,sourceConfDTO);
 
         String catTableName =
-                sourceConfDTO.getTargetDataSet().getDataSourceKeyName() +"." +
+                sourceConfDTO.getTargetDataSource().getCatalogKeyName() +"." +
                         sourceConfDTO.getTargetDataSet().getDatabaseSchemaName() +"." +
                         sourceConfDTO.getTargetDataSet().getTableName();
         boolean isExists = sparkSession.catalog().tableExists(catTableName);
+        if ( isExists )
+            throw new CreateException("Table found, but not expected");
+
         dsm.createTableIfNotExists();
         isExists = sparkSession.catalog().tableExists( catTableName);
         if ( !isExists )
@@ -239,13 +260,4 @@ public class SparkTaskProcessorBodyTest {
         assert  ( !isExists);
 
     }
-/*    private void executeJdbcQuery(String sql) throws SQLException {
-        String url = postgres.getJdbcUrl();
-        String user = postgres.getUsername();
-        String password = postgres.getPassword();
-        Connection connection = DriverManager.getConnection(url, user, password);
-        Statement statement = connection.createStatement();
-        statement.execute(sql);
-    }*/
-
 }

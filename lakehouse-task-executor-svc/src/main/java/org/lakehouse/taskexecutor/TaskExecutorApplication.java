@@ -3,7 +3,6 @@ package org.lakehouse.taskexecutor;
 import org.lakehouse.client.rest.config.configuration.ConfigRestClientConfiguration;
 import org.lakehouse.client.rest.scheduler.configuration.SchedulerRestClientConfiguration;
 import org.lakehouse.client.rest.state.configuration.StateRestClientConfiguration;
-import org.lakehouse.jinja.java.configuration.JinJavaConfiguration;
 import org.lakehouse.taskexecutor.configuration.ScheduledTaskKafkaConfigurationProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

@@ -3,24 +3,25 @@ package org.lakehouse.client.api.dto.configs.dq;
 import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.configs.ScriptReferenceDTO;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 public class QualityMetricsConfTestSetDTO {
     private String description;
-    private Types.DQMetricsType dqMetricsType;
+    private Types.DQMetricTestSetType type;
     private boolean save;
-    private List<ScriptReferenceDTO> scripts;
+    private List<ScriptReferenceDTO> scripts = new ArrayList<>();
 
     public QualityMetricsConfTestSetDTO() {
     }
 
-    public Types.DQMetricsType getDqMetricsType() {
-        return dqMetricsType;
+    public Types.DQMetricTestSetType getType() {
+        return type;
     }
 
-    public void setDqMetricsType(Types.DQMetricsType dqMetricsType) {
-        this.dqMetricsType = dqMetricsType;
+    public void setType(Types.DQMetricTestSetType type) {
+        this.type = type;
     }
 
     public boolean isSave() {
@@ -43,7 +44,7 @@ public class QualityMetricsConfTestSetDTO {
     public String toString() {
         return "QualityMetricsConfTestSetDTO{" +
                 ", description='" + description + '\'' +
-                ", dqMetricsType=" + dqMetricsType +
+                ", type=" + type +
                 ", save=" + save +
                 ", scripts=" + scripts +
                 '}';
@@ -53,12 +54,12 @@ public class QualityMetricsConfTestSetDTO {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         QualityMetricsConfTestSetDTO that = (QualityMetricsConfTestSetDTO) o;
-        return isSave() == that.isSave() &&  Objects.equals(getDescription(), that.getDescription()) && getDqMetricsType() == that.getDqMetricsType() && Objects.equals(getScripts(), that.getScripts());
+        return isSave() == that.isSave() &&  Objects.equals(getDescription(), that.getDescription()) && getType() == that.getType() && Objects.equals(getScripts(), that.getScripts());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getDescription(), getDqMetricsType(), isSave(), getScripts());
+        return Objects.hash(getDescription(), getType(), isSave(), getScripts());
     }
 
     public String getDescription() {

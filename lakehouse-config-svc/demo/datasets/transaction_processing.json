@@ -15,7 +15,7 @@
     {
       "name": "id",
       "description": "tx id",
-      "dataType": "serial",
+      "dataType": "integer",
       "nullable": false,
       "order": 0,
       "sequence": true

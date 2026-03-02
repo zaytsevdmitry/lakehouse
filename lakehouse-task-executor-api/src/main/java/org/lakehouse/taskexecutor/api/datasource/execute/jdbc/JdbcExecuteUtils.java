@@ -1,10 +1,8 @@
 package org.lakehouse.taskexecutor.api.datasource.execute.jdbc;
 
-import com.hubspot.jinjava.Jinjava;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
-import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.jinja.java.JinJavaUtils;
 import org.lakehouse.taskexecutor.api.datasource.exception.ExecuteException;
 import org.lakehouse.taskexecutor.api.datasource.execute.ExecuteUtilsAbstract;
@@ -60,12 +58,11 @@ public class JdbcExecuteUtils extends ExecuteUtilsAbstract {
         execute(sql, new HashMap<>());
     }
 
-    @Override
-    public Integer executeGetResultInt(String sql,Map<String,Object> localContext) throws ExecuteException{
+    public Object executeGetResultObject(String sql,Map<String,Object> localContext) throws ExecuteException{
 
 
 
-        Integer result = null;
+        Object result = null;
 
         String renderedSQL = getjinJavaUtils().render(sql, localContext);
 
@@ -74,12 +71,21 @@ public class JdbcExecuteUtils extends ExecuteUtilsAbstract {
              ResultSet resultSet = statement.executeQuery(renderedSQL))
         {
             resultSet.next();
-            result = resultSet.getInt(RESULT_COLUMN_NAME);
+            result = resultSet.getObject(RESULT_COLUMN_NAME);
 
         } catch (SQLException | TaskConfigurationException e) {
             logger.info(e.getLocalizedMessage());
             throw new ExecuteException(e);
         }
         return result;
+    }
+    @Override
+    public Integer executeGetResultInt(String sql,Map<String,Object> localContext) throws ExecuteException{
+        return  (Integer) executeGetResultObject(sql,localContext);
+    }
+
+    @Override
+    public Long executeGetResultLong(String sql, Map<String, Object> localContext) throws ExecuteException {
+        return  (Long) executeGetResultObject(sql,localContext);
     }
 }

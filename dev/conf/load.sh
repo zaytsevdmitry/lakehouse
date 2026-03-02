@@ -9,6 +9,7 @@ function curlPost() {
     JSON_FILE=$2
     curl -f -i -X POST $URL -H "Content-Type: application/json" --show-error  --data-binary "@./$JSON_FILE"
     if [ $? -ne 0 ]; then
+      echo "cURL error: $output"
       echo "Curl failed with an HTTP error. URL=$URL JSON_FILE=$JSON_FILE"
       exit 1
     fi
@@ -36,7 +37,16 @@ done
 
 for s in "client_processing" "transaction_processing" "transaction_dds" "aggregation_pay_per_client_daily_mart" "aggregation_pay_per_client_total_mart"
 do
-   curlPost 127.0.0.1:8080/v1_0/configs/scripts/"$s.sql" "dataset-sql-model/$s.sql"
+   file="dataset-sql-model/$s.sql"
+   scriptName=`echo $file |sed 's/\//./g'`
+   curlPost 127.0.0.1:8080/v1_0/configs/scripts/$scriptName "sql-scripts/$file"
+done
+
+for s in "non_zero_count" "non_zero_count_th"
+do
+   file="dq/$s.sql"
+   scriptName=`echo $file |sed 's/\//./g'`
+   curlPost 127.0.0.1:8080/v1_0/configs/scripts/$scriptName "sql-scripts/$file"
 done
 
 for s in "client_processing" "transaction_processing" "transaction_dds" "aggregation_pay_per_client_daily_mart" "aggregation_pay_per_client_total_mart"
@@ -63,7 +73,7 @@ done
 
 curlGet 127.0.0.1:8080/v1_0/configs/effective/schedules/name/initial
 
-for s in "transaction_dds_qm"
+for s in "transaction_dds_qm" "transaction_dds_qm_const"
 do
-   curlPost 127.0.0.1:8080/v1_0/configs/qualityMetrics "quality-metrics/$s.json"
+   curlPost 127.0.0.1:8080/v1_0/configs/quality/metrics "quality-metrics/$s.json"
 done

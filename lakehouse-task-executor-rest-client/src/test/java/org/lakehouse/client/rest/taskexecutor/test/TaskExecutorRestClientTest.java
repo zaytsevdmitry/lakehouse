@@ -3,20 +3,13 @@ package org.lakehouse.client.rest.taskexecutor.test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.rest.taskexecutor.TaskExecutorRestClientApi;
 import org.lakehouse.client.rest.taskexecutor.configuration.TaskExecutorRestClientConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.client.MockRestServiceServer;
-
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {TaskExecutorRestClientConfiguration.class})

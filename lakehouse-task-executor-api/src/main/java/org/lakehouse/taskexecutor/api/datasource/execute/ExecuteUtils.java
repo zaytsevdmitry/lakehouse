@@ -40,6 +40,7 @@ public interface ExecuteUtils {
      * @param localContext additional context
      */
     Integer executeGetResultInt(String sql,Map<String,Object> localContext) throws ExecuteException;
+    Long executeGetResultLong(String sql,Map<String,Object> localContext) throws ExecuteException;
 
     String getConnectionString() throws TaskConfigurationException;
 

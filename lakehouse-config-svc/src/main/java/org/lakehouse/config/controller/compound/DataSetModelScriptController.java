@@ -1,7 +1,6 @@
 package org.lakehouse.config.controller.compound;
 
 import org.lakehouse.client.api.constant.Endpoint;
-import org.lakehouse.config.service.ScriptService;
 import org.lakehouse.config.service.compound.ScriptCompoundService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

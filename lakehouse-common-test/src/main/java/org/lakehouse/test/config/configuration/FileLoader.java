@@ -1,7 +1,7 @@
 package org.lakehouse.test.config.configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.lakehouse.client.api.dto.configs.*;
+import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
@@ -162,7 +162,7 @@ public class FileLoader {
         return result;
     }
 
-    public QualityMetricsConfDTO loaQualityMetricsConfDTO(String name) throws IOException {
+    public QualityMetricsConfDTO loadQualityMetricsConfDTO(String name) throws IOException {
         return objectMapper.readValue(new File(rootPath.concat(String.format("/quality-metrics/%s.json", name))), QualityMetricsConfDTO.class);
     }
 }

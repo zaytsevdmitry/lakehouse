@@ -15,18 +15,10 @@ export ICE_MAVEN=https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark
 
 
 export APP_DIR=opt/lakehouse-task-spark-apps
-export DRIVERS_DIR=opt/drivers
+export DRIVERS_DIR=drivers
 
 ##Prepare dir
-#rm -rf $APP_DIR
-mkdir -p $APP_DIR
-#rm -rf $DRIVERS_DIR
 mkdir -p $DRIVERS_DIR
-
-downloadIfNotExists  lakehouse-task-spark-apps-$LH_VERSION-jar-with-dependencies.jar \
-                      "../../lakehouse-task-spark-apps/target" \
-                      "$APP_DIR" \
-                      "local"
 
 downloadIfNotExists $ICE_JAR_NAME \
                     $ICE_MAVEN \
@@ -78,3 +70,4 @@ echo "">> Dockerfile
 
 docker build -t lakehouse-spark:$LH_VERSION ./
 docker images
+rm -rf ./opt

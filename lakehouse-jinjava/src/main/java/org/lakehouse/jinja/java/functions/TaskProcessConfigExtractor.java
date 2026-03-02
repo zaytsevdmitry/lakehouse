@@ -18,30 +18,33 @@ import java.util.stream.Collectors;
  */
 public class TaskProcessConfigExtractor {
     private static final Logger logger = LoggerFactory.getLogger(TaskProcessConfigExtractor.class);
-    public static String ref(String dataSet) {
-        if (dataSet == null || dataSet.isBlank()){
+    public static String ref(String dataSetKeyName) {
+        if (dataSetKeyName == null || dataSetKeyName.isBlank()){
             logger.error("error in Jinjava function. Attribute 'dataSet' can not be blank");
             throw new IllegalArgumentException("Attribute 'dataSet' can not be blank");
         }
         else {
 
             String result =
-                    "{% if dataSets['" + dataSet + "'].databaseSchemaName is defined %}" +
-                            "{{ dataSets['" + dataSet + "'].databaseSchemaName~'.'~dataSets['" + dataSet + "'].tableName }}" +
+                    "{% if dataSets['" + dataSetKeyName + "'].databaseSchemaName is defined %}" +
+                            "{{ dataSets['" + dataSetKeyName + "'].databaseSchemaName~'.'~dataSets['" + dataSetKeyName + "'].tableName }}" +
                             "{% else %}" +
-                            "{{ dataSets['" + dataSet + "'].tableName }}\n" +
+                            "{{ dataSets['" + dataSetKeyName + "'].tableName }}\n" +
                             "{% endif %}";
             System.out.println(result);
             return result;
         }
     }
 
-    public static String refCat(String dataSet) {
-        if (dataSet == null || dataSet.isBlank())
-            throw new IllegalArgumentException("Attribute 'dataSet' can not be blank");
+    public static String refCat(String dataSetKeyName) {
+        if (dataSetKeyName == null || dataSetKeyName.isBlank())
+            throw new IllegalArgumentException("Attribute 'dataSetKeyName' can not be blank");
         try {
 
-            String result = "{{ dataSets['" + dataSet + "'].dataSourceKeyName~'.'~dataSets['" + dataSet + "'].databaseSchemaName~'.'~dataSets['" + dataSet + "'].tableName }}";
+            String result = "{%set catalog_name=dataSources[dataSets['" + dataSetKeyName + "'].dataSourceKeyName].catalogKeyName %}" +
+                    "{{ catalog_name~'.'" +
+                    "~dataSets['" + dataSetKeyName + "'].databaseSchemaName~'.'" +
+                    "~dataSets['" + dataSetKeyName + "'].tableName }}";
             System.out.println(result);
             return result;
         } catch (Exception e) {
@@ -190,4 +193,12 @@ public class TaskProcessConfigExtractor {
         }
     }
 
+    public static String refCatSchema(String dataSetKeyName){
+        if (dataSetKeyName == null || dataSetKeyName.isBlank()){
+            logger.error("error in Jinjava function. Attribute 'dataSetKeyName' can not be blank");
+            throw new IllegalArgumentException("Attribute 'dataSetKeyName' can not be blank");
+        }
+        return  "{{dataSources[dataSets['"+dataSetKeyName + "'].dataSourceKeyName].catalogKeyName~'.'~" +
+                "dataSets['" + dataSetKeyName + "'].databaseSchemaName}}";
+    }
 }

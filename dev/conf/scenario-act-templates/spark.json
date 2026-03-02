@@ -27,6 +27,7 @@
         "spark.executor.memory": "1g",
         "spark.driver.memory": "1g",
         "protocol": "http",
+        "deploy.mainClass": "org.lakehouse.taskexecutor.spark.SparkProcessorApplication",
         "spark.driver.extraClassPath": "/opt/drivers/postgresql-42.7.8.jar:/opt/drivers/iceberg-spark-runtime-3.5_2.12-1.9.2.jar:/opt/drivers/hadoop-aws-3.3.4.jar:/opt/drivers/aws-java-sdk-bundle-1.12.262.jar:/opt/drivers/wildfly-openssl-1.0.7.Final.jar",
         "spark.executor.extraClassPath": "/opt/drivers/postgresql-42.7.8.jar:/opt/drivers/iceberg-spark-runtime-3.5_2.12-1.9.2.jar:/opt/drivers/hadoop-aws-3.3.4.jar:/opt/drivers/aws-java-sdk-bundle-1.12.262.jar:/opt/drivers/wildfly-openssl-1.0.7.Final.jar"
       }
@@ -42,8 +43,26 @@
         "spark.executor.memory": "1g",
         "spark.driver.memory": "1g",
         "protocol": "http",
+        "deploy.mainClass": "org.lakehouse.taskexecutor.spark.SparkProcessorApplication",
         "spark.driver.extraClassPath": "/opt/drivers/postgresql-42.7.8.jar:/opt/drivers/iceberg-spark-runtime-3.5_2.12-1.9.2.jar:/opt/drivers/hadoop-aws-3.3.4.jar:/opt/drivers/aws-java-sdk-bundle-1.12.262.jar:/opt/drivers/wildfly-openssl-1.0.7.Final.jar",
         "spark.executor.extraClassPath": "/opt/drivers/postgresql-42.7.8.jar:/opt/drivers/iceberg-spark-runtime-3.5_2.12-1.9.2.jar:/opt/drivers/hadoop-aws-3.3.4.jar:/opt/drivers/aws-java-sdk-bundle-1.12.262.jar:/opt/drivers/wildfly-openssl-1.0.7.Final.jar"
+      }
+    },
+    {
+      "name": "quality",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "sparkLauncherTaskProcessor",
+      "taskProcessorBody": "mergeSQLProcessorBody",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "taskProcessorArgs": {
+        "spark.executor.memory": "1g",
+        "spark.driver.memory": "1g",
+        "protocol": "http",
+        "deploy.appResource": "/opt/lakehouse-task-spark-dq-app/lakehouse-task-spark-dq-app-0.3.0-jar-with-dependencies.jar",
+        "deploy.mainClass": "org.lakehouse.taskexecutor.spark.dq.SparkProcessorApplicationDQ",
+        "spark.driver.extraClassPath": "/opt/lakehouse-task-spark-apps/lakehouse-task-spark-apps-0.3.0-jar-with-dependencies.jar:/opt/drivers/postgresql-42.7.8.jar:/opt/drivers/iceberg-spark-runtime-3.5_2.12-1.9.2.jar:/opt/drivers/hadoop-aws-3.3.4.jar:/opt/drivers/aws-java-sdk-bundle-1.12.262.jar:/opt/drivers/wildfly-openssl-1.0.7.Final.jar",
+        "spark.executor.extraClassPath": "/opt/lakehouse-task-spark-apps/lakehouse-task-spark-apps-0.3.0-jar-with-dependencies.jar:/opt/drivers/postgresql-42.7.8.jar:/opt/drivers/iceberg-spark-runtime-3.5_2.12-1.9.2.jar:/opt/drivers/hadoop-aws-3.3.4.jar:/opt/drivers/aws-java-sdk-bundle-1.12.262.jar:/opt/drivers/wildfly-openssl-1.0.7.Final.jar"
       }
     },
     {
@@ -69,6 +88,10 @@
     },
     {
       "from": "load",
+      "to": "quality"
+    },
+    {
+      "from": "quality",
       "to": "finally"
     }
   ]

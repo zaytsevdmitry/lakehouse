@@ -59,4 +59,17 @@ public class Status {
             return label;
         }
     }
+    public enum DQMetric {
+        RUNNING("RUNNING"),
+        SUCCESS("SUCCESS"),
+        ERROR("ERROR"),
+        FAILED("FAILED");
+
+        public final String label;
+
+        DQMetric(String label) {
+            this.label = label;
+        }
+    }
+
 }

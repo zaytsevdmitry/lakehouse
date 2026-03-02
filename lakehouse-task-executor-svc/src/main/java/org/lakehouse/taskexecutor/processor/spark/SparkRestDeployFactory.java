@@ -2,21 +2,12 @@ package org.lakehouse.taskexecutor.processor.spark;
 
 import org.lakehouse.client.api.constant.SystemVarKeys;
 import org.lakehouse.client.api.constant.Types;
-import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
-import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
-import org.lakehouse.client.api.dto.configs.datasource.ServiceDTO;
-import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
-import org.lakehouse.client.rest.RestClientHelper;
-import org.lakehouse.client.rest.spark.SparkRestClientApi;
-import org.lakehouse.client.rest.spark.SparkRestClientApiImpl;
 import org.lakehouse.jinja.java.JinJavaUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
-import org.springframework.web.util.DefaultUriBuilderFactory;
 
 /**
  * Based on spark restapi

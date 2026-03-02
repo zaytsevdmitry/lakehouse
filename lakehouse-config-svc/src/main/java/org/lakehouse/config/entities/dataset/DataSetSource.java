@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.lakehouse.config.entities.dq.QualityMetricsConf;
-import org.lakehouse.config.entities.dq.QualityMetricsConfTestSet;
 
 import java.util.Objects;
 

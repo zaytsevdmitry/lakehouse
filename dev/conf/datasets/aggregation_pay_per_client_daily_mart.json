@@ -6,7 +6,7 @@
   "tableName": "aggregation_pay_per_client_daily_mart",
   "scripts": [
     {
-      "key": "aggregation_pay_per_client_daily_mart.sql"
+      "key": "dataset-sql-model.aggregation_pay_per_client_daily_mart.sql"
     }
   ],
   "sources": {

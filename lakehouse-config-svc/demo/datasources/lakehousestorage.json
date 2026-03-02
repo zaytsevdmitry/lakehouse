@@ -1,5 +1,6 @@
 {
   "keyName": "lakehousestorage",
+  "catalogKeyName":"lakehouse",
   "driverKeyName":"spark_iceberg",
   "service":
     {
@@ -8,14 +9,14 @@
       "urn": "",
       "properties": {
         "spark.sql.extensions": "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
-        "spark.sql.catalog.lakehousestorage": "org.apache.iceberg.spark.SparkCatalog",
-        "spark.sql.catalog.lakehousestorage.type": "hadoop",
-        "spark.sql.catalog.lakehousestorage.warehouse": "$PWD/warehouse"
+        "spark.sql.catalog.lakehouse": "org.apache.iceberg.spark.SparkCatalog",
+        "spark.sql.catalog.lakehouse.type": "hadoop",
+        "spark.sql.catalog.lakehouse.warehouse": "$PWD/warehouse"
       }
     },
   "description": "Local datastore",
   "sqlTemplate" : {
-    "tableDDLCompact": "{%set catalog_name=dataSets[targetDataSetKeyName].dataSourceKeyName%}CALL {{catalog_name}}.system.rewrite_data_files(table => 'db_name.table_name', options => map('min-input-files', '2', 'target-file-size-bytes', '134217728'))"
+    "tableDDLCompact": "{%set catalog_name=dataSets[targetDataSetKeyName].catalogKeyName%}CALL {{catalog_name}}.system.rewrite_data_files(table => 'db_name.table_name', options => map('min-input-files', '2', 'target-file-size-bytes', '134217728'))"
   }
 
 

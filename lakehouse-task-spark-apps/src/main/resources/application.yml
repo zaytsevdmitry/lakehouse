@@ -1,0 +1,23 @@
+server:
+  port: 0
+
+lakehouse:
+  client:
+    rest:
+      config:
+        server:
+          url: ${CONFIG_REST_SERVER}
+  taskexecutor:
+    body:
+      config:
+        dq:
+          kafka:
+            producer:
+              metric:
+                value:
+                  topic: ${LH_METRIC_VALUE_TOPIC}
+                status:
+                  topic: ${LH_METRIC_STATUS_TOPIC}
+              testSet:
+                status:
+                  topic: ${LH_METRIC_TEST_SET_STATUS_TOPIC}

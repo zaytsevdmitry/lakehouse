@@ -1,6 +1,5 @@
 package org.lakehouse.config.service;
 
-import org.lakehouse.client.api.constant.SystemVarKeys;
 import org.lakehouse.config.entities.Script;
 import org.lakehouse.config.exception.ScriptNotFoundException;
 import org.lakehouse.config.repository.ScriptRepository;

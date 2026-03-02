@@ -9,9 +9,7 @@ import org.lakehouse.config.entities.datasource.DataSourceSvcItem;
 import org.lakehouse.config.entities.datasource.DataSourceSvcItemProperty;
 import org.lakehouse.config.exception.DataSourceNotFoundException;
 import org.lakehouse.config.exception.DataSourceServiceNotFoundException;
-import org.lakehouse.config.mapper.Mapper;
 import org.lakehouse.config.mapper.keyvalue.KeyValueEntityMerger;
-import org.lakehouse.config.repository.SQLTemplateRepository;
 import org.lakehouse.config.repository.datasource.DataSourcePropertyRepository;
 import org.lakehouse.config.repository.datasource.DataSourceRepository;
 import org.lakehouse.config.repository.datasource.DataSourceSvcItemPropertyRepository;
@@ -22,10 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -77,6 +73,7 @@ public class DataSourceService {
         result.setDriverKeyName(dataSource.getDriver().getKeyName());
         result.setService(findDataSourceService(dataSource.getKeyName()));
         result.setSqlTemplate(sqlTemplateService.getSqlTemplateDTO(dataSource));
+        result.setCatalogKeyName(dataSource.getCatalogKeyName());
         return result;
     }
 
@@ -86,6 +83,7 @@ public class DataSourceService {
         result.setKeyName(dataSourceDTO.getKeyName());
         result.setDescription(dataSourceDTO.getDescription());
         result.setDriver(driverService.findDriverById(dataSourceDTO.getDriverKeyName()));
+        result.setCatalogKeyName(dataSourceDTO.getCatalogKeyName());
         return result;
     }
 

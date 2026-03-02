@@ -2,11 +2,11 @@ package org.lakehouse.client.api.dto.configs.datasource;
 
 import org.lakehouse.client.api.dto.common.SQLTemplateDTO;
 
-import java.util.*;
+import java.util.Objects;
 
 public class DataSourceDTO {
     private String keyName;
-    //private List<ServiceDTO> services = new ArrayList<>();
+    private String catalogKeyName;
     ServiceDTO service;
     private String description;
     private SQLTemplateDTO sqlTemplate = new SQLTemplateDTO();
@@ -59,6 +59,7 @@ public class DataSourceDTO {
     public String toString() {
         return "DataSourceDTO{" +
                 "keyName='" + keyName + '\'' +
+                ", catalogName='" + catalogKeyName + '\'' +
                 ", service=" + service +
                 ", description='" + description + '\'' +
                 ", sqlTemplate=" + sqlTemplate +
@@ -70,12 +71,19 @@ public class DataSourceDTO {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         DataSourceDTO that = (DataSourceDTO) o;
-        return Objects.equals(keyName, that.keyName) && Objects.equals(service, that.service) && Objects.equals(description, that.description) && Objects.equals(sqlTemplate, that.sqlTemplate) && Objects.equals(driverKeyName, that.driverKeyName);
+        return Objects.equals(getKeyName(), that.getKeyName()) && Objects.equals(getCatalogKeyName(), that.getCatalogKeyName()) && Objects.equals(getService(), that.getService()) && Objects.equals(getDescription(), that.getDescription()) && Objects.equals(getSqlTemplate(), that.getSqlTemplate()) && Objects.equals(getDriverKeyName(), that.getDriverKeyName());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(keyName, service, description, sqlTemplate, driverKeyName);
+        return Objects.hash(getKeyName(), getCatalogKeyName(), getService(), getDescription(), getSqlTemplate(), getDriverKeyName());
     }
 
+    public String getCatalogKeyName() {
+        return catalogKeyName;
+    }
+
+    public void setCatalogKeyName(String catalogKeyName) {
+        this.catalogKeyName = catalogKeyName;
+    }
 }

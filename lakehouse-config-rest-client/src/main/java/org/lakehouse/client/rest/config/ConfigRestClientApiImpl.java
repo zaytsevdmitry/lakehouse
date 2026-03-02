@@ -1,7 +1,7 @@
 package org.lakehouse.client.rest.config;
 
 import org.lakehouse.client.api.constant.Endpoint;
-import org.lakehouse.client.api.dto.configs.*;
+import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;

@@ -2,10 +2,8 @@ package org.lakehouse.taskexecutor.api.processor.body.sql;
 
 import org.lakehouse.client.api.constant.SystemVarKeys;
 import org.lakehouse.client.api.exception.TaskFailedException;
-import org.lakehouse.taskexecutor.api.datasource.DataSourceManipulator;
 import org.lakehouse.taskexecutor.api.datasource.exception.ExecuteException;
 import org.lakehouse.taskexecutor.api.datasource.execute.ExecuteUtils;
-import org.lakehouse.taskexecutor.api.processor.body.BodyParam;
 
 import java.util.ArrayList;
 import java.util.Arrays;

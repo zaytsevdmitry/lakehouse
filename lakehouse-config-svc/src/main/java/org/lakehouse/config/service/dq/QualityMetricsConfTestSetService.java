@@ -2,6 +2,7 @@ package org.lakehouse.config.service.dq;
 
 import jakarta.transaction.Transactional;
 import org.lakehouse.client.api.dto.configs.dq.QualityMetricsConfTestSetDTO;
+import org.lakehouse.config.entities.dq.ElementType;
 import org.lakehouse.config.entities.dq.QualityMetricsConf;
 import org.lakehouse.config.entities.dq.QualityMetricsConfTestSet;
 import org.lakehouse.config.repository.dq.QualityMetricsConfTestSetRepository;
@@ -25,16 +26,16 @@ public class QualityMetricsConfTestSetService {
     private QualityMetricsConfTestSet mapTestSet(
             QualityMetricsConf qualityMetricsConf,
             Map.Entry<String, QualityMetricsConfTestSetDTO> dto,
-            boolean isThreshold){
+            ElementType elementType){
         QualityMetricsConfTestSet result = qualityMetricsConfTestSetRepository
                 .findByQualityMetricsConfKeyNameAndKeyName(qualityMetricsConf.getKeyName(),dto.getKey())
                 .orElse( new QualityMetricsConfTestSet());
         result.setDescription(dto.getValue().getDescription());
         result.setQualityMetricsConf(qualityMetricsConf);
-        result.setDqMetricsType(dto.getValue().getDqMetricsType());
+        result.setDqMetricsType(dto.getValue().getType());
         result.setSave(dto.getValue().isSave());
         result.setKeyName(dto.getKey());
-        result.setThreshold(isThreshold);
+        result.setElementType(elementType);
         return result;
     }
 
@@ -42,11 +43,11 @@ public class QualityMetricsConfTestSetService {
     public void save(
             QualityMetricsConf qualityMetricsConf,
             Map<String, QualityMetricsConfTestSetDTO> qualityMetricsConfTestSetDTOs,
-            boolean isThreshold){
+            ElementType elementType){
 
         qualityMetricsConfTestSetRepository.deleteAll(
                 qualityMetricsConfTestSetRepository
-                .findByQualityMetricsConfKeyNameAndIsThreshold(qualityMetricsConf.getKeyName(),isThreshold)
+                .findByQualityMetricsConfKeyNameAndElementType(qualityMetricsConf.getKeyName(),elementType)
                 .stream()
                 .filter(q-> !qualityMetricsConfTestSetDTOs.containsKey(q.getKeyName()))
                 .toList());
@@ -54,7 +55,7 @@ public class QualityMetricsConfTestSetService {
 
 
         for (Map.Entry<String, QualityMetricsConfTestSetDTO> entry: qualityMetricsConfTestSetDTOs.entrySet()){
-            QualityMetricsConfTestSet testSet = qualityMetricsConfTestSetRepository.save(mapTestSet(qualityMetricsConf, entry, isThreshold));
+            QualityMetricsConfTestSet testSet = qualityMetricsConfTestSetRepository.save(mapTestSet(qualityMetricsConf, entry, elementType));
             scriptReferenceService.saveQualityTestSet(testSet, entry.getValue().getScripts());
 
         }
@@ -63,7 +64,7 @@ public class QualityMetricsConfTestSetService {
     public Map.Entry<String,QualityMetricsConfTestSetDTO> mapQualityMetricsConfTestSetDTO(
             QualityMetricsConfTestSet entity) {
         QualityMetricsConfTestSetDTO result = new QualityMetricsConfTestSetDTO();
-        result.setDqMetricsType(entity.getDqMetricsType());
+        result.setType(entity.getDqMetricsType());
         result.setSave(entity.isSave());
         result.setDescription(entity.getDescription());
         result.setScripts( scriptReferenceService.findByQualityMetricsConfTestSetKeyNameOrderByScriptOrder(entity.getKeyName()));

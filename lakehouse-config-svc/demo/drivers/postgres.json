@@ -13,6 +13,7 @@
     "constraintDDLDrop" : "ALTER TABLE  {{ ref(targetDataSetKeyName) }} DROP CONSTRAINT {{ constraintName }}",
     "primaryKeyDDL" : "{%set targetDataSet=dataSets[targetDataSetKeyName]%}CONSTRAINT {{ constraintName }} PRIMARY KEY ({{ targetDataSet.constraints[constraintName].columns }})",
     "primaryKeyDDLAdd" : "ALTER TABLE  {{ ref(targetDataSetKeyName) }} ADD CONSTRAINT {{ constraintName }} PRIMARY KEY ({{ targetDataSet.constraints[constraintName].columns }}",
+    "primaryKeyCheckIntegrity": "",
     "foreignKeyDDL" : "{%set targetDataSet=dataSets[targetDataSetKeyName]%}{%set constraint=targetDataSet.constraints[constraintName]%}{%set refDataSetKeyName=constraint.reference.dataSetKeyName%}CONSTRAINT {{ constraintName }} FOREIGN KEY({{ constraint.columns }}) REFERENCES {{ ref(refDataSetKeyName) }}({{ dataSets[refDataSetKeyName].constraints[constraint.reference.constraintName].columns }})",
     "foreignKeyDDLAdd" : "ALTER TABLE  {{ ref(targetDataSetKeyName) }} ADD CONSTRAINT %s PRIMARY KEY (%s)",
     "uniqueKeyDDL" : "CONSTRAINT {{ constraint.name }} UNIQUE({{ constraint.columns }})",

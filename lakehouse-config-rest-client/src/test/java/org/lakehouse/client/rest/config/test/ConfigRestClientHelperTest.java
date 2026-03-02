@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.lakehouse.client.api.constant.Endpoint;
-import org.lakehouse.client.api.dto.configs.*;
+import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
 import org.lakehouse.client.api.dto.configs.schedule.ScenarioActTemplateDTO;
 import org.lakehouse.client.api.dto.configs.schedule.ScheduleDTO;

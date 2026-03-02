@@ -27,8 +27,18 @@
         <jersey.version>2.36</jersey.version>
         <!--Spark-->
     </properties>
-
     <dependencies>
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-jinjava</artifactId>
@@ -145,7 +155,12 @@
             <artifactId>spring-boot-test</artifactId>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>kafka</artifactId>
+            <scope>test</scope>
+            <version>1.20.4</version>
+        </dependency>
     </dependencies>
     <build>
         <resources>

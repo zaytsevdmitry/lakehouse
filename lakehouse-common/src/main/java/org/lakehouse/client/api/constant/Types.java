@@ -79,15 +79,15 @@ public class Types {
             return value;
         }
     }
-    public enum DQMetricsType {
-        constraint("constraint"),
+    public enum DQMetricTestSetType {
+        integrity("integrity"),
         sparkSQL("sparkSQL"),
         pushDownSQL("pushDownSQL"),
         objectClass("objectClass");
 
         public final String label;
 
-        DQMetricsType(String label) {
+        DQMetricTestSetType(String label) {
             this.label = label;
         }
 

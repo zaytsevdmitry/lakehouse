@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.lakehouse.config.entities.Script;
-import org.lakehouse.config.entities.dataset.DataSet;
 
 import java.util.Objects;
 

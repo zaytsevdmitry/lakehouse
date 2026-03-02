@@ -153,6 +153,7 @@ public class JinjavaTest {
         stubDriverDTO.setKeyName("stubDriver");
         DataSourceDTO stubDataSource = new DataSourceDTO();
         stubDataSource.setKeyName("stubDataSource");
+        stubDataSource.setCatalogKeyName("StubCatalogName");
         stubDataSource.setDriverKeyName(stubDriverDTO.getKeyName());
         DataSetDTO dataSetDTO = new DataSetDTO();
         dataSetDTO.setDataSourceKeyName(stubDataSource.getKeyName());
@@ -207,7 +208,7 @@ public class JinjavaTest {
         String renderedTemplate = jinJavaUtils.render(template, context);
         System.out.println(renderedTemplate);
 
-        String expected = conf.getTargetDataSource().getKeyName() + "."
+        String expected = conf.getTargetDataSource().getCatalogKeyName() + "."
                 + conf.getTargetDataSet().getDatabaseSchemaName()+"."
                 + conf.getTargetDataSet().getTableName();
         System.out.println(expected);
@@ -434,5 +435,20 @@ public class JinjavaTest {
         System.out.println(template);
         assert ("http://localhost:6066".equals(url));
 
+    }
+
+    @Test
+    void catalogDataBaseSchema() throws JsonProcessingException {
+
+        String dataSetKeyName = "transaction_dds";
+        SourceConfDTO sourceConfDTO = configRestClientApi.getSourceConfDTO(dataSetKeyName);
+
+        Map<String,Object> localContext = ObjectMapping.asMap(sourceConfDTO);
+
+        String template = "{{refCatSchema(" + SystemVarKeys.TARGET_DATASET_KEY_NAME + ")}}";
+        String expected = "lakehouse.default";
+        String result = jinJavaUtils.render(template,localContext);
+
+        assert(expected.equals(result));
     }
 }

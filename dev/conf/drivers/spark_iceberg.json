@@ -20,8 +20,8 @@
     "mergeDML" : "{%set targetDataSet=dataSets[targetDataSetKeyName]%}MERGE INTO  {{ refCat(targetDataSetKeyName) }} t\n\tUSING ({{ script }}) q\n\tON ({{ extractMergeOn(targetDataSet,'t','q') }})\n\tWHEN MATCHED THEN\n\t\tUPDATE SET {{ extractMergeUpdate(targetDataSet,'q') }}\n\tWHEN NOT MATCHED BY TARGET THEN\n\t\tINSERT({{ extractColumnsCS(targetDataSet) }})\n\t\tVALUES ({{ extractMergeInsertValues(targetDataSet,'q') }})",
     "insertDML": "{%set targetDataSet=dataSets[targetDataSetKeyName]%}\nINSERT INTO  {{ refCat(targetDataSetKeyName) }} ({{ extractColumnsCS(targetDataSet) }})\nSELECT {{ extractColumnsCS(targetDataSet)}}\nFROM ({{scripts[targetDataSet.scripts[0].key]}})",
     "tableSQLExists" : "{%set targetDataSet=dataSets[targetDataSetKeyName]%}select case when exists (\n\tselect * \n\tfrom pg_catalog.pg_class pc \n\twhere relnamespace = (select oid from pg_catalog.pg_namespace where nspname = '{{ targetDataSet.databaseSchemaName }}')\n and relname='{{ targetDataSet.tableName}}'\n) then 1 else 0 end  as result",
-    "databaseSchemaDDLCreate": "{%set schema=dataSets[currentDataSetKeyName].dataSourceKeyName~'.'~dataSets[currentDataSetKeyName].databaseSchemaName%}CREATE SCHEMA {{ schema }}",
-    "tableDDLCreate": "{%set currentDataSet=dataSets[currentDataSetKeyName]%}\n{%set location=currentDataSet.properties['location']%}\nCREATE TABLE {{ refCat(currentDataSetKeyName) }} (\n{{ extractColumnsDDL(currentDataSet.columnSchema) }}\n)\nUSING iceberg \n{{targetDataSet.partitionStmt}} \nLOCATION '{{location}}'\n",
+    "databaseSchemaDDLCreate": "CREATE SCHEMA IF NOT EXISTS {{ refCatSchema(targetDataSetKeyName) }}",
+    "tableDDLCreate": "{%set currentDataSet=dataSets[currentDataSetKeyName]%}CREATE TABLE IF NOT EXISTS {{ refCat(currentDataSetKeyName) }} (\n {{ extractColumnsDDL(currentDataSet.columnSchema) }} \n) USING iceberg  {{targetDataSet.partitionStmt}}",
     "tableDDLDrop": "DROP TABLE {{ refCat(currentDataSetKeyName) }}",
     "databaseSchemaName": "{%set schema=dataSets[currentDataSetKeyName].dataSourceKeyName~'.'~dataSets[currentDataSetKeyName].databaseSchemaName%}{{schema}}",
     "tableFullName": "{{ refCat(currentDataSetKeyName) }}"
@@ -31,4 +31,3 @@
     "spark": "{%set service=dataSources[dataSets[targetDataSetKeyName].dataSourceKeyName].service%}{{taskProcessorArgs.protocol}}://{{service.host}}:{{service.port}}"
   }
 }
-

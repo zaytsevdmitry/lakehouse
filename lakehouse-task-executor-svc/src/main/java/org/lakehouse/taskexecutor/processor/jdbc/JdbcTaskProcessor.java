@@ -2,13 +2,13 @@ package org.lakehouse.taskexecutor.processor.jdbc;
 
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;
-import org.lakehouse.taskexecutor.api.processor.TaskProcessor;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.jinja.java.JinJavaUtils;
 import org.lakehouse.taskexecutor.api.datasource.DataSourceManipulator;
 import org.lakehouse.taskexecutor.api.datasource.DataSourceManipulatorFactory;
+import org.lakehouse.taskexecutor.api.processor.TaskProcessor;
 import org.lakehouse.taskexecutor.api.processor.body.BodyParam;
 import org.lakehouse.taskexecutor.api.processor.body.BodyParamImpl;
 import org.lakehouse.taskexecutor.api.processor.body.ProcessorBody;
@@ -26,7 +26,7 @@ public  class JdbcTaskProcessor implements TaskProcessor {
     private final ConfigurableApplicationContext applicationContext;
     public JdbcTaskProcessor(
             ConfigRestClientApi configRestClientApi,
-            ConfigurableApplicationContext applicationContext, JinJavaUtils jinJavaUtils) {
+            ConfigurableApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
     }
 

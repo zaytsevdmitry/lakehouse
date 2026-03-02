@@ -3,11 +3,14 @@ package org.lakehouse.config.service.dq;
 import jakarta.transaction.Transactional;
 import org.lakehouse.client.api.dto.configs.dq.QualityMetricsConfDTO;
 import org.lakehouse.client.api.dto.configs.dq.QualityMetricsConfTestSetDTO;
-import org.lakehouse.client.api.dto.configs.dataset.DataSetSourceDTO;
-import org.lakehouse.config.entities.dq.*;
+import org.lakehouse.config.entities.dq.ElementType;
+import org.lakehouse.config.entities.dq.QualityMetricsConf;
+import org.lakehouse.config.entities.dq.QualityMetricsConfTestSet;
 import org.lakehouse.config.exception.QualityMetricsConfNotFoundException;
+import org.lakehouse.config.exception.QualityMetricsConfTestSetNotFoundException;
 import org.lakehouse.config.repository.dataset.DataSetRepository;
-import org.lakehouse.config.repository.dq.*;
+import org.lakehouse.config.repository.dq.QualityMetricsConfRepository;
+import org.lakehouse.config.repository.dq.QualityMetricsConfTestSetRepository;
 import org.lakehouse.config.service.dataset.source.DataSetSourceService;
 import org.springframework.stereotype.Service;
 
@@ -48,17 +51,28 @@ public class QualityMetricsConfService {
         result.setDataSetKeyName(qualityMetricsConf.getDataSet().getKeyName());
         result.setTestSets(
                 qualityMetricsConfTestSetRepository
-                        .findByQualityMetricsConfKeyNameAndIsThreshold(qualityMetricsConf.getKeyName(),false)
+                        .findByQualityMetricsConfKeyNameAndElementType(qualityMetricsConf.getKeyName(),ElementType.TEST_SET)
                         .stream()
                         .map(qualityMetricsConfTestSetService::mapQualityMetricsConfTestSetDTO)
                         .collect(Collectors.toMap(Map.Entry::getKey,Map.Entry::getValue))
         );
         result.setThresholds(
                 qualityMetricsConfTestSetRepository
-                        .findByQualityMetricsConfKeyNameAndIsThreshold(qualityMetricsConf.getKeyName(),true)
+                        .findByQualityMetricsConfKeyNameAndElementType(qualityMetricsConf.getKeyName(),ElementType.THRESHOLD)
                         .stream()
                         .map(qualityMetricsConfTestSetService::mapQualityMetricsConfTestSetDTO)
                         .collect(Collectors.toMap(Map.Entry::getKey,Map.Entry::getValue))
+        );
+        result.setMetric(
+                qualityMetricsConfTestSetRepository
+                .findByQualityMetricsConfKeyNameAndElementType(
+                        qualityMetricsConf.getKeyName(),
+                        ElementType.METRIC)
+                        .stream()
+                        .map(qualityMetricsConfTestSetService::mapQualityMetricsConfTestSetDTO)
+                        .findFirst()
+                        .orElseThrow(() -> new QualityMetricsConfTestSetNotFoundException("Test set with type metric not found"))
+                        .getValue()
         );
         result.setSources(
                 dataSetSourceService
@@ -80,7 +94,7 @@ public class QualityMetricsConfService {
     private QualityMetricsConfTestSet mapQualityMetricsConfTestSetAbstract(
             Map.Entry<String, QualityMetricsConfTestSetDTO> dto) {
         QualityMetricsConfTestSet result = new QualityMetricsConfTestSet();
-        result.setDqMetricsType(dto.getValue().getDqMetricsType());
+        result.setDqMetricsType(dto.getValue().getType());
         result.setSave(dto.getValue().isSave());
         result.setKeyName(dto.getKey());
         result.setDescription(dto.getValue().getDescription());
@@ -100,9 +114,9 @@ public class QualityMetricsConfService {
     public QualityMetricsConfDTO save(QualityMetricsConfDTO qualityMetricsConfDTO) {
         QualityMetricsConf qualityMetricsConf = qualityMetricsConfRepository.save(mapQualityMetricsConf(qualityMetricsConfDTO));
 
-        qualityMetricsConfTestSetService.save(qualityMetricsConf,qualityMetricsConfDTO.getTestSets(), false);
-        qualityMetricsConfTestSetService.save(qualityMetricsConf,qualityMetricsConfDTO.getThresholds(), true);
-
+        qualityMetricsConfTestSetService.save(qualityMetricsConf,qualityMetricsConfDTO.getTestSets(), ElementType.TEST_SET);
+        qualityMetricsConfTestSetService.save(qualityMetricsConf,qualityMetricsConfDTO.getThresholds(), ElementType.THRESHOLD);
+        qualityMetricsConfTestSetService.save(qualityMetricsConf,Map.of(qualityMetricsConf.getKeyName(), qualityMetricsConfDTO.getMetric()), ElementType.METRIC);
         dataSetSourceService.save(qualityMetricsConf, qualityMetricsConfDTO.getSources());
         return findById(qualityMetricsConfDTO.getKeyName());
     }

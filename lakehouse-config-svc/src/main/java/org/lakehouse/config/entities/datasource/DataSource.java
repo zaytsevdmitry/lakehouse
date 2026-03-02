@@ -1,9 +1,6 @@
 package org.lakehouse.config.entities.datasource;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.ForeignKey;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.lakehouse.config.entities.KeyEntityAbstract;
@@ -18,6 +15,9 @@ public class DataSource extends KeyEntityAbstract {
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Driver driver;
 
+    @Column(nullable = false)
+    private String catalogKeyName;
+
     public DataSource() {
     }
 
@@ -29,16 +29,24 @@ public class DataSource extends KeyEntityAbstract {
         this.driver = driver;
     }
 
+    public String getCatalogKeyName() {
+        return catalogKeyName;
+    }
+
+    public void setCatalogKeyName(String catalogKeyName) {
+        this.catalogKeyName = catalogKeyName;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         DataSource that = (DataSource) o;
-        return Objects.equals(driver, that.driver);
+        return Objects.equals(getDriver(), that.getDriver()) && Objects.equals(getCatalogKeyName(), that.getCatalogKeyName());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), driver);
+        return Objects.hash(super.hashCode(), getDriver(), getCatalogKeyName());
     }
 }

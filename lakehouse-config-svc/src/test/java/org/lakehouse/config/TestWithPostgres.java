@@ -1,8 +1,10 @@
 package org.lakehouse.config;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.jupiter.api.*;
 import org.lakehouse.client.api.constant.Endpoint;
-import org.lakehouse.client.api.dto.configs.*;
+import org.lakehouse.client.api.dto.configs.DagEdgeDTO;
+import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
 import org.lakehouse.client.api.dto.configs.dataset.ColumnDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
@@ -26,16 +28,16 @@ import org.lakehouse.config.repository.ScriptRepository;
 import org.lakehouse.config.repository.dataset.DataSetRepository;
 import org.lakehouse.config.repository.dataset.DataSetSourceRepository;
 import org.lakehouse.config.repository.dataset.ForeignKeyReferenceRepository;
-import org.lakehouse.config.service.dq.QualityMetricsConfService;
 import org.lakehouse.config.service.ScenarioActTemplateService;
 import org.lakehouse.config.service.ScheduleService;
 import org.lakehouse.config.service.compound.SourcesCompoundService;
+import org.lakehouse.config.service.dq.QualityMetricsConfService;
 import org.lakehouse.config.specifier.DataSourcePropertyKeyValueEntitySpecifier;
 import org.lakehouse.config.test.configutation.RestManipulator;
 import org.lakehouse.jinja.java.JinJavaUtils;
 import org.lakehouse.jinja.java.configuration.JinJavaConfiguration;
-import org.lakehouse.validator.config.ScheduleConfValidator;
 import org.lakehouse.test.config.configuration.FileLoader;
+import org.lakehouse.validator.config.ScheduleConfValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -805,7 +807,7 @@ public class TestWithPostgres {
                 .get("processingdb")
                 .getService()
                 .getProperties()
-                .get("spark.sql.catalog.processingdb.url");
+                .get("spark.sql.catalog.processing.url");
         assert (found.equals(expected));
     }
 
@@ -835,7 +837,7 @@ public class TestWithPostgres {
         loadScript("dq/non_zero_count", "sql");
         loadScript("dq/non_zero_count_th","sql");
 
-        QualityMetricsConfDTO expected = fileLoader.loaQualityMetricsConfDTO("transaction_dds_qm");
+        QualityMetricsConfDTO expected = fileLoader.loadQualityMetricsConfDTO("transaction_dds_qm");
         QualityMetricsConfDTO result = qualityMetricsConfService.save(expected);
 
         // delete
@@ -854,5 +856,55 @@ public class TestWithPostgres {
         System.out.println("expected ->> \n" + ObjectMapping.asJsonString(expected));
         System.out.println("result ->> \n" +ObjectMapping.asJsonString(result));
         assert(expected.equals(result));
+    }
+    @Test
+    void printEndpoints() throws JsonProcessingException {
+
+    Arrays.asList(
+        Endpoint.ROOT_API_V1_0,
+        Endpoint.CONFIGS,
+        Endpoint.NAME_SPACES,
+        Endpoint.NAME_SPACES_NAME,
+        Endpoint.TASK_EXECUTION_SERVICE_GROUPS,
+        Endpoint.TASK_EXECUTION_SERVICE_GROUPS_NAME,
+        Endpoint.SCRIPTS,
+        Endpoint.SCRIPT_BY_KEY,
+        Endpoint.DATA_SETS,
+        Endpoint.DATA_SETS_NAME,
+        Endpoint.QUALITY_METRICS,
+        Endpoint.QUALITY_METRICS_NAME,
+        Endpoint.DRIVERS,
+        Endpoint.DRIVERS_NAME,
+        Endpoint.DATA_SOURCES,
+        Endpoint.DATA_SOURCES_NAME,
+        Endpoint.COMPOUND,
+        Endpoint.SOURCES_CONF_BY_DATASET_KEY_NAME,
+        Endpoint.DATASET_MODEL_SCRIPT_BY_DATASET_KEY_NAME,
+        Endpoint.SCHEDULES,
+        Endpoint.SCHEDULES_NAME,
+        Endpoint.EFFECTIVE_SCHEDULES_ROOT,
+        Endpoint.EFFECTIVE_SCHEDULES_FROM_DT,
+        Endpoint.EFFECTIVE_SCHEDULES_NAME,
+        Endpoint.EFFECTIVE_SCHEDULE_SCENARIOACT_TASK,
+        Endpoint.SCENARIOS,
+        Endpoint.SCENARIOS_NAME,
+        Endpoint.SCHEDULE,
+        Endpoint.SCHEDULE_NAME,
+        Endpoint.SCHEDULE_ID,
+        Endpoint.TASKS,
+        Endpoint.SCHEDULED_TASKS,
+        Endpoint.SCHEDULED_TASKS_LOCK_BY_ID,
+        Endpoint.SCHEDULED_TASKS_LOCK_ID,
+        Endpoint.SCHEDULED_TASKS_LOCKS,
+        Endpoint.SCHEDULED_TASKS_RELEASE,
+        Endpoint.SCHEDULED_TASKS_LOCK_HEARTBEAT,
+        Endpoint.SCHEDULED_TASKS_ID,
+        Endpoint.STATE,
+        Endpoint.STATE_DATASET,
+        Endpoint.TASK_EXECUTOR,
+        Endpoint.TASK_EXECUTOR_PROCESSOR,
+        Endpoint.TASK_EXECUTOR_PROCESSOR_CONFIG,
+        Endpoint.TASK_EXECUTOR_PROCESSOR_GET_BY_LOCK_ID
+    ).stream().sorted().forEach(s -> System.out.println(s));
     }
 }

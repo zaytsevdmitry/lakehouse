@@ -8,7 +8,7 @@ public class QualityMetricsConfNotFoundException extends RuntimeException {
     private static final long serialVersionUID = 94297551951697828L;
 
     public QualityMetricsConfNotFoundException(String name) {
-        super(String.format("DataSet with name %s not found", name));
+        super(String.format("QualityMetricsConf with name %s not found", name));
     }
 
 }

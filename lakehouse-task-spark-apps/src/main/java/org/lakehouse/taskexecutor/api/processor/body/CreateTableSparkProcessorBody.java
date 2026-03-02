@@ -3,11 +3,14 @@ package org.lakehouse.taskexecutor.api.processor.body;
 import org.apache.spark.sql.SparkSession;
 import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.taskexecutor.api.datasource.exception.CreateException;
+import org.lakehouse.taskexecutor.spark.configuration.SparkConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Service;
 
 @Service
+@Import(SparkConfiguration.class)
 public class CreateTableSparkProcessorBody extends SparkProcessorBodyAbstract{
     private final  Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -21,9 +24,8 @@ public class CreateTableSparkProcessorBody extends SparkProcessorBodyAbstract{
 
         try {
             bodyParam
-                    .targetDataSourceManipulator().createTableIfNotExists();
-
-
+                    .targetDataSourceManipulator()
+                    .createTableIfNotExists();
         } catch (CreateException ue){
             throw  new TaskFailedException(ue);
         }

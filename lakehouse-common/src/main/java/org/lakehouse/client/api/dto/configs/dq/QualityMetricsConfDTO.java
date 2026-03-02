@@ -3,7 +3,14 @@ package org.lakehouse.client.api.dto.configs.dq;
 import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetSourceDTO;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+/**
+ *
+ *"metric" nullable field expected result is 1 column with name value
+ *
+ */
 
 public class QualityMetricsConfDTO {
     private String dataSetKeyName;
@@ -14,7 +21,7 @@ public class QualityMetricsConfDTO {
     private Map<String, DataSetSourceDTO> sources = new HashMap<>();
     private Map<String, QualityMetricsConfTestSetDTO> testSets = new HashMap<>();
     private Map<String, QualityMetricsConfTestSetDTO> thresholds = new HashMap<>();
-
+    private QualityMetricsConfTestSetDTO metric;
 
     public QualityMetricsConfDTO() {
     }
@@ -79,12 +86,12 @@ public class QualityMetricsConfDTO {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         QualityMetricsConfDTO that = (QualityMetricsConfDTO) o;
-        return isEnabled() == that.isEnabled() && Objects.equals(getDataSetKeyName(), that.getDataSetKeyName()) && Objects.equals(getKeyName(), that.getKeyName()) && Objects.equals(getDescription(), that.getDescription()) && Objects.equals(getSources(), that.getSources()) && Objects.equals(getTestSets(), that.getTestSets()) && Objects.equals(getThresholds(), that.getThresholds()) && getDqThresholdViolationLevel() == that.getDqThresholdViolationLevel();
+        return isEnabled() == that.isEnabled() && Objects.equals(getDataSetKeyName(), that.getDataSetKeyName()) && Objects.equals(getKeyName(), that.getKeyName()) && Objects.equals(getDescription(), that.getDescription()) && getDqThresholdViolationLevel() == that.getDqThresholdViolationLevel() && Objects.equals(getSources(), that.getSources()) && Objects.equals(getTestSets(), that.getTestSets()) && Objects.equals(getThresholds(), that.getThresholds()) && Objects.equals(getMetric(), that.getMetric());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getDataSetKeyName(), getKeyName(), getDescription(), isEnabled(), getSources(), getTestSets(), getThresholds(), getDqThresholdViolationLevel());
+        return Objects.hash(getDataSetKeyName(), getKeyName(), getDescription(), isEnabled(), getDqThresholdViolationLevel(), getSources(), getTestSets(), getThresholds(), getMetric());
     }
 
     @Override
@@ -94,10 +101,11 @@ public class QualityMetricsConfDTO {
                 ", keyName='" + keyName + '\'' +
                 ", description='" + description + '\'' +
                 ", enabled=" + enabled +
-                ", sources=" + sources +
-                ", qualityMetricsConfTestSets=" + testSets +
-                ", thresholds=" + thresholds +
                 ", dqThresholdViolationLevel=" + dqThresholdViolationLevel +
+                ", sources=" + sources +
+                ", testSets=" + testSets +
+                ", thresholds=" + thresholds +
+                ", metric=" + metric +
                 '}';
     }
 
@@ -107,6 +115,14 @@ public class QualityMetricsConfDTO {
 
     public void setThresholds(Map<String, QualityMetricsConfTestSetDTO> thresholds) {
         this.thresholds = thresholds;
+    }
+
+    public QualityMetricsConfTestSetDTO getMetric() {
+        return metric;
+    }
+
+    public void setMetric(QualityMetricsConfTestSetDTO metric) {
+        this.metric = metric;
     }
 }
 

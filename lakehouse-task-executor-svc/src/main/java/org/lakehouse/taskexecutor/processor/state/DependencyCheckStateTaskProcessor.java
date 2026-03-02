@@ -1,14 +1,12 @@
 package org.lakehouse.taskexecutor.processor.state;
 
 import org.lakehouse.client.api.constant.Status;
-import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.state.DataSetIntervalDTO;
 import org.lakehouse.client.api.dto.state.DataSetStateDTO;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.client.api.utils.DateTimeUtils;
-import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.client.rest.state.StateRestClientApi;
 import org.lakehouse.jinja.java.JinJavaUtils;
 import org.slf4j.Logger;

@@ -6,7 +6,7 @@
   "tableName": "transactions",
   "scripts": [
     {
-      "key": "transaction_processing.sql",
+      "key": "dataset-sql-model.transaction_processing.sql",
       "order": 1
     }
   ],
@@ -15,7 +15,7 @@
     {
       "name": "id",
       "description": "tx id",
-      "dataType": "serial",
+      "dataType": "integer",
       "nullable": false,
       "order": 0,
       "sequence": true

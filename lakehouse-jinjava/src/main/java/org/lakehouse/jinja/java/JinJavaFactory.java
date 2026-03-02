@@ -1,12 +1,7 @@
 package org.lakehouse.jinja.java;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.hubspot.jinjava.Jinjava;
 import com.hubspot.jinjava.lib.fn.ELFunctionDefinition;
-import org.lakehouse.client.api.constant.SystemVarKeys;
-import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
-import org.lakehouse.client.api.dto.task.SourceConfDTO;
-import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.jinja.java.functions.JinjavaDateTimeFunctions;
 import org.lakehouse.jinja.java.functions.TaskProcessConfigExtractor;
 
@@ -43,6 +38,13 @@ public class JinJavaFactory {
                         "refCat",
                         TaskProcessConfigExtractor.class,
                         "refCat",
+                        String.class));
+        jinjava.getGlobalContext().registerFunction(
+                new ELFunctionDefinition(
+                        "",
+                        "refCatSchema",
+                        TaskProcessConfigExtractor.class,
+                        "refCatSchema",
                         String.class));
         jinjava.getGlobalContext().registerFunction(
                 new ELFunctionDefinition(

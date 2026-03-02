@@ -13,7 +13,7 @@ public class ScheduledTaskDTO extends TaskDTO {
     private String intervalStartDateTime;
     private String intervalEndDateTime;
     private String dataSetKeyName;
-
+    private Integer tryNum;
     public ScheduledTaskDTO() {
     }
 
@@ -81,6 +81,15 @@ public class ScheduledTaskDTO extends TaskDTO {
     public void setDataSetKeyName(String dataSetKeyName) {
         this.dataSetKeyName = dataSetKeyName;
     }
+
+    public Integer getTryNum() {
+        return tryNum;
+    }
+
+    public void setTryNum(Integer tryNum) {
+        this.tryNum = tryNum;
+    }
+
     @JsonIgnore
     public String getTaskFullName(){
         return String.format("%s.%s.%s.%s",

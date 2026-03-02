@@ -87,3 +87,4 @@ echo "">> Dockerfile
 
 docker build -t lakehouse-hms:$LH_VERSION ./
 docker images
+rm -rf ./opt

@@ -4,9 +4,7 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.lakehouse.client.api.constant.Types;
-import org.lakehouse.client.api.dto.configs.ScriptReferenceDTO;
 
-import java.util.List;
 import java.util.Objects;
 
 @Entity
@@ -25,10 +23,9 @@ public class QualityMetricsConfTestSet {
 
     @Column(nullable = false) private String keyName;
     @Column(nullable = false) private String description;
-    @Column(nullable = false) private Types.DQMetricsType dqMetricsType;
+    @Column(nullable = false) private Types.DQMetricTestSetType dqMetricTestSetType;
     @Column(nullable = false) private boolean save;
-    @Column(nullable = false) private boolean isThreshold;
-
+    @Column(nullable = false) @Enumerated(EnumType.ORDINAL) private ElementType elementType;
     public QualityMetricsConfTestSet() {
     }
 
@@ -36,7 +33,7 @@ public class QualityMetricsConfTestSet {
         this.id = a.getId();
         this.keyName = a.getKeyName();
         this.description = a.getDescription();
-        this.dqMetricsType = a.getDqMetricsType();
+        this.dqMetricTestSetType = a.getDqMetricsType();
         this.save = a.isSave();
     }
 
@@ -65,12 +62,12 @@ public class QualityMetricsConfTestSet {
         this.keyName = keyName;
     }
 
-    public Types.DQMetricsType getDqMetricsType() {
-        return dqMetricsType;
+    public Types.DQMetricTestSetType getDqMetricsType() {
+        return dqMetricTestSetType;
     }
 
-    public void setDqMetricsType(Types.DQMetricsType dqMetricsType) {
-        this.dqMetricsType = dqMetricsType;
+    public void setDqMetricsType(Types.DQMetricTestSetType dqMetricTestSetType) {
+        this.dqMetricTestSetType = dqMetricTestSetType;
     }
 
     public boolean isSave() {
@@ -89,23 +86,31 @@ public class QualityMetricsConfTestSet {
         this.qualityMetricsConf = qualityMetricsConf;
     }
 
-    public boolean isThreshold() {
-        return isThreshold;
+    public Types.DQMetricTestSetType getDqMetricTestSetType() {
+        return dqMetricTestSetType;
     }
 
-    public void setThreshold(boolean threshold) {
-        isThreshold = threshold;
+    public void setDqMetricTestSetType(Types.DQMetricTestSetType dqMetricTestSetType) {
+        this.dqMetricTestSetType = dqMetricTestSetType;
+    }
+
+    public ElementType getElementType() {
+        return elementType;
+    }
+
+    public void setElementType(ElementType elementType) {
+        this.elementType = elementType;
     }
 
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         QualityMetricsConfTestSet testSet = (QualityMetricsConfTestSet) o;
-        return isSave() == testSet.isSave() && isThreshold() == testSet.isThreshold() && Objects.equals(getId(), testSet.getId()) && Objects.equals(getQualityMetricsConf(), testSet.getQualityMetricsConf()) && Objects.equals(getKeyName(), testSet.getKeyName()) && Objects.equals(getDescription(), testSet.getDescription()) && getDqMetricsType() == testSet.getDqMetricsType();
+        return isSave() == testSet.isSave() && Objects.equals(getId(), testSet.getId()) && Objects.equals(getQualityMetricsConf(), testSet.getQualityMetricsConf()) && Objects.equals(getKeyName(), testSet.getKeyName()) && Objects.equals(getDescription(), testSet.getDescription()) && getDqMetricTestSetType() == testSet.getDqMetricTestSetType() && getElementType() == testSet.getElementType();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getQualityMetricsConf(), getKeyName(), getDescription(), getDqMetricsType(), isSave(), isThreshold());
+        return Objects.hash(getId(), getQualityMetricsConf(), getKeyName(), getDescription(), getDqMetricTestSetType(), isSave(), getElementType());
     }
 }

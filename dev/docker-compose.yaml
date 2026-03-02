@@ -147,6 +147,9 @@ services:
       lakehouse_net:
         ipv4_address: 192.1.193.50
     volumes:
+      - ../lakehouse-task-spark-apps/target/lakehouse-task-spark-apps-0.3.0-jar-with-dependencies.jar:/opt/lakehouse-task-spark-apps/lakehouse-task-spark-apps-0.3.0-jar-with-dependencies.jar
+      - ../lakehouse-task-spark-dq-app/target/lakehouse-task-spark-dq-app-0.3.0-jar-with-dependencies.jar:/opt/lakehouse-task-spark-dq-app/lakehouse-task-spark-dq-app-0.3.0-jar-with-dependencies.jar
+      - ./spark/drivers:/opt/drivers
       - ./conf_infra/spark-defaults.conf:/opt/spark-3.5.7-bin-hadoop3/conf/spark-defaults.conf
     deploy:
       resources:
@@ -170,6 +173,7 @@ services:
       lakehouse_net:
         ipv4_address: 192.1.193.70
     volumes:
+      - ./spark/drivers:/opt/drivers
       - ./conf_infra/spark-defaults.conf:/opt/spark-3.5.7-bin-hadoop3/conf/spark-defaults.conf
     deploy:
       resources:

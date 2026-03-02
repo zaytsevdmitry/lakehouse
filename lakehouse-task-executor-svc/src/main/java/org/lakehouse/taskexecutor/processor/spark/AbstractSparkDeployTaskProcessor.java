@@ -25,6 +25,8 @@ import java.util.Map;
  * */
 public abstract class AbstractSparkDeployTaskProcessor extends AbstractTaskProcessor {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    protected final String MAIN_CLASS_KEY = "deploy.mainClass";
+    protected final String APP_RESOURCE_KEY = "deploy.appResource";
 
     public AbstractSparkDeployTaskProcessor() {
     }

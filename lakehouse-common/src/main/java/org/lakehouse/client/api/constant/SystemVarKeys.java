@@ -23,6 +23,7 @@ public class SystemVarKeys {
     public static String DRIVER_KEY = "driver";
     public static String DATASOURCE_KEY = "dataSource";
     public static String DATASET_KEY = "dataSet";
+    public static String COLUMN = "column";
 
 
     /**

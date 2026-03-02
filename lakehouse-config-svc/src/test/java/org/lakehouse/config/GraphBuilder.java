@@ -1,4 +1,5 @@
 package org.lakehouse.config;
+
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
 import guru.nidi.graphviz.model.MutableGraph;
@@ -10,7 +11,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import static guru.nidi.graphviz.model.Factory.*;
+import static guru.nidi.graphviz.model.Factory.mutGraph;
+import static guru.nidi.graphviz.model.Factory.mutNode;
 
 
 public class GraphBuilder {

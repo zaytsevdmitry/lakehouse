@@ -19,7 +19,7 @@
   "testSets": {
     "non_zero_count": {
       "description": "count rows of every increment more than 0",
-      "dqMetricsType": "sparkSQL",
+      "type": "sparkSQL",
       "save": false,
       "scripts": [
         {
@@ -28,10 +28,20 @@
       ]
     }
   },
+  "metric" : {
+    "description": "count rows of every increment more than 0",
+    "type": "sparkSQL",
+    "save": false,
+    "scripts": [
+      {
+        "key": "dq.non_zero_count.sql"
+      }
+    ]
+  },
   "thresholds": {
     "non_zero_count_th": {
       "description": "",
-      "dqMetricsType": "sparkSQL",
+      "type": "sparkSQL",
       "save": false,
       "scripts": [
         {

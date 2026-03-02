@@ -7,13 +7,16 @@ import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.exception.TaskFailedException;
+import org.lakehouse.client.api.utils.Coalesce;
 import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.client.api.utils.SparkConfUtil;
 import org.lakehouse.jinja.java.JinJavaUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
@@ -22,10 +25,13 @@ import java.util.List;
 public class SparkLauncherTaskProcessor extends AbstractSparkDeployTaskProcessor {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final SparkRestDeployFactory sparkRestDeployFactory;
-    public SparkLauncherTaskProcessor(SparkRestDeployFactory sparkRestDeployFactory) {
+    private final String configApiUrl;
+    public SparkLauncherTaskProcessor(
+            SparkRestDeployFactory sparkRestDeployFactory,
+            @Value("${lakehouse.client.rest.config.server.url}") String configApiUrl) {
         this.sparkRestDeployFactory = sparkRestDeployFactory;
+        this.configApiUrl = configApiUrl;
     }
-
 
     @Override
     public void runTask(
@@ -37,14 +43,26 @@ public class SparkLauncherTaskProcessor extends AbstractSparkDeployTaskProcessor
         ScheduledTaskDTO unSparkedTaskConfig = SparkConfUtil.unSparkConf(scheduledTaskDTO);
 
         DataSourceDTO dataSourceDTO = sourceConfDTO.getDataSourceDTOByDataSetKeyName(targetDataSetKeyName);
+        String mainClass = Coalesce.apply(
+                scheduledTaskDTO.getTaskProcessorArgs().get(MAIN_CLASS_KEY),
+                dataSourceDTO.getService().getProperties().get(MAIN_CLASS_KEY)
+        );
+        String appResource = Coalesce.apply(
+                scheduledTaskDTO.getTaskProcessorArgs().get(APP_RESOURCE_KEY),
+                dataSourceDTO.getService().getProperties().get(APP_RESOURCE_KEY)
+        );
         try {
+            List<String> appArgs = new ArrayList<>();
+            appArgs.add(ObjectMapping.asJsonString(unSparkedTaskConfig));
+            appArgs.add("--lakehouse.client.rest.config.server.url="+ configApiUrl);
+
             deploy(
                     scheduledTaskDTO.getTaskFullName(),
-                    dataSourceDTO.getService().getProperties().get("deploy.mainClass"),
-                    dataSourceDTO.getService().getProperties().get("deploy.appResource"),
+                    mainClass,
+                    appResource,
                     sparkRestDeployFactory.getServerUrl(sourceConfDTO,scheduledTaskDTO,jinJavaUtils),
                     SparkConfUtil.extractSparkConFromTaskConf(scheduledTaskDTO, new HashSet<>(sourceConfDTO.getDataSources().values())),
-                    List.of(ObjectMapping.asJsonString(unSparkedTaskConfig)));
+                    appArgs);
         } catch (JsonProcessingException e) {
             throw new TaskConfigurationException(e);
         }

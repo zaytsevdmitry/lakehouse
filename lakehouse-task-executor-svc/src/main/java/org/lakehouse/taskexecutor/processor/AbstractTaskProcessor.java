@@ -1,7 +1,7 @@
 package org.lakehouse.taskexecutor.processor;
 
-import org.lakehouse.taskexecutor.api.processor.TaskProcessor;
 import org.lakehouse.client.api.exception.TaskFailedException;
+import org.lakehouse.taskexecutor.api.processor.TaskProcessor;
 
 
 public abstract class AbstractTaskProcessor implements TaskProcessor {

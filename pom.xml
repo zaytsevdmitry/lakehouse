@@ -20,7 +20,6 @@
         <module>lakehouse-scheduler-svc</module>
         <module>lakehouse-state-rest-client</module>
         <module>lakehouse-task-executor-svc</module>
-        <module>lakehouse-task-spark-apps</module>
         <module>lakehouse-ui-svc</module>
         <module>lakehouse-cli</module>
         <module>lakehouse-common-test</module>
@@ -31,7 +30,8 @@
         <module>lakehouse-spark-rest-client</module>
         <module>lakehouse-task-executor-api</module>
         <module>lakehouse-validators</module>
-
+        <module>lakehouse-task-spark-apps</module>
+        <module>lakehouse-task-spark-dq-app</module>
     </modules>
     <properties>
         <maven.compiler.source>17</maven.compiler.source>

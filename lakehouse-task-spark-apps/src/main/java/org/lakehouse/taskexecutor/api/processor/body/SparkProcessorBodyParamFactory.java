@@ -1,17 +1,15 @@
 package org.lakehouse.taskexecutor.api.processor.body;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
+import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.api.exception.DDLDIalectException;
-import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.jinja.java.JinJavaUtils;
-import org.lakehouse.taskexecutor.executionmodule.body.CatalogActivator;
-import org.lakehouse.taskexecutor.executionmodule.body.datasourcemanipulator.SparkDataSourceManipulatorFactory;
-import org.lakehouse.taskexecutor.executionmodule.body.datasourcemanipulator.UnsuportedDataSourceException;
+import org.lakehouse.taskexecutor.api.processor.body.body.CatalogActivator;
+import org.lakehouse.taskexecutor.api.processor.body.body.datasourcemanipulator.SparkDataSourceManipulatorFactory;
+import org.lakehouse.taskexecutor.api.processor.body.body.datasourcemanipulator.UnsuportedDataSourceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -37,9 +35,9 @@ public class SparkProcessorBodyParamFactory {
     }
 
 
-    public  BodyParam buildSparkProcessorBodyParameter(ScheduledTaskLockDTO scheduledTaskLockDTO) throws TaskFailedException {
+    public  BodyParam buildSparkProcessorBodyParameter(ScheduledTaskDTO scheduledTaskDTO) throws TaskFailedException {
 
-        SourceConfDTO sourceConfDTO = configRestClientApi.getSourceConfDTO(scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getDataSetKeyName());
+        SourceConfDTO sourceConfDTO = configRestClientApi.getSourceConfDTO(scheduledTaskDTO.getDataSetKeyName());
 
         catalogActivator.activate(
                 sourceConfDTO.getDataSources().values().stream().toList()
@@ -50,13 +48,12 @@ public class SparkProcessorBodyParamFactory {
         try {
             jinJavaUtils
                     .injectGlobalContext(ObjectMapping.asMap(sourceConfDTO))
-                    .injectGlobalContext(ObjectMapping.asMap(scheduledTaskLockDTO));
+                    .injectGlobalContext(ObjectMapping.asMap(scheduledTaskDTO));
 
             bodyParam = new BodyParamImpl(
                     sparkDataSourceManipulatorFactory.buildTargetDataSourceManipulator(sourceConfDTO),
                     sparkDataSourceManipulatorFactory.buildDataSourceManipulators(sourceConfDTO),
-                    scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getTaskProcessorArgs()
-
+                    scheduledTaskDTO.getTaskProcessorArgs()
             );
         }catch (UnsuportedDataSourceException | DDLDIalectException | IOException e){
             throw new TaskFailedException(e);
