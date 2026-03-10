@@ -1,5 +1,6 @@
 package org.lakehouse.taskexecutor.spark.dq.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.spark.sql.*;
 import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.constant.Types;
@@ -17,14 +18,16 @@ import org.lakehouse.taskexecutor.spark.dq.runner.TestSetRunner;
 import org.lakehouse.taskexecutor.spark.dq.service.producer.MetricDQProducerService;
 import org.lakehouse.taskexecutor.spark.dq.service.producer.MetricDQTestSetProducerService;
 import org.lakehouse.taskexecutor.spark.dq.service.producer.MetricDQValueProducerService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-@Service
+//@Service
 public class QualityMetricRunner {
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final Long metricId;
     private final SourceConfDTO sourceConfDTO;
     private final ScheduledTaskDTO scheduledTaskDTO;
@@ -62,19 +65,25 @@ public class QualityMetricRunner {
         saveMetric(Status.DQMetric.RUNNING);
 
         for (Map.Entry<String, QualityMetricsConfTestSetDTO> testSet : qualityMetricsConfDTO.getTestSets().entrySet()) {
+
             createTempView(testSet);
         }
+
 
         if (qualityMetricsConfDTO.getMetric() != null){
             // for thresholds
             createTempView(Map.entry(qualityMetricsConfDTO.getKeyName(),qualityMetricsConfDTO.getMetric()));
             // for save metrics
-            sparkSession
-                    .table(qualityMetricsConfDTO.getKeyName())
-                    .withColumn("metricId",functions.lit(metricId))
-                    .as(Encoders.bean(MetricDQValueDTO.class))
-                    .collectAsList()
-                    .forEach(metricDQValueProducerService::send);
+            if (qualityMetricsConfDTO.isSave()) {
+                sparkSession
+                        .table(qualityMetricsConfDTO.getKeyName())
+                        .withColumn("metricId", functions.lit(metricId))
+                       // .select("metricId", "subName", "value")
+                      //  .map(row -> new MetricDQValueDTO(metricId,row.getAs("subName"),row.getAs("value")))
+                        .as(Encoders.bean(MetricDQValueDTO.class))
+                        .collectAsList()
+                        .forEach(metricDQValueProducerService::send);
+            }
         }
 
         // perform threshold violation
@@ -97,14 +106,20 @@ public class QualityMetricRunner {
 
     private Dataset<Row> createDataset(Map.Entry<String, QualityMetricsConfTestSetDTO> testSet ) throws TaskFailedException, TaskConfigurationException {
         TestSetRunner testSetRunner = getTestSetRunner(testSet.getValue().getType());
-        Dataset<Row> testSetDataSet = testSetRunner.run(testSet, sourceConfDTO, scheduledTaskDTO, jinJavaUtils);
+        Dataset<Row> testSetDataSet = null;
+        try {
+            testSetDataSet = testSetRunner.run(testSet, sourceConfDTO, scheduledTaskDTO, jinJavaUtils);
+        } catch (JsonProcessingException e) {
+            throw new TaskConfigurationException(e);
+        }
         //todo remove/ it's debug
         testSetDataSet.show();
+        logger.info("Created dataset {}", testSet.getKey());
         return testSetDataSet;
     }
     private void createTempView(Map.Entry<String, QualityMetricsConfTestSetDTO> testSet ) throws TaskFailedException, TaskConfigurationException {
         createDataset(testSet).createOrReplaceTempView(testSet.getKey());
-
+        logger.info("Created view {}", testSet.getKey());
     }
     private TestSetRunner getTestSetRunner(Types.DQMetricTestSetType type) throws TaskFailedException {
         return switch (type) {
@@ -115,18 +130,20 @@ public class QualityMetricRunner {
     }
 
     private void saveMetric(Status.DQMetric status){
+        logger.info("Save metric status {} is {}", qualityMetricsConfDTO.getKeyName(), status.label);
         MetricDQStatusDTO metric = new MetricDQStatusDTO(
                 metricId,
                 sourceConfDTO.getTargetDataSource().getKeyName(),
                 sourceConfDTO.getTargetDataSet().getDatabaseSchemaName(),
                 sourceConfDTO.getTargetDataSet().getTableName(),
-                DateTimeUtils.now(),
-                DateTimeUtils.parseDateTimeFormatWithTZ(scheduledTaskDTO.getTargetDateTime()),
-                DateTimeUtils.parseDateTimeFormatWithTZ(scheduledTaskDTO.getIntervalStartDateTime()),
-                DateTimeUtils.parseDateTimeFormatWithTZ(scheduledTaskDTO.getIntervalEndDateTime()),
+                DateTimeUtils.nowStr(),
+                scheduledTaskDTO.getTargetDateTime(),
+                scheduledTaskDTO.getIntervalStartDateTime(),
+                scheduledTaskDTO.getIntervalEndDateTime(),
                 status,
                 qualityMetricsConfDTO.getKeyName()
         );
         MetricDQProducerService.send(metric);
+        logger.info("Metric status sends");
     }
 }

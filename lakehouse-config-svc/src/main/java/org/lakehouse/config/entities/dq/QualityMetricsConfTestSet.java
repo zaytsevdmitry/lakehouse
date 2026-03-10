@@ -24,7 +24,7 @@ public class QualityMetricsConfTestSet {
     @Column(nullable = false) private String keyName;
     @Column(nullable = false) private String description;
     @Column(nullable = false) private Types.DQMetricTestSetType dqMetricTestSetType;
-    @Column(nullable = false) private boolean save;
+
     @Column(nullable = false) @Enumerated(EnumType.ORDINAL) private ElementType elementType;
     public QualityMetricsConfTestSet() {
     }
@@ -34,7 +34,6 @@ public class QualityMetricsConfTestSet {
         this.keyName = a.getKeyName();
         this.description = a.getDescription();
         this.dqMetricTestSetType = a.getDqMetricsType();
-        this.save = a.isSave();
     }
 
     public Long getId() {
@@ -70,13 +69,7 @@ public class QualityMetricsConfTestSet {
         this.dqMetricTestSetType = dqMetricTestSetType;
     }
 
-    public boolean isSave() {
-        return save;
-    }
 
-    public void setSave(boolean save) {
-        this.save = save;
-    }
 
     public QualityMetricsConf getQualityMetricsConf() {
         return qualityMetricsConf;
@@ -106,11 +99,11 @@ public class QualityMetricsConfTestSet {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         QualityMetricsConfTestSet testSet = (QualityMetricsConfTestSet) o;
-        return isSave() == testSet.isSave() && Objects.equals(getId(), testSet.getId()) && Objects.equals(getQualityMetricsConf(), testSet.getQualityMetricsConf()) && Objects.equals(getKeyName(), testSet.getKeyName()) && Objects.equals(getDescription(), testSet.getDescription()) && getDqMetricTestSetType() == testSet.getDqMetricTestSetType() && getElementType() == testSet.getElementType();
+        return  Objects.equals(getId(), testSet.getId()) && Objects.equals(getQualityMetricsConf(), testSet.getQualityMetricsConf()) && Objects.equals(getKeyName(), testSet.getKeyName()) && Objects.equals(getDescription(), testSet.getDescription()) && getDqMetricTestSetType() == testSet.getDqMetricTestSetType() && getElementType() == testSet.getElementType();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getQualityMetricsConf(), getKeyName(), getDescription(), getDqMetricTestSetType(), isSave(), getElementType());
+        return Objects.hash(getId(), getQualityMetricsConf(), getKeyName(), getDescription(), getDqMetricTestSetType(), getElementType());
     }
 }

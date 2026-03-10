@@ -1,5 +1,6 @@
 package org.lakehouse.taskexecutor.spark.dq.runner;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.lakehouse.client.api.dto.configs.dq.QualityMetricsConfTestSetDTO;
@@ -15,5 +16,5 @@ public interface TestSetRunner {
             Map.Entry<String, QualityMetricsConfTestSetDTO> qualityMetricsConfTestSetDTO,
             SourceConfDTO sourceConfDTO,
             ScheduledTaskDTO scheduledTaskDTO,
-            JinJavaUtils jinJavaUtils) throws TaskConfigurationException;
+            JinJavaUtils jinJavaUtils) throws TaskConfigurationException, JsonProcessingException;
 }

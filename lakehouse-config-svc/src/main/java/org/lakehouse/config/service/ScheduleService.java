@@ -314,7 +314,7 @@ public class ScheduleService {
         result.setName(Coalesce.apply(taskDTO.getName(), taskTemplate.getName()));
         result.setDescription(Coalesce.apply(taskDTO.getDescription(), taskTemplate.getDescription()));
         result.setImportance(Coalesce.apply(taskDTO.getImportance(), taskTemplate.getImportance()));
-        result.setTaskProcessorArgs(Coalesce.applyStringMap(taskDTO.getTaskProcessorArgs(), taskTemplate.getTaskProcessorArgs()));
+        result.setTaskProcessorArgs(Coalesce.applyRewriteStringMap(taskDTO.getTaskProcessorArgs(), taskTemplate.getTaskProcessorArgs()));
         result.setTaskProcessor(Coalesce.apply(taskDTO.getTaskProcessor(), taskTemplate.getTaskProcessor()));
         result.setTaskProcessorBody(Coalesce.apply(taskDTO.getTaskProcessorBody(),taskTemplate.getTaskProcessorBody()));
         result.setTaskExecutionServiceGroupName(Coalesce.apply(taskDTO.getTaskExecutionServiceGroupName(), taskTemplate.getTaskExecutionServiceGroupName()));

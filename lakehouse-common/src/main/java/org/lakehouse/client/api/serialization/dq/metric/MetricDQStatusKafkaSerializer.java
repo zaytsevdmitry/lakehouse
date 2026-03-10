@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.serializer.support.SerializationFailedException;
 
 
-public class MetricDQKafkaSerializer implements Serializer<MetricDQStatusDTO> {
+public class MetricDQStatusKafkaSerializer implements Serializer<MetricDQStatusDTO> {
     private final ObjectMapper objectMapper = new ObjectMapper();
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -23,7 +23,7 @@ public class MetricDQKafkaSerializer implements Serializer<MetricDQStatusDTO> {
             return objectMapper.writeValueAsBytes(data);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
-            throw new SerializationFailedException("Error when serializing MessageDto to byte[]");
+            throw new SerializationFailedException(String.format("Error when serializing %s to byte[]",MetricDQStatusDTO.class.getName()),e);
         }
     }
 

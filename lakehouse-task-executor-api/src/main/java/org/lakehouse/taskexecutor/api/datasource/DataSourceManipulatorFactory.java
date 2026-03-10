@@ -4,12 +4,11 @@ import org.lakehouse.client.api.dto.common.SQLTemplateDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
+import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.factory.SQLTemplateFactory;
 import org.lakehouse.jinja.java.JinJavaUtils;
 import org.lakehouse.taskexecutor.api.datasource.execute.ExecuteUtils;
 import org.lakehouse.taskexecutor.api.datasource.execute.jdbc.JdbcExecuteUtils;
-
-import java.io.IOException;
 
 public class DataSourceManipulatorFactory {
 
@@ -17,7 +16,7 @@ public class DataSourceManipulatorFactory {
             DriverDTO driverDTO,
             DataSourceDTO dataSourceDTO,
             DataSetDTO dataSetDTO,
-            JinJavaUtils jinJavaUtils) throws IOException {
+            JinJavaUtils jinJavaUtils) throws TaskConfigurationException {
         //still one way
         ExecuteUtils jdbcUtils = new JdbcExecuteUtils(
                 jinJavaUtils,

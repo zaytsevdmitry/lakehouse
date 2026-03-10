@@ -28,6 +28,24 @@
         <jersey.version>2.36</jersey.version>
         <!--Spark-->
     </properties>
+    <dependencyManagement>
+        <dependencies>
+            <!-- Define the version here, but don't add the dependency to parent project -->
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>2.15.2</version>
+                <scope>compile</scope>
+            </dependency>
+            <!-- Define the version here, but don't add the dependency to parent project -->
+            <dependency>
+                <groupId>com.fasterxml.jackson.module</groupId>
+                <artifactId>jackson-module-scala_2.12</artifactId>
+                <version>2.15.2</version>
+                <scope>compile</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <dependencies>
         <dependency>
             <groupId>org.springframework.kafka</groupId>
@@ -38,6 +56,12 @@
                     <artifactId>spring-boot-starter-logging</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>lakehouse</groupId>
+            <artifactId>lakehouse-validators</artifactId>
+            <version>0.3.0</version>
         </dependency>
 
         <dependency>

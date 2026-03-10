@@ -126,7 +126,7 @@ public class SparkTaskProcessorBodyTest {
     private DataSourceManipulator createPgDSM(
             SparkSession sparkSession,
             String dataSetKeyName,
-            Dataset<Row> initData) throws CreateException, IOException, UnsuportedDataSourceException, NoSuchTableException {
+            Dataset<Row> initData) throws CreateException, IOException, UnsuportedDataSourceException, NoSuchTableException, TaskConfigurationException {
 
         SourceConfDTO conf = configRestClientApi.getSourceConfDTO(dataSetKeyName); // new TaskConfigTestFactory().loadTaskProcessorConfigDTO(dataSetKeyName, "prepare");
         JinJavaUtils jinJavaUtils = JinJavaFactory.getJinJavaUtils();
@@ -155,7 +155,7 @@ public class SparkTaskProcessorBodyTest {
         return pgDSM;
     }
 
-    private void dropPgDsm(DataSourceManipulator dsm, String dataSetKeyName) throws IOException, DropException {
+    private void dropPgDsm(DataSourceManipulator dsm, String dataSetKeyName) throws IOException, DropException, TaskConfigurationException {
         SourceConfDTO conf = configRestClientApi.getSourceConfDTO(dataSetKeyName);
                 //new TaskConfigTestFactory().loadTaskProcessorConfigDTO(dataSetKeyName, "prepare");
        // Jinjava jinjava = JinJavaFactory.getJinJavaUtils(conf);
@@ -175,7 +175,7 @@ public class SparkTaskProcessorBodyTest {
     }
     @Test
     @Order(1)
-    void testPostgres() throws IOException, ReadException, DropException, UnsuportedDataSourceException, WriteException, DDLDIalectException, CreateException, ExecuteException, NoSuchTableException {
+    void testPostgres() throws IOException, ReadException, DropException, UnsuportedDataSourceException, WriteException, DDLDIalectException, CreateException, ExecuteException, NoSuchTableException, TaskConfigurationException {
         SourceConfDTO sourceConfDTO = configRestClientApi.getSourceConfDTO(trnddsDatasetName);
         ScheduledTaskLockDTO scheduledTaskLockDTO = new  TaskConfigTestFactory().loadScheduledTaskLockDTO(trnddsDatasetName,"load");
         //TaskProcessorConfigDTO conf = new TaskConfigTestFactory().loadScheduledTaskLockDTO(trnddsDatasetName,"load");
@@ -230,9 +230,8 @@ public class SparkTaskProcessorBodyTest {
 
     @Test
     @Order(4)
-    void testDropTableIceberg() throws  IOException, CreateException, DropException, UnsuportedDataSourceException {
+    void testDropTableIceberg() throws CreateException, DropException, TaskConfigurationException, IOException {
 
-        String trnddsDatasetName = "transaction_dds";
         SourceConfDTO sourceConfDTO = configRestClientApi.getSourceConfDTO(trnddsDatasetName);
         ScheduledTaskLockDTO scheduledTaskLockDTO = new  TaskConfigTestFactory().loadScheduledTaskLockDTO(trnddsDatasetName,"load");
         SparkSession sparkSession = buildSparkSession(scheduledTaskLockDTO.getScheduledTaskEffectiveDTO(), sourceConfDTO);

@@ -18,6 +18,8 @@ import org.lakehouse.jinja.java.JinJavaUtils;
 import org.lakehouse.taskexecutor.spark.dq.service.producer.MetricDQProducerService;
 import org.lakehouse.taskexecutor.spark.dq.service.producer.MetricDQTestSetProducerService;
 import org.lakehouse.taskexecutor.spark.dq.service.producer.MetricDQValueProducerService;
+import org.lakehouse.validator.config.ValidationResult;
+import org.lakehouse.validator.task.ScheduledTaskDTOValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -48,6 +50,13 @@ public class SparkTaskProcessorDQBody  {
     }
 
     public void run(ScheduledTaskDTO scheduledTaskDTO) throws TaskFailedException, TaskConfigurationException {
+
+        ValidationResult validationResult = ScheduledTaskDTOValidator.validate(scheduledTaskDTO);
+
+        if (!validationResult.isValid()){
+
+            throw new TaskConfigurationException(String.join(";", validationResult.getDescriptions()));
+        }
         SourceConfDTO sourceConfDTO = configRestClientApi.getSourceConfDTO(scheduledTaskDTO.getDataSetKeyName());
         JinJavaUtils jinJavaUtils = prepareJinJavaUtils(sourceConfDTO,scheduledTaskDTO);
         Map<String, Dataset<Row>> thresholds = new HashMap<>();
@@ -55,7 +64,7 @@ public class SparkTaskProcessorDQBody  {
         for (QualityMetricsConfDTO  qualityMetricsConfDTO:
                 configRestClientApi.getQualityMetricsConfList(scheduledTaskDTO.getDataSetKeyName())) {
             long metricId = getMetricId(sourceConfDTO,scheduledTaskDTO,qualityMetricsConfDTO);
-
+            logger.info("Run QualityMetricsConf {}", qualityMetricsConfDTO.getKeyName());
             new QualityMetricRunner(
                     metricId,
                     sourceConfDTO,

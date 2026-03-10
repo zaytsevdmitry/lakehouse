@@ -54,7 +54,12 @@ public class SparkLauncherTaskProcessor extends AbstractSparkDeployTaskProcessor
         try {
             List<String> appArgs = new ArrayList<>();
             appArgs.add(ObjectMapping.asJsonString(unSparkedTaskConfig));
-            appArgs.add("--lakehouse.client.rest.config.server.url="+ configApiUrl);
+            appArgs.addAll(unSparkedTaskConfig
+                    .getTaskProcessorArgs()
+                    .entrySet()
+                    .stream()
+                    .map(e-> String.format("--%s=%s",e.getKey(),e.getValue()))
+                    .toList());
 
             deploy(
                     scheduledTaskDTO.getTaskFullName(),

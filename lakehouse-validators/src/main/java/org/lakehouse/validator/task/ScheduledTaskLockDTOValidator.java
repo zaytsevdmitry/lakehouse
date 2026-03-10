@@ -9,12 +9,9 @@ public class ScheduledTaskLockDTOValidator {
             if (scheduledTaskLockDTO == null)
                 result.getDescriptions().add(String.format("%s can't be null", ScheduledTaskLockDTO.class.getName()));
             else {
-                if (scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getTargetDateTime() == null)
-                    result.getDescriptions().add("scheduledTaskLockDTO.getScheduledTaskEffectiveDTO can't be null");
-                if (scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getIntervalStartDateTime() == null)
-                    result.getDescriptions().add("scheduledTaskLockDTO.getScheduledTaskEffectiveDTO.getIntervalStartDateTime can't be null");
-                if (scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getIntervalEndDateTime() == null)
-                    result.getDescriptions().add("scheduledTaskLockDTO.getScheduledTaskEffectiveDTO.getIntervalEndDateTime can't be null");
+                result.getDescriptions()
+                        .addAll(ScheduledTaskDTOValidator
+                                .validate(scheduledTaskLockDTO.getScheduledTaskEffectiveDTO()).getDescriptions());
             }
             result.setValid(result.getDescriptions().isEmpty());
             return result;

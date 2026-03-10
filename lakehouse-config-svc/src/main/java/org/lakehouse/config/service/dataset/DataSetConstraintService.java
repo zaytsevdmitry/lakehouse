@@ -35,9 +35,9 @@ public class DataSetConstraintService {
             List<DataSetConstraint> found = current.stream().filter(c-> c.getName().equals(dataSetConstraint.getName())).toList();
             if (!found.isEmpty()){
                 dataSetConstraint.setId(found.get(0).getId());
-                logger.info("Constraint {} will be updated. Id is {}", dataSetConstraint.getName(), dataSetConstraint.getId());
+                logger.info("Constraint {} will be updated. metricId is {}", dataSetConstraint.getName(), dataSetConstraint.getId());
             }else {
-                logger.info("Constrain {} will be added. Id is null", dataSetConstraint.getName());
+                logger.info("Constrain {} will be added. metricId is null", dataSetConstraint.getName());
             }
             return dataSetConstraint;
         }).toList();
@@ -45,7 +45,7 @@ public class DataSetConstraintService {
         for (DataSetConstraint dataSetConstraint:current){
             List<DataSetConstraint> found = newConst.stream().filter(c-> c.getName().equals(dataSetConstraint.getName())).toList();
             if (found.isEmpty()){
-                logger.info("Constraint {} will be deleted. Id is {}", dataSetConstraint.getName(), dataSetConstraint.getId());
+                logger.info("Constraint {} will be deleted. metricId is {}", dataSetConstraint.getName(), dataSetConstraint.getId());
                 dataSetConstraintRepository.delete(dataSetConstraint);
             }
         }

@@ -16,18 +16,11 @@ public class QualityMetricsConf extends KeyEntityAbstract {
     private DataSet dataSet;
 
 
-    @Column(nullable = false, unique = true)
-    private String keyName;
-    @Column(nullable = true)
-    private String description;
-
-    @Column(nullable = false)
-    private Types.DQThresholdViolationLevel dqThresholdViolationLevel;
-
-
-    @Column(nullable = false)
-    private boolean enabled;
-
+    @Column(nullable = false, unique = true) private String keyName;
+    @Column(nullable = true) private String description;
+    @Column(nullable = false) private Types.DQThresholdViolationLevel dqThresholdViolationLevel;
+    @Column(nullable = false) private boolean enabled;
+    @Column(nullable = false) private boolean save;
     public QualityMetricsConf() {
     }
 
@@ -71,6 +64,14 @@ public class QualityMetricsConf extends KeyEntityAbstract {
         return dqThresholdViolationLevel;
     }
 
+    public boolean isSave() {
+        return save;
+    }
+
+    public void setSave(boolean save) {
+        this.save = save;
+    }
+
     public void setDqThresholdViolationLevel(Types.DQThresholdViolationLevel dqThresholdViolationLevel) {
         this.dqThresholdViolationLevel = dqThresholdViolationLevel;
     }
@@ -80,11 +81,11 @@ public class QualityMetricsConf extends KeyEntityAbstract {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         QualityMetricsConf that = (QualityMetricsConf) o;
-        return isEnabled() == that.isEnabled() && Objects.equals(getDataSet(), that.getDataSet()) && Objects.equals(getKeyName(), that.getKeyName()) && Objects.equals(getDescription(), that.getDescription()) && dqThresholdViolationLevel == that.dqThresholdViolationLevel;
+        return isEnabled() == that.isEnabled() && isSave() == that.isSave() && Objects.equals(getDataSet(), that.getDataSet()) && Objects.equals(getKeyName(), that.getKeyName()) && Objects.equals(getDescription(), that.getDescription()) && getDqThresholdViolationLevel() == that.getDqThresholdViolationLevel();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), getDataSet(), getKeyName(), getDescription(), dqThresholdViolationLevel, isEnabled());
+        return Objects.hash(super.hashCode(), getDataSet(), getKeyName(), getDescription(), getDqThresholdViolationLevel(), isEnabled(), isSave());
     }
 }

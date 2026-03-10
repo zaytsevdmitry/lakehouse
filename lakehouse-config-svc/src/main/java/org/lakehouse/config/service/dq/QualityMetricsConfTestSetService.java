@@ -33,7 +33,6 @@ public class QualityMetricsConfTestSetService {
         result.setDescription(dto.getValue().getDescription());
         result.setQualityMetricsConf(qualityMetricsConf);
         result.setDqMetricsType(dto.getValue().getType());
-        result.setSave(dto.getValue().isSave());
         result.setKeyName(dto.getKey());
         result.setElementType(elementType);
         return result;
@@ -65,7 +64,6 @@ public class QualityMetricsConfTestSetService {
             QualityMetricsConfTestSet entity) {
         QualityMetricsConfTestSetDTO result = new QualityMetricsConfTestSetDTO();
         result.setType(entity.getDqMetricsType());
-        result.setSave(entity.isSave());
         result.setDescription(entity.getDescription());
         result.setScripts( scriptReferenceService.findByQualityMetricsConfTestSetKeyNameOrderByScriptOrder(entity.getKeyName()));
         return Map.entry(entity.getKeyName(),result);

@@ -23,7 +23,7 @@ public class MetricDQProducerService {
     }
 
     public void send(MetricDQStatusDTO msg) {
-        kafkaTemplate.send(topic, msg.Id(), msg);
+        kafkaTemplate.send(topic, msg.metricId(), msg);
     }
 
 

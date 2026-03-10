@@ -1,16 +1,39 @@
 package org.lakehouse.client.api.dto.dq;
 
-import java.time.OffsetDateTime;
+import java.io.Serial;
+import java.io.Serializable;
 
-public record MetricDQValueDTO(
-    Long Id,
-    String catalogName,
-    String dataBaseSchemaName,
-    String tableName,
-    OffsetDateTime currentDateTime,
-    OffsetDateTime targetDateTime,
-    OffsetDateTime intervalStartDateTime,
-    OffsetDateTime intervalEndDateTime,
-    Long value,
-    String metricKeyName
-){};
+public final class MetricDQValueDTO implements Serializable {
+    @Serial
+    private static final long serialVersionUID = -8715383864728411678L;
+    private Long metricId;
+    private String subMetricName;
+    private Long value;
+
+    public MetricDQValueDTO() {
+    }
+
+    public Long getMetricId() {
+        return metricId;
+    }
+
+    public void setMetricId(Long metricId) {
+        this.metricId = metricId;
+    }
+
+    public String getSubMetricName() {
+        return subMetricName;
+    }
+
+    public void setSubMetricName(String subMetricName) {
+        this.subMetricName = subMetricName;
+    }
+
+    public Long getValue() {
+        return value;
+    }
+
+    public void setValue(Long value) {
+        this.value = value;
+    }
+};

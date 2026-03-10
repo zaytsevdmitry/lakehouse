@@ -1,6 +1,5 @@
 package org.lakehouse.taskexecutor.spark.dq;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.exception.TaskFailedException;
@@ -10,6 +9,8 @@ import org.lakehouse.jinja.java.configuration.JinJavaConfiguration;
 import org.lakehouse.taskexecutor.api.processor.body.BodyParam;
 import org.lakehouse.taskexecutor.api.processor.body.ProcessorBody;
 import org.lakehouse.taskexecutor.api.processor.body.SparkProcessorBodyParamFactory;
+import org.lakehouse.taskexecutor.spark.configuration.CatalogActivatorConfiguration;
+import org.lakehouse.taskexecutor.spark.configuration.SparkConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
@@ -18,6 +19,10 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @SpringBootApplication
 @ComponentScan(
@@ -27,7 +32,11 @@ import java.io.IOException;
         },
         basePackageClasses = {
                 ConfigRestClientConfiguration.class,
-                JinJavaConfiguration.class})
+                JinJavaConfiguration.class,
+                SparkConfiguration.class,
+                CatalogActivatorConfiguration.class
+        }
+        )
 public class SparkProcessorApplicationDQ {
 
     private final static Logger logger = LoggerFactory.getLogger(SparkProcessorApplicationDQ.class);
@@ -41,12 +50,38 @@ public class SparkProcessorApplicationDQ {
             throw new TaskConfigurationException(e);
         }
     }
-    public static void main(String[] args) throws TaskConfigurationException, JsonProcessingException, TaskFailedException {
-       ConfigurableApplicationContext applicationContext = SpringApplication.run(SparkProcessorApplicationDQ.class, args);
+    public static String[] adaptArgs(String[] args,ScheduledTaskDTO scheduledTaskDTO) throws TaskConfigurationException {
+        logger.info(args[0]);
+
+
+        String [] args2;
+
+        Set<String> args2Set = new HashSet<>();
+
+        if (args.length > 1) {
+            String [] otherArgs = Arrays.copyOfRange(args, 1, args.length);
+
+            args2Set.addAll(Arrays.asList(otherArgs));
+        }
+        args2Set.addAll(scheduledTaskDTO
+                .getTaskProcessorArgs()
+                .entrySet()
+                .stream()
+                .map(e-> String.format("--%s=%s",e.getKey(),e.getValue()))
+                .collect(Collectors.toSet()));
+
+        args2Set.forEach(s -> logger.info("Spring Application parameters {}", s));
+
+        return args2Set.toArray(new String[0]);
+    }
+    public static void main(String[] args) throws TaskConfigurationException, TaskFailedException {
 
         if (args.length >= 1) {
-            logger.info(args[0]);
             ScheduledTaskDTO scheduledTaskDTO = jsonToConf(args[0],ScheduledTaskDTO.class);
+
+            ConfigurableApplicationContext applicationContext = SpringApplication.run(SparkProcessorApplicationDQ.class, adaptArgs(args,scheduledTaskDTO));
+
+
             SparkProcessorBodyParamFactory sparkProcessorBodyParamFactory = applicationContext.getBean(SparkProcessorBodyParamFactory.class);
             ProcessorBody body = (ProcessorBody) applicationContext.getBean(scheduledTaskDTO.getTaskProcessorBody());
             BodyParam bodyParam = sparkProcessorBodyParamFactory.buildSparkProcessorBodyParameter(scheduledTaskDTO);

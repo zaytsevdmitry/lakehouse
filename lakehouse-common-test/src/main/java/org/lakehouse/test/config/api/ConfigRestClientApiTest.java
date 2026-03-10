@@ -33,6 +33,7 @@ public class ConfigRestClientApiTest implements ConfigRestClientApi {
     private final Map<String, DataSetDTO> dataSetDTOMap;
     private final Map<String, DataSourceDTO> dataStoreDTOMap;
     private final Map<String, DriverDTO> driverDTOMap;
+    private final Map<String, QualityMetricsConfDTO> qualityMetricsConfDTOMap;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final JinJavaUtils jinJavaUtils = JinJavaFactory.getJinJavaUtils();
@@ -54,6 +55,7 @@ public class ConfigRestClientApiTest implements ConfigRestClientApi {
         this.dataSetDTOMap = fileLoader.loadAllDataSets();
         this.dataStoreDTOMap = fileLoader.loadAllDataSources();
         this.driverDTOMap = fileLoader.loadAllDrivers();
+        this.qualityMetricsConfDTOMap = fileLoader.loadQualityMetricsConfDTOAll();
     }
 
     @Override
@@ -113,11 +115,7 @@ public class ConfigRestClientApiTest implements ConfigRestClientApi {
 
     @Override
     public QualityMetricsConfDTO getQualityMetricsConf(String key) {
-        try {
-            return fileLoader.loadQualityMetricsConfDTO(key);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return qualityMetricsConfDTOMap.get(key);
     }
 
     @Override
@@ -209,7 +207,11 @@ public class ConfigRestClientApiTest implements ConfigRestClientApi {
 
     @Override
     public List<QualityMetricsConfDTO> getQualityMetricsConfList(String dataSetKeyName) {
-        return List.of();
+        return qualityMetricsConfDTOMap
+                .values()
+                .stream()
+                .filter(v->v.getDataSetKeyName().equals(dataSetKeyName))
+                .toList();
     }
 
     @Override

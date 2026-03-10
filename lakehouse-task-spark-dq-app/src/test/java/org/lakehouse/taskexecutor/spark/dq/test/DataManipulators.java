@@ -1,18 +1,17 @@
-package org.lakehouse.taskexecutor;
+package org.lakehouse.taskexecutor.spark.dq.test;
 
 import org.apache.spark.sql.SparkSession;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;
+import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.jinja.java.JinJavaUtils;
 import org.lakehouse.taskexecutor.api.datasource.DataSourceManipulator;
 import org.lakehouse.taskexecutor.api.processor.body.body.CatalogActivator;
 import org.lakehouse.taskexecutor.api.processor.body.body.datasourcemanipulator.SparkDataSourceManipulatorFactory;
-import org.lakehouse.taskexecutor.api.processor.body.body.datasourcemanipulator.UnsuportedDataSourceException;
 import org.testcontainers.containers.PostgreSQLContainer;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +21,7 @@ public class DataManipulators {
             JinJavaUtils jinJavaUtils,
             SparkSession sparkSession,
             String dataSetKeyName,
-            SourceConfDTO sourceConfDTO) throws IOException,  UnsuportedDataSourceException {
+            SourceConfDTO sourceConfDTO) throws  TaskConfigurationException {
 
         SparkDataSourceManipulatorFactory manipulatorFactory =
                 new SparkDataSourceManipulatorFactory(sparkSession, jinJavaUtils);
@@ -42,7 +41,7 @@ public class DataManipulators {
             PostgreSQLContainer<?> postgres,
             SparkSession sparkSession,
             String dataSetKeyName,
-            SourceConfDTO sourceConfDTO) throws IOException, UnsuportedDataSourceException {
+            SourceConfDTO sourceConfDTO) throws TaskConfigurationException {
         SparkDataSourceManipulatorFactory manipulatorFactory =
                 new SparkDataSourceManipulatorFactory(sparkSession, jinJavaUtils);
 

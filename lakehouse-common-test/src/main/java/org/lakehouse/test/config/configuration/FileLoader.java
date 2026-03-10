@@ -29,7 +29,7 @@ public class FileLoader {
     public final String modelsDir = rootPath.concat("/sql-scripts");
     public final String dataSourcesDir = rootPath.concat("/datasources");
     public final String driversDir = rootPath.concat("/drivers");
-
+    public final String qualityMetricsDir = rootPath.concat("/quality-metrics");
 
     private List<String> getFilenames(String directoryName) {
         List<String> result = new ArrayList<>();
@@ -163,6 +163,17 @@ public class FileLoader {
     }
 
     public QualityMetricsConfDTO loadQualityMetricsConfDTO(String name) throws IOException {
-        return objectMapper.readValue(new File(rootPath.concat(String.format("/quality-metrics/%s.json", name))), QualityMetricsConfDTO.class);
+        return objectMapper.readValue(new File(qualityMetricsDir.concat(String.format("/%s.json", name))), QualityMetricsConfDTO.class);
     }
+
+    public Map<String,QualityMetricsConfDTO> loadQualityMetricsConfDTOAll() throws IOException {
+        Map<String, QualityMetricsConfDTO> result = new HashMap<>();
+
+        for (String name : getFilenames(qualityMetricsDir)
+        ) {
+            result.put(name.replaceAll("/","."), loadQualityMetricsConfDTO(name));
+        }
+        return result;
+    }
+
 }

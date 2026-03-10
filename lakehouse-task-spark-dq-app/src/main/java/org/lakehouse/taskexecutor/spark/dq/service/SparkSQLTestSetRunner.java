@@ -40,8 +40,9 @@ public class SparkSQLTestSetRunner implements TestSetRunner {
                 .sorted(Comparator.comparingInt(ScriptReferenceDTO::getOrder))
                 .map(sr -> configRestClientApi.getScript(sr.getKey()))
                 .collect(Collectors.joining(SystemVarKeys.SCRIPT_DELIMITER));
-
-        Dataset<Row> result = sparkSession.sql(jinJavaUtils.render(script));
+        String sql = jinJavaUtils.render(script);
+        sparkSession.log().info("Query is: {}",sql);
+        Dataset<Row> result = sparkSession.sql(sql);
         result.createOrReplaceTempView(qualityMetricsConfTestSetDTO.getKey());
         return result;
     }

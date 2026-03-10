@@ -4,7 +4,7 @@
   "driverKeyName":"spark_iceberg",
   "service":
     {
-      "host": "localhost",
+      "host": "spark-master",
       "port": "6066",
       "urn": "",
       "properties": {

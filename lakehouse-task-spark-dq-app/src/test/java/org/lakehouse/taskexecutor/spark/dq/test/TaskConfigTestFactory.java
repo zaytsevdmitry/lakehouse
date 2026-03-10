@@ -1,4 +1,4 @@
-package org.lakehouse.taskexecutor;
+package org.lakehouse.taskexecutor.spark.dq.test;
 
 import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.configs.schedule.TaskDTO;

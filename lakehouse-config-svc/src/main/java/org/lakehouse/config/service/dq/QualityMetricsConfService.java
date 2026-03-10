@@ -49,6 +49,7 @@ public class QualityMetricsConfService {
         result.setDescription(qualityMetricsConf.getDescription());
         result.setEnabled(qualityMetricsConf.isEnabled());
         result.setDataSetKeyName(qualityMetricsConf.getDataSet().getKeyName());
+        result.setSave(qualityMetricsConf.isSave());
         result.setTestSets(
                 qualityMetricsConfTestSetRepository
                         .findByQualityMetricsConfKeyNameAndElementType(qualityMetricsConf.getKeyName(),ElementType.TEST_SET)
@@ -86,6 +87,7 @@ public class QualityMetricsConfService {
         result.setKeyName(dto.getKeyName());
         result.setDescription(dto.getDescription());
         result.setEnabled(dto.isEnabled());
+        result.setSave(dto.isSave());
         result.setDataSet(dataSetRepository.getReferenceById(dto.getDataSetKeyName()));
         result.setDqThresholdViolationLevel(dto.getDqThresholdViolationLevel());
         return result;
@@ -95,7 +97,7 @@ public class QualityMetricsConfService {
             Map.Entry<String, QualityMetricsConfTestSetDTO> dto) {
         QualityMetricsConfTestSet result = new QualityMetricsConfTestSet();
         result.setDqMetricsType(dto.getValue().getType());
-        result.setSave(dto.getValue().isSave());
+
         result.setKeyName(dto.getKey());
         result.setDescription(dto.getValue().getDescription());
         return result;

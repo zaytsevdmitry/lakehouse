@@ -1,6 +1,5 @@
 package org.lakehouse.taskexecutor.spark;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.spark.sql.SparkSession;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
@@ -44,7 +43,7 @@ public class SparkProcessorApplication {
             throw new TaskConfigurationException(e);
         }
     }
-    public static void main(String[] args) throws TaskConfigurationException, JsonProcessingException, TaskFailedException {
+    public static void main(String[] args) throws TaskConfigurationException, TaskFailedException {
         if (args.length >= 1) {
             logger.info(args[0]);
             ScheduledTaskDTO scheduledTaskDTO = jsonToConf(args[0],ScheduledTaskDTO.class);

@@ -1,5 +1,6 @@
 package org.lakehouse.taskexecutor.spark.dq.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -11,28 +12,25 @@ import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.factory.ConstructFactory;
 import org.lakehouse.client.api.factory.SQLTemplateFactory;
-import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.jinja.java.JinJavaUtils;
 import org.lakehouse.taskexecutor.spark.dq.runner.TestSetRunner;
 import org.lakehouse.taskexecutor.spark.dq.runner.integrity.Check;
 import org.lakehouse.taskexecutor.spark.dq.runner.integrity.CheckImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.util.Map;
 
 @Service
 public class ConstraintTestSetRunner implements TestSetRunner {
+    private final  Logger logger = LoggerFactory.getLogger(this.getClass());
+
     private final SparkSession sparkSession;
-    private final ConfigRestClientApi configRestClientApi;
 
-    public ConstraintTestSetRunner(SparkSession sparkSession, ConfigRestClientApi configRestClientApi) {
+    public ConstraintTestSetRunner(SparkSession sparkSession) {
         this.sparkSession = sparkSession;
-        this.configRestClientApi = configRestClientApi;
     }
-
-
-
 
     @Override
     public Dataset<Row> run(
@@ -40,7 +38,7 @@ public class ConstraintTestSetRunner implements TestSetRunner {
             SourceConfDTO sourceConfDTO,
             ScheduledTaskDTO scheduledTaskDTO,
             JinJavaUtils jinJavaUtils
-            ) throws TaskConfigurationException {
+            ) throws TaskConfigurationException, JsonProcessingException {
 
         Check check = prepareCheck(sourceConfDTO, jinJavaUtils);
 
@@ -63,20 +61,14 @@ public class ConstraintTestSetRunner implements TestSetRunner {
         return result;
     }
 
-    private Check prepareCheck(SourceConfDTO sourceConfDTO, JinJavaUtils jinJavaUtils)
-            throws TaskConfigurationException {
-        try {
-            return new CheckImpl(
-                    SQLTemplateFactory.mergeSqlTemplate(
-                            sourceConfDTO.getTargetDriver(),
-                            sourceConfDTO.getTargetDataSource(),
-                            sourceConfDTO.getTargetDataSet()),
-                    sparkSession,
-                    jinJavaUtils);
-        } catch (IOException e) {
-            throw new TaskConfigurationException(e);
-        }
-
+    private Check prepareCheck(SourceConfDTO sourceConfDTO, JinJavaUtils jinJavaUtils) throws TaskConfigurationException {
+        return new CheckImpl(
+                SQLTemplateFactory.mergeSqlTemplate(
+                        sourceConfDTO.getTargetDriver(),
+                        sourceConfDTO.getTargetDataSource(),
+                        sourceConfDTO.getTargetDataSet()),
+                sparkSession,
+                jinJavaUtils);
     }
 
 

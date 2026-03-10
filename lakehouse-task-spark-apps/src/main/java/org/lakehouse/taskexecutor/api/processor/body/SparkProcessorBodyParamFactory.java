@@ -2,7 +2,7 @@ package org.lakehouse.taskexecutor.api.processor.body;
 
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;
-import org.lakehouse.client.api.exception.DDLDIalectException;
+import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
@@ -35,7 +35,7 @@ public class SparkProcessorBodyParamFactory {
     }
 
 
-    public  BodyParam buildSparkProcessorBodyParameter(ScheduledTaskDTO scheduledTaskDTO) throws TaskFailedException {
+    public  BodyParam buildSparkProcessorBodyParameter(ScheduledTaskDTO scheduledTaskDTO) throws TaskFailedException, TaskConfigurationException {
 
         SourceConfDTO sourceConfDTO = configRestClientApi.getSourceConfDTO(scheduledTaskDTO.getDataSetKeyName());
 
@@ -55,7 +55,7 @@ public class SparkProcessorBodyParamFactory {
                     sparkDataSourceManipulatorFactory.buildDataSourceManipulators(sourceConfDTO),
                     scheduledTaskDTO.getTaskProcessorArgs()
             );
-        }catch (UnsuportedDataSourceException | DDLDIalectException | IOException e){
+        }catch (UnsuportedDataSourceException  | IOException e){
             throw new TaskFailedException(e);
         }
         return bodyParam;

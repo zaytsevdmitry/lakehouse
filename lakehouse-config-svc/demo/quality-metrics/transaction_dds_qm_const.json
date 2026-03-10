@@ -1,9 +1,9 @@
 {
-  "dataSetKeyName": "transaction_dds",
+  "dataSetKeyName": "transaction_dds1",
   "keyName": "transaction_dds_qm_const",
   "description": "",
-  "enabled": true,
   "dqThresholdViolationLevel": "error",
+  "save": "true",
   "metric": {
     "description": "count rows of every increment more than 0",
     "type": "integrity"
@@ -12,7 +12,6 @@
     "non_zero_count_th": {
       "description": "",
       "type": "sparkSQL",
-      "save": false,
       "scripts": [
         {
           "key": "dq.non_zero_count_th.sql"

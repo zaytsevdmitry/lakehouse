@@ -21,7 +21,7 @@ public class CatalogActivator {
     private void activateOne(String catalogName){
         log.info("Activate DataSource to Catalog with name {}", catalogName);
         sparkSession.catalog().setCurrentCatalog(catalogName);
-        sparkSession.catalog().listDatabases().show();
+      //  sparkSession.catalog().listDatabases().show();
     }
 
     public  void activate(List<DataSourceDTO> dataSourceDTOS){

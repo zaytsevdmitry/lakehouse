@@ -27,9 +27,9 @@ public class DataSetColumnService {
             List<DataSetColumn> found = currentColumns.stream().filter(c-> c.getName().equals(dataSetColumn.getName())).toList();
             if (!found.isEmpty()){
                 dataSetColumn.setId(found.get(0).getId());
-                logger.info("Column {} will be updated. Id is {}", dataSetColumn.getName(), dataSetColumn.getId());
+                logger.info("Column {} will be updated. metricId is {}", dataSetColumn.getName(), dataSetColumn.getId());
             }else {
-                logger.info("Column {} will be added. Id is null", dataSetColumn.getName());
+                logger.info("Column {} will be added. metricId is null", dataSetColumn.getName());
             }
             return dataSetColumn;
         }).toList();
@@ -37,7 +37,7 @@ public class DataSetColumnService {
         for (DataSetColumn dataSetColumn:currentColumns){
             List<DataSetColumn> found = newColumns.stream().filter(c-> c.getName().equals(dataSetColumn.getName())).toList();
             if (found.isEmpty()){
-                logger.info("Column {} will be deleted. Id is {}", dataSetColumn.getName(), dataSetColumn.getId());
+                logger.info("Column {} will be deleted. metricId is {}", dataSetColumn.getName(), dataSetColumn.getId());
                 dataSetColumnRepository.delete(dataSetColumn);
             }
         }

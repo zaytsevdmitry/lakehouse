@@ -17,6 +17,8 @@ public class QualityMetricsConfDTO {
     private String keyName;
     private String description;
     private boolean enabled;
+    private boolean save;
+
     private Types.DQThresholdViolationLevel dqThresholdViolationLevel;
     private Map<String, DataSetSourceDTO> sources = new HashMap<>();
     private Map<String, QualityMetricsConfTestSetDTO> testSets = new HashMap<>();
@@ -24,6 +26,14 @@ public class QualityMetricsConfDTO {
     private QualityMetricsConfTestSetDTO metric;
 
     public QualityMetricsConfDTO() {
+    }
+
+    public boolean isSave() {
+        return save;
+    }
+
+    public void setSave(boolean save) {
+        this.save = save;
     }
 
     public String getDataSetKeyName() {
@@ -84,14 +94,15 @@ public class QualityMetricsConfDTO {
 
     @Override
     public boolean equals(Object o) {
+
         if (o == null || getClass() != o.getClass()) return false;
         QualityMetricsConfDTO that = (QualityMetricsConfDTO) o;
-        return isEnabled() == that.isEnabled() && Objects.equals(getDataSetKeyName(), that.getDataSetKeyName()) && Objects.equals(getKeyName(), that.getKeyName()) && Objects.equals(getDescription(), that.getDescription()) && getDqThresholdViolationLevel() == that.getDqThresholdViolationLevel() && Objects.equals(getSources(), that.getSources()) && Objects.equals(getTestSets(), that.getTestSets()) && Objects.equals(getThresholds(), that.getThresholds()) && Objects.equals(getMetric(), that.getMetric());
+        return isEnabled() == that.isEnabled() && isSave() == that.isSave() && Objects.equals(getDataSetKeyName(), that.getDataSetKeyName()) && Objects.equals(getKeyName(), that.getKeyName()) && Objects.equals(getDescription(), that.getDescription()) && getDqThresholdViolationLevel() == that.getDqThresholdViolationLevel() && Objects.equals(getSources(), that.getSources()) && Objects.equals(getTestSets(), that.getTestSets()) && Objects.equals(getThresholds(), that.getThresholds()) && Objects.equals(getMetric(), that.getMetric());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getDataSetKeyName(), getKeyName(), getDescription(), isEnabled(), getDqThresholdViolationLevel(), getSources(), getTestSets(), getThresholds(), getMetric());
+        return Objects.hash(getDataSetKeyName(), getKeyName(), getDescription(), isEnabled(), isSave(), getDqThresholdViolationLevel(), getSources(), getTestSets(), getThresholds(), getMetric());
     }
 
     @Override
@@ -101,6 +112,7 @@ public class QualityMetricsConfDTO {
                 ", keyName='" + keyName + '\'' +
                 ", description='" + description + '\'' +
                 ", enabled=" + enabled +
+                ", save=" + save +
                 ", dqThresholdViolationLevel=" + dqThresholdViolationLevel +
                 ", sources=" + sources +
                 ", testSets=" + testSets +

@@ -39,16 +39,12 @@ public  class JdbcTaskProcessor implements TaskProcessor {
 
 
         DataSourceManipulator dataSourceManipulator = null;
-        try {
-             dataSourceManipulator = DataSourceManipulatorFactory
-                    .buildDataSourceManipulator(
-                            sourceConfDTO.getTargetDriver(),
-                            sourceConfDTO.getTargetDataSource(),
-                            sourceConfDTO.getTargetDataSet(),
-                            jinJavaUtils);
-        } catch (IOException e) {
-            throw new TaskConfigurationException(e);
-        }
+        dataSourceManipulator = DataSourceManipulatorFactory
+               .buildDataSourceManipulator(
+                       sourceConfDTO.getTargetDriver(),
+                       sourceConfDTO.getTargetDataSource(),
+                       sourceConfDTO.getTargetDataSet(),
+                       jinJavaUtils);
 
 
         BodyParam bodyParam = new BodyParamImpl(

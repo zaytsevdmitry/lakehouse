@@ -7,7 +7,7 @@ import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;
-import org.lakehouse.client.api.exception.DDLDIalectException;
+import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.factory.SQLTemplateFactory;
 import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.jinja.java.JinJavaUtils;
@@ -34,7 +34,7 @@ public class SparkDataSourceManipulatorFactory {
     }
 
     public DataSourceManipulator buildTargetDataSourceManipulator(SourceConfDTO sourceConfDTO)
-            throws UnsuportedDataSourceException, DDLDIalectException, IOException {
+            throws UnsuportedDataSourceException, TaskConfigurationException {
         return buildDataSourceManipulator(
                 sourceConfDTO.getTargetDriver(),
                 sourceConfDTO.getTargetDataSource(),
@@ -44,7 +44,7 @@ public class SparkDataSourceManipulatorFactory {
     public DataSourceManipulator buildDataSourceManipulator(
             DriverDTO driverDTO,
             DataSourceDTO dataSourceDTO,
-            DataSetDTO dataSetDTO) throws UnsuportedDataSourceException, IOException {
+            DataSetDTO dataSetDTO) throws  TaskConfigurationException {
         DataSourceManipulator result = null;
         SparkExecuteUtils executeUtils = new SparkExecuteUtilsImpl(jinJavaUtils, dataSourceDTO, driverDTO, sparkSession);
         SQLTemplateDTO sqlTemplateDTO = SQLTemplateFactory.mergeSqlTemplate(driverDTO,dataSourceDTO,dataSetDTO);
@@ -54,8 +54,13 @@ public class SparkDataSourceManipulatorFactory {
 
 
         if (driverDTO.getDataSourceType().equals(Types.DataSourceType.database)){
-            sqlTemplateDTO = ObjectMapping.fileToObject(getClass().getClassLoader().getResourceAsStream("spark_jdbc_override_template.json"),
-                    SQLTemplateDTO.class);
+            final String internalSparkSqlTemplateFileName = "spark_jdbc_override_template.json";
+            try {
+                sqlTemplateDTO = ObjectMapping.fileToObject(getClass().getClassLoader().getResourceAsStream(internalSparkSqlTemplateFileName),
+                        SQLTemplateDTO.class);
+            } catch (IOException e) {
+                throw new TaskConfigurationException("Internal error with resource file " + internalSparkSqlTemplateFileName ,e);
+            }
             parameter = new SparkSQLDataSourceManipulatorParameterImpl(sparkSession,executeUtils,sqlTemplateDTO,dataSetDTO);
             result = new JdbcSparkSQLDataSourceManipulator(parameter);
         } else if (driverDTO.getDataSourceType().equals(Types.DataSourceType.iceberg)) {
@@ -74,7 +79,7 @@ public class SparkDataSourceManipulatorFactory {
     }
     public Map<String, DataSourceManipulator> buildDataSourceManipulators(
             SourceConfDTO sourceConfDTO)
-            throws UnsuportedDataSourceException, DDLDIalectException, IOException {
+            throws  IOException, TaskConfigurationException {
 
         Map<String, DataSourceManipulator> result = new HashMap<>();
 

@@ -18,6 +18,8 @@
         <module name="lakehouse-jinjava" />
         <module name="lakehouse-ui-svc" />
         <module name="lakehouse-scheduler-svc" />
+        <module name="lakehouse-task-spark-apps" />
+        <module name="lakehouse-task-spark-dq-app" />
         <module name="lakehouse-config-rest-client" />
         <module name="lakehouse-cli" />
         <module name="lakehouse-task-executor-api" />
@@ -46,9 +48,9 @@
       <module name="lakehouse-task-executor-api" options="-parameters" />
       <module name="lakehouse-task-executor-rest-client" options="-parameters" />
       <module name="lakehouse-task-executor-svc" options="-parameters" />
-      <module name="lakehouse-task-spark-apps" options="" />
+      <module name="lakehouse-task-spark-apps" options="-parameters" />
       <module name="lakehouse-task-spark-dq" options="-parameters" />
-      <module name="lakehouse-task-spark-dq-app" options="" />
+      <module name="lakehouse-task-spark-dq-app" options="-parameters" />
       <module name="lakehouse-ui-svc" options="-parameters" />
       <module name="lakehouse-validators" options="-parameters" />
     </option>

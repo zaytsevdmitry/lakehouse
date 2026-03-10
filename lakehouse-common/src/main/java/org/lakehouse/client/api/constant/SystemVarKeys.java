@@ -16,6 +16,7 @@ public class SystemVarKeys {
     */
     public static String CURRENT_DATASET_KEY_NAME = "currentDataSetKeyName";
     public static String CONSTRAINT_NAME = "constraintName";
+    public static String CONSTRAINT = "constraint";
     public static String PARTITION_NAME = "partitionName";
     public static String SCRIPT = "script";
     public static String CONNECTION_STRING_PROTOCOL_NAME = "protocol"; // jdbc:[*]/spark/http[s] etc
