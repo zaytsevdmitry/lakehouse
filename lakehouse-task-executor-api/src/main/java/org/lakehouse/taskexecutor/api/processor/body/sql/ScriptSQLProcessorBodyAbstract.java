@@ -2,6 +2,8 @@ package org.lakehouse.taskexecutor.api.processor.body.sql;
 
 import org.lakehouse.client.api.constant.SystemVarKeys;
 import org.lakehouse.client.api.exception.TaskFailedException;
+import org.lakehouse.client.rest.config.ConfigRestClientApi;
+import org.lakehouse.taskexecutor.api.datasource.DataSourceManipulatorFactory;
 import org.lakehouse.taskexecutor.api.datasource.exception.ExecuteException;
 import org.lakehouse.taskexecutor.api.datasource.execute.ExecuteUtils;
 
@@ -12,7 +14,10 @@ import java.util.Map;
 
 public abstract class ScriptSQLProcessorBodyAbstract extends SQLProcessorBodyAbstract {
 
-    public ScriptSQLProcessorBodyAbstract() {
+    public ScriptSQLProcessorBodyAbstract(
+            ConfigRestClientApi configRestClientApi,
+            DataSourceManipulatorFactory  dataSourceManipulatorFactory) {
+        super(configRestClientApi,dataSourceManipulatorFactory);
 
     }
 

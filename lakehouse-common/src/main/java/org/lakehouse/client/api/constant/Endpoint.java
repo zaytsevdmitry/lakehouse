@@ -16,8 +16,10 @@ public class Endpoint {
 
     public final static String DATA_SETS = CONFIGS + "/datasets";
     public final static String DATA_SETS_NAME = CONFIGS + "/datasets" + "/{name}";
+
     public final static String QUALITY_METRICS = CONFIGS + "/quality/metrics";
     public final static String QUALITY_METRICS_NAME = QUALITY_METRICS + "/{name}";
+    public final static String QUALITY_METRICS_BY_DATASET = QUALITY_METRICS + "/dataset/{dataSetKeyName}";
 
     public final static String DRIVERS = CONFIGS + "/drivers";
     public final static String DRIVERS_NAME = DRIVERS + "/{name}";
@@ -40,7 +42,7 @@ public class Endpoint {
 
     public final static String SCENARIOS = CONFIGS + "/scenarios";
     public final static String SCENARIOS_NAME = SCENARIOS + "/{name}";
-
+// scheduler-svc
     public final static String SCHEDULE = ROOT_API_V1_0 + "/schedule";
     public final static String SCHEDULE_NAME = ROOT_API_V1_0 + "/schedule/name={name}/limit={limit}";
     public final static String SCHEDULE_ID = ROOT_API_V1_0 + "/schedule/id={id}";
@@ -52,10 +54,10 @@ public class Endpoint {
     public final static String SCHEDULED_TASKS_RELEASE = SCHEDULED_TASKS + "/release";
     public final static String SCHEDULED_TASKS_LOCK_HEARTBEAT = SCHEDULED_TASKS + "/lock/heartbeat";
     public final static String SCHEDULED_TASKS_ID = SCHEDULED_TASKS + "/{id}";
-
+// state-svc
     public final static String STATE = ROOT_API_V1_0 + "/state";
     public final static String STATE_DATASET = STATE + "/dataset";
-
+//task executor-svc
     public final static String TASK_EXECUTOR = ROOT_API_V1_0 + "/taskexecutor";
     public final static String TASK_EXECUTOR_PROCESSOR = TASK_EXECUTOR + "/processor";
     public final static String TASK_EXECUTOR_PROCESSOR_CONFIG = TASK_EXECUTOR_PROCESSOR + "/config";

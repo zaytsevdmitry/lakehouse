@@ -5,6 +5,30 @@ pwd
 ls ./
 echo "server is 127.0.0.1:8080/v1_0/configs"
 
+
+find ./sql-scripts/ -type f | while read -r f; do
+    clean_name="${f#./sql-scripts/}" && clean_name="${clean_name//\//.}"
+    curl -i -X POST 127.0.0.1:8080/v1_0/configs/scripts/"$clean_name" \
+         -H "Content-Type: text/plain" \
+         --data-binary "@$f"
+done
+
+#for dir in "`ls sql-scripts`"
+
+#for s in "dataset-sql-model/client_processing" \
+#  "dataset-sql-model/transaction_processing" \
+#  "dataset-sql-model/transaction_dds" \
+#  "dataset-sql-model/aggregation_pay_per_client_daily_mart" \
+#  "dataset-sql-model/aggregation_pay_per_client_total_mart" \
+#  "dq/non_zero_count.sql" \
+#  "dq/non_zero_count_th.sql" \
+#do
+#   curl -i -X POST 127.0.0.1:8080/v1_0/configs/scripts/"$s.sql" \
+#     -H "Content-Type: text/plain" \
+#     --data-binary "@./sql-scripts/$s.sql"
+#done
+
+
 curl -i -X POST 127.0.0.1:8080/v1_0/configs/nameSpaces \
   -H "Content-Type: application/json" \
   --data-binary "@./name-spaces/demo.json"
@@ -25,18 +49,6 @@ do
 done
 
 
-for s in "dataset-sql-model/client_processing" \
-  "dataset-sql-model/transaction_processing" \
-  "dataset-sql-model/transaction_dds" \
-  "dataset-sql-model/aggregation_pay_per_client_daily_mart" \
-  "dataset-sql-model/aggregation_pay_per_client_total_mart" \
-  "dq/non_zero_count.sql" \
-  "dq/non_zero_count_th.sql" \
-do
-   curl -i -X POST 127.0.0.1:8080/v1_0/configs/scripts/"$s.sql" \
-     -H "Content-Type: text/plain" \
-     --data-binary "@./sql-scripts/$s.sql"
-done
 
 for s in "client_processing" "transaction_processing" "transaction_dds" "aggregation_pay_per_client_daily_mart" "aggregation_pay_per_client_total_mart"
 do

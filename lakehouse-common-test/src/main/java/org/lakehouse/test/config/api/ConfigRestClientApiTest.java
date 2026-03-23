@@ -10,7 +10,7 @@ import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
 import org.lakehouse.client.api.dto.configs.dq.QualityMetricsConfDTO;
 import org.lakehouse.client.api.dto.configs.schedule.*;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;
-import org.lakehouse.client.rest.config.ConfigRestClientApi;
+import org.lakehouse.client.rest.config.ConfigRestClientApiAbstract;
 import org.lakehouse.jinja.java.JinJavaFactory;
 import org.lakehouse.jinja.java.JinJavaUtils;
 import org.lakehouse.jinja.java.util.SourceConfUtil;
@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class ConfigRestClientApiTest implements ConfigRestClientApi {
+public class ConfigRestClientApiTest extends ConfigRestClientApiAbstract {
     private final FileLoader fileLoader = new FileLoader();
     private final Map<String, TaskDTO> taskDTOEffectiveMap = new HashMap<>();
     private final Map<String, String> scriptMap;
@@ -120,7 +120,9 @@ public class ConfigRestClientApiTest implements ConfigRestClientApi {
 
     @Override
     public String getScript(String key) {
-        return scriptMap.get(key);
+        if (scriptMap.containsKey(key))
+            return scriptMap.get(key);
+        else throw new RuntimeException("Script's key '"+ key + "' not found");
     }
 
     @Override
@@ -206,7 +208,7 @@ public class ConfigRestClientApiTest implements ConfigRestClientApi {
     }
 
     @Override
-    public List<QualityMetricsConfDTO> getQualityMetricsConfList(String dataSetKeyName) {
+    public List<QualityMetricsConfDTO> getQualityMetricsConfListByDataSetKeyName(String dataSetKeyName) {
         return qualityMetricsConfDTOMap
                 .values()
                 .stream()

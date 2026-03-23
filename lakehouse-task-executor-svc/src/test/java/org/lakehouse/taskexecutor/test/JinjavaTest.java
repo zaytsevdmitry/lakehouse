@@ -270,7 +270,7 @@ public class JinjavaTest {
         String constraintName = dataSetDTO.getConstraints().entrySet().stream().filter(e -> e.getValue().getType().equals(Types.Constraint.primary)).map(Map.Entry::getKey).findFirst().get();
         context.put(SystemVarKeys.CONSTRAINT_NAME, constraintName);
 
-        String template = driverDTO.getSqlTemplate().getPrimaryKeyDDL();
+        String template = configRestClientApi.getScript(driverDTO.getSqlTemplate().getPrimaryKeyDDL());
         String result = jinJavaUtils.render(template,context);
         String expected = "CONSTRAINT transaction_processing_pk PRIMARY KEY (id)";
         System.out.println("template: "+ template+"\nresult: " + result + "\nExpected: " + expected) ;
@@ -297,7 +297,7 @@ public class JinjavaTest {
 
         context.put("constraintName", fkDTO.getKey());
 
-        String template = driverDTO.getSqlTemplate().getForeignKeyDDL();
+        String template = configRestClientApi.getScript(driverDTO.getSqlTemplate().getForeignKeyDDL());
         System.out.println("template is :" + template);
         String result = jinJavaUtils.render(template,context);
         System.out.println("result   is :" + result);
@@ -377,7 +377,7 @@ public class JinjavaTest {
                 .filter(so-> so.getValue()!=null)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-        String template =   driverDTO.getSqlTemplate().getMergeDML();
+        String template = configRestClientApi.getScript(driverDTO.getSqlTemplate().getMergeDML());
         System.out.println("template is :" + template);
         String result = jinJavaUtils.render(template,context);
 
@@ -391,15 +391,14 @@ public class JinjavaTest {
     @Test
     @Order(14)
     void taskProcessorArg() throws IOException {
-        ScheduledTaskLockDTO conf = new ScheduledTaskLockDTO();
+        ScheduledTaskDTO conf = new ScheduledTaskDTO();
         String argName =  "protocol";
         String expected = "https";
-        conf.setScheduledTaskEffectiveDTO(new ScheduledTaskDTO());
-        conf.getScheduledTaskEffectiveDTO().getTaskProcessorArgs().put(argName,expected);
-        String template = "{{scheduledTaskEffectiveDTO.taskProcessorArgs['" + argName + "']}}";
+        conf.getTaskProcessorArgs().put(argName,expected);
+        String template = "{{taskProcessorArgs['" + argName + "']}}";
 
         Map<String,Object> context =ObjectMapping.asMap(conf);
-
+        jinJavaUtils.cleanGlobalContext();
         String result = jinJavaUtils.render(template,context);
 
         assert (expected.equals(result));

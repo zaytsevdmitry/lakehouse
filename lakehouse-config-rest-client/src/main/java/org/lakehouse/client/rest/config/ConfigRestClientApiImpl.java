@@ -18,7 +18,7 @@ import java.util.Arrays;
 import java.util.List;
 
 
-public class ConfigRestClientApiImpl implements ConfigRestClientApi {
+public class ConfigRestClientApiImpl extends ConfigRestClientApiAbstract {
 
     private final RestClientHelper restClientHelper;
 
@@ -164,12 +164,20 @@ public class ConfigRestClientApiImpl implements ConfigRestClientApi {
 
     @Override
     public List<QualityMetricsConfDTO> getQualityMetricsConfList() {
-        return List.of();
+        return Arrays.asList(restClientHelper.getRestClient()
+                .get()
+                .uri(Endpoint.QUALITY_METRICS)
+                .retrieve()
+                .body(QualityMetricsConfDTO[].class));
     }
 
     @Override
-    public List<QualityMetricsConfDTO> getQualityMetricsConfList(String dataSetKeyName) {
-        return List.of();
+    public List<QualityMetricsConfDTO> getQualityMetricsConfListByDataSetKeyName(String dataSetKeyName) {
+        return Arrays.asList(restClientHelper.getRestClient()
+                .get()
+                .uri(Endpoint.QUALITY_METRICS_BY_DATASET, dataSetKeyName)
+                .retrieve()
+                .body(QualityMetricsConfDTO[].class));
     }
 
     @Override

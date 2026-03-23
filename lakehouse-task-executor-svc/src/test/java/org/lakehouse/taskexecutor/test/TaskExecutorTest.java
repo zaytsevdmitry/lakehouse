@@ -27,6 +27,7 @@ import org.lakehouse.taskexecutor.api.processor.TaskProcessor;
 import org.lakehouse.taskexecutor.api.processor.body.sql.AppendSQLProcessorBody;
 import org.lakehouse.taskexecutor.api.processor.body.sql.CreateTableSQLProcessorBody;
 import org.lakehouse.taskexecutor.api.processor.body.sql.MergeSQLProcessorBody;
+import org.lakehouse.taskexecutor.configuration.DataSourceManipulatorFactoryConfiguration;
 import org.lakehouse.taskexecutor.processor.jdbc.JdbcTaskProcessor;
 import org.lakehouse.taskexecutor.processor.state.DependencyCheckStateTaskProcessor;
 import org.lakehouse.taskexecutor.processor.state.LockedStateTaskProcessor;
@@ -87,7 +88,8 @@ import java.util.Map;
         AppendSQLProcessorBody.class,
         LockedStateTaskProcessor.class,
         DependencyCheckStateTaskProcessor.class,
-        SuccessStateTaskProcessor.class
+        SuccessStateTaskProcessor.class,
+        DataSourceManipulatorFactoryConfiguration.class
 
 })
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)

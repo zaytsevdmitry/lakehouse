@@ -1,6 +1,0 @@
-*.jar
-*.tgz
-spark-3.5.7-bin-hadoop3
-opt
-Dockerfile
-Dockerfile.tmp

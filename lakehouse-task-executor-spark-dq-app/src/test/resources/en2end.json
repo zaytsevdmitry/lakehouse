@@ -1,0 +1,27 @@
+{
+  "name" : "quality",
+  "taskExecutionServiceGroupName" : "default",
+  "taskProcessor" : "sparkLauncherTaskProcessor",
+  "taskProcessorBody" : "sparkTaskProcessorDQBody",
+  "importance" : null,
+  "description" : null,
+  "taskProcessorArgs" : {
+    "spark.executor.memory" : "1g",
+    "spark.driver.memory" : "1g",
+    "protocol" : "http",
+    "lakehouse.client.rest.config.server.url": "",
+    "lakehouse.taskexecutor.body.config.dq.kafka.producer.metric.status.topic" : "metric_status",
+    "lakehouse.taskexecutor.body.config.dq.kafka.producer.metric.value.topic" : "metric_value",
+    "lakehouse.taskexecutor.body.config.dq.kafka.producer.properties.bootstrap-servers" : "{???}",
+    "lakehouse.taskexecutor.body.config.dq.kafka.producer.testSet.status.topic" : "metric_test_set_status"
+   },
+  "id" : 18,
+  "scenarioActKeyName" : "transaction_dds",
+  "scheduleKeyName" : "regular",
+  "status" : "RUNNING",
+  "targetDateTime" : "2025-01-02T00:00:00Z",
+  "intervalStartDateTime" : "2025-01-01T00:00:00Z",
+  "intervalEndDateTime" : "2025-01-02T00:00:00Z",
+  "dataSetKeyName" : "transaction_dds",
+  "tryNum" : null
+}

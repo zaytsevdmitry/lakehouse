@@ -1,10 +1,10 @@
 package org.lakehouse.config.specifier;
 
 import org.lakehouse.config.entities.KeyValueAbstract;
+import org.lakehouse.config.entities.SQLTemplate;
 import org.lakehouse.config.entities.dataset.DataSet;
 import org.lakehouse.config.entities.datasource.DataSource;
 import org.lakehouse.config.entities.datasource.Driver;
-import org.lakehouse.config.entities.datasource.SQLTemplate;
 import org.lakehouse.config.mapper.keyvalue.KeyValueEntitySpecifierAbstract;
 import org.springframework.data.jpa.repository.JpaRepository;
 

@@ -2,7 +2,7 @@ package org.lakehouse.client.api.dto.common;
 
 import java.util.Objects;
 
-public class SQLTemplateDTO {
+public class SQLTemplateDTO implements SQLTemplateGetter , SQLTemplateSetter {
     
     private String databaseSchemaName;
     private String databaseSchemaDDLCreate;
@@ -50,258 +50,322 @@ public class SQLTemplateDTO {
     private String mergeDML;
     private String insertDML;
 
+    @Override
     public String getDatabaseSchemaName() {
         return databaseSchemaName;
     }
 
+    @Override
     public void setDatabaseSchemaName(String databaseSchemaName) {
         this.databaseSchemaName = databaseSchemaName;
     }
 
+    @Override
     public String getDatabaseSchemaDDLCreate() {
         return databaseSchemaDDLCreate;
     }
 
+    @Override
     public void setDatabaseSchemaDDLCreate(String databaseSchemaDDLCreate) {
         this.databaseSchemaDDLCreate = databaseSchemaDDLCreate;
     }
 
+    @Override
     public String getDatabaseSchemaExistsSQL() {
         return databaseSchemaExistsSQL;
     }
 
+    @Override
     public void setDatabaseSchemaExistsSQL(String databaseSchemaExistsSQL) {
         this.databaseSchemaExistsSQL = databaseSchemaExistsSQL;
     }
 
+    @Override
     public String getTableFullName() {
         return tableFullName;
     }
 
+    @Override
     public void setTableFullName(String tableFullName) {
         this.tableFullName = tableFullName;
     }
 
+    @Override
     public String getTableDDLCreate() {
         return tableDDLCreate;
     }
 
+    @Override
     public void setTableDDLCreate(String tableDDLCreate) {
         this.tableDDLCreate = tableDDLCreate;
     }
 
+    @Override
     public String getTableSQLExists() {
         return tableSQLExists;
     }
 
+    @Override
     public void setTableSQLExists(String tableSQLExists) {
         this.tableSQLExists = tableSQLExists;
     }
 
+    @Override
     public String getTableDDLDrop() {
         return tableDDLDrop;
     }
 
+    @Override
     public void setTableDDLDrop(String tableDDLDrop) {
         this.tableDDLDrop = tableDDLDrop;
     }
 
+    @Override
     public String getTableDDLTruncate() {
         return tableDDLTruncate;
     }
 
+    @Override
     public void setTableDDLTruncate(String tableDDLTruncate) {
         this.tableDDLTruncate = tableDDLTruncate;
     }
 
+    @Override
     public String getTableDDLCompact() {
         return tableDDLCompact;
     }
 
+    @Override
     public void setTableDDLCompact(String tableDDLCompact) {
         this.tableDDLCompact = tableDDLCompact;
     }
 
+    @Override
     public String getColumnNonNullCheckIntegrity() {
         return columnNonNullCheckIntegrity;
     }
 
+    @Override
     public void setColumnNonNullCheckIntegrity(String columnNonNullCheckIntegrity) {
         this.columnNonNullCheckIntegrity = columnNonNullCheckIntegrity;
     }
 
+    @Override
     public String getColumnCheckIntegrity() {
         return columnCheckIntegrity;
     }
 
+    @Override
     public void setColumnCheckIntegrity(String columnCheckIntegrity) {
         this.columnCheckIntegrity = columnCheckIntegrity;
     }
 
+    @Override
     public String getPartitionDDLExchange() {
         return partitionDDLExchange;
     }
 
+    @Override
     public void setPartitionDDLExchange(String partitionDDLExchange) {
         this.partitionDDLExchange = partitionDDLExchange;
     }
 
+    @Override
     public String getPartitionDDLDrop() {
         return partitionDDLDrop;
     }
 
+    @Override
     public void setPartitionDDLDrop(String partitionDDLDrop) {
         this.partitionDDLDrop = partitionDDLDrop;
     }
 
+    @Override
     public String getPartitionDDLTruncate() {
         return partitionDDLTruncate;
     }
 
+    @Override
     public void setPartitionDDLTruncate(String partitionDDLTruncate) {
         this.partitionDDLTruncate = partitionDDLTruncate;
     }
 
+    @Override
     public String getPartitionDDLAdd() {
         return partitionDDLAdd;
     }
 
+    @Override
     public void setPartitionDDLAdd(String partitionDDLAdd) {
         this.partitionDDLAdd = partitionDDLAdd;
     }
 
+    @Override
     public String getPartitionDDLCompact() {
         return partitionDDLCompact;
     }
 
+    @Override
     public void setPartitionDDLCompact(String partitionDDLCompact) {
         this.partitionDDLCompact = partitionDDLCompact;
     }
 
+    @Override
     public String getConstraintDDLDrop() {
         return constraintDDLDrop;
     }
 
+    @Override
     public void setConstraintDDLDrop(String constraintDDLDrop) {
         this.constraintDDLDrop = constraintDDLDrop;
     }
 
+    @Override
     public String getPrimaryKeyDDL() {
         return primaryKeyDDL;
     }
 
+    @Override
     public void setPrimaryKeyDDL(String primaryKeyDDL) {
         this.primaryKeyDDL = primaryKeyDDL;
     }
 
+    @Override
     public String getPrimaryKeyDDLAdd() {
         return primaryKeyDDLAdd;
     }
 
+    @Override
     public void setPrimaryKeyDDLAdd(String primaryKeyDDLAdd) {
         this.primaryKeyDDLAdd = primaryKeyDDLAdd;
     }
 
+    @Override
     public String getPrimaryKeyCheckIntegrity() {
         return primaryKeyCheckIntegrity;
     }
 
+    @Override
     public void setPrimaryKeyCheckIntegrity(String primaryKeyCheckIntegrity) {
         this.primaryKeyCheckIntegrity = primaryKeyCheckIntegrity;
     }
 
+    @Override
     public String getForeignKeyDDL() {
         return foreignKeyDDL;
     }
 
+    @Override
     public void setForeignKeyDDL(String foreignKeyDDL) {
         this.foreignKeyDDL = foreignKeyDDL;
     }
 
+    @Override
     public String getForeignKeyDDLAdd() {
         return foreignKeyDDLAdd;
     }
 
+    @Override
     public void setForeignKeyDDLAdd(String foreignKeyDDLAdd) {
         this.foreignKeyDDLAdd = foreignKeyDDLAdd;
     }
 
+    @Override
     public String getForeignKeyCheckIntegrity() {
         return foreignKeyCheckIntegrity;
     }
 
+    @Override
     public void setForeignKeyCheckIntegrity(String foreignKeyCheckIntegrity) {
         this.foreignKeyCheckIntegrity = foreignKeyCheckIntegrity;
     }
 
+    @Override
     public String getUniqueKeyDDL() {
         return uniqueKeyDDL;
     }
 
+    @Override
     public void setUniqueKeyDDL(String uniqueKeyDDL) {
         this.uniqueKeyDDL = uniqueKeyDDL;
     }
 
+    @Override
     public String getUniqueKeyDDLAdd() {
         return uniqueKeyDDLAdd;
     }
 
+    @Override
     public void setUniqueKeyDDLAdd(String uniqueKeyDDLAdd) {
         this.uniqueKeyDDLAdd = uniqueKeyDDLAdd;
     }
 
+    @Override
     public String getUniqueKeyCheckIntegrity() {
         return uniqueKeyCheckIntegrity;
     }
 
+    @Override
     public void setUniqueKeyCheckIntegrity(String uniqueKeyCheckIntegrity) {
         this.uniqueKeyCheckIntegrity = uniqueKeyCheckIntegrity;
     }
 
+    @Override
     public String getCheckConstraintDDL() {
         return CheckConstraintDDL;
     }
 
+    @Override
     public void setCheckConstraintDDL(String checkConstraintDDL) {
         CheckConstraintDDL = checkConstraintDDL;
     }
 
+    @Override
     public String getCheckConstraintDDLAdd() {
         return CheckConstraintDDLAdd;
     }
 
+    @Override
     public void setCheckConstraintDDLAdd(String checkConstraintDDLAdd) {
         CheckConstraintDDLAdd = checkConstraintDDLAdd;
     }
 
+    @Override
     public String getCheckConstraintCheckIntegrity() {
         return CheckConstraintCheckIntegrity;
     }
 
+    @Override
     public void setCheckConstraintCheckIntegrity(String checkConstraintCheckIntegrity) {
         CheckConstraintCheckIntegrity = checkConstraintCheckIntegrity;
     }
 
+    @Override
     public String getColumnsCastDML() {
         return columnsCastDML;
     }
 
+    @Override
     public void setColumnsCastDML(String columnsCastDML) {
         this.columnsCastDML = columnsCastDML;
     }
 
+    @Override
     public String getMergeDML() {
         return mergeDML;
     }
 
+    @Override
     public void setMergeDML(String mergeDML) {
         this.mergeDML = mergeDML;
     }
 
+    @Override
     public String getInsertDML() {
         return insertDML;
     }
 
+    @Override
     public void setInsertDML(String insertDML) {
         this.insertDML = insertDML;
     }

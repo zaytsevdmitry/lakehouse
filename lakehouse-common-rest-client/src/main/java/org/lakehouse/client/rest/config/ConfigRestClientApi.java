@@ -1,12 +1,14 @@
 package org.lakehouse.client.rest.config;
 
 import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
+import org.lakehouse.client.api.dto.configs.ScriptReferenceDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
 import org.lakehouse.client.api.dto.configs.dq.QualityMetricsConfDTO;
 import org.lakehouse.client.api.dto.configs.schedule.*;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;
+import org.lakehouse.client.rest.exception.ScriptBuildException;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -37,6 +39,8 @@ public interface ConfigRestClientApi {
 
     String getScript(String key);
 
+    String getScriptByListOfReference(List<ScriptReferenceDTO> scriptReferences) throws ScriptBuildException;
+
     SourceConfDTO getSourceConfDTO(String dataSetKeyName);
 
     String getDataSetModelScript(String dataSetKeyName);
@@ -59,7 +63,7 @@ public interface ConfigRestClientApi {
 
     List<QualityMetricsConfDTO> getQualityMetricsConfList();
 
-    List<QualityMetricsConfDTO> getQualityMetricsConfList(String dataSetKeyName);
+    List<QualityMetricsConfDTO> getQualityMetricsConfListByDataSetKeyName(String dataSetKeyName);
 
     int deleteDriverDTO(String name);
 

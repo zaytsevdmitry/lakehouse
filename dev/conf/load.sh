@@ -22,6 +22,15 @@ function curlGet() {
       exit 1
     fi
 }
+
+
+find ./sql-scripts/ -type f | while read -r f; do
+    clean_name="${f#./sql-scripts/}" && clean_name="${clean_name//\//.}"
+    curl -i -X POST 127.0.0.1:8080/v1_0/configs/scripts/"$clean_name" \
+         -H "Content-Type: text/plain" \
+         --data-binary "@$f"
+done
+
 curlPost 127.0.0.1:8080/v1_0/configs/nameSpaces "name-spaces/demo.json"
 
 for s in "postgres" "spark_iceberg"
@@ -72,7 +81,7 @@ do
 done
 
 curlGet 127.0.0.1:8080/v1_0/configs/effective/schedules/name/initial
-
+echo Quality metrics config
 for s in "transaction_dds_qm" "transaction_dds_qm_const"
 do
    curlPost 127.0.0.1:8080/v1_0/configs/quality/metrics "quality-metrics/$s.json"

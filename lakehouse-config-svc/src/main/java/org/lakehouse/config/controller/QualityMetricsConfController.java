@@ -28,8 +28,14 @@ public class QualityMetricsConfController {
     }
 
     @GetMapping(Endpoint.QUALITY_METRICS_NAME)
+    @ResponseStatus(HttpStatus.OK)
     QualityMetricsConfDTO get(@PathVariable String name) {
         return qualityMetricsConfService.findById(name);
+    }
+    @GetMapping(Endpoint.QUALITY_METRICS_BY_DATASET)
+    @ResponseStatus(HttpStatus.OK)
+    List<QualityMetricsConfDTO>  getByDataSetKeyName(@PathVariable String dataSetKeyName) {
+        return qualityMetricsConfService.findByDataSetKeyName(dataSetKeyName);
     }
 
     @DeleteMapping(Endpoint.QUALITY_METRICS_NAME)

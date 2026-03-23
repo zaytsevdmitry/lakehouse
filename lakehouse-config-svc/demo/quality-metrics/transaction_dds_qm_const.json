@@ -1,7 +1,8 @@
 {
-  "dataSetKeyName": "transaction_dds1",
+  "dataSetKeyName": "transaction_dds",
   "keyName": "transaction_dds_qm_const",
   "description": "",
+  "enabled": false,
   "dqThresholdViolationLevel": "error",
   "save": "true",
   "metric": {

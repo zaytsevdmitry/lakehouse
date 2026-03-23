@@ -3,12 +3,12 @@ package org.lakehouse.taskexecutor.api.datasource;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.lakehouse.client.api.constant.SystemVarKeys;
 import org.lakehouse.client.api.constant.Types;
-import org.lakehouse.client.api.dto.common.SQLTemplateDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetConstraintDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.utils.Coalesce;
 import org.lakehouse.taskexecutor.api.datasource.exception.*;
 import org.lakehouse.taskexecutor.api.datasource.execute.ExecuteUtils;
+import org.lakehouse.taskexecutor.api.facade.SQLTemplateResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,12 +19,12 @@ import java.util.Map;
 public class JdbcDataSourceManipulator implements DataSourceManipulator {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final ExecuteUtils executeUtils;
-    private final SQLTemplateDTO sqlTemplateDTO;
+    private final SQLTemplateResolver sqlTemplateResolver;
     private final DataSetDTO dataSetDTO;
     public JdbcDataSourceManipulator(
             DataSourceManipulatorParameter dataSourceManipulatorParameter) {
         this.executeUtils = dataSourceManipulatorParameter.executeUtils();
-        this.sqlTemplateDTO = dataSourceManipulatorParameter.sqlTemplateDTO();
+        this.sqlTemplateResolver = dataSourceManipulatorParameter.sqlTemplateResolver();
         this.dataSetDTO = dataSourceManipulatorParameter.dataSetDTO();
     }
 
@@ -34,8 +34,8 @@ public class JdbcDataSourceManipulator implements DataSourceManipulator {
     }
 
     @Override
-    public SQLTemplateDTO sqlTemplateDTO() {
-        return sqlTemplateDTO;
+    public SQLTemplateResolver sqlTemplateResolver() {
+        return sqlTemplateResolver;
     }
 
 
@@ -45,15 +45,14 @@ public class JdbcDataSourceManipulator implements DataSourceManipulator {
 
         try {
             executeUtils().executeIfFalse(
-                    sqlTemplateDTO().getDatabaseSchemaExistsSQL(),
-                    sqlTemplateDTO().getDatabaseSchemaDDLCreate(),
+                    sqlTemplateResolver().getDatabaseSchemaExistsSQL(),
+                    sqlTemplateResolver().getDatabaseSchemaDDLCreate(),
                     new HashMap<>());
 
             executeUtils().executeIfFalse(
-                    sqlTemplateDTO().getTableSQLExists(),
-                    sqlTemplateDTO().getTableDDLCreate(),
+                    sqlTemplateResolver().getTableSQLExists(),
+                    sqlTemplateResolver().getTableDDLCreate(),
                     new HashMap<>());
-
 
         } catch (ExecuteException e) {
             throw new CreateException(e);
@@ -63,9 +62,9 @@ public class JdbcDataSourceManipulator implements DataSourceManipulator {
     @Override
     public void drop() throws DropException {
         try {
-            executeUtils.executeIfFalse(
-                    sqlTemplateDTO().getTableSQLExists(),
-                    sqlTemplateDTO().getTableSQLExists(),
+            executeUtils.executeIfTrue(
+                    sqlTemplateResolver().getTableSQLExists(),
+                    sqlTemplateResolver().getTableDDLDrop(),
                     new HashMap<>());
 
         } catch ( ExecuteException  e) {
@@ -76,7 +75,7 @@ public class JdbcDataSourceManipulator implements DataSourceManipulator {
     @Override
     public void truncate() throws TruncateException {
         try {
-            executeUtils.execute(sqlTemplateDTO().getTableDDLTruncate(),new HashMap<>());
+            executeUtils.execute(sqlTemplateResolver().getTableDDLTruncate(),new HashMap<>());
         } catch (ExecuteException e) {
             throw new TruncateException(e);
         }
@@ -96,7 +95,7 @@ public class JdbcDataSourceManipulator implements DataSourceManipulator {
     public void dropPartitions( List<String> partitions) throws DropException {
         try {
             executePartitions(
-                sqlTemplateDTO().getPartitionDDLDrop(),
+                sqlTemplateResolver().getPartitionDDLDrop(),
                 partitions);
         } catch (ExecuteException  e) {
                 throw new DropException(e);
@@ -106,7 +105,7 @@ public class JdbcDataSourceManipulator implements DataSourceManipulator {
     @Override
     public void truncatePartitions( List<String> partitions) throws TruncateException {
         try {
-            executePartitions(sqlTemplateDTO().getPartitionDDLTruncate(), partitions);
+            executePartitions(sqlTemplateResolver().getPartitionDDLTruncate(), partitions);
         } catch (ExecuteException e) {
             throw new TruncateException(e);
         }
@@ -126,7 +125,7 @@ public class JdbcDataSourceManipulator implements DataSourceManipulator {
                 .map(Map.Entry::getKey)
                 .toList()){
             try {
-                executeConstraint(constraintName, sqlTemplateDTO().getConstraintDDLDrop());
+                executeConstraint(constraintName, sqlTemplateResolver().getConstraintDDLDrop());
             } catch (JsonProcessingException | ExecuteException e) {
                 throw new ConstraintException(e);
             }
@@ -136,7 +135,7 @@ public class JdbcDataSourceManipulator implements DataSourceManipulator {
     @Override
     public void removeConstraintByName( String constraintName) throws ConstraintException {
         try {
-            executeConstraint(constraintName, sqlTemplateDTO().getConstraintDDLDrop());
+            executeConstraint(constraintName, sqlTemplateResolver().getConstraintDDLDrop());
         } catch (JsonProcessingException | ExecuteException e) {
             throw new ConstraintException(e);
         }
@@ -145,13 +144,13 @@ public class JdbcDataSourceManipulator implements DataSourceManipulator {
     private String getConstraintTemplate(Map.Entry<String,DataSetConstraintDTO> constraint) throws ConstraintException {
         String template = null;
         if ( constraint.getValue().getType().equals(Types.Constraint.primary))
-            template = sqlTemplateDTO().getPrimaryKeyDDLAdd();
+            template = sqlTemplateResolver().getPrimaryKeyDDLAdd();
         else if (constraint.getValue().getType().equals(Types.Constraint.unique))
-            template = sqlTemplateDTO().getUniqueKeyDDLAdd();
+            template = sqlTemplateResolver().getUniqueKeyDDLAdd();
         else if (constraint.getValue().getType().equals(Types.Constraint.foreign))
-            template = sqlTemplateDTO().getForeignKeyDDLAdd();
+            template = sqlTemplateResolver().getForeignKeyDDLAdd();
         else if (constraint.getValue().getType().equals(Types.Constraint.check))
-            template = sqlTemplateDTO().getCheckConstraintDDLAdd();
+            template = sqlTemplateResolver().getCheckConstraintDDLAdd();
         else throw new
                     ConstraintException(
                     String.format(
@@ -173,7 +172,6 @@ public class JdbcDataSourceManipulator implements DataSourceManipulator {
                 .toList()){
             try {
                 String template = getConstraintTemplate(constraint);
-
                 executeConstraint(constraint.getKey(),template);
             } catch (JsonProcessingException | ExecuteException e) {
                 throw new ConstraintException(e);

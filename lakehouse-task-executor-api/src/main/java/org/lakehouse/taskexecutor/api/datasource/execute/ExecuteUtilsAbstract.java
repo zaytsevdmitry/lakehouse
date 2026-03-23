@@ -45,8 +45,7 @@ public abstract class ExecuteUtilsAbstract implements ExecuteUtils {
             Map<String,Object> localContext) throws ExecuteException {
         logger.info("Check query {}\n if true query {}",checkQuery,executionQuery);
 
-        boolean isExists = 1 == executeGetResultInt(checkQuery,localContext);
-        if(!isExists)
+        if(1 == executeGetResultInt(checkQuery,localContext))
             execute(executionQuery,localContext);
     }
     @Override
@@ -55,8 +54,7 @@ public abstract class ExecuteUtilsAbstract implements ExecuteUtils {
             String executionQuery,
             Map<String,Object> localContext) throws ExecuteException {
         logger.info("Check query {}\n if true query {}",checkQuery,executionQuery);
-        boolean isExists = 1 == executeGetResultInt(checkQuery,localContext);
-        if(!isExists)
+        if((1 != executeGetResultInt(checkQuery,localContext)))
             execute(executionQuery,localContext);
     }
 
@@ -68,10 +66,16 @@ public abstract class ExecuteUtilsAbstract implements ExecuteUtils {
         if (dataSourceDTO.getService()==null){
             throw new TaskConfigurationException(String.format("DataSource %s with empty list of services", dataSourceDTO.getKeyName()));
         }
-        return jinJavaUtils.render(
+        if (driverDTO.getConnectionTemplates().containsKey(Types.ConnectionType.jdbc))
+            return jinJavaUtils.render(
                 driverDTO.getConnectionTemplates().get(Types.ConnectionType.jdbc),
                 Map.of(SystemVarKeys.SERVICE_KEY, dataSourceDTO.getService())
         );
+        else throw new TaskConfigurationException(
+                String.format(
+                        "The %s %s connection template not contains '%s'",
+                        DriverDTO.class.getSimpleName(), driverDTO.getKeyName(),Types.ConnectionType.jdbc.label
+                         ));
     }
     public Map<String,String> dtoToProps() throws TaskConfigurationException {
         if (dataSourceDTO.getService()==null){

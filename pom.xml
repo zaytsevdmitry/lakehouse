@@ -30,8 +30,9 @@
         <module>lakehouse-spark-rest-client</module>
         <module>lakehouse-task-executor-api</module>
         <module>lakehouse-validators</module>
-        <module>lakehouse-task-spark-apps</module>
-        <module>lakehouse-task-spark-dq-app</module>
+        <module>lakehouse-task-executor-spark-api</module>
+        <module>lakehouse-task-executor-spark-dataset-app</module>
+        <module>lakehouse-task-executor-spark-dq-app</module>
     </modules>
     <properties>
         <maven.compiler.source>17</maven.compiler.source>

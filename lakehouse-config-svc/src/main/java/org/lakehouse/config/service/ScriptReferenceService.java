@@ -2,8 +2,8 @@ package org.lakehouse.config.service;
 
 import org.lakehouse.client.api.dto.configs.ScriptReferenceDTO;
 import org.lakehouse.config.entities.dataset.DataSet;
-import org.lakehouse.config.entities.dataset.ScriptReference;
 import org.lakehouse.config.entities.dq.QualityMetricsConfTestSet;
+import org.lakehouse.config.entities.script.ScriptReference;
 import org.lakehouse.config.repository.ScriptReferenceRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,9 +40,9 @@ public class ScriptReferenceService {
     }
 
     @Transactional
-    public List<ScriptReferenceDTO> findByQualityMetricsConfTestSetKeyNameOrderByScriptOrder(String testConf){
+    public List<ScriptReferenceDTO> findByQualityMetricsConfTestSetIdOrderByScriptOrder(Long qualityMetricsConfTestSetId){
         return scriptReferenceRepository
-                .findByQualityMetricsConfTestSetKeyNameOrderByScriptOrder(testConf)
+                .findByQualityMetricsConfTestSetIdOrderByScriptOrder(qualityMetricsConfTestSetId)
                 .stream().map(this::mapScriptReferenceDTO)
                 .toList();
     }
@@ -74,7 +74,7 @@ public class ScriptReferenceService {
                 null,
                 qualityMetricsConfTestSet,
                 scriptReferenceDTOs,
-                scriptReferenceRepository.findByDataSetKeyNameOrderByScriptOrder(qualityMetricsConfTestSet.getKeyName()));
+                scriptReferenceRepository.findByQualityMetricsConfTestSetIdOrderByScriptOrder(qualityMetricsConfTestSet.getId()));
     }
 
     @Transactional

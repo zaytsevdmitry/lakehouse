@@ -66,9 +66,7 @@ public class QualityMetricsConfService {
         );
         result.setMetric(
                 qualityMetricsConfTestSetRepository
-                .findByQualityMetricsConfKeyNameAndElementType(
-                        qualityMetricsConf.getKeyName(),
-                        ElementType.METRIC)
+                .findByQualityMetricsConfKeyNameAndElementType(qualityMetricsConf.getKeyName(), ElementType.METRIC)
                         .stream()
                         .map(qualityMetricsConfTestSetService::mapQualityMetricsConfTestSetDTO)
                         .findFirst()

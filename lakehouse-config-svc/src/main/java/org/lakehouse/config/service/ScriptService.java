@@ -1,6 +1,6 @@
 package org.lakehouse.config.service;
 
-import org.lakehouse.config.entities.Script;
+import org.lakehouse.config.entities.script.Script;
 import org.lakehouse.config.exception.ScriptNotFoundException;
 import org.lakehouse.config.repository.ScriptRepository;
 import org.slf4j.Logger;

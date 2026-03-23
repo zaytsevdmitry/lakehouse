@@ -14,8 +14,6 @@ public class QualityMetricsConf extends KeyEntityAbstract {
     @ManyToOne(optional = false)
     @JoinColumn(foreignKey = @ForeignKey(name = "quality_metrics_conf__data_set__fk"))
     private DataSet dataSet;
-
-
     @Column(nullable = false, unique = true) private String keyName;
     @Column(nullable = true) private String description;
     @Column(nullable = false) private Types.DQThresholdViolationLevel dqThresholdViolationLevel;
@@ -81,7 +79,12 @@ public class QualityMetricsConf extends KeyEntityAbstract {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         QualityMetricsConf that = (QualityMetricsConf) o;
-        return isEnabled() == that.isEnabled() && isSave() == that.isSave() && Objects.equals(getDataSet(), that.getDataSet()) && Objects.equals(getKeyName(), that.getKeyName()) && Objects.equals(getDescription(), that.getDescription()) && getDqThresholdViolationLevel() == that.getDqThresholdViolationLevel();
+        return isEnabled() == that.isEnabled()
+                && isSave() == that.isSave()
+                && Objects.equals(getDataSet(), that.getDataSet())
+                && Objects.equals(getKeyName(), that.getKeyName())
+                && Objects.equals(getDescription(), that.getDescription())
+                && getDqThresholdViolationLevel() == that.getDqThresholdViolationLevel();
     }
 
     @Override

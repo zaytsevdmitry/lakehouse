@@ -838,10 +838,20 @@ public class TestWithPostgres {
         loadScript("dq/non_zero_count_th","sql");
 
         QualityMetricsConfDTO expected = fileLoader.loadQualityMetricsConfDTO("transaction_dds_qm");
+        QualityMetricsConfDTO expectedOtherDataSetDQConf = fileLoader.loadQualityMetricsConfDTO("transaction_dds_qm");
+        expectedOtherDataSetDQConf.setDataSetKeyName(transactionProcessingDTO.getKeyName());
+        qualityMetricsConfService.save(expectedOtherDataSetDQConf);
         QualityMetricsConfDTO result = qualityMetricsConfService.save(expected);
-
+        QualityMetricsConfDTO expected_const = qualityMetricsConfService.save(fileLoader.loadQualityMetricsConfDTO("transaction_dds_qm_const"));
+        QualityMetricsConfDTO result2 = qualityMetricsConfService
+                .findByDataSetKeyName(resultTransactionddsDTO.getKeyName())
+                .stream()
+                .filter(q-> q.getKeyName().equals("transaction_dds_qm"))
+                .findFirst()
+                .orElseThrow( () -> new Exception("Quality conf notfound"));
         // delete
         restManipulator.deleteDTO(expected.getKeyName(), Endpoint.QUALITY_METRICS_NAME);
+        restManipulator.deleteDTO(expected_const.getKeyName(), Endpoint.QUALITY_METRICS_NAME);
         restManipulator.deleteDTO(resultAggdaily.getKeyName(), Endpoint.DATA_SETS_NAME);
         restManipulator.deleteDTO(resultAggTotal.getKeyName(), Endpoint.DATA_SETS_NAME);
         restManipulator.deleteDTO(resultTransactionddsDTO.getKeyName(), Endpoint.DATA_SETS_NAME);
@@ -856,6 +866,8 @@ public class TestWithPostgres {
         System.out.println("expected ->> \n" + ObjectMapping.asJsonString(expected));
         System.out.println("result ->> \n" +ObjectMapping.asJsonString(result));
         assert(expected.equals(result));
+        assert(expected.equals(result2));
+
     }
     @Test
     void printEndpoints() throws JsonProcessingException {
@@ -873,6 +885,7 @@ public class TestWithPostgres {
         Endpoint.DATA_SETS_NAME,
         Endpoint.QUALITY_METRICS,
         Endpoint.QUALITY_METRICS_NAME,
+        Endpoint.QUALITY_METRICS_BY_DATASET,
         Endpoint.DRIVERS,
         Endpoint.DRIVERS_NAME,
         Endpoint.DATA_SOURCES,
@@ -892,6 +905,7 @@ public class TestWithPostgres {
         Endpoint.SCHEDULE_NAME,
         Endpoint.SCHEDULE_ID,
         Endpoint.TASKS,
+
         Endpoint.SCHEDULED_TASKS,
         Endpoint.SCHEDULED_TASKS_LOCK_BY_ID,
         Endpoint.SCHEDULED_TASKS_LOCK_ID,
@@ -905,6 +919,8 @@ public class TestWithPostgres {
         Endpoint.TASK_EXECUTOR_PROCESSOR,
         Endpoint.TASK_EXECUTOR_PROCESSOR_CONFIG,
         Endpoint.TASK_EXECUTOR_PROCESSOR_GET_BY_LOCK_ID
-    ).stream().sorted().forEach(s -> System.out.println(s));
+    ).stream().sorted().forEach(System.out::println);
     }
+
+
 }
