@@ -34,6 +34,7 @@ public class ApplicationBodyStarter {
         ConfigurableApplicationContext context = null;
         int exitcode = ExitCode.success.getValue();
         try {
+            logger.info("Create context");
             context = run(args,aClass);
 
         } catch (TaskConfigurationException e) {
@@ -66,7 +67,7 @@ public class ApplicationBodyStarter {
         if (args.length >= 1) {
             logger.info(args[0]);
             ScheduledTaskDTO scheduledTaskDTO = jsonToConf(args[0],ScheduledTaskDTO.class);
-
+            logger.info("Validate task configuration");
             ValidationResult validationResult = ScheduledTaskDTOValidator.validate(scheduledTaskDTO);
             if (!validationResult.isValid())
                 throw new TaskConfigurationException(validationResult.getDescriptions().stream().collect(Collectors.joining("\n")));

@@ -10,7 +10,6 @@
         <version>0.3.0</version>
     </parent>
     <artifactId>lakehouse-config-rest-client</artifactId>
-
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>

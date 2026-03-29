@@ -1,4 +1,7 @@
 @startuml 
+(script) -> (dataset)
+(script) -> (sqlTemplate)
+(script) -> (quality-metric)
 (schedule) --> (scenarioActs[])
 (scenarioActs[]) --> (scenarioAct)
 (scenarioActTemplate) -> (scenarioAct)
@@ -6,6 +9,7 @@
 (scenarioAct) --> (task)
 (task)-->(taskExecutionService)
 (dataset) -> (scenarioAct)
+(dataset)->(quality-metric)
 (dataSource) --> (dataset)
 (project) -> (dataset)
 (project) ..> (schedule)
@@ -13,6 +17,6 @@
 (sqlTemplate) --> (driver)
 (sqlTemplate) --> (dataSource)
 (sqlTemplate) --> (dataset)
-(catalog) o--o  (dataSource)
+(catalog) o..o  (dataSource)
 (project) .> (dataSource)
 @enduml 

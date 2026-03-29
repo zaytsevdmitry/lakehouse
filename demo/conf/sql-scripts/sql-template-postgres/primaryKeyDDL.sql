@@ -1,0 +1,1 @@
+{%set targetDataSet=dataSets[targetDataSetKeyName]%}CONSTRAINT {{ constraintName }} PRIMARY KEY ({{ targetDataSet.constraints[constraintName].columns }})

@@ -5,7 +5,7 @@
 В idea :
 
 - обеспечить наличие java 17
-- Установить maven (mvn)
+- Установить maven (mvn) и плагины
 - Установить docker и docker compose
 
 Перед сборкой нужно убедится что установлены java 17 по умолчанию и mvn
@@ -27,7 +27,10 @@ export JAVA_HOME=[путь к папке с установленной java17]
 export PATH=$JAVA_HOME/bin/:$PATH
 ```
 
-Снова проверить версию > java -version
+Снова проверить версию
+```commandline
+> java -version
+```
 ожидается что в выводе будет java 17
 
 ## Сборка образа
@@ -40,10 +43,10 @@ export PATH=$JAVA_HOME/bin/:$PATH
 Выполнить команду
 
 ```
-docker compose down; docker compose up --build
+docker compose down; docker compose up
 ```
-
-Возможны ошибки о том, что контейнеры которые должны быть запущены уже существуют. Нужно убедиться, что они
+#### Совпадения имен
+Возможны ошибки о том, что контейнеры которые должны быть запущены уже существуют. Это либо контейнеры от предыдущих попыток запуска, либо одноименные контейнеры. Нужно убедиться, что они
 действительно не нужны и удалить их.
 
 > Error response from daemon: Conflict. The container name "/broker" is already in use by container "
@@ -52,13 +55,30 @@ docker compose down; docker compose up --build
 
 ``` 
 docker container rm broker 
-docker container rm db
+docker container rm db-dev
+docker container rm demo-trino-1
+docker container rm hive-metastore
+docker container rm spark-history
+docker container rm spark-master
+docker container rm spark-worker-1
 docker container rm task-executor-svc-1
 docker container rm task-executor-svc-2 
 docker container rm task-executor-svc-3 
+docker container rm task-executor-svc-4 
 docker container rm conf-svc 
 docker container rm scheduler-svc 
 ```
+#### Сеть
+В конфигурации определена сеть
+```yaml
+networks:
+  lakehouse_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.1.193.0/24
+```
+Многие файлы конфигурации могут использовать IP адрес для указания сервера.
 
 ## Загрузка демонстрационной конфигурации
 
@@ -67,7 +87,30 @@ docker container rm scheduler-svc
 Он загрузит демонстрационные данные в сервис конфигурации. Через несколько секунд после этого сервис исполнитель начнет
 выполнять демонстрационные задачи
 
+Если сервис конфигураций еще не доступен, скрипт "подождет" готовности сервиса 
+```commandline
+server is 127.0.0.1:8080/v1_0/configs
+pwd is /home/dm2/IdeaProjects/lakehouse/demo/conf
+Waiting Config-SVC: The request failed. Sleeping...zzZ
+Retry Config-SVC
+Waiting Config-SVC: The request failed. Sleeping...zzZ
+
+```
+и загрузит конфигурацию. В конце должно появиться сообщение 
+```commandline
+All configurations loaded
+```
+
 ### Зависимость ключей в конфигурациях
 
 ![зависимость ключей в конфигурациях](../doc/entities_design/logical_entities_dependency.png)
 
+
+## Ссылки
+[minio](http://localhost:9001/login)  
+
+[spark-master](http://192.1.193.40:8400/)
+
+[spark-worker](http://192.1.193.50:8401/)
+
+[spark-history](http://localhost:18080/)

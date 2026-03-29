@@ -2,26 +2,25 @@
   "keyName": "transaction_dds",
   "nameSpaceKeyName": "DEMO",
   "dataSourceKeyName": "lakehousestorage",
-  "fullTableName": "transaction_dds",
+  "databaseSchemaName": "default",
+  "tableName": "transaction_dds",
   "scripts": [
     {
-      "key": "transaction_dds.sql"
+      "key": "dataset-sql-model.transaction_dds.sql"
     }
   ],
-  "sources": [
-    {
-      "name": "client_processing",
+  "sources": {
+    "client_processing": {
       "properties": {
         "fetchSize": "10000"
       }
     },
-    {
-      "name": "transaction_processing",
+    "transaction_processing": {
       "properties": {
         "fetchSize": "10000"
       }
     }
-  ],
+  },
   "columnSchema": [
     {
       "name": "client_name",
@@ -67,17 +66,15 @@
       "nullable": false
     }
   ],
-  "constraints": [
-    {
-      "name": "transaction_dds_pk",
+  "constraints": {
+    "transaction_dds_pk": {
       "type": "primary",
       "columns": "id",
-      "runtimeLevelCheck": false,
-      "constructLevelCheck": true
+      "constraintLevelCheck": "dataQuality"
     }
-  ],
+  },
   "properties": {
-    "location": "/mytabs/transaction_dds",
+    "location": "s3a://data/warehouse/default/transaction_dds",
     "using": "iceberg"
   },
   "description": "Details"

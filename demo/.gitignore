@@ -1,0 +1,6 @@
+storages/minio_storage/*
+docker/spark/drivers
+docker/spark/*.tgz
+docker/spark/*.zip
+docker/spark/dockerfile
+docker/hms/*gz

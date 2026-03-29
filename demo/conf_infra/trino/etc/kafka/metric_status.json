@@ -1,0 +1,58 @@
+{
+  "tableName": "metric_status",
+  "schemaName": "default",
+  "topicName": "metric_status",
+  "message": {
+    "dataFormat": "json",
+    "fields": [
+      {
+        "name": "metric_id",
+        "mapping": "metricId",
+        "type": "BIGINT"
+      },
+      {
+        "name": "catalog_name",
+        "mapping": "catalogName",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "data_base_schema_name",
+        "mapping": "dataBaseSchemaName",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "table_name",
+        "mapping": "tableName",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "target_date_time",
+        "mapping": "targetDateTime",
+        "type": "TIMESTAMP",
+        "dataFormat": "iso8601"
+      },
+      {
+        "name": "interval_start_date_time",
+        "mapping": "intervalStartDateTime",
+        "type": "TIMESTAMP",
+        "dataFormat": "iso8601"
+      },
+      {
+        "name": "interval_end_date_time",
+        "mapping": "intervalEndDateTime",
+        "type": "TIMESTAMP",
+        "dataFormat": "iso8601"
+      },
+      {
+        "name": "status",
+        "mapping": "status",
+        "type": "VARCHAR"
+      },
+      {
+        "name": "metric_key_name",
+        "mapping": "metricKeyName",
+        "type": "VARCHAR"
+      }
+    ]
+  }
+}

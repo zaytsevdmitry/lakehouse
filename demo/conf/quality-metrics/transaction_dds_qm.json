@@ -3,37 +3,50 @@
   "keyName": "transaction_dds_qm",
   "description": "",
   "enabled": true,
-  "sources": [
-    {
-      "name": "client_processing",
+  "save": true,
+  "dqThresholdViolationLevel": "error",
+  "sources": {
+    "client_processing": {
       "properties": {
         "fetchSize": "10000"
       }
     },
-    {
-      "name": "transaction_processing",
+    "transaction_processing": {
       "properties": {
         "fetchSize": "10000"
       }
     }
-  ],
-  "qualityMetricsConfTestSets": [
-    {
-      "keyName": "non_zero_count",
+  },
+  "testSets": {
+    "non_zero_count": {
       "description": "count rows of every increment more than 0",
-      "dqMetricsType": "sparkSQL",
-      "save": false,
-      "value": "select count(1) cnt from {{ dataSet.fullTableName }} where reg_date_time >= {{intervalStart}} and reg_date_time < {{intervalEnd}}"
+      "type": "sparkSQL",
+      "scripts": [
+        {
+          "key": "dq.non_zero_count.sql"
+        }
+      ]
     }
-  ],
-  "thresholds": [
-    {
-      "keyName": "non_zero_count_th",
+  },
+  "metric" : {
+    "description": "count rows of every increment more than 0",
+    "type": "sparkSQL",
+    "scripts": [
+      {
+        "key": "dq.non_zero_count.sql"
+      }
+    ]
+  },
+  "thresholds": {
+    "non_zero_count_th": {
       "description": "",
-      "dqMetricsType": "sparkSQL",
-      "save": false,
-      "value": "select * from non_zero_count where cnt = 0"
+      "type": "sparkSQL",
+      "scripts": [
+        {
+          "key": "dq.non_zero_count_th.sql"
+        }
+      ]
     }
-  ]
+  }
 }
 

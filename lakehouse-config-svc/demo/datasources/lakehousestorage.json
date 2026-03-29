@@ -16,10 +16,7 @@
     },
   "description": "Local datastore",
   "sqlTemplate" : {
-    "tableDDLCompact": "{%set catalog_name=dataSets[targetDataSetKeyName].catalogKeyName%}CALL {{catalog_name}}.system.rewrite_data_files(table => 'db_name.table_name', options => map('min-input-files', '2', 'target-file-size-bytes', '134217728'))"
+    "tableDDLCompact" : "sql-template-spark_iceberg.tableDDLCompact.sql"
   }
-
-
-
 }
 

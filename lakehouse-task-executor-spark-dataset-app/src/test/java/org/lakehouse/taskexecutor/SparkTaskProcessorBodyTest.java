@@ -28,6 +28,7 @@ import org.lakehouse.taskexecutor.api.datasource.DataSourceManipulatorFactory;
 import org.lakehouse.taskexecutor.api.datasource.DataSourceManipulatorFactoryImpl;
 import org.lakehouse.taskexecutor.api.datasource.exception.*;
 import org.lakehouse.taskexecutor.api.processor.body.ProcessorBody;
+import org.lakehouse.taskexecutor.api.processor.body.sql.CompactTableSQLProcessorBody;
 import org.lakehouse.taskexecutor.api.processor.body.sql.MergeSQLProcessorBody;
 import org.lakehouse.taskexecutor.spark.dataset.datasourcemanipulator.SparkDataSourceManipulatorFactory;
 import org.lakehouse.taskexecutor.spark.dataset.datasourcemanipulator.UnsuportedDataSourceException;
@@ -44,13 +45,16 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 @SpringBootTest
 @Import({
-        MergeSQLProcessorBody.class})
+        MergeSQLProcessorBody.class,CompactTableSQLProcessorBody.class})
 public class SparkTaskProcessorBodyTest {
 
     static String clientDatasetName = "client_processing";
@@ -76,6 +80,10 @@ public class SparkTaskProcessorBodyTest {
         @Bean
         DataSourceManipulatorFactory getDataSourceManipulatorFactory(SparkSession sparkSession){
             return new SparkDataSourceManipulatorFactory(sparkSession);
+        }
+        @Bean(value = "compactTableSQLProcessorBody")
+        CompactTableSQLProcessorBody getCompactTableSQLProcessorBody(ConfigRestClientApi configRestClientApi, DataSourceManipulatorFactory dataSourceManipulatorFactory){
+            return new CompactTableSQLProcessorBody(configRestClientApi,dataSourceManipulatorFactory);
         }
     }
     @Autowired
@@ -172,12 +180,7 @@ public class SparkTaskProcessorBodyTest {
     @Order(1)
     void testPostgres() throws IOException, DropException,  CreateException, NoSuchTableException, TaskConfigurationException {
         SourceConfDTO sourceConfDTO = configRestClientApi.getSourceConfDTO(trnddsDatasetName);
-        ScheduledTaskLockDTO scheduledTaskLockDTO = new  TaskConfigTestFactory().loadScheduledTaskLockDTO(trnddsDatasetName,"load");
-        SparkSession sparkSession =  applicationContext.getBean(SparkSession.class);/*buildSparkSession(
-                applicationContext.getBean(SparkSession.class),
-                scheduledTaskLockDTO.getScheduledTaskEffectiveDTO(), sourceConfDTO);
-
-  */
+       SparkSession sparkSession =  applicationContext.getBean(SparkSession.class);
         JinJavaUtils jinJavaUtils = JinJavaFactory.getJinJavaUtils();
         jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(sourceConfDTO));
 
@@ -251,5 +254,46 @@ public class SparkTaskProcessorBodyTest {
         isExists = sparkSession.catalog().tableExists(catTableName);
 
         assert  (!isExists);
+    }
+
+    @Test
+    void compactEnd2End() throws URISyntaxException, IOException, TaskConfigurationException, CreateException, TaskFailedException, DropException {
+        ScheduledTaskDTO scheduledTaskDTO = ObjectMapping
+                .fileToObject(
+                        new File(getClass().getClassLoader().getResource("compact_task.json").toURI()),
+                        ScheduledTaskDTO.class);
+        SparkSession sparkSession = applicationContext.getBean(SparkSession.class);
+
+        SourceConfDTO sourceConfDTO = configRestClientApi.getSourceConfDTO(scheduledTaskDTO.getDataSetKeyName());
+        JinJavaUtils jinJavaUtils = JinJavaFactory.getJinJavaUtils();
+        jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(sourceConfDTO));
+        jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(scheduledTaskDTO));
+        DataSourceManipulator dsm = DataManipulators
+                .getIcebergDataSourceManipulator(
+                        jinJavaUtils,
+                        sparkSession,
+                        trnddsDatasetName,
+                        sourceConfDTO,
+                        configRestClientApi
+
+                );
+
+        dsm.createTableIfNotExists();
+        String sql = "insert into `lakehouse`.`default`.`transaction_dds` (" +
+                " id ,amount ,client_id, client_name,commission ,provider_id, reg_date_time  )" +
+                "values(" +
+                "1,   9282.88,1,        'myTestClient', 400.55, 1, timestamp '2025-01-01T00:00:00Z')";
+        sparkSession.sql(sql).show();
+        sql = "select * from `lakehouse`.`default`.`transaction_dds`";
+        sparkSession.sql(sql).show();
+
+        String[] beanNames = applicationContext.getBeanDefinitionNames();
+        Arrays.sort(beanNames);
+        for (String beanName : beanNames) {
+            System.out.println(beanName);
+        }
+        ProcessorBody body = (ProcessorBody) applicationContext.getBean(scheduledTaskDTO.getTaskProcessorBody());
+        body.run(scheduledTaskDTO);
+        dsm.drop();
     }
 }

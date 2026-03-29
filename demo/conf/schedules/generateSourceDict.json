@@ -3,15 +3,15 @@
   "description": "regular schedule for client transactions",
   "intervalExpression": "@daily",
   "startDateTime": "2025-01-01T00:00:00.0+00:00",
-  "stopDateTime": null,
+  "stopDateTime": "2026-01-01T00:00:00.0+00:00",
   "enabled": true,
   "scenarioActs": [
     {
       "name": "client_processing",
       "dataSet": "client_processing",
-      "scenarioActTemplate": "source",
-      "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
-      "intervalEnd": "{{ targetDateTimeTZ }}"
+      "scenarioActTemplate": "database",
+      "intervalStart": "{{ adddays(targetDateTime, -1) }}",
+      "intervalEnd": "{{ targetDateTime }}"
     }
   ],
   "scenarioActEdges": [

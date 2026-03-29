@@ -1,0 +1,42 @@
+{
+  "keyName" : "spark_iceberg",
+  "description" : null,
+  "connectionTemplates" : {
+    "spark" : "{%set service=dataSources[dataSets[targetDataSetKeyName].dataSourceKeyName].service%}{{taskProcessorArgs.protocol}}://{{service.host}}:{{service.port}}"
+  },
+  "sqlTemplate" : {
+    "databaseSchemaName" : "sql-template-spark_iceberg.databaseSchemaName.sql",
+    "databaseSchemaDDLCreate" : "sql-template-spark_iceberg.databaseSchemaDDLCreate.sql",
+    "databaseSchemaExistsSQL" : "sql-template-spark_iceberg.databaseSchemaExistsSQL.sql",
+    "tableFullName" : "sql-template-spark_iceberg.tableFullName.sql",
+    "tableDDLCreate" : "sql-template-spark_iceberg.tableDDLCreate.sql",
+    "tableSQLExists" : "sql-template-spark_iceberg.tableSQLExists.sql",
+    "tableDDLDrop" : "sql-template-spark_iceberg.tableDDLDrop.sql",
+    "tableDDLTruncate" : "sql-template-spark_iceberg.tableDDLTruncate.sql",
+    "tableDDLCompact" : "sql-template-spark_iceberg.tableDDLCompact.sql",
+    "columnNonNullCheckIntegrity" : "sql-template-spark_iceberg.columnNonNullCheckIntegrity.sql",
+    "columnCheckIntegrity" : "sql-template-spark_iceberg.columnCheckIntegrity.sql",
+    "partitionDDLExchange" : "sql-template-spark_iceberg.partitionDDLExchange.sql",
+    "partitionDDLDrop" : "sql-template-spark_iceberg.partitionDDLDrop.sql",
+    "partitionDDLTruncate" : "sql-template-spark_iceberg.partitionDDLTruncate.sql",
+    "partitionDDLAdd" : "sql-template-spark_iceberg.partitionDDLAdd.sql",
+    "partitionDDLCompact" : "sql-template-spark_iceberg.partitionDDLCompact.sql",
+    "constraintDDLDrop" : "sql-template-spark_iceberg.constraintDDLDrop.sql",
+    "primaryKeyDDL" : "sql-template-spark_iceberg.primaryKeyDDL.sql",
+    "primaryKeyDDLAdd" : "sql-template-spark_iceberg.primaryKeyDDLAdd.sql",
+    "primaryKeyCheckIntegrity" : "sql-template-spark_iceberg.primaryKeyCheckIntegrity.sql",
+    "foreignKeyDDL" : "sql-template-spark_iceberg.foreignKeyDDL.sql",
+    "foreignKeyDDLAdd" : "sql-template-spark_iceberg.foreignKeyDDLAdd.sql",
+    "foreignKeyCheckIntegrity" : "sql-template-spark_iceberg.foreignKeyCheckIntegrity.sql",
+    "uniqueKeyDDL" : "sql-template-spark_iceberg.uniqueKeyDDL.sql",
+    "uniqueKeyDDLAdd" : "sql-template-spark_iceberg.uniqueKeyDDLAdd.sql",
+    "uniqueKeyCheckIntegrity" : "sql-template-spark_iceberg.uniqueKeyCheckIntegrity.sql",
+    "columnsCastDML" : "sql-template-spark_iceberg.columnsCastDML.sql",
+    "mergeDML" : "sql-template-spark_iceberg.mergeDML.sql",
+    "insertDML" : "sql-template-spark_iceberg.insertDML.sql",
+    "checkConstraintDDL" : "sql-template-spark_iceberg.checkConstraintDDL.sql",
+    "checkConstraintDDLAdd" : "sql-template-spark_iceberg.checkConstraintDDLAdd.sql",
+    "checkConstraintCheckIntegrity" : "sql-template-spark_iceberg.checkConstraintCheckIntegrity.sql"
+  },
+  "dataSourceType" : "iceberg"
+}

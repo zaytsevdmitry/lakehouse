@@ -1,0 +1,19 @@
+{
+  "name" : "compact",
+  "taskExecutionServiceGroupName" : "spark-cluster",
+  "taskProcessor" : "sparkLauncherTaskProcessor",
+  "taskProcessorBody" : "compactTableSQLProcessorBody",
+  "importance" : null,
+  "description" : null,
+  "taskProcessorArgs" : {
+  },
+  "id" : 17,
+  "scenarioActKeyName" : "transaction_dds",
+  "scheduleKeyName" : "regular",
+  "status" : "RUNNING",
+  "targetDateTime" : "2025-01-02T00:00:00Z",
+  "intervalStartDateTime" : "2025-01-01T00:00:00Z",
+  "intervalEndDateTime" : "2025-01-02T00:00:00Z",
+  "dataSetKeyName" : "transaction_dds",
+  "tryNum" : null
+}

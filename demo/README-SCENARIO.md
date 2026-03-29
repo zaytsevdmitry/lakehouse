@@ -20,20 +20,20 @@
 
 Конфигурация содержит описания
 
-- двух мест хранения данных бд Postgres и файловая система [datastores](conf/datastores).
+- двух мест хранения данных бд Postgres и файловая система [datasources](conf/datasources).
 - пяти датасетов [datasets](conf/datasets) и скриптов описывающих трансформацию
-  данных [dataset-sql-model](conf/dataset-sql-model)
+  данных [dataset-sql-model](conf/sql-scripts/dataset-sql-model)
 - двух шаблонов сценариев [scenario-act-templates](conf/scenario-act-templates):
-    - [default](conf/scenario-act-templates/default.json) применяется в
+    - [spark](conf/scenario-act-templates/spark.json) применяется в
       расписаниях [regular](conf/schedules/regular.json) и [initial](conf/schedules/initial.json). Обслуживает логику
       Spark задач
-    - [source.json](conf/scenario-act-templates/source.json) применяется в
+    - [database](conf/scenario-act-templates/database.json) применяется в
       расписаниях [generateSource](conf/schedules/generateSource.json)
       и [generateSourceDict](conf/schedules/generateSourceDict.json). Обслуживает логику jdbc задач
 - расписаний, сценарий которого применяет шаблоны последовательностей задач. :
     - [generateSource](conf/schedules/generateSource.json) формирует данные в таблице платежных
       транзакций [transaction_processing](conf/datasets/transaction_processing.json) в
-      postgres [processingdb](conf/datastores/processingdb.json)
+      postgres [processingdb](conf/datasources/processingdb.json)
     - [generateSourceDict](conf/schedules/generateSourceDict.json) просто перезаписывает справочник
       клиентов [client_processing](conf/datasets/client_processing.json) в
       postgres [processingdb](conf/datastores/processingdb.json)
@@ -56,7 +56,8 @@
 - проекта (пространства имен, он один [demo](conf/projects/demo.json))
 - двух групп исполнителей [taskexecutionservicegroups](conf/taskexecutionservicegroups)
     - [state-exe](conf/taskexecutionservicegroups/state-exe.json) для работы с задачами "состояний" 1 экземпляр
-    - [default](conf/taskexecutionservicegroups/default.json) обрабатывает задачи с данными 2 конкурирующих экземпляра
+    - [database](conf/taskexecutionservicegroups/database.json) обрабатывает задачи с БД  1 экземпляр
+    - [spark-cluster](conf/taskexecutionservicegroups/spark-cluster.json) обрабатывает spark задачи  1 экземпляр
 
 > Датасеты transaction_processing и client_processing имеют отличительную особенность - тк они являются источником, в их
 > сценариях расписаний [source.json](conf/scenario-act-templates/source.json)  нет шага проверки зависимостей
