@@ -12,28 +12,22 @@ Key Business Benefits
 
 # Compatible keywords
 MetaData Driven
-
 Domain Driven Design (DDD)
-
 Data mesh
-
 Data vault
-
 Data governance
-
 Scheduling
-
 Custom code
-
 SQL
-
 Data engineer tool
-
 Lakehouse management tool
-
 United namespace
 
-# links
+# Configuration
+[Configuration](doc/configuration/configuration.md)
+
+
+# Dev links
 
 [System design](./doc/system_design/system_design.md)
 
