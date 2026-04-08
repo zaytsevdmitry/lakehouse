@@ -7,10 +7,7 @@ import org.lakehouse.client.api.utils.Coalesce;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.config.entities.Schedule;
 import org.lakehouse.config.entities.scenario.*;
-import org.lakehouse.config.exception.DataSetNotFoundException;
-import org.lakehouse.config.exception.ScenarioActNotFoundException;
-import org.lakehouse.config.exception.ScheduleNotFoundException;
-import org.lakehouse.config.exception.TaskEffectiveNotFoundException;
+import org.lakehouse.config.exception.*;
 import org.lakehouse.config.mapper.Mapper;
 import org.lakehouse.config.repository.*;
 import org.lakehouse.config.repository.dataset.DataSetRepository;
@@ -131,7 +128,7 @@ public class ScheduleService {
 
     private ScheduleDTO mapScheduleToDTO(Schedule schedule) {
         ScheduleDTO result = new ScheduleDTO();
-        result.setName(schedule.getKeyName());
+        result.setKeyName(schedule.getKeyName());
         result.setDescription(schedule.getDescription());
         result.setIntervalExpression(schedule.getIntervalExpression());
         result.setStartDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(schedule.getStartDateTime()));
@@ -145,7 +142,7 @@ public class ScheduleService {
     }
 
     private Schedule mapScheduleToEntity(Schedule schedule, ScheduleDTO scheduleDTO) {
-        schedule.setKeyName(scheduleDTO.getName());
+        schedule.setKeyName(scheduleDTO.getKeyName());
         schedule.setDescription(scheduleDTO.getDescription());
         schedule.setIntervalExpression(scheduleDTO.getIntervalExpression());
         schedule.setStartDateTime(DateTimeUtils.parseDateTimeFormatWithTZ(scheduleDTO.getStartDateTime()));
@@ -180,7 +177,7 @@ public class ScheduleService {
 
         Schedule currentScheduleVersion =
                 scheduleRepository
-                        .findById(scheduleDTO.getName())
+                        .findById(scheduleDTO.getKeyName())
                         .orElse(new Schedule());
 
         if (scheduleDTO.equals(mapScheduleToDTO(currentScheduleVersion))) {
@@ -301,9 +298,10 @@ public class ScheduleService {
             TaskDTO taskDTO,
             TaskDTO taskTemplate) {
 
-        if (taskDTO == null && taskTemplate == null)
-            logger.warn("Internal error both arguments are null");
-
+        if (taskDTO == null && taskTemplate == null) {
+            logger.error("Internal error both arguments are null");
+            throw new TaskEffectiveMatchException("Internal error both arguments are null");
+        }
         if (taskTemplate == null)
             return taskDTO;
 
@@ -323,7 +321,7 @@ public class ScheduleService {
 
 
     public TaskDTO getEffectiveTaskDTO(String scheduleName, String scenarioActName, String taskName) {
-
+        logger.info("Get EffectiveTaskDTO {}.{}.{}",scheduleName,scenarioActName,taskName);
         ScenarioAct scenarioAct = scenarioActRepository.findByScheduleNameAndActName(scheduleName, scenarioActName)
                 .orElseThrow(() -> new ScenarioActNotFoundException(scheduleName, scenarioActName));
 
@@ -374,9 +372,9 @@ public class ScheduleService {
             Map<String, ScenarioActTemplateDTO> actTemplateDTOMap
     ) {
         ScheduleEffectiveDTO result = new ScheduleEffectiveDTO();
-        Schedule schedule = findById(scheduleDTO.getName());
+        Schedule schedule = findById(scheduleDTO.getKeyName());
         result.setEnabled(scheduleDTO.isEnabled());
-        result.setName(scheduleDTO.getName());
+        result.setKeyName(scheduleDTO.getKeyName());
         result.setIntervalExpression(scheduleDTO.getIntervalExpression());
         result.setStartDateTime(scheduleDTO.getStartDateTime());
         result.setStopDateTime(scheduleDTO.getStopDateTime());
@@ -420,7 +418,10 @@ public class ScheduleService {
 
                     resultAct.setTasks(taskNames
                             .stream()
-                            .map(string -> matchTaskWithTemplate(taskDTOmap.get(string), taskDTOTemplatesMap.get(string)))
+                            .map(taskName -> {
+                                logger.info("Get EffectiveTaskDTO {}.{}.{}", schedule.getKeyName(),resultAct.getName(), taskName);
+                                return matchTaskWithTemplate(taskDTOmap.get(taskName), taskDTOTemplatesMap.get(taskName));
+                            })
                             .collect(Collectors.toSet()));
 
                     return resultAct;

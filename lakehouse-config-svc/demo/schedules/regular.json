@@ -1,5 +1,5 @@
 {
-  "name": "regular",
+  "keyName": "regular",
   "description": "regular schedule for client transactions",
   "intervalExpression": "0 0 * * * *",
   "startDateTime": "2024-07-29T21:26:19.183+00:00",

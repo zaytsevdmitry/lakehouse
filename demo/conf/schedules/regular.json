@@ -1,15 +1,15 @@
 {
-  "name": "regular",
+  "keyName": "regular",
   "description": "regular schedule for client transactions",
   "intervalExpression": "@daily",
-  "startDateTime": "2025-01-01T00:00:00.0+00:00",
+  "startDateTime": "2024-12-31T00:00:00.0+00:00",
   "stopDateTime": null,
   "enabled": true,
   "scenarioActs": [
     {
       "name": "transaction_dds",
       "dataSet": "transaction_dds",
-      "scenarioActTemplate": "spark",
+      "scenarioActTemplate": "spark-dq",
       "intervalStart": "{{ adddays(targetDateTime, -1) }}",
       "intervalEnd": "{{ targetDateTime }}"
     },

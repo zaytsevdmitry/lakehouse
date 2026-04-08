@@ -17,7 +17,7 @@ import static guru.nidi.graphviz.model.Factory.mutNode;
 
 public class GraphBuilder {
     public static void build2(ScheduleEffectiveDTO dto){
-        MutableGraph root = mutGraph(dto.getName()).setDirected(true).graphAttrs().add("compound", true);
+        MutableGraph root = mutGraph(dto.getKeyName()).setDirected(true).graphAttrs().add("compound", true);
 
         Map<String,MutableGraph> clusters = new HashMap<>();
         for (ScheduleScenarioActEffectiveDTO efa:dto.getScenarioActs()){

@@ -50,7 +50,7 @@ lakehouse:
               bootstrap.servers: localhost:9092
               group.id: scheduler
               auto.offset.reset: earliest
-            topics: schedule_changes
+            topics: schedule_effective_changes
             concurrency: 1
     registration:
       delay-ms: 6000

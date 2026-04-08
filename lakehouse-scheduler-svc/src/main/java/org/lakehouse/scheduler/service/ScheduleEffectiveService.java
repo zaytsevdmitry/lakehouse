@@ -31,13 +31,13 @@ public class ScheduleEffectiveService {
     }
 
     public ScheduleEffectiveDTO setScheduleEffectiveDTO(ScheduleEffectiveDTO scheduleEffectiveDTO) {
-        if (!scheduleEffectiveDTOMap.containsKey(scheduleEffectiveDTO.getName())
+        if (!scheduleEffectiveDTOMap.containsKey(scheduleEffectiveDTO.getKeyName())
                 || scheduleEffectiveDTOMap
-                .get(scheduleEffectiveDTO.getName()).getLastChangeNumber()
+                .get(scheduleEffectiveDTO.getKeyName()).getLastChangeNumber()
                 < scheduleEffectiveDTO.getLastChangeNumber()
         )
-            scheduleEffectiveDTOMap.put(scheduleEffectiveDTO.getName(), scheduleEffectiveDTO);
-        return scheduleEffectiveDTOMap.get(scheduleEffectiveDTO.getName());
+            scheduleEffectiveDTOMap.put(scheduleEffectiveDTO.getKeyName(), scheduleEffectiveDTO);
+        return scheduleEffectiveDTOMap.get(scheduleEffectiveDTO.getKeyName());
     }
 
     public boolean isBefore(String intervalExpression, OffsetDateTime lastOffsetDateTime) {

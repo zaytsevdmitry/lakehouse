@@ -207,7 +207,7 @@ public class TaskExecutorTest {
         result.setTaskProcessorArgs(taskDTO.getTaskProcessorArgs());
         result.setTaskProcessorBody(taskDTO.getTaskProcessorBody());
         result.setTaskProcessor(taskDTO.getTaskProcessor());
-        result.setScheduleKeyName(scheduleEffectiveDTO.getName());
+        result.setScheduleKeyName(scheduleEffectiveDTO.getKeyName());
         result.setScenarioActKeyName("act");
         return result;
     }

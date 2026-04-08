@@ -1,5 +1,5 @@
 {
-  "name": "database",
+  "keyName": "database",
   "description": "Database scenario",
   "tasks": [
     {

@@ -1,5 +1,5 @@
 {
-  "name": "initial",
+  "keyName": "initial",
   "description": "initial schedule for client transactions",
   "intervalExpression": "0 0 1 1 * *",
   "startDateTime": "2020-12-31T21:00:00.000+00:00",

@@ -97,7 +97,7 @@ public class ManageStateService {
             findNextScheduleInstanceOrNull(sir, scheduleEffectiveDTO).ifPresentOrElse((scheduleInstance -> {
 
                 if (scheduleInstance.getStatus().equals(Status.Schedule.NEW)) {
-                    logger.info("Next schedule of {} is found", scheduleEffectiveDTO.getName());
+                    logger.info("Next schedule of {} is found", scheduleEffectiveDTO.getKeyName());
                     scheduleInstance.setStatus(Status.Schedule.RUNNING);
                     sir.setScheduleInstance(scheduleInstance);
 
@@ -106,14 +106,14 @@ public class ManageStateService {
                     result.addAndGet(1);
                 }else {
                     logger.info("Next schedule of {} found but status not {}. Current status {}",
-                            scheduleEffectiveDTO.getName(),
+                            scheduleEffectiveDTO.getKeyName(),
                             Status.Schedule.RUNNING,
                             scheduleInstance.getStatus()
                     );
                 }
 
             }),
-                    () -> logger.info("Next schedule of {} not found", scheduleEffectiveDTO.getName()));
+                    () -> logger.info("Next schedule of {} not found", scheduleEffectiveDTO.getKeyName()));
         });
         return result.get();
     }

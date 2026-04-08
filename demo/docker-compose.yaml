@@ -159,7 +159,7 @@ services:
         limits:
           cpus: "2" # Adjust as needed
           memory: 4g  # Adjust as needed
-
+      
   conf-svc:
     image: lakehouse:0.3.0
     container_name: conf-svc
@@ -171,7 +171,7 @@ services:
     command: >
       bash -c "java
       -Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=ConfigSVC
-      -Dlakehouse.config.schedule.kafka.producer.bootstrap-servers=broker:9092
+      -Dlakehouse.config.schedule.send.kafka.producer.properties.bootstrap.servers=broker:9092
       -jar /opt/lakehouse-config-svc-0.3.0-jar-with-dependencies.jar"
     depends_on:
       - db-dev

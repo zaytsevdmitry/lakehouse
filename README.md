@@ -24,7 +24,7 @@ Lakehouse management tool
 United namespace
 
 # Configuration
-[Configuration](doc/configuration/configuration.md)
+[Configuration](lakehouse-config-svc/doc/configuration/configuration.md)
 
 
 # Dev links

@@ -55,6 +55,8 @@ public class InternalScheduler {
             ScheduleEffectiveDTO scheduleEffectiveDTO = scheduleService.findEffectiveScheduleDTOById(scheduleProduceMessage.getSchedule().getKeyName());
             scheduleConfigProducerService.send(scheduleEffectiveDTO);
             scheduleProduceMessageRepository.delete(scheduleProduceMessage);
+            logger.info("Schedule config {} sent", scheduleProduceMessage.getSchedule().getKeyName());
+
         });
     }
 }

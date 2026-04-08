@@ -77,11 +77,11 @@ public class ConfigRestClientHelperTest {
 
         ScheduleDTO expectScheduleDTO = fileLoader.loadScheduleDTO("initial");
         server.expect(ExpectedCount.manyTimes(),
-                        requestTo(String.format("%s/%s", Endpoint.SCHEDULES, expectScheduleDTO.getName())))
+                        requestTo(String.format("%s/%s", Endpoint.SCHEDULES, expectScheduleDTO.getKeyName())))
                 .andRespond(withSuccess(objectMapper.writeValueAsString(expectScheduleDTO), MediaType.APPLICATION_JSON));
         System.out.println("schedule is loaded");
 
-        ScheduleDTO scheduleDTO = this.client.getScheduleDTO(expectScheduleDTO.getName());
+        ScheduleDTO scheduleDTO = this.client.getScheduleDTO(expectScheduleDTO.getKeyName());
         assert (expectScheduleDTO.equals(scheduleDTO));
     }
 
@@ -89,12 +89,12 @@ public class ConfigRestClientHelperTest {
     public void MakesCorrectCallScenarioActTemplateDTO() throws Exception {
         ScenarioActTemplateDTO scenarioActTemplateDTO = fileLoader.loadScenarioActTemplateDTO();
         server.expect(ExpectedCount.manyTimes(),
-                        requestTo(String.format("%s/%s", Endpoint.SCENARIOS, scenarioActTemplateDTO.getName())))
+                        requestTo(String.format("%s/%s", Endpoint.SCENARIOS, scenarioActTemplateDTO.getKeyName())))
                 .andRespond(withSuccess(objectMapper.writeValueAsString(scenarioActTemplateDTO), MediaType.APPLICATION_JSON));
         System.out.println("scenario is loaded");
 
         ScenarioActTemplateDTO expect = fileLoader.loadScenarioActTemplateDTO();
-        ScenarioActTemplateDTO result = client.getScenarioActTemplateDTO(expect.getName());
+        ScenarioActTemplateDTO result = client.getScenarioActTemplateDTO(expect.getKeyName());
         assert (expect.equals(result));
     }
 
@@ -102,12 +102,12 @@ public class ConfigRestClientHelperTest {
     public void MakesCorrectCallScheduleEffectiveDTO() throws Exception {
         ScheduleEffectiveDTO sef = fileLoader.loadScheduleEffectiveDTO();
         server.expect(ExpectedCount.manyTimes(),
-                        requestTo(String.format("%s/name/%s", Endpoint.EFFECTIVE_SCHEDULES_ROOT, sef.getName())))
+                        requestTo(String.format("%s/name/%s", Endpoint.EFFECTIVE_SCHEDULES_ROOT, sef.getKeyName())))
                 .andRespond(withSuccess(objectMapper.writeValueAsString(sef), MediaType.APPLICATION_JSON));
         System.out.println("Schedule effective is loaded");
 
         ScheduleEffectiveDTO expect = fileLoader.loadScheduleEffectiveDTO();
-        ScheduleEffectiveDTO result = client.getScheduleEffectiveDTO(expect.getName());
+        ScheduleEffectiveDTO result = client.getScheduleEffectiveDTO(expect.getKeyName());
         assert (expect.equals(result));
     }
 

@@ -29,7 +29,7 @@ public class ScheduleObjectActions implements ConfigObjectActions {
         return ObjectActionsHelper.table(
                 new String[]{"name", "description", "intervalExpression", "startDateTime", "stopDateTime"},
                 l.stream().map(o -> new String[]{
-                        o.getName(),
+                        o.getKeyName(),
                         o.getDescription(),
                         o.getIntervalExpression(),
                         o.getStartDateTime(),

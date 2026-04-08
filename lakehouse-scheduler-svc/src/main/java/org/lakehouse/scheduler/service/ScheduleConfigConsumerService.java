@@ -27,7 +27,7 @@ public class ScheduleConfigConsumerService {
             concurrency = "#{'${lakehouse.scheduler.config.schedule.kafka.consumer.concurrency}'}",
             containerFactory = "containerFactory")
     public void listen(ScheduleEffectiveDTO scheduleEffectiveDTO) {
-        logger.info("New schedule config change: {}", scheduleEffectiveDTO.getName());
+        logger.info("New schedule config change: {}", scheduleEffectiveDTO.getKeyName());
         buildService.registration(scheduleEffectiveDTO);
         logger.info("findAndRegisterNewSchedules");
     }

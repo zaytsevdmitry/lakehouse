@@ -69,7 +69,7 @@ public class ScenarioActTemplateService {
 
     private ScenarioActTemplateDTO mapScenarioToDTO(TemplateScenarioAct templateScenarioAct) {
         ScenarioActTemplateDTO result = new ScenarioActTemplateDTO();
-        result.setName(templateScenarioAct.getKeyName());
+        result.setKeyName(templateScenarioAct.getKeyName());
         result.setDescription(templateScenarioAct.getDescription());
         result.setTasks(taskTemplateRepository.findByTemplateScenarioActKeyName(templateScenarioAct.getKeyName()).stream()
                 .map(taskTemplate -> mapper
@@ -90,7 +90,7 @@ public class ScenarioActTemplateService {
 
     private TemplateScenarioAct mapScenarioToEntity(ScenarioActTemplateDTO scenarioActTemplateDTO) {
         TemplateScenarioAct result = new TemplateScenarioAct();
-        result.setKeyName(scenarioActTemplateDTO.getName());
+        result.setKeyName(scenarioActTemplateDTO.getKeyName());
         result.setDescription(scenarioActTemplateDTO.getDescription());
 
         return result;
@@ -101,7 +101,7 @@ public class ScenarioActTemplateService {
     }
 
     public Map<String, ScenarioActTemplateDTO> findAllAsMap() {
-        return findAll().stream().collect(Collectors.toMap(ScenarioActTemplateDTO::getName, scenarioActTemplateDTO -> scenarioActTemplateDTO));
+        return findAll().stream().collect(Collectors.toMap(ScenarioActTemplateDTO::getKeyName, scenarioActTemplateDTO -> scenarioActTemplateDTO));
     }
 
     public Set<TaskDTO> getTaskDTOListNullSafe(ScenarioActTemplateDTO scenarioActTemplateDTO) {
@@ -136,7 +136,7 @@ public class ScenarioActTemplateService {
                 });
         taskTemplateRepository.findByTemplateScenarioActKeyName(templateScenarioAct.getKeyName()).forEach(taskTemplate ->
                 logger.info("Found task {}.{}", templateScenarioAct.getKeyName(), taskTemplate.getName()));
-        logger.info("Save ScenarioActTemplate.name={}", scenarioActTemplateDTO.getName());
+        logger.info("Save ScenarioActTemplate.name={}", scenarioActTemplateDTO.getKeyName());
         TemplateScenarioAct result = scenarioActTemplateRepository.save(templateScenarioAct);
 
         Map<String, TemplateTask> taskTemplates = new HashMap<>();
@@ -154,7 +154,7 @@ public class ScenarioActTemplateService {
 
             templateTaskBefore.setDescription(taskDTO.getDescription());
 
-            logger.info("Save ScenarioActTemplate.name={}, taskTemplate.name={}", scenarioActTemplateDTO.getName(), templateTaskBefore.getName());
+            logger.info("Save ScenarioActTemplate.name={}, taskTemplate.name={}", scenarioActTemplateDTO.getKeyName(), templateTaskBefore.getName());
 
             TemplateTask templateTaskAfter = taskTemplateRepository.save(templateTaskBefore);
 
@@ -163,7 +163,7 @@ public class ScenarioActTemplateService {
             taskDTO.getTaskProcessorArgs().forEach((k, v) -> {
 
                 logger.info("Save ScenarioActTemplate.name={}, taskTemplate.name={}, argKey={}",
-                        scenarioActTemplateDTO.getName(),
+                        scenarioActTemplateDTO.getKeyName(),
                         templateTaskAfter.getName(),
                         k);
                 TemplateTaskProcessorArg executionModuleArg = new TemplateTaskProcessorArg();

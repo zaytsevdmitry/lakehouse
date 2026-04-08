@@ -45,7 +45,7 @@ public class ConfigRestClientApiTest extends ConfigRestClientApiAbstract {
             scheduleScenarioActEffectiveDTO.getTasks().forEach(taskDTO -> {
                 String key = String.format(
                         "%s %s %s",
-                        sef.getName(),
+                        sef.getKeyName(),
                         scheduleScenarioActEffectiveDTO.getName(),
                         taskDTO.getName());
                 taskDTOEffectiveMap.put(key, taskDTO);

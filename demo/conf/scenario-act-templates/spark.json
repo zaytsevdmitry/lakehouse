@@ -1,5 +1,5 @@
 {
-  "name": "spark",
+  "keyName": "spark",
   "description": "Spark job scenario",
   "tasks": [
     {
@@ -53,27 +53,6 @@
       }
     },
     {
-      "name": "quality",
-      "taskExecutionServiceGroupName": "spark-cluster",
-      "taskProcessor": "sparkLauncherTaskProcessor",
-      "taskProcessorBody": "sparkTaskProcessorDQBody",
-      "importance": "critical",
-      "description": "load from remote datastore",
-      "taskProcessorArgs": {
-        "spark.ui.enabled": "true",
-        "spark.executor.memory": "1g",
-        "spark.driver.memory": "1g",
-        "lakehouse.client.rest.config.server.url": "http://192.1.193.80:8080",
-        "lakehouse.taskexecutor.body.config.dq.kafka.producer.properties.bootstrap.servers" : "broker:9092",
-        "lakehouse.taskexecutor.body.config.dq.kafka.producer.metric.status.topic": "metric_status",
-        "lakehouse.taskexecutor.body.config.dq.kafka.producer.testSet.status.topic": "metric_test_set_status",
-        "lakehouse.taskexecutor.body.config.dq.kafka.producer.metric.value.topic": "metric_value",
-        "protocol": "http",
-        "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dq-app-0.3.0-jar-with-dependencies.jar",
-        "deploy.mainClass": "org.lakehouse.taskexecutor.spark.dq.SparkProcessorApplicationDQ"
-        }
-    },
-    {
       "name": "compact",
       "taskExecutionServiceGroupName": "spark-cluster",
       "taskProcessor": "sparkLauncherTaskProcessor",
@@ -113,15 +92,7 @@
     },
     {
       "from": "load",
-      "to": "quality"
-    },
-    {
-      "from": "load",
       "to": "compact"
-    },
-    {
-      "from": "quality",
-      "to": "finally"
     },
     {
       "from": "compact",

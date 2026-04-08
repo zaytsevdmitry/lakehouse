@@ -1,7 +1,7 @@
 package org.lakehouse.client.api.dto.configs.schedule;
 
 import org.lakehouse.client.api.dto.configs.DagEdgeDTO;
-import org.lakehouse.client.api.dto.configs.NameDescriptionAbstract;
+import org.lakehouse.client.api.dto.configs.KeyNameDescriptionAbstract;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 
 import java.io.Serial;
@@ -9,7 +9,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-public class ScheduleAbstract extends NameDescriptionAbstract {
+public class ScheduleAbstract extends KeyNameDescriptionAbstract {
     @Serial
     private static final long serialVersionUID = 5872306801909970542L;
     private String intervalExpression;
@@ -89,7 +89,7 @@ public class ScheduleAbstract extends NameDescriptionAbstract {
     public ScheduleAbstract copy() throws Exception {
         ScheduleAbstract result = new ScheduleAbstract();
         result.setEnabled(isEnabled());
-        result.setName(getName());
+        result.setKeyName(getKeyName());
         result.setIntervalExpression(getIntervalExpression());
         result.setStartDateTime(getStartDateTime());
         result.setStopDateTime(getStopDateTime());

@@ -25,7 +25,9 @@ public class ScheduleEffectiveDTO extends ScheduleAbstract {
     }
 
     public void setScenarioActs(Set<ScheduleScenarioActEffectiveDTO> scenarioActs) {
-        this.scenarioActs = scenarioActs.stream().sorted(Comparator.comparing(ScheduleScenarioActAbstract::getName)).collect(Collectors.toCollection(LinkedHashSet::new));
+        this.scenarioActs = scenarioActs.stream()
+                .sorted(Comparator.comparing(ScheduleScenarioActAbstract::getName))
+                .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     public void setLastChangeNumber(Long lastChangeNumber) {

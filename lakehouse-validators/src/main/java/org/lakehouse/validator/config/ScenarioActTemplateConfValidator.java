@@ -15,7 +15,7 @@ public class ScenarioActTemplateConfValidator {
         List<String> descriptions = new ArrayList<>();
 
         descriptions.addAll(ScheduleConfValidator.validateEdges(
-                String.format("ScenarioActTemplate %s", scenarioActTemplateDTO.getName()),
+                String.format("ScenarioActTemplate %s", scenarioActTemplateDTO.getKeyName()),
                 scenarioActTemplateDTO
                         .getTasks()
                         .stream()
@@ -26,7 +26,7 @@ public class ScenarioActTemplateConfValidator {
 
         ScheduleConfValidator
                 .validateEdges(
-                        String.format("scenario template '%s'", scenarioActTemplateDTO.getName()),
+                        String.format("scenario template '%s'", scenarioActTemplateDTO.getKeyName()),
                         scenarioActTemplateDTO.getTasks().stream().map(TaskDTO::getName).collect(Collectors.toSet()),
                         scenarioActTemplateDTO.getDagEdges())
                 .forEach(s -> {

@@ -37,7 +37,7 @@ public class ScheduleInstanceFactory {
         } catch (CronParceErrorException e) {
             logger.warn(e.getMessage());
             throw new TransactionException(String.format("Error when try to set TargetExecutionDateTime of %s",
-                    scheduleEffectiveDTO.getName()), e);
+                    scheduleEffectiveDTO.getKeyName()), e);
         }
 
         scheduleInstance.setStatus(Status.Schedule.NEW);

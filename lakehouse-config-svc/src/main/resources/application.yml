@@ -33,12 +33,10 @@ lakehouse:
         delay-ms: 10000
         initial-delay-ms: 20000
         limit: 100
-      kafka:
-        producer:
-          schedule:
-            send:
-              topic: schedule_changes
-            delete:
-              topic: schedule_deletes
-          bootstrap-servers: localhost:9092
-          topic: schedules_effective
+        topic: schedule_effective_changes
+        kafka:
+          producer:
+            properties:
+              bootstrap.servers: localhost:9092
+
+

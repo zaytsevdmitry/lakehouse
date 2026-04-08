@@ -1,10 +1,12 @@
 package org.lakehouse.client.api.dto.configs.schedule;
 
+import java.io.Serial;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
 public class ScheduleDTO extends ScheduleAbstract {
+    @Serial
     private static final long serialVersionUID = 5259060075468520559L;
 
     private Set<ScheduleScenarioActDTO> scenarioActs = new HashSet<>();

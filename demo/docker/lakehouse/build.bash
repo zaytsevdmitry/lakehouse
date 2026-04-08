@@ -1,9 +1,8 @@
-  #!/usr/bin/env bash
+#!/usr/bin/env bash
 set -e
 set -v
 export LH_VERSION=0.3.0
 pwd
-#mvn clean package
 mkdir -p ./opt
 export CODE_ROOT="../../.."
 for app in "lakehouse-scheduler-svc" "lakehouse-cli" "lakehouse-config-svc" "lakehouse-task-executor-svc" "lakehouse-state-svc"

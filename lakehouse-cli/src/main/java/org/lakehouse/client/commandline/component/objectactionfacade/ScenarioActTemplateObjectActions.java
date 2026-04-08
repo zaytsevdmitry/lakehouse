@@ -30,7 +30,7 @@ public class ScenarioActTemplateObjectActions implements ConfigObjectActions {
         return ObjectActionsHelper.table(
                 new String[]{"name", "description"},
                 l.stream().map(o -> new String[]{
-                        o.getName(),
+                        o.getKeyName(),
                         o.getDescription()
                 }).toList());
     }

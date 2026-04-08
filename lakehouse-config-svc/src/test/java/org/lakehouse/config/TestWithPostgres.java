@@ -203,7 +203,7 @@ public class TestWithPostgres {
 
     private ScenarioActTemplateDTO putScenarioDTO() throws Exception {
         ScenarioActTemplateDTO dto = fileLoader.loadScenarioDTO();
-        return ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getName(),
+        return ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getKeyName(),
                         ObjectMapping.asJsonString(dto), Endpoint.SCENARIOS, Endpoint.SCENARIOS_NAME),
                 ScenarioActTemplateDTO.class);
     }
@@ -214,7 +214,7 @@ public class TestWithPostgres {
         TaskExecutionServiceGroupDTO taskExecutionServiceGroupDTO = putTaskExecutionServiceGroupDTO();
         ScenarioActTemplateDTO dto = fileLoader.loadScenarioDTO();
         ScenarioActTemplateDTO resultDTO = putScenarioDTO();
-        restManipulator.deleteDTO(dto.getName(), Endpoint.SCENARIOS_NAME);
+        restManipulator.deleteDTO(dto.getKeyName(), Endpoint.SCENARIOS_NAME);
         restManipulator.deleteDTO(taskExecutionServiceGroupDTO.getName(), Endpoint.TASK_EXECUTION_SERVICE_GROUPS_NAME);
         assert (resultDTO.equals(dto));
     }
@@ -357,7 +357,7 @@ public class TestWithPostgres {
 
     private ScheduleDTO putScheduleDTO(String name) throws Exception {
         ScheduleDTO dto = fileLoader.loadScheduleDTO(name);
-        return ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getName(),
+        return ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getKeyName(),
                 ObjectMapping.asJsonString(dto), Endpoint.SCHEDULES, Endpoint.SCHEDULES_NAME), ScheduleDTO.class);
     }
 
@@ -400,7 +400,7 @@ public class TestWithPostgres {
         scheduleDTO.setScenarioActEdges(new HashSet<>());
         scheduleDTO.setIntervalExpression("*****");
         ScheduleDTO resultscheduleDTO = scheduleService.save(scheduleDTO);
-        assert (scheduleService.findById(resultscheduleDTO.getName()).getLastChangeNumber() == (schedule.getLastChangeNumber() + 1));
+        assert (scheduleService.findById(resultscheduleDTO.getKeyName()).getLastChangeNumber() == (schedule.getLastChangeNumber() + 1));
 
         scheduleRepository.delete(resultSchedule);
         restManipulator.deleteDTO(dto.getKeyName(), Endpoint.DATA_SETS_NAME);
@@ -493,7 +493,7 @@ public class TestWithPostgres {
 
         ScheduleEffectiveDTO scheduleEffectiveDTOExpected = fileLoader.loadScheduleEffectiveDTO();
         ScheduleEffectiveDTO scheduleEffectiveDTOResult = scheduleService
-                .findEffectiveScheduleDTOById(initialScheduleDTO.getName());
+                .findEffectiveScheduleDTOById(initialScheduleDTO.getKeyName());
         //lastChangeTime untestable
         scheduleEffectiveDTOExpected.setLastChangedDateTime(scheduleEffectiveDTOResult.getLastChangedDateTime());
         System.out.println("expected--->" + ObjectMapping.asJsonString(scheduleEffectiveDTOExpected));
@@ -537,8 +537,8 @@ public class TestWithPostgres {
 
         //------------------------------------
         // delete
-        restManipulator.deleteDTO(resultInitialScheduleDTO.getName(), Endpoint.SCHEDULES_NAME);
-        restManipulator.deleteDTO(resultRegularScheduleDTO.getName(), Endpoint.SCHEDULES_NAME);
+        restManipulator.deleteDTO(resultInitialScheduleDTO.getKeyName(), Endpoint.SCHEDULES_NAME);
+        restManipulator.deleteDTO(resultRegularScheduleDTO.getKeyName(), Endpoint.SCHEDULES_NAME);
 
         restManipulator.deleteDTO(resultAggdaily.getKeyName(), Endpoint.DATA_SETS_NAME);
         restManipulator.deleteDTO(resultAggTotal.getKeyName(), Endpoint.DATA_SETS_NAME);
@@ -546,7 +546,7 @@ public class TestWithPostgres {
         restManipulator.deleteDTO(transactionProcessingDTO.getKeyName(), Endpoint.DATA_SETS_NAME);
         restManipulator.deleteDTO(clientProcessingDTO.getKeyName(), Endpoint.DATA_SETS_NAME);
 
-        restManipulator.deleteDTO(scenarioActTemplateDTO.getName(), Endpoint.SCENARIOS_NAME);
+        restManipulator.deleteDTO(scenarioActTemplateDTO.getKeyName(), Endpoint.SCENARIOS_NAME);
         restManipulator.deleteDTO(defaultTaskExecutionServiceGroupDTO.getName(),
                 Endpoint.TASK_EXECUTION_SERVICE_GROUPS_NAME);
         restManipulator.deleteDTO(mydbDataSourceDTO.getKeyName(), Endpoint.DATA_SOURCES_NAME);
@@ -598,7 +598,7 @@ public class TestWithPostgres {
         loadTaskDTOExpected.setTaskProcessorBody("mergeSQLProcessorBody");
         loadTaskDTOExpected.setImportance("critical");
         loadTaskDTOExpected.setDescription("override load");
-        TaskDTO loadTaskDTO = scheduleService.getEffectiveTaskDTO(initialScheduleDTO.getName(), "transaction_dds", "load");
+        TaskDTO loadTaskDTO = scheduleService.getEffectiveTaskDTO(initialScheduleDTO.getKeyName(), "transaction_dds", "load");
         //todo debug
         System.out.println("expect --->\n" + ObjectMapping.asJsonString(loadTaskDTOExpected));
         System.out.println("result --->\n" + ObjectMapping.asJsonString(loadTaskDTO));
@@ -616,7 +616,7 @@ public class TestWithPostgres {
         extendTaskDTOExpected.setTaskProcessorBody("mergeSQLProcessorBody");
         extendTaskDTOExpected.setImportance("critical");
         extendTaskDTOExpected.setDescription("Not exists in template");
-        TaskDTO extendTaskDTO = scheduleService.getEffectiveTaskDTO(initialScheduleDTO.getName(), "transaction_dds", "extend");
+        TaskDTO extendTaskDTO = scheduleService.getEffectiveTaskDTO(initialScheduleDTO.getKeyName(), "transaction_dds", "extend");
         assert (extendTaskDTO.equals(extendTaskDTOExpected));
 
 
@@ -629,17 +629,17 @@ public class TestWithPostgres {
         mergeTaskDTOExpected.setTaskProcessor("dependencyCheckStateTaskProcessor");
         mergeTaskDTOExpected.setImportance("critical");
         mergeTaskDTOExpected.setDescription("Dependency check");
-        TaskDTO mergeTaskDTO = scheduleService.getEffectiveTaskDTO(initialScheduleDTO.getName(), "transaction_dds", "check");
+        TaskDTO mergeTaskDTO = scheduleService.getEffectiveTaskDTO(initialScheduleDTO.getKeyName(), "transaction_dds", "check");
         assert (mergeTaskDTO.equals(mergeTaskDTOExpected));
 
         // delete
-        restManipulator.deleteDTO(initialScheduleDTO.getName(), Endpoint.SCHEDULES_NAME);
+        restManipulator.deleteDTO(initialScheduleDTO.getKeyName(), Endpoint.SCHEDULES_NAME);
         restManipulator.deleteDTO(resultAggdaily.getKeyName(), Endpoint.DATA_SETS_NAME);
         restManipulator.deleteDTO(resultAggTotal.getKeyName(), Endpoint.DATA_SETS_NAME);
         restManipulator.deleteDTO(resultTransactionddsDTO.getKeyName(), Endpoint.DATA_SETS_NAME);
         restManipulator.deleteDTO(transactionProcessingDTO.getKeyName(), Endpoint.DATA_SETS_NAME);
         restManipulator.deleteDTO(clientProcessingDTO.getKeyName(), Endpoint.DATA_SETS_NAME);
-        restManipulator.deleteDTO(scenarioActTemplateDTO.getName(), Endpoint.SCENARIOS_NAME);
+        restManipulator.deleteDTO(scenarioActTemplateDTO.getKeyName(), Endpoint.SCENARIOS_NAME);
         restManipulator.deleteDTO(defaultTaskExecutionServiceGroupDTO.getName(),
                 Endpoint.TASK_EXECUTION_SERVICE_GROUPS_NAME);
         restManipulator.deleteDTO(mydbDataSourceDTO.getKeyName(), Endpoint.DATA_SOURCES_NAME);

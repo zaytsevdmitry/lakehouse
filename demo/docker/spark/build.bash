@@ -5,7 +5,7 @@ export LH_VERSION=0.3.0
 
 export SCALA_VERSION=2.12
 export SPARK_MAJOR_VERSION=3.5
-export SPARK_VERSION=3.5.6
+export SPARK_VERSION=3.5.8
 export SPARK_NAME=spark-$SPARK_VERSION-bin-hadoop3
 export SPARK_DISTR=$SPARK_NAME.tgz
 

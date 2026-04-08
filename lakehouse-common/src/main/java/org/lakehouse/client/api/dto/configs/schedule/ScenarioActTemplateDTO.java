@@ -1,35 +1,22 @@
 package org.lakehouse.client.api.dto.configs.schedule;
 
 import org.lakehouse.client.api.dto.configs.DagEdgeDTO;
+import org.lakehouse.client.api.dto.configs.KeyNameDescriptionAbstract;
 
+import java.io.Serial;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-public class ScenarioActTemplateDTO {
-    private String name;
-    private String description;
+public class ScenarioActTemplateDTO extends KeyNameDescriptionAbstract {
+    @Serial
+    private static final long serialVersionUID = 2789430311171934926L;
     private Set<TaskDTO> tasks = new HashSet<>();
     private Set<DagEdgeDTO> dagEdges = new HashSet<>();
 
     public ScenarioActTemplateDTO() {
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
 
     public Set<TaskDTO> getTasks() {
         return tasks;
@@ -53,7 +40,7 @@ public class ScenarioActTemplateDTO {
         if (o == null || getClass() != o.getClass()) return false;
         ScenarioActTemplateDTO that = (ScenarioActTemplateDTO) o;
 
-        return Objects.equals(getName(), that.getName())
+        return Objects.equals(getKeyName(), that.getKeyName())
                 && Objects.equals(getDescription(), that.getDescription())
                 && Objects.equals(this.getTasks(), that.getTasks())
                 && Objects.equals(getDagEdges(), that.getDagEdges());
@@ -61,6 +48,6 @@ public class ScenarioActTemplateDTO {
 
     @Override
     public int hashCode() {
-        return Objects.hash(getName(), getDescription(), getTasks(), getDagEdges());
+        return Objects.hash(getKeyName(), getDescription(), getTasks(), getDagEdges());
     }
 }

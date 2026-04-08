@@ -1,5 +1,5 @@
 {
-  "name": "initial",
+  "keyName": "initial",
   "description": "initial schedule for client transactions",
   "intervalExpression": "@monthly",
   "startDateTime": "2025-01-01T00:00:00.000+00:00",
@@ -9,7 +9,7 @@
     {
       "name": "transaction_dds",
       "dataSet": "transaction_dds",
-      "scenarioActTemplate": "spark",
+      "scenarioActTemplate": "spark-dq",
       "intervalStart": "{{ addmonths(targetDateTime, -1) }}",
       "intervalEnd": "{{ targetDateTime }}"
     },

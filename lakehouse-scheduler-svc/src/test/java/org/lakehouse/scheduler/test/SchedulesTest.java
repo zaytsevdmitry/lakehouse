@@ -183,7 +183,7 @@ public class SchedulesTest {
         // Rise config
         ScheduleEffectiveDTO sef = fileLoader.loadScheduleEffectiveDTO();
         Producer<String, ScheduleEffectiveDTO> producer = getKafkaProducer();
-        producer.send(new ProducerRecord<String, ScheduleEffectiveDTO>("testtopic", sef.getName(), sef));
+        producer.send(new ProducerRecord<String, ScheduleEffectiveDTO>("testtopic", sef.getKeyName(), sef));
         producer.flush();
 
         // registration
@@ -196,7 +196,7 @@ public class SchedulesTest {
 
         assert (sibList.get(0).getScheduleInstance() == null);
         assert (Objects.equals(sibList.get(0).getLastChangeNumber(), sef.getLastChangeNumber()));
-        assert (sibList.get(0).getConfigScheduleKeyName().equals(sef.getName()));
+        assert (sibList.get(0).getConfigScheduleKeyName().equals(sef.getKeyName()));
         assert (sibList.get(0).getLastChangedDateTime() != null);
         assert (sibList.get(0).getLastUpdateDateTime() != null);
 
@@ -294,7 +294,7 @@ public class SchedulesTest {
         logger.info("Run schedules {}", rows);
         scheduleInstanceRepository.findAll().forEach(a -> System.out.println(a.getConfigScheduleKeyName() + " --> " + a.getStatus()));
         assert (rows == 1);
-        assert (scheduleInstanceRepository.findByScheduleName(sef.getName()).get(0).getStatus().equals(Status.Schedule.RUNNING));
+        assert (scheduleInstanceRepository.findByScheduleName(sef.getKeyName()).get(0).getStatus().equals(Status.Schedule.RUNNING));
 
         rows = manageStateService.runNewScenariosActs();
         logger.info("runNewScenariosActs {}", rows);
@@ -340,7 +340,7 @@ public class SchedulesTest {
         sef.setStartDateTime("2025-05-05T00:00:00z");
         sef.setStopDateTime("2025-05-06T00:00:01z"); // 1 day and 1 second
         sef.setIntervalExpression("0 0 0 * * *"); // every day
-        sef.setName("scheduleEndDateTest");
+        sef.setKeyName("scheduleEndDateTest");
         // schedule registration
         buildService.registration(sef);
         buildService.buildAll(); // create schedule

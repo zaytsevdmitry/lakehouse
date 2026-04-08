@@ -15,7 +15,7 @@
 
 > Примечание: сортировку коллекции выполняет API сервиса конфигурирования, но способ и коннечный вариант применения остается за исполняющим движком. (processor или processorBody)
 
-[ScriptReferenceDTO.java](../../lakehouse-common/src/main/java/org/lakehouse/client/api/dto/configs/ScriptReferenceDTO.java)
+[ScriptReferenceDTO.java](../../../lakehouse-common/src/main/java/org/lakehouse/client/api/dto/configs/ScriptReferenceDTO.java)
 
 
 # Коллекция скриптов

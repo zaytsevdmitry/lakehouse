@@ -70,7 +70,7 @@ public class BuildService {
     public void registration(ScheduleEffectiveDTO scheduleEffectiveDTO) {
         ScheduleEffectiveDTO sefdto = scheduleEffectiveService.setScheduleEffectiveDTO(scheduleEffectiveDTO);
 
-        scheduleInstanceLastBuildRepository.findByConfigScheduleKeyName(scheduleEffectiveDTO.getName())
+        scheduleInstanceLastBuildRepository.findByConfigScheduleKeyName(scheduleEffectiveDTO.getKeyName())
                 .ifPresentOrElse(
                         scheduleInstanceLastBuild -> {
                             if (scheduleInstanceLastBuild.getLastChangeNumber() < sefdto.getLastChangeNumber())
@@ -85,7 +85,7 @@ public class BuildService {
                                     ScheduleInstanceLastBuildFactory
                                             .mapDTOToScheduleInstanceLastBuild(new ScheduleInstanceLastBuild(), sefdto));
                             ScheduleInstanceRunning sir = new ScheduleInstanceRunning();
-                            sir.setConfigScheduleKeyName(sefdto.getName());
+                            sir.setConfigScheduleKeyName(sefdto.getKeyName());
                             scheduleInstanceRunningRepository.save(sir);
                         }
                 );

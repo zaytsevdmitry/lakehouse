@@ -60,7 +60,7 @@ public class ScheduleConfValidator {
         descriptions
                 .addAll(
                         validateEdges(
-                                String.format("Schedule %s", scheduleDTO.getName()),
+                                String.format("Schedule %s", scheduleDTO.getKeyName()),
                                 scheduleDTO
                                         .getScenarioActs()
                                         .stream()
@@ -75,7 +75,7 @@ public class ScheduleConfValidator {
             descriptions
                     .addAll(
                             validateEdges(
-                                    String.format("Scenario Act  %s.%s", scheduleDTO.getName(), ssa.getName()),
+                                    String.format("Scenario Act  %s.%s", scheduleDTO.getKeyName(), ssa.getName()),
                                     ssa
                                             .getTasks()
                                             .stream()
@@ -83,12 +83,12 @@ public class ScheduleConfValidator {
                                             .collect(Collectors.toSet()),
                                     ssa.getDagEdges()));
             if (ssa.getDataSet() == null || ssa.getDataSet().isEmpty())
-                descriptions.add(String.format("Error %S.%S. DataSet key name is empty", scheduleDTO.getName(), ssa.getName()));
+                descriptions.add(String.format("Error %S.%S. DataSet key name is empty", scheduleDTO.getKeyName(), ssa.getName()));
 
             if (ssa.getIntervalStart() == null || ssa.getIntervalStart().isEmpty())
-                descriptions.add(String.format("Error %S.%S. intervalStart key name is empty", scheduleDTO.getName(), ssa.getName()));
+                descriptions.add(String.format("Error %S.%S. intervalStart key name is empty", scheduleDTO.getKeyName(), ssa.getName()));
             if (ssa.getIntervalEnd() == null || ssa.getIntervalEnd().isEmpty())
-                descriptions.add(String.format("Error %S.%S. intervalEnd key name is empty", scheduleDTO.getName(), ssa.getName()));
+                descriptions.add(String.format("Error %S.%S. intervalEnd key name is empty", scheduleDTO.getKeyName(), ssa.getName()));
 
 
         });

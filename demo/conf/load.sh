@@ -81,7 +81,7 @@ do
    curlPost 127.0.0.1:8080/v1_0/configs/taskexecutionservicegroups "taskexecutionservicegroups/$s.json"
 done
 
-for s in "database" "spark"
+for s in "database" "spark" "spark-dq"
 do
    curlPost 127.0.0.1:8080/v1_0/configs/scenarios "scenario-act-templates/$s.json"
 done
