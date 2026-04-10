@@ -56,7 +56,7 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      KAFKA_NUM_PARTITIONS: 100
+      KAFKA_NUM_PARTITIONS: 2
 
   hive-metastore:
     image: lakehouse-hms:0.3.0
@@ -128,8 +128,8 @@ services:
       lakehouse_net:
         ipv4_address: 192.1.193.50
     volumes:
-      - ./conf_infra/spark-defaults.conf:/opt/spark-3.5.6-bin-hadoop3/conf/spark-defaults.conf
-      - ./conf_infra/log4j2.properties:/opt/spark-3.5.6-bin-hadoop3/conf/log4j2.properties
+      - ./conf_infra/spark-defaults.conf:/opt/spark-3.5.8-bin-hadoop3/conf/spark-defaults.conf
+      - ./conf_infra/log4j2.properties:/opt/spark-3.5.8-bin-hadoop3/conf/log4j2.properties
     deploy:
       resources:
         limits:

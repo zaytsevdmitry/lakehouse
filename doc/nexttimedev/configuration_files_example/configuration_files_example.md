@@ -104,7 +104,7 @@ endPoint: mytabs.anotherTable
 projectKey: myfirstproject
 ```
 
-![localImage](./dependency.png)
+![localImage](dependency.png)
 
 ```yaml
 configtype: dataSet
@@ -239,7 +239,7 @@ scenario1
 
 ScenarioTemplate DAG
 
-![localImage](./taskpipeline.png)
+![localImage](taskpipeline.png)
 
 ```plantuml
 !pragma layout smetana

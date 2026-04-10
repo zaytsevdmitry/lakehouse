@@ -52,12 +52,16 @@ public class ApplicationBodyStarter {
                 SparkSession sparkSession = context.getBean(SparkSession.class);
                 logger.info("Stopping Spark session");
                 sparkSession.stop();
-                Thread.sleep(40000L); //todo made app parameter
-                logger.info("Stopping context");
+                while (!sparkSession.sparkContext().isStopped()) {
+                    logger.info("Awaiting spark session.");
+                    Thread.sleep(3000L); //todo made app parameter
+
+                }
+                logger.info("Stopping Spring context");
                 context.stop();
-                Thread.sleep(40000L); //todo made app parameter
+            //    Thread.sleep(10000L); //todo made app parameter
             }
-            logger.info("Exit application");
+            logger.info("Exit application with code {}",exitcode);
             System.exit(exitcode);
         }
 

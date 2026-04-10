@@ -23,10 +23,13 @@
 - двух мест хранения данных бд Postgres и файловая система [datasources](conf/datasources).
 - пяти датасетов [datasets](conf/datasets) и скриптов описывающих трансформацию
   данных [dataset-sql-model](conf/sql-scripts/dataset-sql-model)
-- двух шаблонов сценариев [scenario-act-templates](conf/scenario-act-templates):
+- трех шаблонов сценариев [scenario-act-templates](conf/scenario-act-templates):
     - [spark](conf/scenario-act-templates/spark.json) применяется в
       расписаниях [regular](conf/schedules/regular.json) и [initial](conf/schedules/initial.json). Обслуживает логику
       Spark задач
+    - [spark-dq](conf/scenario-act-templates/spark-dq.json) применяется в
+      расписаниях [regular](conf/schedules/regular.json) и [initial](conf/schedules/initial.json). Обслуживает логику
+      Spark задач c оснащенных шагом DataQuality
     - [database](conf/scenario-act-templates/database.json) применяется в
       расписаниях [generateSource](conf/schedules/generateSource.json)
       и [generateSourceDict](conf/schedules/generateSourceDict.json). Обслуживает логику jdbc задач
@@ -39,7 +42,7 @@
       postgres [processingdb](conf/datastores/processingdb.json)
     - [regular](conf/schedules/regular.json) имитирует ежедневное соединение двух
       таблиц [transaction_dds.sql](conf/dataset-sql-model/transaction_dds.sql) из расписаний выше в одну на
-      spark [transaction_dds](conf/datasets/transaction_dds.json) сохраняя на
+      spark [transaction_dds](conf/datasets/transaction_dds.json) сохраняя на s3/minio
       диск [lakehousestorage](conf/datastores/lakehousestorage.json)
         - transaction_dds послужит
           источником [aggregation_pay_per_client_total_mart.sql](conf/dataset-sql-model/aggregation_pay_per_client_total_mart.sql)
@@ -57,7 +60,7 @@
 - двух групп исполнителей [taskexecutionservicegroups](conf/taskexecutionservicegroups)
     - [state-exe](conf/taskexecutionservicegroups/state-exe.json) для работы с задачами "состояний" 1 экземпляр
     - [database](conf/taskexecutionservicegroups/database.json) обрабатывает задачи с БД  1 экземпляр
-    - [spark-cluster](conf/taskexecutionservicegroups/spark-cluster.json) обрабатывает spark задачи  1 экземпляр
+    - [spark-exec[1|2]](conf/taskexecutionservicegroups/spark-cluster.json) обрабатывает spark задачи  2 экземпляра
 
 > Датасеты transaction_processing и client_processing имеют отличительную особенность - тк они являются источником, в их
 > сценариях расписаний [source.json](conf/scenario-act-templates/source.json)  нет шага проверки зависимостей
@@ -126,3 +129,8 @@ regular тоже начнет работать в феврале, но он су
 - [data_set_status_view.sql](../Scripts/data_set_status_view.sql) - статусы инкрементов. LOCKED предшествует началу
   трансформации. SUCCESS - по завершении трансформации
 
+- [trino_kafka_metric_status.sql](../Scripts/trino_kafka_metric_status.sql) - trino подключен к kafka и позволяет собрать статус обработки DQ
+
+## Поток управления 
+
+![flow.png](uml/flow.png)

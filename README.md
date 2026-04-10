@@ -35,7 +35,7 @@ United namespace
 
 [Scheduling](doc/scheduling/Scheduling.md)
 
-[States](doc/state_model/state-models.MD)
+[States](lakehouse-state-svc/doc/state_model/state-models.MD)
 
 [Command line](./lakehouse-cli/doc/commandline.MD)
 

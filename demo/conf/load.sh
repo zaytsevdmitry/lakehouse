@@ -99,4 +99,4 @@ do
    curlPost 127.0.0.1:8080/v1_0/configs/quality/metrics "quality-metrics/$s.json"
 done
 
-echo "All configurations loaded"
+echo -e "\e[37;42m All configurations loaded \e[0m"

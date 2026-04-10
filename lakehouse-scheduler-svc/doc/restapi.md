@@ -43,8 +43,9 @@ curl -X GET http://localhost:8081/v1_0/schedule |jq
 ## Удаление расписания
 На пример требуется удалить расписание из предыдущего примера generateSourceDict.  Его id=2.
 Тогда строка для удаления будет выглядеть так:
-```
-http://localhost:8081/v1_0/schedule/id=2
+
+```shell
+curl -X DELETE http://localhost:8081/v1_0/schedule/id=1
 ```
 HTTP CODE 200 означает успешное удаление
 
