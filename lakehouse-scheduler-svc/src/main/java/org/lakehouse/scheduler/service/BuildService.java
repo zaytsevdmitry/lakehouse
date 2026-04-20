@@ -54,16 +54,6 @@ public class BuildService {
         this.scheduleEffectiveService = scheduleEffectiveService;
     }
 
-    private ScheduleInstance getLastScheduleInstance(String scheduleName) {
-
-        List<ScheduleInstance> scheduleInstanceList = scheduleInstanceRepository
-                .findByScheduleNameOrderByTargetExecutionDateTimeDesc(scheduleName, Limit.of(1));
-
-        if (!scheduleInstanceList.isEmpty()) {
-            return null;
-        } else
-            return scheduleInstanceList.get(0);
-    }
 
 
     @Transactional

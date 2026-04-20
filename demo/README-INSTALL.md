@@ -31,7 +31,7 @@ export PATH=$JAVA_HOME/bin/:$PATH
 ```commandline
 > java -version
 ```
-ожидается что в выводе будет java 17
+Ожидается что в выводе будет java 17
 
 ## Сборка образа
 

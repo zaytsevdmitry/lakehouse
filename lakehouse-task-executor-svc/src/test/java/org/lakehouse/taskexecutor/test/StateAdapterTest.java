@@ -81,7 +81,7 @@ public class StateAdapterTest {
     private ScheduledTaskDTO getTargetScheduledTaskDTO(String dataSetName, Class aClass){
         String start = "2025-01-01T00:00:00z";
         String end = "2025-01-02T00:00:00z";
-        char c[] = aClass.getSimpleName().toCharArray();
+        char[] c = aClass.getSimpleName().toCharArray();
         c[0] = Character.toLowerCase(c[0]);
         String prName= new String(c);
 

@@ -7,23 +7,6 @@ import java.util.Map;
 
 public class CreateRequest {
 
-    /*
-    * {
-  "appResource": "",
-  "sparkProperties": {
-    "spark.master": "spark://master:7077",
-    "spark.app.name": "Spark Pi",
-    "spark.driver.memory": "1g",
-    "spark.driver.cores": "1",
-    "spark.jars": ""
-  },
-  "clientSparkVersion": "",
-  "mainClass": "org.apache.spark.deploy.SparkSubmit",
-  "environmentVariables": { },
-  "action": "CreateSubmissionRequest",
-  "appArgs": [ "/opt/spark/examples/src/main/python/pi.py", "10" ]
-}
-    * */
     private String appResource;
     private String clientSparkVersion = "";
     private String mainClass;
@@ -33,12 +16,6 @@ public class CreateRequest {
     private List<String> appArgs = new ArrayList<>();
 
 
-    /*
-    *   var appResource: String = null
-  var mainClass: String = null
-  var appArgs: Array[String] = null
-  var sparkProperties: Map[String, String] = null
-  var environmentVariables: Map[String, String] = null*/
     public CreateRequest() {
     }
 
