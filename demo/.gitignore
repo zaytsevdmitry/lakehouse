@@ -6,3 +6,4 @@ docker/spark/dockerfile
 docker/hms/*gz
 /docker/hms/Dockerfile
 /log.log
+/wildfly-openssl-1.0.7.Final.jar

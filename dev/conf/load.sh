@@ -4,6 +4,17 @@ pwd
 ls ./
 echo "server is 127.0.0.1:8080/v1_0/configs"
 echo "pwd is $PWD"
+check_config_svc_ready() {
+  if curl -sf -X GET "http://localhost:8080/v1_0/configs/quality/metrics"; then
+      echo "s3 ready!"
+  else
+      echo "Waiting Config-SVC: The request failed. Sleeping...zzZ"
+      sleep 10
+      echo "Retry Config-SVC"
+      check_config_svc_ready
+  fi
+}
+
 function curlPost() {
     URL=$1
     JSON_FILE=$2
@@ -80,9 +91,11 @@ do
    curlPost 127.0.0.1:8080/v1_0/configs/schedules "schedules/$s.json"
 done
 
-curlGet 127.0.0.1:8080/v1_0/configs/effective/schedules/name/initial
+curlGet 127.0.0.1:8080/v1_0/configs/effective/schedules/schedule/initial
 echo Quality metrics config
 for s in "transaction_dds_qm" "transaction_dds_qm_const"
 do
    curlPost 127.0.0.1:8080/v1_0/configs/quality/metrics "quality-metrics/$s.json"
 done
+
+echo -e "\e[37;42m All configurations loaded \e[0m"

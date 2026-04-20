@@ -99,7 +99,7 @@
 ##  /v1_0/configs/schedules/{keyName}
 Манипуляция конкретным объектом по ключу
 
-##  /v1_0/configs/effective/schedules/name/{name}
+##  /v1_0/configs/effective/schedules/schedule/{keyName}
 Вернет настройки расписания с учетом применения шаблона сценария. Все данные, шаблона и самого расписания будут слиты в одну эффективную конфигурацию
 
 ##  /v1_0/configs/effective/schedules/schedule/{keyName}/scenarioActName/{scenarioActName}/taskName/{taskName} 
