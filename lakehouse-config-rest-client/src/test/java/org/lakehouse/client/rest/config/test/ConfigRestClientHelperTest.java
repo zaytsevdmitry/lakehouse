@@ -127,9 +127,9 @@ public class ConfigRestClientHelperTest {
 
         server.expect(ExpectedCount.manyTimes(),
                         requestTo(Endpoint.EFFECTIVE_SCHEDULE_SCENARIOACT_TASK
-                                .replaceAll("\\{schedule}", "initial")
-                                .replaceAll("\\{scenarioact}", "transaction_dds")
-                                .replaceAll("\\{task}", "merge")
+                                .replaceAll("\\{scheduleKeyName}", "initial")
+                                .replaceAll("\\{scenarioActName}", "transaction_dds")
+                                .replaceAll("\\{taskName}", "merge")
 
                         ))
                 .andRespond(withSuccess(objectMapper.writeValueAsString(mergeTaskDTOExpected), MediaType.APPLICATION_JSON));

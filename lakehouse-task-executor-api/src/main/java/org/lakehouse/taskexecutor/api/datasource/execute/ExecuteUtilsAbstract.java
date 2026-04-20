@@ -53,7 +53,7 @@ public abstract class ExecuteUtilsAbstract implements ExecuteUtils {
             String checkQuery,
             String executionQuery,
             Map<String,Object> localContext) throws ExecuteException {
-        logger.info("Check query {}\n if true query {}",checkQuery,executionQuery);
+        logger.info("Check query {}\n if false query {}",checkQuery,executionQuery);
         if((1 != executeGetResultInt(checkQuery,localContext)))
             execute(executionQuery,localContext);
     }

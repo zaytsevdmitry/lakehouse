@@ -28,13 +28,13 @@ public class NameSpaceController {
     }
 
     @GetMapping(Endpoint.NAME_SPACES_NAME)
-    NameSpaceDTO get(@PathVariable String name) {
-        return nameSpaceService.findByName(name);
+    NameSpaceDTO get(@PathVariable String keyName) {
+        return nameSpaceService.findByName(keyName);
     }
 
     @DeleteMapping(Endpoint.NAME_SPACES_NAME)
     @ResponseStatus(HttpStatus.ACCEPTED)
-    void deleteById(@PathVariable String name) {
-        nameSpaceService.deleteById(name);
+    void deleteById(@PathVariable String keyName) {
+        nameSpaceService.deleteById(keyName);
     }
 }

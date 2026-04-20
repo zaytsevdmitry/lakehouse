@@ -69,3 +69,9 @@
 }
 
 ```
+
+
+##  /v1_0/configs/scenarios
+Список сценариев
+##  /v1_0/configs/scenarios/{keyName}
+Манипуляция конкретным объектом по ключу

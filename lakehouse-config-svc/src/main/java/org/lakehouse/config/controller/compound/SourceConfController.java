@@ -15,7 +15,7 @@ public class SourceConfController {
     }
 
     @GetMapping(Endpoint.SOURCES_CONF_BY_DATASET_KEY_NAME)
-    public SourceConfDTO getSourceConfDTO(@PathVariable String dataSetKeyName){
-        return sourcesCompoundService.getSourceConfDTO(dataSetKeyName);
+    public SourceConfDTO getSourceConfDTO(@PathVariable String keyName){
+        return sourcesCompoundService.getSourceConfDTO(keyName);
     }
 }

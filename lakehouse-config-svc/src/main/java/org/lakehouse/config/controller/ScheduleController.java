@@ -31,14 +31,14 @@ public class ScheduleController {
     }
 
     @GetMapping(Endpoint.SCHEDULES_NAME)
-    ScheduleDTO get(@PathVariable String name) {
-        return scheduleService.findDtoById(name);
+    ScheduleDTO get(@PathVariable String keyName) {
+        return scheduleService.findDtoById(keyName);
     }
 
     @DeleteMapping(Endpoint.SCHEDULES_NAME)
     @ResponseStatus(HttpStatus.ACCEPTED)
-    void deleteById(@PathVariable String name) {
-        scheduleService.deleteById(name);
+    void deleteById(@PathVariable String keyName) {
+        scheduleService.deleteById(keyName);
     }
 
     @GetMapping(Endpoint.EFFECTIVE_SCHEDULES_FROM_DT)
@@ -47,16 +47,16 @@ public class ScheduleController {
     }
 
     @GetMapping(Endpoint.EFFECTIVE_SCHEDULES_NAME)
-    ScheduleEffectiveDTO getEffective(@PathVariable String name) {
-        return scheduleService.findEffectiveScheduleDTOById(name);
+    ScheduleEffectiveDTO getEffective(@PathVariable String keyName) {
+        return scheduleService.findEffectiveScheduleDTOById(keyName);
     }
 
     @GetMapping(Endpoint.EFFECTIVE_SCHEDULE_SCENARIOACT_TASK)
     TaskDTO getEffectiveTaskDTO(
-            @PathVariable String schedule,
-            @PathVariable String scenarioact,
-            @PathVariable String task
+            @PathVariable String scheduleKeyName,
+            @PathVariable String scenarioActName,
+            @PathVariable String taskName
     ) {
-        return scheduleService.getEffectiveTaskDTO(schedule, scenarioact, task);
+        return scheduleService.getEffectiveTaskDTO(scheduleKeyName, scenarioActName, taskName);
     }
 }

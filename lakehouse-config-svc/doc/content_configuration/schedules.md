@@ -93,3 +93,15 @@
 }
 
 ```
+##  /v1_0/configs/schedules
+Список объектов
+
+##  /v1_0/configs/schedules/{keyName}
+Манипуляция конкретным объектом по ключу
+
+##  /v1_0/configs/effective/schedules/name/{name}
+Вернет настройки расписания с учетом применения шаблона сценария. Все данные, шаблона и самого расписания будут слиты в одну эффективную конфигурацию
+
+##  /v1_0/configs/effective/schedules/schedule/{keyName}/scenarioActName/{scenarioActName}/taskName/{taskName} 
+Вернет конфигурацию конкретной задачи по указанному расписанию и сценарию.
+

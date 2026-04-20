@@ -125,3 +125,17 @@
   
 }
 ```
+
+##  /v1_0/configs/datasets
+GET - Выводит полный список конфигураций датасетов
+POST - Примет датасет в body для сохранения
+```shell
+curl -X GET http://localhost:8080/v1_0/configs/datasets  |jq
+```
+GET - Вернет датасет в body
+DELETE - удалит указанный датасет (при отсутствии зависимостей)
+##  /v1_0/configs/datasets/{keyName}
+
+```shell
+curl -X GET http://localhost:8080/v1_0/configs/datasets/transaction_dds  |jq
+```

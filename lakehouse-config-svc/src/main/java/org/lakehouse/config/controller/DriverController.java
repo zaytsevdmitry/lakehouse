@@ -28,13 +28,13 @@ public class DriverController {
     }
 
     @GetMapping(Endpoint.DRIVERS_NAME)
-    DriverDTO get(@PathVariable String name) {
-        return driverService.findById(name);
+    DriverDTO get(@PathVariable String keyName) {
+        return driverService.findById(keyName);
     }
 
     @DeleteMapping(Endpoint.DRIVERS_NAME)
     @ResponseStatus(HttpStatus.ACCEPTED)
-    void deleteById(@PathVariable String name) {
-        driverService.deleteById(name);
+    void deleteById(@PathVariable String keyName) {
+        driverService.deleteById(keyName);
     }
 }

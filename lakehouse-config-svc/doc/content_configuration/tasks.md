@@ -1,5 +1,5 @@
 # Задачи (tasks)
-Одно атомарное действие в составе множества, направленных на изменение состояния датасета, или сопутствующие действия.
+Задача это одно атомарное действие в составе множества, направленных на изменение состояния датасета, или сопутствующие действия.
 Описание задачи применяется в шаблонизации сценариев либо непосредственно в сценарии
 Не используется как самостоятельный объект
 
@@ -33,5 +33,6 @@
         "deploy.mainClass": "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
         "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.3.0-jar-with-dependencies.jar"
       }
-    },
+    }
 ```
+     

@@ -28,39 +28,39 @@ public class ConfigRestClientApiImpl extends ConfigRestClientApiAbstract {
 
 
     @Override
-    public DriverDTO getDriverDTO(String name) {
-        return restClientHelper.getDtoOne(name, Endpoint.DRIVERS_NAME, DriverDTO.class);
+    public DriverDTO getDriverDTO(String keyName) {
+        return restClientHelper.getDtoOne(keyName, Endpoint.DRIVERS_NAME, DriverDTO.class);
     }
 
-    public NameSpaceDTO getNameSpaceDTO(String NameSpaceName) {
-        return restClientHelper.getDtoOne(NameSpaceName, Endpoint.NAME_SPACES_NAME, NameSpaceDTO.class);
+    public NameSpaceDTO getNameSpaceDTO(String keyName) {
+        return restClientHelper.getDtoOne(keyName, Endpoint.NAME_SPACES_NAME, NameSpaceDTO.class);
     }
 
-    public DataSourceDTO getDataSourceDTO(String name) {
-        return restClientHelper.getDtoOne(name, Endpoint.DATA_SOURCES_NAME, DataSourceDTO.class);
+    public DataSourceDTO getDataSourceDTO(String keyName) {
+        return restClientHelper.getDtoOne(keyName, Endpoint.DATA_SOURCES_NAME, DataSourceDTO.class);
     }
 
-    public DataSetDTO getDataSetDTO(String name) {
-        return restClientHelper.getDtoOne(name, Endpoint.DATA_SETS_NAME, DataSetDTO.class);
+    public DataSetDTO getDataSetDTO(String keyName) {
+        return restClientHelper.getDtoOne(keyName, Endpoint.DATA_SETS_NAME, DataSetDTO.class);
     }
 
-    public ScenarioActTemplateDTO getScenarioActTemplateDTO(String name) {
-        return restClientHelper.getDtoOne(name, Endpoint.SCENARIOS_NAME, ScenarioActTemplateDTO.class);
+    public ScenarioActTemplateDTO getScenarioActTemplateDTO(String keyName) {
+        return restClientHelper.getDtoOne(keyName, Endpoint.SCENARIOS_NAME, ScenarioActTemplateDTO.class);
     }
 
-    public ScheduleDTO getScheduleDTO(String name) {
-        return restClientHelper.getDtoOne(name, Endpoint.SCHEDULES_NAME, ScheduleDTO.class);
+    public ScheduleDTO getScheduleDTO(String keyName) {
+        return restClientHelper.getDtoOne(keyName, Endpoint.SCHEDULES_NAME, ScheduleDTO.class);
     }
 
-    public ScheduleEffectiveDTO getScheduleEffectiveDTO(String name) {
-        return restClientHelper.getDtoOne(name, Endpoint.EFFECTIVE_SCHEDULES_NAME, ScheduleEffectiveDTO.class);
+    public ScheduleEffectiveDTO getScheduleEffectiveDTO(String keyName) {
+        return restClientHelper.getDtoOne(keyName, Endpoint.EFFECTIVE_SCHEDULES_NAME, ScheduleEffectiveDTO.class);
     }
 
     @Override
-    public TaskDTO getEffectiveTaskDTO(String schedule, String scenarioact, String task) {
+    public TaskDTO getEffectiveTaskDTO(String scheduleKeyName, String scenarioActName, String taskName) {
         return restClientHelper.getRestClient()
                 .get()
-                .uri(Endpoint.EFFECTIVE_SCHEDULE_SCENARIOACT_TASK, schedule, scenarioact, task)
+                .uri(Endpoint.EFFECTIVE_SCHEDULE_SCENARIOACT_TASK, scheduleKeyName, scenarioActName, taskName)
                 .retrieve()
                 .body(TaskDTO.class);
     }

@@ -15,7 +15,7 @@ public class DataSetModelScriptController {
     }
 
     @GetMapping(Endpoint.DATASET_MODEL_SCRIPT_BY_DATASET_KEY_NAME)
-    public String getModelScript(@PathVariable String dataSetKeyName){
-       return scriptCompoundService.getCompoundDataSetScript(dataSetKeyName);
+    public String getModelScript(@PathVariable String keyName){
+       return scriptCompoundService.getCompoundDataSetScript(keyName);
     }
 }

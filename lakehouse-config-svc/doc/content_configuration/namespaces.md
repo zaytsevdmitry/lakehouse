@@ -14,3 +14,9 @@
   "description": "Demo space"
 }
 ```
+
+
+##  /v1_0/configs/nameSpaces
+Предоставит все объекты списком
+##  /v1_0/configs/nameSpaces/{keyName}
+Манипуляция конкретным объектом по ключу

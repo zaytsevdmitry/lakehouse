@@ -5,43 +5,43 @@ public class Endpoint {
     public final static String CONFIGS = ROOT_API_V1_0 + "/configs";
 
     public final static String NAME_SPACES = CONFIGS + "/nameSpaces";
-    public final static String NAME_SPACES_NAME = NAME_SPACES + "/{name}";
+    public final static String NAME_SPACES_NAME = NAME_SPACES + "/{keyName}";
 
     public final static String TASK_EXECUTION_SERVICE_GROUPS = CONFIGS + "/taskexecutionservicegroups";
-    public final static String TASK_EXECUTION_SERVICE_GROUPS_NAME = TASK_EXECUTION_SERVICE_GROUPS + "/{name}";
+    public final static String TASK_EXECUTION_SERVICE_GROUPS_NAME = TASK_EXECUTION_SERVICE_GROUPS + "/{keyName}";
 
 
     public final static String SCRIPTS = CONFIGS + "/scripts";
     public final static String SCRIPT_BY_KEY = CONFIGS + "/scripts/{key}";
 
     public final static String DATA_SETS = CONFIGS + "/datasets";
-    public final static String DATA_SETS_NAME = CONFIGS + "/datasets" + "/{name}";
+    public final static String DATA_SETS_NAME = CONFIGS + "/datasets" + "/{keyName}";
 
     public final static String QUALITY_METRICS = CONFIGS + "/quality/metrics";
-    public final static String QUALITY_METRICS_NAME = QUALITY_METRICS + "/{name}";
-    public final static String QUALITY_METRICS_BY_DATASET = QUALITY_METRICS + "/dataset/{dataSetKeyName}";
+    public final static String QUALITY_METRICS_NAME = QUALITY_METRICS + "/{keyName}";
+    public final static String QUALITY_METRICS_BY_DATASET = QUALITY_METRICS + "/dataset/{keyName}";
 
     public final static String DRIVERS = CONFIGS + "/drivers";
-    public final static String DRIVERS_NAME = DRIVERS + "/{name}";
+    public final static String DRIVERS_NAME = DRIVERS + "/{keyName}";
 
     public final static String DATA_SOURCES = CONFIGS + "/datasources";
-    public final static String DATA_SOURCES_NAME = DATA_SOURCES + "/{name}";
+    public final static String DATA_SOURCES_NAME = DATA_SOURCES + "/{keyName}";
 
     public final static String COMPOUND = CONFIGS + "/compound";
-    public final static String SOURCES_CONF_BY_DATASET_KEY_NAME = COMPOUND + "/sources/dataset/{dataSetKeyName}";
-    public final static String DATASET_MODEL_SCRIPT_BY_DATASET_KEY_NAME = COMPOUND + "/dataset/model/script/dataset/{dataSetKeyName}";
+    public final static String SOURCES_CONF_BY_DATASET_KEY_NAME = COMPOUND + "/sources/dataset/{keyName}";
+    public final static String DATASET_MODEL_SCRIPT_BY_DATASET_KEY_NAME = COMPOUND + "/dataset/model/script/dataset/{keyName}";
 
 
     public final static String SCHEDULES = CONFIGS + "/schedules";
-    public final static String SCHEDULES_NAME = SCHEDULES + "/{name}";
+    public final static String SCHEDULES_NAME = SCHEDULES + "/{keyName}";
     public final static String EFFECTIVE_SCHEDULES_ROOT = CONFIGS + "/effective/schedules";
     public final static String EFFECTIVE_SCHEDULES_FROM_DT = EFFECTIVE_SCHEDULES_ROOT + "/fromdt/{dt}";
-    public final static String EFFECTIVE_SCHEDULES_NAME = EFFECTIVE_SCHEDULES_ROOT + "/name/{name}";
+    public final static String EFFECTIVE_SCHEDULES_NAME = EFFECTIVE_SCHEDULES_ROOT + "/schedule/{keyName}";
     public final static String EFFECTIVE_SCHEDULE_SCENARIOACT_TASK = EFFECTIVE_SCHEDULES_ROOT
-            + "/schedule/{schedule}/scenarioact/{scenarioact}/task/{task}";
+            + "/schedule/{scheduleKeyName}/scenarioActName/{scenarioActName}/taskName/{taskName}";
 
     public final static String SCENARIOS = CONFIGS + "/scenarios";
-    public final static String SCENARIOS_NAME = SCENARIOS + "/{name}";
+    public final static String SCENARIOS_NAME = SCENARIOS + "/{keyName}";
 // scheduler-svc
     public final static String SCHEDULE = ROOT_API_V1_0 + "/schedule";
     public final static String SCHEDULE_NAME = ROOT_API_V1_0 + "/schedule/name={name}/limit={limit}";

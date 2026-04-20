@@ -28,14 +28,14 @@ public class ScenarioController {
     }
 
     @GetMapping(Endpoint.SCENARIOS_NAME)
-    ScenarioActTemplateDTO get(@PathVariable String name) {
-        return scenarioActTemplateService.findById(name);
+    ScenarioActTemplateDTO get(@PathVariable String keyName) {
+        return scenarioActTemplateService.findById(keyName);
     }
 
     @DeleteMapping(Endpoint.SCENARIOS_NAME)
     @ResponseStatus(HttpStatus.ACCEPTED)
-    void deleteById(@PathVariable String name) {
+    void deleteById(@PathVariable String keyName) {
 
-        scenarioActTemplateService.deleteById(name);
+        scenarioActTemplateService.deleteById(keyName);
     }
 }

@@ -1,8 +1,3 @@
-
-
-
-
-
 # TaskProcessor
 То что исполняет процесс задачи.
 ![TaskProcessors.png](uml/TaskProcessors.png)

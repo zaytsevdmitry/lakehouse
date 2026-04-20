@@ -28,13 +28,13 @@ public class TaskExecutionServiceGroupController {
     }
 
     @GetMapping(Endpoint.TASK_EXECUTION_SERVICE_GROUPS_NAME)
-    TaskExecutionServiceGroupDTO get(@PathVariable String name) {
-        return taskExecutionServiceGroupService.findById(name);
+    TaskExecutionServiceGroupDTO get(@PathVariable String keyName) {
+        return taskExecutionServiceGroupService.findById(keyName);
     }
 
     @DeleteMapping(Endpoint.TASK_EXECUTION_SERVICE_GROUPS_NAME)
     @ResponseStatus(HttpStatus.ACCEPTED)
-    void deleteById(@PathVariable String name) {
-        taskExecutionServiceGroupService.deleteById(name);
+    void deleteById(@PathVariable String keyName) {
+        taskExecutionServiceGroupService.deleteById(keyName);
     }
 }

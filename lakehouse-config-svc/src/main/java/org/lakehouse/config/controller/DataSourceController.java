@@ -28,13 +28,13 @@ public class DataSourceController {
     }
 
     @GetMapping(Endpoint.DATA_SOURCES_NAME)
-    DataSourceDTO get(@PathVariable String name) {
-        return dataSourceService.findById(name);
+    DataSourceDTO get(@PathVariable String keyName) {
+        return dataSourceService.findById(keyName);
     }
 
     @DeleteMapping(Endpoint.DATA_SOURCES_NAME)
     @ResponseStatus(HttpStatus.ACCEPTED)
-    void deleteById(@PathVariable String name) {
-        dataSourceService.deleteById(name);
+    void deleteById(@PathVariable String keyName) {
+        dataSourceService.deleteById(keyName);
     }
 }

@@ -28,13 +28,13 @@ public class DataSetController {
     }
 
     @GetMapping(Endpoint.DATA_SETS_NAME)
-    DataSetDTO get(@PathVariable String name) {
-        return dataSetService.findById(name);
+    DataSetDTO get(@PathVariable String keyName) {
+        return dataSetService.findById(keyName);
     }
 
     @DeleteMapping(Endpoint.DATA_SETS_NAME)
     @ResponseStatus(HttpStatus.ACCEPTED)
-    void deleteById(@PathVariable String name) {
-        dataSetService.deleteById(name);
+    void deleteById(@PathVariable String keyName) {
+        dataSetService.deleteById(keyName);
     }
 }

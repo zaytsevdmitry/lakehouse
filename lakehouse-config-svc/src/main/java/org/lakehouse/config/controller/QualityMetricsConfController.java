@@ -29,18 +29,18 @@ public class QualityMetricsConfController {
 
     @GetMapping(Endpoint.QUALITY_METRICS_NAME)
     @ResponseStatus(HttpStatus.OK)
-    QualityMetricsConfDTO get(@PathVariable String name) {
-        return qualityMetricsConfService.findById(name);
+    QualityMetricsConfDTO get(@PathVariable String keyName) {
+        return qualityMetricsConfService.findById(keyName);
     }
     @GetMapping(Endpoint.QUALITY_METRICS_BY_DATASET)
     @ResponseStatus(HttpStatus.OK)
-    List<QualityMetricsConfDTO>  getByDataSetKeyName(@PathVariable String dataSetKeyName) {
-        return qualityMetricsConfService.findByDataSetKeyName(dataSetKeyName);
+    List<QualityMetricsConfDTO>  getByDataSetKeyName(@PathVariable String keyName) {
+        return qualityMetricsConfService.findByDataSetKeyName(keyName);
     }
 
     @DeleteMapping(Endpoint.QUALITY_METRICS_NAME)
     @ResponseStatus(HttpStatus.ACCEPTED)
-    void deleteById(@PathVariable String name) {
-        qualityMetricsConfService.deleteById(name);
+    void deleteById(@PathVariable String keyName) {
+        qualityMetricsConfService.deleteById(keyName);
     }
 }

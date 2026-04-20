@@ -50,3 +50,10 @@
 
 
 ```
+
+##  /v1_0/configs/datasources
+GET - Выводит список источников
+
+##  /v1_0/configs/datasources/{keyName}                                                            
+
+Манипуляция конкретным объектом по ключу

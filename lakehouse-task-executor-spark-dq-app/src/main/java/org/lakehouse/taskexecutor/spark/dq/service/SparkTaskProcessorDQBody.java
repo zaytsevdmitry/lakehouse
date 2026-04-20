@@ -79,7 +79,6 @@ public class SparkTaskProcessorDQBody  implements ProcessorBody {
 
         for (QualityMetricsConfDTO  qualityMetricsConfDTO: getQualityMetricsConfs(scheduledTaskDTO)) {
             long metricId = getMetricId(sourceConfDTO,scheduledTaskDTO,qualityMetricsConfDTO);
-            logger.info("Run QualityMetricsConf {}", qualityMetricsConfDTO.getKeyName());
             logger.info("Run QualityMetricsConf {}", qualityMetricsConfDTO.toString());
             new QualityMetricRunner(
                     metricId,
