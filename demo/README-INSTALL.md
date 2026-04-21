@@ -29,7 +29,7 @@ export PATH=$JAVA_HOME/bin/:$PATH
 
 Снова проверить версию
 ```commandline
-> java -version
+ java -version
 ```
 Ожидается что в выводе будет java 17
 

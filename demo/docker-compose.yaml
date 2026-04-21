@@ -32,6 +32,11 @@ services:
       POSTGRES_USER: postgresUser
       POSTGRES_PASSWORD: postgresPW
       POSTGRES_DB: postgresDB
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U hive -d metastore_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       lakehouse_net:
         ipv4_address: 192.1.193.10
@@ -70,24 +75,27 @@ services:
     ports:
       - "9083:9083"
     volumes:
-      - ./conf_infra/metastore-site.xml:/opt/apache-hive-metastore-3.1.3-bin/conf/metastore-site.xml
+      - ./conf_infra/metastore-site.xml:/opt/hive/conf/metastore-site.xml
     networks:
       lakehouse_net:
         ipv4_address: 192.1.193.60
 
   spark-master:
-    image: lakehouse-spark:0.3.0
+    image: lakehouse-spark-hms-aws:0.3.0
     container_name: spark-master
     hostname: spark-master
     environment:
       SPARK_MODE: master
       SPARK_MASTER_WEBUI_PORT: 8400
       SPARK_MASTER_HOSTNAME: 192.1.193.40
+      SPARK_PUBLIC_DNS: 192.1.193.40
+      SPARK_LOCAL_IP: 0.0.0.0
       SPARK_MASTER_PORT: 7077
       SPARK_MASTER_OPTS: "-Dspark.master.rest.enabled=true"
       AWS_ACCESS_KEY_ID: spark_user
       AWS_SECRET_ACCESS_KEY: spark_pwd
       S3_ENDPOINT: http://192.1.193.30:9000
+      S3_TEST_URL: http://192.1.193.30:9001
     ports:
       - "6066:6066"
       - "7077:7077"
@@ -96,7 +104,7 @@ services:
       lakehouse_net:
         ipv4_address: 192.1.193.40
     volumes:
-      - ./conf_infra/spark-defaults.conf:/opt/spark-3.5.6-bin-hadoop3/conf/spark-defaults.conf
+      - ./conf_infra/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
     deploy:
       resources:
         limits:
@@ -107,10 +115,12 @@ services:
       - db-dev
 
   spark-worker-1:
-    image: lakehouse-spark:0.3.0
+    image: lakehouse-spark-hms-aws:0.3.0
     container_name: spark-worker-1
     environment:
       SPARK_MODE: worker
+      SPARK_PUBLIC_DNS: 192.1.193.50
+      SPARK_LOCAL_IP: 0.0.0.0
       SPARK_WORKER_WEBUI_PORT: 8401
       SPARK_MASTER_URL: spark://192.1.193.40:7077
       SPARK_WORKER_MEMORY: 6g
@@ -119,6 +129,7 @@ services:
       AWS_ACCESS_KEY_ID: spark_user
       AWS_SECRET_ACCESS_KEY: spark_pwd
       S3_ENDPOINT: http://192.1.193.30:9000
+      S3_TEST_URL: http://192.1.193.30:9001
     ports:
       - "8401:8401"
       - "4040:4040"
@@ -128,8 +139,8 @@ services:
       lakehouse_net:
         ipv4_address: 192.1.193.50
     volumes:
-      - ./conf_infra/spark-defaults.conf:/opt/spark-3.5.8-bin-hadoop3/conf/spark-defaults.conf
-      - ./conf_infra/log4j2.properties:/opt/spark-3.5.8-bin-hadoop3/conf/log4j2.properties
+      - ./conf_infra/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
+      - ./conf_infra/log4j2.properties:/opt/spark/conf/log4j2.properties
     deploy:
       resources:
         limits:
@@ -139,21 +150,21 @@ services:
       - spark-master
 
   spark-history:
-    image: lakehouse-spark:0.3.0
+    image: lakehouse-spark-hms-aws:0.3.0
     container_name: spark-history
     environment:
       AWS_ACCESS_KEY_ID: spark_user
       AWS_SECRET_ACCESS_KEY: spark_pwd
       S3_ENDPOINT: http://192.1.193.30:9000
+      S3_TEST_URL: http://192.1.193.30:9001
       SPARK_MODE: history
-      SPARK_DAEMON_CLASSPATH: /opt/drivers/hadoop-aws-3.3.4.jar:/opt/drivers/aws-java-sdk-bundle-1.12.262.jar:/opt/drivers/wildfly-openssl-1.0.7.Final.jar
     ports:
       - "18080:18080"
     networks:
       lakehouse_net:
         ipv4_address: 192.1.193.70
     volumes:
-      - ./conf_infra/spark-defaults.conf:/opt/spark-3.5.6-bin-hadoop3/conf/spark-defaults.conf
+      - ./conf_infra/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
     deploy:
       resources:
         limits:
@@ -242,7 +253,7 @@ services:
       - scheduler-svc
       - state-svc
   lakehouse-task-executor-svc-2:
-    image: lakehouse
+    image: lakehouse:0.3.0
     container_name: task-executor-svc-2
     hostname: task-executor-svc-2
     networks:
@@ -267,7 +278,7 @@ services:
       - scheduler-svc
       - state-svc
   lakehouse-task-executor-svc-3:
-    image: lakehouse
+    image: lakehouse:0.3.0
     container_name: task-executor-svc-3
     hostname: task-executor-svc-3
     networks:
@@ -295,7 +306,7 @@ services:
       - state-svc
 
   lakehouse-task-executor-svc-4:
-    image: lakehouse
+    image: lakehouse:0.3.0
     container_name: task-executor-svc-4
     hostname: task-executor-svc-4
     networks:

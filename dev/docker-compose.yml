@@ -88,6 +88,7 @@ services:
       AWS_ACCESS_KEY_ID: spark_user
       AWS_SECRET_ACCESS_KEY: spark_pwd
       S3_ENDPOINT: http://192.1.193.30:9000
+      S3_TEST_URL: http://192.1.193.30:9001
     ports:
       - "6066:6066"
       - "7077:7077"

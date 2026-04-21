@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 check_s3_ready() {
-  if curl -sf -X GET "http://192.1.193.30:9001"; then
+  if curl -sf -X GET "$S3_TEST_URL"; then
       echo "s3 ready!"
   else
       echo "Waiting s3: The request failed. Sleeping...zzZ"

@@ -92,7 +92,7 @@ do
    curlPost 127.0.0.1:8080/v1_0/configs/schedules "schedules/$s.json"
 done
 
-curlGet 127.0.0.1:8080/v1_0/configs/effective/schedules/name/initial
+curlGet 127.0.0.1:8080/v1_0/configs/effective/schedules/schedule/initial
 echo Quality metrics config
 for s in "transaction_dds_qm" "transaction_dds_qm_const"
 do
