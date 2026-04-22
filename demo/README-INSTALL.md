@@ -36,7 +36,10 @@ export PATH=$JAVA_HOME/bin/:$PATH
 ## Сборка образа
 
 Файл build.bash запускает сборку проекта, образа и раскладывает артефакты по папкам
-
+```commandline
+cd lakehouse/demo
+bash build.bash
+```
 ## Запуск сервисов
 
 Перейти в терминале в корне проекта в каталог demo. Там расположен файл docker-compose.yml

@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17-jdk
+FROM eclipse-temurin:17
 
 RUN apt-get update && apt-get install -y wget tar unzip bash mc
 
@@ -26,7 +26,6 @@ RUN wget -nv https://dlcdn.apache.org/spark/spark-${SPARK_VERSION}/spark-${SPARK
 
 
 
-RUN wget -nv -P ${HIVE_HOME}/lib/ https://repo1.maven.org/maven2/org/apache/hive/hive-exec/${METASTORE_VERSION}/hive-exec-${METASTORE_VERSION}.jar
 
 # 2. Drivers (AWS S3A & Postgres)
 RUN wget -nv -P /opt/spark/jars/ https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/${HADOOP_VERSION}/hadoop-aws-${HADOOP_VERSION}.jar && \
@@ -61,8 +60,8 @@ RUN userdel -r ubuntu  && \
 
 ADD entrypoint.sh /
 ENTRYPOINT /entrypoint.sh
-USER lakehouse
-WORKDIR /home/lakehouse
+USER spark
+WORKDIR /home/spark
 
 EXPOSE 4040 9083
 

@@ -3,7 +3,7 @@ set -e
 set -v
 cd  ../
 pwd
-#mvn clean package
+mvn clean package
 cd ./docker/lakehouse
 bash ./build.bash
 cd ../lakehouse-spark-aws

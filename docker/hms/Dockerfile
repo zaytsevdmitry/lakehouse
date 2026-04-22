@@ -1,9 +1,9 @@
 # --- Этап 1: Распаковка и очистка ---
-FROM eclipse-temurin:17-jdk AS builder
+FROM eclipse-temurin:17 AS builder
 
 RUN apt-get update && apt-get install -y wget tar
 
-ENV HADOOP_VERSION=3.3.4 \
+ENV HADOOP_VERSION=3.3.6 \
     METASTORE_VERSION=3.1.3 \
     LOG4J_WEB_VERSION=2.17.1 \
     HIVE_HOME=/opt/hive
@@ -11,7 +11,7 @@ ENV HADOOP_VERSION=3.3.4 \
 WORKDIR /tmp
 
 # Скачиваем и чистим Hadoop
-RUN wget -nv  https://archive.apache.org/dist/hadoop/common/hadoop-$HADOOP_VERSION/hadoop-$HADOOP_VERSION.tar.gz
+RUN wget -nv  https://mirror.yandex.ru/mirrors/apache/hadoop/common/hadoop-$HADOOP_VERSION/hadoop-$HADOOP_VERSION.tar.gz
 RUN mkdir -p /opt/hadoop && \
     tar -xzf hadoop-$HADOOP_VERSION.tar.gz -C /opt/hadoop --strip-components=1 && \
     # УДАЛЯЕМ ЛИШНЕЕ (экономим ~500-600МБ)
@@ -32,7 +32,7 @@ RUN wget -nv https://repo1.maven.org/maven2/org/apache/hive/hive-standalone-meta
 RUN wget -nv -P ${HIVE_HOME}/lib/ https://repo1.maven.org/maven2/org/apache/hive/hive-exec/${METASTORE_VERSION}/hive-exec-${METASTORE_VERSION}.jar
 RUN wget -nv -P ${HIVE_HOME}/lib/ https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-web/${LOG4J_WEB_VERSION}/log4j-web-${LOG4J_WEB_VERSION}.jar
 # --- Этап 2: Финальный образ ---
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:17
 
 # Переменные окружения
 ENV HADOOP_HOME=/opt/hadoop \
