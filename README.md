@@ -23,21 +23,8 @@ Data engineer tool
 Lakehouse management tool
 United namespace
 
-# Configuration
-[Configuration](lakehouse-config-svc/doc/configuration/configuration.md)
 
 
-# Dev links
-
-[System design](./doc/system_design/system_design.md)
-
-[Entities design](./doc/entities_design/entities_design.md)
-
-[Scheduling](lakehouse-scheduler-svc/doc/scheduling/Scheduling.md)
-
-[States](lakehouse-state-svc/doc/state_model/state-models.MD)
-
-[Command line](./lakehouse-cli/doc/commandline.MD)
 
 [Demo](./demo/README.md)
 
@@ -63,3 +50,17 @@ United namespace
 | [lakehouse-validators](lakehouse-validators)                                           | Prototype    |                                                    |
 | [lakehouse-ui-svc](lakehouse-ui-svc)                                                   | Not designed |                                                    |
 | Authorization & security                                                               | Not designed |                                                    |
+
+
+
+# Dev links
+
+[System design](./doc/system_design/system_design.md)
+
+[Entities design](./doc/entities_design/entities_design.md)
+
+[Scheduling](lakehouse-scheduler-svc/doc/scheduling/Scheduling.md)
+
+[States](lakehouse-state-svc/doc/state_model/state-models.MD)
+
+[Command line](./lakehouse-cli/doc/commandline.MD)
