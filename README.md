@@ -30,26 +30,26 @@ United namespace
 
 # Project status
 
-| Component                                                                              | Status       | Documentation                                      |   
-|----------------------------------------------------------------------------------------|--------------|----------------------------------------------------|
-| [lakehouse-cli](lakehouse-cli)                                                         | Prototype    | [doc](lakehouse-cli/doc/commandline.MD)            |
-| [lakehouse-common-rest-client](lakehouse-common-rest-client)                           | Candidate    |                                                    |
-| [lakehouse-common-test](lakehouse-common-test)                                         | Candidate    |                                                    |
-| [lakehouse-config-rest-client](lakehouse-config-rest-client)                           | Candidate    |                                                    |
-| [lakehouse-config-svc](lakehouse-config-svc)                                           | Candidate    | [doc](lakehouse-config-svc/doc/readme.md)          |
-| [lakehouse-scheduler-rest-client](lakehouse-scheduler-rest-client)                     | Candidate    |                                                    |
-| [lakehouse-scheduler-svc](lakehouse-scheduler-svc)                                     | Candidate    | [doc](lakehouse-scheduler-svc/doc/readme.md)       |
-| [lakehouse-state-rest-client](lakehouse-state-rest-client)                             | Candidate    |                                                    |
-| [lakehouse-state-svc](lakehouse-state-svc)                                             | Candidate    |                                                    |
-| [lakehouse-task-executor-api](lakehouse-task-executor-api)                             | Candidate    |                                                    |
-| [lakehouse-task-executor-rest-client](lakehouse-task-executor-rest-client)             | Candidate    |                                                    |
-| [lakehouse-task-executor-svc](lakehouse-task-executor-svc)                             | Candidate    | [doc](lakehouse-task-executor-svc/doc/devguide.md) |
-| [lakehouse-task-executor-spark-api](lakehouse-task-executor-spark-api)                 | Candidate    |                                                    |
-| [lakehouse-task-executor-spark-dataset-app](lakehouse-task-executor-spark-dataset-app) | Candidate    |                                                    |
-| [lakehouse-task-executor-spark-dq-app](lakehouse-task-executor-spark-dq-app)           | Prototype    |                                                    |
-| [lakehouse-validators](lakehouse-validators)                                           | Prototype    |                                                    |
-| [lakehouse-ui-svc](lakehouse-ui-svc)                                                   | Not designed |                                                    |
-| Authorization & security                                                               | Not designed |                                                    |
+| Component                                                                              | Status       | Documentation                                |   
+|----------------------------------------------------------------------------------------|--------------|----------------------------------------------|
+| [lakehouse-cli](lakehouse-cli)                                                         | Prototype    | [doc](lakehouse-cli/doc/commandline.MD)      |
+| [lakehouse-common-rest-client](lakehouse-common-rest-client)                           | Candidate    |                                              |
+| [lakehouse-common-test](lakehouse-common-test)                                         | Candidate    |                                              |
+| [lakehouse-config-rest-client](lakehouse-config-rest-client)                           | Candidate    |                                              |
+| [lakehouse-config-svc](lakehouse-config-svc)                                           | Candidate    | [doc](lakehouse-config-svc/doc/readme.md)    |
+| [lakehouse-scheduler-rest-client](lakehouse-scheduler-rest-client)                     | Candidate    |                                              |
+| [lakehouse-scheduler-svc](lakehouse-scheduler-svc)                                     | Candidate    | [doc](lakehouse-scheduler-svc/doc/readme.md) |
+| [lakehouse-state-rest-client](lakehouse-state-rest-client)                             | Candidate    |                                              |
+| [lakehouse-state-svc](lakehouse-state-svc)                                             | Candidate    |                                              |
+| [lakehouse-task-executor-api](lakehouse-task-executor-api)                             | Candidate    |                                              |
+| [lakehouse-task-executor-rest-client](lakehouse-task-executor-rest-client)             | Candidate    |                                              |
+| [lakehouse-task-executor-svc](lakehouse-task-executor-svc)                             | Candidate    | [doc](lakehouse-task-executor-svc/readme.md) |
+| [lakehouse-task-executor-spark-api](lakehouse-task-executor-spark-api)                 | Candidate    |                                              |
+| [lakehouse-task-executor-spark-dataset-app](lakehouse-task-executor-spark-dataset-app) | Candidate    |                                              |
+| [lakehouse-task-executor-spark-dq-app](lakehouse-task-executor-spark-dq-app)           | Prototype    |                                              |
+| [lakehouse-validators](lakehouse-validators)                                           | Prototype    |                                              |
+| [lakehouse-ui-svc](lakehouse-ui-svc)                                                   | Not designed |                                              |
+| Authorization & security                                                               | Not designed |                                              |
 
 
 

@@ -1,0 +1,52 @@
+@startuml
+interface ProcessorBody [[java:org.lakehouse.taskexecutor.api.processor.body.ProcessorBody]] {
+	run(scheduledTaskDTO: ScheduledTaskDTO): void
+}
+class MergeSQLProcessorBody [[java:org.lakehouse.taskexecutor.api.processor.body.sql.MergeSQLProcessorBody]] {
+	-configRestClientApi: ConfigRestClientApi
+	+MergeSQLProcessorBody(configRestClientApi: ConfigRestClientApi, dataSourceManipulatorFactory: DataSourceManipulatorFactory)
+	+run(scheduledTaskDTO: ScheduledTaskDTO): void
+}
+class ScriptSQLProcessorBodyAbstract {
+}
+ScriptSQLProcessorBodyAbstract <|-- MergeSQLProcessorBody
+class CompactTableSQLProcessorBody [[java:org.lakehouse.taskexecutor.api.processor.body.sql.CompactTableSQLProcessorBody]] {
+	+CompactTableSQLProcessorBody(configRestClientApi: ConfigRestClientApi, dataSourceManipulatorFactory: DataSourceManipulatorFactory)
+	+run(scheduledTaskDTO: ScheduledTaskDTO): void
+}
+class ScriptSQLProcessorBodyAbstract {
+}
+ScriptSQLProcessorBodyAbstract <|-- CompactTableSQLProcessorBody
+abstract class SQLProcessorBodyAbstract [[java:org.lakehouse.taskexecutor.api.processor.body.sql.SQLProcessorBodyAbstract]] {
+	-configRestClientApi: ConfigRestClientApi
+	-dataSourceManipulatorFactory: DataSourceManipulatorFactory
+	#SQLProcessorBodyAbstract(configRestClientApi: ConfigRestClientApi, dataSourceManipulatorFactory: DataSourceManipulatorFactory)
+	+getTargetDataSourceManipulator(scheduledTaskDTO: ScheduledTaskDTO): DataSourceManipulator
+}
+interface ProcessorBody {
+}
+ProcessorBody <|.. SQLProcessorBodyAbstract
+abstract class ScriptSQLProcessorBodyAbstract [[java:org.lakehouse.taskexecutor.api.processor.body.sql.ScriptSQLProcessorBodyAbstract]] {
+	+ScriptSQLProcessorBodyAbstract(configRestClientApi: ConfigRestClientApi, dataSourceManipulatorFactory: DataSourceManipulatorFactory)
+	+execute(executeUtils: ExecuteUtils, template: String, model: String): void
+}
+class SQLProcessorBodyAbstract {
+}
+SQLProcessorBodyAbstract <|-- ScriptSQLProcessorBodyAbstract
+class AppendSQLProcessorBody [[java:org.lakehouse.taskexecutor.api.processor.body.sql.AppendSQLProcessorBody]] {
+	-configRestClientApi: ConfigRestClientApi
+	+AppendSQLProcessorBody(configRestClientApi: ConfigRestClientApi, dataSourceManipulatorFactory: DataSourceManipulatorFactory)
+	+run(scheduledTaskDTO: ScheduledTaskDTO): void
+}
+class ScriptSQLProcessorBodyAbstract {
+}
+ScriptSQLProcessorBodyAbstract <|-- AppendSQLProcessorBody
+class CreateTableSQLProcessorBody [[java:org.lakehouse.taskexecutor.api.processor.body.sql.CreateTableSQLProcessorBody]] {
+	+CreateTableSQLProcessorBody(configRestClientApi: ConfigRestClientApi, dataSourceManipulatorFactory: DataSourceManipulatorFactory)
+	+run(scheduledTaskDTO: ScheduledTaskDTO): void
+}
+class SQLProcessorBodyAbstract {
+}
+SQLProcessorBodyAbstract <|-- CreateTableSQLProcessorBody
+
+@enduml
