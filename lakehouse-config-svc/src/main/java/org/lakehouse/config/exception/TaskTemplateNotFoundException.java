@@ -5,10 +5,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(value = HttpStatus.NOT_FOUND)
 public class TaskTemplateNotFoundException extends RuntimeException {
-	private static final long serialVersionUID = 1955935669950721393L;
+    private static final long serialVersionUID = 1955935669950721393L;
 
-	public TaskTemplateNotFoundException(String scenarioTemplateName, String taskTemplateName) {
-		super(String.format("Schedule scenario with name %s.%s not found", scenarioTemplateName, taskTemplateName));
-	}
+    public TaskTemplateNotFoundException(String scenarioTemplateName, String taskTemplateName) {
+        super(String.format("Schedule scenario with name %s.%s not found", scenarioTemplateName, taskTemplateName));
+    }
 
 }

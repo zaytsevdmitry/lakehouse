@@ -1,0 +1,41 @@
+{
+  "keyName": "regular",
+  "description": "regular schedule for client transactions",
+  "intervalExpression": "@daily",
+  "startDateTime": "2025-01-01T00:00:00.0+00:00",
+  "stopDateTime": null,
+  "enabled": true,
+  "scenarioActs": [
+    {
+      "name": "transaction_dds",
+      "dataSet": "transaction_dds",
+      "scenarioActTemplate": "spark",
+      "intervalStart": "{{ adddays(targetDateTime, -1) }}",
+      "intervalEnd": "{{ targetDateTime }}"
+    },
+    {
+      "name": "aggregation_pay_per_client_daily_mart",
+      "dataSet": "aggregation_pay_per_client_daily_mart",
+      "scenarioActTemplate": "spark",
+      "intervalStart": "{{ adddays(targetDateTime, -1) }}",
+      "intervalEnd": "{{ targetDateTime }}"
+    },
+    {
+      "name": "aggregation_pay_per_client_total_mart",
+      "dataSet": "aggregation_pay_per_client_total_mart",
+      "scenarioActTemplate": "spark",
+      "intervalStart": "{{ adddays(targetDateTime, -1) }}",
+      "intervalEnd": "{{ targetDateTime }}"
+    }
+  ],
+  "scenarioActEdges": [
+    {
+      "from": "transaction_dds",
+      "to": "aggregation_pay_per_client_daily_mart"
+    },
+    {
+      "from": "transaction_dds",
+      "to": "aggregation_pay_per_client_total_mart"
+    }
+  ]
+}

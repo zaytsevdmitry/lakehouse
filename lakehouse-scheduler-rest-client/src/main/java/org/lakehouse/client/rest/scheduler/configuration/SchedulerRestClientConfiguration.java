@@ -13,23 +13,23 @@ import org.springframework.web.util.DefaultUriBuilderFactory;
 
 @Configuration
 public class SchedulerRestClientConfiguration {
-	private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Bean
-	SchedulerRestClientApi getSchedulerRestClientApi(
-			RestClient.Builder builder,
-			@Value("${lakehouse.client.rest.scheduler.server.url}") String baseURI) {
+    SchedulerRestClientApi getSchedulerRestClientApi(
+            RestClient.Builder builder,
+            @Value("${lakehouse.client.rest.scheduler.server.url}") String baseURI) {
 
-		logger.info("rest scheduler baseURI:{}", baseURI);
+        logger.info("rest scheduler baseURI:{}", baseURI);
 
-		DefaultUriBuilderFactory defaultUriBuilderFactory = new DefaultUriBuilderFactory(baseURI);
+        DefaultUriBuilderFactory defaultUriBuilderFactory = new DefaultUriBuilderFactory(baseURI);
 
-		defaultUriBuilderFactory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.NONE);
+        defaultUriBuilderFactory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.NONE);
 
-		return new SchedulerRestClientApiImpl(
-				new RestClientHelper(
-						builder
-								.uriBuilderFactory(defaultUriBuilderFactory)
-								.build()));
-	}
+        return new SchedulerRestClientApiImpl(
+                new RestClientHelper(
+                        builder
+                                .uriBuilderFactory(defaultUriBuilderFactory)
+                                .build()));
+    }
 }

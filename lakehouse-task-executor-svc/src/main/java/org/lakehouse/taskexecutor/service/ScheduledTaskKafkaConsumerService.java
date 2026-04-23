@@ -14,7 +14,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 
 @Service
-public class ScheduledTaskKafkaConsumerService  {
+public class ScheduledTaskKafkaConsumerService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final ExecuteService executeService;
     private final SchedulerRestClientApi schedulerRestClientApi;
@@ -30,7 +30,7 @@ public class ScheduledTaskKafkaConsumerService  {
             @Value("${lakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id}") String groupName,
             @Value("${lakehouse.task-executor.service.max-lock-retries}") Integer maxLockRetries,
             @Value("${lakehouse.task-executor.service.max-lock-retries-duration-ms}") Integer maxLockRetriesDuration
-            ){
+    ) {
         this.executeService = executeService;
         this.schedulerRestClientApi = schedulerRestClientApi;
         this.serviceId = serviceId;
@@ -40,7 +40,7 @@ public class ScheduledTaskKafkaConsumerService  {
     }
 
     @KafkaListener(
-            topics =      "#{'${lakehouse.task-executor.scheduled.task.kafka.consumer.topics}'.split(',')}",
+            topics = "#{'${lakehouse.task-executor.scheduled.task.kafka.consumer.topics}'.split(',')}",
             concurrency = "#{'${lakehouse.task-executor.scheduled.task.kafka.consumer.concurrency}'}",
             containerFactory = "containerFactory")
     public void listen(ScheduledTaskMsgDTO scheduledTaskMsgDTO, Acknowledgment acknowledgment) throws Exception {
@@ -52,9 +52,9 @@ public class ScheduledTaskKafkaConsumerService  {
 
         ScheduledTaskLockDTO taskInstanceLockDTO = null;
 
-        if (scheduledTaskMsgDTO.getTaskExecutionServiceGroupName().equals(groupName)){
-                taskInstanceLockDTO = takeLockWithReTries(scheduledTaskMsgDTO,0);
-        }else {
+        if (scheduledTaskMsgDTO.getTaskExecutionServiceGroupName().equals(groupName)) {
+            taskInstanceLockDTO = takeLockWithReTries(scheduledTaskMsgDTO, 0);
+        } else {
             logger.info(
                     "TaskId={} skipped because taskGroup {} not equals {}",
                     scheduledTaskMsgDTO.getId(),
@@ -86,15 +86,15 @@ public class ScheduledTaskKafkaConsumerService  {
             taskInstanceLockDTO = schedulerRestClientApi.lockTaskById(scheduledTaskMsgDTO.getId(), serviceId);
 
             logger.info("Lock taken lockId={}, task={}, scheduleName={}, scheduleTargetTimestamp={}, scenarioActName={}",
-                        taskInstanceLockDTO.getLockId(),
-                        taskInstanceLockDTO.getScheduledTaskEffectiveDTO().getName(),
-                        taskInstanceLockDTO.getScheduledTaskEffectiveDTO().getScheduleKeyName(),
-                        taskInstanceLockDTO.getScheduledTaskEffectiveDTO().getTargetDateTime(),
-                        taskInstanceLockDTO.getScheduledTaskEffectiveDTO().getScenarioActKeyName());
+                    taskInstanceLockDTO.getLockId(),
+                    taskInstanceLockDTO.getScheduledTaskEffectiveDTO().getName(),
+                    taskInstanceLockDTO.getScheduledTaskEffectiveDTO().getScheduleKeyName(),
+                    taskInstanceLockDTO.getScheduledTaskEffectiveDTO().getTargetDateTime(),
+                    taskInstanceLockDTO.getScheduledTaskEffectiveDTO().getScenarioActKeyName());
 
 
         } catch (HttpClientErrorException.NotFound nfe) {
-                logger.info("Already resolved {}", nfe.getMessage());
+            logger.info("Already resolved {}", nfe.getMessage());
         } catch (HttpServerErrorException e) {
             logger.warn("can't get the lock for  task: id={} taskGroup {}, tryNum {}",
                     scheduledTaskMsgDTO.getId(),
@@ -102,7 +102,7 @@ public class ScheduledTaskKafkaConsumerService  {
                     tryNum);
 
             logger.error(e.fillInStackTrace().toString());
-            logger.info("Waiting {} ms",maxLockRetriesDuration);
+            logger.info("Waiting {} ms", maxLockRetriesDuration);
             Thread.sleep(maxLockRetriesDuration);
             tryNum++;
             logger.info("Retry {} to lock lockId={}, task={}, scheduleName={}, scheduleTargetTimestamp={}, scenarioActName={} ",

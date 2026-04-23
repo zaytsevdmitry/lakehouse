@@ -1,80 +1,775 @@
 @startuml
-'https://plantuml.com/class-diagram
-
-Project --|{ DataSet
-DataStore --|{ DataSet
-
-ScenarioActTemplate --|{ TaskTemplate
-ScenarioActTemplate --|{ ScenarioAct
-DataSet --|{ ScenarioAct
-Schedule --|{ ScenarioAct
-Schedule --|{ ScenarioActDependency
-ScenarioAct --|{ ScenarioActDependency
-
-DataSet --|{ DataSetDependency
-DataSet --|{ DataSetDependency
-
-taskExecutionServiceGroup  --|{ TaskTemplate
-taskExecutionServiceGroup --|{ TaskExecutorService
-Schedule --{ ScheduleInstance
-Schedule --{ ScheduleInstanceLast
-Schedule --{ ScheduleInstanceRunning
-TaskTemplate ..{ ScheduleTaskInstance
-ScheduleInstance --{ ScheduleTaskInstance
-ScheduleInstance --{ ScheduleInstanceLast
-ScheduleInstance --{ ScheduleInstanceRunning
-ScheduleInstance ---{ ScheduleTaskInstanceDependency
-ScheduleTaskInstance---{ ScheduleTaskInstanceDependency
-
-class DataSetDTO{
-    private String name;
-    private String project;
-    private String dataStore;
-    private List<DataSetSourceDTO> sources;
-    private List<ColumnDTO> columnSchema;
-    private Map<String,String> properties;
-    private String description;
-
+class TaskExecutionServiceGroup [[java:org.lakehouse.config.entities.TaskExecutionServiceGroup]] {
+	+TaskExecutionServiceGroup()
 }
-class ScheduleScenarioActDTO{
-    private String name;
-    private String dataSet;
-    private String scenarioActTemplate;
-    private List<TaskDTO> tasks;
-    private List<DagEdgeDTO> dagEdges;    
+class KeyEntityAbstract {
 }
-class ScheduleDTO{
-    private String intervalExpression;
-    private String startDateTime;
-    private String stopDateTime;
-    private List<ScheduleScenarioActDTO> scenarioActs;
-    private List<DagEdgeDTO> scenarioActEdges;
-    private boolean enabled;
+KeyEntityAbstract <|-- TaskExecutionServiceGroup
+class Schedule [[java:org.lakehouse.config.entities.Schedule]] {
+	-intervalExpression: String
+	-startDateTime: OffsetDateTime
+	-endDateTime: OffsetDateTime
+	-enabled: boolean
+	-lastChangedDateTime: OffsetDateTime
+	-lastChangeNumber: Long
+	+Schedule()
+	+getIntervalExpression(): String
+	+setIntervalExpression(intervalExpression: String): void
+	+getStartDateTime(): OffsetDateTime
+	+setStartDateTime(startDateTime: OffsetDateTime): void
+	+getEndDateTime(): OffsetDateTime
+	+setEndDateTime(endDateTime: OffsetDateTime): void
+	+isEnabled(): boolean
+	+setEnabled(enabled: boolean): void
+	+getLastChangedDateTime(): OffsetDateTime
+	+setLastChangedDateTime(lastChangedDateTime: OffsetDateTime): void
+	+getLastChangeNumber(): Long
+	+setLastChangeNumber(lastChangeNumber: Long): void
+	+equals(o: Object): boolean
+	+hashCode(): int
 }
-
-class ScenarioActTemplateDTO{
-    private String name;
-    private String description;
-    private List<TaskDTO> tasks;
-    private List<DagEdgeDTO> dagEdges;
+class KeyEntityAbstract {
 }
-
-class ScheduledTaskDto{
-    private String name;
-    private String taskExecutionServiceGroupName;
-    private String executionModule;
-    private String importance;
-    private String description;
-    private Map<String,String> executionModuleArgs;
+KeyEntityAbstract <|-- Schedule
+abstract class TaskAbstract [[java:org.lakehouse.config.entities.TaskAbstract]] {
+	-id: Long
+	-name: String
+	-description: String
+	-taskProcessor: String
+	-taskProcessorBody: String
+	-importance: String
+	+TaskAbstract()
+	+getId(): Long
+	+setId(id: Long): void
+	+getName(): String
+	+setName(name: String): void
+	+getDescription(): String
+	+setDescription(description: String): void
+	+toString(): String
+	+getTaskProcessor(): String
+	+setTaskProcessor(taskProcessor: String): void
+	+getImportance(): String
+	+setImportance(importance: String): void
+	+setTaskExecutionServiceGroup(taskExecutionServiceGroup: TaskExecutionServiceGroup): void
+	+getTaskProcessorBody(): String
+	+setTaskProcessorBody(taskProcessorBody: String): void
+	+equals(o: Object): boolean
+	+hashCode(): int
 }
-
-ProjectDTO --|{ DataSetDTO
-DataStoreDTO --|{ DataSetDTO
-
-ScheduleScenarioActDTO --|{ ScheduleDTO
-ScenarioActTemplateDTO --|{ ScheduleScenarioActDTO
-TaskExecutionServiceGroupDTO  --|{ TaskDTO
-TaskDTO--|{ ScheduleScenarioActDTO
-TaskDTO--|{ ScenarioActTemplateDTO
-DataSetDTO --|{ ScheduleScenarioActDTO
+class TaskExecutionServiceGroup {
+}
+TaskAbstract --> "1" TaskExecutionServiceGroup : taskExecutionServiceGroup
+class TaskExecutionServiceGroup {
+}
+TaskAbstract --> "1" TaskExecutionServiceGroup : getTaskExecutionServiceGroup()
+class ScheduleProduceMessage [[java:org.lakehouse.config.entities.ScheduleProduceMessage]] {
+	-id: Long
+	+ScheduleProduceMessage()
+	+getId(): Long
+	+setId(id: Long): void
+	+setSchedule(schedule: Schedule): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+class Schedule {
+}
+ScheduleProduceMessage --> "1" Schedule : schedule
+class Schedule {
+}
+ScheduleProduceMessage --> "1" Schedule : getSchedule()
+abstract class KeyValueAbstract [[java:org.lakehouse.config.entities.KeyValueAbstract]] {
+	-id: Long
+	-key: String
+	-value: String
+	+KeyValueAbstract()
+	+KeyValueAbstract(key: String, value: String)
+	+getId(): Long
+	+setId(id: Long): void
+	+getKey(): String
+	+setKey(key: String): void
+	+getValue(): String
+	+setValue(value: String): void
+	+toString(): String
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+class NameSpace [[java:org.lakehouse.config.entities.NameSpace]] {
+	+NameSpace()
+}
+class KeyEntityAbstract {
+}
+KeyEntityAbstract <|-- NameSpace
+abstract class KeyEntityAbstract [[java:org.lakehouse.config.entities.KeyEntityAbstract]] {
+	-keyName: String
+	-description: String
+	+KeyEntityAbstract()
+	+getKeyName(): String
+	+setKeyName(keyName: String): void
+	+getDescription(): String
+	+setDescription(description: String): void
+	+toString(): String
+	+equals(o: Object): boolean
+	+hashCode(): int
+	+equalsByName(that: KeyEntityAbstract): boolean
+}
+class SQLTemplate [[java:org.lakehouse.config.entities.SQLTemplate]] {
+	+SQLTemplate()
+	+setDataSource(dataSource: DataSource): void
+	+setDataSet(dataSet: DataSet): void
+	+setDriver(driver: Driver): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+class DataSource {
+}
+SQLTemplate --> "1" DataSource : dataSource
+class DataSet {
+}
+SQLTemplate --> "1" DataSet : dataSet
+class Driver {
+}
+SQLTemplate --> "1" Driver : driver
+class DataSource {
+}
+SQLTemplate --> "1" DataSource : getDataSource()
+class DataSet {
+}
+SQLTemplate --> "1" DataSet : getDataSet()
+class Driver {
+}
+SQLTemplate --> "1" Driver : getDriver()
+class KeyValueAbstract {
+}
+KeyValueAbstract <|-- SQLTemplate
+class DataSet [[java:org.lakehouse.config.entities.dataset.DataSet]] {
+	-databaseSchemaName: String
+	-tableName: String
+	+DataSet()
+	+setNameSpace(nameSpace: NameSpace): void
+	+setDataSource(dataSource: DataSource): void
+	+getDatabaseSchemaName(): String
+	+setDatabaseSchemaName(databaseSchemaName: String): void
+	+getTableName(): String
+	+setTableName(tableName: String): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+class NameSpace {
+}
+DataSet --> "1" NameSpace : nameSpace
+class DataSource {
+}
+DataSet --> "1" DataSource : dataSource
+class NameSpace {
+}
+DataSet --> "1" NameSpace : getNameSpace()
+class DataSource {
+}
+DataSet --> "1" DataSource : getDataSource()
+class KeyEntityAbstract {
+}
+KeyEntityAbstract <|-- DataSet
+class DataSetProperty [[java:org.lakehouse.config.entities.dataset.DataSetProperty]] {
+	+DataSetProperty()
+	+setDataSet(dataSet: DataSet): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+class DataSet {
+}
+DataSetProperty --> "1" DataSet : dataSet
+class DataSet {
+}
+DataSetProperty --> "1" DataSet : getDataSet()
+class KeyValueAbstract {
+}
+KeyValueAbstract <|-- DataSetProperty
+class ForeignKeyReference [[java:org.lakehouse.config.entities.dataset.ForeignKeyReference]] {
+	-id: Long
+	-onDelete: Types.ReferenceAction
+	-onUpdate: Types.ReferenceAction
+	+ForeignKeyReference()
+	+getId(): Long
+	+setId(id: Long): void
+	+setDataSetConstraint(dataSetConstraint: DataSetConstraint): void
+	+setRefDataSetConstraint(refDataSetConstraint: DataSetConstraint): void
+	+getOnDelete(): Types.ReferenceAction
+	+setOnDelete(onDelete: Types.ReferenceAction): void
+	+getOnUpdate(): Types.ReferenceAction
+	+setOnUpdate(onUpdate: Types.ReferenceAction): void
+}
+class DataSetConstraint {
+}
+ForeignKeyReference --> "1" DataSetConstraint : dataSetConstraint
+class DataSetConstraint {
+}
+ForeignKeyReference --> "1" DataSetConstraint : refDataSetConstraint
+class DataSetConstraint {
+}
+ForeignKeyReference --> "1" DataSetConstraint : getDataSetConstraint()
+class DataSetConstraint {
+}
+ForeignKeyReference --> "1" DataSetConstraint : getRefDataSetConstraint()
+class DataSetConstraint [[java:org.lakehouse.config.entities.dataset.DataSetConstraint]] {
+	-id: Long
+	-name: String
+	-type: Types.Constraint
+	-columns: String
+	-enabled: boolean
+	-constraintLevelCheck: Types.ConstraintLevelCheck
+	-createConstraintDDLOverride: String
+	+DataSetConstraint()
+	+getId(): Long
+	+setId(id: Long): void
+	+setDataSet(dataSet: DataSet): void
+	+getName(): String
+	+setName(name: String): void
+	+getType(): Types.Constraint
+	+setType(type: Types.Constraint): void
+	+getColumns(): String
+	+setColumns(columns: String): void
+	+isEnabled(): boolean
+	+setEnabled(enabled: boolean): void
+	+getConstraintLevelCheck(): Types.ConstraintLevelCheck
+	+setConstraintLevelCheck(constraintLevelCheck: Types.ConstraintLevelCheck): void
+	+getCreateConstraintDDLOverride(): String
+	+equals(o: Object): boolean
+	+hashCode(): int
+	+setCreateConstraintDDLOverride(createConstraintDDLOverride: String): void
+	+toString(): String
+}
+class DataSet {
+}
+DataSetConstraint --> "1" DataSet : dataSet
+class DataSet {
+}
+DataSetConstraint --> "1" DataSet : getDataSet()
+class DataSetSourceProperty [[java:org.lakehouse.config.entities.dataset.DataSetSourceProperty]] {
+	+DataSetSourceProperty()
+	+setDataSetSource(dataSetSource: DataSetSource): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+class DataSetSource {
+}
+DataSetSourceProperty --> "1" DataSetSource : dataSetSource
+class DataSetSource {
+}
+DataSetSourceProperty --> "1" DataSetSource : getDataSetSource()
+class KeyValueAbstract {
+}
+KeyValueAbstract <|-- DataSetSourceProperty
+class DataSetSource [[java:org.lakehouse.config.entities.dataset.DataSetSource]] {
+	-id: Long
+	+DataSetSource()
+	+setDataSet(dataSet: DataSet): void
+	+setSource(source: DataSet): void
+	+getId(): Long
+	+setId(id: Long): void
+	+setQualityMetricsConf(qualityMetricsConf: QualityMetricsConf): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+	+toString(): String
+}
+class DataSet {
+}
+DataSetSource --> "1" DataSet : source
+class DataSet {
+}
+DataSetSource --> "1" DataSet : dataSet
+class QualityMetricsConf {
+}
+DataSetSource --> "1" QualityMetricsConf : qualityMetricsConf
+class DataSet {
+}
+DataSetSource --> "1" DataSet : getDataSet()
+class DataSet {
+}
+DataSetSource --> "1" DataSet : getSource()
+class QualityMetricsConf {
+}
+DataSetSource --> "1" QualityMetricsConf : getQualityMetricsConf()
+class DataSetColumn [[java:org.lakehouse.config.entities.dataset.DataSetColumn]] {
+	-id: Long
+	-name: String
+	-dataType: String
+	-nullable: boolean
+	-comment: String
+	-columnOrder: Integer
+	+DataSetColumn()
+	+getId(): Long
+	+setId(id: Long): void
+	+getName(): String
+	+setName(name: String): void
+	+getDataType(): String
+	+setDataType(dataType: String): void
+	+isNullable(): boolean
+	+setNullable(nullable: boolean): void
+	+getComment(): String
+	+setComment(comment: String): void
+	+setDataSet(dataSet: DataSet): void
+	+getColumnOrder(): Integer
+	+setColumnOrder(columnOrder: Integer): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+class DataSet {
+}
+DataSetColumn --> "1" DataSet : dataSet
+class DataSet {
+}
+DataSetColumn --> "1" DataSet : getDataSet()
+class DataSourceSvcItem [[java:org.lakehouse.config.entities.datasource.DataSourceSvcItem]] {
+	-id: Long
+	-host: String
+	-port: String
+	-urn: String
+	+DataSourceSvcItem()
+	+getHost(): String
+	+setHost(host: String): void
+	+getPort(): String
+	+setPort(port: String): void
+	+getUrn(): String
+	+setUrn(urn: String): void
+	+getId(): Long
+	+setId(id: Long): void
+	+setDataSource(dataSource: DataSource): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+class DataSource {
+}
+DataSourceSvcItem --> "1" DataSource : dataSource
+class DataSource {
+}
+DataSourceSvcItem --> "1" DataSource : getDataSource()
+class DataSourceProperty [[java:org.lakehouse.config.entities.datasource.DataSourceProperty]] {
+	+DataSourceProperty()
+	+setDataSource(dataSource: DataSource): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+class DataSource {
+}
+DataSourceProperty --> "1" DataSource : dataSource
+class DataSource {
+}
+DataSourceProperty --> "1" DataSource : getDataSource()
+class KeyValueAbstract {
+}
+KeyValueAbstract <|-- DataSourceProperty
+class Driver [[java:org.lakehouse.config.entities.datasource.Driver]] {
+	-dataSourceType: Types.DataSourceType
+	+getDataSourceType(): Types.DataSourceType
+	+setDataSourceType(dataSourceType: Types.DataSourceType): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+class KeyEntityAbstract {
+}
+KeyEntityAbstract <|-- Driver
+class ConnectionTemplate [[java:org.lakehouse.config.entities.datasource.ConnectionTemplate]] {
+	+setDriver(driver: Driver): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+class Driver {
+}
+ConnectionTemplate --> "1" Driver : driver
+class Driver {
+}
+ConnectionTemplate --> "1" Driver : getDriver()
+class KeyValueAbstract {
+}
+KeyValueAbstract <|-- ConnectionTemplate
+class DataSourceSvcItemProperty [[java:org.lakehouse.config.entities.datasource.DataSourceSvcItemProperty]] {
+	+DataSourceSvcItemProperty()
+	+setDataSourceSvcItem(dataSourceSvcItem: DataSourceSvcItem): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+class DataSourceSvcItem {
+}
+DataSourceSvcItemProperty --> "1" DataSourceSvcItem : dataSourceSvcItem
+class DataSourceSvcItem {
+}
+DataSourceSvcItemProperty --> "1" DataSourceSvcItem : getDataSourceSvcItem()
+class KeyValueAbstract {
+}
+KeyValueAbstract <|-- DataSourceSvcItemProperty
+class DataSource [[java:org.lakehouse.config.entities.datasource.DataSource]] {
+	-catalogKeyName: String
+	+DataSource()
+	+setDriver(driver: Driver): void
+	+getCatalogKeyName(): String
+	+setCatalogKeyName(catalogKeyName: String): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+class Driver {
+}
+DataSource --> "1" Driver : driver
+class Driver {
+}
+DataSource --> "1" Driver : getDriver()
+class KeyEntityAbstract {
+}
+KeyEntityAbstract <|-- DataSource
+class QualityMetricsConfTestSetScript [[java:org.lakehouse.config.entities.dq.QualityMetricsConfTestSetScript]] {
+	-id: Long
+	-scriptOrder: Integer
+	+getId(): Long
+	+setId(id: Long): void
+	+getScriptOrder(): Integer
+	+setScriptOrder(scriptOrder: Integer): void
+	+setScript(script: Script): void
+	+setQualityMetricsConfTestSet(qualityMetricsConfTestSet: QualityMetricsConfTestSet): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+class Script {
+}
+QualityMetricsConfTestSetScript --> "1" Script : script
+class QualityMetricsConfTestSet {
+}
+QualityMetricsConfTestSetScript --> "1" QualityMetricsConfTestSet : qualityMetricsConfTestSet
+class Script {
+}
+QualityMetricsConfTestSetScript --> "1" Script : getScript()
+class QualityMetricsConfTestSet {
+}
+QualityMetricsConfTestSetScript --> "1" QualityMetricsConfTestSet : getQualityMetricsConfTestSet()
+class QualityMetricsConfSourceProperty [[java:org.lakehouse.config.entities.dq.QualityMetricsConfSourceProperty]] {
+	+QualityMetricsConfSourceProperty()
+	+setQualityMetricsConfSource(qualityMetricsConfSource: QualityMetricsConfSource): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+class QualityMetricsConfSource {
+}
+QualityMetricsConfSourceProperty --> "1" QualityMetricsConfSource : qualityMetricsConfSource
+class QualityMetricsConfSource {
+}
+QualityMetricsConfSourceProperty --> "1" QualityMetricsConfSource : getQualityMetricsConfSource()
+class KeyValueAbstract {
+}
+KeyValueAbstract <|-- QualityMetricsConfSourceProperty
+enum ElementType [[java:org.lakehouse.config.entities.dq.ElementType]] {
+	TEST_SET
+	METRIC
+	THRESHOLD
+	value
+	~ElementType(value: int)
+}
+class QualityMetricsConf [[java:org.lakehouse.config.entities.dq.QualityMetricsConf]] {
+	-keyName: String
+	-description: String
+	-dqThresholdViolationLevel: Types.DQThresholdViolationLevel
+	-enabled: boolean
+	-save: boolean
+	+QualityMetricsConf()
+	+setDataSet(dataSet: DataSet): void
+	+isEnabled(): boolean
+	+setEnabled(enabled: boolean): void
+	+getKeyName(): String
+	+setKeyName(keyName: String): void
+	+getDescription(): String
+	+setDescription(description: String): void
+	+getDqThresholdViolationLevel(): Types.DQThresholdViolationLevel
+	+isSave(): boolean
+	+setSave(save: boolean): void
+	+setDqThresholdViolationLevel(dqThresholdViolationLevel: Types.DQThresholdViolationLevel): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+class DataSet {
+}
+QualityMetricsConf --> "1" DataSet : dataSet
+class DataSet {
+}
+QualityMetricsConf --> "1" DataSet : getDataSet()
+class KeyEntityAbstract {
+}
+KeyEntityAbstract <|-- QualityMetricsConf
+class QualityMetricsConfTestSet [[java:org.lakehouse.config.entities.dq.QualityMetricsConfTestSet]] {
+	-id: Long
+	-keyName: String
+	-description: String
+	-dqMetricTestSetType: Types.DQMetricTestSetType
+	+QualityMetricsConfTestSet()
+	+of(a: QualityMetricsConfTestSet): void
+	+getId(): Long
+	+setId(id: Long): void
+	+getDescription(): String
+	+setDescription(description: String): void
+	+getKeyName(): String
+	+setKeyName(keyName: String): void
+	+getDqMetricsType(): Types.DQMetricTestSetType
+	+setDqMetricsType(dqMetricTestSetType: Types.DQMetricTestSetType): void
+	+setQualityMetricsConf(qualityMetricsConf: QualityMetricsConf): void
+	+getDqMetricTestSetType(): Types.DQMetricTestSetType
+	+setDqMetricTestSetType(dqMetricTestSetType: Types.DQMetricTestSetType): void
+	+setElementType(elementType: ElementType): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+class QualityMetricsConf {
+}
+QualityMetricsConfTestSet --> "1" QualityMetricsConf : qualityMetricsConf
+class ElementType {
+}
+QualityMetricsConfTestSet --> "1" ElementType : elementType
+class QualityMetricsConf {
+}
+QualityMetricsConfTestSet --> "1" QualityMetricsConf : getQualityMetricsConf()
+class ElementType {
+}
+QualityMetricsConfTestSet --> "1" ElementType : getElementType()
+class QualityMetricsConfSource [[java:org.lakehouse.config.entities.dq.QualityMetricsConfSource]] {
+	-id: Long
+	+QualityMetricsConfSource()
+	+setSource(source: DataSet): void
+	+getId(): Long
+	+setId(id: Long): void
+	+setQualityMetricsConf(qualityMetricsConf: QualityMetricsConf): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+class DataSet {
+}
+QualityMetricsConfSource --> "1" DataSet : source
+class QualityMetricsConf {
+}
+QualityMetricsConfSource --> "1" QualityMetricsConf : qualityMetricsConf
+class DataSet {
+}
+QualityMetricsConfSource --> "1" DataSet : getSource()
+class QualityMetricsConf {
+}
+QualityMetricsConfSource --> "1" QualityMetricsConf : getQualityMetricsConf()
+class ScenarioAct [[java:org.lakehouse.config.entities.scenario.ScenarioAct]] {
+	-id: Long
+	-name: String
+	~intervalStart: String
+	~intervalEnd: String
+	+ScenarioAct()
+	+getId(): Long
+	+setId(id: Long): void
+	+getName(): String
+	+setName(name: String): void
+	+setDataSet(dataSet: DataSet): void
+	+setSchedule(schedule: Schedule): void
+	+setScenarioActTemplate(templateScenarioAct: TemplateScenarioAct): void
+	+getIntervalStart(): String
+	+setIntervalStart(intervalStart: String): void
+	+getIntervalEnd(): String
+	+setIntervalEnd(intervalEnd: String): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+class DataSet {
+}
+ScenarioAct --> "1" DataSet : dataSet
+class Schedule {
+}
+ScenarioAct --> "1" Schedule : schedule
+class TemplateScenarioAct {
+}
+ScenarioAct --> "1" TemplateScenarioAct : templateScenarioAct
+class DataSet {
+}
+ScenarioAct --> "1" DataSet : getDataSet()
+class Schedule {
+}
+ScenarioAct --> "1" Schedule : getSchedule()
+class TemplateScenarioAct {
+}
+ScenarioAct --> "1" TemplateScenarioAct : getScenarioActTemplate()
+class ScenarioActEdge [[java:org.lakehouse.config.entities.scenario.ScenarioActEdge]] {
+	-id: Long
+	+ScenarioActEdge()
+	+getId(): Long
+	+setId(id: Long): void
+	+setSchedule(schedule: Schedule): void
+	+setFromScenarioAct(fromScenarioAct: ScenarioAct): void
+	+setToScenarioAct(toScenarioAct: ScenarioAct): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+class Schedule {
+}
+ScenarioActEdge --> "1" Schedule : schedule
+class ScenarioAct {
+}
+ScenarioActEdge --> "1" ScenarioAct : fromScenarioAct
+class ScenarioAct {
+}
+ScenarioActEdge --> "1" ScenarioAct : toScenarioAct
+class Schedule {
+}
+ScenarioActEdge --> "1" Schedule : getSchedule()
+class ScenarioAct {
+}
+ScenarioActEdge --> "1" ScenarioAct : getFromScenarioAct()
+class ScenarioAct {
+}
+ScenarioActEdge --> "1" ScenarioAct : getToScenarioAct()
+class ScenarioActTask [[java:org.lakehouse.config.entities.scenario.ScenarioActTask]] {
+	+ScenarioActTask()
+	+setScenarioAct(scenarioAct: ScenarioAct): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+class ScenarioAct {
+}
+ScenarioActTask --> "1" ScenarioAct : scenarioAct
+class ScenarioAct {
+}
+ScenarioActTask --> "1" ScenarioAct : getScenarioAct()
+class TaskAbstract {
+}
+TaskAbstract <|-- ScenarioActTask
+class ScenarioActTaskProcessorArg [[java:org.lakehouse.config.entities.scenario.ScenarioActTaskProcessorArg]] {
+	+ScenarioActTaskProcessorArg()
+	+setScenarioActTask(taskTemplate: ScenarioActTask): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+class ScenarioActTask {
+}
+ScenarioActTaskProcessorArg --> "1" ScenarioActTask : scenarioActTask
+class ScenarioActTask {
+}
+ScenarioActTaskProcessorArg --> "1" ScenarioActTask : getScenarioActTask()
+class KeyValueAbstract {
+}
+KeyValueAbstract <|-- ScenarioActTaskProcessorArg
+class ScenarioActTaskEdge [[java:org.lakehouse.config.entities.scenario.ScenarioActTaskEdge]] {
+	-id: Long
+	-fromScenarioActTask: String
+	-toScenarioActTask: String
+	+ScenarioActTaskEdge()
+	+getId(): Long
+	+setId(id: Long): void
+	+setScenarioActTemplate(scenarioAct: ScenarioAct): void
+	+getFromScenarioActTask(): String
+	+setFromScenarioActTask(fromScenarioActTask: String): void
+	+getToScenarioActTask(): String
+	+setToScenarioActTask(toScenarioActTask: String): void
+	+setScenarioAct(scenarioAct: ScenarioAct): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+class ScenarioAct {
+}
+ScenarioActTaskEdge --> "1" ScenarioAct : scenarioAct
+class ScenarioAct {
+}
+ScenarioActTaskEdge --> "1" ScenarioAct : getScenarioAct()
+class ScriptReference [[java:org.lakehouse.config.entities.script.ScriptReference]] {
+	-id: Long
+	-scriptOrder: Integer
+	+ScriptReference()
+	+setScript(script: Script): void
+	+getId(): Long
+	+setId(id: Long): void
+	+setDataSet(dataSet: DataSet): void
+	+getScriptOrder(): Integer
+	+setScriptOrder(scriptOrder: Integer): void
+	+setQualityMetricsConfTestSet(qualityMetricsConfTestSet: QualityMetricsConfTestSet): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+class Script {
+}
+ScriptReference --> "1" Script : script
+class DataSet {
+}
+ScriptReference --> "1" DataSet : dataSet
+class QualityMetricsConfTestSet {
+}
+ScriptReference --> "1" QualityMetricsConfTestSet : qualityMetricsConfTestSet
+class Script {
+}
+ScriptReference --> "1" Script : getScript()
+class DataSet {
+}
+ScriptReference --> "1" DataSet : getDataSet()
+class QualityMetricsConfTestSet {
+}
+ScriptReference --> "1" QualityMetricsConfTestSet : getQualityMetricsConfTestSet()
+class Script [[java:org.lakehouse.config.entities.script.Script]] {
+	-key: String
+	-value: String
+	+Script()
+	+getKey(): String
+	+setKey(key: String): void
+	+getValue(): String
+	+setValue(value: String): void
+}
+class TemplateTask [[java:org.lakehouse.config.entities.templates.TemplateTask]] {
+	+TemplateTask()
+	+setScenarioTemplate(templateScenarioAct: TemplateScenarioAct): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+class TemplateScenarioAct {
+}
+TemplateTask --> "1" TemplateScenarioAct : templateScenarioAct
+class TemplateScenarioAct {
+}
+TemplateTask --> "1" TemplateScenarioAct : getScenarioTemplate()
+class TaskAbstract {
+}
+TaskAbstract <|-- TemplateTask
+class TemplateTaskEdge [[java:org.lakehouse.config.entities.templates.TemplateTaskEdge]] {
+	-id: Long
+	+TemplateTaskEdge()
+	+getId(): Long
+	+setId(id: Long): void
+	+setScenarioActTemplate(templateScenarioAct: TemplateScenarioAct): void
+	+setFromTaskTemplate(fromTemplateTask: TemplateTask): void
+	+setToTaskTemplate(toTemplateTask: TemplateTask): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+class TemplateScenarioAct {
+}
+TemplateTaskEdge --> "1" TemplateScenarioAct : templateScenarioAct
+class TemplateTask {
+}
+TemplateTaskEdge --> "1" TemplateTask : fromTemplateTask
+class TemplateTask {
+}
+TemplateTaskEdge --> "1" TemplateTask : toTemplateTask
+class TemplateScenarioAct {
+}
+TemplateTaskEdge --> "1" TemplateScenarioAct : getScenarioActTemplate()
+class TemplateTask {
+}
+TemplateTaskEdge --> "1" TemplateTask : getFromTaskTemplate()
+class TemplateTask {
+}
+TemplateTaskEdge --> "1" TemplateTask : getToTaskTemplate()
+class TemplateTaskProcessorArg [[java:org.lakehouse.config.entities.templates.TemplateTaskProcessorArg]] {
+	+TemplateTaskProcessorArg()
+	+setTaskTemplate(templateTask: TemplateTask): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+class TemplateTask {
+}
+TemplateTaskProcessorArg --> "1" TemplateTask : templateTask
+class TemplateTask {
+}
+TemplateTaskProcessorArg --> "1" TemplateTask : getTaskTemplate()
+class KeyValueAbstract {
+}
+KeyValueAbstract <|-- TemplateTaskProcessorArg
+class TemplateScenarioAct [[java:org.lakehouse.config.entities.templates.TemplateScenarioAct]] {
+	+TemplateScenarioAct()
+}
+class KeyEntityAbstract {
+}
+KeyEntityAbstract <|-- TemplateScenarioAct
 @enduml

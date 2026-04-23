@@ -12,13 +12,17 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableScheduling
-@EnableConfigurationProperties(value =  ScheduledTaskKafkaConfigurationProperties.class)
+@EnableConfigurationProperties(value = {
+        ScheduledTaskKafkaConfigurationProperties.class})
 @ComponentScan(
-        basePackages = {"org.lakehouse.taskexecutor","org.lakehouse.client.rest.state"},
+        basePackages = {
+                "org.lakehouse.taskexecutor",
+                "org.lakehouse.client.rest.state"
+        },
         basePackageClasses = {
-        ConfigRestClientConfiguration.class,
-        SchedulerRestClientConfiguration.class ,
-        StateRestClientConfiguration.class})
+                ConfigRestClientConfiguration.class,
+                SchedulerRestClientConfiguration.class,
+                StateRestClientConfiguration.class})
 public class TaskExecutorApplication {
 
     public static void main(String[] args) {

@@ -7,51 +7,51 @@ import java.util.Objects;
 
 @MappedSuperclass
 public abstract class KeyEntityAbstract {
-	@Id
-	private String name;
+    @Id
+    private String keyName;
 
-	private String description;
+    private String description;
 
-	public KeyEntityAbstract() {
-	}
+    public KeyEntityAbstract() {
+    }
 
-	public String getName() {
-		return name;
-	}
+    public String getKeyName() {
+        return keyName;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public void setKeyName(String keyName) {
+        this.keyName = keyName;
+    }
 
-	public String getDescription() {
-		return description;
-	}
+    public String getDescription() {
+        return description;
+    }
 
-	public void setDescription(String description) {
-		this.description = description;
-	}
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-	@Override
-	public String toString() {
-		return getName();
-	}
+    @Override
+    public String toString() {
+        return getKeyName();
+    }
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o)
-			return true;
-		if (!(o instanceof KeyEntityAbstract keyEntity))
-			return false;
-		return Objects.equals(getName(), keyEntity.getName())
-				&& Objects.equals(getDescription(), keyEntity.getDescription());
-	}
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof KeyEntityAbstract keyEntity))
+            return false;
+        return Objects.equals(getKeyName(), keyEntity.getKeyName())
+                && Objects.equals(getDescription(), keyEntity.getDescription());
+    }
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(getName(), getDescription());
-	}
+    @Override
+    public int hashCode() {
+        return Objects.hash(getKeyName(), getDescription());
+    }
 
-	public boolean equalsByName(KeyEntityAbstract that) {
-		return Objects.equals(this.getName(), that.getName());
-	}
+    public boolean equalsByName(KeyEntityAbstract that) {
+        return Objects.equals(this.getKeyName(), that.getKeyName());
+    }
 }

@@ -1,5 +1,5 @@
 {
-  "name": "initial",
+  "keyName": "initial",
   "description": "initial schedule for client transactions",
   "intervalExpression": "@monthly",
   "startDateTime": "2025-01-01T00:00:00.000+00:00",
@@ -9,23 +9,23 @@
     {
       "name": "transaction_dds",
       "dataSet": "transaction_dds",
-      "scenarioActTemplate": "default",
-      "intervalStart": "{{ addmonths(targetDateTimeTZ, -1) }}",
-      "intervalEnd": "{{ targetDateTimeTZ }}"
+      "scenarioActTemplate": "spark-dq",
+      "intervalStart": "{{ addmonths(targetDateTime, -1) }}",
+      "intervalEnd": "{{ targetDateTime }}"
     },
     {
       "name": "aggregation_pay_per_client_daily_mart",
       "dataSet": "aggregation_pay_per_client_daily_mart",
-      "scenarioActTemplate": "default",
-      "intervalStart": "{{ addmonths(targetDateTimeTZ, -1) }}",
-      "intervalEnd": "{{ targetDateTimeTZ }}"
+      "scenarioActTemplate": "spark",
+      "intervalStart": "{{ addmonths(targetDateTime, -1) }}",
+      "intervalEnd": "{{ targetDateTime }}"
     },
     {
       "name": "aggregation_pay_per_client_total_mart",
       "dataSet": "aggregation_pay_per_client_total_mart",
-      "scenarioActTemplate": "default",
-      "intervalStart": "{{ addmonths(targetDateTimeTZ, -1) }}",
-      "intervalEnd": "{{ targetDateTimeTZ }}"
+      "scenarioActTemplate": "spark",
+      "intervalStart": "{{ addmonths(targetDateTime, -1) }}",
+      "intervalEnd": "{{ targetDateTime }}"
     }
   ],
   "scenarioActEdges": [

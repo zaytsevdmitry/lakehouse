@@ -12,9 +12,10 @@ import java.util.stream.Collectors;
 @Component
 public class StateFactory {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
     public MergeResult merge(DataSetState newState, List<DataSetState> dataSetStates) throws Exception {
         List<DataSetState> result = new ArrayList<>();
-        for (DataSetState dataSetState :sortStates(dataSetStates)) {
+        for (DataSetState dataSetState : sortStates(dataSetStates)) {
             DataSetState dataSetCurState = dataSetState.copy();
             /*
              * curr /--------------------------------/
@@ -37,7 +38,7 @@ public class StateFactory {
                      * or  * new  /--------------------------------/
                      * */
                     if ((dataSetCurState.getIntervalStartDateTime().isAfter(newState.getIntervalStartDateTime())
-                            ||dataSetCurState.getIntervalStartDateTime().isEqual(newState.getIntervalStartDateTime()))
+                            || dataSetCurState.getIntervalStartDateTime().isEqual(newState.getIntervalStartDateTime()))
                             && (dataSetCurState.getIntervalEndDateTime().isBefore(newState.getIntervalEndDateTime())
                             || dataSetCurState.getIntervalEndDateTime().isEqual(newState.getIntervalEndDateTime()))
 
@@ -65,14 +66,13 @@ public class StateFactory {
                                     && dataSetCurState.getIntervalStartDateTime().isBefore(newState.getIntervalEndDateTime())) {
                                 dataSetCurState.setIntervalStartDateTime(newState.getIntervalEndDateTime());
                                 result.add(dataSetCurState);
-                            }
-                            else
+                            } else
                                 /*
                                  * curr    /--------------------------------/
                                  * new          /--------------------/
                                  * */
                                 if (dataSetCurState.getIntervalStartDateTime().isBefore(newState.getIntervalStartDateTime())
-                                && dataSetCurState.getIntervalEndDateTime().isAfter(newState.getIntervalEndDateTime())) {
+                                        && dataSetCurState.getIntervalEndDateTime().isAfter(newState.getIntervalEndDateTime())) {
 
                                     DataSetState prev = dataSetCurState.copy();
                                     prev.setIntervalEndDateTime(newState.getIntervalStartDateTime());
@@ -84,19 +84,18 @@ public class StateFactory {
                                     post.setIntervalStartDateTime(newState.getIntervalEndDateTime());
                                     post.setLockSource(newState.getLockSource());
                                     result.add(post);
-                                }
-                            else {
+                                } else {
                                     throw new Exception("Unexpected case");
                                 }
 
             }
         }
         result.add(newState);
-        result = result.stream().filter(dataSetState -> dataSetState.getStatus()!=null).toList();
-        return new MergeResult(result , getForRemove(dataSetStates,result));
+        result = result.stream().filter(dataSetState -> dataSetState.getStatus() != null).toList();
+        return new MergeResult(result, getForRemove(dataSetStates, result));
     }
 
-    public List<DataSetState> sortStates(List<DataSetState> unsorted){
+    public List<DataSetState> sortStates(List<DataSetState> unsorted) {
         List<DataSetState> result = new ArrayList<>();
         unsorted
                 .stream()
@@ -110,8 +109,8 @@ public class StateFactory {
     }
 
 
-    private List<DataSetState> getForRemove(List<DataSetState> beforeChange, List<DataSetState> afterChange){
-        Set<Long> afterChangeIds =  afterChange.stream().map(DataSetState::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+    private List<DataSetState> getForRemove(List<DataSetState> beforeChange, List<DataSetState> afterChange) {
+        Set<Long> afterChangeIds = afterChange.stream().map(DataSetState::getId).filter(Objects::nonNull).collect(Collectors.toSet());
         return beforeChange.stream().filter(state -> !afterChangeIds.contains(state.getId())).toList();
     }
 
@@ -121,20 +120,20 @@ public class StateFactory {
             OffsetDateTime intervalEndDateTime) {
 
 
-        List<DataSetState>  result =  sortStates(dataSetStates);
-        DataSetState lastState = result.get(result.size()-1);
-        DataSetState  firstState = result.get(0);
+        List<DataSetState> result = sortStates(dataSetStates);
+        DataSetState lastState = result.get(result.size() - 1);
+        DataSetState firstState = result.get(0);
 
-        if (intervalEndDateTime.isAfter(lastState.getIntervalEndDateTime())){
+        if (intervalEndDateTime.isAfter(lastState.getIntervalEndDateTime())) {
             DataSetState gap = new DataSetState();
             gap.setDataSetKeyName(lastState.getDataSetKeyName());
-            gap.setIntervalStartDateTime(result.get(result.size()-1).getIntervalEndDateTime());
+            gap.setIntervalStartDateTime(result.get(result.size() - 1).getIntervalEndDateTime());
             gap.setIntervalEndDateTime(intervalEndDateTime);
             gap.setStatus(null);
             result.add(gap);
         }
 
-        if (intervalStartDateTime.isBefore(firstState.getIntervalStartDateTime())){
+        if (intervalStartDateTime.isBefore(firstState.getIntervalStartDateTime())) {
             DataSetState gap = new DataSetState();
             gap.setDataSetKeyName(firstState.getDataSetKeyName());
             gap.setIntervalStartDateTime(intervalStartDateTime);
@@ -145,16 +144,16 @@ public class StateFactory {
         return result;
     }
 
-    public  List<DataSetState> feelGaps(List<DataSetState> dataSetStates){
+    public List<DataSetState> feelGaps(List<DataSetState> dataSetStates) {
         List<DataSetState> result = new ArrayList<>();
         List<DataSetState> dataSetStatesSorted = sortStates(dataSetStates);
 
-        for (int i=0; i < dataSetStatesSorted.size(); i++){
+        for (int i = 0; i < dataSetStatesSorted.size(); i++) {
             DataSetState curr = dataSetStatesSorted.get(i);
-            if (i > 0){
-                DataSetState prev = dataSetStatesSorted.get(i-1);
+            if (i > 0) {
+                DataSetState prev = dataSetStatesSorted.get(i - 1);
 
-                if(prev.getIntervalEndDateTime().isBefore(curr.getIntervalStartDateTime())){
+                if (prev.getIntervalEndDateTime().isBefore(curr.getIntervalStartDateTime())) {
                     DataSetState gap = new DataSetState();
                     gap.setIntervalStartDateTime(prev.getIntervalEndDateTime());
                     gap.setIntervalEndDateTime(curr.getIntervalStartDateTime());
@@ -163,8 +162,7 @@ public class StateFactory {
                     result.add(gap);
                 }
                 result.add(curr);
-            }
-            else result.add(curr);
+            } else result.add(curr);
         }
         return result;
     }

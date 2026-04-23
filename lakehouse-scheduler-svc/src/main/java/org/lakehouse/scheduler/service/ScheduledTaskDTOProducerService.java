@@ -21,8 +21,8 @@ public class ScheduledTaskDTOProducerService {
         this.scheduledTaskTopic = scheduledTaskTopic;
     }
 
-    public void send (ScheduledTaskMsgDTO msg){
-        kafkaTemplate.send(scheduledTaskTopic,msg.getId(),msg);
+    public void send(ScheduledTaskMsgDTO msg) {
+        kafkaTemplate.send(scheduledTaskTopic, msg.getId(), msg);
     }
 
 

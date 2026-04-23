@@ -1,21 +1,19 @@
 package org.lakehouse.client.api.dto.scheduler.tasks;
 
-import org.lakehouse.client.api.dto.configs.TaskDTO;
-
-import java.util.HashMap;
-import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.lakehouse.client.api.constant.Status;
+import org.lakehouse.client.api.dto.configs.schedule.TaskDTO;
 
 public class ScheduledTaskDTO extends TaskDTO {
     private Long id;
-    private Map<String,String> executionModuleArgs = new HashMap<>();
     private String scenarioActKeyName;
     private String scheduleKeyName;
-    private String status;
+    private Status.Task status;
     private String targetDateTime;
     private String intervalStartDateTime;
     private String intervalEndDateTime;
     private String dataSetKeyName;
-
+    private Integer tryNum;
     public ScheduledTaskDTO() {
     }
 
@@ -48,16 +46,6 @@ public class ScheduledTaskDTO extends TaskDTO {
         return intervalStartDateTime;
     }
 
-    @Override
-    public Map<String, String> getExecutionModuleArgs() {
-        return executionModuleArgs;
-    }
-
-    @Override
-    public void setExecutionModuleArgs(Map<String, String> executionModuleArgs) {
-        this.executionModuleArgs = executionModuleArgs;
-    }
-
     public String getTargetDateTime() {
         return targetDateTime;
     }
@@ -78,11 +66,11 @@ public class ScheduledTaskDTO extends TaskDTO {
         this.intervalEndDateTime = intervalEndDateTime;
     }
 
-    public String getStatus() {
+    public Status.Task getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(Status.Task status) {
         this.status = status;
     }
 
@@ -92,5 +80,29 @@ public class ScheduledTaskDTO extends TaskDTO {
 
     public void setDataSetKeyName(String dataSetKeyName) {
         this.dataSetKeyName = dataSetKeyName;
+    }
+
+    public Integer getTryNum() {
+        return tryNum;
+    }
+
+    public void setTryNum(Integer tryNum) {
+        this.tryNum = tryNum;
+    }
+
+    @JsonIgnore
+    public String getTaskFullName(){
+        return String.format("%s.%s.%s.%s",
+                getScheduleKeyName(),
+                getScenarioActKeyName(),
+                getName(),
+                getTargetDateTime());
+    }
+    @JsonIgnore
+    public String getLockSource(){
+        return String.format("%s.%s.%s",
+                getScheduleKeyName(),
+                getScenarioActKeyName(),
+                getTargetDateTime());
     }
 }

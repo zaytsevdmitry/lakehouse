@@ -4,7 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.lakehouse.client.api.constant.Endpoint;
-import org.lakehouse.client.api.dto.configs.*;
+import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
+import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
+import org.lakehouse.client.api.dto.configs.schedule.ScenarioActTemplateDTO;
+import org.lakehouse.client.api.dto.configs.schedule.ScheduleDTO;
+import org.lakehouse.client.api.dto.configs.schedule.ScheduleEffectiveDTO;
+import org.lakehouse.client.api.dto.configs.schedule.TaskDTO;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.client.rest.config.configuration.ConfigRestClientConfiguration;
 import org.lakehouse.test.config.configuration.FileLoader;
@@ -25,99 +30,114 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {ConfigRestClientConfiguration.class})
 @RestClientTest(properties = {
-		"lakehouse.client.rest.config.server.url=",
+        "lakehouse.client.rest.config.server.url=",
 })
 public class ConfigRestClientHelperTest {
 
-	@Autowired
-	ConfigRestClientApi client ;
+    @Autowired
+    ConfigRestClientApi client;
 
-	@Autowired MockRestServiceServer server;
+    @Autowired
+    MockRestServiceServer server;
 
-	@Autowired private ObjectMapper objectMapper;
-
-
-	private final FileLoader fileLoader = new FileLoader();
-
-	@Test
-	public void MakesCorrectCallProjectDTO() throws Exception {
-		ProjectDTO expectProjectDTO = fileLoader.loadProjectDTO();
-		server.expect(ExpectedCount.manyTimes(),
-						requestTo(String.format("%s/%s", Endpoint.PROJECTS, expectProjectDTO.getName())))
-				.andRespond(withSuccess(objectMapper.writeValueAsString(expectProjectDTO), MediaType.APPLICATION_JSON));
-		System.out.println("Project is loaded");
+    @Autowired
+    private ObjectMapper objectMapper;
 
 
-		ProjectDTO projectDTO = this.client.getProjectDTO(expectProjectDTO.getName());
-		assert (expectProjectDTO.equals(projectDTO));
-	}
+    private final FileLoader fileLoader = new FileLoader();
 
-	@Test
-	public void MakesCorrectCallScheduleDTO() throws Exception {
+    @Test
+    public void MakesCorrectCallDriverDTO() throws Exception {
+        DriverDTO expectDriverDTO = fileLoader.loadDriverDTO("postgres");
+        server.expect(ExpectedCount.manyTimes(),
+                        requestTo(String.format("%s/%s", Endpoint.DRIVERS, expectDriverDTO.getKeyName())))
+                .andRespond(withSuccess(objectMapper.writeValueAsString(expectDriverDTO), MediaType.APPLICATION_JSON));
+        System.out.println("Driver is loaded");
 
-		ScheduleDTO expectScheduleDTO = fileLoader.loadScheduleDTO("initial");
-		server.expect(ExpectedCount.manyTimes(),
-						requestTo(String.format("%s/%s", Endpoint.SCHEDULES, expectScheduleDTO.getName())))
-				.andRespond(withSuccess(objectMapper.writeValueAsString(expectScheduleDTO), MediaType.APPLICATION_JSON));
-		System.out.println("schedule is loaded");
 
-		ScheduleDTO scheduleDTO = this.client.getScheduleDTO(expectScheduleDTO.getName());
-		assert (expectScheduleDTO.equals(scheduleDTO));
-	}
+        DriverDTO driverDTO = this.client.getDriverDTO(expectDriverDTO.getKeyName());
+        assert (expectDriverDTO.equals(driverDTO));
+    }
 
-	@Test
-	public void MakesCorrectCallScenarioActTemplateDTO() throws Exception {
-		ScenarioActTemplateDTO scenarioActTemplateDTO = fileLoader.loadScenarioActTemplateDTO();
-		server.expect(ExpectedCount.manyTimes(),
-						requestTo(String.format("%s/%s", Endpoint.SCENARIOS, scenarioActTemplateDTO.getName())))
-				.andRespond(withSuccess(objectMapper.writeValueAsString(scenarioActTemplateDTO), MediaType.APPLICATION_JSON));
-		System.out.println("scenario is loaded");
+    @Test
+    public void MakesCorrectCallNameSpaceDTO() throws Exception {
+        NameSpaceDTO expectNameSpaceDTO = fileLoader.loadNameSpaceDTO();
+        server.expect(ExpectedCount.manyTimes(),
+                        requestTo(String.format("%s/%s", Endpoint.NAME_SPACES, expectNameSpaceDTO.getKeyName())))
+                .andRespond(withSuccess(objectMapper.writeValueAsString(expectNameSpaceDTO), MediaType.APPLICATION_JSON));
+        System.out.println("NameSpace is loaded");
 
-		ScenarioActTemplateDTO expect = fileLoader.loadScenarioActTemplateDTO();
-		ScenarioActTemplateDTO result = client.getScenarioActTemplateDTO(expect.getName());
-		assert (expect.equals(result));
-	}
 
-	@Test
-	public void MakesCorrectCallScheduleEffectiveDTO() throws Exception {
-		ScheduleEffectiveDTO sef = fileLoader.loadScheduleEffectiveDTO();
-		server.expect(ExpectedCount.manyTimes(),
-						requestTo(String.format("%s/name/%s", Endpoint.EFFECTIVE_SCHEDULES_ROOT, sef.getName())))
-				.andRespond(withSuccess(objectMapper.writeValueAsString(sef), MediaType.APPLICATION_JSON));
-		System.out.println("Schedule effective is loaded");
+        NameSpaceDTO nameSpaceDTO = this.client.getNameSpaceDTO(expectNameSpaceDTO.getKeyName());
+        assert (expectNameSpaceDTO.equals(nameSpaceDTO));
+    }
 
-		ScheduleEffectiveDTO expect = fileLoader.loadScheduleEffectiveDTO();
-		ScheduleEffectiveDTO result = client.getScheduleEffectiveDTO(expect.getName());
-		assert (expect.equals(result));
-	}
+    @Test
+    public void MakesCorrectCallScheduleDTO() throws Exception {
 
-	@Test
-	public void MakesCorrectCallScheduleEffectiveTaskDTO() throws Exception {
-		TaskDTO mergeTaskDTOExpected = new TaskDTO();
-		Map<String,String> mergeTaskDTOExpectedArgs = new HashMap<>();
-		mergeTaskDTOExpectedArgs.put("spark.executor.memory", "5gb");
-		mergeTaskDTOExpectedArgs.put("spark.driver.memory", "2gb");
-		mergeTaskDTOExpectedArgs.put("spark.driver.cores", "3");
-		mergeTaskDTOExpected.setExecutionModuleArgs(mergeTaskDTOExpectedArgs);
-		mergeTaskDTOExpected.setName("merge");
-		mergeTaskDTOExpected.setTaskExecutionServiceGroupName("default");
-		mergeTaskDTOExpected.setExecutionModule("org.lakehouse.taskexecutor.executionmodule.datamanipulation.MergeProcessor");
-		mergeTaskDTOExpected.setImportance("critical");
-		mergeTaskDTOExpected.setDescription("load from remote datastore");
+        ScheduleDTO expectScheduleDTO = fileLoader.loadScheduleDTO("initial");
+        server.expect(ExpectedCount.manyTimes(),
+                        requestTo(String.format("%s/%s", Endpoint.SCHEDULES, expectScheduleDTO.getKeyName())))
+                .andRespond(withSuccess(objectMapper.writeValueAsString(expectScheduleDTO), MediaType.APPLICATION_JSON));
+        System.out.println("schedule is loaded");
 
-		server.expect(ExpectedCount.manyTimes(),
-						requestTo( Endpoint.EFFECTIVE_SCHEDULE_SCENARIOACT_TASK
-												.replaceAll("\\{schedule}", "initial")
-												.replaceAll("\\{scenarioact}","transaction_dds" )
-												.replaceAll("\\{task}","merge")
+        ScheduleDTO scheduleDTO = this.client.getScheduleDTO(expectScheduleDTO.getKeyName());
+        assert (expectScheduleDTO.equals(scheduleDTO));
+    }
 
-										))
-				.andRespond(withSuccess(objectMapper.writeValueAsString(mergeTaskDTOExpected), MediaType.APPLICATION_JSON));
-		System.out.println("Schedule effective is loaded");
+    @Test
+    public void MakesCorrectCallScenarioActTemplateDTO() throws Exception {
+        ScenarioActTemplateDTO scenarioActTemplateDTO = fileLoader.loadScenarioActTemplateDTO();
+        server.expect(ExpectedCount.manyTimes(),
+                        requestTo(String.format("%s/%s", Endpoint.SCENARIOS, scenarioActTemplateDTO.getKeyName())))
+                .andRespond(withSuccess(objectMapper.writeValueAsString(scenarioActTemplateDTO), MediaType.APPLICATION_JSON));
+        System.out.println("scenario is loaded");
 
-		TaskDTO result = client.getEffectiveTaskDTO("initial",
-				"transaction_dds",
-				"merge");
-		assert (mergeTaskDTOExpected.equals(result));
-	}
+        ScenarioActTemplateDTO expect = fileLoader.loadScenarioActTemplateDTO();
+        ScenarioActTemplateDTO result = client.getScenarioActTemplateDTO(expect.getKeyName());
+        assert (expect.equals(result));
+    }
+
+    @Test
+    public void MakesCorrectCallScheduleEffectiveDTO() throws Exception {
+        ScheduleEffectiveDTO sef = fileLoader.loadScheduleEffectiveDTO();
+        server.expect(ExpectedCount.manyTimes(),
+                        requestTo(String.format("%s/name/%s", Endpoint.EFFECTIVE_SCHEDULES_ROOT, sef.getKeyName())))
+                .andRespond(withSuccess(objectMapper.writeValueAsString(sef), MediaType.APPLICATION_JSON));
+        System.out.println("Schedule effective is loaded");
+
+        ScheduleEffectiveDTO expect = fileLoader.loadScheduleEffectiveDTO();
+        ScheduleEffectiveDTO result = client.getScheduleEffectiveDTO(expect.getKeyName());
+        assert (expect.equals(result));
+    }
+
+    @Test
+    public void MakesCorrectCallScheduleEffectiveTaskDTO() throws Exception {
+        TaskDTO mergeTaskDTOExpected = new TaskDTO();
+        Map<String, String> mergeTaskDTOExpectedArgs = new HashMap<>();
+        mergeTaskDTOExpectedArgs.put("spark.executor.memory", "5g");
+        mergeTaskDTOExpectedArgs.put("spark.driver.memory", "2g");
+        mergeTaskDTOExpectedArgs.put("spark.driver.cores", "3");
+        mergeTaskDTOExpected.setTaskProcessorArgs(mergeTaskDTOExpectedArgs);
+        mergeTaskDTOExpected.setName("merge");
+        mergeTaskDTOExpected.setTaskExecutionServiceGroupName("default");
+        mergeTaskDTOExpected.setTaskProcessor("org.lakehouse.taskexecutor.executionmodule.datamanipulation.MergeProcessor");
+        mergeTaskDTOExpected.setImportance("critical");
+        mergeTaskDTOExpected.setDescription("load from remote datastore");
+
+        server.expect(ExpectedCount.manyTimes(),
+                        requestTo(Endpoint.EFFECTIVE_SCHEDULE_SCENARIOACT_TASK
+                                .replaceAll("\\{scheduleKeyName}", "initial")
+                                .replaceAll("\\{scenarioActName}", "transaction_dds")
+                                .replaceAll("\\{taskName}", "merge")
+
+                        ))
+                .andRespond(withSuccess(objectMapper.writeValueAsString(mergeTaskDTOExpected), MediaType.APPLICATION_JSON));
+        System.out.println("Schedule effective is loaded");
+
+        TaskDTO result = client.getEffectiveTaskDTO("initial",
+                "transaction_dds",
+                "merge");
+        assert (mergeTaskDTOExpected.equals(result));
+    }
 }

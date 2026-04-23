@@ -8,29 +8,29 @@ import org.lakehouse.client.rest.RestClientHelper;
 
 
 public class StateRestClientApiImpl implements StateRestClientApi {
-	
-	private final RestClientHelper restClientHelper;
-	
-	public StateRestClientApiImpl(RestClientHelper restClientHelper) {
-		this.restClientHelper = restClientHelper;
-	}
+
+    private final RestClientHelper restClientHelper;
+
+    public StateRestClientApiImpl(RestClientHelper restClientHelper) {
+        this.restClientHelper = restClientHelper;
+    }
 
 
-	@Override
-	public int setDataSetStateDTO(DataSetStateDTO dataSetStateDTO) {
-		return restClientHelper.putDTO(dataSetStateDTO, Endpoint.STATE_DATASET);
-	}
+    @Override
+    public int setDataSetStateDTO(DataSetStateDTO dataSetStateDTO) {
+        return restClientHelper.putDTO(dataSetStateDTO, Endpoint.STATE_DATASET);
+    }
 
-	@Override
-	public DataSetStateResponseDTO getDataSetStateResponseDTO(DataSetIntervalDTO dataSetIntervalDTO) {
-		return restClientHelper.getDtoOne(
-				dataSetIntervalDTO,
+    @Override
+    public DataSetStateResponseDTO getDataSetStateResponseDTO(DataSetIntervalDTO dataSetIntervalDTO) {
+        return restClientHelper.getDtoOne(
+                dataSetIntervalDTO,
 				/*Map.of(
 						"dataSetKeyName",dataSetIntervalDTO.getDataSetKeyName(),
 						"intervalStartDateTime", dataSetIntervalDTO.getIntervalStartDateTime(),
 						"intervalEndDateTime", dataSetIntervalDTO.getIntervalEndDateTime()
 				),*/
-				Endpoint.STATE_DATASET,
-				DataSetStateResponseDTO.class);
-	}
+                Endpoint.STATE_DATASET,
+                DataSetStateResponseDTO.class);
+    }
 }

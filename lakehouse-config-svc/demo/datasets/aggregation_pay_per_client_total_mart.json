@@ -1,17 +1,17 @@
 {
   "keyName": "aggregation_pay_per_client_total_mart",
-  "project": "DEMO",
-  "dataStoreKeyName": "lakehousestorage",
-  "fullTableName": "ggregation_pay_per_client_total_mart",
+  "nameSpaceKeyName": "DEMO",
+  "dataSourceKeyName": "lakehousestorage",
+  "databaseSchemaName": "default",
+  "tableName": "ggregation_pay_per_client_total_mart",
   "scripts": [
     {
-      "key": "aggregation_pay_per_client_total_mart.sql"
-    }],
-  "sources": [
-    {
-      "name": "transaction_dds"
+      "key": "dataset-sql-model.aggregation_pay_per_client_total_mart.sql"
     }
   ],
+  "sources": {
+    "transaction_dds": {}
+  },
   "columnSchema": [
     {
       "name": "client_name",
@@ -32,17 +32,15 @@
       "nullable": false
     }
   ],
-  "constraints":[
-    {
-      "name": "aggregation_pay_per_client_total_mart_pk",
+  "constraints": {
+    "aggregation_pay_per_client_total_mart_pk":{
       "type": "primary",
       "columns": "client_name",
-      "runtimeLevelCheck": false,
-      "constructLevelCheck": true
-    }
-  ],
+      "enabled": true,
+      "constraintLevelCheck": "dataQuality"
+  }
+},
   "properties": {
-
     "location": "/demo/datamarts/aggregation_pay_per_client_total_mart",
     "using": "iceberg"
   },

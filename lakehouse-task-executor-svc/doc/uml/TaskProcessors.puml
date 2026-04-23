@@ -1,0 +1,87 @@
+@startuml
+interface TaskProcessor [[java:org.lakehouse.taskexecutor.api.processor.TaskProcessor]] {
+	runTask(sourceConfDTO: SourceConfDTO, scheduledTaskDTO: ScheduledTaskDTO, jinJavaUtils: JinJavaUtils): void
+}
+interface TaskProcessor {
+}
+TaskProcessor <|.. AbstractTaskProcessor
+class JdbcTaskProcessor [[java:org.lakehouse.taskexecutor.processor.jdbc.JdbcTaskProcessor]] {
+	-logger: Logger
+	-applicationContext: ConfigurableApplicationContext
+	+JdbcTaskProcessor(applicationContext: ConfigurableApplicationContext)
+	+runTask(sourceConfDTO: SourceConfDTO, scheduledTaskDTO: ScheduledTaskDTO, jinJavaUtils: JinJavaUtils): void
+}
+abstract class AbstractTaskProcessor [[java:org.lakehouse.taskexecutor.processor.AbstractTaskProcessor]] {
+	+AbstractTaskProcessor()
+	#sleep(ms: long): void
+}
+
+TaskProcessor <|.. JdbcTaskProcessor
+abstract class AbstractSparkDeployTaskProcessor [[java:org.lakehouse.taskexecutor.processor.spark.AbstractSparkDeployTaskProcessor]] {
+	-logger: Logger
+	#MAIN_CLASS_KEY: String
+	#APP_RESOURCE_KEY: String
+	-finalStatusNames: List<String>
+	-negativeStatusNames: List<String>
+	+AbstractSparkDeployTaskProcessor()
+	+isStatusFinal(statusName: String): boolean
+	+isStatusNegative(statusName: String): boolean
+	+buildSparkRestClientApi(baseURI: String): SparkRestClientApi
+	+deploy(taskFullName: String, mainClass: String, appResource: String, severUrl: String, sparkProperties: Map<String,String>, sparkArgs: List<String>): void
+}
+class AbstractTaskProcessor {
+}
+AbstractTaskProcessor <|-- AbstractSparkDeployTaskProcessor
+class SparkRestDeployFactory [[java:org.lakehouse.taskexecutor.processor.spark.SparkRestDeployFactory]] {
+	-urnV1: String
+	+SparkRestDeployFactory()
+	+getServerUrl(sourceConfDTO: SourceConfDTO, scheduledTaskDTO: ScheduledTaskDTO, jinJavaUtils: JinJavaUtils): String
+}
+class SparkLauncherTaskProcessor [[java:org.lakehouse.taskexecutor.processor.spark.SparkLauncherTaskProcessor]] {
+	-logger: Logger
+	-configApiUrl: String
+	+SparkLauncherTaskProcessor(sparkRestDeployFactory: SparkRestDeployFactory, configApiUrl: String)
+	+runTask(sourceConfDTO: SourceConfDTO, scheduledTaskDTO: ScheduledTaskDTO, jinJavaUtils: JinJavaUtils): void
+}
+class SparkRestDeployFactory {
+}
+SparkLauncherTaskProcessor --> "1" SparkRestDeployFactory : sparkRestDeployFactory
+class AbstractSparkDeployTaskProcessor {
+}
+AbstractSparkDeployTaskProcessor <|-- SparkLauncherTaskProcessor
+class LockedStateTaskProcessor [[java:org.lakehouse.taskexecutor.processor.state.LockedStateTaskProcessor]] {
+	-logger: Logger
+	+LockedStateTaskProcessor(stateRestClientApi: StateRestClientApi)
+	+runTask(sourceConfDTO: SourceConfDTO, scheduledTaskDTO: ScheduledTaskDTO, jinJavaUtils: JinJavaUtils): void
+}
+class AbstractStateTaskProcessor {
+}
+AbstractStateTaskProcessor <|-- LockedStateTaskProcessor
+abstract class AbstractStateTaskProcessor [[java:org.lakehouse.taskexecutor.processor.state.AbstractStateTaskProcessor]] {
+	-logger: Logger
+	-stateRestClientApi: StateRestClientApi
+	+AbstractStateTaskProcessor(stateRestClientApi: StateRestClientApi)
+	+getStateRestClientApi(): StateRestClientApi
+}
+class AbstractTaskProcessor {
+}
+AbstractTaskProcessor <|-- AbstractStateTaskProcessor
+class SuccessStateTaskProcessor [[java:org.lakehouse.taskexecutor.processor.state.SuccessStateTaskProcessor]] {
+	-logger: Logger
+	+SuccessStateTaskProcessor(stateRestClientApi: StateRestClientApi)
+	+runTask(sourceConfDTO: SourceConfDTO, scheduledTaskDTO: ScheduledTaskDTO, jinJavaUtils: JinJavaUtils): void
+}
+class AbstractStateTaskProcessor {
+}
+AbstractStateTaskProcessor <|-- SuccessStateTaskProcessor
+class DependencyCheckStateTaskProcessor [[java:org.lakehouse.taskexecutor.processor.state.DependencyCheckStateTaskProcessor]] {
+	-logger: Logger
+	+DependencyCheckStateTaskProcessor(stateRestClientApi: StateRestClientApi)
+	-getStates(dataSetKeyName: String, intervalStartDateTime: String, intervalEndDateTime: String): List<DataSetStateDTO>
+	-pass(dataSetStateDTO: DataSetStateDTO, scheduledTaskDTO: ScheduledTaskDTO): boolean
+	+runTask(sourceConfDTO: SourceConfDTO, scheduledTaskDTO: ScheduledTaskDTO, jinJavaUtils: JinJavaUtils): void
+}
+class AbstractStateTaskProcessor {
+}
+AbstractStateTaskProcessor <|-- DependencyCheckStateTaskProcessor
+@enduml

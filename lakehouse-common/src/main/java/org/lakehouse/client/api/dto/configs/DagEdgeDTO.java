@@ -3,7 +3,7 @@ package org.lakehouse.client.api.dto.configs;
 import java.util.Objects;
 
 public class DagEdgeDTO {
-    private String  from;
+    private String from;
     private String to;
 
     public DagEdgeDTO() {

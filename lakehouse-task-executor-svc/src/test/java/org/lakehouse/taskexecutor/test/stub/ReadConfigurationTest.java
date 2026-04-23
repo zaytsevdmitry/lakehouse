@@ -17,12 +17,6 @@ import org.springframework.boot.test.context.SpringBootTest;
                 "lakehouse.client.rest.state.server.url=http://state.test.lakehouse.org:12345",
         })
 @EnableConfigurationProperties(value = RestClientStateConfigurationProperties.class)
-/*
-@ComponentScan(basePackages = {
-        "org.lakehouse.taskexecutor"
-}
-)
-*/
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class ReadConfigurationTest {
@@ -31,7 +25,7 @@ public class ReadConfigurationTest {
 
     @Test
     @Order(2)
-    void testRestStateConfigurationProperties(){
+    void testRestStateConfigurationProperties() {
         assert (restClientStateConfigurationProperties.getServer().getUrl().equals("http://state.test.lakehouse.org:12345"));
     }
 }

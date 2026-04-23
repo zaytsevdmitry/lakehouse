@@ -1,0 +1,79 @@
+@startuml
+class SparkProcessorBodyStarter
+class SparkProcessorBodyFactory{
+public static SparkProcessorBody buildSparkProcessorBody(
+            SparkSession sparkSession,
+            String[] args)
+            throws TaskFailedException
+}
+interface SparkProcessorBody{
+ void run() throws TaskFailedException;
+}
+interface BodyParam {
+    Map<String, DataSourceManipulator> getSourceDataSourceManipulatorMap();
+    DataSourceManipulator getTargetDataSourceManipulator();
+    Map<String, String> getExecutionArgs();
+}
+class BodyParamImpl implements BodyParam
+
+SparkProcessorBodyStarter *-- SparkProcessorBodyFactory
+SparkProcessorBodyStarter *-- SparkProcessorBody
+SparkProcessorBodyFactory *-- SparkProcessorBody
+
+abstract class SparkProcessorBodyAbstract implements SparkProcessorBody{
+private final BodyParam bodyParam
+}
+SparkProcessorBodyAbstract *-- BodyParam
+class TransformationSparkProcessorBody extends SparkProcessorBodyAbstract
+class SparkTaskProcessorDQBody extends SparkProcessorBodyAbstract{
+    BodyParam bodyParam;
+}
+class CatalogActivator{
+private final SparkSession sparkSession;
+    public  void activate(DataSourceDTO dataSourceDTO)
+    public  void activate(List<DataSourceDTO> dataSourceDTOS)
+}
+SparkProcessorBodyFactory *--CatalogActivator
+'-------------------------------------
+' DataSourceManipulator
+'-------------------------------------
+interface DataSourceManipulator extends DataSourceManipulatorParameter {
+
+    void addConstraints(Map<String,DataSetConstraintDTO> constraints) throws ConstraintException;
+    void compact() throws CompactException;
+    void compactPartitions(List<String> partitions) throws CompactException;
+    void createTableIfNotExists() throws CreateException;
+    void drop() throws DropException;
+    void dropPartitions(List<String> partitions) throws DropException;
+    void removeConstraintByName(String constraintName) throws ConstraintException;
+    void removeConstraints(Map<String,DataSetConstraintDTO> constraints) throws ConstraintException;
+    void truncate() throws TruncateException;
+    void truncatePartitions(List<String> partitions) throws TruncateException;
+}
+class SparkSession
+class JdbcSparkSQLDataSourceManipulator extends SparkSQLDataSourceManipulatorAbstract
+abstract class SparkSQLDataSourceManipulatorAbstract extends JdbcDataSourceManipulator implements DataSourceManipulator{
+SparkSession sparkSession,
+            DataSourceDTO dataSourceDTO,
+            ExecutionUtils executionUtils,
+            DataSetDTO dataSetDTO
+}
+
+SparkSQLDataSourceManipulatorAbstract *- SparkSession
+SparkSQLDataSourceManipulatorAbstract *- DataSourceDTO
+SparkSQLDataSourceManipulatorAbstract *- ExecutionUtils
+SparkSQLDataSourceManipulatorAbstract *- dataSetDTO
+
+class IcebergSparkSQLDataSourceManipulator extends SparkSQLDataSourceManipulatorAbstract
+class FileSparkSQLDataSourceManipulator extends SparkSQLDataSourceManipulatorAbstract
+'-------------------------------------
+' END DataSourceManipulator
+'--------------------------------------
+BodyParam *-- DataSourceManipulator
+TransformationSparkProcessorBody *--- TransformerFactory
+interface DataTransformer{
+Dataset<Row> transform(
+List<DataSourceManipulator> sourceDataSourceManipulators,
+DataSourceManipulator targetDataSourceManipulator)
+}
+@enduml

@@ -1,0 +1,7 @@
+@startuml
+(TaskProcessor)->(SparkLauncherTaskProcessor)
+(SparkLauncherTaskProcessor)..>(SparkClusterStandAlone): request
+(SparkClusterStandAlone)..>(SparkProcessorApplication): run job
+(SparkProcessorApplication)->(ApplicationBodyStarter)
+(ApplicationBodyStarter)->(SparkProcessorBody)
+@enduml

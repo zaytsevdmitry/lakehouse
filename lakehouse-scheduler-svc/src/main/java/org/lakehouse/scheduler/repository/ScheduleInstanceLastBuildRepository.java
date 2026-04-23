@@ -9,18 +9,19 @@ import java.util.Optional;
 
 public interface ScheduleInstanceLastBuildRepository extends JpaRepository<ScheduleInstanceLastBuild, Long> {
 
-	@Query("""
-			select sil\s
-			from ScheduleInstanceLastBuild sil\s
-			 where sil.enabled \s
-			   and not exists(
-			                   select sil \
-			                     from ScheduleInstanceRunning sir
-			                    where sir.configScheduleKeyName = sil.configScheduleKeyName\s
-			)""")
-	List<ScheduleInstanceLastBuild> findByScheduleEnabledNotRunning();
+    @Query("""
+            select sil\s
+            from ScheduleInstanceLastBuild sil\s
+             where sil.enabled \s
+               and not exists(
+                               select sil \
+                                 from ScheduleInstanceRunning sir
+                                where sir.configScheduleKeyName = sil.configScheduleKeyName\s
+            )""")
+    List<ScheduleInstanceLastBuild> findByScheduleEnabledNotRunning();
 
 
-	List<ScheduleInstanceLastBuild> findByEnabled(boolean enabled);
-	Optional<ScheduleInstanceLastBuild> findByConfigScheduleKeyName(String configScheduleKeyName);
+    List<ScheduleInstanceLastBuild> findByEnabled(boolean enabled);
+
+    Optional<ScheduleInstanceLastBuild> findByConfigScheduleKeyName(String configScheduleKeyName);
 }

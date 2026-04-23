@@ -9,9 +9,10 @@ import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
 
 import java.util.List;
 
-public class SchedulerRestClienApiTest implements SchedulerRestClientApi{
+public class SchedulerRestClienApiTest implements SchedulerRestClientApi {
 
     private final List<ScheduledTaskLockDTO> scheduledTaskLockDTOS;
+
     public SchedulerRestClienApiTest(List<ScheduledTaskLockDTO> scheduledTaskLockDTOS) {
 
         this.scheduledTaskLockDTOS = scheduledTaskLockDTOS;

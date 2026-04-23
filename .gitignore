@@ -2,7 +2,15 @@ spark-warehouse
 target
 distr
 debug
+demodebug
 .idea
 .gigaide
 .project
 .classpath
+
+
+/dev/log.log
+/dev/docker/hms/opt/
+/dev/docker/hms/Dockerfile
+/dev/docker/hms/hive-standalone-metastore-3.1.3-bin.tar.gz
+/dev/docker/hms/hadoop-3.3.4.tar.gz

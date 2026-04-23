@@ -1,6 +1,6 @@
 package org.lakehouse.scheduler.service;
 
-import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
+import org.lakehouse.client.api.dto.configs.schedule.ScheduleEffectiveDTO;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +14,7 @@ public class ScheduleConfigConsumerService {
     private final BuildService buildService;
 
     private final ConfigRestClientApi configRestClientApi;
+
     public ScheduleConfigConsumerService(
             BuildService buildService, ConfigRestClientApi configRestClientApi) {
         this.buildService = buildService;
@@ -21,14 +22,12 @@ public class ScheduleConfigConsumerService {
     }
 
 
-
-   @KafkaListener(
+    @KafkaListener(
             topics = "#{'${lakehouse.scheduler.config.schedule.kafka.consumer.topics}'.split(',')}",
             concurrency = "#{'${lakehouse.scheduler.config.schedule.kafka.consumer.concurrency}'}",
             containerFactory = "containerFactory")
-    public void listen(ScheduleEffectiveDTO scheduleEffectiveDTO)
-    {
-        logger.info("New schedule config change: {}", scheduleEffectiveDTO.getName());
+    public void listen(ScheduleEffectiveDTO scheduleEffectiveDTO) {
+        logger.info("New schedule config change: {}", scheduleEffectiveDTO.getKeyName());
         buildService.registration(scheduleEffectiveDTO);
         logger.info("findAndRegisterNewSchedules");
     }

@@ -1,31 +1,34 @@
 package org.lakehouse.state.entity;
 
 import jakarta.persistence.*;
+import org.lakehouse.client.api.constant.Status;
 
 import java.time.OffsetDateTime;
 import java.util.Objects;
+
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(name = "data_set_state__uk", columnNames = {
         "data_set_key_name",
         "interval_start_date_time",
-        "interval_end_date_time" }))
+        "interval_end_date_time"}))
 public class DataSetState {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column( nullable = false)
+    @Column(nullable = false)
     String dataSetKeyName;
 
-    @Column( nullable = false)
+    @Column(nullable = false)
     OffsetDateTime intervalStartDateTime;
 
-    @Column( nullable = false)
+    @Column(nullable = false)
     OffsetDateTime intervalEndDateTime;
 
-    @Column( nullable = false)
-    String status;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    Status.DataSet status;
 
     @Column(length = 1000)
     String lockSource;
@@ -65,11 +68,11 @@ public class DataSetState {
         this.intervalEndDateTime = intervalEndDateTime;
     }
 
-    public String getStatus() {
+    public Status.DataSet getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(Status.DataSet status) {
         this.status = status;
     }
 

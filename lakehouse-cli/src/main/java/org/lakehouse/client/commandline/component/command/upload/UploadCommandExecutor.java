@@ -5,20 +5,21 @@ import org.lakehouse.client.commandline.component.CommandExecutor;
 import org.lakehouse.client.commandline.component.objectactionfacade.factory.ConfigObjectActionsFactory;
 import org.lakehouse.client.commandline.model.CommandResult;
 import org.springframework.stereotype.Component;
+
 @Component
-public class UploadCommandExecutor implements CommandExecutor{
+public class UploadCommandExecutor implements CommandExecutor {
 
-	private final ConfigObjectActionsFactory objectActionsFactory;
-	
-	public UploadCommandExecutor(ConfigObjectActionsFactory objectActionsFactory) {
+    private final ConfigObjectActionsFactory objectActionsFactory;
 
-		this.objectActionsFactory = objectActionsFactory;
-	}
-	
-	@Override
-	public CommandResult execute(String[] commandAttrs) throws Exception {
+    public UploadCommandExecutor(ConfigObjectActionsFactory objectActionsFactory) {
 
-		return objectActionsFactory.getObjectActionsByObjectName(commandAttrs[1]).upload(commandAttrs);
-	}
+        this.objectActionsFactory = objectActionsFactory;
+    }
+
+    @Override
+    public CommandResult execute(String[] commandAttrs) throws Exception {
+
+        return objectActionsFactory.getObjectActionsByObjectName(commandAttrs[1]).upload(commandAttrs);
+    }
 
 }

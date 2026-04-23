@@ -1,7 +1,7 @@
 package org.lakehouse.scheduler.factory;
 
 import org.lakehouse.client.api.constant.Status;
-import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
+import org.lakehouse.client.api.dto.configs.schedule.ScheduleEffectiveDTO;
 import org.lakehouse.client.api.dto.scheduler.ScheduleInstanceDTO;
 import org.lakehouse.client.api.exception.CronParceErrorException;
 import org.lakehouse.client.api.utils.DateTimeUtils;
@@ -16,6 +16,7 @@ import java.util.List;
 
 public class ScheduleInstanceFactory {
     private final static Logger logger = LoggerFactory.getLogger(ScheduleInstanceFactory.class);
+
     public static ScheduleInstance newScheduleInstance(
             ScheduleInstanceLastBuild scheduleInstanceLast,
             ScheduleEffectiveDTO scheduleEffectiveDTO) {
@@ -25,7 +26,7 @@ public class ScheduleInstanceFactory {
         OffsetDateTime lastTargetExecutionDate;
 
         if (scheduleInstanceLast.getScheduleInstance() == null) {
-            lastTargetExecutionDate =  DateTimeUtils.parseDateTimeFormatWithTZ( scheduleEffectiveDTO.getStartDateTime()); //scheduleInstanceLast.getSchedule().getStartDateTime();
+            lastTargetExecutionDate = DateTimeUtils.parseDateTimeFormatWithTZ(scheduleEffectiveDTO.getStartDateTime()); //scheduleInstanceLast.getSchedule().getStartDateTime();
         } else {
             lastTargetExecutionDate = scheduleInstanceLast.getScheduleInstance().getTargetExecutionDateTime();
         }
@@ -36,15 +37,15 @@ public class ScheduleInstanceFactory {
         } catch (CronParceErrorException e) {
             logger.warn(e.getMessage());
             throw new TransactionException(String.format("Error when try to set TargetExecutionDateTime of %s",
-                    scheduleEffectiveDTO.getName()), e);
+                    scheduleEffectiveDTO.getKeyName()), e);
         }
 
-        scheduleInstance.setStatus(Status.Schedule.NEW.label);
+        scheduleInstance.setStatus(Status.Schedule.NEW);
 
         return scheduleInstance;
     }
 
-    public static ScheduleInstanceDTO mapScheduleInstanceDTO(ScheduleInstance scheduleInstance){
+    public static ScheduleInstanceDTO mapScheduleInstanceDTO(ScheduleInstance scheduleInstance) {
         ScheduleInstanceDTO result = new ScheduleInstanceDTO();
         result.setId(scheduleInstance.getId());
         result.setStatus(scheduleInstance.getStatus());
@@ -53,10 +54,10 @@ public class ScheduleInstanceFactory {
         return result;
     }
 
-    public static List<ScheduleInstanceDTO> scheduleInstanceDTOList(List<ScheduleInstance> scheduleInstanceList){
-        return  scheduleInstanceList
-                        .stream()
-                        .map(ScheduleInstanceFactory::mapScheduleInstanceDTO)
-                        .toList();
+    public static List<ScheduleInstanceDTO> scheduleInstanceDTOList(List<ScheduleInstance> scheduleInstanceList) {
+        return scheduleInstanceList
+                .stream()
+                .map(ScheduleInstanceFactory::mapScheduleInstanceDTO)
+                .toList();
     }
 }

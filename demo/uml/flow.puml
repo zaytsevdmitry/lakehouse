@@ -1,0 +1,27 @@
+@startuml
+
+queue  t_schedules
+queue  t_tasks
+queue  t_dq_metric
+database db_proc
+database trino
+database s3_lakehouse
+
+User -> (conf-svc): dataset, scrits,schedule, etc
+(conf-svc) ..> t_schedules: schedule
+t_schedules ..> (scheduler-svc)
+(scheduler-svc) ..> t_tasks
+t_tasks ..> (task-executor)
+(task-executor) ---> (scheduler-svc): lock task
+(task-executor) <--> (state-svc)
+(task-executor) <--> db_proc
+(task-executor) <--> (spark-cluster)
+(task-executor) ---> (scheduler-svc): release task
+(spark-cluster) --> (datasetProcess)
+(datasetProcess) --> s3_lakehouse
+s3_lakehouse ..> (DQProcess)
+(spark-cluster) --> (DQProcess)
+(DQProcess) ..> t_dq_metric
+t_dq_metric ..> trino
+s3_lakehouse ..> trino
+@enduml

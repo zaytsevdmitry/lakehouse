@@ -15,6 +15,7 @@ public class StateRestClientApiTest implements StateRestClientApi {
     public StateRestClientApiTest() {
         testCollection = new ArrayList<>();
     }
+
     public StateRestClientApiTest(List<DataSetStateDTO> testCollection) {
         this.testCollection = testCollection;
     }

@@ -1,6 +1,6 @@
 package org.lakehouse.client.api.dto.state;
 
-import org.lakehouse.client.api.common.IntervalDTO;
+import org.lakehouse.client.api.dto.common.IntervalDTO;
 
 import java.util.Objects;
 
@@ -35,7 +35,7 @@ public class DataSetIntervalDTO extends IntervalDTO {
 
     @Override
     public String toString() {
-        return this.getClass().getName() +"{" +
+        return this.getClass().getName() + "{" +
                 "dataSetKeyName='" + dataSetKeyName + '\'' +
                 ", intervalStartDateTime='" + getIntervalStartDateTime() + '\'' +
                 ", intervalEndDateTime='" + getIntervalEndDateTime() + '\'' +

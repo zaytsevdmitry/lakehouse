@@ -7,7 +7,7 @@ import org.hibernate.annotations.OnDeleteAction;
 import java.util.Objects;
 
 @Entity
-public class ScheduledTaskForProducerMessage{
+public class ScheduledTaskForProducerMessage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

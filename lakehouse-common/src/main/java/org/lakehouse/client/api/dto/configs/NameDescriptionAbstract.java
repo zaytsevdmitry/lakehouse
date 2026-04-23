@@ -5,7 +5,7 @@ import java.util.Objects;
 
 public abstract class NameDescriptionAbstract implements Serializable {
     private static final long serialVersionUID = 6749318353497672650L;
-	private String name;
+    private String name;
     private String description;
 
     public NameDescriptionAbstract() {

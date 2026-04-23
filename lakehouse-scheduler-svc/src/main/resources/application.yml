@@ -2,7 +2,7 @@ debug: enabled
 server:
   port: 8081
 logging:
-  level: 
+  level:
     org:
       springframework:
         transaction:
@@ -50,19 +50,22 @@ lakehouse:
               bootstrap.servers: localhost:9092
               group.id: scheduler
               auto.offset.reset: earliest
-            topics: schedule_changes
+            topics: schedule_effective_changes
             concurrency: 1
     registration:
-      delay-ms: 60000
+      delay-ms: 6000
       initial-delay-ms: 5000
     run:
-      delay-ms: 12000
+      delay-ms: 1200
       initial-delay-ms: 3000
     resolvedeps:
-      delay-ms: 15000
+      delay-ms: 1500
       initial-delay-ms: 10000
     task:
       retry:
         delay-ms: 14000
         initial-delay-ms: 10000
+        lag-when-failed: 1000
+        lag-when-config-failed: 120000
+
 

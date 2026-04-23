@@ -4,34 +4,45 @@ public class Endpoint {
     public final static String ROOT_API_V1_0 = "/v1_0";
     public final static String CONFIGS = ROOT_API_V1_0 + "/configs";
 
-    public final static String PROJECTS = CONFIGS + "/projects";
-    public final static String PROJECTS_NAME = PROJECTS + "/{name}";
+    public final static String NAME_SPACES = CONFIGS + "/nameSpaces";
+    public final static String NAME_SPACES_NAME = NAME_SPACES + "/{keyName}";
 
-    public final static String TASK_EXECUTION_SERVICE_GROUPS =  CONFIGS + "/taskexecutionservicegroups";
-    public final static String TASK_EXECUTION_SERVICE_GROUPS_NAME = TASK_EXECUTION_SERVICE_GROUPS + "/{name}";
+    public final static String TASK_EXECUTION_SERVICE_GROUPS = CONFIGS + "/taskexecutionservicegroups";
+    public final static String TASK_EXECUTION_SERVICE_GROUPS_NAME = TASK_EXECUTION_SERVICE_GROUPS + "/{keyName}";
 
 
     public final static String SCRIPTS = CONFIGS + "/scripts";
-    public final static String SCRIPT_BY_KEY= CONFIGS + "/scripts/{key}";
+    public final static String SCRIPT_BY_KEY = CONFIGS + "/scripts/{key}";
 
     public final static String DATA_SETS = CONFIGS + "/datasets";
-    public final static String DATA_SETS_NAME = CONFIGS +  "/datasets" + "/{name}";
+    public final static String DATA_SETS_NAME = CONFIGS + "/datasets" + "/{keyName}";
 
-    public final static String DATA_STORES = CONFIGS +  "/datastores";
-    public final static String DATA_STORES_NAME = DATA_STORES + "/{name}";
+    public final static String QUALITY_METRICS = CONFIGS + "/quality/metrics";
+    public final static String QUALITY_METRICS_NAME = QUALITY_METRICS + "/{keyName}";
+    public final static String QUALITY_METRICS_BY_DATASET = QUALITY_METRICS + "/dataset/{keyName}";
 
-    public final static String SCHEDULES = CONFIGS +  "/schedules";
-    public final static String SCHEDULES_NAME = SCHEDULES + "/{name}";
-    public final static String EFFECTIVE_SCHEDULES_ROOT = CONFIGS +  "/effective/schedules";
-    public final static String EFFECTIVE_SCHEDULES_FROM_DT = EFFECTIVE_SCHEDULES_ROOT  +  "/fromdt/{dt}";
-    public final static String EFFECTIVE_SCHEDULES_NAME = EFFECTIVE_SCHEDULES_ROOT + "/name/{name}";
+    public final static String DRIVERS = CONFIGS + "/drivers";
+    public final static String DRIVERS_NAME = DRIVERS + "/{keyName}";
+
+    public final static String DATA_SOURCES = CONFIGS + "/datasources";
+    public final static String DATA_SOURCES_NAME = DATA_SOURCES + "/{keyName}";
+
+    public final static String COMPOUND = CONFIGS + "/compound";
+    public final static String SOURCES_CONF_BY_DATASET_KEY_NAME = COMPOUND + "/sources/dataset/{keyName}";
+    public final static String DATASET_MODEL_SCRIPT_BY_DATASET_KEY_NAME = COMPOUND + "/dataset/model/script/dataset/{keyName}";
+
+
+    public final static String SCHEDULES = CONFIGS + "/schedules";
+    public final static String SCHEDULES_NAME = SCHEDULES + "/{keyName}";
+    public final static String EFFECTIVE_SCHEDULES_ROOT = CONFIGS + "/effective/schedules";
+    public final static String EFFECTIVE_SCHEDULES_FROM_DT = EFFECTIVE_SCHEDULES_ROOT + "/fromdt/{dt}";
+    public final static String EFFECTIVE_SCHEDULES_NAME = EFFECTIVE_SCHEDULES_ROOT + "/schedule/{keyName}";
     public final static String EFFECTIVE_SCHEDULE_SCENARIOACT_TASK = EFFECTIVE_SCHEDULES_ROOT
-            + "/schedule/{schedule}/scenarioact/{scenarioact}/task/{task}";
+            + "/schedule/{scheduleKeyName}/scenarioActName/{scenarioActName}/taskName/{taskName}";
 
     public final static String SCENARIOS = CONFIGS + "/scenarios";
-    public final static String SCENARIOS_NAME = SCENARIOS + "/{name}";
-
-
+    public final static String SCENARIOS_NAME = SCENARIOS + "/{keyName}";
+// scheduler-svc
     public final static String SCHEDULE = ROOT_API_V1_0 + "/schedule";
     public final static String SCHEDULE_NAME = ROOT_API_V1_0 + "/schedule/name={name}/limit={limit}";
     public final static String SCHEDULE_ID = ROOT_API_V1_0 + "/schedule/id={id}";
@@ -43,8 +54,13 @@ public class Endpoint {
     public final static String SCHEDULED_TASKS_RELEASE = SCHEDULED_TASKS + "/release";
     public final static String SCHEDULED_TASKS_LOCK_HEARTBEAT = SCHEDULED_TASKS + "/lock/heartbeat";
     public final static String SCHEDULED_TASKS_ID = SCHEDULED_TASKS + "/{id}";
-
-    public final static String STATE= ROOT_API_V1_0 + "/state";
-    public final static String STATE_DATASET= STATE + "/dataset";
+// state-svc
+    public final static String STATE = ROOT_API_V1_0 + "/state";
+    public final static String STATE_DATASET = STATE + "/dataset";
+//task executor-svc
+    public final static String TASK_EXECUTOR = ROOT_API_V1_0 + "/taskexecutor";
+    public final static String TASK_EXECUTOR_PROCESSOR = TASK_EXECUTOR + "/processor";
+    public final static String TASK_EXECUTOR_PROCESSOR_CONFIG = TASK_EXECUTOR_PROCESSOR + "/config";
+    public final static String TASK_EXECUTOR_PROCESSOR_GET_BY_LOCK_ID = TASK_EXECUTOR_PROCESSOR_CONFIG + "/lock/{id}";
 
 }

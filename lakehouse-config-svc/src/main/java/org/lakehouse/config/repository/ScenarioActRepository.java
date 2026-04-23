@@ -10,16 +10,16 @@ import java.util.Optional;
 
 public interface ScenarioActRepository extends JpaRepository<ScenarioAct, Long> {
 
-	@Query("select p from ScenarioAct p where p.schedule.name = ?1")
-	List<ScenarioAct> findByScheduleName(String scheduleName);
+    //@Query("select p from ScenarioAct p where p.schedule.name = ?1")
+    List<ScenarioAct> findByScheduleKeyName(String scheduleName);
 
-	List<ScenarioAct> findByScenarioActTemplateName(String scenarioActTemplateName);
+    List<ScenarioAct> findByTemplateScenarioActKeyName(String scenarioActTemplateName);
 
-	@Query("select p from ScenarioAct p where p.schedule.name = ?1 and p.name = ?2")
-	Optional<ScenarioAct> findByScheduleNameAndActName(String scheduleName, String actName);
+    @Query("select p from ScenarioAct p where p.schedule.keyName = ?1 and p.name = ?2")
+    Optional<ScenarioAct> findByScheduleNameAndActName(String scheduleName, String actName);
 
 
-	@Modifying
-	@Query("delete from ScenarioAct sa where sa.schedule.name = ?1")
-	void deleteByScheduleName(String scheduleName);
+    @Modifying
+    @Query("delete from ScenarioAct sa where sa.schedule.keyName = ?1")
+    void deleteByScheduleName(String scheduleName);
 }

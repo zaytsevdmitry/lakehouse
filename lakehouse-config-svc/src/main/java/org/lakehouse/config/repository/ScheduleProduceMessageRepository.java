@@ -12,5 +12,5 @@ public interface ScheduleProduceMessageRepository extends JpaRepository<Schedule
     @Query("select t " +
             "from ScheduleProduceMessage t " +
             "order by id")
-    List<ScheduleProduceMessage> findAllWithLimit( Limit limit);
+    List<ScheduleProduceMessage> findAllWithLimit(Limit limit);
 }

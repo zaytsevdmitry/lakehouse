@@ -1,6 +1,6 @@
 package org.lakehouse.client.commandline.component.objectactionfacade;
 
-import org.lakehouse.client.api.dto.configs.DataSetDTO;
+import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.client.commandline.model.CommandResult;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
@@ -8,55 +8,57 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.util.List;
+
 @Component
-public class DataSetObjectActions implements ConfigObjectActions{
-	private final ConfigRestClientApi configRestClientApi;
-	
-	public DataSetObjectActions(ConfigRestClientApi configRestClientApi) {
-		this.configRestClientApi = configRestClientApi;
-	}
-	@Override
-	public CommandResult showOne(String[] args)  {
-		
-		return ObjectActionsHelper.getObjectJSONResult( configRestClientApi.getDataSetDTO(args[3]));
-	}
+public class DataSetObjectActions implements ConfigObjectActions {
+    private final ConfigRestClientApi configRestClientApi;
 
-	@Override
-	public CommandResult showAll(String[] args) {
-		List<DataSetDTO> l = configRestClientApi.getDataSetDTOList();
-		
-		return ObjectActionsHelper.table(
-				new String[]{"name", "description", "project"}, 
-				l.stream().map(o -> new String[]{
-						o.getKeyName(),
-						o.getDescription(),
-						o.getProject()}).toList());
-	}
+    public DataSetObjectActions(ConfigRestClientApi configRestClientApi) {
+        this.configRestClientApi = configRestClientApi;
+    }
 
-	@Override
-	public CommandResult upload(String[] args) throws Exception{
-		return ObjectActionsHelper.coverHttpCode(
-				configRestClientApi
-					.postDataSetDTO(
-						ObjectMapping
-							.fileToObject(
-									new File(args[2]) , 
-									DataSetDTO.class
-									)
-							)
-					
-				);
-	}
+    @Override
+    public CommandResult showOne(String[] args) {
 
-	@Override
-	public CommandResult download(String[] args) {
-		
-		return ObjectActionsHelper.save(args[3], configRestClientApi.getDataSetDTO(args[2]));
-		
-	}
+        return ObjectActionsHelper.getObjectJSONResult(configRestClientApi.getDataSetDTO(args[3]));
+    }
 
-	@Override
-	public CommandResult delete(String[] args) {
-		return ObjectActionsHelper.coverHttpCode(configRestClientApi.deleteDataSetDTO(args[2]));
-	}
+    @Override
+    public CommandResult showAll(String[] args) {
+        List<DataSetDTO> l = configRestClientApi.getDataSetDTOList();
+
+        return ObjectActionsHelper.table(
+                new String[]{"name", "description", "nameSpace"},
+                l.stream().map(o -> new String[]{
+                        o.getKeyName(),
+                        o.getDescription(),
+                        o.getNameSpaceKeyName()}).toList());
+    }
+
+    @Override
+    public CommandResult upload(String[] args) throws Exception {
+        return ObjectActionsHelper.coverHttpCode(
+                configRestClientApi
+                        .postDataSetDTO(
+                                ObjectMapping
+                                        .fileToObject(
+                                                new File(args[2]),
+                                                DataSetDTO.class
+                                        )
+                        )
+
+        );
+    }
+
+    @Override
+    public CommandResult download(String[] args) {
+
+        return ObjectActionsHelper.save(args[3], configRestClientApi.getDataSetDTO(args[2]));
+
+    }
+
+    @Override
+    public CommandResult delete(String[] args) {
+        return ObjectActionsHelper.coverHttpCode(configRestClientApi.deleteDataSetDTO(args[2]));
+    }
 }

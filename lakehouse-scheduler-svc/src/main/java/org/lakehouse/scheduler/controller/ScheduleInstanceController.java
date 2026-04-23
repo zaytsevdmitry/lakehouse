@@ -13,27 +13,27 @@ import java.util.List;
 
 @RestController
 public class ScheduleInstanceController {
-	private final ManageStateService manageStateService;
+    private final ManageStateService manageStateService;
 
-	public ScheduleInstanceController(
+    public ScheduleInstanceController(
             ScheduleTaskInstanceService scheduleInstanceService, ManageStateService manageStateService) {
         this.manageStateService = manageStateService;
-	}
+    }
 
-	@GetMapping(Endpoint.SCHEDULE)
-	List<ScheduleInstanceDTO> getAll() {
-		return manageStateService.findAll();
-	}
+    @GetMapping(Endpoint.SCHEDULE)
+    List<ScheduleInstanceDTO> getAll() {
+        return manageStateService.findAll();
+    }
 
-	@GetMapping(Endpoint.SCHEDULE_NAME)
-	List<ScheduleInstanceDTO> getAllByName(@PathVariable String name, @PathVariable int limit) {
-		return manageStateService.findAllByName(name,limit);
-	}
+    @GetMapping(Endpoint.SCHEDULE_NAME)
+    List<ScheduleInstanceDTO> getAllByName(@PathVariable String name, @PathVariable int limit) {
+        return manageStateService.findAllByName(name, limit);
+    }
 
-	@DeleteMapping(Endpoint.SCHEDULE_ID)
-	void getAllByName(@PathVariable Long id) {
-		 manageStateService.delete(id);
-	}
+    @DeleteMapping(Endpoint.SCHEDULE_ID)
+    void getAllByName(@PathVariable Long id) {
+        manageStateService.delete(id);
+    }
 
-	
+
 }

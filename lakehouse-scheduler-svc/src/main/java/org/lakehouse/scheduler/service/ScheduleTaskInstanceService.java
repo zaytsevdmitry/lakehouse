@@ -2,13 +2,14 @@ package org.lakehouse.scheduler.service;
 
 import org.apache.kafka.common.KafkaException;
 import org.lakehouse.client.api.constant.Status;
-import org.lakehouse.client.api.dto.configs.TaskDTO;
+import org.lakehouse.client.api.dto.configs.schedule.TaskDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskExecutionHeartBeatDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskInstanceReleaseDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskResultDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskMsgDTO;
+import org.lakehouse.client.api.utils.Coalesce;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.scheduler.entities.ScheduleTaskInstance;
@@ -28,284 +29,287 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 
 @Service
 public class ScheduleTaskInstanceService {
-	private final Logger logger = LoggerFactory.getLogger(this.getClass());
-	private final ScheduleTaskInstanceRepository repository;
-	private final ScheduleTaskInstanceDependencyRepository dependencyRepository;
-	private final ScheduleTaskInstanceExecutionLockRepository executionLockRepository;
-	private final ScheduledTaskForProducerMessagesRepository scheduledTaskForProducerMessagesRepository;
-	private final ScheduledTaskDTOProducerService scheduledTaskDTOProducerService;
-	private final ConfigRestClientApi configRestClientApi;
-	private final ScheduleTaskInstanceFactory scheduleTaskInstanceFactory;
-	public ScheduleTaskInstanceService(
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final ScheduleTaskInstanceRepository repository;
+    private final ScheduleTaskInstanceDependencyRepository dependencyRepository;
+    private final ScheduleTaskInstanceExecutionLockRepository executionLockRepository;
+    private final ScheduledTaskForProducerMessagesRepository scheduledTaskForProducerMessagesRepository;
+    private final ScheduledTaskDTOProducerService scheduledTaskDTOProducerService;
+    private final ConfigRestClientApi configRestClientApi;
+    private final ScheduleTaskInstanceFactory scheduleTaskInstanceFactory;
+
+    public ScheduleTaskInstanceService(
             ScheduleTaskInstanceRepository repository,
             ScheduleTaskInstanceExecutionLockRepository executionLockRepository,
             ScheduleTaskInstanceDependencyRepository dependencyRepository,
             ScheduledTaskDTOProducerService scheduledTaskDTOProducerService,
             ScheduledTaskForProducerMessagesRepository scheduledTaskForProducerMessagesRepository,
             ConfigRestClientApi configRestClientApi,
-			ScheduleTaskInstanceFactory scheduleTaskInstanceFactory
+            ScheduleTaskInstanceFactory scheduleTaskInstanceFactory
+
     ) {
-		this.repository = repository;
-		this.dependencyRepository = dependencyRepository;
-		this.executionLockRepository = executionLockRepository;
+        this.repository = repository;
+        this.dependencyRepository = dependencyRepository;
+        this.executionLockRepository = executionLockRepository;
         this.scheduledTaskForProducerMessagesRepository = scheduledTaskForProducerMessagesRepository;
         this.configRestClientApi = configRestClientApi;
-		this.scheduledTaskDTOProducerService = scheduledTaskDTOProducerService;
+        this.scheduledTaskDTOProducerService = scheduledTaskDTOProducerService;
         this.scheduleTaskInstanceFactory = scheduleTaskInstanceFactory;
     }
-	
-	
-	private void putToQueue(List<ScheduleTaskInstance> list) {
-		list.forEach(sti -> {
-			sti.setStatus(Status.Task.QUEUED.label);
-
-			ScheduledTaskForProducerMessage message = new ScheduledTaskForProducerMessage();
-			message.setScheduleTaskInstance(sti);
-			scheduledTaskForProducerMessagesRepository.save(message);
-			repository.saveAndFlush(sti);
 
 
-			});
-	}
-	
-	public int addTaskToQueue() {
-		List<ScheduleTaskInstance> l = repository
-				.findReadyToQueue();
-		putToQueue(l);
-		return l.size();
-	}
-	public Integer produceScheduledTasks(){
-		Integer result = 0;
-		for (ScheduledTaskForProducerMessage message : scheduledTaskForProducerMessagesRepository.findAll()) {
+    private void putToQueue(List<ScheduleTaskInstance> list) {
+        list.forEach(sti -> {
+            sti.setStatus(Status.Task.QUEUED);
 
- 				ScheduledTaskMsgDTO scheduledTaskMsgDTO = new ScheduledTaskMsgDTO();
-			scheduledTaskMsgDTO.setId(message.getScheduleTaskInstance().getId());
-			logger.info("schedule {} scenarioact {} task {}",message.getScheduleTaskInstance().getScheduleScenarioActInstance()
-							.getScheduleInstance()
-							.getConfigScheduleKeyName(),
-					message.getScheduleTaskInstance().getScheduleScenarioActInstance().getConfDataSetKeyName(),
-					message.getScheduleTaskInstance().getName());
-			TaskDTO t = null;
+            ScheduledTaskForProducerMessage message = new ScheduledTaskForProducerMessage();
+            message.setScheduleTaskInstance(sti);
+            scheduledTaskForProducerMessagesRepository.save(message);
+            repository.saveAndFlush(sti);
 
-				logger.info("Get effective taskDTO for schedule={} scenarioAct={} task={}",
-						message.getScheduleTaskInstance().getScheduleScenarioActInstance()
-								.getScheduleInstance()
-								.getConfigScheduleKeyName(),
-						message.getScheduleTaskInstance().getScheduleScenarioActInstance().getConfDataSetKeyName(),
-						message.getScheduleTaskInstance().getName());
-			try {
-				t =	configRestClientApi.getEffectiveTaskDTO(
-						message.getScheduleTaskInstance().getScheduleScenarioActInstance()
-								.getScheduleInstance()
-								.getConfigScheduleKeyName(),
-						message.getScheduleTaskInstance().getScheduleScenarioActInstance().getConfDataSetKeyName(),
-						message.getScheduleTaskInstance().getName());
-				scheduledTaskMsgDTO.setTaskExecutionServiceGroupName(t.getTaskExecutionServiceGroupName());
-			}
-			catch (RuntimeException e){
-				logger.warn("Error when getting EffectiveTaskDTO from config service", e);
-			}
-			if (t != null){
 
-				try {
-					logger.info(
-							"Send scheduledTaskMsgDTO=(id={}  taskExecutionServiceGroupName={})",
-							scheduledTaskMsgDTO.getId(),
-							scheduledTaskMsgDTO.getTaskExecutionServiceGroupName());
-					scheduledTaskDTOProducerService.send(scheduledTaskMsgDTO);
-					scheduledTaskForProducerMessagesRepository.delete(message);
+        });
+    }
 
-					result++;
-				}
-				catch (KafkaException ke){
-						logger.error(ke.getLocalizedMessage(),ke);
-				}
-			}
-		}
-		return result;
-	}
+    public int addTaskToQueue() {
+        List<ScheduleTaskInstance> l = repository
+                .findReadyToQueue();
+        putToQueue(l);
+        return l.size();
+    }
 
-	private ScheduledTaskMsgDTO mapScheduledTaskToMsgDTO(ScheduleTaskInstance sti) {
-		ScheduledTaskMsgDTO result = new ScheduledTaskMsgDTO();
-		result.setId(sti.getId());
-		return result;
-	}
+    public Integer produceScheduledTasks() {
+        Integer result = 0;
+        for (ScheduledTaskForProducerMessage message : scheduledTaskForProducerMessagesRepository.findAll()) {
 
-	
-	private ScheduledTaskLockDTO mapScheduledTaskLockDTO(ScheduleTaskInstanceExecutionLock l) {
-		ScheduledTaskLockDTO result = new ScheduledTaskLockDTO();
-		result.setLockId(l.getId());
+            ScheduledTaskMsgDTO scheduledTaskMsgDTO = new ScheduledTaskMsgDTO();
+            scheduledTaskMsgDTO.setId(message.getScheduleTaskInstance().getId());
+            logger.info("schedule {} scenarioact {} task {}", message.getScheduleTaskInstance().getScheduleScenarioActInstance()
+                            .getScheduleInstance()
+                            .getConfigScheduleKeyName(),
+                    message.getScheduleTaskInstance().getScheduleScenarioActInstance().getConfDataSetKeyName(),
+                    message.getScheduleTaskInstance().getName());
+            TaskDTO t = null;
 
-		result.setScheduledTaskEffectiveDTO( scheduleTaskInstanceFactory.mapScheduledTaskToDTO(l.getScheduleTaskInstance()));
+            logger.info("Get effective taskDTO for schedule={} scenarioAct={} task={}",
+                    message.getScheduleTaskInstance().getScheduleScenarioActInstance()
+                            .getScheduleInstance()
+                            .getConfigScheduleKeyName(),
+                    message.getScheduleTaskInstance().getScheduleScenarioActInstance().getConfDataSetKeyName(),
+                    message.getScheduleTaskInstance().getName());
+            try {
+                t = configRestClientApi.getEffectiveTaskDTO(
+                        message.getScheduleTaskInstance().getScheduleScenarioActInstance()
+                                .getScheduleInstance()
+                                .getConfigScheduleKeyName(),
+                        message.getScheduleTaskInstance().getScheduleScenarioActInstance().getConfDataSetKeyName(),
+                        message.getScheduleTaskInstance().getName());
+                scheduledTaskMsgDTO.setTaskExecutionServiceGroupName(t.getTaskExecutionServiceGroupName());
+            } catch (RuntimeException e) {
+                logger.warn("Error when getting EffectiveTaskDTO from config service", e);
+            }
+            if (t != null) {
 
-		result.setServiceId(l.getServiceId());
-		if (l.getLastHeartBeatDateTime() != null)
-			result.setLastHeartBeatDateTime(DateTimeUtils.formatDateTimeFormatWithTZ( l.getLastHeartBeatDateTime()));
-		return result;
-	}
-	
-	private ScheduledTaskLockDTO lockTask(ScheduleTaskInstance sti, String serviceId ){
-		sti.setStatus(Status.Task.RUNNING.label);
-		sti.setBeginDateTime(DateTimeUtils.now());
-		sti.setEndDateTime(null);
-		sti.setServiceId(serviceId);
+                try {
+                    logger.info(
+                            "Send scheduledTaskMsgDTO=(id={}  taskExecutionServiceGroupName={})",
+                            scheduledTaskMsgDTO.getId(),
+                            scheduledTaskMsgDTO.getTaskExecutionServiceGroupName());
+                    scheduledTaskDTOProducerService.send(scheduledTaskMsgDTO);
+                    scheduledTaskForProducerMessagesRepository.delete(message);
 
-		ScheduleTaskInstanceExecutionLock beforeLock = new ScheduleTaskInstanceExecutionLock();
-		beforeLock.setLastHeartBeatDateTime(DateTimeUtils.now());
-		beforeLock.setServiceId(serviceId);
-		beforeLock.setScheduleTaskInstance(repository.save(sti));
-		ScheduleTaskInstanceExecutionLock afterLock = executionLockRepository.save(beforeLock);
+                    result++;
+                } catch (KafkaException ke) {
+                    logger.error(ke.getLocalizedMessage(), ke);
+                }
+            }
+        }
+        return result;
+    }
 
-		return mapScheduledTaskLockDTO(afterLock);
-	}
-	@Transactional
-	public ScheduledTaskLockDTO lockTaskById(Long taskId,String serviceId) {
-		ScheduleTaskInstance sti = repository.findById(taskId).orElseThrow(() ->
-				new ScheduledTaskNotFoundException(taskId, Status.Task.QUEUED.label));
+    private ScheduledTaskMsgDTO mapScheduledTaskToMsgDTO(ScheduleTaskInstance sti) {
+        ScheduledTaskMsgDTO result = new ScheduledTaskMsgDTO();
+        result.setId(sti.getId());
+        return result;
+    }
 
-		if(sti.getStatus().equals(Status.Task.QUEUED.label))
-			return lockTask(sti, serviceId);
-		else
-			throw new ScheduledTaskNotFoundException(taskId,Status.Task.QUEUED.label);
-	}
 
-	public ScheduleTaskInstanceExecutionLock heartBeat(TaskExecutionHeartBeatDTO taskExecutionHeardBeat) {
-		ScheduleTaskInstanceExecutionLock lock = 
-				executionLockRepository
-					.findById(taskExecutionHeardBeat.getLockId())
-					.orElseThrow(() ->
-							new ScheduledTaskInstanceLockNotFoundException(taskExecutionHeardBeat.getLockId()));
-		
-		lock.setLastHeartBeatDateTime(DateTimeUtils.now());
-		return executionLockRepository.save(lock);
-	}
-	@Transactional
-	public void releaseTask(TaskInstanceReleaseDTO taskInstanceReleaseDTO) {
-		
-		Status.Task t = taskInstanceReleaseDTO.getTaskResult().getStatus();
-		
-		if (t == Status.Task.SUCCESS || 
-				t == Status.Task.FAILED ||
-					t == Status.Task.CONF_ERROR) {
-		
-			ScheduleTaskInstanceExecutionLock executionLock = 			
-				executionLockRepository
-						.findById(taskInstanceReleaseDTO.getLockId())
-						.orElseThrow(() -> 
-							new ScheduledTaskInstanceLockNotFoundException(taskInstanceReleaseDTO.getLockId()));
-				
-			ScheduleTaskInstance sti = executionLock.getScheduleTaskInstance();
-			sti.setStatus(t.label);
-			sti.setEndDateTime(DateTimeUtils.now());
-			sti.setReTryCount(sti.getReTryCount()+1);
-			sti.setCauses(taskInstanceReleaseDTO.getTaskResult().getCauses());
-			repository.save(sti);
-			
-			executionLockRepository.delete(executionLock);
-			
-		}
-		else 
-			throw new ReleaseTaskStatusChangeException(t);
-	}
+    private ScheduledTaskLockDTO mapScheduledTaskLockDTO(ScheduleTaskInstanceExecutionLock l) {
+        ScheduledTaskLockDTO result = new ScheduledTaskLockDTO();
+        result.setLockId(l.getId());
 
-	public List<ScheduledTaskDTO> findAll() {
-		return repository
-				.findAll()
-				.stream().map(scheduleTaskInstanceFactory::mapScheduledTaskToDTO)
-				.toList();
-	}	
-	
-	public List<ScheduledTaskLockDTO> getScheduledTaskLockDTOs(){
-		return	executionLockRepository
-				.findAll()
-				.stream()
-				.map(this::mapScheduledTaskLockDTO).toList();
-	}
-	
-	
-	public ScheduledTaskLockDTO getScheduledTaskLockDTO(String id) {
-		Long idL = Long.valueOf(id);
-		return mapScheduledTaskLockDTO(
-				executionLockRepository.findById(idL).orElseThrow(() -> {
-				logger.info("Can't get lock id: {}", idL);
-				return new ScheduledTaskInstanceLockNotFoundException(idL);
-			}));
-	  
-	}
-	public int successResolvedDependency() {
-		List<ScheduleTaskInstanceDependency> list = dependencyRepository
-			.findReadyToSatisfied();
-		
-		list.forEach(d ->{
-				d.setSatisfied(true);
-				dependencyRepository.save(d);
-			});
-		
-		return list.size();
-	}
-	
-	public int reTryFailedTasks() {
-		List<ScheduleTaskInstance> l =  new ArrayList<>();
-		l.addAll(
-			repository
-				.findByStatus(Status.Task.FAILED.label)
-					.stream()
-					.filter(sti-> sti
-							.getEndDateTime()
-							.isAfter(
-									DateTimeUtils.now()
-											.minusMinutes(2)))	//todo move to application properties
-					.toList());
-		l.addAll(
-			repository
-				.findByStatus(Status.Task.CONF_ERROR.label)
-					.stream()
-					.filter(sti-> sti
-							.getEndDateTime()
-							.isAfter(
-									DateTimeUtils.now()
-											.minusMinutes(4)))	//todo move to application properties
-					.toList());
+        result.setScheduledTaskEffectiveDTO(scheduleTaskInstanceFactory.mapScheduledTaskToDTO(l.getScheduleTaskInstance()));
 
-		l.forEach(t -> {
-				t.setReTryCount(t.getReTryCount() +1);
-				t.setStatus(Status.Task.NEW.label);
-				t.setBeginDateTime(null);
-				t.setEndDateTime(null);
-				t.setCauses(null);
-				ScheduleTaskInstance sti = repository.save(t);
-				logger.info("Retry task {}", sti);
-			});
-		
-		return l.size();
-	}
-	
-	public int heartBeatLimitExceeded() {
-		
-		List<ScheduleTaskInstanceExecutionLock> locks = executionLockRepository
-				.findAll()
-				.stream()
-				.filter(l -> 
-					l.getLastHeartBeatDateTime().isAfter(
-							//todo move to application properties
-				    	 DateTimeUtils.now().minusMinutes(2)))
-				.toList();
-		locks.forEach( l -> {
-			releaseTask(
-				new TaskInstanceReleaseDTO(
-						l.getId(),
-						new TaskResultDTO(Status.Task.FAILED, "Heart beat limit exceeded")));
-			logger.info("Heart beat limit exceeded of lock {}", l);
-		});
-		
-		return locks.size();
-	}
-	
-	
+        result.setServiceId(l.getServiceId());
+        if (l.getLastHeartBeatDateTime() != null)
+            result.setLastHeartBeatDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(l.getLastHeartBeatDateTime()));
+        return result;
+    }
+
+    private ScheduledTaskLockDTO lockTask(ScheduleTaskInstance sti, String serviceId) {
+        sti.setStatus(Status.Task.RUNNING);
+        sti.setBeginDateTime(DateTimeUtils.now());
+        sti.setEndDateTime(null);
+        sti.setServiceId(serviceId);
+
+        ScheduleTaskInstanceExecutionLock beforeLock = new ScheduleTaskInstanceExecutionLock();
+        beforeLock.setLastHeartBeatDateTime(DateTimeUtils.now());
+        beforeLock.setServiceId(serviceId);
+        beforeLock.setScheduleTaskInstance(repository.save(sti));
+        ScheduleTaskInstanceExecutionLock afterLock = executionLockRepository.save(beforeLock);
+
+        return mapScheduledTaskLockDTO(afterLock);
+    }
+
+    @Transactional
+    public ScheduledTaskLockDTO lockTaskById(Long taskId, String serviceId) {
+        ScheduleTaskInstance sti = repository.findById(taskId).orElseThrow(() ->
+                new ScheduledTaskNotFoundException(taskId, Status.Task.QUEUED));
+
+        if (sti.getStatus().equals(Status.Task.QUEUED))
+            return lockTask(sti, serviceId);
+        else
+            throw new ScheduledTaskNotFoundException(taskId, Status.Task.QUEUED);
+    }
+
+    public ScheduleTaskInstanceExecutionLock heartBeat(TaskExecutionHeartBeatDTO taskExecutionHeardBeat) {
+        ScheduleTaskInstanceExecutionLock lock =
+                executionLockRepository
+                        .findById(taskExecutionHeardBeat.getLockId())
+                        .orElseThrow(() ->
+                                new ScheduledTaskInstanceLockNotFoundException(taskExecutionHeardBeat.getLockId()));
+
+        lock.setLastHeartBeatDateTime(DateTimeUtils.now());
+        return executionLockRepository.save(lock);
+    }
+
+    @Transactional
+    public void releaseTask(TaskInstanceReleaseDTO taskInstanceReleaseDTO) {
+
+        Status.Task t = taskInstanceReleaseDTO.getTaskResult().getStatus();
+
+        if (t == Status.Task.SUCCESS ||
+                t == Status.Task.FAILED ||
+                t == Status.Task.CONF_ERROR) {
+
+            ScheduleTaskInstanceExecutionLock executionLock =
+                    executionLockRepository
+                            .findById(taskInstanceReleaseDTO.getLockId())
+                            .orElseThrow(() ->
+                                    new ScheduledTaskInstanceLockNotFoundException(taskInstanceReleaseDTO.getLockId()));
+
+            ScheduleTaskInstance sti = executionLock.getScheduleTaskInstance();
+            sti.setStatus(t);
+            sti.setEndDateTime(DateTimeUtils.now());
+            sti.setReTryCount(sti.getReTryCount() + 1);
+            sti.setCauses(taskInstanceReleaseDTO.getTaskResult().getCauses());
+            repository.save(sti);
+
+            executionLockRepository.delete(executionLock);
+
+        } else
+            throw new ReleaseTaskStatusChangeException(t);
+    }
+
+    public List<ScheduledTaskDTO> findAll() {
+        return repository
+                .findAll()
+                .stream().map(scheduleTaskInstanceFactory::mapScheduledTaskToDTO)
+                .toList();
+    }
+
+    public List<ScheduledTaskLockDTO> getScheduledTaskLockDTOs() {
+        return executionLockRepository
+                .findAll()
+                .stream()
+                .map(this::mapScheduledTaskLockDTO).toList();
+    }
+
+
+    public ScheduledTaskLockDTO getScheduledTaskLockDTO(String id) {
+        Long idL = Long.valueOf(id);
+        return mapScheduledTaskLockDTO(
+                executionLockRepository.findById(idL).orElseThrow(() -> {
+                    logger.info("Can't get lock id: {}", idL);
+                    return new ScheduledTaskInstanceLockNotFoundException(idL);
+                }));
+
+    }
+
+    public int successResolvedDependency() {
+        List<ScheduleTaskInstanceDependency> list = dependencyRepository
+                .findReadyToSatisfied();
+
+        list.forEach(d -> {
+            d.setSatisfied(true);
+            dependencyRepository.save(d);
+        });
+
+        return list.size();
+    }
+
+    public int reTryFailedTasks() {
+        List<ScheduleTaskInstance> l = new ArrayList<>();
+        l.addAll(
+                repository
+                        .findByStatus(Status.Task.FAILED)
+                        .stream()
+                        .filter(sti -> DateTimeUtils.now().minusSeconds(10) //todo move to application properties
+                                .isAfter(
+                                        Coalesce.apply(
+                                                sti.getEndDateTime(),
+                                                OffsetDateTime.MIN)))
+                        .toList());
+        l.addAll(
+                repository
+                        .findByStatus(Status.Task.CONF_ERROR)
+                        .stream()
+                        .filter(sti -> DateTimeUtils.now().minusMinutes(4) //todo move to application properties
+                                .isAfter(
+                                        Coalesce.apply(
+                                                sti.getEndDateTime(),
+                                                OffsetDateTime.MIN)))
+                        .toList());
+
+        l.forEach(t -> {
+            t.setReTryCount(t.getReTryCount() + 1);
+            t.setStatus(Status.Task.NEW);
+            t.setBeginDateTime(null);
+            t.setEndDateTime(null);
+            t.setCauses(null);
+            ScheduleTaskInstance sti = repository.save(t);
+            logger.info("Retry task {}", sti);
+        });
+
+        return l.size();
+    }
+
+    public int heartBeatLimitExceeded() {
+
+        List<ScheduleTaskInstanceExecutionLock> locks = executionLockRepository
+                .findAll()
+                .stream()
+                .filter(l ->   //todo move to application properties
+                        DateTimeUtils.now().minusSeconds(30)
+                                .isAfter(l.getLastHeartBeatDateTime()))
+                .toList();
+        locks.forEach(l -> {
+            releaseTask(
+                    new TaskInstanceReleaseDTO(
+                            l.getId(),
+                            new TaskResultDTO(Status.Task.FAILED, "Heart beat limit exceeded")));
+            logger.info("Heart beat limit exceeded of lock {}", l);
+        });
+
+        return locks.size();
+    }
+
+
 }

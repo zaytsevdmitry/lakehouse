@@ -6,7 +6,7 @@ import java.util.Map;
 
 public abstract class AbstractConfigurationProperties {
 
-    private  Map<String, String> properties = new HashMap<>();
+    private Map<String, String> properties = new HashMap<>();
 
     public Map<String, String> getProperties() {
         return properties;

@@ -1,5 +1,5 @@
 {
-  "name": "regular",
+  "keyName": "regular",
   "description": "regular schedule for client transactions",
   "intervalExpression": "0 0 * * * *",
   "startDateTime": "2024-07-29T21:26:19.183+00:00",
@@ -16,25 +16,36 @@
         {
           "name": "begin",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.RunningStateTaskProcessor",
+          "taskProcessor": "lockedStateTaskProcessor",
           "importance": "critical",
           "description": "Made interval status RUNNING"
         },
         {
+          "name": "prepare",
+          "taskExecutionServiceGroupName": "default",
+          "taskProcessor": "jdbcTaskProcessor",
+          "taskProcessorBody": "createTableSQLProcessorBody",
+          "importance": "critical",
+          "description": "Create table if not exists",
+          "taskProcessorArgs": {
+          }
+        },
+        {
           "name": "load",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.JdbcTaskProcessor",
+          "taskProcessor": "jdbcTaskProcessor",
+          "taskProcessorBody": "appendSQLProcessorBody",
           "importance": "critical",
           "description": "override load",
-          "executionModuleArgs": {
-            "spark.executor.memory": "1gb",
+          "taskProcessorArgs": {
+            "spark.executor.memory": "1g",
             "spark.executor.cores": "2"
           }
         },
         {
           "name": "success",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.SuccessStateTaskProcessor",
+          "taskProcessor": "successStateTaskProcessor",
           "importance": "critical",
           "description": "DataSet success"
         }
@@ -42,6 +53,10 @@
       "dagEdges": [
         {
           "from": "begin",
+          "to": "prepare"
+        },
+        {
+          "from": "prepare",
           "to": "load"
         },
         {
@@ -49,7 +64,6 @@
           "to": "success"
         }
       ]
-
     },
     {
       "name": "client_processing",
@@ -61,25 +75,36 @@
         {
           "name": "begin",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.RunningStateTaskProcessor",
+          "taskProcessor": "lockedStateTaskProcessor",
           "importance": "critical",
           "description": "Made interval status RUNNING"
         },
         {
+          "name": "prepare",
+          "taskExecutionServiceGroupName": "default",
+          "taskProcessor": "jdbcTaskProcessor",
+          "taskProcessorBody": "createTableSQLProcessorBody",
+          "importance": "critical",
+          "description": "Create table if not exists",
+          "taskProcessorArgs": {
+          }
+        },
+        {
           "name": "load",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.JdbcTaskProcessor",
+          "taskProcessor": "jdbcTaskProcessor",
+          "taskProcessorBody": "mergeSQLProcessorBody",
           "importance": "critical",
           "description": "override load",
-          "executionModuleArgs": {
-            "spark.executor.memory": "1gb",
+          "taskProcessorArgs": {
+            "spark.executor.memory": "1g",
             "spark.executor.cores": "2"
           }
         },
         {
           "name": "success",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.state.SuccessStateTaskProcessor",
+          "taskProcessor": "successStateTaskProcessor",
           "importance": "critical",
           "description": "DataSet success"
         }
@@ -87,6 +112,10 @@
       "dagEdges": [
         {
           "from": "begin",
+          "to": "prepare"
+        },
+        {
+          "from": "prepare",
           "to": "load"
         },
         {
@@ -105,23 +134,25 @@
         {
           "name": "extend",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.SparkTaskProcessor",
+          "taskProcessor": "sparkLauncherTaskProcessor",
+          "taskProcessorBody": "mergeSQLProcessorBody",
           "importance": "critical",
           "description": "Not exists in template",
-          "executionModuleArgs": {
-            "spark.executor.memory": "5gb",
-            "spark.driver.memory": "2gb"
+          "taskProcessorArgs": {
+            "spark.executor.memory": "5g",
+            "spark.driver.memory": "2g"
           }
         },
         {
           "name": "load",
           "taskExecutionServiceGroupName": "default",
-          "executionModule": "org.lakehouse.taskexecutor.executionmodule.SparkTaskProcessor",
+          "taskProcessor": "sparkLauncherTaskProcessor",
+          "taskProcessorBody": "mergeSQLProcessorBody",
           "importance": "critical",
           "description": "override load",
-          "executionModuleArgs": {
-            "spark.executor.memory": "1gb",
-            "spark.driver.memory": "2gb",
+          "taskProcessorArgs": {
+            "spark.executor.memory": "1g",
+            "spark.driver.memory": "2g",
             "spark.executor.cores": "2"
           }
         }

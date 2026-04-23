@@ -9,7 +9,7 @@ import java.util.List;
 
 @Transactional
 public interface ScheduleScenarioActInstanceRepository extends JpaRepository<ScheduleScenarioActInstance, Long> {
-	@Query("""
+    @Query("""
             select  ssai\s
                 from ScheduleInstanceRunning sir
                 join ScheduleInstanceLastBuild sil on sir.configScheduleKeyName = sil.configScheduleKeyName and sil.enabled\s
@@ -21,9 +21,9 @@ public interface ScheduleScenarioActInstanceRepository extends JpaRepository<Sch
                         		where ssaid.to.id = ssai.id\s
                             		and not ssaid.satisfied\s
                 )""")
-	List<ScheduleScenarioActInstance> findScenarioActReadyToRun();
-	
-	@Query("""
+    List<ScheduleScenarioActInstance> findScenarioActReadyToRun();
+
+    @Query("""
             select  ssai\s
                 from ScheduleInstanceRunning sir\s
                 join ScheduleInstance si              on si.id = sir.scheduleInstance.id    and si.status = 'RUNNING'\s
@@ -32,5 +32,5 @@ public interface ScheduleScenarioActInstanceRepository extends JpaRepository<Sch
                                 from ScheduleTaskInstance sti\s
                                 where ssai.id = sti.scheduleScenarioActInstance.id\s
                                 and sti.status != 'SUCCESS')""")
-	List<ScheduleScenarioActInstance> findScenarioActReadyToSuccess();
+    List<ScheduleScenarioActInstance> findScenarioActReadyToSuccess();
 }

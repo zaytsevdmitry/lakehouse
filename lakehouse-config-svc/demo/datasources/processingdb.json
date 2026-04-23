@@ -1,0 +1,25 @@
+{
+  "keyName": "processingdb",
+  "driverKeyName":"postgres",
+  "catalogKeyName":"processing",
+  "service":
+    {
+      "host": "localhost",
+      "port": "5432",
+      "urn": "postgresDB",
+      "properties": {
+        "password": "postgresPW",
+        "user": "postgresUser",
+        "fetchSize": "10000",
+        "spark.sql.catalog.processing": "org.apache.spark.sql.execution.datasources.v2.jdbc.JDBCTableCatalog",
+        "spark.sql.catalog.processing.url": "{{driver.connectionTemplates['jdbc']}}",
+        "spark.sql.catalog.processing.user": "{{driver.services[0].properties['user']}}",
+        "spark.sql.catalog.processing.password": "{{driver.services[0].properties['password']}}",
+        "spark.sql.catalog.processing.type": "hive"
+
+      }
+    },
+  "description": "Remote datastore processingdb"
+}
+
+

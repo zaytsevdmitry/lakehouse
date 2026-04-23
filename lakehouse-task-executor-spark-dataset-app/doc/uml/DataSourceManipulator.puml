@@ -1,0 +1,46 @@
+@startuml
+interface DataSourceManipulator
+class SparkSession
+interface SparkSQLDataSourceManipulatorParameter extends DataSourceManipulatorParameter
+class JdbcSparkSQLDataSourceManipulator extends SparkSQLDataSourceManipulatorAbstract
+class JdbcDataSourceManipulator implements DataSourceManipulator {
+    ExecuteUtils executeUtils
+    SQLTemplateDTO sqlTemplateDTO
+    DataSetDTO dataSetDTO
+ }
+abstract class SparkSQLDataSourceManipulatorAbstract implements DataSourceManipulator{
+SparkSQLDataSourceManipulatorParameter sparkSQLDataSourceManipulatorParameter
+}
+SparkSQLDataSourceManipulatorAbstract *-- SparkSQLDataSourceManipulatorParameter
+
+interface DataSourceManipulatorParameter {
+    ExecuteUtils executeUtils()
+    SQLTemplateDTO sqlTemplateDTO()
+    DataSetDTO dataSetDTO()
+}
+interface SparkSQLDataSourceManipulatorParameter extends DataSourceManipulatorParameter {
+    SparkSession sparkSession();
+    SparkExecuteUtils executeUtils();
+}
+ interface SparkExecuteUtils extends ExecuteUtils {
+    Dataset<Row> executeQuery(String sql)throws ExecuteException;
+    Dataset<Row> executeQuery(String sql, Map<String,Object> localContext)throws ExecuteException ;
+}
+class SparkSQLDataSourceManipulatorParameterImpl implements SparkSQLDataSourceManipulatorParameter{
+        SparkSession sparkSession,
+        SparkExecuteUtils executeUtils,
+        SQLTemplateDTO sqlTemplateDTO,
+        DataSetDTO dataSetDTO
+}
+DataSourceManipulatorParameter <-- SparkSQLDataSourceManipulatorParameter
+SparkSQLDataSourceManipulatorParameter <--SparkSQLDataSourceManipulatorParameterImp
+SparkSQLDataSourceManipulatorParameterImp *-- SparkSession
+SparkSQLDataSourceManipulatorParameterImp *- SparkExecuteUtils
+DataSourceManipulatorParameter *- ExecuteUtils
+DataSourceManipulatorParameter *- dataSetDTO
+SparkExecuteUtils --> ExecuteUtils
+JdbcDataSourceManipulator *-- ExecuteUtils
+JdbcDataSourceManipulator *-- dataSetDTO
+class IcebergSparkDataSourceManipulator extends SparkSQLDataSourceManipulatorAbstract
+class FileSparkDataSourceManipulator extends SparkSQLDataSourceManipulatorAbstract
+@enduml

@@ -6,8 +6,8 @@ import org.lakehouse.client.api.dto.state.DataSetStateResponseDTO;
 
 
 public interface StateRestClientApi {
-	public int setDataSetStateDTO(DataSetStateDTO dataSetStateDTO);
+    public int setDataSetStateDTO(DataSetStateDTO dataSetStateDTO);
 
-	public DataSetStateResponseDTO getDataSetStateResponseDTO(DataSetIntervalDTO dataSetIntervalDTO);
+    public DataSetStateResponseDTO getDataSetStateResponseDTO(DataSetIntervalDTO dataSetIntervalDTO);
 
 }

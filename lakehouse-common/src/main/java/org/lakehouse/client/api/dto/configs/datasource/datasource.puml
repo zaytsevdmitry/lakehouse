@@ -1,0 +1,5 @@
+@startuml
+(DriverDTO)<--(DataSourceDTO)
+(Catalog)<..(DataSourceDTO)
+(DataSetDTO)->(DataSourceDTO)
+@enduml

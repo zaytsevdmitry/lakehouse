@@ -6,7 +6,7 @@
     <parent>
         <groupId>lakehouse</groupId>
         <artifactId>lakehouse-parent</artifactId>
-        <version>0.2.0</version>
+        <version>0.3.0</version>
     </parent>
 
     <artifactId>lakehouse-config-svc</artifactId>
@@ -19,14 +19,30 @@
     </properties>
     <dependencies>
         <dependency>
+            <groupId>guru.nidi</groupId>
+            <artifactId>graphviz-java</artifactId>
+            <version>0.18.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-common</artifactId>
-            <version>0.2.0</version>
+            <version>0.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>lakehouse</groupId>
+            <artifactId>lakehouse-validators</artifactId>
+            <version>0.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>lakehouse</groupId>
+            <artifactId>lakehouse-jinjava</artifactId>
+            <version>0.3.0</version>
         </dependency>
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-common-test</artifactId>
-            <version>0.2.0</version>
+            <version>0.3.0</version>
             <scope>test</scope>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-web -->
@@ -101,6 +117,16 @@
                         <phase>package</phase>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.12.0</version> <!-- Используйте актуальную версию -->
+                <configuration>
+                    <!-- Пример: включить отображение private методов -->
+                    <show>private</show>
+                    <nohelp>true</nohelp>
+                </configuration>
             </plugin>
         </plugins>
     </build>

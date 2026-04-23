@@ -1,0 +1,31 @@
+@startuml
+'https://plantuml.com/use-case-diagram
+autonumber
+queue taskqueue
+
+scheduler -> taskqueue: send task message
+
+taskqueue -> ScheduledTaskKafkaConsumerService: get message
+ScheduledTaskKafkaConsumerService -> scheduler: take a lock
+ScheduledTaskKafkaConsumerService -> ExecuteService: use lock information
+ExecuteService -> HeardBeatService: run heard beat loop
+HeardBeatService -> scheduler
+ExecuteService -> ProcessorFactory: process the task
+ExecuteService -> HeardBeatService: shutdown heard beat
+ExecuteService -> scheduler: send task result status
+
+
+
+
+note right of scheduler
+scheduler sends task information to kafka
+end note
+note right of ScheduledTaskKafkaConsumerService
+ScheduledTaskKafkaConsumerService
+filtered messages
+by taskExecutionGroup Key
+end note
+note left of ProcessorFactory
+Task processor builder
+end note
+@enduml

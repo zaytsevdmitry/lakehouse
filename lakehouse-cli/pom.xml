@@ -6,7 +6,7 @@
     <parent>
         <groupId>lakehouse</groupId>
         <artifactId>lakehouse-parent</artifactId>
-        <version>0.2.0</version>
+        <version>0.3.0</version>
     </parent>
 
     <artifactId>lakehouse-cli</artifactId>
@@ -22,25 +22,26 @@
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-config-rest-client</artifactId>
-            <version>0.2.0</version>
+            <version>0.3.0</version>
         </dependency>
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-scheduler-rest-client</artifactId>
-            <version>0.2.0</version>
+            <version>0.3.0</version>
         </dependency>
     </dependencies>
 
     <build>
-       <resources>
+        <resources>
             <resource>
                 <directory>src/main/resources</directory>
-       <!--         <filtering>true</filtering>
-                <excludes>
-                    <exclude>*.properties</exclude>
-                    <exclude>*.yaml</exclude>
-                </excludes>
--->            </resource>
+                <!--         <filtering>true</filtering>
+                         <excludes>
+                             <exclude>*.properties</exclude>
+                             <exclude>*.yaml</exclude>
+                         </excludes>
+         -->
+            </resource>
         </resources>
         <plugins>
             <plugin>

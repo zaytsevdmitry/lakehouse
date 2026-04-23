@@ -1,8 +1,5 @@
 server:
   port: 8089
-spark:
-  master: local
-
 lakehouse:
   client:
     rest:
@@ -28,14 +25,7 @@ lakehouse:
           consumer:
             concurrency: 1
             properties:
-              bootstrap.servers: localhost:9092
+              bootstrap.servers: 192.1.193.20:9092
               group.id: default
               auto.offset.reset: earliest
             topics: scheduled_task_msg
-#    schedule:
-#      lockTask:
-#        delay-ms: 1000
-#        initial-delay-ms: 1000
-#      heardBeatTask:
-#        delay-ms: 1000
-#        initial-delay-ms: 1000

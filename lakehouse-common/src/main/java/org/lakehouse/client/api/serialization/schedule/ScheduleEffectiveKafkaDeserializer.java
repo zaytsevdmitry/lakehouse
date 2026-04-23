@@ -2,7 +2,7 @@ package org.lakehouse.client.api.serialization.schedule;
 
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Deserializer;
-import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
+import org.lakehouse.client.api.dto.configs.schedule.ScheduleEffectiveDTO;
 import org.lakehouse.client.api.utils.ObjectMapping;
 
 public class ScheduleEffectiveKafkaDeserializer implements Deserializer<ScheduleEffectiveDTO> {
@@ -11,7 +11,7 @@ public class ScheduleEffectiveKafkaDeserializer implements Deserializer<Schedule
     @Override
     public ScheduleEffectiveDTO deserialize(String topic, byte[] data) {
         try {
-            if (data == null){
+            if (data == null) {
                 System.out.println("Null received at deserializing");
                 return null;
             }

@@ -1,13 +1,22 @@
 @startuml 
-(schedule) --> (scenarioActs[])
-(scenarioActs[]) --> (scenarioAct)
-(scenarioActTemplate) -> (scenarioAct)
-(scenarioActTemplate) -> (task)
-(scenarioAct) --> (task)
-(task)-->(taskExecutionService)
-(dataset) -> (scenarioAct)
-(datastore) --> (dataset)
-(project) -> (dataset)
-(project) ..> (schedule)
-(project) .> (datastore)
+(script) -> (dataset)
+(script) --> (sqlTemplate)
+(script) -> (quality-metric)
+(schedule) --> (scenarioActs[]): cascade
+(scenarioActs[]) --> (scenarioAct): cascade
+(scenarioActTemplate) ------> (scenarioAct)
+'(scenarioActTemplate) -> (task)
+(scenarioAct) --> (task): cascade
+(taskExecutionService)------->(task)
+(dataset) --> (scenarioAct)
+(dataset) -->(quality-metric)
+(dataSource) --> (dataset)
+(nameSpace) -----> (dataset)
+(nameSpace) .> (schedule)
+(driver)-->(dataSource)
+(sqlTemplate) --> (driver)
+(sqlTemplate) --> (dataSource)
+(sqlTemplate) --> (dataset)
+(catalog) o..o  (dataSource)
+(nameSpace) .> (dataSource)
 @enduml 

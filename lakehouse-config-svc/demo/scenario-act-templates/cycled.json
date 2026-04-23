@@ -1,0 +1,139 @@
+{
+  "keyName": "default",
+  "description": "Default scenario",
+  "tasks": [
+    {
+      "name": "check",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "org.lakehouse.taskexecutor.processor.state.DependencyCheckStateTaskProcessor",
+      "importance": "critical",
+      "description": "Dependency check"
+    },
+    {
+      "name": "begin",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "org.lakehouse.taskexecutor.processor.state.LockedStateTaskProcessor",
+      "importance": "critical",
+      "description": "Made interval status RUNNING"
+    },
+    {
+      "name": "prepare",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "org.lakehouse.taskexecutor.processor.SparkLauncherTaskProcessor",
+      "taskProcessorBody": "org.lakehouse.taskexecutor.api.processor.body.sql.CreateTableSQLProcessorBody",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "taskProcessorArgs": {
+        "spark.executor.memory": "1g",
+        "spark.driver.memory": "1g",
+        "protocol": "http",
+        "spark.driver.extraClassPath": "/opt/drivers/postgresql-42.7.8.jar:/opt/drivers/iceberg-spark-runtime-3.5_2.12-1.9.2.jar",
+        "spark.executor.extraClassPath": "/opt/drivers/postgresql-42.7.8.jar:/opt/drivers/iceberg-spark-runtime-3.5_2.12-1.9.2.jar"
+      }
+    },
+    {
+      "name": "load",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "org.lakehouse.taskexecutor.processor.SparkLauncherTaskProcessor",
+      "taskProcessorBody": "org.lakehouse.taskexecutor.api.processor.body.sql.MergeSQLProcessorBody",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "taskProcessorArgs": {
+        "spark.executor.memory": "5g",
+        "spark.driver.memory": "2g",
+        "protocol": "http",
+        "spark.driver.extraClassPath": "/opt/drivers/postgresql-42.7.8.jar:/opt/drivers/iceberg-spark-runtime-3.5_2.12-1.9.2.jar",
+        "spark.executor.extraClassPath": "/opt/drivers/postgresql-42.7.8.jar:/opt/drivers/iceberg-spark-runtime-3.5_2.12-1.9.2.jar"
+      }
+    },
+    {
+      "name": "merge",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "org.lakehouse.taskexecutor.processor.datamanipulation.MergeProcessor",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "taskProcessorArgs": {
+        "spark.executor.memory": "5g",
+        "spark.driver.memory": "2g",
+        "spark.driver.cores": "3"
+      }
+    },
+    {
+      "name": "dataQualityBeforeApply",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "org.lakehouse.taskexecutor.processor.datamanipulation.DataQualityBeforeProcessor",
+      "importance": "warn",
+      "description": "load from remote datastore",
+      "taskProcessorArgs": {}
+    },
+    {
+      "name": "apply",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "org.lakehouse.taskexecutor.processor.datamanipulation.ApplyProcessor",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "taskProcessorArgs": {}
+    },
+    {
+      "name": "dataQualityAfterCritical",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "org.lakehouse.taskexecutor.processor.datamanipulation.DataQualityAfterCriticalProcessor",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "taskProcessorArgs": {}
+    },
+    {
+      "name": "dataQualityAfterWarn",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "org.lakehouse.taskexecutor.processor.datamanipulation.DataQualityAfterWarnProcessor",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "taskProcessorArgs": {}
+    },
+    {
+      "name": "finally",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "org.lakehouse.taskexecutor.processor.state.SuccessStateTaskProcessor",
+      "importance": "critical",
+      "description": "DataSet success"
+    }
+  ],
+  "dagEdges": [
+    {
+      "from": "check",
+      "to": "begin"
+    },
+    {
+      "from": "begin",
+      "to": "check"
+    },
+    {
+      "from": "check",
+      "to": "load"
+    },
+    {
+      "from": "load",
+      "to": "merge"
+    },
+    {
+      "from": "merge",
+      "to": "dataQualityBeforeApply"
+    },
+    {
+      "from": "dataQualityBeforeApply",
+      "to": "apply"
+    },
+    {
+      "from": "apply",
+      "to": "dataQualityAfterCritical"
+    },
+    {
+      "from": "dataQualityAfterCritical",
+      "to": "finally"
+    },
+    {
+      "from": "apply",
+      "to": "dataQualityAfterWarn"
+    }
+  ]
+}

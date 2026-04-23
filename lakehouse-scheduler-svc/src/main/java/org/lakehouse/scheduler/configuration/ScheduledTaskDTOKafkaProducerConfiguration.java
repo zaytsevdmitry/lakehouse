@@ -16,8 +16,9 @@ import java.util.Map;
 
 @Configuration
 public class ScheduledTaskDTOKafkaProducerConfiguration {
-    @Value("${lakehouse.scheduler.schedule.task.kafka.producer.properties.bootstrap.servers}" )
+    @Value("${lakehouse.scheduler.schedule.task.kafka.producer.properties.bootstrap.servers}")
     private String bootstrapServers;
+
     @Bean
     public ProducerFactory<Long, ScheduledTaskMsgDTO> producerFactory() {
         return new DefaultKafkaProducerFactory<>(producerConfigs());
@@ -32,13 +33,11 @@ public class ScheduledTaskDTOKafkaProducerConfiguration {
         // See https://kafka.apache.org/documentation/#producerconfigs for more properties
         return props;
     }
+
     @Bean
     public KafkaTemplate<Long, ScheduledTaskMsgDTO> ScheduleEffectiveDTOKafkaTemplate() {
-        return new KafkaTemplate<Long, ScheduledTaskMsgDTO>( producerFactory());
+        return new KafkaTemplate<Long, ScheduledTaskMsgDTO>(producerFactory());
     }
-
-
-
 
 
 }

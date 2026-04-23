@@ -1,55 +1,51 @@
 {
   "keyName": "client_processing",
-  "project": "DEMO",
-  "dataStoreKeyName": "processingdb",
-  "fullTableName": "proc.client",
+  "nameSpaceKeyName": "DEMO",
+  "dataSourceKeyName": "processingdb",
+  "databaseSchemaName": "proc",
+  "tableName": "client",
   "scripts": [
     {
-      "key": "client_processing.sql"
-    }],
-  "sources": [],
+      "key": "dataset-sql-model.client_processing.sql"
+    }
+  ],
+  "sources": {},
   "columnSchema": [
     {
-    "name": "id",
-    "description": "Client id",
-    "dataType": "integer",
-    "nullable": false
+      "name": "id",
+      "description": "Client id",
+      "dataType": "integer",
+      "nullable": false
     },
     {
-    "name": "name",
-    "description": "Client name",
-    "dataType": "varchar(255)",
-    "nullable": false
+      "name": "name",
+      "description": "Client name",
+      "dataType": "varchar(255)",
+      "nullable": false
     },
     {
-    "name": "reg_date_time",
-    "description": "Client registration",
-    "dataType": "timestamp",
-    "nullable": false
+      "name": "reg_date_time",
+      "description": "Client registration",
+      "dataType": "timestamp",
+      "nullable": false
     }
   ],
-  "constraints":[
+  "constraints":
     {
-      "name": "client_processing_pk",
-      "type": "primary",
-      "columns": "id",
-      "enabled": "true",
-      "runtimeLevelCheck": false,
-      "constructLevelCheck": true
+      "client_processing_pk": {
+        "type": "primary",
+        "columns": "id",
+        "enabled": true,
+        "constraintLevelCheck": "construct"
+      },
+      "client_processing_uk": {
+        "type": "unique",
+        "columns": "name",
+        "enabled": true,
+        "constraintLevelCheck": "construct"
+      }
     },
-    {
-      "name": "client_processing_pk",
-      "type": "unique",
-      "columns": "name",
-      "enabled": "true",
-      "runtimeLevelCheck": false,
-      "constructLevelCheck": true
-    }
-
-  ],
-
   "properties": {
-
     "data-end-point": "proc.client"
   },
   "description": "remote dataset with clients"

@@ -1,18 +1,21 @@
 package org.lakehouse.client.api.dto.state;
 
+import org.lakehouse.client.api.constant.Status;
+
 import java.util.Objects;
 
-public class DataSetStateDTO  extends DataSetIntervalDTO{
-    String status;
+public class DataSetStateDTO extends DataSetIntervalDTO {
+    Status.DataSet status;
     String lockSource;
+
     public DataSetStateDTO() {
     }
 
-    public String getStatus() {
+    public Status.DataSet getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(Status.DataSet status) {
         this.status = status;
     }
 

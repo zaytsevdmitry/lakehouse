@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>lakehouse</groupId>
+        <artifactId>lakehouse-parent</artifactId>
+        <version>0.3.0</version>
+    </parent>
+
+    <artifactId>lakehouse-task-executor-spark-api</artifactId>
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <scala.binary.version>2.12</scala.binary.version>
+        <spark.version>3.5.8</spark.version>
+
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>lakehouse</groupId>
+            <artifactId>lakehouse-task-executor-api</artifactId>
+            <version>0.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>lakehouse</groupId>
+            <artifactId>lakehouse-common</artifactId>
+            <version>0.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>lakehouse</groupId>
+            <artifactId>lakehouse-task-executor-rest-client</artifactId>
+            <version>0.3.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>lakehouse</groupId>
+            <artifactId>lakehouse-validators</artifactId>
+            <version>0.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-core_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+            <!-- <exclusions>
+                 <exclusion>
+                     <groupId>org.apache.logging.log4j</groupId>
+                     <artifactId>log4j-slf4j-impl</artifactId>
+                 </exclusion>
+                 <exclusion>
+                     <groupId>org.apache.logging.log4j</groupId>
+                     <artifactId>log4j-to-slf4j</artifactId>
+                 </exclusion>
+             </exclusions>-->
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+    </dependencies>
+
+</project>

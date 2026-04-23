@@ -3,47 +3,48 @@ package org.lakehouse.client.api.dto.scheduler.lock;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 
 public class ScheduledTaskLockDTO {
-	private Long lockId;
-	private ScheduledTaskDTO scheduledTaskEffectiveDTO;
-	private String lastHeartBeatDateTime;
-	private String serviceId;
+    private Long lockId;
+    private ScheduledTaskDTO scheduledTaskEffectiveDTO;
+    private String lastHeartBeatDateTime;
+    private String serviceId;
 
 
-	public ScheduledTaskLockDTO() {
-		
-	}
-	
-	public Long getLockId() {
-		return lockId;
-	}
-	
-	public void setLockId(Long lockId) {
-		this.lockId = lockId;
-	}
+    public ScheduledTaskLockDTO() {
 
-	public ScheduledTaskDTO getScheduledTaskEffectiveDTO() {
-		return scheduledTaskEffectiveDTO;
-	}
+    }
 
-	public void setScheduledTaskEffectiveDTO(ScheduledTaskDTO scheduledTaskEffectiveDTO) {
-		this.scheduledTaskEffectiveDTO = scheduledTaskEffectiveDTO;
-	}
+    public Long getLockId() {
+        return lockId;
+    }
 
-	public String getLastHeartBeatDateTime() {
-		return lastHeartBeatDateTime;
-	}
+    public void setLockId(Long lockId) {
+        this.lockId = lockId;
+    }
 
-	public void setLastHeartBeatDateTime(String lastHeartBeatDateTime) {
-		this.lastHeartBeatDateTime = lastHeartBeatDateTime;
-	}
+    public ScheduledTaskDTO getScheduledTaskEffectiveDTO() {
+        return scheduledTaskEffectiveDTO;
+    }
 
-	public String getServiceId() {
-		return serviceId;
-	}
+    public void setScheduledTaskEffectiveDTO(ScheduledTaskDTO scheduledTaskEffectiveDTO) {
+        this.scheduledTaskEffectiveDTO = scheduledTaskEffectiveDTO;
+    }
 
-	public void setServiceId(String serviceId) {
-		this.serviceId = serviceId;
-	}
+    public String getLastHeartBeatDateTime() {
+        return lastHeartBeatDateTime;
+    }
+
+    public void setLastHeartBeatDateTime(String lastHeartBeatDateTime) {
+        this.lastHeartBeatDateTime = lastHeartBeatDateTime;
+    }
+
+    public String getServiceId() {
+        return serviceId;
+    }
+
+    public void setServiceId(String serviceId) {
+        this.serviceId = serviceId;
+    }
+
 
 
 }

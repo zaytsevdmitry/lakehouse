@@ -1,6 +1,6 @@
 package org.lakehouse.config.service;
 
-import org.lakehouse.client.api.dto.configs.ScheduleEffectiveDTO;
+import org.lakehouse.client.api.dto.configs.schedule.ScheduleEffectiveDTO;
 import org.lakehouse.config.entities.Schedule;
 import org.lakehouse.config.entities.ScheduleProduceMessage;
 import org.lakehouse.config.repository.ScheduleProduceMessageRepository;
@@ -21,9 +21,7 @@ public class ScheduleConfigProducerService {
 
     public ScheduleConfigProducerService(
             KafkaTemplate<String, ScheduleEffectiveDTO> scheduleEffectiveDTOKafkaTemplate,
-            //todo rename namespace. kafka.producer. must contain only kafka producer native properties!!!!
-            @Value("${lakehouse.config.schedule.kafka.producer.schedule.send.topic}") String scheduleTopic,
-            @Value("${lakehouse.config.schedule.kafka.producer.schedule.delete.topic}") String scheduleDeleteTopic,
+            @Value("${lakehouse.config.schedule.send.topic}") String scheduleTopic,
             ScheduleRepository scheduleRepository, ScheduleProduceMessageRepository scheduleProduceMessageRepository
     ) {
         this.scheduleEffectiveDTOKafkaTemplate = scheduleEffectiveDTOKafkaTemplate;
@@ -33,11 +31,11 @@ public class ScheduleConfigProducerService {
 
     }
 
-    public void send (ScheduleEffectiveDTO msg){
-        scheduleEffectiveDTOKafkaTemplate.send(scheduleTopic,msg.getName(),msg);
+    public void send(ScheduleEffectiveDTO msg) {
+        scheduleEffectiveDTOKafkaTemplate.send(scheduleTopic, msg.getKeyName(), msg);
     }
 
-    public void changeSchedule(Schedule schedule){
+    public void changeSchedule(Schedule schedule) {
         ScheduleProduceMessage scheduleProduceMessage = new ScheduleProduceMessage();
         scheduleProduceMessage.setSchedule(schedule);
         scheduleProduceMessageRepository.save(scheduleProduceMessage);
