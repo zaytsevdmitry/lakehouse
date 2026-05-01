@@ -14,7 +14,7 @@ select si.id
 , stiel.service_id
 , sti.service_id
 , sti.id sti_id
-, stiel.last_heart_beat_date_time - sti.begin_date_time
+, coalesce(stiel.last_heart_beat_date_time, sti.end_date_time) - sti.begin_date_time duration
 from lakehouse_scheduler.schedule_task_instance sti
 join lakehouse_scheduler.schedule_scenario_act_instance ssai on ssai.id =sti.schedule_scenario_act_instance_id
 join lakehouse_scheduler.schedule_instance si on si.id = ssai.schedule_instance_id

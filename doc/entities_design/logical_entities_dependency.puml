@@ -2,13 +2,10 @@
 (script) -> (dataset)
 (script) --> (sqlTemplate)
 (script) -> (quality-metric)
-(schedule) --> (scenarioActs[]): cascade
-(scenarioActs[]) --> (scenarioAct): cascade
-(scenarioActTemplate) ------> (scenarioAct)
+(scenarioActTemplate) ----> (schedule)
 '(scenarioActTemplate) -> (task)
-(scenarioAct) --> (task): cascade
-(taskExecutionService)------->(task)
-(dataset) --> (scenarioAct)
+(taskExecutionService)--->(scenarioActTemplate)
+(dataset) --> (schedule)
 (dataset) -->(quality-metric)
 (dataSource) --> (dataset)
 (nameSpace) -----> (dataset)

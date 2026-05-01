@@ -7,21 +7,22 @@ database db_proc
 database trino
 database s3_lakehouse
 
-User -> (conf-svc): dataset, scrits,schedule, etc
-(conf-svc) ..> t_schedules: schedule
-t_schedules ..> (scheduler-svc)
-(scheduler-svc) ..> t_tasks
-t_tasks ..> (task-executor)
-(task-executor) ---> (scheduler-svc): lock task
-(task-executor) <--> (state-svc)
-(task-executor) <--> db_proc
-(task-executor) <--> (spark-cluster)
-(task-executor) ---> (scheduler-svc): release task
-(spark-cluster) --> (datasetProcess)
-(datasetProcess) --> s3_lakehouse
+User --> (conf-svc): 1. dataset, scrits,schedule, etc
+(conf-svc) .> t_schedules: 2. schedule
+t_schedules .> (scheduler-svc): 3 consume
+(scheduler-svc) .> t_tasks: 4. taskId
+t_tasks .> (task-executor): 5. consume
+(task-executor) -> (scheduler-svc): 6.lock task
+(task-executor) <--> (state-svc): 7 when state task
+(task-executor) <--> db_proc: 7.when jdbc task
+(task-executor) <-> (spark-cluster): 7. when spark job task
+(task-executor) --> (scheduler-svc): 8. heart beat task
+(task-executor) --> (scheduler-svc): 9. release task
+(spark-cluster) --> (datasetProcess): 7.1 start job
+(datasetProcess) -> s3_lakehouse
 s3_lakehouse ..> (DQProcess)
-(spark-cluster) --> (DQProcess)
-(DQProcess) ..> t_dq_metric
-t_dq_metric ..> trino
-s3_lakehouse ..> trino
+(spark-cluster) -> (DQProcess): 7.1 start job
+(DQProcess) .> t_dq_metric
+t_dq_metric .> trino
+s3_lakehouse .> trino
 @enduml
