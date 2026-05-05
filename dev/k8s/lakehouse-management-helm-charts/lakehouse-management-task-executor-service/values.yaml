@@ -1,0 +1,6 @@
+conf-svc:
+  image:
+    repository: lakehouse
+    tag: "0.3.0"
+    pullPolicy: IfNotPresent
+

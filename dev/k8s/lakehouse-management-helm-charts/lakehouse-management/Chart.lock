@@ -1,0 +1,15 @@
+dependencies:
+- name: lakehouse-management-config-service
+  repository: file://../lakehouse-management-config-service
+  version: 0.1.0
+- name: lakehouse-management-scheduler-service
+  repository: file://../lakehouse-management-scheduler-service
+  version: 0.1.0
+- name: lakehouse-management-state-service
+  repository: file://../lakehouse-management-state-service
+  version: 0.1.0
+- name: lakehouse-management-task-executor-service
+  repository: file://../lakehouse-management-task-executor-service
+  version: 0.1.0
+digest: sha256:21453f527fc0ff619706ca8dbcec0ea343ca0859c4ebc285aa66d9d4940e123f
+generated: "2026-05-05T17:23:14.614126894+03:00"

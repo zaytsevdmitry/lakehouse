@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: my-spring-app-sa
+  namespace: lakehouse-ns # Пространство, где крутится ваше Spring-приложение
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: spark-submitter-role
+  namespace: spark-apps # Даем права именно в пространстве для Spark-задач
+rules:
+  - apiGroups: ["sparkoperator.k8s.io"]
+    resources: ["sparkapplications"]
+    verbs: ["create", "get", "list", "watch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: spark-submitter-binding
+  namespace: spark-apps
+subjects:
+  - kind: ServiceAccount
+    name: my-spring-app-sa
+    namespace: default
+roleRef:
+  kind: Role
+  name: spark-submitter-role
+  apiGroup: rbac.authorization.k8s.io

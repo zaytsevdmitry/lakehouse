@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: lakehouse-management-config-service
+spec:
+  type: NodePort # Делаем сервис доступным извне через порт
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: lakehouse-management-config-service
+    app.kubernetes.io/instance: {{ .Release.Name }}

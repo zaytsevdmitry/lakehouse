@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db-dev
+  template:
+    metadata:
+      labels:
+        app: db-dev
+    spec:
+      containers:
+        - name: db-dev
+          image: "{{ .Values.dbDev.image.repository }}:{{ .Values.dbDev.image.tag }}"
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: {{ .Values.dbDev.env.POSTGRES_USER | quote }}
+            - name: POSTGRES_PASSWORD
+              value: {{ .Values.dbDev.env.POSTGRES_PASSWORD | quote }}
+            - name: POSTGRES_DB
+              value: {{ .Values.dbDev.env.POSTGRES_DB | quote }}
+            # Важно для Postgres: указываем путь к данным внутри смонтированной папки
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            # Монтируем диск для данных
+            - mountPath: /var/lib/postgresql/data
+              name: db-data
+            # Оставляем shared memory из прошлого шага
+            - mountPath: /dev/shm
+              name: dshm
+      volumes:
+        - name: db-data
+          persistentVolumeClaim:
+            claimName: db-dev-data
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 128Mi

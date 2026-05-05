@@ -12,6 +12,7 @@
         <module name="lakehouse-spark-rest-client" />
         <module name="lakehouse-common" />
         <module name="lakehouse-state-svc" />
+        <module name="lakehouse-dataSetState-svc" />
         <module name="lakehouse-task-executor-spark-api" />
         <module name="lakehouse-config-svc" />
         <module name="lakehouse-scheduler-rest-client" />
@@ -23,13 +24,17 @@
         <module name="lakehouse-config-rest-client" />
         <module name="lakehouse-cli" />
         <module name="lakehouse-task-executor-spark-dq-app" />
+        <module name="lakehouse-dataSetState-rest-client" />
         <module name="lakehouse-task-executor-api" />
         <module name="lakehouse-task-executor-rest-client" />
         <module name="lakehouse-validators" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel target="17">
-      <module name="lakehouse-task-spark-dq" target="17" />
+    <bytecodeTargetLevel>
+      <module name="lakehouse-dataSetState-rest-client" target="17" />
+      <module name="lakehouse-dataSetState-svc" target="17" />
+      <module name="lakehouse-jinjava-cusom" target="17" />
+      <module name="lakehouse-task-coordinator-svc" target="17" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
@@ -40,19 +45,22 @@
       <module name="lakehouse-common-test" options="-parameters" />
       <module name="lakehouse-config-rest-client" options="-parameters" />
       <module name="lakehouse-config-svc" options="-parameters" />
+      <module name="lakehouse-dataSetState-rest-client" options="-parameters" />
+      <module name="lakehouse-dataSetState-svc" options="-parameters" />
       <module name="lakehouse-jinjava" options="-parameters" />
+      <module name="lakehouse-jinjava-cusom" options="-parameters" />
       <module name="lakehouse-scheduler-rest-client" options="-parameters" />
       <module name="lakehouse-scheduler-svc" options="-parameters" />
       <module name="lakehouse-spark-rest-client" options="-parameters" />
       <module name="lakehouse-state-rest-client" options="-parameters" />
       <module name="lakehouse-state-svc" options="-parameters" />
+      <module name="lakehouse-task-coordinator-svc" options="-parameters" />
       <module name="lakehouse-task-executor-api" options="-parameters" />
       <module name="lakehouse-task-executor-rest-client" options="-parameters" />
       <module name="lakehouse-task-executor-spark-api" options="-parameters" />
       <module name="lakehouse-task-executor-spark-dataset-app" options="-parameters" />
       <module name="lakehouse-task-executor-spark-dq-app" options="-parameters" />
       <module name="lakehouse-task-executor-svc" options="-parameters" />
-      <module name="lakehouse-task-spark-dq" options="-parameters" />
       <module name="lakehouse-ui-svc" options="-parameters" />
       <module name="lakehouse-validators" options="-parameters" />
     </option>

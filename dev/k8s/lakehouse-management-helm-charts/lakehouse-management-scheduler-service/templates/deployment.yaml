@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lakehouse-management-scheduler-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: lakehouse-management-scheduler-service
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: lakehouse-management-scheduler-service
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      # --- check---
+      initContainers:
+        - name: wait-for-db
+          image: postgres:latest
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Начинаем опрос готовности PostgreSQL..."
+              # Скрипт не упадет, даже если DNS имя db-dev еще не создалось на старте
+              until pg_isready -h db-dev -p 5432 -U postgresUser || [ $? -eq 2 ]; do
+                echo "PostgreSQL на db-dev:5432 ещё недоступен. Ждём 3 секунды..."
+                sleep 3
+              done
+              echo "Ура! База данных полностью готова к приёму соединений!"
+              echo "Даем 5 секунд форы для стабилизации..."
+              sleep 5
+
+      containers:
+        - name: scheduler-svc
+          image: "lakehouse:0.3.0"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8081
+              protocol: TCP
+          command: ["bash", "-c"]
+          args:
+            - "java
+            -Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=SchedulerSVC 
+            -Dlakehouse.scheduler.schedule.task.kafka.producer.properties.bootstrap.servers=broker:9092 
+            -Dlakehouse.scheduler.config.schedule.kafka.consumer.properties.bootstrap.servers=broker:9092 
+            -Dlakehouse.scheduler.registration.delay-ms=5000 
+            -Dlakehouse.scheduler.run.delay-ms=5000 
+            -Dlakehouse.scheduler.resolvedeps.delay-ms=5000 
+            -Dlakehouse.client.rest.config.server.url=http://lakehouse-management-config-service:8080 
+            -jar /opt/lakehouse-scheduler-svc-0.3.0-jar-with-dependencies.jar"
