@@ -13,7 +13,7 @@
     "spark.executor.extraClassPath" : "/opt/drivers/postgresql-42.7.8.jar:/opt/drivers/iceberg-spark-runtime-3.5_2.12-1.9.2.jar:/opt/drivers/hadoop-aws-3.3.4.jar:/opt/drivers/aws-java-sdk-bundle-1.12.262.jar:/opt/drivers/wildfly-openssl-1.0.7.Final.jar",
     "spark.driver.extraClassPath" : "/opt/drivers/postgresql-42.7.8.jar:/opt/drivers/iceberg-spark-runtime-3.5_2.12-1.9.2.jar:/opt/drivers/hadoop-aws-3.3.4.jar:/opt/drivers/aws-java-sdk-bundle-1.12.262.jar:/opt/drivers/wildfly-openssl-1.0.7.Final.jar",
     "lakehouse.taskexecutor.body.config.dq.kafka.producer.testSet.status.topic" : "metric_test_set_status",
-    "deploy.appResource" : "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dq-app-0.3.0-jar-with-dependencies.jar",
+    "deploy.appResource" : "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dq-app-0.4.0-jar-with-dependencies.jar",
     "protocol" : "http",
     "lakehouse.taskexecutor.body.config.dq.kafka.producer.metric.status.topic" : "metric_status",
     "lakehouse.taskexecutor.body.config.dq.kafka.producer.properties.bootstrap.servers" : "broker:9092",

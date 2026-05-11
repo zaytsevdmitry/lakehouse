@@ -42,7 +42,7 @@ RUN wget -nv https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip && \
 
 
 LABEL type="lakehouse=spark" \
-      version="lakehouse-0.3.0_spark-3.5.8" \
+      version="lakehouse-0.4.0_spark-3.5.8" \
       features="spark, aws-s3a, postgres-jdbc, aws-cli"
 
 RUN apt-get update && \
@@ -50,8 +50,8 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p ${APP_HOME}
-ADD lakehouse-task-executor-spark-dataset-app-0.3.0-jar-with-dependencies.jar ${APP_HOME}/
-ADD lakehouse-task-executor-spark-dq-app-0.3.0-jar-with-dependencies.jar ${APP_HOME}/
+ADD lakehouse-task-executor-spark-dataset-app-0.4.0-jar-with-dependencies.jar ${APP_HOME}/
+ADD lakehouse-task-executor-spark-dq-app-0.4.0-jar-with-dependencies.jar ${APP_HOME}/
 RUN userdel -r ubuntu  && \
     groupadd -r spark  && \
     useradd -r -g spark --uid=1000 -d /home/spark -m spark && \

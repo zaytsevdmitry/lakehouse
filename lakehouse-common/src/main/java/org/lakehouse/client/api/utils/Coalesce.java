@@ -24,7 +24,7 @@ public class Coalesce {
      * @param currentMap for override
      * @param newMap overriding map
      * @return map with override values if new values is not null
-     * @since 0.3.0
+     * @since 0.4.0
      *  */
     public static Map<String, String> applyMergeNonNullValuesMap(Map<String, String> currentMap, Map<String, String> newMap) {
         Map<String, String> result = new HashMap<>();

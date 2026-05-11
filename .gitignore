@@ -10,7 +10,12 @@ demodebug
 
 
 /dev/log.log
-/dev/docker/hms/opt/
-/dev/docker/hms/Dockerfile
-/dev/docker/hms/hive-standalone-metastore-3.1.3-bin.tar.gz
-/dev/docker/hms/hadoop-3.3.4.tar.gz
+/dev/compose/docker/hms/opt/
+/dev/compose/docker/hms/Dockerfile
+/dev/compose/docker/hms/hive-standalone-metastore-3.1.3-bin.tar.gz
+/dev/compose/docker/hms/hadoop-3.3.4.tar.gz
+docker/lakehouse-spark-aws
+lakehouse-task-executor-spark-dataset-app/dependency-reduced-pom.xml
+lakehouse-task-executor-spark-dq-app/dependency-reduced-pom.xml
+
+/dev/k8s/lakehouse-management-helm-charts/lakehouse-management/charts/

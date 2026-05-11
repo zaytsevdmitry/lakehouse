@@ -1,0 +1,130 @@
+{
+  "keyName": "spark-dq",
+  "description": "Spark job scenario",
+  "tasks": [
+    {
+      "name": "check",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "dependencyCheckStateTaskProcessor",
+      "importance": "critical",
+      "description": "Dependency check"
+    },
+    {
+      "name": "begin",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "lockedStateTaskProcessor",
+      "importance": "critical",
+      "description": "Made interval status RUNNING"
+    },
+    {
+      "name": "prepare",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "sparkK8sOperatorTaskProcessor",
+      "taskProcessorBody": "createTableSQLProcessorBody",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "taskProcessorArgs": {
+        "k8s.spark-operator.spec.sparkConfui.enabled": "true",
+        "k8s.spark-operator.spec.sparkConfexecutor.memory": "1g",
+        "k8s.spark-operator.spec.sparkConfdriver.memory": "1g",
+        "protocol": "http",
+        "lakehouse.client.rest.config.server.url": "http://lakehouse-management-config-service:8080",
+        "deploy.mainClass": "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
+        "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.4.0-jar-with-dependencies.jar",
+        "k8s.spark-operator.spec.sparkConfdriver.extraClassPath": "/opt/drivers/postgresql-42.7.8.jar:/opt/drivers/iceberg-spark-runtime-3.5_2.12-1.9.2.jar:/opt/drivers/hadoop-aws-3.3.4.jar:/opt/drivers/aws-java-sdk-bundle-1.12.262.jar:/opt/drivers/wildfly-openssl-1.0.7.Final.jar",
+        "k8s.spark-operator.spec.sparkConfexecutor.extraClassPath": "/opt/drivers/postgresql-42.7.8.jar:/opt/drivers/iceberg-spark-runtime-3.5_2.12-1.9.2.jar:/opt/drivers/hadoop-aws-3.3.4.jar:/opt/drivers/aws-java-sdk-bundle-1.12.262.jar:/opt/drivers/wildfly-openssl-1.0.7.Final.jar"
+      }
+    },
+    {
+      "name": "load",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "sparkK8sOperatorTaskProcessor",
+      "taskProcessorBody": "mergeSQLProcessorBody",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "taskProcessorArgs": {
+        "k8s.spark-operator.spec.sparkConfui.enabled": "true",
+        "k8s.spark-operator.spec.sparkConfexecutor.memory": "1g",
+        "k8s.spark-operator.spec.sparkConfdriver.memory": "1g",
+        "protocol": "http",
+        "lakehouse.client.rest.config.server.url": "http://lakehouse-management-config-service:8080",
+        "deploy.mainClass": "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
+        "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.4.0-jar-with-dependencies.jar"
+      }
+    },
+    {
+      "name": "quality",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "sparkK8sOperatorTaskProcessor",
+      "taskProcessorBody": "sparkTaskProcessorDQBody",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "taskProcessorArgs": {
+        "k8s.spark-operator.spec.sparkConfui.enabled": "true",
+        "k8s.spark-operator.spec.sparkConfexecutor.memory": "1g",
+        "k8s.spark-operator.spec.sparkConfdriver.memory": "1g",
+        "lakehouse.client.rest.config.server.url": "http://lakehouse-management-config-service:8080",
+        "lakehouse.taskexecutor.body.config.dq.kafka.producer.properties.bootstrap.servers" : "broker:9092",
+        "lakehouse.taskexecutor.body.config.dq.kafka.producer.metric.status.topic": "metric_status",
+        "lakehouse.taskexecutor.body.config.dq.kafka.producer.testSet.status.topic": "metric_test_set_status",
+        "lakehouse.taskexecutor.body.config.dq.kafka.producer.metric.value.topic": "metric_value",
+        "protocol": "http",
+        "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dq-app-0.4.0-jar-with-dependencies.jar",
+        "deploy.mainClass": "org.lakehouse.taskexecutor.spark.dq.SparkProcessorApplicationDQ"
+      }
+    },
+    {
+      "name": "compact",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "sparkK8sOperatorTaskProcessor",
+      "taskProcessorBody": "compactTableSQLProcessorBody",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "taskProcessorArgs": {
+        "k8s.spark-operator.spec.sparkConfui.enabled": "true",
+        "k8s.spark-operator.spec.sparkConfexecutor.memory": "1g",
+        "k8s.spark-operator.spec.sparkConfdriver.memory": "1g",
+        "protocol": "http",
+        "lakehouse.client.rest.config.server.url": "http://lakehouse-management-config-service:8080",
+        "deploy.mainClass": "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
+        "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.4.0-jar-with-dependencies.jar"
+      }
+    },
+    {
+      "name": "finally",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "successStateTaskProcessor",
+      "importance": "critical",
+      "description": "DataSet success"
+    }
+  ],
+  "dagEdges": [
+    {
+      "from": "check",
+      "to": "begin"
+    },
+    {
+      "from": "begin",
+      "to": "prepare"
+    },
+    {
+      "from": "prepare",
+      "to": "load"
+    },
+    {
+      "from": "load",
+      "to": "compact"
+    },
+    {
+      "from": "compact",
+      "to": "finally"
+    },
+    {
+      "from": "load",
+      "to": "quality"
+    },    {
+      "from": "quality",
+      "to": "finally"
+    }
+  ]
+}

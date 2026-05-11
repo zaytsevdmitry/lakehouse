@@ -1,0 +1,52 @@
+{
+  "keyName": "client_processing",
+  "nameSpaceKeyName": "DEMO",
+  "dataSourceKeyName": "processingdb",
+  "databaseSchemaName": "proc",
+  "tableName": "client",
+  "scripts": [
+    {
+      "key": "dataset-sql-model.client_processing.sql"
+    }
+  ],
+  "sources": {},
+  "columnSchema": [
+    {
+      "name": "id",
+      "description": "Client id",
+      "dataType": "integer",
+      "nullable": false
+    },
+    {
+      "name": "name",
+      "description": "Client name",
+      "dataType": "varchar(255)",
+      "nullable": false
+    },
+    {
+      "name": "reg_date_time",
+      "description": "Client registration",
+      "dataType": "timestamp",
+      "nullable": false
+    }
+  ],
+  "constraints":
+    {
+      "client_processing_pk": {
+        "type": "primary",
+        "columns": "id",
+        "enabled": true,
+        "constraintLevelCheck": "construct"
+      },
+      "client_processing_uk": {
+        "type": "unique",
+        "columns": "name",
+        "enabled": true,
+        "constraintLevelCheck": "construct"
+      }
+    },
+  "properties": {
+    "data-end-point": "proc.client"
+  },
+  "description": "remote dataset with clients"
+}

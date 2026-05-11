@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lakehouse-management-config-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: lakehouse-management-config-service
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: lakehouse-management-config-service
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: conf-svc
+          image: "lakehouse:0.4.0"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          command: ["bash", "-c"]
+          args:
+            - "java -Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=ConfigSVC -Dlakehouse.config.schedule.send.kafka.producer.properties.bootstrap.servers=broker:9092 -jar /opt/lakehouse-config-svc-0.4.0-jar-with-dependencies.jar"
