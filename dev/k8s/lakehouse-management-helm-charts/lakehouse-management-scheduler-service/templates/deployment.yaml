@@ -34,7 +34,7 @@ spec:
 
       containers:
         - name: scheduler-svc
-          image: "lakehouse:0.3.0"
+          image: "lakehouse:0.4.0"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8081
@@ -49,4 +49,4 @@ spec:
             -Dlakehouse.scheduler.run.delay-ms=5000 
             -Dlakehouse.scheduler.resolvedeps.delay-ms=5000 
             -Dlakehouse.client.rest.config.server.url=http://lakehouse-management-config-service:8080 
-            -jar /opt/lakehouse-scheduler-svc-0.3.0-jar-with-dependencies.jar"
+            -jar /opt/lakehouse-scheduler-svc-0.4.0-jar-with-dependencies.jar"

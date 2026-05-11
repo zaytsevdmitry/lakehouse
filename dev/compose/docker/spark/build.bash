@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 source ../bashfunctions.bash
 set -e
-export LH_VERSION=0.3.0
+export LH_VERSION=0.4.0
 
 export SCALA_VERSION=2.12
 export SPARK_MAJOR_VERSION=3.5
@@ -48,12 +48,12 @@ downloadIfNotExists wildfly-openssl-1.0.7.Final.jar \
                     https://repo1.maven.org/maven2/org/wildfly/openssl/wildfly-openssl/1.0.7.Final \
                     "$DRIVERS_DIR" \
                     "http"
-downloadIfNotExists lakehouse-task-executor-spark-dataset-app-0.3.0-jar-with-dependencies.jar \
+downloadIfNotExists lakehouse-task-executor-spark-dataset-app-0.4.0-jar-with-dependencies.jar \
                     ../../../lakehouse-task-executor-spark-dataset-app/target/ \
                     "$APP_DIR" \
                     "local"
 
-downloadIfNotExists lakehouse-task-executor-spark-dq-app-0.3.0-jar-with-dependencies.jar \
+downloadIfNotExists lakehouse-task-executor-spark-dq-app-0.4.0-jar-with-dependencies.jar \
                     ../../../lakehouse-task-executor-spark-dq-app/target/ \
                     "$APP_DIR" \
                     "local"

@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: task-executor-svc
-          image: "lakehouse:0.3.0"
+          image: "lakehouse:0.4.0"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8090
@@ -32,4 +32,4 @@ spec:
             -Dlakehouse.task-executor.service.id=default
             -Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1
             -Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=broker:9092
-            -jar /opt/lakehouse-task-executor-svc-0.3.0-jar-with-dependencies.jar"
+            -jar /opt/lakehouse-task-executor-svc-0.4.0-jar-with-dependencies.jar"

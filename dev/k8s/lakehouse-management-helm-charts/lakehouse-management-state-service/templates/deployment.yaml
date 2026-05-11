@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: state-svc
-          image: "lakehouse:0.3.0"
+          image: "lakehouse:0.4.0"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8082
@@ -25,4 +25,4 @@ spec:
           args:
             - "java
             -Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=StateSVC
-            -jar /opt/lakehouse-state-svc-0.3.0-jar-with-dependencies.jar"
+            -jar /opt/lakehouse-state-svc-0.4.0-jar-with-dependencies.jar"

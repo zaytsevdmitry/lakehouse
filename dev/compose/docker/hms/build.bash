@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 source ../bashfunctions.bash
 set -e
-export LH_VERSION=0.3.0
+export LH_VERSION=0.4.0
 export HADOOP_VERSION=3.3.4
 export METASTORE_VERSION=3.1.3
 export PSQL_CONN_VERSION=42.3.1

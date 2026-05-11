@@ -16,11 +16,11 @@ spec:
     spec:
       containers:
         - name: conf-svc
-          image: "lakehouse:0.3.0"
+          image: "lakehouse:0.4.0"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
               protocol: TCP
           command: ["bash", "-c"]
           args:
-            - "java -Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=ConfigSVC -Dlakehouse.config.schedule.send.kafka.producer.properties.bootstrap.servers=broker:9092 -jar /opt/lakehouse-config-svc-0.3.0-jar-with-dependencies.jar"
+            - "java -Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=ConfigSVC -Dlakehouse.config.schedule.send.kafka.producer.properties.bootstrap.servers=broker:9092 -jar /opt/lakehouse-config-svc-0.4.0-jar-with-dependencies.jar"

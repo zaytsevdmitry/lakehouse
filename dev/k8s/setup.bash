@@ -3,7 +3,13 @@ minikube start --cpus 4 --memory 8192 --registry-mirror=https
 
 #helm uninstall lakehouse-release -n lakehouse-management
 helm dependency update ./lakehouse-management-helm-charts/lakehouse-management
+minikube image load lakehouse:0.4.0
+minikube image load postgres:latest
+minikube image load apache/kafka:latest
+
 helm install lakehouse-release ./lakehouse-management-helm-charts/lakehouse-management --create-namespace  --namespace lakehouse-management
+
+
 kubectl port-forward svc/lakehouse-management-config-service 8080:8080 -n lakehouse-management
 kubectl port-forward svc/lakehouse-management-state-service  8081:8081 -n lakehouse-management
 kubectl port-forward svc/db-dev 5432:5432 -n lakehouse-management
@@ -19,13 +25,10 @@ kubectl exec -ti openbao-0 -n openbao -- bao auth enable kubernetes
 
 kubectl exec -ti openbao-0 -n openbao -- bao write auth/kubernetes/config \
     kubernetes_host="https://default.svc"
-minikube image load lakehouse:0.3.0
+minikube image load lakehouse:0.4.0
 minikube image pull postgres:latest
 minikube image pull apache/kafka:latest
 
-minikube image load lakehouse:0.3.0
-minikube image load postgres:latest
-minikube image load apache/kafka:latest
 Hang tight while we grab the latest from your chart repositories...
 ...Successfully got an update from the "openbao" chart repository
 Update Complete. ⎈Happy Helming!⎈

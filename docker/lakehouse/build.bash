@@ -1,7 +1,7 @@
   #!/usr/bin/env bash
 set -e
 set -v
-export LH_VERSION=0.3.0
+export LH_VERSION=0.4.0
 pwd
 #mvn clean package
 mkdir -p ./opt
