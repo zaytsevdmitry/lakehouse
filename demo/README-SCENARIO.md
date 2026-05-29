@@ -8,7 +8,7 @@
 - объединяющая источники детальная трансформация
 - две разные агрегации на основе детальной трансформации
 - процессы запускаемые по расписанию между ними
-  ![datasetdeps.png](uml/datasetdeps.png)
+  ![datasetdeps.png](compose/uml/datasetdeps.png)
 
 Наполнение данными источников и трансформаций производится разными расписаниями по какой-то, нужной кому-то логике. При
 подготовке трансформаций отдельным расписанием будет сделана помесячная загрузка двух первых месяцев 2025 года. Далее
@@ -20,62 +20,62 @@
 
 Конфигурация содержит описания
 
-- двух мест хранения данных бд Postgres и файловая система [datasources](conf/datasources).
-- пяти датасетов [datasets](conf/datasets) и скриптов описывающих трансформацию
-  данных [dataset-sql-model](conf/sql-scripts/dataset-sql-model)
-- трех шаблонов сценариев [scenario-act-templates](conf/scenario-act-templates):
-    - [spark](conf/scenario-act-templates/spark.json) применяется в
-      расписаниях [regular](conf/schedules/regular.json) и [initial](conf/schedules/initial.json). Обслуживает логику
+- двух мест хранения данных бд Postgres и файловая система [datasources](compose/conf/datasources).
+- пяти датасетов [datasets](compose/conf/datasets) и скриптов описывающих трансформацию
+  данных [dataset-sql-model](compose/conf/sql-scripts/dataset-sql-model)
+- трех шаблонов сценариев [scenario-act-templates](compose/conf/scenario-act-templates):
+    - [spark](compose/conf/scenario-act-templates/spark.json) применяется в
+      расписаниях [regular](compose/conf/schedules/regular.json) и [initial](compose/conf/schedules/initial.json). Обслуживает логику
       Spark задач
-    - [spark-dq](conf/scenario-act-templates/spark-dq.json) применяется в
-      расписаниях [regular](conf/schedules/regular.json) и [initial](conf/schedules/initial.json). Обслуживает логику
+    - [spark-dq](compose/conf/scenario-act-templates/spark-dq.json) применяется в
+      расписаниях [regular](compose/conf/schedules/regular.json) и [initial](compose/conf/schedules/initial.json). Обслуживает логику
       Spark задач c оснащенных шагом DataQuality
-    - [database](conf/scenario-act-templates/database.json) применяется в
-      расписаниях [generateSource](conf/schedules/generateSource.json)
-      и [generateSourceDict](conf/schedules/generateSourceDict.json). Обслуживает логику jdbc задач
+    - [database](compose/conf/scenario-act-templates/database.json) применяется в
+      расписаниях [generateSource](compose/conf/schedules/generateSource.json)
+      и [generateSourceDict](compose/conf/schedules/generateSourceDict.json). Обслуживает логику jdbc задач
 - расписаний, сценарий которого применяет шаблоны последовательностей задач. :
-    - [generateSource](conf/schedules/generateSource.json) формирует данные в таблице платежных
-      транзакций [transaction_processing](conf/datasets/transaction_processing.json) в
-      postgres [processingdb](conf/datasources/processingdb.json)
-    - [generateSourceDict](conf/schedules/generateSourceDict.json) просто перезаписывает справочник
-      клиентов [client_processing](conf/datasets/client_processing.json) в
+    - [generateSource](compose/conf/schedules/generateSource.json) формирует данные в таблице платежных
+      транзакций [transaction_processing](compose/conf/datasets/transaction_processing.json) в
+      postgres [processingdb](compose/conf/datasources/processingdb.json)
+    - [generateSourceDict](compose/conf/schedules/generateSourceDict.json) просто перезаписывает справочник
+      клиентов [client_processing](compose/conf/datasets/client_processing.json) в
       postgres [processingdb](conf/datastores/processingdb.json)
-    - [regular](conf/schedules/regular.json) имитирует ежедневное соединение двух
+    - [regular](compose/conf/schedules/regular.json) имитирует ежедневное соединение двух
       таблиц [transaction_dds.sql](conf/dataset-sql-model/transaction_dds.sql) из расписаний выше в одну на
-      spark [transaction_dds](conf/datasets/transaction_dds.json) сохраняя на s3/minio
+      spark [transaction_dds](compose/conf/datasets/transaction_dds.json) сохраняя на s3/minio
       диск [lakehousestorage](conf/datastores/lakehousestorage.json)
         - transaction_dds послужит
           источником [aggregation_pay_per_client_total_mart.sql](conf/dataset-sql-model/aggregation_pay_per_client_total_mart.sql)
           для
-          витрины [aggregation_pay_per_client_total_mart.json](conf/datasets/aggregation_pay_per_client_total_mart.json)
+          витрины [aggregation_pay_per_client_total_mart.json](compose/conf/datasets/aggregation_pay_per_client_total_mart.json)
           которая будет сохранена в [lakehousestorage](conf/datastores/lakehousestorage.json)
         - transaction_dds послужит
           источником [aggregation_pay_per_client_daily_mart.sql](conf/dataset-sql-model/aggregation_pay_per_client_daily_mart.sql)
           для
-          витрины [aggregation_pay_per_client_daily_mart.json](conf/datasets/aggregation_pay_per_client_daily_mart.json)
+          витрины [aggregation_pay_per_client_daily_mart.json](compose/conf/datasets/aggregation_pay_per_client_daily_mart.json)
           которая будет сохранена в [lakehousestorage](conf/datastores/lakehousestorage.json)
-    - [initial](conf/schedules/initial.json) ежемесячная версия [regular](conf/schedules/regular.json). Будет
+    - [initial](compose/conf/schedules/initial.json) ежемесячная версия [regular](compose/conf/schedules/regular.json). Будет
       заблокирована сбором generateSource и generateSourceDict до тех пор, пока они не будут собраны за первый месяц
 - проекта (пространства имен, он один [demo](conf/projects/demo.json))
-- двух групп исполнителей [taskexecutionservicegroups](conf/taskexecutionservicegroups)
+- двух групп исполнителей [taskexecutionservicegroups](compose/conf/taskexecutionservicegroups)
     - [state-exe](conf/taskexecutionservicegroups/state-exe.json) для работы с задачами "состояний" 1 экземпляр
-    - [database](conf/taskexecutionservicegroups/database.json) обрабатывает задачи с БД  1 экземпляр
-    - [spark-exec[1|2]](conf/taskexecutionservicegroups/spark-cluster.json) обрабатывает spark задачи  2 экземпляра
+    - [database](compose/conf/taskexecutionservicegroups/database.json) обрабатывает задачи с БД  1 экземпляр
+    - [spark-exec[1|2]](compose/conf/taskexecutionservicegroups/spark-cluster.json) обрабатывает spark задачи  2 экземпляра
 
 > Датасеты transaction_processing и client_processing имеют отличительную особенность - тк они являются источником, в их
 > сценариях расписаний [source.json](conf/scenario-act-templates/source.json)  нет шага проверки зависимостей
 
 ### Источники собираются каждый день, трансформации тоже каждый день
 
-![regular.png](uml/regular.png)
+![regular.png](compose/uml/regular.png)
 
 ### Источники собираются каждый день, трансформации каждый месяц
 
-![initial.png](uml/initial.png)
+![initial.png](compose/uml/initial.png)
 
 ### Диаграмма относительно расписаний
 
-![ganttSchedule.png](uml/ganttSchedule.png)
+![ganttSchedule.png](compose/uml/ganttSchedule.png)
 
 generateSource и generateSourceDict отрабатывают каждый день
 
@@ -90,22 +90,22 @@ regular тоже начнет работать в феврале, но он су
 Расписания запускают задачи, которые просматривают данные "назад"
 так как запуск идет задним числом
 
-![ganttData.png](uml/ganttData.png)
+![ganttData.png](compose/uml/ganttData.png)
 
 ### Диаграмма относительно данных
 
-![ganttDataSets.png](uml/ganttDataSets.png)
+![ganttDataSets.png](compose/uml/ganttDataSets.png)
 
 Несмотря на путаницу в расписаниях, мы получаем строго полный год данных на всех датасетах
 
 Пример. Отработало расписание Initial. Состояние до начала работы regular
-![beforeRegular.png](img/beforeRegular.png)
+![beforeRegular.png](compose/img/beforeRegular.png)
 
 До того как Initial смог взять блокировку датасета - уже успели отработать 6 запусков за февраль по одному дню.
 Далее отработала задача Initial, которая перекрывала своим месячным интервалом несколько дней и "слила" все записи
 февраля в одну.
 
-![afterRegular.png](img/afterRegular.png)
+![afterRegular.png](compose/img/afterRegular.png)
 
 Отработал regular. Он "разбил" 28 дневную успешную запись статуса интервала на:
 
@@ -113,7 +113,7 @@ regular тоже начнет работать в феврале, но он су
 - "текущий" 1 день в заблокированном статусе
 - "после" 21 день
 
-![nextRegular.png](img/nextRegular.png)
+![nextRegular.png](compose/img/nextRegular.png)
 
 Каждая последующая запись будет "разрезать" период на отдельные дни
 
@@ -133,4 +133,4 @@ regular тоже начнет работать в феврале, но он су
 
 ## Поток управления 
 
-![flow.png](uml/flow.png)
+![flow.png](compose/uml/flow.png)

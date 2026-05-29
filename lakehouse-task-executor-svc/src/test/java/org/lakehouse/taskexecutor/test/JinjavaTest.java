@@ -53,7 +53,7 @@ public class JinjavaTest {
 
     @Autowired
     ConfigRestClientApi configRestClientApi;
-        @Test
+    @Test
     @Order(1)
     public void testJinjaAddDay() {
         OffsetDateTime targetDateTime = OffsetDateTime.now();
@@ -450,4 +450,5 @@ public class JinjavaTest {
 
         assert(expected.equals(result));
     }
+
 }

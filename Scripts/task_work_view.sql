@@ -4,10 +4,7 @@ select si.id
 , ssai."name"                     scenario         -- part of chedule, is an reference for dataset, schedule and tasks
 , sti."name"                      task             -- task
 , ssai.conf_data_set_key_name                     -- dataset
-, si.status                       schedule_status
-, ssai.status  	                   scenario_status
-, sti.status                      task_status
-, sti.re_try_count
+, si.status ||'-> '|| ssai.status ||'-> '|| sti.status ||' [' || sti.re_try_num || ']' status         --schedule_status scenario_status task_status re_try_count
 , sti.causes
 , stiel.last_heart_beat_date_time
 , stiel.id                        lock_id

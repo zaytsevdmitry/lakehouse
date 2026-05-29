@@ -30,7 +30,7 @@ public class DataManipulators {
 
         new CatalogActivatorService(
                 sparkSession)
-                .activate(List.of(dataSourceDTO));
+                .activate(sourceConfDTO);
         return manipulatorFactory.buildDataSourceManipulator(driverDTO, dataSourceDTO, dataSetDTO,jinJavaUtils,configRestClientApi);
     }
 }

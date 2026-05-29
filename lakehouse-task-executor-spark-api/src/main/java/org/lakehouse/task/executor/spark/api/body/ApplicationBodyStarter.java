@@ -2,9 +2,13 @@ package org.lakehouse.task.executor.spark.api.body;
 
 import org.apache.spark.sql.SparkSession;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
+import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.client.api.utils.ObjectMapping;
+import org.lakehouse.client.api.utils.conf.SparkConfUtil;
+import org.lakehouse.client.rest.config.ConfigRestClientApi;
+import org.lakehouse.task.executor.spark.api.service.CatalogActivatorService;
 import org.lakehouse.taskexecutor.api.processor.body.ProcessorBody;
 import org.lakehouse.validator.config.ValidationResult;
 import org.lakehouse.validator.task.ScheduledTaskDTOValidator;
@@ -15,6 +19,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ApplicationBodyStarter {
@@ -55,11 +60,9 @@ public class ApplicationBodyStarter {
                 while (!sparkSession.sparkContext().isStopped()) {
                     logger.info("Awaiting spark session.");
                     Thread.sleep(3000L); //todo made app parameter
-
                 }
                 logger.info("Stopping Spring context");
                 context.stop();
-            //    Thread.sleep(10000L); //todo made app parameter
             }
             logger.info("Exit application with code {}",exitcode);
             System.exit(exitcode);
@@ -89,17 +92,46 @@ public class ApplicationBodyStarter {
             }
 
             ConfigurableApplicationContext applicationContext = SpringApplication.run(aClass, args);
+            logger.info("Try to activate catalogs");
+            //activateCatalogs(applicationContext,scheduledTaskDTO);
+/*
+            Map<String,String> sparkparams = (Map<String, String>) applicationContext.getBean(SparkSession.class)
+                    .conf()
+                    .getAll();
 
 
+            sparkparams.keySet().forEach(
+                    t ->
+                         logger.info("Spark Catalog Property: {} = {}", t, sparkparams.get(t))
+                    );
+
+ */
             ProcessorBody body = (ProcessorBody) applicationContext.getBean(scheduledTaskDTO.getTaskProcessorBody());
             body.run(scheduledTaskDTO);
             return applicationContext;
         } else {
-            String msg = "No one attribute found. TaskProcessorConfig is null. Exit";
+            String msg = "No one attribute found. Task configuration is null. Exit";
             logger.info(msg);
             throw new TaskConfigurationException(msg);
         }
     }
+/*    private void activateCatalogs(
+            ConfigurableApplicationContext applicationContext,
+            ScheduledTaskDTO scheduledTaskDTO
+    ){
+        CatalogActivatorService catalogActivatorService = applicationContext.getBean(CatalogActivatorService.class);
+        ConfigRestClientApi configRestClientApi = applicationContext.getBean(ConfigRestClientApi.class);
+        SourceConfDTO sourceConfDTO = configRestClientApi
+                .getSourceConfDTO(
+                        scheduledTaskDTO
+                                .getDataSetKeyName());
+        SparkSession sparkSession = applicationContext.getBean(SparkSession.class);
+        SparkConfUtil
+                .startWithSparkCatalog(sourceConfDTO,scheduledTaskDTO)
+                .forEach((k, v) -> sparkSession.conf().set(k,v));
+
+        catalogActivatorService.activate(sourceConfDTO);
+    }*/
     public enum ExitCode {
         TaskConfigurationException(10001),
         TaskFailedException(10002),

@@ -146,7 +146,6 @@ public class ScheduleTaskInstanceService {
         result.setLockId(l.getId());
 
         result.setScheduledTaskEffectiveDTO(scheduleTaskInstanceFactory.mapScheduledTaskToDTO(l.getScheduleTaskInstance()));
-
         result.setServiceId(l.getServiceId());
         if (l.getLastHeartBeatDateTime() != null)
             result.setLastHeartBeatDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(l.getLastHeartBeatDateTime()));
@@ -208,7 +207,6 @@ public class ScheduleTaskInstanceService {
             ScheduleTaskInstance sti = executionLock.getScheduleTaskInstance();
             sti.setStatus(t);
             sti.setEndDateTime(DateTimeUtils.now());
-            sti.setReTryCount(sti.getReTryCount() + 1);
             sti.setCauses(taskInstanceReleaseDTO.getTaskResult().getCauses());
             repository.save(sti);
 
@@ -279,7 +277,7 @@ public class ScheduleTaskInstanceService {
                         .toList());
 
         l.forEach(t -> {
-            t.setReTryCount(t.getReTryCount() + 1);
+            t.setReTryNum(t.getReTryNum() + 1);
             t.setStatus(Status.Task.NEW);
             t.setBeginDateTime(null);
             t.setEndDateTime(null);

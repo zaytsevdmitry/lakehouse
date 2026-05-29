@@ -92,11 +92,19 @@ public class ScheduledTaskDTO extends TaskDTO {
 
     @JsonIgnore
     public String getTaskFullName(){
-        return String.format("%s.%s.%s.%s",
+        return (String.format("%s-%s-%s-%s",
                 getScheduleKeyName(),
                 getScenarioActKeyName(),
                 getName(),
-                getTargetDateTime());
+                getTargetDateTime()
+                        .replace("-","")
+                )//DNS RFC 1123  Kubernetes
+                        .replace(":","")
+                        .replace(" ","-")
+                        .replace("_","-")
+                        .replace("+","-")
+                        .toLowerCase()
+        );
     }
     @JsonIgnore
     public String getLockSource(){

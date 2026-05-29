@@ -1,0 +1,73 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-trino-etc
+data:
+  config.properties: |
+    coordinator=true
+    node-scheduler.include-coordinator=true
+    http-server.http.port=8080
+    discovery.uri=http://localhost:8080
+
+  jvm.config: |
+    -server
+    -XX:InitialRAMPercentage=80
+    -XX:MaxRAMPercentage=80
+    -XX:G1HeapRegionSize=32M
+    -XX:+ExplicitGCInvokesConcurrent
+    -XX:+HeapDumpOnOutOfMemoryError
+    -XX:+ExitOnOutOfMemoryError
+    -XX:-OmitStackTraceInFastThrow
+    -XX:ReservedCodeCacheSize=256M
+    -XX:PerMethodRecompilationCutoff=10000
+    -XX:PerBytecodeRecompilationCutoff=10000
+    -Djdk.attach.allowAttachSelf=true
+    -Djdk.nio.maxCachedBufferSize=2000000
+
+  node.properties: |
+    node.environment=docker
+    node.data-dir=/data/trino
+
+  metric_status.json: |
+    {
+      "tableName": "metric_status",
+      "schemaName": "default",
+      "topicName": "metric_status",
+      "message": {
+        "dataFormat": "json",
+        "fields": [
+          {"name": "metric_id", "mapping": "metricId", "type": "BIGINT"},
+          {"name": "catalog_name", "mapping": "catalogName", "type": "VARCHAR"},
+          {"name": "data_base_schema_name", "mapping": "dataBaseSchemaName", "type": "VARCHAR"},
+          {"name": "table_name", "mapping": "tableName", "type": "VARCHAR"},
+          {"name": "target_date_time", "mapping": "targetDateTime", "type": "TIMESTAMP", "dataFormat": "iso8601"},
+          {"name": "interval_start_date_time", "mapping": "intervalStartDateTime", "type": "TIMESTAMP", "dataFormat": "iso8601"},
+          {"name": "interval_end_date_time", "mapping": "intervalEndDateTime", "type": "TIMESTAMP", "dataFormat": "iso8601"},
+          {"name": "status", "mapping": "status", "type": "VARCHAR"},
+          {"name": "metric_key_name", "mapping": "metricKeyName", "type": "VARCHAR"}
+        ]
+      }
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-trino-catalog
+data:
+  kafka.properties: |
+    connector.name=kafka
+    kafka.nodes=broker:9092
+    kafka.table-names=default.metric_status
+    kafka.table-description-dir=/etc/trino/kafka
+
+  lakehouse.properties: |
+    connector.name=iceberg
+    hive.metastore.uri=thrift://hive-metastore:9083
+    fs.native-s3.enabled=true
+    s3.region=us-east-1
+    s3.endpoint=http://minio:9000
+    s3.path-style-access=true
+    s3.aws-access-key=spark_user
+    s3.aws-secret-key=spark_pwd
+    hive.metastore-cache-ttl=0s
+    hive.metastore-refresh-interval=5s

@@ -3,6 +3,7 @@ package org.lakehouse.client.api.utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,6 +13,10 @@ import java.util.Map;
 
 public class ObjectMapping {
     private static final ObjectMapper objectMapper = new ObjectMapperTS();
+
+    static {
+        objectMapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
+    }
 
     public static <T> T stringToObject(String string, Class<T> clazz) throws IOException {
         return objectMapper.readValue(
@@ -23,6 +28,11 @@ public class ObjectMapping {
         return objectMapper.readValue(
                 new String(data, StandardCharsets.UTF_8),
                 clazz);
+    }
+
+
+    public static <T> T mapToObject(Map<?,?> map, Class<T> clazz) throws IOException {
+        return objectMapper.convertValue(map, clazz);
     }
 
     public static <T> T fileToObject(File file, Class<T> clazz) throws IOException {
@@ -56,5 +66,7 @@ public class ObjectMapping {
                 .readValue(asJsonString(obj), new TypeReference<>() {
                 });
     }
+
+
 
 }

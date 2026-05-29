@@ -19,3 +19,7 @@ lakehouse-task-executor-spark-dataset-app/dependency-reduced-pom.xml
 lakehouse-task-executor-spark-dq-app/dependency-reduced-pom.xml
 
 /dev/k8s/lakehouse-management-helm-charts/lakehouse-management/charts/
+/demo/k8s/lakehouse-management-helm-charts/lakehouse-management/charts/
+/dev/k8s/lakehouse-management-helm-charts/lakehouse-management/Chart.lock
+/demo/k8s/lakehouse-management-helm-charts/lakehouse-management/Chart.lock
+/demo/compose/storages/minio_storage/*

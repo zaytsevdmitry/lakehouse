@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @EnableKubernetesMockClient(crud = true)
 class K8sSparkOperatorClientUtilsTest {
 
+    // Поле заполняется автоматически благодаря аннотации @EnableKubernetesMockClient
     KubernetesClient client;
     K8sSparkOperatorClientUtils utils;
 
@@ -32,7 +33,7 @@ class K8sSparkOperatorClientUtilsTest {
     void setUp() {
         utils = new K8sSparkOperatorClientUtils();
 
-        // Регистрация CRD в моке (чертеж)
+        // Регистрируем схему CRD в Mock-сервере один раз для всех тестов
         client.apiextensions().v1().customResourceDefinitions().load(new ByteArrayInputStream("""
                 {
                   "apiVersion": "apiextensions.k8s.io/v1",
@@ -51,8 +52,30 @@ class K8sSparkOperatorClientUtilsTest {
     }
 
     @Test
-    @DisplayName("Should finish even if status is FAILED")
-    void shouldHandleFailedStatus() {
+    @DisplayName("Should execute successfully when task goes through RUNNING to COMPLETED")
+    void shouldSubmitSuccessfully() {
+        String jobName = "success-job";
+        String jsonSpec = String.format("""
+                {
+                  "apiVersion": "sparkoperator.k8s.io/v1beta2",
+                  "kind": "SparkApplication",
+                  "metadata": { "name": "%s", "namespace": "default" },
+                  "spec": { "type": "Java" }
+                }""", jobName);
+
+        // Имитируем реальный жизненный цикл: появление -> RUNNING через 200мс -> COMPLETED через 500мс
+        simulateOperatorLifecycle(jobName, "COMPLETED", 200, 500);
+
+        // Метод должен успешно завершиться
+        assertDoesNotThrow(() -> utils.submit(client, jsonSpec));
+
+        // Проверяем авто-очистку: успешная задача должна быть удалена из etcd
+        assertNull(client.genericKubernetesResources(CONTEXT).inNamespace("default").withName(jobName).get());
+    }
+
+    @Test
+    @DisplayName("Should throw TaskFailedException when Spark job fails")
+    void shouldThrowExceptionWhenStatusIsFailed() {
         String jobName = "failed-job";
         String jsonSpec = String.format("""
                 {
@@ -62,85 +85,59 @@ class K8sSparkOperatorClientUtilsTest {
                   "spec": { "type": "Java" }
                 }""", jobName);
 
-        simulateOperator(jobName, "FAILED", 300);
+        // Имитируем падение задачи: появление -> RUNNING через 100мс -> FAILED через 300мс
+        simulateOperatorLifecycle(jobName, "FAILED", 100, 300);
 
-        assertDoesNotThrow(() -> utils.submit(client, jsonSpec));
+        // ИСПРАВЛЕНО: Согласно нашей бизнес-логике, при FAILED должно выбрасываться исключение
+        TaskFailedException exception = assertThrows(TaskFailedException.class, () -> utils.submit(client, jsonSpec));
+        assertTrue(exception.getMessage().contains("failed in Kubernetes"));
+
+        // Проверяем, что упавшая задача НЕ удалена из кластера для ручного анализа через kubectl describe
+        assertNotNull(client.genericKubernetesResources(CONTEXT).inNamespace("default").withName(jobName).get());
     }
 
-    private void simulateOperator(String name, String targetState, long delayMs) {
+    /**
+     * Полноценный симулятор Spark-оператора, отрабатывающий асинхронно в фоне.
+     * Позволяет проверить устойчивость кода к промежуточным Null-статусам.
+     */
+    private void simulateOperatorLifecycle(String name, String terminalState, long toRunningDelayMs, long toTerminalDelayMs) {
         new Thread(() -> {
             try {
-                Thread.sleep(delayMs);
                 var resOp = client.genericKubernetesResources(CONTEXT)
                         .inNamespace("default")
                         .withName(name);
 
-                GenericKubernetesResource current = resOp.get();
-                if (current != null) {
+                // Ждем появления ресурса в etcd Mock-сервера
+                GenericKubernetesResource current = null;
+                for (int i = 0; i < 10; i++) {
+                    current = resOp.get();
+                    if (current != null) break;
+                    Thread.sleep(50);
+                }
+
+                if (current == null) return;
+
+                // ЭТАП 1: Переводим задачу в статус RUNNING
+                Thread.sleep(toRunningDelayMs);
+                current = resOp.get();
+                current.setAdditionalProperties(Map.of(
+                        "status", Map.of("applicationState", Map.of("state", "RUNNING"))
+                ));
+                resOp.patchStatus(current);
+
+                // ЭТАП 2: Переводим задачу в терминальный статус (COMPLETED или FAILED)
+                Thread.sleep(toTerminalDelayMs);
+                current = resOp.get();
+                if (current != null) { // Объект мог быть удален, если код отработал быстрее
                     current.setAdditionalProperties(Map.of(
-                            "status", Map.of("applicationState", Map.of("state", targetState))
+                            "status", Map.of("applicationState", Map.of("state", terminalState))
                     ));
                     resOp.patchStatus(current);
                 }
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }).start();
     }
-    @Test
-    void shouldSubmit() throws TaskFailedException {
-        // 1. Создаем "видимость" установленного оператора (точнее его CRD)
-        client.apiextensions().v1().customResourceDefinitions().load(new ByteArrayInputStream("""
-                {
-                           "apiVersion": "apiextensions.k8s.io/v1",
-                           "kind": "CustomResourceDefinition",
-                           "metadata": { "name": "sparkapplications.sparkoperator.k8s.io" },
-                           "spec": {
-                             "group": "sparkoperator.k8s.io",
-                             "names": { "kind": "SparkApplication", "plural": "sparkapplications" },
-                             "scope": "Namespaced",
-                             "versions": [{ "name": "v1beta2", "served": true, "storage": true,\s
-                                 "schema": { "openAPIV3Schema": { "type": "object", "x-kubernetes-preserve-unknown-fields": true } }\s
-                             }]
-                           }
-                         }
-        """.getBytes())).patch();
-        String jsonSpec = """
-        {
-          "apiVersion": "sparkoperator.k8s.io/v1beta2",
-          "kind": "SparkApplication",
-          "metadata": { "name": "my-spark-job", "namespace": "default" },
-          "spec": {
-              "type": "Scala",
-              "mode": "cluster",
-              "image": "apache/spark:3.5.0",
-              "mainClass": "org.apache.spark.examples.SparkPi",
-              "mainApplicationFile": "local:///opt/spark/examples/jars/spark-examples_2.12-3.5.0.jar",
-              "sparkVersion": "3.5.0",
-              "sparkConf": {
-                "spark.executor.extraJavaOptions": "-Duser.timezone=UTC",
-                "spark.sql.shuffle.partitions": "100",
-                "spark.hadoop.fs.s3a.impl": "org.apache.hadoop.fs.s3a.S3AFileSystem",
-                "spark.kubernetes.allocation.batch.size": "10"
-              },
-              "driver": {
-                "cores": 1,
-                "memory": "512m",
-                "serviceAccount": "spark"
-              },
-              "executor": {
-                "cores": 1,
-                "instances": 1,
-                "memory": "512m"
-              }
-            }
-        }""";
-        // 3. Запускаем имитацию оператора (он сработает через 1 сек после старта)
-        simulateOperator("my-spark-job", "COMPLETED", 1000);
-
-        // 4. Запускаем основной метод
-        // 2. Теперь клиент сможет найти метаданные
-        utils.submit(client, jsonSpec);
-    }
-
 }

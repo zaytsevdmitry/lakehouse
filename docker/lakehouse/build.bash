@@ -12,6 +12,6 @@ do
   cp -f $CODE_ROOT/$app/target/$app-$LH_VERSION-jar-with-dependencies.jar ./opt/
 done
 
-docker build -t lakehouse:$LH_VERSION ./
-docker images
+docker build --no-cache -t lakehouse:$LH_VERSION ./
+docker images | grep lakehouse
 rm -rf ./opt

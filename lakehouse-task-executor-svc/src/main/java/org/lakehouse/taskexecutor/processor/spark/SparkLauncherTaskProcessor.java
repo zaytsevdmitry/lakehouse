@@ -9,7 +9,7 @@ import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.client.api.utils.Coalesce;
 import org.lakehouse.client.api.utils.ObjectMapping;
-import org.lakehouse.client.api.utils.SparkConfUtil;
+import org.lakehouse.client.api.utils.conf.SparkConfUtil;
 import org.lakehouse.jinja.java.JinJavaUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,7 +66,7 @@ public class SparkLauncherTaskProcessor extends AbstractSparkDeployTaskProcessor
                     mainClass,
                     appResource,
                     sparkRestDeployFactory.getServerUrl(sourceConfDTO,scheduledTaskDTO,jinJavaUtils),
-                    SparkConfUtil.extractSparkConFromTaskConf(scheduledTaskDTO, new HashSet<>(sourceConfDTO.getDataSources().values())),
+                    SparkConfUtil.extractSparkConFromTaskConf(sourceConfDTO, scheduledTaskDTO),
                     appArgs);
         } catch (JsonProcessingException e) {
             throw new TaskConfigurationException(e);

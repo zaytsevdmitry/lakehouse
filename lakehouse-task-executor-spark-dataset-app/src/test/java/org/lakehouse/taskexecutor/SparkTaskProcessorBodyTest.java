@@ -11,14 +11,13 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
-import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.api.exception.DDLDIalectException;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.client.api.utils.ObjectMapping;
-import org.lakehouse.client.api.utils.SparkConfUtil;
+import org.lakehouse.client.api.utils.conf.SparkConfUtil;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.jinja.java.JinJavaFactory;
 import org.lakehouse.jinja.java.JinJavaUtils;
@@ -71,10 +70,19 @@ public class SparkTaskProcessorBodyTest {
         @Primary
         SparkSession getSparkSessionTest() throws IOException {
             ConfigRestClientApi configRestClientApi1 =  new ConfigRestClientApiTest();
-            DataSetDTO dataSetDTO = configRestClientApi1.getDataSetDTO(trnddsDatasetName);
-            DataSourceDTO dataSourceDTO = configRestClientApi1.getDataSourceDTO(dataSetDTO.getDataSourceKeyName());
             SparkConf conf = new SparkConf();
-            SparkConfUtil.extractAppConf(dataSourceDTO.getService().getProperties()).forEach(conf::set);
+            SourceConfDTO sourceConfDTO = configRestClientApi1.getSourceConfDTO(trnddsDatasetName);
+            ScheduledTaskDTO scheduledTaskDTO = new  TaskConfigTestFactory().loadScheduledTaskLockDTO(trnddsDatasetName,"load").getScheduledTaskEffectiveDTO();
+
+            Map.of(
+                            "spark.sql.catalog.processing", "org.apache.spark.sql.execution.datasources.v2.jdbc.JDBCTableCatalog",
+                            "spark.sql.catalog.processing.url", postgres.getJdbcUrl(),
+                            "spark.sql.catalog.processing.user", postgres.getUsername(),
+                            "spark.sql.catalog.processing.password", postgres.getPassword())
+                    .forEach((k,v) ->
+                            sourceConfDTO.getDataSourceDTOByDataSetKeyName(trnDatasetName).getService().getProperties().put(k, v));
+
+            SparkConfUtil.extractSparkConFromTaskConf(sourceConfDTO,scheduledTaskDTO).forEach(conf::set);
             return SparkSession.builder().master("local").config(conf).getOrCreate();
         }
         @Bean
@@ -153,7 +161,7 @@ public class SparkTaskProcessorBodyTest {
         conf.getDataSourceDTOByDataSetKeyName(dataSetKeyName).getService().getProperties()
                 .forEach((k, v) -> sparkSession.conf().set(k,v));
 
-        new CatalogActivatorService(sparkSession).activate(List.of(conf.getDataSourceDTOByDataSetKeyName(dataSetKeyName)));
+        //new CatalogActivatorService(sparkSession).activate(List.of(conf.getDataSourceDTOByDataSetKeyName(dataSetKeyName)));
 
         DataSourceManipulator jdbcManipulator = new DataSourceManipulatorFactoryImpl()
                 .buildDataSourceManipulator(

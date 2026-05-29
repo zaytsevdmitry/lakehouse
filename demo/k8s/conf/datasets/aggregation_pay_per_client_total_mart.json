@@ -1,0 +1,48 @@
+{
+  "keyName": "aggregation_pay_per_client_total_mart",
+  "nameSpaceKeyName": "DEMO",
+  "dataSourceKeyName": "lakehousestorage",
+  "databaseSchemaName": "default",
+  "tableName": "ggregation_pay_per_client_total_mart",
+  "scripts": [
+    {
+      "key": "dataset-sql-model.aggregation_pay_per_client_total_mart.sql"
+    }
+  ],
+  "sources": {
+    "transaction_dds": {}
+  },
+  "columnSchema": [
+    {
+      "name": "client_name",
+      "description": "Name of client",
+      "dataType": "string",
+      "nullable": false
+    },
+    {
+      "name": "sum_amount",
+      "description": "Sum by client",
+      "dataType": "decimal",
+      "nullable": false
+    },
+    {
+      "name": "sum_commission",
+      "description": "Our profit)",
+      "dataType": "decimal",
+      "nullable": false
+    }
+  ],
+  "constraints": {
+    "aggregation_pay_per_client_total_mart_pk":{
+      "type": "primary",
+      "columns": "client_name",
+      "enabled": true,
+      "constraintLevelCheck": "dataQuality"
+  }
+},
+  "properties": {
+    "location": "s3a://data/warehouse/default/aggregation_pay_per_client_total_mart",
+    "using": "iceberg"
+  },
+  "description": "We want to know who our most profitable clients are"
+}

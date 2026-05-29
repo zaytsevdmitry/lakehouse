@@ -34,6 +34,7 @@ function curlGet() {
     fi
 }
 
+check_config_svc_ready
 
 find ./sql-scripts/ -type f | while read -r f; do
     clean_name="${f#./sql-scripts/}" && clean_name="${clean_name//\//.}"
@@ -74,13 +75,13 @@ do
    curlPost 127.0.0.1:8080/v1_0/configs/datasets "datasets/$s.json"
 done
 
-curl -f -i -X POST 127.0.0.1:8080/v1_0/configs/datasets -H "Content-Type: application/json" --data-binary "@./datasets/client_processing.json"
-for s in "default"
+
+for s in "state-service" "spark-cluster" "database"
 do
    curlPost 127.0.0.1:8080/v1_0/configs/taskexecutionservicegroups "taskexecutionservicegroups/$s.json"
 done
 
-for s in "database" "spark"
+for s in "database" "spark" "spark-dq"
 do
    curlPost 127.0.0.1:8080/v1_0/configs/scenarios "scenario-act-templates/$s.json"
 done

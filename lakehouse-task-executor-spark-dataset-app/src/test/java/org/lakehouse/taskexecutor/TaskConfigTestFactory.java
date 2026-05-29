@@ -11,64 +11,7 @@ import java.io.IOException;
 
 public class TaskConfigTestFactory {
 
-/*
-    public TaskProcessorConfigDTO buildTaskProcessorConfigDTO(String dataSetName) throws IOException {
-        FileLoader fileLoader = new FileLoader();
-        TaskProcessorConfigDTO result = new TaskProcessorConfigDTO();
-        DataSetDTO dataSetDTO = fileLoader.loadDataSetDTO(dataSetName);
-        result.setTargetDataSetKeyName(dataSetName);
-        result.getDataSetDTOs().put(dataSetDTO.getKeyName(),dataSetDTO);
 
-
-        dataSetDTO.getConstraints()
-                .stream()
-                .filter(c -> c.getType().equals(Types.Constraint.foreign))
-                .map(c->c.getReference().getDataSetKeyName())
-                .map(s -> {
-                    try {
-                        return fileLoader.loadDataSetDTO(s);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .forEach(d -> result.getDataSetDTOs().put(d.getKeyName(),d));
-
-        dataSetDTO.getSources().stream().map(dss-> {
-                    try {
-                        return fileLoader.loadDataSetDTO(dss.getDataSetKeyName());
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .forEach(d -> result.getDataSetDTOs().put(d.getKeyName(),d));
-
-
-        Map<String,DataSourceDTO> dataSourceDTOs = new HashMap<>();
-        result
-                .getDataSetDTOs()
-                .values()
-                .stream()
-                .map(DataSetDTO::getDataSourceKeyName)
-                .map(k -> {
-                    try {
-                        return fileLoader.loadDataSourceDTO(k);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .forEach(dataSourceDTO -> dataSourceDTOs.put(dataSourceDTO.getKeyName(),dataSourceDTO));
-        result.setDataSources(dataSourceDTOs);
-        result.setScripts(
-        dataSetDTO.getScripts().stream().sorted(Comparator.comparingInt(DataSetScriptDTO::getOrder))
-                .map(dataSetScriptDTO -> {
-                    try {
-                        return fileLoader.loadModelScript(dataSetScriptDTO.getKey().split("\\.")[0]);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                }).toList());
-        return result;
-    }*/
     public ScheduledTaskLockDTO loadScheduledTaskLockDTO(String dataSetKeyName, String taskName) throws IOException {
 
         ScheduledTaskLockDTO scheduledTaskLockDTO = new ScheduledTaskLockDTO();

@@ -4,7 +4,7 @@
   "driverKeyName":"spark_iceberg",
   "service":
     {
-      "host": "spark-master",
+      "host": "192.1.193.40",
       "port": "6066",
       "urn": "",
       "properties": {
@@ -32,10 +32,7 @@
 
   "description": "Local datastore",
   "sqlTemplate" : {
-    "tableDDLCompact": "{%set catalog_name=dataSets[targetDataSetKeyName].catalogKeyName%}CALL {{catalog_name}}.system.rewrite_data_files(table => 'db_name.table_name', options => map('min-input-files', '2', 'target-file-size-bytes', '134217728'))"
+    "tableDDLCompact" : "sql-template-spark_iceberg.tableDDLCompact.sql"
   }
-
-
-
 }
 

@@ -26,7 +26,7 @@ United namespace
 
 
 
-[Demo](./demo/README.md)
+[Demo](demo/README.md)
 
 # Project status
 
@@ -50,6 +50,7 @@ United namespace
 | [lakehouse-validators](lakehouse-validators)                                           | Prototype    |                                              |
 | [lakehouse-ui-svc](lakehouse-ui-svc)                                                   | Not designed |                                              |
 | Authorization & security                                                               | Not designed |                                              |
+| [Docker](docker/readme.md)                                                             | Candidate |                                              |
 
 
 

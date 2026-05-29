@@ -1,0 +1,1 @@
+{%set targetDataSet=dataSets[targetDataSetKeyName]%}TRUNCATE TABLE {{ targetDataSet.databaseSchemaName~'.'~targetDataSet.tableName }}

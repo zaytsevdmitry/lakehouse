@@ -1,17 +1,17 @@
 {
   "keyName": "database",
-  "description": "Default scenario",
+  "description": "Database scenario",
   "tasks": [
     {
       "name": "begin",
-      "taskExecutionServiceGroupName": "default",
+      "taskExecutionServiceGroupName": "state-service",
       "taskProcessor": "lockedStateTaskProcessor",
       "importance": "critical",
       "description": "Made dataset interval status Locked"
     },
     {
       "name": "prepare",
-      "taskExecutionServiceGroupName": "default",
+      "taskExecutionServiceGroupName": "database",
       "taskProcessor": "jdbcTaskProcessor",
       "taskProcessorBody": "createTableSQLProcessorBody",
       "importance": "critical",
@@ -21,7 +21,7 @@
     },
     {
       "name": "load",
-      "taskExecutionServiceGroupName": "default",
+      "taskExecutionServiceGroupName": "database",
       "taskProcessor": "jdbcTaskProcessor",
       "taskProcessorBody": "mergeSQLProcessorBody",
       "importance": "critical",
@@ -31,7 +31,7 @@
     },
     {
       "name": "finally",
-      "taskExecutionServiceGroupName": "default",
+      "taskExecutionServiceGroupName": "state-service",
       "taskProcessor": "successStateTaskProcessor",
       "importance": "critical",
       "description": "Made dataset interval status SUCCESS"

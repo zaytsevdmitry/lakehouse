@@ -1,9 +1,0 @@
-*.jar
-*.tgz
-spark-3.5.8-bin-hadoop3
-spark-3.5.7-bin-hadoop3
-spark-3.5.6-bin-hadoop3
-awscli-exe-linux-x86_64.zip
-opt
-Dockerfile
-Dockerfile.tmp

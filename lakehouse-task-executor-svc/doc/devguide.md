@@ -7,8 +7,9 @@
 # TaskProcessor
 То что исполняет процесс задачи.
 ![TaskProcessors.png](uml/TaskProcessors.png)
-* Spark-задачи
-  * [SparkLauncherTaskProcessor.java](../src/main/java/org/lakehouse/taskexecutor/processor/spark/SparkLauncherTaskProcessor.java) запускает тело задачи на удаленном кластере в виде spark-job. [Подробнее тут](../../lakehouse-task-spark-apps/doc/devguide.md)
+* [Spark-задачи](../../lakehouse-task-spark-apps/doc/devguide.md)
+  * [SparkLauncherTaskProcessor.java](../src/main/java/org/lakehouse/taskexecutor/processor/spark/SparkLauncherTaskProcessor.java) запускает тело задачи на удаленном spark standalone кластере в виде spark-job.
+  * [SparkK8sOperatorTaskProcessor.java](../src/main/java/org/lakehouse/taskexecutor/processor/spark/SparkK8sOperatorTaskProcessor.java) запускает тело задачи на удаленном кластере k8s в виде spark-job 
 * Работа со статусной моделью датасета
   * [LockedStateTaskProcessor.java](../src/main/java/org/lakehouse/taskexecutor/processor/state/LockedStateTaskProcessor.java) Переводит инкремент датасета в статус - Locked - заблокирован. Это показывает другим процессам, что они НЕ могут работать с интервалом данных датасета.
   * [SuccessStateTaskProcessor.java](../src/main/java/org/lakehouse/taskexecutor/processor/state/SuccessStateTaskProcessor.java) Переводит инкремент датасета в статус - Success  - успешен.  Это показывает другим процессам, что они могут работать с интервалом данных датасета.
@@ -33,7 +34,7 @@ TaskProcessorBody использующие шаблоны SQLTemplate совме
 
 
 [SparkTaskProcessorDQBody.java](../../lakehouse-task-executor-spark-dq-app/src/main/java/org/lakehouse/taskexecutor/spark/dq/service/SparkTaskProcessorDQBody.java)
-совместим только [SparkLauncherTaskProcessor.java](../src/main/java/org/lakehouse/taskexecutor/processor/spark/SparkLauncherTaskProcessor.java)
-
+совместим только [SparkLauncherTaskProcessor.java](../src/main/java/org/lakehouse/taskexecutor/processor/spark/SparkLauncherTaskProcessor.java) и
+[SparkK8sOperatorTaskProcessor.java](../src/main/java/org/lakehouse/taskexecutor/processor/spark/SparkK8sOperatorTaskProcessor.java)
 
 

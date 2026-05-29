@@ -1,0 +1,1 @@
+ALTER TABLE  {{ refCat(targetDataSetKeyName) }} ADD CONSTRAINT {{ constraint.name }} UNIQUE({{ constraint.columns }})
