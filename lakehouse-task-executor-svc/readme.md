@@ -1,3 +1,3 @@
 [Настройки сервиса](doc/properties.md)
 
-[Описание работы](doc/devguide.md)
+[Описание работы](doc/processors.md) 
