@@ -79,3 +79,8 @@ All configurations loaded
 [spark-worker](http://192.1.193.50:8401/)
 
 [spark-history](http://localhost:18080/)
+
+
+## Поток управления
+
+![flow.png](../uml/flow.png)

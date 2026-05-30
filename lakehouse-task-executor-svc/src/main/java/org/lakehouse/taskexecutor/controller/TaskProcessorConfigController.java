@@ -11,8 +11,5 @@ public class TaskProcessorConfigController {
         this.executeService = executeService;
     }
 
-/*    @GetMapping(Endpoint.TASK_EXECUTOR_PROCESSOR_GET_BY_LOCK_ID)
-    public TaskProcessorConfigDTO getTaskProcessorConfigDTO(Long lockId) {
-        return executeService.getTaskProcessorConfigDTO(lockId);
-    }*/
+
 }

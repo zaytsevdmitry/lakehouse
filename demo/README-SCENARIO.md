@@ -1,6 +1,7 @@
 # Сценарий демонстрации
 
 ## Тема сценария
+Трансформация из бд с последующей проверкой качества и агрегацией.
 
 Предположим есть
 
@@ -8,7 +9,7 @@
 - объединяющая источники детальная трансформация
 - две разные агрегации на основе детальной трансформации
 - процессы запускаемые по расписанию между ними
-  ![datasetdeps.png](compose/uml/datasetdeps.png)
+  ![datasetdeps.png](uml/datasetdeps.png)
 
 Наполнение данными источников и трансформаций производится разными расписаниями по какой-то, нужной кому-то логике. При
 подготовке трансформаций отдельным расписанием будет сделана помесячная загрузка двух первых месяцев 2025 года. Далее
@@ -67,15 +68,15 @@
 
 ### Источники собираются каждый день, трансформации тоже каждый день
 
-![regular.png](compose/uml/regular.png)
+![regular.png](uml/regular.png)
 
 ### Источники собираются каждый день, трансформации каждый месяц
 
-![initial.png](compose/uml/initial.png)
+![initial.png](uml/initial.png)
 
 ### Диаграмма относительно расписаний
 
-![ganttSchedule.png](compose/uml/ganttSchedule.png)
+![ganttSchedule.png](uml/ganttSchedule.png)
 
 generateSource и generateSourceDict отрабатывают каждый день
 
@@ -90,11 +91,11 @@ regular тоже начнет работать в феврале, но он су
 Расписания запускают задачи, которые просматривают данные "назад"
 так как запуск идет задним числом
 
-![ganttData.png](compose/uml/ganttData.png)
+![ganttData.png](uml/ganttData.png)
 
 ### Диаграмма относительно данных
 
-![ganttDataSets.png](compose/uml/ganttDataSets.png)
+![ganttDataSets.png](uml/ganttDataSets.png)
 
 Несмотря на путаницу в расписаниях, мы получаем строго полный год данных на всех датасетах
 
@@ -131,6 +132,4 @@ regular тоже начнет работать в феврале, но он су
 
 - [trino_kafka_metric_status.sql](../Scripts/trino_kafka_metric_status.sql) - trino подключен к kafka и позволяет собрать статус обработки DQ
 
-## Поток управления 
 
-![flow.png](compose/uml/flow.png)
