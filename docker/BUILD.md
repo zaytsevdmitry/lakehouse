@@ -12,7 +12,7 @@
 > project lakehouse-common: Fatal error compiling: error: release version 17 not supported -> [Help 1]
 
 ```
-@localhost:~/projects/my/lakehouse/buld> java -version
+@localhost:~/projects/my/lakehouse/docker> java -version
 openjdk version "17.0.13" 2024-10-15
 OpenJDK Runtime Environment Temurin-17.0.13+11 (build 17.0.13+11)
 OpenJDK 64-Bit Server VM Temurin-17.0.13+11 (build 17.0.13+11, mixed mode, sharing)
@@ -33,7 +33,10 @@ export PATH=$JAVA_HOME/bin/:$PATH
 
 ## Сборка образа
 
-Файл build.bash запускает сборку проекта, образа и раскладывает артефакты по папкам
+Файл  docker/build.bash запускает сборку проекта, образа и раскладывает артефакты по папкам
+```commandline
+cd docker
+```
 ```commandline
 sh build.bash
 ```

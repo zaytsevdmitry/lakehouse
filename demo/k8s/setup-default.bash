@@ -13,6 +13,8 @@ minikube image load apache/kafka:latest
 
 helm install lakehouse-release ./lakehouse-management-helm-charts/lakehouse-management  --namespace default
 
+helm upgrade lakehouse-release ./lakehouse-management-helm-charts/lakehouse-management  --namespace default
+
 kubectl create serviceaccount spark -n default
 kubectl create clusterrolebinding spark-role --clusterrole=edit --serviceaccount=default:spark --namespace=default
 kubectl apply -f spark-rbac.yaml

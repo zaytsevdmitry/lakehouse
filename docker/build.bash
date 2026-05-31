@@ -10,5 +10,7 @@ cd ../lakehouse-spark-aws
 bash ./build.bash
 cd ../hms
 bash ./build.bash
+cd ../checkcontainer
+bash ./build.bash
 
 docker images | grep lakehouse
