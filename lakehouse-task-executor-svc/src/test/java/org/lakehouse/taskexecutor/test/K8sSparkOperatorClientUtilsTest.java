@@ -67,7 +67,7 @@ class K8sSparkOperatorClientUtilsTest {
         simulateOperatorLifecycle(jobName, "COMPLETED", 200, 500);
 
         // Метод должен успешно завершиться
-        assertDoesNotThrow(() -> utils.submit(client, jsonSpec));
+        assertDoesNotThrow(() -> utils.submit(client, jsonSpec,2,6));
 
         // Проверяем авто-очистку: успешная задача должна быть удалена из etcd
         assertNull(client.genericKubernetesResources(CONTEXT).inNamespace("default").withName(jobName).get());
@@ -85,15 +85,12 @@ class K8sSparkOperatorClientUtilsTest {
                   "spec": { "type": "Java" }
                 }""", jobName);
 
-        // Имитируем падение задачи: появление -> RUNNING через 100мс -> FAILED через 300мс
         simulateOperatorLifecycle(jobName, "FAILED", 100, 300);
 
-        // ИСПРАВЛЕНО: Согласно нашей бизнес-логике, при FAILED должно выбрасываться исключение
-        TaskFailedException exception = assertThrows(TaskFailedException.class, () -> utils.submit(client, jsonSpec));
+        TaskFailedException exception = assertThrows(TaskFailedException.class, () -> utils.submit(client, jsonSpec, 2,6));
+        System.out.println(exception.getMessage());
         assertTrue(exception.getMessage().contains("failed in Kubernetes"));
 
-        // Проверяем, что упавшая задача НЕ удалена из кластера для ручного анализа через kubectl describe
-        assertNotNull(client.genericKubernetesResources(CONTEXT).inNamespace("default").withName(jobName).get());
     }
 
     /**

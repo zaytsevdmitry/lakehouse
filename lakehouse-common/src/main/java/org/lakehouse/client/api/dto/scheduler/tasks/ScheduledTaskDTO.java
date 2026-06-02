@@ -103,7 +103,7 @@ public class ScheduledTaskDTO extends TaskDTO {
                         .replace(" ","-")
                         .replace("_","-")
                         .replace("+","-")
-                        .toLowerCase()
+                        .toLowerCase() //todo This value needs some work for Kubernetes. Additionally, it is expected that the subname cannot exceed 63 characters.
         );
     }
     @JsonIgnore

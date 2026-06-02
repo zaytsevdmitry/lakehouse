@@ -27,12 +27,17 @@ public class Coalesce {
      * @since 0.3.0
      *  */
     public static  <K, V>  Map <K, V>  applyMergeNonNullValuesMap(Map <K, V>  currentMap, Map <K, V>  newMap) {
-        Map <K, V>  result = new HashMap<>();
-        result.putAll(currentMap);
-        result.putAll(newMap.entrySet()
-                .stream()
-                .filter(e -> e.getValue() !=null)
-                .collect(Collectors.toMap(Map.Entry::getKey,Map.Entry::getValue)));
+        Map<K, V> result = new HashMap<>();
+        if (currentMap != null) {
+            result.putAll(currentMap);
+        }
+        if (newMap != null) {
+            newMap.forEach((key, value) -> {
+                if (value != null) {
+                    result.put(key, value);
+                }
+            });
+        }
         return result;
     }
 

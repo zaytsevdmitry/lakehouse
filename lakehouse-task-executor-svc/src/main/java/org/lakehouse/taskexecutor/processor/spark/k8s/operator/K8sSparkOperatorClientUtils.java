@@ -8,7 +8,7 @@ import org.lakehouse.client.api.exception.TaskFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,11 +19,13 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class K8sSparkOperatorClientUtils {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
-    private static final ResourceDefinitionContext SPARK_APP_CONTEXT = new ResourceDefinitionContext.Builder()
-            .withGroup("sparkoperator.k8s.io")
-            .withVersion("v1beta2")
-            .withKind("SparkApplication")
+    private final static String GROUP = "sparkoperator.k8s.io";
+    private final static String VERSION = "v1beta2";
+    private final static String KIND = "SparkApplication";
+    private final static ResourceDefinitionContext SPARK_APP_CONTEXT = new ResourceDefinitionContext.Builder()
+            .withGroup(GROUP)
+            .withVersion(VERSION)
+            .withKind(KIND)
             .withNamespaced(true)
             .build();
 
@@ -36,26 +38,57 @@ public class K8sSparkOperatorClientUtils {
         return new KubernetesClientBuilder().withConfig(config).build();
     }
 
-    // Константы таймаутов для управления жизненным циклом задачи
-    private static final long STARTUP_TIMEOUT_MINUTES = 2;
-    private static final long BUSINESS_TIMEOUT_HOURS = 3;
-
-    public void submit(KubernetesClient kubernetesClient, String jsonConf) throws TaskFailedException {
+    public void submit(
+            KubernetesClient kubernetesClient,
+            String jsonConf,
+            long startupTimeoutMinutes,
+            long businessTimeoutMinutes
+    ) throws TaskFailedException {
         logger.info("Json conf is {}", jsonConf);
+
         GenericKubernetesResource sparkApp = kubernetesClient.genericKubernetesResources(SPARK_APP_CONTEXT)
                 .load(new ByteArrayInputStream(jsonConf.getBytes(StandardCharsets.UTF_8)))
                 .item();
+
         logger.info("Json conf loaded");
 
-        String name = sparkApp.getMetadata().getName();
+        cleanUpResource(kubernetesClient,sparkApp);
+
+        try {
+            createResource(
+                    kubernetesClient,
+                    sparkApp,
+                    startupTimeoutMinutes,
+                    businessTimeoutMinutes
+            );
+
+        } catch (TaskFailedException e) {
+                throw e;
+        } catch (Exception e) {
+            throw new TaskFailedException("Error during Spark job submission or monitoring", e);
+        } finally {
+            logDelivery(kubernetesClient, sparkApp);
+            cleanUpResource(kubernetesClient,sparkApp);
+        }
+
+    }
+
+    private void cleanUpResource(
+            KubernetesClient kubernetesClient,
+            GenericKubernetesResource sparkApp
+            ){
         String namespace = sparkApp.getMetadata().getNamespace();
+        String name      = sparkApp.getMetadata().getName();
 
-        AtomicReference<String> finalState = new AtomicReference<>("TIMEOUT");
-
-        CountDownLatch runningLatch = new CountDownLatch(1);
-        CountDownLatch terminalLatch = new CountDownLatch(1);
-
-        // 1. Превентивное удаление старого ресурса
+        try {
+            logger.info("Cleaning up pods for SparkApplication '{}' in namespace '{}'...", name, namespace);
+            kubernetesClient.pods()
+                    .inNamespace(namespace)
+                    .withLabel("sparkoperator.k8s.io/app-name", name)
+                    .delete();
+        } catch (Exception e) {
+            logger.warn("Failed to delete pods for SparkApplication '{}'", name, e);
+        }
         try {
             var existing = kubernetesClient.genericKubernetesResources(SPARK_APP_CONTEXT)
                     .inNamespace(namespace)
@@ -68,160 +101,125 @@ public class K8sSparkOperatorClientUtils {
         } catch (Exception e) {
             logger.warn("Failed to check or delete existing SparkApplication resource before creation", e);
         }
+    }
 
-        try {
-            // Создаем чистый ресурс в K8s
-            kubernetesClient.resource(sparkApp).create();
-            logger.info("SparkApplication '{}' successfully created. Initializing watch...", name);
+    private void createResource(
+            KubernetesClient kubernetesClient,
+            GenericKubernetesResource sparkApp,
+            Long startupTimeoutMinutes,
+            Long businessTimeoutMinutes
+    ) throws TaskFailedException, InterruptedException {
+        String namespace = sparkApp.getMetadata().getNamespace();
+        String name      = sparkApp.getMetadata().getName();
+        CountDownLatch runningLatch = new CountDownLatch(1);
+        CountDownLatch terminalLatch = new CountDownLatch(1);
 
-            // Инициализируем watch ПОСЛЕ физического создания ресурса
-            try (Watch watch = kubernetesClient.genericKubernetesResources(SPARK_APP_CONTEXT)
-                    .inNamespace(namespace)
-                    .withName(name)
-                    .watch(new Watcher<GenericKubernetesResource>() {
-                        @Override
-                        public void eventReceived(Action action, GenericKubernetesResource resource) {
-                            String state = extractState(resource);
-                            logger.info("Job: {}, State: {}", name, state);
+        AtomicReference<PodState> finalState = new AtomicReference<>(PodState.TIMEOUT);
 
-                            finalState.set(state);
+        kubernetesClient.resource(sparkApp).create();
+        logger.info("SparkApplication '{}' successfully created. Initializing watch...", name);
 
-                            // Сигнал о прохождении этапа инициализации
-                            if ("RUNNING".equals(state) || "COMPLETED".equals(state) || "FAILED".equals(state)) {
-                                runningLatch.countDown();
-                            }
+        // Инициализируем watch ПОСЛЕ физического создания ресурса
+        try (Watch watch = kubernetesClient.genericKubernetesResources(SPARK_APP_CONTEXT)
+                .inNamespace(namespace)
+                .withName(name)
+                    .watch(new K8sSparkOperatorResourceWatcher(name,finalState, runningLatch, terminalLatch))) {
 
-                            // Сигнал о полном завершении
-                            if ("COMPLETED".equals(state) || "FAILED".equals(state)) {
-                                terminalLatch.countDown();
-                            }
-                        }
-
-                        @Override
-                        public void onClose(WatcherException cause) {
-                            if (cause != null) {
-                                logger.error("Watch connection closed with error", cause);
-                            }
-                            runningLatch.countDown();
-                            terminalLatch.countDown();
-                        }
-                    })) {
-
-                // ЭТАП 1: Ожидаем старта задачи максимум 2 минуты
-                boolean startedInTime = runningLatch.await(STARTUP_TIMEOUT_MINUTES, TimeUnit.MINUTES);
-                if (!startedInTime) {
-                    logger.warn("Task '{}' failed to start within {} minutes.", name, STARTUP_TIMEOUT_MINUTES);
-                    throw new TaskFailedException("Spark job submission timed out during startup.");
-                }
-
-                // ЭТАП 2: Переходим к длительному бизнес-ожиданию выполнения (3 часа)
-                String currentState = finalState.get();
-                if ("RUNNING".equals(currentState)) {
-                    logger.info("Task '{}' is RUNNING. Waiting up to {} hours for completion...", name, BUSINESS_TIMEOUT_HOURS);
-
-                    boolean completedInTime = terminalLatch.await(BUSINESS_TIMEOUT_HOURS, TimeUnit.HOURS);
-                    if (!completedInTime) {
-                        logger.error("Task '{}' exceeded the maximum business execution limit of {} hours.", name, BUSINESS_TIMEOUT_HOURS);
-                        finalState.set("TIMEOUT"); // Принудительно выставляем таймаут для логики очистки ресурса
-                        throw new TaskFailedException("Spark job execution hit the business timeout limit.");
-                    }
-                } else {
-                    logger.info("Task '{}' bypassed RUNNING state and went directly to: {}", name, currentState);
-                }
+            // Stage 1: waiting for run. Limit 2 minutes
+            boolean startedInTime = runningLatch.await(startupTimeoutMinutes, TimeUnit.MINUTES);
+            if (!startedInTime) {
+                logger.warn("Task '{}' failed to start within {} minutes.", name, startupTimeoutMinutes);
+                throw new TaskFailedException("Spark job submission timed out during startup.");
             }
 
-            // Проверяем финальный статус выполнения
-            String stateResult = finalState.get();
-            if ("UNKNOWN".equals(stateResult) || "SUBMITTED".equals(stateResult)) {
-                throw new TaskFailedException("SparkApplication stopped or connection broke in intermediate state: " + stateResult);
-            }
+            // Stage 2: Wait for complete. Limit 3 hours
+            PodState currentState = finalState.get();
+            if (PodState.RUNNING.equals(currentState)) {
+                logger.info("Task '{}' is RUNNING. Waiting up to {} minutes for completion...", name, businessTimeoutMinutes);
 
-        } catch (TaskFailedException e) {
-                throw e;
-        } catch (Exception e) {
-            throw new TaskFailedException("Error during Spark job submission or monitoring", e);
-        } finally {
-            String currentState = finalState.get();
-            logger.info("Final state evaluated as: {}", currentState);
-            logDelivery(kubernetesClient, sparkApp);
-            // Удаляем ресурс ТОЛЬКО если задача завершилась успешно (COMPLETED)
-            if ("COMPLETED".equals(currentState)) {
-                try {
-                    logger.info("Cleaning up successful SparkApplication resource: {}", name);
-                    kubernetesClient.genericKubernetesResources(SPARK_APP_CONTEXT)
-                            .inNamespace(namespace)
-                            .withName(name)
-                            .delete();
-                } catch (Exception e) {
-                    logger.error("Failed to clean up successful SparkApplication resource", e);
+                boolean completedInTime = terminalLatch.await(businessTimeoutMinutes, TimeUnit.MINUTES);
+                if (!completedInTime) {
+                    logger.error("Task '{}' exceeded the maximum business execution limit of {} minutes.", name, businessTimeoutMinutes);
+                    finalState.set(PodState.TIMEOUT); // Принудительно выставляем таймаут для логики очистки ресурса
+                    throw new TaskFailedException("Spark job execution hit the business timeout limit.");
                 }
             } else {
-                logger.warn("SparkApplication '{}' was NOT deleted from K8s cluster because its status is '{}'. Inspect it manually.", name, currentState);
+                logger.info("Task '{}' bypassed RUNNING state and went directly to: {}", name, currentState);
             }
         }
 
-        // Бросаем исключение наружу, если задача завершилась не успешно
-        if ("FAILED".equals(finalState.get())) {
+        PodState stateResult = finalState.get();
+
+        logger.info("Final state evaluated as: {}", finalState.get());
+        if (PodState.UNKNOWN.equals(stateResult) || PodState.SUBMITTED.equals(stateResult)) {
+            throw new TaskFailedException("SparkApplication stopped or connection broke in intermediate state: " + stateResult);
+        }
+        else if (PodState.FAILED.equals(finalState.get())) {
             throw new TaskFailedException("Spark job execution failed in Kubernetes.");
-        } else if ("TIMEOUT".equals(finalState.get())) {
+        }
+        else if (PodState.TIMEOUT.equals(finalState.get())) {
             throw new TaskFailedException("Spark job execution timed out.");
         }
     }
 
-
-    private String extractState(GenericKubernetesResource resource) {
+    private PodState extractState(GenericKubernetesResource resource) {
         try {
             if (resource == null
                     || resource.getAdditionalProperties() == null
                     || !resource.getAdditionalProperties().containsKey("status")
                     ||  resource.getAdditionalProperties().get("status") == null
                     || !((Map<String, Object>) resource.getAdditionalProperties().get("status")).containsKey("applicationState")) {
-                return "UNKNOWN";
+                return PodState.UNKNOWN;
             }
             Map<String, Object> status = (Map<String, Object>) resource.getAdditionalProperties().get("status");
             Map<String, Object> appState = (Map<String, Object>) status.get("applicationState");
-            return (String) appState.get("state");
+            return  PodState.valueOf(appState.get("state").toString());
 
         } catch (Exception e) {
             logger.debug("Failed to extract state: {}", e.getLocalizedMessage());
-            return "UNKNOWN";
+            return PodState.UNKNOWN;
         }
     }
     private void logDelivery(KubernetesClient kubernetesClient, GenericKubernetesResource sparkApp){
 
+        try {
 
-        List<Pod> driverPods = kubernetesClient.pods()
-                .inNamespace(sparkApp.getMetadata().getNamespace())
-                .withLabel("sparkoperator.k8s.io/app-name", sparkApp.getMetadata().getName())
-                .withLabel("spark-role", "driver")
-                .list()
-                .getItems();
-
-        logger.info("Count of driver pods for logging: {} ", driverPods.size());
-
-        List<Pod> executorPods = kubernetesClient.pods()
-                .inNamespace(sparkApp.getMetadata().getNamespace())
-                .withLabel("spark-role", "executor")
-                .withLabel("sparkoperator.k8s.io/app-name", sparkApp.getMetadata().getName())
-                .list()
-                .getItems();
-
-        logger.info("Count of excutor pods for logging: {} ", executorPods.size());
-
-        List<Pod> allPods = new ArrayList<>(driverPods);
-        allPods.addAll(executorPods);
-
-        for (Pod pod : allPods) {
-            String podName = pod.getMetadata().getName();
-            logger.info("Getting logs for pod: {}", podName);
-
-            String logs = kubernetesClient.pods()
+            List<Pod> driverPods = kubernetesClient.pods()
                     .inNamespace(sparkApp.getMetadata().getNamespace())
-                    .withName(podName)
-                    .getLog();
-            logger.info("--- Logs from pod {} ---------------\n", podName);
-            logger.info(logs);
-            logger.info("----End of logs from pod {} ---------\n", podName);
+                    .withLabel(GROUP.concat("/app-name"), sparkApp.getMetadata().getName())
+                    .withLabel("spark-role", "driver")
+                    .list()
+                    .getItems();
+
+            logger.info("Count of driver pods for logging: {} ", driverPods.size());
+
+            for (Pod pod : driverPods) {
+                String podName = pod.getMetadata().getName();
+                logger.info("Getting logs for pod: {}", podName);
+                try (InputStream is = kubernetesClient.pods()
+                        .inNamespace(sparkApp.getMetadata().getNamespace())
+                        .withName(podName)
+                        .watchLog()
+                        .getOutput();
+                     InputStreamReader isr = new InputStreamReader(is, StandardCharsets.UTF_8);
+                     BufferedReader reader = new BufferedReader(isr, 8192)) {
+                    String line;
+                    long lineCount = 0;
+                    logger.info("--- Logs from pod {} ---------------\n", podName);
+
+                    while ((line = reader.readLine()) != null) {
+                        logger.info("[{}]: {}", podName, line);
+                        lineCount++;
+                    }
+
+                    logger.info("----End of logs from pod {} ---------\n", podName);
+                } catch (KubernetesClientException | IOException e) {
+                    logger.info(e.getLocalizedMessage());
+                    logger.debug(String.valueOf(e.fillInStackTrace()));
+                }
+            }
+        } catch (Exception e) {
+            logger.warn(e.getMessage());
         }
     }
 }

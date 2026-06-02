@@ -1,10 +1,8 @@
 package org.lakehouse.taskexecutor.processor.spark.k8s.operator;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigRenderOptions;
-import com.typesafe.config.ConfigValueFactory;
 import org.lakehouse.client.api.constant.SystemVarKeys;
 import org.lakehouse.client.api.constant.TaskProcessorArgKey;
 import org.lakehouse.client.api.constant.Types;
@@ -14,6 +12,7 @@ import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.utils.Coalesce;
 import org.lakehouse.client.api.utils.ObjectMapping;
+import org.lakehouse.client.api.utils.conf.ConfUtil;
 import org.lakehouse.client.api.utils.conf.SparkConfUtil;
 import org.lakehouse.jinja.java.JinJavaFactory;
 import org.lakehouse.jinja.java.JinJavaUtils;
@@ -21,20 +20,13 @@ import org.lakehouse.taskexecutor.processor.spark.k8s.operator.entity.K8sSparkAp
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class SparkK8sOperatorConfUtil {
-    private static Map<String,Object> extractConf(Map<String,String> conf, String startWith){
-        return conf
-                .entrySet()
-                .stream()
-                .filter(e->e.getKey().startsWith(startWith))
-                .map(e ->  Map.entry(e.getKey().replace(startWith, ""), e.getValue()))
-                .collect(Collectors.toMap(Map.Entry::getKey,Map.Entry::getValue));
-    }
-    public static Map<String,Object> extractK8sOperatorConf(
+public class SparkK8sOperatorConfUtil extends ConfUtil{
+    public static Map<String,String> extractK8sOperatorConf(
             SourceConfDTO sourceConfDTO,
             ScheduledTaskDTO scheduledTaskDTO
             ){
@@ -44,16 +36,6 @@ public class SparkK8sOperatorConfUtil {
                 extractConf(scheduledTaskDTO.getTaskProcessorArgs(), TaskProcessorArgKey.K8S_SPARK_OPERATOR));
 
     }
-
-/*
-    public static Map<String,String> extractK8sOperatorConfSpec(
-            SourceConfDTO sourceConfDTO,
-            ScheduledTaskDTO scheduledTaskDTO
-    ){
-
-        return extractConf(extractK8sOperatorConf(sourceConfDTO,scheduledTaskDTO) , "spec.");
-    }
-*/
 
     public static String extractMasterUrl(
             SourceConfDTO sourceConfDTO,
@@ -83,30 +65,51 @@ public class SparkK8sOperatorConfUtil {
             ScheduledTaskDTO scheduledTaskDTO
     ) throws TaskConfigurationException {
         try {
+            Map<String, String> manifestConf = extractConf(
+                    extractK8sOperatorConf(
+                            sourceConfDTO,
+                            scheduledTaskDTO),
+                    TaskProcessorArgKey
+                            .K8S_SPARK_OPERATOR_MANIFEST);
 
-            Map<String,Object> conf = extractK8sOperatorConf(sourceConfDTO,scheduledTaskDTO);
-            Map<String,String> specSparkConf = SparkConfUtil.extractSparkConFromTaskConf(sourceConfDTO, scheduledTaskDTO);
             ConfigRenderOptions options = ConfigRenderOptions.defaults()
                 .setJson(true)
                 .setOriginComments(false)
                 .setComments(false)
                 .setFormatted(true);
 
-            String a = ConfigFactory.parseMap(conf).root().render(options);
 
-            K8sSparkApplicationConf k8SSparkApplicationConf = null;
-            k8SSparkApplicationConf = ObjectMapping.stringToObject(a, K8sSparkApplicationConf.class);
 
+            K8sSparkApplicationConf k8SSparkApplicationConf =  ObjectMapping
+                    .stringToObject(
+                            ConfigFactory
+                                    .parseMap(manifestConf)
+                                    .root()
+                                    .render(options),
+                            K8sSparkApplicationConf.class);
+
+            String fixedTaskName;
             //todo next time need create getTaskFullName function in jijava  "k8s.spark-operator.metadata.name" : {{ k8s_dns_rfc_1123(scheduledTask)}}
-            if (k8SSparkApplicationConf.getMetadata().getName()==null||k8SSparkApplicationConf.getMetadata().getName().isBlank())
-                k8SSparkApplicationConf.getMetadata()
-                        .setName(
-                                String.format(
-                                        "task-%d-%d",
-                                        scheduledTaskDTO.getId(),
-                                        scheduledTaskDTO.getTryNum()));
+            if (k8SSparkApplicationConf.getMetadata().getName()==null ||
+                    k8SSparkApplicationConf.getMetadata().getName().isBlank())
+                fixedTaskName = String.format(
+                        "task-%d-%d",
+                        scheduledTaskDTO.getId(),
+                        scheduledTaskDTO.getTryNum());
+            else
+                fixedTaskName = k8SSparkApplicationConf.getMetadata().getName().substring(0,63);
 
-            k8SSparkApplicationConf.getSpec().setSparkConf(specSparkConf);
+            k8SSparkApplicationConf
+                    .getMetadata()
+                        .setName(fixedTaskName);
+
+            k8SSparkApplicationConf
+                    .getSpec()
+                    .setSparkConf(
+                            SparkConfUtil
+                                    .extractSparkConFromTaskConf(
+                                            sourceConfDTO,
+                                            scheduledTaskDTO));
 
 
             k8SSparkApplicationConf.getSpec().setArguments(extractArguments(sourceConfDTO,scheduledTaskDTO));
@@ -126,20 +129,24 @@ public class SparkK8sOperatorConfUtil {
     ) throws TaskConfigurationException {
         List<String> resultList = new ArrayList<>();
         try {
-            resultList.add(ObjectMapping.asJsonString(scheduledTaskDTO));
-        } catch (JsonProcessingException e) {
+            ScheduledTaskDTO newScheduledTaskDTO =  ObjectMapping.mapToObject(
+                            ObjectMapping.asMap(scheduledTaskDTO),
+                            ScheduledTaskDTO.class) ;
+            // task args will be sent as args outside. Clear now
+            newScheduledTaskDTO.setTaskProcessorArgs(new HashMap<>());
+            resultList.add(ObjectMapping.asJsonString(newScheduledTaskDTO));
+        } catch (IOException e) {
             throw new TaskConfigurationException(e);
         }
+        // task args outside
         resultList.addAll(
             Coalesce.applyMergeNonNullValuesMap(
                 sourceConfDTO.getTargetDataSource().getService().getProperties(),
                 scheduledTaskDTO.getTaskProcessorArgs())
                 .entrySet()
                 .stream()
-                .filter(e ->
-                        !e.getKey().startsWith(TaskProcessorArgKey.K8S_SPARK_OPERATOR) &&
-                        !e.getKey().startsWith(TaskProcessorArgKey.SPARK_PREFIX)
-                )
+                .filter(e -> !e.getKey().startsWith(TaskProcessorArgKey.K8S_SPARK_OPERATOR))
+                .filter(e -> !e.getKey().startsWith(TaskProcessorArgKey.SPARK_PREFIX))
                 .map(e-> String.format("--%s=%s",e.getKey(),e.getValue()))
                 .toList());
         return resultList.toArray(String[]::new);

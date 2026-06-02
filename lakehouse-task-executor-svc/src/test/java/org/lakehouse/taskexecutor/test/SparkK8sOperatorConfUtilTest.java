@@ -39,8 +39,8 @@ public class SparkK8sOperatorConfUtilTest {
                 "spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem",
                 "spark.eventLog.enabled", "true",
                 "spark.eventLog.dir", "s3a://sparklogs/eventlog/",
-                "k8s.spark-operator.spec.driver.cores", "1",
-                "k8s.spark-operator.metadata.namespace", "lakehouse-management"
+                "k8s.spark-operator.manifest.spec.driver.cores", "1",
+                "k8s.spark-operator.manifest.metadata.namespace", "lakehouse-management"
         ));
 
         serviceDTO.setProperties(props);
@@ -78,16 +78,16 @@ public class SparkK8sOperatorConfUtilTest {
         scheduledTaskDTO.setTryNum(1);
         scheduledTaskDTO.setId(100L);
         Map<String,String> taskProcessorArgs = Map.of(
-                "k8s.spark-operator.spec.image", "apache/spark:3.5.0",
+                "k8s.spark-operator.manifest.spec.image", "apache/spark:3.5.0",
                 "spark.ui.enabled", "true",
                 "spark.executor.memory", "1g",
-                "k8s.spark-operator.metadata.namespace", "lakehouse-management-ovrd",
+                "k8s.spark-operator.manifest.metadata.namespace", "lakehouse-management-ovrd",
                 "lakehouse.client.rest.config.server.url", "http://lakehouse-management-config-service:8080",
                 "lakehouse.taskexecutor.body.config.dq.kafka.producer.properties.bootstrap.servers" , "broker:9092",
                 "lakehouse.taskexecutor.body.config.dq.kafka.producer.metric.value.topic", "metric_value",
                 "protocol", "https",
-                "k8s.spark-operator.spec.mainApplicationFile", "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dq-app-0.4.0-jar-with-dependencies.jar",
-                "k8s.spark-operator.spec.mainClass", "org.lakehouse.taskexecutor.spark.dq.SparkProcessorApplicationDQ");
+                "k8s.spark-operator.manifest.spec.mainApplicationFile", "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dq-app-0.4.0-jar-with-dependencies.jar",
+                "k8s.spark-operator.manifest.spec.mainClass", "org.lakehouse.taskexecutor.spark.dq.SparkProcessorApplicationDQ");
 
 
         scheduledTaskDTO.setTaskProcessorArgs(taskProcessorArgs);
@@ -101,15 +101,15 @@ public class SparkK8sOperatorConfUtilTest {
     @Order(1)
     public void testK8sOperatorConfExtraction() {
         System.out.println("Map.of(\n");
-        Map<String,Object> result = SparkK8sOperatorConfUtil.extractK8sOperatorConf(getSourceConfDTO(),getScheduledTaskDTO());
+        Map<String,String> result = SparkK8sOperatorConfUtil.extractK8sOperatorConf(getSourceConfDTO(),getScheduledTaskDTO());
         result.forEach((s, s2) -> System.out.println(String.format("\"%s\",\"%s\"",s,s2)));
         System.out.println(")\n");
-        Map<String,Object> expected = Map.of(
-                "spec.driver.cores","1",
-                "spec.mainApplicationFile","/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dq-app-0.4.0-jar-with-dependencies.jar",
-                "spec.mainClass","org.lakehouse.taskexecutor.spark.dq.SparkProcessorApplicationDQ",
-                "metadata.namespace","lakehouse-management-ovrd",
-                "spec.image","apache/spark:3.5.0"
+        Map<String,String> expected = Map.of(
+                "manifest.spec.driver.cores","1",
+                "manifest.spec.mainApplicationFile","/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dq-app-0.4.0-jar-with-dependencies.jar",
+                "manifest.spec.mainClass","org.lakehouse.taskexecutor.spark.dq.SparkProcessorApplicationDQ",
+                "manifest.metadata.namespace","lakehouse-management-ovrd",
+                "manifest.spec.image","apache/spark:3.5.0"
         )
                 ;
         assert(Objects.equals(result,expected));
@@ -160,7 +160,7 @@ public class SparkK8sOperatorConfUtilTest {
       "spark.hadoop.fs.s3a.impl" : "org.apache.hadoop.fs.s3a.S3AFileSystem",
       "spark.ui.enabled" : "true"
     },
-    "arguments" : [ "{\\n  \\"name\\" : \\"quality\\",\\n  \\"taskExecutionServiceGroupName\\" : \\"default\\",\\n  \\"taskProcessor\\" : \\"sparkK8sOperatorTaskProcessor\\",\\n  \\"taskProcessorBody\\" : \\"sparkTaskProcessorDQBody\\",\\n  \\"importance\\" : null,\\n  \\"description\\" : null,\\n  \\"taskProcessorArgs\\" : {\\n    \\"k8s.spark-operator.metadata.namespace\\" : \\"lakehouse-management-ovrd\\",\\n    \\"k8s.spark-operator.spec.image\\" : \\"apache/spark:3.5.0\\",\\n    \\"k8s.spark-operator.spec.mainApplicationFile\\" : \\"/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dq-app-0.4.0-jar-with-dependencies.jar\\",\\n    \\"k8s.spark-operator.spec.mainClass\\" : \\"org.lakehouse.taskexecutor.spark.dq.SparkProcessorApplicationDQ\\",\\n    \\"lakehouse.client.rest.config.server.url\\" : \\"http://lakehouse-management-config-service:8080\\",\\n    \\"lakehouse.taskexecutor.body.config.dq.kafka.producer.metric.value.topic\\" : \\"metric_value\\",\\n    \\"lakehouse.taskexecutor.body.config.dq.kafka.producer.properties.bootstrap.servers\\" : \\"broker:9092\\",\\n    \\"protocol\\" : \\"https\\",\\n    \\"spark.executor.memory\\" : \\"1g\\",\\n    \\"spark.ui.enabled\\" : \\"true\\"\\n  },\\n  \\"id\\" : 100,\\n  \\"scenarioActKeyName\\" : \\"Test_Act\\",\\n  \\"scheduleKeyName\\" : \\"Test_Schedule\\",\\n  \\"status\\" : null,\\n  \\"targetDateTime\\" : \\"2026-01-01 00:00:00z\\",\\n  \\"intervalStartDateTime\\" : null,\\n  \\"intervalEndDateTime\\" : null,\\n  \\"dataSetKeyName\\" : null,\\n  \\"tryNum\\" : 1\\n}", "--lakehouse.client.rest.config.server.url=http://lakehouse-management-config-service:8080", "--lakehouse.taskexecutor.body.config.dq.kafka.producer.metric.value.topic=metric_value", "--protocol=https", "--lakehouse.taskexecutor.body.config.dq.kafka.producer.properties.bootstrap.servers=broker:9092" ],
+    "arguments" : [ "{\\n  \\"name\\" : \\"quality\\",\\n  \\"taskExecutionServiceGroupName\\" : \\"default\\",\\n  \\"taskProcessor\\" : \\"sparkK8sOperatorTaskProcessor\\",\\n  \\"taskProcessorBody\\" : \\"sparkTaskProcessorDQBody\\",\\n  \\"importance\\" : null,\\n  \\"description\\" : null,\\n  \\"taskProcessorArgs\\" : { },\\n  \\"id\\" : 100,\\n  \\"scenarioActKeyName\\" : \\"Test_Act\\",\\n  \\"scheduleKeyName\\" : \\"Test_Schedule\\",\\n  \\"status\\" : null,\\n  \\"targetDateTime\\" : \\"2026-01-01 00:00:00z\\",\\n  \\"intervalStartDateTime\\" : null,\\n  \\"intervalEndDateTime\\" : null,\\n  \\"dataSetKeyName\\" : null,\\n  \\"tryNum\\" : 1\\n}", "--lakehouse.client.rest.config.server.url=http://lakehouse-management-config-service:8080", "--lakehouse.taskexecutor.body.config.dq.kafka.producer.metric.value.topic=metric_value", "--protocol=https", "--lakehouse.taskexecutor.body.config.dq.kafka.producer.properties.bootstrap.servers=broker:9092" ],
     "sparkVersion" : null,
     "type" : null
   }
