@@ -1,7 +1,5 @@
 package org.lakehouse.taskexecutor.spark.dq;
 
-import org.lakehouse.client.api.exception.TaskConfigurationException;
-import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.client.rest.config.configuration.ConfigRestClientConfiguration;
 import org.lakehouse.task.executor.spark.api.body.ApplicationBodyStarter;
 import org.lakehouse.task.executor.spark.api.configuration.SparkSessionConfiguration;

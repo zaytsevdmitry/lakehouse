@@ -1,14 +1,10 @@
 package org.lakehouse.taskexecutor.processor.spark;
 
-import com.typesafe.config.ConfigFactory;
-import com.typesafe.config.ConfigRenderOptions;
 import io.fabric8.kubernetes.client.KubernetesClient;
-
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.exception.TaskFailedException;
-import org.lakehouse.client.api.utils.conf.SparkConfUtil;
 import org.lakehouse.jinja.java.JinJavaUtils;
 import org.lakehouse.taskexecutor.api.processor.TaskProcessor;
 import org.lakehouse.taskexecutor.processor.spark.k8s.operator.K8sSparkOperatorClientUtils;
@@ -17,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.util.Map;
 
 @Service

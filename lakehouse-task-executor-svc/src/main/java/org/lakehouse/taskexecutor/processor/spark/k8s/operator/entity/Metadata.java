@@ -2,8 +2,6 @@ package org.lakehouse.taskexecutor.processor.spark.k8s.operator.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Objects;
-
 public  class Metadata {
     @JsonProperty("name")
     private  String name;

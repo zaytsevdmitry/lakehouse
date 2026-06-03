@@ -1,17 +1,24 @@
 select si.id
-, si.config_schedule_key_name                     -- schedule name
 , si.target_execution_date_time                   -- schedule target datetime
-, ssai."name"                     scenario         -- part of chedule, is an reference for dataset, schedule and tasks
-, sti."name"                      task             -- task
-, ssai.conf_data_set_key_name                     -- dataset
-, si.status ||'-> '|| ssai.status ||'-> '|| sti.status ||' [' || sti.re_try_num || ']' status         --schedule_status scenario_status task_status re_try_count
-, sti.causes
+, si.config_schedule_key_name 
+      || ' [' || case when ssai."name" = ssai.conf_data_set_key_name then ssai.conf_data_set_key_name
+                 else ssai."name" || ' , ' || ssai.conf_data_set_key_name 
+                 end
+      || ' ][ ' || sti."name" || ' ]' task_fullname                                             
+--, si.config_schedule_key_name                     -- schedule name
+--, ssai."name"                     scenario         -- part of chedule, is an reference for dataset, schedule and tasks
+--, sti."name"                      task             -- task
+--, ssai.conf_data_set_key_name                     -- dataset
+, case when si.status = ssai.status and ssai.status = sti.status then sti.status 
+       else si.status ||'-> '|| ssai.status ||'-> '|| sti.status 
+  end ||' [' || sti.re_try_num || ']'  status         --schedule_status scenario_status task_status re_try_count
 , stiel.last_heart_beat_date_time
 , stiel.id                        lock_id
 , stiel.service_id
 , sti.service_id
 , sti.id sti_id
 , coalesce(stiel.last_heart_beat_date_time, sti.end_date_time) - sti.begin_date_time duration
+, sti.causes
 from lakehouse_scheduler.schedule_task_instance sti
 join lakehouse_scheduler.schedule_scenario_act_instance ssai on ssai.id =sti.schedule_scenario_act_instance_id
 join lakehouse_scheduler.schedule_instance si on si.id = ssai.schedule_instance_id

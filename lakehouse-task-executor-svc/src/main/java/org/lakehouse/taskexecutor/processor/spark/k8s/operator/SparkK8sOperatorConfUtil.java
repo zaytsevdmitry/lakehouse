@@ -1,6 +1,5 @@
 package org.lakehouse.taskexecutor.processor.spark.k8s.operator;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigRenderOptions;
 import org.lakehouse.client.api.constant.SystemVarKeys;
@@ -23,7 +22,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class SparkK8sOperatorConfUtil extends ConfUtil{
     public static Map<String,String> extractK8sOperatorConf(

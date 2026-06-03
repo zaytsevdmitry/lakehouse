@@ -3,7 +3,6 @@ package org.lakehouse.client.api.utils;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class Coalesce {
     public static String apply(String s1, String s2) {

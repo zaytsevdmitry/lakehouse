@@ -9,8 +9,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
-import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
-import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.api.exception.DDLDIalectException;
@@ -21,7 +19,6 @@ import org.lakehouse.client.api.utils.conf.SparkConfUtil;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.jinja.java.JinJavaFactory;
 import org.lakehouse.jinja.java.JinJavaUtils;
-import org.lakehouse.task.executor.spark.api.service.CatalogActivatorService;
 import org.lakehouse.taskexecutor.api.datasource.DataSourceManipulator;
 import org.lakehouse.taskexecutor.api.datasource.DataSourceManipulatorFactory;
 import org.lakehouse.taskexecutor.api.datasource.DataSourceManipulatorFactoryImpl;
@@ -48,7 +45,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 @SpringBootTest

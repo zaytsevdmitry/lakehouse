@@ -1,14 +1,11 @@
 package org.lakehouse.client.api.utils.conf;
 
 import org.lakehouse.client.api.constant.TaskProcessorArgKey;
-import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;
-import org.lakehouse.client.api.utils.Coalesce;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public class SparkConfUtil {

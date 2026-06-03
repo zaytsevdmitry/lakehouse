@@ -2,13 +2,9 @@ package org.lakehouse.task.executor.spark.api.body;
 
 import org.apache.spark.sql.SparkSession;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
-import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.client.api.utils.ObjectMapping;
-import org.lakehouse.client.api.utils.conf.SparkConfUtil;
-import org.lakehouse.client.rest.config.ConfigRestClientApi;
-import org.lakehouse.task.executor.spark.api.service.CatalogActivatorService;
 import org.lakehouse.taskexecutor.api.processor.body.ProcessorBody;
 import org.lakehouse.validator.config.ValidationResult;
 import org.lakehouse.validator.task.ScheduledTaskDTOValidator;
@@ -19,7 +15,6 @@ import org.springframework.context.ConfigurableApplicationContext;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ApplicationBodyStarter {
