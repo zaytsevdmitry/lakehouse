@@ -46,7 +46,8 @@ public class K8sSparkOperatorClientUtils {
     ) throws TaskFailedException {
         logger.info("Json conf is {}", jsonConf);
 
-        GenericKubernetesResource sparkApp = kubernetesClient.genericKubernetesResources(SPARK_APP_CONTEXT)
+        GenericKubernetesResource sparkApp = kubernetesClient
+                .genericKubernetesResources(SPARK_APP_CONTEXT)
                 .load(new ByteArrayInputStream(jsonConf.getBytes(StandardCharsets.UTF_8)))
                 .item();
 

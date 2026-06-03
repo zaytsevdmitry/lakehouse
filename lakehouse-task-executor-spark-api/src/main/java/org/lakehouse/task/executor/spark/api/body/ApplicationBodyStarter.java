@@ -93,19 +93,7 @@ public class ApplicationBodyStarter {
 
             ConfigurableApplicationContext applicationContext = SpringApplication.run(aClass, args);
             logger.info("Try to activate catalogs");
-            //activateCatalogs(applicationContext,scheduledTaskDTO);
-/*
-            Map<String,String> sparkparams = (Map<String, String>) applicationContext.getBean(SparkSession.class)
-                    .conf()
-                    .getAll();
 
-
-            sparkparams.keySet().forEach(
-                    t ->
-                         logger.info("Spark Catalog Property: {} = {}", t, sparkparams.get(t))
-                    );
-
- */
             ProcessorBody body = (ProcessorBody) applicationContext.getBean(scheduledTaskDTO.getTaskProcessorBody());
             body.run(scheduledTaskDTO);
             return applicationContext;
@@ -115,23 +103,7 @@ public class ApplicationBodyStarter {
             throw new TaskConfigurationException(msg);
         }
     }
-/*    private void activateCatalogs(
-            ConfigurableApplicationContext applicationContext,
-            ScheduledTaskDTO scheduledTaskDTO
-    ){
-        CatalogActivatorService catalogActivatorService = applicationContext.getBean(CatalogActivatorService.class);
-        ConfigRestClientApi configRestClientApi = applicationContext.getBean(ConfigRestClientApi.class);
-        SourceConfDTO sourceConfDTO = configRestClientApi
-                .getSourceConfDTO(
-                        scheduledTaskDTO
-                                .getDataSetKeyName());
-        SparkSession sparkSession = applicationContext.getBean(SparkSession.class);
-        SparkConfUtil
-                .startWithSparkCatalog(sourceConfDTO,scheduledTaskDTO)
-                .forEach((k, v) -> sparkSession.conf().set(k,v));
 
-        catalogActivatorService.activate(sourceConfDTO);
-    }*/
     public enum ExitCode {
         TaskConfigurationException(10001),
         TaskFailedException(10002),
