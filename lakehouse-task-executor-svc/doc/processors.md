@@ -35,7 +35,7 @@ scheduler-svc должен будет повторить задачу, это с
 
 ###  [Spark-задачи](../../lakehouse-task-spark-apps/doc/devguide.md)
   * [SparkLauncherTaskProcessor.java](../src/main/java/org/lakehouse/taskexecutor/processor/spark/SparkLauncherTaskProcessor.java) запускает тело задачи на удаленном spark standalone кластере в виде spark-job.
-  * [sparkK8sOperatorTaskProcessor.md](processors/sparkK8sOperatorTaskProcessor.md) запускает тело задачи на удаленном кластере k8s в виде spark-job 
+  * [K8sSparkNativeTaskProcessor.md](processors/K8sSparkNativeTaskProcessor.md) запускает тело задачи на удаленном кластере k8s в виде spark-job 
 
 Ничего не знают о логике задачи. Ответственность это разбор конфигурации, чтобы параметризовать spark-driver в конкретном кластере.
 Не работают с локальным запуском драйвере тк это сильно утяжелит сам сервис и размоет границы его ответственности.

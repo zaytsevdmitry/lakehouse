@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
@@ -97,13 +97,11 @@
             <artifactId>config</artifactId>
             <version>1.4.3</version>
         </dependency>
-
-            <!-- Основной клиент Fabric8 -->
-            <dependency>
-                <groupId>io.fabric8</groupId>
-                <artifactId>kubernetes-client</artifactId>
-                <version>7.6.1</version>
-            </dependency>
+        <dependency>
+            <groupId>io.fabric8</groupId>
+            <artifactId>kubernetes-client</artifactId>
+            <version>7.6.1</version>
+        </dependency>
 
 
         <dependency>
@@ -112,6 +110,7 @@
             <version>7.6.1</version>
             <scope>test</scope>
         </dependency>
+
 
         <dependency>
             <groupId>org.testcontainers</groupId>
@@ -178,6 +177,7 @@
                     <argLine>
                         --add-exports java.base/sun.nio.ch=ALL-UNNAMED
                         --add-opens=java.base/java.nio=ALL-UNNAMED
+                        --add-opens=java.base/java.io=ALL-UNNAMED
                     </argLine>
                 </configuration>
             </plugin>

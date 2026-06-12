@@ -10,7 +10,7 @@ import java.util.List;
 
 
 public interface SchedulerRestClientApi {
-    public ScheduledTaskMsgDTO getScheduledTaskDTO(String name);
+    public ScheduledTaskDTO getScheduledTaskDTO(String name);
 
     public ScheduledTaskLockDTO getScheduledTaskLockDTO(String id);
 

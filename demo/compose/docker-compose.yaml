@@ -258,31 +258,33 @@ services:
       - conf-svc
       - scheduler-svc
       - state-svc
-#  lakehouse-task-executor-svc-2:
-#    image: lakehouse:0.4.0
-#    container_name: task-executor-svc-2
-#   hostname: task-executor-svc-2
-#   networks:
-#     lakehouse_net:
-#       ipv4_address: 192.1.193.130
-#    ports:
-#      - "8092:8092"
-#   command: >
-#     bash -c "java
-#      -Dserver.port=8092
-#      -Dlakehouse.client.rest.config.server.url=http://conf-svc:8080
-#      -Dlakehouse.client.rest.scheduler.server.url=http://scheduler-svc:8081
-#      -Dlakehouse.client.rest.state.server.url=http://state-svc:8082
-#      -Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id=spark-cluster
-#      -Dlakehouse.task-executor.service.id=spark-exec-1
-#      -Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1
-#      -Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=192.1.193.20:9092
-#      -jar /opt/lakehouse-task-executor-svc-0.4.0-jar-with-dependencies.jar"
-#    depends_on:
-#      - broker
-#      - conf-svc
-#      - scheduler-svc
-#      - state-svc
+
+  lakehouse-task-executor-svc-2:
+    image: lakehouse:0.4.0
+    container_name: task-executor-svc-2
+    hostname: task-executor-svc-2
+    networks:
+     lakehouse_net:
+       ipv4_address: 192.1.193.130
+    ports:
+      - "8092:8092"
+    command: >
+     bash -c "java
+      -Dserver.port=8092
+      -Dlakehouse.client.rest.config.server.url=http://conf-svc:8080
+      -Dlakehouse.client.rest.scheduler.server.url=http://scheduler-svc:8081
+      -Dlakehouse.client.rest.state.server.url=http://state-svc:8082
+      -Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id=spark-cluster
+      -Dlakehouse.task-executor.service.id=spark-exec-1
+      -Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1
+      -Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=192.1.193.20:9092
+      -jar /opt/lakehouse-task-executor-svc-0.4.0-jar-with-dependencies.jar"
+    depends_on:
+      - broker
+      - conf-svc
+      - scheduler-svc
+      - state-svc
+
   lakehouse-task-executor-svc-3:
     image: lakehouse:0.4.0
     container_name: task-executor-svc-3
@@ -311,33 +313,33 @@ services:
       - scheduler-svc
       - state-svc
 
-#  lakehouse-task-executor-svc-4:
-#    image: lakehouse:0.4.0
-#    container_name: task-executor-svc-4
-#    hostname: task-executor-svc-4
-#    networks:
-#      lakehouse_net:
-#        ipv4_address: 192.1.193.150
-#    ports:
-#      - "8094:8094"
-#    command: >
-#      bash -c "java
-#      --add-exports java.base/sun.nio.ch=ALL-UNNAMED
-#      --add-opens=java.base/java.nio=ALL-UNNAMED
-#      -Dserver.port=8094
-#      -Dlakehouse.client.rest.config.server.url=http://conf-svc:8080
-#      -Dlakehouse.client.rest.scheduler.server.url=http://scheduler-svc:8081
-#      -Dlakehouse.client.rest.state.server.url=http://state-svc:8082
-#      -Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id=spark-cluster
-#      -Dlakehouse.task-executor.service.id=spark-exec-2
-#      -Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1
-#      -Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=192.1.193.20:9092
-#      -jar /opt/lakehouse-task-executor-svc-0.4.0-jar-with-dependencies.jar"
-#    depends_on:
-#      - broker
-#      - conf-svc
-#      - scheduler-svc
-#      - state-svc
+  lakehouse-task-executor-svc-4:
+    image: lakehouse:0.4.0
+    container_name: task-executor-svc-4
+    hostname: task-executor-svc-4
+    networks:
+      lakehouse_net:
+        ipv4_address: 192.1.193.150
+    ports:
+      - "8094:8094"
+    command: >
+      bash -c "java
+      --add-exports java.base/sun.nio.ch=ALL-UNNAMED
+      --add-opens=java.base/java.nio=ALL-UNNAMED
+      -Dserver.port=8094
+      -Dlakehouse.client.rest.config.server.url=http://conf-svc:8080
+      -Dlakehouse.client.rest.scheduler.server.url=http://scheduler-svc:8081
+      -Dlakehouse.client.rest.state.server.url=http://state-svc:8082
+      -Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id=spark-cluster
+      -Dlakehouse.task-executor.service.id=spark-exec-2
+      -Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1
+      -Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=192.1.193.20:9092
+      -jar /opt/lakehouse-task-executor-svc-0.4.0-jar-with-dependencies.jar"
+    depends_on:
+      - broker
+      - conf-svc
+      - scheduler-svc
+      - state-svc
 
   trino:
     ports:

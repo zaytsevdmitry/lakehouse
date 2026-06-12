@@ -16,10 +16,10 @@ public class MetricDQStatusKafkaSerializer implements Serializer<MetricDQStatusD
     public byte[] serialize(String topic, MetricDQStatusDTO data) {
         try {
             if (data == null) {
-                System.out.println("Null received at serializing");
+                logger.info("Null received at serializing");
                 return null;
             }
-            System.out.println("Serializing...");
+            logger.info("Serializing...");
             return objectMapper.writeValueAsBytes(data);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);

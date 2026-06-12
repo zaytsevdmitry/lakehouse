@@ -392,7 +392,7 @@ public class JinjavaTest {
     @Order(14)
     void taskProcessorArg() throws IOException {
         ScheduledTaskDTO conf = new ScheduledTaskDTO();
-        String argName =  "protocol";
+        String argName =  "datasource.service.protocol";
         String expected = "https";
         conf.getTaskProcessorArgs().put(argName,expected);
         String template = "{{taskProcessorArgs['" + argName + "']}}";
@@ -426,7 +426,9 @@ public class JinjavaTest {
         String template = sourceConfDTO.getTargetDriver().getConnectionTemplates().get(Types.ConnectionType.spark);
         JinJavaUtils jinJavaUtils = JinJavaFactory.getJinJavaUtils();
         ScheduledTaskDTO scheduledTaskDTO = new ScheduledTaskDTO();
-        scheduledTaskDTO.getTaskProcessorArgs().put(SystemVarKeys.CONNECTION_STRING_PROTOCOL_NAME,"http");
+
+        scheduledTaskDTO.getTaskProcessorArgs().put(SystemVarKeys.DATASOURCE_SERVICE_PROTOCOL_NAME_KEY,"http");
+
         jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(sourceConfDTO));
         jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(scheduledTaskDTO));
         String url = jinJavaUtils.render(template);

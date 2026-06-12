@@ -64,8 +64,8 @@ public class SchedulerRestClientApiImpl implements SchedulerRestClientApi {
     }
 
     @Override
-    public ScheduledTaskMsgDTO getScheduledTaskDTO(String name) {
-        return restClientHelper.getDtoOne(name, Endpoint.SCHEDULED_TASKS_ID, ScheduledTaskMsgDTO.class);
+    public ScheduledTaskDTO getScheduledTaskDTO(String name) {
+        return restClientHelper.getDtoOne(name, Endpoint.SCHEDULED_TASKS_ID, ScheduledTaskDTO.class);
     }
 
     @Override

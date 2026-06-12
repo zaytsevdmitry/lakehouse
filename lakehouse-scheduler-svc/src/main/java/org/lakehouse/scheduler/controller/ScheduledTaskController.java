@@ -4,6 +4,7 @@ import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.scheduler.service.ScheduleTaskInstanceService;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -19,6 +20,11 @@ public class ScheduledTaskController {
     @GetMapping(Endpoint.SCHEDULED_TASKS)
     List<ScheduledTaskDTO> getAll() {
         return scheduleTaskInstanceService.findAll();
+    }
+
+    @GetMapping(Endpoint.SCHEDULED_TASKS_ID)
+    ScheduledTaskDTO getOne(@PathVariable Long id){
+        return scheduleTaskInstanceService.findById(id);
     }
 
 }

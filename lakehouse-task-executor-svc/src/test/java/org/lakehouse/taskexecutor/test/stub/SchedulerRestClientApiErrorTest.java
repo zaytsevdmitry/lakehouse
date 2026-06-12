@@ -11,7 +11,7 @@ import java.util.List;
 
 public class SchedulerRestClientApiErrorTest implements SchedulerRestClientApi {
     @Override
-    public ScheduledTaskMsgDTO getScheduledTaskDTO(String name) {
+    public ScheduledTaskDTO getScheduledTaskDTO(String name) {
         return null;
     }
 

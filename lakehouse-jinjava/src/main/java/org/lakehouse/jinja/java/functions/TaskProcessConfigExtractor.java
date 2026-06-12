@@ -62,7 +62,7 @@ public class TaskProcessConfigExtractor {
                     .stream()
                     .map(s -> {
                         try {
-                            return ObjectMapping.stringToObject(ObjectMapping.asJsonString(s),ColumnDTO.class);
+                            return ObjectMapping.stringToObject(ObjectMapping.asJsonStringPretty(s),ColumnDTO.class);
                         } catch (IOException e) {
                             logger.error(e.getMessage());
                             throw new RuntimeException(e);
@@ -116,7 +116,7 @@ public class TaskProcessConfigExtractor {
             throw new IllegalArgumentException("Attribute 'dataSetDTO' can not be null");
         try {
             DataSetDTO dataSetDTO =
-                    ObjectMapping.stringToObject(ObjectMapping.asJsonString(dataSetMap),DataSetDTO.class);
+                    ObjectMapping.stringToObject(ObjectMapping.asJsonStringPretty(dataSetMap),DataSetDTO.class);
             List<String> keyColNames = getKeyColumnNames(dataSetDTO);
 
             return dataSetDTO
@@ -141,7 +141,7 @@ public class TaskProcessConfigExtractor {
 
         try {
             DataSetDTO dataSetDTO =
-                    ObjectMapping.stringToObject(ObjectMapping.asJsonString(dataSetMap),DataSetDTO.class);
+                    ObjectMapping.stringToObject(ObjectMapping.asJsonStringPretty(dataSetMap),DataSetDTO.class);
 
             List<String> keyColNames = getKeyColumnNames(dataSetDTO);
 
@@ -163,7 +163,7 @@ public class TaskProcessConfigExtractor {
             throw new IllegalArgumentException("Attribute 'dataSetDTO' can not be null");
         try {
             DataSetDTO dataSetDTO =
-                    ObjectMapping.stringToObject(ObjectMapping.asJsonString(dataSetMap),DataSetDTO.class);
+                    ObjectMapping.stringToObject(ObjectMapping.asJsonStringPretty(dataSetMap),DataSetDTO.class);
 
             return dataSetDTO
                     .getColumnSchema()
@@ -180,7 +180,7 @@ public class TaskProcessConfigExtractor {
             throw new IllegalArgumentException("Attribute 'dataSetDTO' can not be null");
         try {
             DataSetDTO dataSetDTO =
-                    ObjectMapping.stringToObject(ObjectMapping.asJsonString(dataSetMap),DataSetDTO.class);
+                    ObjectMapping.stringToObject(ObjectMapping.asJsonStringPretty(dataSetMap),DataSetDTO.class);
 
             return dataSetDTO
                     .getColumnSchema()

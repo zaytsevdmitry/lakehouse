@@ -1,6 +1,8 @@
 package org.lakehouse.taskexecutor.spark.dq;
 
 import org.lakehouse.client.rest.config.configuration.ConfigRestClientConfiguration;
+import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
+import org.lakehouse.client.rest.scheduler.configuration.SchedulerRestClientConfiguration;
 import org.lakehouse.task.executor.spark.api.body.ApplicationBodyStarter;
 import org.lakehouse.task.executor.spark.api.configuration.SparkSessionConfiguration;
 import org.lakehouse.task.executor.spark.api.service.CatalogActivatorService;
@@ -18,7 +20,8 @@ import org.springframework.context.annotation.ComponentScan;
                 ConfigRestClientConfiguration.class,
                 SparkSessionConfiguration.class,
                 CatalogActivatorService.class,
-                DqMetricConfigProducerKafkaConfigurationProperties.class
+                DqMetricConfigProducerKafkaConfigurationProperties.class,
+                SchedulerRestClientConfiguration.class
         }
         )
 

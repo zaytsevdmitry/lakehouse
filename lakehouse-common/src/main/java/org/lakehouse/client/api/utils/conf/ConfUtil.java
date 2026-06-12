@@ -1,12 +1,16 @@
 package org.lakehouse.client.api.utils.conf;
 
 import org.lakehouse.client.api.exception.TaskConfigurationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ConfUtil {
+
+    final private static Logger logger = LoggerFactory.getLogger(ConfUtil.class);
 
     /**
      * <p>Filters out keys that begin with a prefix.</>
@@ -30,35 +34,100 @@ public class ConfUtil {
      * @param conf - source map
      * @param startWith - prefix
      * @return result - rest of map, with rewrote keys
-     * * @since 0.4.0
+     * @since 0.4.0
      * */
-    public static  Map<String, String> extractConf(Map<String, String> conf, String startWith){
-        if (conf == null) {
+    public static Map<String, String> extractConf(Map<String, String> conf, String startWith) {
+        if (conf == null || startWith == null) {
+            logger.warn("{}.extractConf Map or 'startWith' is empty", ConfUtil.class.getName());
             return new HashMap<>();
         }
         return conf.entrySet()
                 .stream()
                 .filter(e -> e.getKey() != null && e.getKey().startsWith(startWith))
-                // Используем явные лямбда-выражения вместо ссылок на методы ::
                 .collect(Collectors.toMap(
                         e -> e.getKey().substring(startWith.length()),
                         e -> e.getValue() != null ? e.getValue() : ""
                 ));
     }
+
+    /**
+     * Safely retrieves a Long value by key from the configuration map.
+     *
+     * @param map - configuration map
+     * @param key - property key
+     * @param defaultValue - fallback value if key is not found
+     * @return Long value
+     * @throws TaskConfigurationException if parsing fails or key is missing without a default value
+     * @since 0.4.0
+     */
     public static Long getLongByKey(Map<String, String> map, String key, Long defaultValue) throws TaskConfigurationException {
-        if (map.containsKey(key) || map.get(key).isBlank())
+        if (map == null || key == null) {
+            logger.warn("{}.getLongByKey Map or key is empty", ConfUtil.class.getName());
+            return getLongDefaultOrThrow(key, defaultValue);
+        }
+
+        String value = map.get(key);
+
+        if (value != null && !value.isBlank()) {
             try {
-                return Long.valueOf(map.get(key));
+                return Long.valueOf(value.trim());
             } catch (NumberFormatException e) {
                 throw new TaskConfigurationException(e);
             }
-        else {
-            if (defaultValue == null)
-                throw new TaskConfigurationException(String.format("Key not found %s", key));
-            else return defaultValue;
+        }
+
+        return getLongDefaultOrThrow(key, defaultValue);
+    }
+
+    private static Long getLongDefaultOrThrow(String key, Long defaultValue) throws TaskConfigurationException {
+        if (defaultValue == null) {
+            throw new TaskConfigurationException(String.format("Key not found: %s", key));
+        }
+        return defaultValue;
+    }
+
+    /**
+     * Safely retrieves a boolean value by key from the configuration map.
+     *
+     * @param map - configuration map
+     * @param key - property key
+     * @param defaultValue - fallback value if key is not found
+     * @return boolean value
+     * @throws TaskConfigurationException if the value is not a valid boolean representation
+     * @since 0.4.0
+     */
+    public static boolean getBooleanByKey(Map<String, String> map, String key, boolean defaultValue) throws TaskConfigurationException {
+        if (map == null || key == null) {
+            logger.warn("{}.getBooleanByKey Map or key is empty", ConfUtil.class.getName());
+            return defaultValue;
+        }
+
+        String value = map.get(key);
+
+        if (value == null || value.isBlank()) {
+            return defaultValue;
+        }
+
+        String trimmedValue = value.trim();
+        if ("true".equalsIgnoreCase(trimmedValue)) {
+            return true;
+        } else if ("false".equalsIgnoreCase(trimmedValue)) {
+            return false;
+        } else {
+            throw new TaskConfigurationException(
+                    String.format(
+                            "Wrong value %s for key %s when expected boolean { true or false in any case }",
+                            value, key));
         }
     }
 
+    /**
+     * Convert to string map from another generic map.
+     *
+     * @param map - other generic types map
+     * @return map of strings
+     * @since 0.4.0
+     */
     public static <K,V> Map<String, String> castToStringMap(Map<K,V> map){
         return map
                 .entrySet()

@@ -74,7 +74,7 @@ public class SQLTemplateService {
     private SQLTemplateDTO mapSQSqlTemplateToDTO(List<SQLTemplate> sqlTemplates) {
         try {
             return ObjectMapping.stringToObject(
-                    ObjectMapping.asJsonString(
+                    ObjectMapping.asJsonStringPretty(
                             sqlTemplates
                                     .stream()
                                     .map(sqlTemplate -> Map.entry(sqlTemplate.getKey(),sqlTemplate.getValue()))

@@ -51,19 +51,23 @@ public class ObjectMapping {
 
     public static String asJsonString(final Object obj) throws JsonProcessingException {
         return objectMapper
+                .writeValueAsString(obj);
+    }
+    public static String asJsonStringPretty(final Object obj) throws JsonProcessingException {
+        return objectMapper
                 .writerWithDefaultPrettyPrinter()
                 .writeValueAsString(obj);
     }
     public static Map<String,Object> asMap(final Object obj) throws JsonProcessingException {
-        String str = asJsonString(obj);
+        String str = asJsonStringPretty(obj);
         return objectMapper
-                .readValue(asJsonString(obj), new TypeReference<>() {
+                .readValue(asJsonStringPretty(obj), new TypeReference<>() {
                 });
     }
     public static Map<String,String> asMapOfStrings(final Object obj) throws JsonProcessingException {
-        String str = asJsonString(obj);
+        String str = asJsonStringPretty(obj);
         return objectMapper
-                .readValue(asJsonString(obj), new TypeReference<>() {
+                .readValue(asJsonStringPretty(obj), new TypeReference<>() {
                 });
     }
 

@@ -8,9 +8,9 @@ helm dependency update ./lakehouse-management-helm-charts/lakehouse-management
 
 echo copy image lakehouse:0.4.0  ~ 2-3 minutes
 minikube image load lakehouse:0.4.0 --daemon --alsologtostderr -v=1
-echo copy image lakehouse:0.4.0  ~ 2-3 minutes
+echo copy image lakehouse-s3-check  ~ 2-3 minutes
 minikube image load lakehouse-s3-check:0.4.0 --daemon  --alsologtostderr -v=1
-echo copy image lakehouse:0.4.0  ~ 2-3 minutes
+echo copy image lakehouse-hms:0.4.0  ~ 2-3 minutes
 minikube image load lakehouse-hms:0.4.0  --daemon --alsologtostderr -v=1
 echo copy image lakehouse-spark-aws:0.4.0  ~ 2-3 minutes
 minikube image load lakehouse-spark-aws:0.4.0 --daemon  --alsologtostderr -v=1

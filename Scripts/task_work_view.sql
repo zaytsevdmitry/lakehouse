@@ -9,9 +9,9 @@ select si.id
 --, ssai."name"                     scenario         -- part of chedule, is an reference for dataset, schedule and tasks
 --, sti."name"                      task             -- task
 --, ssai.conf_data_set_key_name                     -- dataset
-, case when si.status = ssai.status and ssai.status = sti.status then sti.status 
-       else si.status ||'-> '|| ssai.status ||'-> '|| sti.status 
-  end ||' [' || sti.re_try_num || ']'  status         --schedule_status scenario_status task_status re_try_count
+, /*case when si.status = ssai.status and ssai.status = sti.status then sti.status 
+       else si.status ||'-> '|| ssai.status ||'-> '||*/ sti.status 
+  /*end */||' [' || sti.re_try_num || ']'  status         --schedule_status scenario_status task_status re_try_count
 , stiel.last_heart_beat_date_time
 , stiel.id                        lock_id
 , stiel.service_id

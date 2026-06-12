@@ -64,7 +64,7 @@ public class SQLTemplateFactory {
 
             return ObjectMapping
                     .stringToObject(
-                            ObjectMapping.asJsonString(resultMap),
+                            ObjectMapping.asJsonStringPretty(resultMap),
                             SQLTemplateDTO.class);
         } catch (IOException e) {
             throw new TaskConfigurationException(e);

@@ -12,7 +12,7 @@ data:
         <!-- Database Settings -->
         <property>
             <name>javax.jdo.option.ConnectionURL</name>
-            <value>jdbc:postgresql://{{ .Values.config.db.host }}:{{ .Values.config.db.port }}/{{ .Values.config.db.name }}</value>
+            <value>jdbc:postgresql://{{ .Values.config.db.host }}:{{ .Values.config.db.port }}/{{ .Values.config.db.name }}?ApplicationName=HiveMetaStore</value>
         </property>
         <property>
             <name>javax.jdo.option.ConnectionDriverName</name>

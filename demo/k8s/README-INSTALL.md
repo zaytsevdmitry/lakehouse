@@ -30,7 +30,7 @@ minikube start --cpus 4 --memory 8192 --registry-mirror=https://dh-mirror.gitver
 ```commandline
 sh install.bash
 ```
-В результате выполнения команды будет 
+В результате выполнения команды : 
 - образы lakehouse* перегрузятся из локального репозитория в minikube
 - соберется helm chart
 - создано пространство имен lakehouse-management
@@ -44,15 +44,7 @@ sh install.bash
 ## Проброс портов из контейнеров
 Для наблюдения за сервисами можно прокинуть порты контейнеров на localhost
 ```commandline
-
-xterm -e "kubectl port-forward svc/spark-history 18080:18080 -n lakehouse-management" &
-xterm -e "kubectl port-forward svc/lakehouse-release-trino 9090:8080 -n lakehouse-management" &
-xterm -e "kubectl port-forward svc/minio 9001:9001 -n lakehouse-management" &
-xterm -e "kubectl port-forward svc/minio 9000:9000 -n lakehouse-management" &
-xterm -e "kubectl port-forward svc/lakehouse-management-config-service 8080:8080 -n lakehouse-management" &
-xterm -e "kubectl port-forward svc/lakehouse-management-state-service  8081:8081 -n lakehouse-management" &
-xterm -e "kubectl port-forward svc/db-dev 5432:5432 -n lakehouse-management" &
-xterm -e "kubectl port-forward svc/broker 9092:9092 -n lakehouse-management" &
+sh tunnels.bash
 ```
 > В примере команда kubectl запускается через xterm. Это нужно, чтобы иметь возможность закрыть проброс порта кликом мыши в интерфейсе рабочего стола, а не искать номера процессов чтобы их завершить.
 > xterm это стандартная утилита linux. В своей операционной системе можно найти аналог.
@@ -87,16 +79,17 @@ All configurations loaded
 kubectl -n lakehouse-management get pods
 ```
 Просмотр лога task-executor
-```commandline
-kubectl -n lakehouse-management logs deployment/lakehouse-management-task-executor-service
+```commandline`
+kubectl -n lakehouse-management logs deployment/lakehouse-management-task-executor-service`
 ```
 Просмотр лога драйвера, который упал с ошибкой
 ```commandline
 kubectl -n lakehouse-management get pods|grep driver| grep Error|awk '{print $1}'|xargs -r kubectl -n lakehouse-management logs
 ```
+kubectl -n lakehouse-management get pods -o custom-columns="NAME:.metadata.name,TASK-NAME:.metadata.annotations.lakehouse-management-task"
 
 
-# Деинсталяция
+# Де-инсталляция
 ## Удаление сервисов
 ```commandline 
 sh uninstall.bash

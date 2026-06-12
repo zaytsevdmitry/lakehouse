@@ -222,7 +222,11 @@ public class ScheduleTaskInstanceService {
                 .stream().map(scheduleTaskInstanceFactory::mapScheduledTaskToDTO)
                 .toList();
     }
-
+    public ScheduledTaskDTO findById(Long id){
+        return scheduleTaskInstanceFactory.mapScheduledTaskToDTO(
+                repository.getReferenceById(id)
+        );
+    }
     public List<ScheduledTaskLockDTO> getScheduledTaskLockDTOs() {
         return executionLockRepository
                 .findAll()

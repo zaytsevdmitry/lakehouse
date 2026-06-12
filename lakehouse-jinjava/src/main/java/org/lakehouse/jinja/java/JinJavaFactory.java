@@ -88,7 +88,7 @@ public class JinJavaFactory {
 
         return new JinJavaUtils(jinjava);
     }
-    public JinJavaUtils getJinJavaUtils(SourceConfDTO sourceConfDTO, ScheduledTaskDTO scheduledTaskDTO) throws JsonProcessingException {
+    public static JinJavaUtils getJinJavaUtils(SourceConfDTO sourceConfDTO, ScheduledTaskDTO scheduledTaskDTO) throws JsonProcessingException {
        return getJinJavaUtils()
                .injectGlobalContext(ObjectMapping.asMap(sourceConfDTO))
                .injectGlobalContext(ObjectMapping.asMap(scheduledTaskDTO));

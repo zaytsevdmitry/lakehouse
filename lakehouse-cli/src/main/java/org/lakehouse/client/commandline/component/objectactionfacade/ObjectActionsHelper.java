@@ -16,7 +16,7 @@ public class ObjectActionsHelper {
         CommandResult result = new CommandResult(new ArrayList<String>());
         try {
             result.getResultSrtingList().add(ObjectMapping
-                    .asJsonString(o));
+                    .asJsonStringPretty(o));
         } catch (JsonProcessingException e) {
             result.getResultSrtingList().add(e.getMessage());
         }

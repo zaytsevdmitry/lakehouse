@@ -4,7 +4,7 @@
   "tasks": [
     {
       "name": "begin",
-      "taskExecutionServiceGroupName": "tesg1",
+      "taskExecutionServiceGroupName": "state-service",
       "taskProcessor": "lockedStateTaskProcessor",
       "importance": "critical",
       "description": "Made dataset interval status Locked"

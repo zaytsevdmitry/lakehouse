@@ -15,7 +15,7 @@ rules:
     verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]
   - apiGroups: [""]
     resources: ["pods", "pods/log", "services", "configmaps", "events"]
-    verbs: ["get", "list", "watch", "delete", "deletecollection"]
+    verbs: ["create", "get", "list", "watch", "update", "patch", "delete", "deletecollection"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

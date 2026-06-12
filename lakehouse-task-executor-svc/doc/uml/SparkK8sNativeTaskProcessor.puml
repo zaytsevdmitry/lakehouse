@@ -1,0 +1,105 @@
+@startuml
+skinparam monochrome false
+skinparam shadowing false
+
+' Определение стилей для цветового кодирования состояний
+skinparam state {
+  ' Стартовые состояния (Синий)
+  BackgroundColor<<Initial>> #E6F0FA
+  BorderColor<<Initial>> #0066CC
+  FontColor<<Initial>> #004080
+
+  ' Промежуточные состояния (Желтый)
+  BackgroundColor<<Intermediate>> #FFF9E6
+  BorderColor<<Intermediate>> #ECC043
+  FontColor<<Intermediate>> #8A6D1C
+
+  ' Положительные финальные состояния (Зеленый)
+  BackgroundColor<<Success>> #E6F4EA
+  BorderColor<<Success>> #137333
+  FontColor<<Success>> #137333
+
+  ' Аварийные финальные состояния (Красный)
+  BackgroundColor<<Terminal>> #FCE8E6
+  BorderColor<<Terminal>> #C5221F
+  FontColor<<Terminal>> #C5221F
+}
+
+[*] --> SUBMITTED : submit() called
+
+state SUBMITTED <<Initial>> {
+  [*] --> PodCreated : createResource()
+  PodCreated --> WatcherRegistered : watch() started
+}
+
+SUBMITTED ---> PENDING : Event: "Pending"\n[finalState = PENDING]
+SUBMITTED ---> RUNNING : Event: "Running"\n[finalState = RUNNING\nrunningLatch.countDown()]
+
+state PENDING <<Intermediate>> {
+  [*] --> WaitingForStart
+  WaitingForStart --> StartupTimeoutHit : Timeout startupTimeoutMinutes\n[startedInTime == false]
+}
+
+StartupTimeoutHit --> TIMEOUT_STARTUP : throw TaskFailedException\n"timed out during startup"
+
+PENDING --> RUNNING : Event: "Running"\n[finalState = RUNNING\nrunningLatch.countDown()]
+
+state RUNNING <<Intermediate>> {
+  [*] --> WaitingForBusinessLogic
+  WaitingForBusinessLogic --> BusinessTimeoutHit : Timeout businessTimeoutMinutes\n[completedInTime == false]
+}
+
+BusinessTimeoutHit --> TIMEOUT_BUSINESS : throw TaskFailedException\n"hit business timeout limit"
+
+state NetworkDisconnect <<Intermediate>> {
+  note : Called onClose(cause)\nResets both Latches\nregardless of error!
+}
+
+PENDING --> NetworkDisconnect : onClose()
+RUNNING --> NetworkDisconnect : onClose()
+NetworkDisconnect --> UNKNOWN : Exit from await()\nCheck finalState.get()
+
+RUNNING --> SUCCEEDED : Event: "Succeeded"\n[finalState = SUCCEEDED\nterminalLatch.countDown()]
+PENDING --> SUCCEEDED : Event: "Succeeded" (bypassing Running)
+
+RUNNING --> FAILED : Event: "Failed"\n[finalState = FAILED\nterminalLatch.countDown()]
+PENDING --> FAILED : Event: "Failed"
+
+state SUCCEEDED <<Success>> {
+  note "Final: Success\nLogged: Succeeded" as N1
+}
+
+state FAILED <<Terminal>> {
+  note "Final: Failure\nthrow TaskFailedException" as N2
+}
+
+state TIMEOUT_STARTUP <<Terminal>>
+state TIMEOUT_BUSINESS <<Terminal>>
+state UNKNOWN <<Terminal>>
+
+' Resource cleanup in finally block
+SUCCEEDED --> CleanUp : finally block
+FAILED --> CleanUp : finally block
+TIMEOUT_STARTUP --> CleanUp : finally block
+TIMEOUT_BUSINESS --> CleanUp : finally block
+UNKNOWN --> CleanUp : finally block
+
+state CleanUp <<Intermediate>> {
+  [*] --> LogCheck
+  state LogCheck <<choice>>
+  LogCheck --> LogDelivery : [isFailed && logDeliveryIfFail]
+  LogCheck --> CleanupCheck : [otherwise]
+
+  LogDelivery --> CleanupCheck
+
+  state CleanupCheck <<choice>>
+  CleanupCheck --> DeleteResources : [!skipCleanup]\ncall cleanUpResource()
+  CleanupCheck --> KeepResources : [skipCleanup]\npod remains for debugging
+
+  state DeleteResources {
+    [*] --> DeleteDriverAndExecutors : withPropagationPolicy\n(BACKGROUND).delete()
+  }
+}
+
+CleanUp --> [*] : Thread execution finished
+@endum

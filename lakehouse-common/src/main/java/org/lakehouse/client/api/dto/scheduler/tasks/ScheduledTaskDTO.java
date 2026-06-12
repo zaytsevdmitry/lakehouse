@@ -91,23 +91,19 @@ public class ScheduledTaskDTO extends TaskDTO {
     }
 
     @JsonIgnore
-    public String getTaskFullName(){
-        return (String.format("%s-%s-%s-%s",
+    public String buildTaskFullName(){
+        return (String.format("%d-%d-%s-%s-%s-%s",
+                getId(),
+                getTryNum(),
                 getScheduleKeyName(),
                 getScenarioActKeyName(),
                 getName(),
                 getTargetDateTime()
                         .replace("-","")
-                )//DNS RFC 1123  Kubernetes
-                        .replace(":","")
-                        .replace(" ","-")
-                        .replace("_","-")
-                        .replace("+","-")
-                        .toLowerCase() //todo This value needs some work for Kubernetes. Additionally, it is expected that the subname cannot exceed 63 characters.
-        );
+                        .replace(":","")));
     }
     @JsonIgnore
-    public String getLockSource(){
+    public String buildLockSource(){
         return String.format("%s.%s.%s",
                 getScheduleKeyName(),
                 getScenarioActKeyName(),
