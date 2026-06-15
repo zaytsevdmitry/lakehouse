@@ -594,7 +594,7 @@ public class TestWithPostgres {
         loadTaskDTOExpected.setTaskProcessorArgs(loadExpectArgs);
         loadTaskDTOExpected.setName("load");
         loadTaskDTOExpected.setTaskExecutionServiceGroupName("default");
-        loadTaskDTOExpected.setTaskProcessor("sparkLauncherTaskProcessor");
+        loadTaskDTOExpected.setTaskProcessor("sparkStandAloneClusterTaskProcessor");
         loadTaskDTOExpected.setTaskProcessorBody("mergeSQLProcessorBody");
         loadTaskDTOExpected.setImportance("critical");
         loadTaskDTOExpected.setDescription("override load");
@@ -612,7 +612,7 @@ public class TestWithPostgres {
         extendTaskDTOExpected.setTaskProcessorArgs(extendTaskDTOExpectedArgs);
         extendTaskDTOExpected.setName("extend");
         extendTaskDTOExpected.setTaskExecutionServiceGroupName("default");
-        extendTaskDTOExpected.setTaskProcessor("sparkLauncherTaskProcessor");
+        extendTaskDTOExpected.setTaskProcessor("sparkStandAloneClusterTaskProcessor");
         extendTaskDTOExpected.setTaskProcessorBody("mergeSQLProcessorBody");
         extendTaskDTOExpected.setImportance("critical");
         extendTaskDTOExpected.setDescription("Not exists in template");

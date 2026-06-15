@@ -1,7 +1,7 @@
 {
   "name" : "compact",
   "taskExecutionServiceGroupName" : "spark-cluster",
-  "taskProcessor" : "sparkLauncherTaskProcessor",
+  "taskProcessor" : "sparkStandAloneClusterTaskProcessor",
   "taskProcessorBody" : "compactTableSQLProcessorBody",
   "importance" : null,
   "description" : null,

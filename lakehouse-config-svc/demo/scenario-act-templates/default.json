@@ -19,7 +19,7 @@
     {
       "name": "load",
       "taskExecutionServiceGroupName": "default",
-      "taskProcessor": "sparkLauncherTaskProcessor",
+      "taskProcessor": "sparkStandAloneClusterTaskProcessor",
       "taskProcessorBody": "mergeSQLProcessorBody",
       "importance": "critical",
       "description": "load from remote datastore",

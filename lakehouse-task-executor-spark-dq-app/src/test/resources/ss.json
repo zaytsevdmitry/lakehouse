@@ -1,7 +1,7 @@
 {
   "name" : "quality",
   "taskExecutionServiceGroupName" : "default",
-  "taskProcessor" : "sparkLauncherTaskProcessor",
+  "taskProcessor" : "sparkStandAloneClusterTaskProcessor",
   "taskProcessorBody" : "sparkTaskProcessorDQBody",
   "importance" : null,
   "description" : null,

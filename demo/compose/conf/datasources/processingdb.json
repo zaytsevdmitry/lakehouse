@@ -4,7 +4,7 @@
   "catalogKeyName":"processing",
   "service":
     {
-      "host": "192.1.193.10",
+      "host": "172.20.193.10",
       "port": "5432",
       "urn": "postgresDB",
       "properties": {

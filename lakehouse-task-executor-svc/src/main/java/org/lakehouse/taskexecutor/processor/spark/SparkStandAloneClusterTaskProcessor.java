@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 
-@Service(value = "sparkLauncherTaskProcessor")
+@Service(value = "sparkStandAloneClusterTaskProcessor")
 public class SparkStandAloneClusterTaskProcessor extends AbstractSparkDeployTaskProcessor {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final SparkRestDeployFactory sparkRestDeployFactory;

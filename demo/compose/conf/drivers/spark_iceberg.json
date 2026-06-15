@@ -2,7 +2,7 @@
   "keyName" : "spark_iceberg",
   "description" : null,
   "connectionTemplates" : {
-    "spark" : "{%set service=dataSources[dataSets[targetDataSetKeyName].dataSourceKeyName].service%}{{taskProcessorArgs.protocol}}://{{service.host}}:{{service.port}}"
+    "spark" : "{%set service=dataSources[dataSets[targetDataSetKeyName].dataSourceKeyName].service%}{%set protocol=taskProcessorArgs['datasource.service.protocol']%}{{protocol}}://{{service.host}}:{{service.port}}"
   },
   "sqlTemplate" : {
     "databaseSchemaName" : "sql-template-spark_iceberg.databaseSchemaName.sql",

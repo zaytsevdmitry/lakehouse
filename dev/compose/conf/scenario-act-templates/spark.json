@@ -19,7 +19,7 @@
     {
       "name": "prepare",
       "taskExecutionServiceGroupName": "spark-cluster",
-      "taskProcessor": "sparkLauncherTaskProcessor",
+      "taskProcessor": "sparkStandAloneClusterTaskProcessor",
       "taskProcessorBody": "createTableSQLProcessorBody",
       "importance": "critical",
       "description": "load from remote datastore",
@@ -36,7 +36,7 @@
     {
       "name": "load",
       "taskExecutionServiceGroupName": "spark-cluster",
-      "taskProcessor": "sparkLauncherTaskProcessor",
+      "taskProcessor": "sparkStandAloneClusterTaskProcessor",
       "taskProcessorBody": "mergeSQLProcessorBody",
       "importance": "critical",
       "description": "load from remote datastore",
@@ -53,7 +53,7 @@
     {
       "name": "compact",
       "taskExecutionServiceGroupName": "spark-cluster",
-      "taskProcessor": "sparkLauncherTaskProcessor",
+      "taskProcessor": "sparkStandAloneClusterTaskProcessor",
       "taskProcessorBody": "compactTableSQLProcessorBody",
       "importance": "critical",
       "description": "load from remote datastore",

@@ -33,9 +33,9 @@ scheduler-svc должен будет повторить задачу, это с
 > Имя процессора указывается с буквенного символа в нижнем регистре в camelCase
 
 
-###  [Spark-задачи](../../lakehouse-task-spark-apps/doc/devguide.md)
-  * [SparkLauncherTaskProcessor.java](../src/main/java/org/lakehouse/taskexecutor/processor/spark/SparkLauncherTaskProcessor.java) запускает тело задачи на удаленном spark standalone кластере в виде spark-job.
-  * [K8sSparkNativeTaskProcessor.md](processors/K8sSparkNativeTaskProcessor.md) запускает тело задачи на удаленном кластере k8s в виде spark-job 
+###  [Spark-задачи](../../lakehouse-task-executor-spark-api/doc/readme.md)
+  * sparkStandAloneClusterTaskProcessor [SparkStandAloneClusterTaskProcessor.java](../src/main/java/org/lakehouse/taskexecutor/processor/spark/SparkStandAloneClusterTaskProcessor.java) запускает тело задачи на удаленном spark standalone кластере в виде spark-job.
+  * [k8sSparkNativeTaskProcessor](processors/K8sSparkNativeTaskProcessor.md) запускает тело задачи на удаленном кластере k8s в виде spark-job 
 
 Ничего не знают о логике задачи. Ответственность это разбор конфигурации, чтобы параметризовать spark-driver в конкретном кластере.
 Не работают с локальным запуском драйвере тк это сильно утяжелит сам сервис и размоет границы его ответственности.
@@ -53,7 +53,7 @@ scheduler-svc должен будет повторить задачу, это с
   - Производится обход параметров целевого datasource. Отфильтровываются параметры k8s.spark-operator.
   - Производится обход taskProcessorArgs. Отфильтровываются параметры k8s.spark-operator. Отобранные параметры перезапишут полученные выше, если встретятся одинаковые ключи.
 >  Как это уже видно из названия этот вид конфигурации применяется для создания манифеста kuberflow/spark-operator и работает только с SparkK8sOperatorTaskProcessor
-> В SparkLauncherTaskProcessor это не требуется так как кластер spark - standalone обходится исключительно конфигурацией spark. В манифесте для k8s мы должны рассказать больше специфичных подробностей, а иногда даже продублировать количество требуемой памяти и ядер
+> В SparkStandAloneClusterTaskProcessor это не требуется так как кластер spark - standalone обходится исключительно конфигурацией spark. В манифесте для k8s мы должны рассказать больше специфичных подробностей, а иногда даже продублировать количество требуемой памяти и ядер
 
 
 ### Работа со статусной моделью датасета
@@ -86,7 +86,7 @@ TaskProcessorBody использующие шаблоны SQLTemplate совме
 Они знают только какой шаблон надо извлечь, формируют уникальный jinja контекст, передают это все в абстрактную среду исполнения котора рендерит темплейт и исполняет его в конкретном окружении (RDBMS,TRINO или SPARK)
 
 [SparkTaskProcessorDQBody.java](../../lakehouse-task-executor-spark-dq-app/src/main/java/org/lakehouse/taskexecutor/spark/dq/service/SparkTaskProcessorDQBody.java)
-совместим только [SparkLauncherTaskProcessor.java](../src/main/java/org/lakehouse/taskexecutor/processor/spark/SparkLauncherTaskProcessor.java) и
-[SparkK8sOperatorTaskProcessor.java](../src/main/java/org/lakehouse/taskexecutor/processor/spark/SparkK8sOperatorTaskProcessor.java)
+совместим только [SparkStandAloneClusterTaskProcessor.java](../src/main/java/org/lakehouse/taskexecutor/processor/spark/SparkStandAloneClusterTaskProcessor.java) и
+[k8sSparkNativeTaskProcessor](processors/K8sSparkNativeTaskProcessor.md)
 
 

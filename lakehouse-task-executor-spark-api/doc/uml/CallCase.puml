@@ -1,0 +1,10 @@
+@startuml
+(TaskProcessor)-->(SparkStandAloneClusterTaskProcessor)
+(TaskProcessor)-->(SparkK8sNativeTaskProcessor)
+(SparkStandAloneClusterTaskProcessor)..>(SparkClusterStandAlone): request
+(SparkK8sNativeTaskProcessor)..>(K8s-cluster): request
+(SparkClusterStandAlone)..>(SparkProcessorApplication): run job
+(K8s-cluster)..>(SparkProcessorApplication): run job
+(SparkProcessorApplication)->(ApplicationBodyStarter)
+(ApplicationBodyStarter)->(ProcessorBody)
+@enduml
