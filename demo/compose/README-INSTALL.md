@@ -20,18 +20,20 @@ docker compose down; docker compose up
 
 ``` 
 docker container rm broker 
+docker container rm conf-svc 
 docker container rm db-dev
 docker container rm demo-trino-1
 docker container rm hive-metastore
+docker container rm minio-dev 
+docker container rm scheduler-svc
 docker container rm spark-history
 docker container rm spark-master
 docker container rm spark-worker-1
+docker container rm state-svc
 docker container rm task-executor-svc-1
 docker container rm task-executor-svc-2 
 docker container rm task-executor-svc-3 
 docker container rm task-executor-svc-4 
-docker container rm conf-svc 
-docker container rm scheduler-svc 
 ```
 #### Сеть
 В конфигурации определена сеть
@@ -41,7 +43,7 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 192.1.193.0/24
+        - subnet: 172.20.193.0/24
 ```
 Многие файлы конфигурации могут использовать IP адрес для указания сервера.
 
@@ -84,3 +86,16 @@ All configurations loaded
 ## Поток управления
 
 ![flow.png](../uml/flow.png)
+
+# Удаление 
+
+Выполнить удаление контейнеров 
+
+```shell
+docker compose down
+```
+
+Очистить данные хранилища minio. Потребуются root привилегии тк сервис работает в контейнере под root  
+```shell
+su_cleanup.bash
+```
