@@ -7,10 +7,10 @@ scheduler -> taskqueue: send task message
 
 taskqueue -> ScheduledTaskKafkaConsumerService: get message
 ScheduledTaskKafkaConsumerService -> scheduler: take a lock
-ScheduledTaskKafkaConsumerService -> ExecuteService: use lock information
+ScheduledTaskKafkaConsumerService -> ExecuteService: receive lock information
 ExecuteService -> HeardBeatService: run heard beat loop
 HeardBeatService -> scheduler
-ExecuteService -> ProcessorFactory: process the task
+ExecuteService -> ApplicationContext: Get Processor bean by name and run process the task
 ExecuteService -> HeardBeatService: shutdown heard beat
 ExecuteService -> scheduler: send task result status
 
@@ -25,7 +25,7 @@ ScheduledTaskKafkaConsumerService
 filtered messages
 by taskExecutionGroup Key
 end note
-note left of ProcessorFactory
+note left of ApplicationContext
 Task processor builder
 end note
 @enduml
