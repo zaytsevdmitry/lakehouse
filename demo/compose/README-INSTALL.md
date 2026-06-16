@@ -23,6 +23,7 @@ docker container rm broker
 docker container rm conf-svc 
 docker container rm db-dev
 docker container rm demo-trino-1
+docker container rm compose-trino-1
 docker container rm hive-metastore
 docker container rm minio-dev 
 docker container rm scheduler-svc

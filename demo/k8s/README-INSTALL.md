@@ -75,20 +75,22 @@ All configurations loaded
 # Наблюдение
 Просмотр списка подов
 
-```commandline
-kubectl -n lakehouse-management get pods
+```shell
+kubectl -n lakehouse-management get pods -o custom-columns="NAME:.metadata.name,STATUS:.status.phase,TASK-NAME:.metadata.annotations.lakehouse-management-task"
+
 ```
 Просмотр лога task-executor
-```commandline`
+```commandline
 kubectl -n lakehouse-management logs deployment/lakehouse-management-task-executor-service`
 ```
 Просмотр лога драйвера, который упал с ошибкой
-```commandline
-kubectl -n lakehouse-management get pods|grep driver| grep Error|awk '{print $1}'|xargs -r kubectl -n lakehouse-management logs
+```shell
+kubectl -n lakehouse-management get pods|grep task| grep Error|awk '{print $1}'|xargs -r kubectl -n lakehouse-management logs
 ```
-kubectl -n lakehouse-management get pods -o custom-columns="NAME:.metadata.name,TASK-NAME:.metadata.annotations.lakehouse-management-task"
-
-
+Ускоряем работу
+```shell
+kubectl -n lakehouse-management scale deployment lakehouse-management-task-executor-service --replicas=4
+````
 # Де-инсталляция
 ## Удаление сервисов
 ```commandline 
