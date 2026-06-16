@@ -20,7 +20,7 @@ mv kubectl $HOME/bin/
   - для удобства можно добавить helm-bash-completion или другой удобный
 - Запустить minikube
 
-```commandline
+```shell
 minikube start --cpus 4 --memory 8192 --registry-mirror=https://dh-mirror.gitverse.ru
 ```
 
@@ -43,7 +43,7 @@ sh install.bash
 
 ## Проброс портов из контейнеров
 Для наблюдения за сервисами можно прокинуть порты контейнеров на localhost
-```commandline
+```shell
 sh tunnels.bash
 ```
 > В примере команда kubectl запускается через xterm. Это нужно, чтобы иметь возможность закрыть проброс порта кликом мыши в интерфейсе рабочего стола, а не искать номера процессов чтобы их завершить.
@@ -59,7 +59,7 @@ lakehouse-management-config-service 8080 нужен для загрузки ко
 выполнять демонстрационные задачи
 
 Если сервис конфигураций еще не доступен, скрипт "подождет" готовности сервиса
-```commandline
+```
 server is 127.0.0.1:8080/v1_0/configs
 pwd is /home/dm2/IdeaProjects/lakehouse/demo/conf
 Waiting Config-SVC: The request failed. Sleeping...zzZ
@@ -68,7 +68,7 @@ Waiting Config-SVC: The request failed. Sleeping...zzZ
 
 ```
 и загрузит конфигурацию. В конце должно появиться сообщение
-```commandline
+```
 All configurations loaded
 ```
 
@@ -80,8 +80,8 @@ kubectl -n lakehouse-management get pods -o custom-columns="NAME:.metadata.name,
 
 ```
 Просмотр лога task-executor
-```commandline
-kubectl -n lakehouse-management logs deployment/lakehouse-management-task-executor-service`
+```shell
+kubectl -n lakehouse-management logs deployment/lakehouse-management-task-executor-service
 ```
 Просмотр лога драйвера, который упал с ошибкой
 ```shell

@@ -37,10 +37,12 @@ public class K8sPodStatusWatcher implements Watcher<Pod> {
 
         switch (phase) {
             case "Pending":
+                logger.info("Pod '{}' state {}.", podName, PodPhase.PENDING);
                 finalState.set(PodPhase.PENDING);
                 break;
 
             case "Running":
+                logger.info("Pod '{}' state {}.", podName, PodPhase.RUNNING);
                 finalState.set(PodPhase.RUNNING);
                 runningLatch.countDown(); // Сигнализируем, что под успешно запустился
                 break;
@@ -61,6 +63,7 @@ public class K8sPodStatusWatcher implements Watcher<Pod> {
 
             case "Unknown":
             default:
+                logger.info("Pod '{}' state {}.", podName, PodPhase.UNKNOWN);
                 finalState.set(PodPhase.UNKNOWN);
                 break;
         }
@@ -70,7 +73,7 @@ public class K8sPodStatusWatcher implements Watcher<Pod> {
     public void onClose(WatcherException cause) {
         if (cause != null) {
             logger.error("Watch for Pod '{}' closed with error", podName, cause);
-            // Разблокируем потоки в случае аварийного закрытия соединения
+            // Unlock
             runningLatch.countDown();
             terminalLatch.countDown();
         } else {
