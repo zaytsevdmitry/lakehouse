@@ -1,19 +1,17 @@
 package org.lakehouse.taskexecutor.spark.dq.test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.spark.SparkConf;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
-import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.configs.dq.QualityMetricsConfDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
+import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.client.api.utils.ObjectMapping;
-import org.lakehouse.client.api.utils.SparkConfUtil;
+import org.lakehouse.client.api.utils.conf.SparkConfUtil;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.client.rest.exception.ScriptBuildException;
 import org.lakehouse.taskexecutor.api.datasource.DataSourceManipulator;
@@ -40,6 +38,7 @@ import org.testcontainers.utility.DockerImageName;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Map;
 
 @SpringBootTest(properties = {
        "lakehouse.taskexecutor.body.config.dq.kafka.producer.metric.status.topic=metric_status",
@@ -72,12 +71,20 @@ public class SparkTaskProcessorBodyTest2 {
         @Primary
         SparkSession getSparkSessionTest() throws IOException {
             ConfigRestClientApi configRestClientApi1 =  new ConfigRestClientApiTest();
-            DataSetDTO dataSetDTO = configRestClientApi1.getDataSetDTO(trnddsDatasetName);
-            DataSourceDTO dataSourceDTO = configRestClientApi1.getDataSourceDTO(dataSetDTO.getDataSourceKeyName());
             SparkConf conf = new SparkConf();
-            SparkConfUtil.extractAppConf(dataSourceDTO.getService().getProperties()).forEach(conf::set);
-            return SparkSession.builder().master("local").config(conf).getOrCreate();
-        }
+            SourceConfDTO sourceConfDTO = configRestClientApi1.getSourceConfDTO(trnddsDatasetName);
+            ScheduledTaskDTO scheduledTaskDTO = new  TaskConfigTestFactory().loadScheduledTaskLockDTO(trnddsDatasetName,"load").getScheduledTaskEffectiveDTO();
+
+            Map.of(
+                            "spark.sql.catalog.processing", "org.apache.spark.sql.execution.datasources.v2.jdbc.JDBCTableCatalog",
+                            "spark.sql.catalog.processing.url", postgres.getJdbcUrl(),
+                            "spark.sql.catalog.processing.user", postgres.getUsername(),
+                            "spark.sql.catalog.processing.password", postgres.getPassword())
+                    .forEach((k,v) ->
+                            sourceConfDTO.getDataSourceDTOByDataSetKeyName(trnDatasetName).getService().getProperties().put(k, v));
+
+            SparkConfUtil.extractSparkConFromTaskConf(sourceConfDTO,scheduledTaskDTO).forEach(conf::set);
+            return SparkSession.builder().master("local").config(conf).getOrCreate();        }
     }
     @Autowired
     ConfigurableApplicationContext applicationContext;

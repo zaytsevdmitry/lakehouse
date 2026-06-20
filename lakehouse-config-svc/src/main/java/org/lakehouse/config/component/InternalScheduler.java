@@ -51,12 +51,14 @@ public class InternalScheduler {
 
         List<ScheduleProduceMessage> scheduleProduceMessages = scheduleProduceMessageRepository.findAllWithLimit(Limit.of(sendLimit));
         logger.info("Found {} schedule config for send", scheduleProduceMessages.size());
-        scheduleProduceMessages.forEach(scheduleProduceMessage -> {
+        for (ScheduleProduceMessage scheduleProduceMessage: scheduleProduceMessages) {
+            //scheduleProduceMessages.forEach(scheduleProduceMessage -> {
             ScheduleEffectiveDTO scheduleEffectiveDTO = scheduleService.findEffectiveScheduleDTOById(scheduleProduceMessage.getSchedule().getKeyName());
             scheduleConfigProducerService.send(scheduleEffectiveDTO);
             scheduleProduceMessageRepository.delete(scheduleProduceMessage);
             logger.info("Schedule config {} sent", scheduleProduceMessage.getSchedule().getKeyName());
 
-        });
+            //});
+        }
     }
 }

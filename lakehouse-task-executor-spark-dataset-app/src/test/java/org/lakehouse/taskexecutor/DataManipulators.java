@@ -12,8 +12,6 @@ import org.lakehouse.task.executor.spark.api.service.CatalogActivatorService;
 import org.lakehouse.taskexecutor.api.datasource.DataSourceManipulator;
 import org.lakehouse.taskexecutor.spark.dataset.datasourcemanipulator.SparkDataSourceManipulatorFactory;
 
-import java.util.List;
-
 public class DataManipulators {
     public static DataSourceManipulator getIcebergDataSourceManipulator(
             JinJavaUtils jinJavaUtils,
@@ -30,7 +28,7 @@ public class DataManipulators {
 
         new CatalogActivatorService(
                 sparkSession)
-                .activate(List.of(dataSourceDTO));
+                .activate(sourceConfDTO);
         return manipulatorFactory.buildDataSourceManipulator(driverDTO, dataSourceDTO, dataSetDTO,jinJavaUtils,configRestClientApi);
     }
 }

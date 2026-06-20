@@ -122,8 +122,10 @@ public class FileLoader {
         return objectMapper.readValue(new File(String.format(rootPath.concat("/schedules/%s.json"), name)), ScheduleDTO.class);
     }
 
-    public ScenarioActTemplateDTO loadScenarioActTemplateDTO() throws IOException {
-        return objectMapper.readValue(new File(rootPath.concat("/scenario-act-templates/default.json")), ScenarioActTemplateDTO.class);
+
+    public ScenarioActTemplateDTO loadScenarioActTemplateDTO(String name) throws IOException {
+
+        return objectMapper.readValue(new File(String.format(rootPath.concat("/scenario-act-templates/%s.json"),name)), ScenarioActTemplateDTO.class);
 
     }
     public ScenarioActTemplateDTO loadScenarioActTemplateDTOcycled() throws IOException {

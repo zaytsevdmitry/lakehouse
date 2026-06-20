@@ -19,7 +19,7 @@
     {
       "name": "prepare",
       "taskExecutionServiceGroupName": "default",
-      "taskProcessor": "org.lakehouse.taskexecutor.processor.SparkLauncherTaskProcessor",
+      "taskProcessor": "org.lakehouse.taskexecutor.processor.SparkStandAloneClusterTaskProcessor",
       "taskProcessorBody": "org.lakehouse.taskexecutor.api.processor.body.sql.CreateTableSQLProcessorBody",
       "importance": "critical",
       "description": "load from remote datastore",
@@ -34,7 +34,7 @@
     {
       "name": "load",
       "taskExecutionServiceGroupName": "default",
-      "taskProcessor": "org.lakehouse.taskexecutor.processor.SparkLauncherTaskProcessor",
+      "taskProcessor": "org.lakehouse.taskexecutor.processor.SparkStandAloneClusterTaskProcessor",
       "taskProcessorBody": "org.lakehouse.taskexecutor.api.processor.body.sql.MergeSQLProcessorBody",
       "importance": "critical",
       "description": "load from remote datastore",

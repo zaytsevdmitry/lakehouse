@@ -1,6 +1,0 @@
-@startuml
-(JDBC Internal)-->(select-merge):pass statement into db
-(JDBC External)-->(readTable):read query into spark dataframe
-(readTable)-->(SparkJoin): enreach dataframe
-(SparkJoin)-->(write)
-@enduml

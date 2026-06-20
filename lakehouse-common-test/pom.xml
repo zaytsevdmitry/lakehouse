@@ -6,7 +6,7 @@
     <parent>
         <groupId>lakehouse</groupId>
         <artifactId>lakehouse-parent</artifactId>
-        <version>0.3.0</version>
+        <version>0.4.0</version>
     </parent>
 
     <artifactId>lakehouse-common-test</artifactId>
@@ -20,13 +20,13 @@
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-common</artifactId>
-            <version>0.3.0</version>
+            <version>0.4.0</version>
         </dependency>
 
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-common-rest-client</artifactId>
-            <version>0.3.0</version>
+            <version>0.4.0</version>
             <scope>compile</scope>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.httpcomponents.client5/httpclient5 -->
@@ -38,7 +38,7 @@
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-jinjava</artifactId>
-            <version>0.3.0</version>
+            <version>0.4.0</version>
             <scope>compile</scope>
         </dependency>
 

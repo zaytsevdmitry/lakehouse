@@ -1,0 +1,30 @@
+apiVersion: v2
+name: lakehouse-management
+description: Umbrella chart.
+type: application
+version: 0.1.0
+appVersion: "0.4.0"
+dependencies:
+  - name: lakehouse-management-config-service
+    version: "0.1.0"
+    repository: "file://../lakehouse-management-config-service" # локальный путь или URL репозитория
+  - name: lakehouse-management-scheduler-service
+    version: "0.1.0"
+    repository: "file://../lakehouse-management-scheduler-service"
+  - name: lakehouse-management-state-service
+    version: "0.1.0"
+    repository: "file://../lakehouse-management-state-service"
+  - name: lakehouse-management-task-executor-service
+    version: "0.1.0"
+    repository: "file://../lakehouse-management-task-executor-service"
+  - name: hive-metastore
+    version: 0.1.0
+    repository: "file://../hive-metastore"
+  - name: trino
+    version: 1.0.0
+    repository: "file://../trino"
+    condition: trino.enabled
+  - name: spark-history
+    version: 0.1.0
+    repository: "file://../spark-history"
+

@@ -1,0 +1,24 @@
+dependencies:
+- name: lakehouse-management-config-service
+  repository: file://../lakehouse-management-config-service
+  version: 0.1.0
+- name: lakehouse-management-scheduler-service
+  repository: file://../lakehouse-management-scheduler-service
+  version: 0.1.0
+- name: lakehouse-management-state-service
+  repository: file://../lakehouse-management-state-service
+  version: 0.1.0
+- name: lakehouse-management-task-executor-service
+  repository: file://../lakehouse-management-task-executor-service
+  version: 0.1.0
+- name: hive-metastore
+  repository: file://../hive-metastore
+  version: 0.1.0
+- name: trino
+  repository: file://../trino
+  version: 1.0.0
+- name: spark-history
+  repository: file://../spark-history
+  version: 0.1.0
+digest: sha256:aea93fc08ba4ce6e084d50d35b372c0abbf82b41ef08d10a0559625606cedd1a
+generated: "2026-06-07T21:14:48.01848321+03:00"

@@ -1,0 +1,2 @@
+{%set targetDataSet=dataSets[targetDataSetKeyName]%}
+create schema {{ targetDataSet.databaseSchemaName }}

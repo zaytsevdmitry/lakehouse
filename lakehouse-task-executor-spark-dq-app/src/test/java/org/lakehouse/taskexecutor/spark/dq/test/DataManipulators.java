@@ -17,7 +17,6 @@ import org.lakehouse.taskexecutor.spark.dataset.datasourcemanipulator.SparkDataS
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class DataManipulators {
@@ -36,7 +35,7 @@ public class DataManipulators {
 
         new CatalogActivatorService(
                 sparkSession)
-                .activate(List.of(dataSourceDTO));
+                .activate(sourceConfDTO);
         return manipulatorFactory.buildDataSourceManipulator(driverDTO,dataSourceDTO,dataSetDTO,jinJavaUtils,configRestClientApi);
 
     }
@@ -73,7 +72,7 @@ public class DataManipulators {
 
         new CatalogActivatorService(
                 sparkSession)
-                .activate(List.of(dataSourceDTO));
+                .activate(sourceConfDTO);
         return manipulatorFactory.buildDataSourceManipulator(driverDTO,dataSourceDTO,dataSetDTO,jinJavaUtils,configRestClientApi);
     }
 }

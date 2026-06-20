@@ -1,5 +1,9 @@
 # Демо
+[Сценарий демонстрации](README-SCENARIO.md)
 
-[Как установить и запустить](README-INSTALL.md)
+# Варианты развертывания
 
-[Что будет происходить](README-SCENARIO.md)
+### Docker compose
+[Как установить и запустить](compose/README-INSTALL.md)
+### Kubernetes
+[Как установить и запустить](k8s/README-INSTALL.md)

@@ -57,7 +57,7 @@
         {
           "name": "load",
           "taskExecutionServiceGroupName": "default",
-          "taskProcessor": "sparkLauncherTaskProcessor",
+          "taskProcessor": "sparkStandAloneClusterTaskProcessor",
           "taskProcessorBody": "mergeSQLProcessorBody",
           "importance": "critical",
           "description": "load from remote datastore",
@@ -115,7 +115,7 @@
         {
           "name": "load",
           "taskExecutionServiceGroupName": "default",
-          "taskProcessor": "sparkLauncherTaskProcessor",
+          "taskProcessor": "sparkStandAloneClusterTaskProcessor",
           "taskProcessorBody": "mergeSQLProcessorBody",
           "importance": "critical",
           "description": "load from remote datastore",
@@ -217,7 +217,7 @@
         {
           "name": "load",
           "taskExecutionServiceGroupName": "default",
-          "taskProcessor": "sparkLauncherTaskProcessor",
+          "taskProcessor": "sparkStandAloneClusterTaskProcessor",
           "taskProcessorBody": "mergeSQLProcessorBody",
           "importance": "critical",
           "description": "override load",
@@ -246,7 +246,7 @@
         {
           "name": "extend",
           "taskExecutionServiceGroupName": "default",
-          "taskProcessor": "sparkLauncherTaskProcessor",
+          "taskProcessor": "sparkStandAloneClusterTaskProcessor",
           "taskProcessorBody": "mergeSQLProcessorBody",
           "importance": "critical",
           "description": "Not exists in template",

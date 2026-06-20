@@ -87,13 +87,13 @@ public class ConfigRestClientHelperTest {
 
     @Test
     public void MakesCorrectCallScenarioActTemplateDTO() throws Exception {
-        ScenarioActTemplateDTO scenarioActTemplateDTO = fileLoader.loadScenarioActTemplateDTO();
+        ScenarioActTemplateDTO scenarioActTemplateDTO = fileLoader.loadScenarioActTemplateDTO("default");
         server.expect(ExpectedCount.manyTimes(),
                         requestTo(String.format("%s/%s", Endpoint.SCENARIOS, scenarioActTemplateDTO.getKeyName())))
                 .andRespond(withSuccess(objectMapper.writeValueAsString(scenarioActTemplateDTO), MediaType.APPLICATION_JSON));
         System.out.println("scenario is loaded");
 
-        ScenarioActTemplateDTO expect = fileLoader.loadScenarioActTemplateDTO();
+        ScenarioActTemplateDTO expect = fileLoader.loadScenarioActTemplateDTO("default");
         ScenarioActTemplateDTO result = client.getScenarioActTemplateDTO(expect.getKeyName());
         assert (expect.equals(result));
     }

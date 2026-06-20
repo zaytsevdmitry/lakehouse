@@ -28,9 +28,6 @@
         <module name="lakehouse-validators" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel target="17">
-      <module name="lakehouse-task-spark-dq" target="17" />
-    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
@@ -52,7 +49,6 @@
       <module name="lakehouse-task-executor-spark-dataset-app" options="-parameters" />
       <module name="lakehouse-task-executor-spark-dq-app" options="-parameters" />
       <module name="lakehouse-task-executor-svc" options="-parameters" />
-      <module name="lakehouse-task-spark-dq" options="-parameters" />
       <module name="lakehouse-ui-svc" options="-parameters" />
       <module name="lakehouse-validators" options="-parameters" />
     </option>

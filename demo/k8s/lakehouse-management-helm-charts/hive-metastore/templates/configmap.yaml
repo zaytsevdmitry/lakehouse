@@ -1,0 +1,73 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "hive-metastore.fullname" . }}-config
+  labels:
+    {{- include "hive-metastore.labels" . | nindent 4 }}
+data:
+  metastore-site.xml: |
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+    <?xml-stylesheet type="text/stylesheet" href="configuration.xsl"?>
+    <configuration>
+        <!-- Database Settings -->
+        <property>
+            <name>javax.jdo.option.ConnectionURL</name>
+            <value>jdbc:postgresql://{{ .Values.config.db.host }}:{{ .Values.config.db.port }}/{{ .Values.config.db.name }}?ApplicationName=HiveMetaStore</value>
+        </property>
+        <property>
+            <name>javax.jdo.option.ConnectionDriverName</name>
+            <value>org.postgresql.Driver</value>
+        </property>
+        <property>
+            <name>javax.jdo.option.ConnectionUserName</name>
+            <value>{{ .Values.config.db.user }}</value>
+        </property>
+        <property>
+            <name>javax.jdo.option.ConnectionPassword</name>
+            <value>{{ .Values.config.db.password }}</value>
+        </property>
+        <property>
+            <name>org.jpox.autoCreateSchema</name>
+            <value>true</value>
+        </property>
+        <property>
+            <name>hive.metastore.bind.host</name>
+            <value>0.0.0.0</value>
+        </property>
+
+        <!-- S3 / MinIO Settings -->
+        <property>
+            <name>fs.s3a.endpoint</name>
+            <value>{{ .Values.config.s3.endpoint }}</value>
+        </property>
+        <property>
+            <name>fs.s3a.access.key</name>
+            <value>{{ .Values.config.s3.accessKey }}</value>
+        </property>
+        <property>
+            <name>fs.s3a.secret.key</name>
+            <value>{{ .Values.config.s3.secretKey }}</value>
+        </property>
+        <property>
+            <name>fs.s3a.path.style.access</name>
+            <value>true</value>
+        </property>
+        <property>
+            <name>fs.s3a.connection.ssl.enabled</name>
+            <value>false</value>
+        </property>
+        <property>
+            <name>fs.s3a.impl</name>
+            <value>org.apache.hadoop.fs.s3a.S3AFileSystem</value>
+        </property>
+        <property>
+            <name>hive.metastore.warehouse.dir</name>
+            <value>{{ .Values.config.s3.warehouseDir }}</value>
+        </property>
+
+        <!-- Other Settings -->
+        <property>
+            <name>hive.metastore.event.db.notification.api.auth</name>
+            <value>false</value>
+        </property>
+    </configuration>

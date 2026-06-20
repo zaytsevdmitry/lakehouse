@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lakehouse-management-state-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: lakehouse-management-state-service
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: lakehouse-management-state-service
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: state-svc
+          image: "lakehouse:0.4.0"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8082
+              protocol: TCP
+          command: ["bash", "-c"]
+          args:
+            - "java
+            -Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=StateSVC
+            -jar /opt/lakehouse-state-svc-0.4.0-jar-with-dependencies.jar"

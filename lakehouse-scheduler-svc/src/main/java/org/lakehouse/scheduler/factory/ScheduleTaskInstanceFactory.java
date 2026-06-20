@@ -56,7 +56,7 @@ public class ScheduleTaskInstanceFactory {
         result.setName(sti.getName());
         result.setStatus(sti.getStatus());
         result.setTaskExecutionServiceGroupName(taskDTO.getTaskExecutionServiceGroupName());
-
+        result.setTryNum(sti.getReTryNum());
         ScheduleScenarioActEffectiveDTO actDTO = scheduleEffectiveService
                 .getScheduleEffectiveDTO(
                         sti.getScheduleScenarioActInstance()

@@ -37,18 +37,18 @@ class SparkRestDeployFactory [[java:org.lakehouse.taskexecutor.processor.spark.S
 	+SparkRestDeployFactory()
 	+getServerUrl(sourceConfDTO: SourceConfDTO, scheduledTaskDTO: ScheduledTaskDTO, jinJavaUtils: JinJavaUtils): String
 }
-class SparkLauncherTaskProcessor [[java:org.lakehouse.taskexecutor.processor.spark.SparkLauncherTaskProcessor]] {
+class SparkStandAloneClusterTaskProcessor [[java:org.lakehouse.taskexecutor.processor.spark.SparkStandAloneClusterTaskProcessor]] {
 	-logger: Logger
 	-configApiUrl: String
-	+SparkLauncherTaskProcessor(sparkRestDeployFactory: SparkRestDeployFactory, configApiUrl: String)
+	+SparkStandAloneClusterTaskProcessor(sparkRestDeployFactory: SparkRestDeployFactory, configApiUrl: String)
 	+runTask(sourceConfDTO: SourceConfDTO, scheduledTaskDTO: ScheduledTaskDTO, jinJavaUtils: JinJavaUtils): void
 }
 class SparkRestDeployFactory {
 }
-SparkLauncherTaskProcessor --> "1" SparkRestDeployFactory : sparkRestDeployFactory
+SparkStandAloneClusterTaskProcessor --> "1" SparkRestDeployFactory : sparkRestDeployFactory
 class AbstractSparkDeployTaskProcessor {
 }
-AbstractSparkDeployTaskProcessor <|-- SparkLauncherTaskProcessor
+AbstractSparkDeployTaskProcessor <|-- SparkStandAloneClusterTaskProcessor
 class LockedStateTaskProcessor [[java:org.lakehouse.taskexecutor.processor.state.LockedStateTaskProcessor]] {
 	-logger: Logger
 	+LockedStateTaskProcessor(stateRestClientApi: StateRestClientApi)
@@ -84,4 +84,6 @@ class DependencyCheckStateTaskProcessor [[java:org.lakehouse.taskexecutor.proces
 class AbstractStateTaskProcessor {
 }
 AbstractStateTaskProcessor <|-- DependencyCheckStateTaskProcessor
+
+class K8sSparkNativeTaskProcessor implements TaskProcessor{}
 @enduml

@@ -3,7 +3,6 @@ package org.lakehouse.client.api.utils;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class Coalesce {
     public static String apply(String s1, String s2) {
@@ -26,13 +25,18 @@ public class Coalesce {
      * @return map with override values if new values is not null
      * @since 0.3.0
      *  */
-    public static Map<String, String> applyMergeNonNullValuesMap(Map<String, String> currentMap, Map<String, String> newMap) {
-        Map<String, String> result = new HashMap<>();
-        result.putAll(currentMap);
-        result.putAll(newMap.entrySet()
-                .stream()
-                .filter(e -> e.getValue() !=null)
-                .collect(Collectors.toMap(Map.Entry::getKey,Map.Entry::getValue)));
+    public static  <K, V>  Map <K, V>  applyMergeNonNullValuesMap(Map <K, V>  currentMap, Map <K, V>  newMap) {
+        Map<K, V> result = new HashMap<>();
+        if (currentMap != null) {
+            result.putAll(currentMap);
+        }
+        if (newMap != null) {
+            newMap.forEach((key, value) -> {
+                if (value != null) {
+                    result.put(key, value);
+                }
+            });
+        }
         return result;
     }
 

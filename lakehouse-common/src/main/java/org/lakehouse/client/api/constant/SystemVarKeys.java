@@ -19,7 +19,7 @@ public class SystemVarKeys {
     public static String CONSTRAINT = "constraint";
     public static String PARTITION_NAME = "partitionName";
     public static String SCRIPT = "script";
-    public static String CONNECTION_STRING_PROTOCOL_NAME = "protocol"; // jdbc:[*]/spark/http[s] etc
+    public static String DATASOURCE_SERVICE_PROTOCOL_NAME_KEY = "datasource.service.protocol"; // jdbc:[*]/spark/http[s] etc
     public static String SERVICE_KEY = "service";
     public static String DRIVER_KEY = "driver";
     public static String DATASOURCE_KEY = "dataSource";

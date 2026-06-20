@@ -14,7 +14,7 @@ public class DataSetStateDTOFactory {
         result.setIntervalStartDateTime(scheduledTaskDTO.getIntervalStartDateTime());
         result.setIntervalEndDateTime(scheduledTaskDTO.getIntervalEndDateTime());
         result.setStatus(status);
-        result.setLockSource(scheduledTaskDTO.getLockSource());
+        result.setLockSource(scheduledTaskDTO.buildLockSource());
 
         return result;
     }

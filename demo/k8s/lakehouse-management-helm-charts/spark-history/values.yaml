@@ -1,0 +1,24 @@
+replicaCount: 1
+
+image:
+  repository: lakehouse-spark-aws
+  tag: 0.4.0
+  pullPolicy: IfNotPresent
+
+# Секреты и окружение выносим в values для гибкости
+env:
+  awsAccessKeyId: "spark_user"
+  awsSecretAccessKey: "spark_pwd"
+  s3Endpoint: "http://minio:9000"
+  s3TestUrl: "http://minio:9001"
+  sparkMode: "history"
+
+resources:
+  limits:
+    cpu: "2"
+    memory: 4Gi
+  requests:
+    cpu: "500m"
+    memory: 1Gi
+
+

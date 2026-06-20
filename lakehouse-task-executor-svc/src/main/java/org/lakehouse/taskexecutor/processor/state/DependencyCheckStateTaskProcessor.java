@@ -56,7 +56,7 @@ public class DependencyCheckStateTaskProcessor extends AbstractStateTaskProcesso
     }
     private boolean pass(DataSetStateDTO dataSetStateDTO, ScheduledTaskDTO scheduledTaskDTO){
         return !dataSetStateDTO.getDataSetKeyName().equals(scheduledTaskDTO.getDataSetKeyName())
-                || !dataSetStateDTO.getLockSource().equals(scheduledTaskDTO.getLockSource())
+                || !dataSetStateDTO.getLockSource().equals(scheduledTaskDTO.buildLockSource())
                 || !dataSetStateDTO.getStatus().equals(Status.DataSet.LOCKED)
                 || !DateTimeUtils.parseDateTimeFormatWithTZ(dataSetStateDTO.getIntervalStartDateTime()).equals(
                         DateTimeUtils.parseDateTimeFormatWithTZ(scheduledTaskDTO.getIntervalStartDateTime()))
@@ -95,7 +95,7 @@ public class DependencyCheckStateTaskProcessor extends AbstractStateTaskProcesso
                 .stream()
                 .filter(dataSetStateDTO -> (
                         dataSetStateDTO.getLockSource() != null &&
-                                !dataSetStateDTO.getLockSource().equals(scheduledTaskDTO.getLockSource()) &&
+                                !dataSetStateDTO.getLockSource().equals(scheduledTaskDTO.buildLockSource()) &&
                                 dataSetStateDTO.getStatus()!= null &&
                                 dataSetStateDTO.getStatus().equals(Status.DataSet.LOCKED)))
                 .forEach(dataSetStateDTOs::add);

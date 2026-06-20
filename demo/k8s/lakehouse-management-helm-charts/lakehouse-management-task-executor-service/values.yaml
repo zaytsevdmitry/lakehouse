@@ -1,0 +1,5 @@
+lakehouse-management-task-executor-service:
+  image:
+    repository: lakehouse
+    tag: "0.4.0"
+    pullPolicy: IfNotPresent

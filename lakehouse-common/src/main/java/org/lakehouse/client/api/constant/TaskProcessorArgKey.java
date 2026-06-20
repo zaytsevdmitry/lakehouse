@@ -3,5 +3,11 @@ package org.lakehouse.client.api.constant;
 public class TaskProcessorArgKey {
     public static String QUALITY_METRICS_CONF_KEY_NAME ="qualityMetricsConfKeyName";
     public static String SPARK_PREFIX = "spark.";
-    public static String SPARK_CATALOG_PREFIX = "spark.catalog.";
+    public static String SPARK_CATALOG_PREFIX = "spark.sql.catalog.";
+    public static String K8S_SPARK_OPERATOR = "k8s.spark-operator.";
+    public static String K8S_SPARK_OPERATOR_MANIFEST = "manifest.";
+
+    public static String K8S_NATIVE = "k8s.spark-native.";
+    public static String K8S_NATIVE_MANIFEST = "manifest.";
+
 }

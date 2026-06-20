@@ -157,13 +157,13 @@ public class TestWithPostgres {
         NameSpaceDTO dto = fileLoader.loadNameSpaceDTO();
 
         return ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getKeyName(),
-                ObjectMapping.asJsonString(dto), Endpoint.NAME_SPACES, Endpoint.NAME_SPACES_NAME), NameSpaceDTO.class);
+                ObjectMapping.asJsonStringPretty(dto), Endpoint.NAME_SPACES, Endpoint.NAME_SPACES_NAME), NameSpaceDTO.class);
     }
     private DriverDTO putDriverDTO(String name) throws Exception {
         DriverDTO dto = fileLoader.loadDriverDTO(name);
 
         return ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getKeyName(),
-                ObjectMapping.asJsonString(dto), Endpoint.DRIVERS, Endpoint.DRIVERS_NAME), DriverDTO.class);
+                ObjectMapping.asJsonStringPretty(dto), Endpoint.DRIVERS, Endpoint.DRIVERS_NAME), DriverDTO.class);
     }
 
     @Test
@@ -187,7 +187,7 @@ public class TestWithPostgres {
         TaskExecutionServiceGroupDTO dto = fileLoader.loadTaskExecutionServiceGroupDTO();
 
         return ObjectMapping.stringToObject(
-                restManipulator.writeAndReadDTOTest(dto.getName(), ObjectMapping.asJsonString(dto),
+                restManipulator.writeAndReadDTOTest(dto.getName(), ObjectMapping.asJsonStringPretty(dto),
                         Endpoint.TASK_EXECUTION_SERVICE_GROUPS, Endpoint.TASK_EXECUTION_SERVICE_GROUPS_NAME),
                 TaskExecutionServiceGroupDTO.class);
     }
@@ -204,7 +204,7 @@ public class TestWithPostgres {
     private ScenarioActTemplateDTO putScenarioDTO() throws Exception {
         ScenarioActTemplateDTO dto = fileLoader.loadScenarioDTO();
         return ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getKeyName(),
-                        ObjectMapping.asJsonString(dto), Endpoint.SCENARIOS, Endpoint.SCENARIOS_NAME),
+                        ObjectMapping.asJsonStringPretty(dto), Endpoint.SCENARIOS, Endpoint.SCENARIOS_NAME),
                 ScenarioActTemplateDTO.class);
     }
 
@@ -222,7 +222,7 @@ public class TestWithPostgres {
     private DataSourceDTO putDataSourceDTO(String name) throws Exception {
         DataSourceDTO dto = fileLoader.loadDataSourceDTO(name);
         return ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getKeyName(),
-                ObjectMapping.asJsonString(dto), Endpoint.DATA_SOURCES, Endpoint.DATA_SOURCES_NAME), DataSourceDTO.class);
+                ObjectMapping.asJsonStringPretty(dto), Endpoint.DATA_SOURCES, Endpoint.DATA_SOURCES_NAME), DataSourceDTO.class);
     }
 
     @Test
@@ -236,8 +236,8 @@ public class TestWithPostgres {
 
         restManipulator.deleteDTO(dto.getKeyName(), Endpoint.DATA_SOURCES_NAME);
         restManipulator.deleteDTO(driverDTO.getKeyName(), Endpoint.DRIVERS_NAME);
-        System.out.println("\nexpect--->\n" + ObjectMapping.asJsonString(dto));
-        System.out.println("\nresult--->\n" + ObjectMapping.asJsonString(resultDTO));
+        System.out.println("\nexpect--->\n" + ObjectMapping.asJsonStringPretty(dto));
+        System.out.println("\nresult--->\n" + ObjectMapping.asJsonStringPretty(resultDTO));
         assert (resultDTO.equals(dto));
     }
 
@@ -281,7 +281,7 @@ public class TestWithPostgres {
 
         DataSetDTO dto = fileLoader.loadDataSetDTO(name);
         return ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getKeyName(),
-                ObjectMapping.asJsonString(dto), Endpoint.DATA_SETS, Endpoint.DATA_SETS_NAME), DataSetDTO.class);
+                ObjectMapping.asJsonStringPretty(dto), Endpoint.DATA_SETS, Endpoint.DATA_SETS_NAME), DataSetDTO.class);
     }
 
 
@@ -298,7 +298,7 @@ public class TestWithPostgres {
         DataSetDTO dto = putDataSetDTO(name);
 
         DataSetDTO resultDTO = ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getKeyName(),
-                ObjectMapping.asJsonString(dto), Endpoint.DATA_SETS, Endpoint.DATA_SETS_NAME), DataSetDTO.class);
+                ObjectMapping.asJsonStringPretty(dto), Endpoint.DATA_SETS, Endpoint.DATA_SETS_NAME), DataSetDTO.class);
         restManipulator.deleteDTO(dto.getKeyName(), Endpoint.DATA_SETS_NAME);
         restManipulator.deleteDTO(dataSourceDTO.getKeyName(), Endpoint.DATA_SOURCES_NAME);
         restManipulator.deleteDTO(nameSpaceDTO.getKeyName(), Endpoint.NAME_SPACES_NAME);
@@ -321,7 +321,7 @@ public class TestWithPostgres {
 
         // again
         DataSetDTO resultDTO = ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getKeyName(),
-                ObjectMapping.asJsonString(dto), Endpoint.DATA_SETS, Endpoint.DATA_SETS_NAME), DataSetDTO.class);
+                ObjectMapping.asJsonStringPretty(dto), Endpoint.DATA_SETS, Endpoint.DATA_SETS_NAME), DataSetDTO.class);
 
 
         restManipulator.deleteDTO(dto.getKeyName(), Endpoint.DATA_SETS_NAME);
@@ -337,7 +337,7 @@ public class TestWithPostgres {
     void scenarioActTemplateChange() throws Exception {
 
         putTaskExecutionServiceGroupDTO();
-        ScenarioActTemplateDTO beforeWrite = fileLoader.loadScenarioActTemplateDTO();
+        ScenarioActTemplateDTO beforeWrite = fileLoader.loadScenarioActTemplateDTO("default");
         ScenarioActTemplateDTO afterWrite = scenarioActTemplateService.save(beforeWrite);
         assert (afterWrite.equals(beforeWrite));
 
@@ -358,7 +358,7 @@ public class TestWithPostgres {
     private ScheduleDTO putScheduleDTO(String name) throws Exception {
         ScheduleDTO dto = fileLoader.loadScheduleDTO(name);
         return ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getKeyName(),
-                ObjectMapping.asJsonString(dto), Endpoint.SCHEDULES, Endpoint.SCHEDULES_NAME), ScheduleDTO.class);
+                ObjectMapping.asJsonStringPretty(dto), Endpoint.SCHEDULES, Endpoint.SCHEDULES_NAME), ScheduleDTO.class);
     }
 
     @Test
@@ -496,8 +496,8 @@ public class TestWithPostgres {
                 .findEffectiveScheduleDTOById(initialScheduleDTO.getKeyName());
         //lastChangeTime untestable
         scheduleEffectiveDTOExpected.setLastChangedDateTime(scheduleEffectiveDTOResult.getLastChangedDateTime());
-        System.out.println("expected--->" + ObjectMapping.asJsonString(scheduleEffectiveDTOExpected));
-        System.out.println("result--->" + ObjectMapping.asJsonString(scheduleEffectiveDTOResult));
+        System.out.println("expected--->" + ObjectMapping.asJsonStringPretty(scheduleEffectiveDTOExpected));
+        System.out.println("result--->" + ObjectMapping.asJsonStringPretty(scheduleEffectiveDTOResult));
 
 
         assert (scheduleEffectiveDTOResult.equals(scheduleEffectiveDTOExpected));
@@ -594,14 +594,14 @@ public class TestWithPostgres {
         loadTaskDTOExpected.setTaskProcessorArgs(loadExpectArgs);
         loadTaskDTOExpected.setName("load");
         loadTaskDTOExpected.setTaskExecutionServiceGroupName("default");
-        loadTaskDTOExpected.setTaskProcessor("sparkLauncherTaskProcessor");
+        loadTaskDTOExpected.setTaskProcessor("sparkStandAloneClusterTaskProcessor");
         loadTaskDTOExpected.setTaskProcessorBody("mergeSQLProcessorBody");
         loadTaskDTOExpected.setImportance("critical");
         loadTaskDTOExpected.setDescription("override load");
         TaskDTO loadTaskDTO = scheduleService.getEffectiveTaskDTO(initialScheduleDTO.getKeyName(), "transaction_dds", "load");
         //todo debug
-        System.out.println("expect --->\n" + ObjectMapping.asJsonString(loadTaskDTOExpected));
-        System.out.println("result --->\n" + ObjectMapping.asJsonString(loadTaskDTO));
+        System.out.println("expect --->\n" + ObjectMapping.asJsonStringPretty(loadTaskDTOExpected));
+        System.out.println("result --->\n" + ObjectMapping.asJsonStringPretty(loadTaskDTO));
         assert (loadTaskDTO.equals(loadTaskDTOExpected));
 
         // not exists in template
@@ -612,7 +612,7 @@ public class TestWithPostgres {
         extendTaskDTOExpected.setTaskProcessorArgs(extendTaskDTOExpectedArgs);
         extendTaskDTOExpected.setName("extend");
         extendTaskDTOExpected.setTaskExecutionServiceGroupName("default");
-        extendTaskDTOExpected.setTaskProcessor("sparkLauncherTaskProcessor");
+        extendTaskDTOExpected.setTaskProcessor("sparkStandAloneClusterTaskProcessor");
         extendTaskDTOExpected.setTaskProcessorBody("mergeSQLProcessorBody");
         extendTaskDTOExpected.setImportance("critical");
         extendTaskDTOExpected.setDescription("Not exists in template");
@@ -704,7 +704,7 @@ public class TestWithPostgres {
         stringList = ScheduleConfValidator
                 .validateEdgesCycling(
                         "Without cycle",
-                        ScheduleConfValidator.edgesToMap(fileLoader.loadScenarioActTemplateDTO().getDagEdges()));
+                        ScheduleConfValidator.edgesToMap(fileLoader.loadScenarioActTemplateDTO("default").getDagEdges()));
         assert (stringList.isEmpty());
         stringList = ScheduleConfValidator
                 .validateEdgesCycling(
@@ -792,7 +792,7 @@ public class TestWithPostgres {
         DataSetDTO dto = putDataSetDTO(name);
 
         DataSetDTO resultDTO = ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getKeyName(),
-                ObjectMapping.asJsonString(dto), Endpoint.DATA_SETS, Endpoint.DATA_SETS_NAME), DataSetDTO.class);
+                ObjectMapping.asJsonStringPretty(dto), Endpoint.DATA_SETS, Endpoint.DATA_SETS_NAME), DataSetDTO.class);
 
         SourceConfDTO conf = sourcesCompoundService.getSourceConfDTO(name);
 
@@ -863,8 +863,8 @@ public class TestWithPostgres {
         restManipulator.deleteDTO(nameSpaceDTO.getKeyName(), Endpoint.NAME_SPACES_NAME);
         restManipulator.deleteDTO(pgDriverDTO.getKeyName(), Endpoint.DRIVERS_NAME);
         restManipulator.deleteDTO(sparkDriverDTO.getKeyName(), Endpoint.DRIVERS_NAME);
-        System.out.println("expected ->> \n" + ObjectMapping.asJsonString(expected));
-        System.out.println("result ->> \n" +ObjectMapping.asJsonString(result));
+        System.out.println("expected ->> \n" + ObjectMapping.asJsonStringPretty(expected));
+        System.out.println("result ->> \n" +ObjectMapping.asJsonStringPretty(result));
         assert(expected.equals(result));
         assert(expected.equals(result2));
 

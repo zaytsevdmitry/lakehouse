@@ -19,7 +19,7 @@ public class SchedulerRestClienApiTest implements SchedulerRestClientApi {
     }
 
     @Override
-    public ScheduledTaskMsgDTO getScheduledTaskDTO(String name) {
+    public ScheduledTaskDTO getScheduledTaskDTO(String name) {
         return null;
     }
 
