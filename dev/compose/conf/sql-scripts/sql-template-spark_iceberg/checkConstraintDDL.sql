@@ -1,1 +1,0 @@
-CONSTRAINT {{ constraint.name }} CHECK ({{ constraint.checkExpr }})

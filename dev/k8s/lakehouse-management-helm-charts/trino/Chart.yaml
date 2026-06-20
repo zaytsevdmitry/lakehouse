@@ -1,5 +1,0 @@
-apiVersion: v2
-name: trino
-type: application
-version: 1.0.0
-appVersion: "478"

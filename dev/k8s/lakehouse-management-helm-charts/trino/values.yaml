@@ -1,5 +1,0 @@
-enabled: true
-image:
-  repository: trinodb/trino
-  tag: "478"
-  pullPolicy: IfNotPresent
