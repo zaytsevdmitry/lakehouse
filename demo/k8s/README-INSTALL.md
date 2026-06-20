@@ -27,10 +27,10 @@ minikube start --cpus 4 --memory 8192 --registry-mirror=https://dh-mirror.gitver
 >Сборка тестировалась с применением ближайшего registry-mirror. Можно указать любой либо убрать и использовать настройку по умолчанию.
 
 # Установка
-```commandline
+```shell
 sh install.bash
 ```
-В результате выполнения команды : 
+В результате выполнения команды: 
 - образы lakehouse* перегрузятся из локального репозитория в minikube
 - соберется helm chart
 - создано пространство имен lakehouse-management
@@ -93,11 +93,11 @@ kubectl -n lakehouse-management scale deployment lakehouse-management-task-execu
 ````
 # Де-инсталляция
 ## Удаление сервисов
-```commandline 
+```shell 
 sh uninstall.bash
 ```
 ## Удаление образов
-```commandline
+```shell
 sh remove_images.bash
 ```
 

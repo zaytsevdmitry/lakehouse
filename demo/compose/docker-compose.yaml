@@ -66,6 +66,7 @@ services:
     image: lakehouse-hms:0.4.0
     entrypoint: ["/bin/sh", "-c", "/service.sh"]
     container_name: hive-metastore
+    restart: on-failure
     depends_on:
       db-dev:
         condition: service_healthy
