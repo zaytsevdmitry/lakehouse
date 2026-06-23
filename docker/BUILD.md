@@ -62,11 +62,11 @@ sh build.bash
 Сборку можно считать успешной если все 4 образа можно найти в локальном репозитории
 
 ```shell
-docker images | grep lakehouse | grep '0.4.0'
+docker images | grep lakehouse | grep '0.5.0'
 ```
 ```commandline
-lakehouse-s3-check                       0.4.0                           70a21c6fc79c   3 minutes ago    119MB
-lakehouse-hms                            0.4.0                           f81700fd2891   3 minutes ago    893MB
-lakehouse-spark-aws                      0.4.0                           42e9f3a122aa   4 minutes ago    1.54GB
-lakehouse                                0.4.0                           c8f6f2da61dc   5 minutes ago    1.36GB
+lakehouse-s3-check                       0.5.0                           70a21c6fc79c   3 minutes ago    119MB
+lakehouse-hms                            0.5.0                           f81700fd2891   3 minutes ago    893MB
+lakehouse-spark-aws                      0.5.0                           42e9f3a122aa   4 minutes ago    1.54GB
+lakehouse                                0.5.0                           c8f6f2da61dc   5 minutes ago    1.36GB
 ```

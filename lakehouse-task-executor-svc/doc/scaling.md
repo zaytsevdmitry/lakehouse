@@ -62,7 +62,7 @@ lakehouse:
         "datasource.service.protocol": "https",
         "lakehouse.client.rest.config.server.url": "http://lakehouse-management-config-service:8080",
         "k8s.spark-native.mainClass": "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
-        "k8s.spark-native.appResource": "local:///opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.4.0-jar-with-dependencies.jar"
+        "k8s.spark-native.appResource": "local:///opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.5.0-jar-with-dependencies.jar"
       }
     }
 ```

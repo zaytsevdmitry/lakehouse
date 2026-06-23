@@ -25,7 +25,7 @@
       "spark.hive.s3.endpoint": "http://minio:9000",
       "spark.kubernetes.authenticate.driver.serviceAccountName": "spark-driver-sa",
       "spark.kubernetes.authenticate.executor.serviceAccountName": "spark-driver-sa",
-      "spark.kubernetes.container.image": "lakehouse-spark-aws:0.4.0",
+      "spark.kubernetes.container.image": "lakehouse-spark-aws:0.5.0",
       "spark.sql.catalog.lakehouse": "org.apache.iceberg.spark.SparkCatalog",
       "spark.sql.catalog.lakehouse.type": "hive",
       "spark.sql.catalog.lakehouse.uri": "thrift://hive-metastore:9083",

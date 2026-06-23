@@ -10,6 +10,7 @@ Key Business Benefits
 * Scalability: Decoupling processing logic from transformation logic allows organizations to manage massive data volumes efficiently.
 * Automation: Metadata serves as the engine for automated transformations and event-driven execution.
 
+
 # Compatible keywords
 MetaData Driven
 Domain Driven Design (DDD)
@@ -63,3 +64,22 @@ United namespace
 [States](lakehouse-state-svc/doc/state_model/state-models.MD)
 
 [Command line](./lakehouse-cli/doc/commandline.MD)
+
+
+
+# Copyright
+"Lakehouse management tool" - the services set for managing data changes based on a metadata-driven approach
+Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/lakehouse
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as
+    published by the Free Software Foundation, either version 3 of the
+    License, or (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.

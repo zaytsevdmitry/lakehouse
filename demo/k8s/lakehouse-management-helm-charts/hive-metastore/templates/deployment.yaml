@@ -29,7 +29,7 @@ spec:
               done
               echo "PostgreSQL is up and running!"
         - name: wait-and-init-minio
-          image: lakehouse-s3-check:0.4.0
+          image: lakehouse-s3-check:0.5.0
           imagePullPolicy: IfNotPresent
           env:
             - name: MINIO_ENDPOINT

@@ -17,7 +17,7 @@ spec:
       serviceAccountName: lakehouse-app-sa  # name from lakehouse-management chart values.yaml
       containers:
         - name: task-executor-svc
-          image: "lakehouse:0.4.0"
+          image: "lakehouse:0.5.0"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8091
@@ -33,4 +33,4 @@ spec:
             -Dlakehouse.task-executor.service.id=default
             -Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1
             -Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=broker:9092
-            -jar /opt/lakehouse-task-executor-svc-0.4.0-jar-with-dependencies.jar"
+            -jar /opt/lakehouse-task-executor-svc-0.5.0-jar-with-dependencies.jar"

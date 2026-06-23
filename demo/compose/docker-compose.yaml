@@ -63,7 +63,7 @@ services:
       KAFKA_NUM_PARTITIONS: 4
 
   hive-metastore:
-    image: lakehouse-hms:0.4.0
+    image: lakehouse-hms:0.5.0
     entrypoint: ["/bin/sh", "-c", "/service.sh"]
     container_name: hive-metastore
     restart: on-failure
@@ -85,7 +85,7 @@ services:
         ipv4_address: 172.20.193.60
 
   spark-master:
-    image: lakehouse-spark-aws:0.4.0
+    image: lakehouse-spark-aws:0.5.0
     entrypoint: ["/bin/sh", "-c", "/service.sh"]
     container_name: spark-master
     hostname: spark-master
@@ -122,7 +122,7 @@ services:
         condition: service_healthy
 
   spark-worker-1:
-    image: lakehouse-spark-aws:0.4.0
+    image: lakehouse-spark-aws:0.5.0
     entrypoint: ["/bin/sh", "-c", "/service.sh"]
     container_name: spark-worker-1
     environment:
@@ -159,7 +159,7 @@ services:
         condition: service_started
 
   spark-history:
-    image: lakehouse-spark-aws:0.4.0
+    image: lakehouse-spark-aws:0.5.0
     entrypoint: ["/bin/sh", "-c", "/service.sh"]
     container_name: spark-history
     environment:
@@ -182,7 +182,7 @@ services:
           memory: 4g
 
   conf-svc:
-    image: lakehouse:0.4.0
+    image: lakehouse:0.5.0
     container_name: conf-svc
     ports:
       - "8080:8080"
@@ -193,7 +193,7 @@ services:
       bash -c "java
       -Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=ConfigSVC
       -Dlakehouse.config.schedule.send.kafka.producer.properties.bootstrap.servers=broker:9092
-      -jar /opt/lakehouse-config-svc-0.4.0-jar-with-dependencies.jar"
+      -jar /opt/lakehouse-config-svc-0.5.0-jar-with-dependencies.jar"
     depends_on:
       db-dev:
         condition: service_healthy
@@ -201,7 +201,7 @@ services:
         condition: service_started
 
   scheduler-svc:
-    image: lakehouse:0.4.0
+    image: lakehouse:0.5.0
     container_name: scheduler-svc
     ports:
       - "8081:8081"
@@ -217,7 +217,7 @@ services:
       -Dlakehouse.scheduler.run.delay-ms=5000 
       -Dlakehouse.scheduler.resolvedeps.delay-ms=5000 
       -Dlakehouse.client.rest.config.server.url=http://conf-svc:8080 
-      -jar /opt/lakehouse-scheduler-svc-0.4.0-jar-with-dependencies.jar"
+      -jar /opt/lakehouse-scheduler-svc-0.5.0-jar-with-dependencies.jar"
     depends_on:
       db-dev:
         condition: service_healthy
@@ -227,7 +227,7 @@ services:
         condition: service_started
 
   state-svc:
-    image: lakehouse:0.4.0
+    image: lakehouse:0.5.0
     container_name: state-svc
     ports:
       - "8082:8082"
@@ -237,13 +237,13 @@ services:
     command: >
       bash -c "java
       -Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=StateSVC
-      -jar /opt/lakehouse-state-svc-0.4.0-jar-with-dependencies.jar"
+      -jar /opt/lakehouse-state-svc-0.5.0-jar-with-dependencies.jar"
     depends_on:
       db-dev:
         condition: service_healthy
 
   lakehouse-task-executor-svc-1:
-    image: lakehouse:0.4.0
+    image: lakehouse:0.5.0
     container_name: task-executor-svc-1
     hostname: task-executor-svc-1
     ports:
@@ -261,7 +261,7 @@ services:
       "-Dlakehouse.task-executor.service.id=database",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=broker:9092",
-      "-jar", "/opt/lakehouse-task-executor-svc-0.4.0-jar-with-dependencies.jar"
+      "-jar", "/opt/lakehouse-task-executor-svc-0.5.0-jar-with-dependencies.jar"
     ]
     depends_on:
       broker:
@@ -274,7 +274,7 @@ services:
         condition: service_started
 
   lakehouse-task-executor-svc-2:
-    image: lakehouse:0.4.0
+    image: lakehouse:0.5.0
     container_name: task-executor-svc-2
     hostname: task-executor-svc-2
     networks:
@@ -292,7 +292,7 @@ services:
       "-Dlakehouse.task-executor.service.id=spark-exec-1",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=broker:9092",
-      "-jar", "/opt/lakehouse-task-executor-svc-0.4.0-jar-with-dependencies.jar"
+      "-jar", "/opt/lakehouse-task-executor-svc-0.5.0-jar-with-dependencies.jar"
     ]
     depends_on:
       broker:
@@ -305,7 +305,7 @@ services:
         condition: service_started
 
   lakehouse-task-executor-svc-3:
-    image: lakehouse:0.4.0
+    image: lakehouse:0.5.0
     container_name: task-executor-svc-3
     hostname: task-executor-svc-3
     networks:
@@ -323,7 +323,7 @@ services:
       "-Dlakehouse.task-executor.service.id=state-service",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=broker:9092",
-      "-jar", "/opt/lakehouse-task-executor-svc-0.4.0-jar-with-dependencies.jar"
+      "-jar", "/opt/lakehouse-task-executor-svc-0.5.0-jar-with-dependencies.jar"
     ]
     depends_on:
       broker:
@@ -336,7 +336,7 @@ services:
         condition: service_started
 
   lakehouse-task-executor-svc-4:
-    image: lakehouse:0.4.0
+    image: lakehouse:0.5.0
     container_name: task-executor-svc-4
     hostname: task-executor-svc-4
     networks:
@@ -354,7 +354,7 @@ services:
       "-Dlakehouse.task-executor.service.id=spark-exec-2",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=broker:9092",
-      "-jar", "/opt/lakehouse-task-executor-svc-0.4.0-jar-with-dependencies.jar"
+      "-jar", "/opt/lakehouse-task-executor-svc-0.5.0-jar-with-dependencies.jar"
     ]
     depends_on:
       broker:
