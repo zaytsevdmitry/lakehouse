@@ -55,13 +55,13 @@ WORKDIR /tmp
 ADD log4j2.properties /opt/spark/conf/
 
 LABEL type="lakehouse=spark" \
-      version="lakehouse-0.4.0_spark-3.5.8" \
+      version="lakehouse-0.5.0_spark-3.5.8" \
       features="spark, aws-s3a, postgres-jdbc, aws-cli"
 
 
 # Add application
-ADD lakehouse-task-executor-spark-dataset-app-0.4.0-jar-with-dependencies.jar ${APP_HOME}/
-ADD lakehouse-task-executor-spark-dq-app-0.4.0-jar-with-dependencies.jar ${APP_HOME}/
+ADD lakehouse-task-executor-spark-dataset-app-0.5.0-jar-with-dependencies.jar ${APP_HOME}/
+ADD lakehouse-task-executor-spark-dq-app-0.5.0-jar-with-dependencies.jar ${APP_HOME}/
 
 EXPOSE 4040 9083
 

@@ -1,3 +1,21 @@
+/*
+ * "Lakehouse management tool" - the services set for managing data changes based on a metadata-driven approach
+ * Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/lakehouse
+ * 
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU Affero General Public License as
+ *     published by the Free Software Foundation, either version 3 of the
+ *     License, or (at your option) any later version.
+ * 
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU Affero General Public License for more details.
+ * 
+ *     You should have received a copy of the GNU Affero General Public License
+ *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package org.lakehouse.client.api.utils.conf;
 
 import org.lakehouse.client.api.exception.TaskConfigurationException;
@@ -34,7 +52,7 @@ public class ConfUtil {
      * @param conf - source map
      * @param startWith - prefix
      * @return result - rest of map, with rewrote keys
-     * @since 0.4.0
+     * @since 0.5.0
      * */
     public static Map<String, String> extractConf(Map<String, String> conf, String startWith) {
         if (conf == null || startWith == null) {
@@ -58,7 +76,7 @@ public class ConfUtil {
      * @param defaultValue - fallback value if key is not found
      * @return Long value
      * @throws TaskConfigurationException if parsing fails or key is missing without a default value
-     * @since 0.4.0
+     * @since 0.5.0
      */
     public static Long getLongByKey(Map<String, String> map, String key, Long defaultValue) throws TaskConfigurationException {
         if (map == null || key == null) {
@@ -94,7 +112,7 @@ public class ConfUtil {
      * @param defaultValue - fallback value if key is not found
      * @return boolean value
      * @throws TaskConfigurationException if the value is not a valid boolean representation
-     * @since 0.4.0
+     * @since 0.5.0
      */
     public static boolean getBooleanByKey(Map<String, String> map, String key, boolean defaultValue) throws TaskConfigurationException {
         if (map == null || key == null) {
@@ -126,7 +144,7 @@ public class ConfUtil {
      *
      * @param map - other generic types map
      * @return map of strings
-     * @since 0.4.0
+     * @since 0.5.0
      */
     public static <K,V> Map<String, String> castToStringMap(Map<K,V> map){
         return map

@@ -6,7 +6,7 @@
     <parent>
         <groupId>lakehouse</groupId>
         <artifactId>lakehouse-parent</artifactId>
-        <version>0.4.0</version>
+        <version>0.5.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -59,7 +59,7 @@
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-scheduler-rest-client</artifactId>
-            <version>0.4.0</version>
+            <version>0.5.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.springframework.boot</groupId>
@@ -70,7 +70,7 @@
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-jinjava</artifactId>
-            <version>0.4.0</version>
+            <version>0.5.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.springframework.boot</groupId>
@@ -81,7 +81,7 @@
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-task-executor-spark-api</artifactId>
-            <version>0.4.0</version>
+            <version>0.5.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.springframework.boot</groupId>
@@ -144,7 +144,7 @@
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-task-executor-spark-dataset-app</artifactId>
-            <version>0.4.0</version>
+            <version>0.5.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -161,7 +161,7 @@
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-common-test</artifactId>
-            <version>0.4.0</version>
+            <version>0.5.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>

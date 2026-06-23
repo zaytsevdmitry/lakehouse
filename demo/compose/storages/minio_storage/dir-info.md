@@ -1,0 +1,1 @@
+Directory for mount to minio storage
