@@ -1,4 +1,3 @@
-
 select * from (
 select 1 id, 'one' name,  TIMESTAMP WITH TIME ZONE '{{ targetDateTime }}' as reg_date_time union all
 select 2 id, 'two' name,  TIMESTAMP WITH TIME ZONE '{{ targetDateTime }}' as reg_date_time union all
