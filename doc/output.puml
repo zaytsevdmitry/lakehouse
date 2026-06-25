@@ -1,4 +1,3 @@
-
 @startuml
 skinparam classAttributeIconSize 0
 class ColumnDTO{

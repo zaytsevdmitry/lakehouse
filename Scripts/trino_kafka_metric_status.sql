@@ -1,4 +1,3 @@
-
 with tab as(
 select metric_id
 	 , catalog_name
