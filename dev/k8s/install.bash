@@ -15,7 +15,6 @@
 # 
 #     You should have received a copy of the GNU Affero General Public License
 #     along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 set -e
 set -v
 kubectl get pods -A
@@ -23,22 +22,27 @@ kubectl get pods -A
 echo build helm dependencies
 helm dependency update ./lakehouse-management-helm-charts/lakehouse-management
 
-echo -e "\e[34mecho copy image lakehouse:0.5.0 ~ 2-3 minutes\e[0m"
-minikube image load lakehouse:0.5.0 --daemon --alsologtostderr -v=1
+# Function to check and load images into Minikube only if they are missing
+load_image_if_missing() {
+    local IMAGE=$1
+    # Check if the image already exists inside minikube
+    if minikube image list | grep -q "${IMAGE}"; then
+        echo -e "\e[32mImage ${IMAGE} is already present in Minikube. Skipping.\e[0m"
+    else
+        echo -e "\e[34mLoading image ${IMAGE} ~ 2-3 minutes\e[0m"
+        minikube image load "${IMAGE}" --daemon --alsologtostderr -v=1
+    fi
+}
 
-echo -e "\e[34mecho copy image lakehouse-s3-check  ~ 2-3 minutes\e[0m"
-minikube image load lakehouse-s3-check:0.5.0 --daemon  --alsologtostderr -v=1
+# Load only missing images
+load_image_if_missing "lakehouse:0.5.0"
+load_image_if_missing "lakehouse-s3-check:0.5.0"
+load_image_if_missing "lakehouse-hms:0.5.0"
+load_image_if_missing "lakehouse-spark-aws:0.5.0"
 
-echo -e "\e[34mecho copy image lakehouse-hms:0.5.0  ~ 2-3 minutes\e[0m"
-minikube image load lakehouse-hms:0.5.0  --daemon --alsologtostderr -v=1
-
-echo -e "\e[34mecho lakehouse-spark-aws:0.5.0  ~ 2-3 minutes\e[0m"
-minikube image load lakehouse-spark-aws:0.5.0 --daemon  --alsologtostderr -v=1
-
-echo -e "\e[34mecho All lakehouse images loaded\e[0m"
+echo -e "\e[34mAll lakehouse images processed\e[0m"
 
 echo install lakehouse-release
 helm install lakehouse-release ./lakehouse-management-helm-charts/lakehouse-management --create-namespace  --namespace lakehouse-management
-
 
 echo -e "\e[37;42m All services installed to namespace lakehouse-management \e[0m"

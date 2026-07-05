@@ -43,11 +43,11 @@ public class SourceConfUtil {
                 if(dataSourceDTO.getDriverKeyName().equals(driverDTO.getKeyName())){
                     localContext.put(SystemVarKeys.DATASOURCE_KEY, dataSourceDTO);
                     localContext.put(SystemVarKeys.SERVICE_KEY, dataSourceDTO.getService());
-                    dataSourceDTO.getService().setProperties(jinJavaUtils.renderMap(dataSourceDTO.getService().getProperties(),localContext));
+                    dataSourceDTO.getService().setProperties(jinJavaUtils.renderMapValues(dataSourceDTO.getService().getProperties(),localContext));
                     for (DataSetDTO dataSetDTO:sourceConfDTO.getDataSets().values()){
                         if (dataSetDTO.getDataSourceKeyName().equals(dataSourceDTO.getKeyName())){
                             localContext.put(SystemVarKeys.DATASET_KEY, dataSetDTO);
-                            dataSetDTO.setProperties(jinJavaUtils.renderMap(dataSetDTO.getProperties(),localContext));
+                            dataSetDTO.setProperties(jinJavaUtils.renderMapValues(dataSetDTO.getProperties(),localContext));
                         }
                     }
                 }

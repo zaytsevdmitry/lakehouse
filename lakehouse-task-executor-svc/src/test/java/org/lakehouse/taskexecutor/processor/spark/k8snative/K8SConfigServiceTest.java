@@ -17,12 +17,12 @@
 
 package org.lakehouse.taskexecutor.processor.spark.k8snative;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
 import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.lakehouse.client.api.constant.SystemVarKeys;
 import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
@@ -34,6 +34,7 @@ import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.jinja.java.JinJavaFactory;
 import org.lakehouse.jinja.java.JinJavaUtils;
+import org.lakehouse.taskexecutor.processor.spark.k8snative.mappers.*;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -44,10 +45,10 @@ import static org.junit.Assert.*;
 public class K8SConfigServiceTest {
 
     private K8sConfigService k8SConfigService;
-    private PodUtilService podUtilService;
+    private PodMapperService podMapperService;
     private SourceConfDTO sourceConfDTO;
     private ScheduledTaskDTO scheduledTaskDTO;
-
+    private SparkDriverContainerMapperService sparkDriverContainerMapperService;
     private SourceConfDTO getSourceConfDTO() {
         DriverDTO driverDTO = new DriverDTO();
         driverDTO.setKeyName("spark_iceberg");
@@ -119,8 +120,13 @@ public class K8SConfigServiceTest {
     }
     @Before
     public void setUp() {
-        podUtilService = new PodUtilService("","");
-        k8SConfigService = new K8sConfigService(podUtilService);
+        MetadataMapperService metadataMapperService = new MetadataMapperService();
+        ContainerMapperService containerMapperService = new ContainerMapperService();
+        VolumeMapperService volumeMapperService = new VolumeMapperService();
+        PodSpecMapperService podSpecMapperService = new PodSpecMapperService(containerMapperService,volumeMapperService);
+        podMapperService = new PodMapperService(metadataMapperService,podSpecMapperService);
+        sparkDriverContainerMapperService = new SparkDriverContainerMapperService();
+        k8SConfigService = new K8sConfigService(podMapperService,sparkDriverContainerMapperService,"","");
 
         // Инициализируем вложенную структуру SourceConfDTO, чтобы избежать NullPointerException
         sourceConfDTO = getSourceConfDTO();
@@ -141,7 +147,7 @@ public class K8SConfigServiceTest {
                 .endMetadata()
                 .build();
 
-        String result = podUtilService.getFixedTaskName(scheduledTaskDTO, pod);
+        String result = k8SConfigService.getFixedPodName(scheduledTaskDTO, pod.getMetadata().getName());
 
         assertEquals("custom-pod-name", result);
     }
@@ -150,7 +156,7 @@ public class K8SConfigServiceTest {
     public void testGetFixedTaskName_GeneratesAndCleansDnsName() {
         // Имя содержит верхний регистр, спецсимволы и подчеркивания
 
-        String result = podUtilService.getFixedTaskName(scheduledTaskDTO, null);
+        String result = k8SConfigService.getFixedPodName(scheduledTaskDTO, null);
         System.out.println(result);
         // Проверяем формат: task-{id}-{tryNum}-{cleaned_name}
         assertTrue(result.startsWith("task-123-2-"));
@@ -165,7 +171,7 @@ public class K8SConfigServiceTest {
     public void testGetFixedTaskName_TrimsTo63CharactersAndCleansEdges() {
         // Передаем слишком длинное имя, которое гарантированно превысит лимит в 63 символа
 
-        String result = podUtilService.getFixedTaskName(scheduledTaskDTO, null);
+        String result = k8SConfigService.getFixedPodName(scheduledTaskDTO, null);
         System.out.println(result);
         // Проверяем требования DNS RFC 1123 для Kubernetes
         assertTrue(result.length() <= 63);
@@ -186,7 +192,7 @@ public class K8SConfigServiceTest {
     public void testTranslateSparkConfToResources_DefaultValues() {
         Map<String, String> sparkConf = new HashMap<>();
 
-        ResourceRequirements resources = podUtilService.translateSparkConfToResources(sparkConf);
+        ResourceRequirements resources = sparkDriverContainerMapperService.translateSparkConfToResources(sparkConf);
 
         // Дефолты: 1 CPU. Память: 1g (1024Mi) + 10% overhead (минимум 384Mi) = 1408Mi
         assertEquals("1", resources.getRequests().get("cpu").getAmount());
@@ -202,7 +208,7 @@ public class K8SConfigServiceTest {
         sparkConf.put("spark.driver.memoryOverhead", "512m"); // 512 MB
         // Итого: 2560 MB -> 2560Mi
 
-        ResourceRequirements resources = podUtilService.translateSparkConfToResources(sparkConf);
+        ResourceRequirements resources = sparkDriverContainerMapperService.translateSparkConfToResources(sparkConf);
 
         assertEquals("4", resources.getRequests().get("cpu").getAmount());
         assertEquals("2560", resources.getRequests().get("memory").getAmount());
@@ -216,9 +222,9 @@ public class K8SConfigServiceTest {
 
     @Test
     public void testParseSparkMemoryToBytes_CorrectUnits() {
-        assertEquals(1024L * 1024 * 1024, podUtilService.parseSparkMemoryToBytes("1g"));
-        assertEquals(512L * 1024 * 1024, podUtilService.parseSparkMemoryToBytes("512m"));
-        assertEquals(2048L * 1024, podUtilService.parseSparkMemoryToBytes("2048k"));
+        assertEquals(1024L * 1024 * 1024, sparkDriverContainerMapperService.parseSparkMemoryToBytes("1g"));
+        assertEquals(512L * 1024 * 1024, sparkDriverContainerMapperService.parseSparkMemoryToBytes("512m"));
+        assertEquals(2048L * 1024, sparkDriverContainerMapperService.parseSparkMemoryToBytes("2048k"));
     }
 
     @Test
@@ -226,9 +232,9 @@ public class K8SConfigServiceTest {
         long defaultBytes = 1024L * 1024 * 1024; // 1GB в байтах
         
         // Любые некорректные или пустые строки должны безопасно возвращать дефолтное значение
-        assertEquals(defaultBytes, podUtilService.parseSparkMemoryToBytes("incorrect_format_123"));
-        assertEquals(defaultBytes, podUtilService.parseSparkMemoryToBytes(""));
-        assertEquals(defaultBytes, podUtilService.parseSparkMemoryToBytes(null));
+        assertEquals(defaultBytes, sparkDriverContainerMapperService.parseSparkMemoryToBytes("incorrect_format_123"));
+        assertEquals(defaultBytes, sparkDriverContainerMapperService.parseSparkMemoryToBytes(""));
+        assertEquals(defaultBytes, sparkDriverContainerMapperService.parseSparkMemoryToBytes(null));
     }
 
     // ==========================================================
@@ -236,8 +242,8 @@ public class K8SConfigServiceTest {
     // ==========================================================
     @Test
     public void testExtractMasterUrl_SuccessWithProtocolFromTaskProcessorArgs() throws TaskConfigurationException, IOException {
-        ScheduledTaskDTO scheduledTaskDTO = K8sClientServiceTest.getScheduledTaskDTO();
-        SourceConfDTO sourceConfDTO =  K8sClientServiceTest.getSourceConfDTO();
+        ScheduledTaskDTO scheduledTaskDTO = TestObjects.getScheduledTaskDTO();
+        SourceConfDTO sourceConfDTO =  TestObjects.getSourceConfDTO();
         Map<String,String> props = new HashMap<>(scheduledTaskDTO.getTaskProcessorArgs());
         props.put(SystemVarKeys.DATASOURCE_SERVICE_PROTOCOL_NAME_KEY,"https");
         scheduledTaskDTO.setTaskProcessorArgs(props);
@@ -286,6 +292,66 @@ public class K8SConfigServiceTest {
         );
         // Метод buildTaskFullName() для вашей таски вернет "Test_Schedule.Test_Act.quality"
         assertTrue(exception.getMessage().contains("Key 'datasource.service.protocol' is not present in TaskProcessorArgs"));
+    }
+    @Test
+    public void testSuccessfulRenderWithEscapedVaultTemplate() throws Exception {
+        // 1. Arrange: Инициализируем JinJavaUtils через вашу фабрику
+        SourceConfDTO sourceConfDTO = getSourceConfDTO();
+        ScheduledTaskDTO scheduledTaskDTO = getScheduledTaskDTO();
+
+        org.lakehouse.jinja.java.JinJavaUtils jinJavaUtils =
+                org.lakehouse.jinja.java.JinJavaFactory.getJinJavaUtils(sourceConfDTO, scheduledTaskDTO);
+
+        // Включаем строгий режим компиляции (как в продуктовом Spring-окружении),
+        // чтобы доказать, что экранирование гарантирует безопасность даже при жестких правилах.
+        try {
+            java.lang.reflect.Field jinjavaField = jinJavaUtils.getClass().getDeclaredField("jinjava");
+            jinjavaField.setAccessible(true);
+            com.hubspot.jinjava.Jinjava internalJinjava = (com.hubspot.jinjava.Jinjava) jinjavaField.get(jinJavaUtils);
+
+            com.hubspot.jinjava.JinjavaConfig strictConfig = com.hubspot.jinjava.JinjavaConfig.newBuilder()
+                    .withFailOnUnknownTokens(true)
+                    .build();
+
+            java.lang.reflect.Field configField = internalJinjava.getClass().getDeclaredField("config");
+            configField.setAccessible(true);
+            configField.set(internalJinjava, strictConfig);
+        } catch (Exception ignored) {}
+
+        // Эмулируем JSON-строку Pod, которую сгенерировал Jackson из файла с правильным {% raw %}.
+        // Обратите внимание на тройное экранирование кавычек (\\\\\\\") — именно в таком виде
+        // Jackson выдает строку из объекта Java обратно в текстовый шаблон перед рендером.
+        String safePodTemplateJson = """
+    {
+      "apiVersion" : "v1",
+      "kind" : "Pod",
+      "metadata" : {
+        "annotations" : {
+          "bao.openbao.org/agent-inject" : "true",
+          "bao.openbao.org/agent-inject-secret-spark-secrets.conf" : "secret/data/lakehouse/processingdb",
+          "bao.openbao.org/agent-inject-template-spark-secrets.conf" : "{% raw %}{{- with secret \\\\\\\"secret/data/lakehouse/processingdb\\\\\\\" -}}\\nspark.sql.catalog.processing.user={{ .Data.data.user }}\\nspark.secret.processing.password={{ .Data.data.password }}\\n{{- end -}}{% endraw %}",
+          "bao.openbao.org/role" : "spark-executor-role",
+          "lakehouse-management-task" : "18-1-regular-transaction_dds-prepare-20250102T000000Z"
+        }
+      }
+    }
+    """;
+
+        // 2. Act & Assert: Убеждаемся, что метод завершается без FatalTemplateErrorsException
+        String renderedJson = Assertions.assertDoesNotThrow(() -> {
+            return jinJavaUtils.render(safePodTemplateJson);
+        }, "Тест не должен падать, так как блок OpenBao надежно изолирован внутри {% raw %}");
+
+        // 3. Дополнительные проверки корректности результата
+        assertNotNull(renderedJson);
+
+        // Проверяем, что Jinjava успешно убрала свои управляющие теги {% raw %} и {% endraw %}
+        assertFalse(renderedJson.contains("{% raw %}"));
+        assertFalse(renderedJson.contains("{% endraw %}"));
+
+        // Проверяем, что целевой Go-шаблон для OpenBao остался внутри JSON в исходном, неповрежденном виде
+        assertTrue(renderedJson.contains("with secret"));
+        assertTrue(renderedJson.contains(".Data.data.user"));
     }
 
 }

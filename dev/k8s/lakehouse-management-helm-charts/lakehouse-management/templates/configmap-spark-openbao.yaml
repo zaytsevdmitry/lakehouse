@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openbao-spark-template
+  namespace: lakehouse-management
+data:
+  spark-secrets.tmpl: |
+    {{ `{{- with secret "secret/data/lakehouse/processingdb" -}}` }}
+    spark.sql.catalog.processing.user={{ `{{ .Data.data.user }}` }}
+    spark.secret.processing.password={{ `{{ .Data.data.password }}` }}
+    {{ `{{- end -}}` }}
+    {{ `{{- with secret "secret/data/lakehouse/s3" -}}` }}
+    spark.hadoop.fs.s3a.access.key={{ `{{ .Data.data.access_key }}` }}
+    spark.secret.s3a.secret.key={{ `{{ .Data.data.secret_key }}` }}
+    {{ `{{- end -}}` }}

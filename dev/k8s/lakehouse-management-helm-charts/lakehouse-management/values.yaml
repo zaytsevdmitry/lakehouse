@@ -235,4 +235,6 @@ openbao:
       enabled: true # just dev
     ha:
       enabled: false # just dev
-
+  enabled: true
+  injector:
+    enabled: true # Включает webhook-инжектор
