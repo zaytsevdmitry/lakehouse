@@ -1,0 +1,63 @@
+@startuml
+skinparam BoxPadding 15
+skinparam ParticipantPadding 10
+
+box "Ваше Java-приложение" #LightYellow
+participant "Fabric8 Client" as F8
+end box
+
+box "Kubernetes Cluster" #LightBlue
+participant "K8s API Server" as K8s
+participant "Pod №1: Инициатор\n(Ваш манифест с ./bin/spark-submit)" as Pod1
+participant "Pod №2: Настоящий Драйвер\n(Создается автоматически)" as Driver
+participant "Spark Executor Pods" as Exec
+end box
+
+== Этап 1: Запуск Пода-Инициатора ==
+F8 -> K8s: HTTP POST (Отправка вашего манифеста)
+activate K8s
+K8s --> F8: 201 Created (Манифест принят)
+deactivate K8s
+
+K8s -> Pod1: Планирование и запуск Пода №1
+activate Pod1
+Pod1 -> Pod1: Выполнение команды:\n./bin/spark-submit --deploy-mode cluster
+
+== Этап 2: Рождение настоящего Драйвера ==
+Pod1 -> K8s: HTTP POST /api/v1/pods (Запрос на создание Драйвера)
+activate K8s
+K8s --> Pod1: 201 Created
+note over Pod1: Роль утилиты spark-submit выполнена. \nОна просто передала эстафету.
+Pod1 -> Pod1: Завершение процесса (Exit 0)
+deactivate Pod1
+note over Pod1 #LightGray: Pod №1 переходит в статус 'Completed'
+
+K8s -> Driver: Планирование и запуск Пода №2 (Driver)
+activate Driver
+deactivate K8s
+Driver -> Driver: Инициализация SparkContext\nи запуск вашего Java/Scala кода
+
+== Этап 3: Запуск Исполнителей и вычисления ==
+Driver -> K8s: HTTP POST (Запрос подов для Executors)
+activate K8s
+K8s -> Exec: Запуск рабочих подов
+activate Exec
+Exec --> Driver: Подключение к Драйверу
+deactivate K8s
+
+Driver -> Exec: Распределение Tasks и вычисления
+activate Exec #LightPink
+Exec --> Driver: Результаты вычислений
+deactivate Exec
+
+== Этап 4: Очистка ==
+Driver -> K8s: Удаление подов Executors
+activate K8s
+K8s -> Exec: SIGTERM
+destroy Exec
+deactivate K8s
+
+Driver -> Driver: Завершение главного метода (Exit 0)
+Driver --> K8s: Смена статуса Пода №2 на 'Succeeded'
+deactivate Driver
+@enduml

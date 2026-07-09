@@ -122,10 +122,10 @@ public class SparkDriverContainerMapperService {
         resultList.add(appName);
 
         // Insert --properties-file parameter at the beginning of the spark-submit arguments list
-        String propertiesFilePath = taskConf.getOrDefault(TaskProcessorArgKey.K8S_NATIVE_PROPERTY_FILE, "");
+        String propertiesFilePath = taskConf.getOrDefault(TaskProcessorArgKey.K8S_NATIVE_PROPERTIES_FILE, "");
         if (StringUtils.hasText(propertiesFilePath)) {
             resultList.add("--properties-file");
-            resultList.add(taskConf.get("propertiesFile"));
+            resultList.add(taskConf.get(propertiesFilePath));
         }
 
         sparkConf.forEach((key, value) -> {

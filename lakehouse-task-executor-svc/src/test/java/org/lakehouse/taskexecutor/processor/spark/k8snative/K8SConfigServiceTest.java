@@ -32,13 +32,16 @@ import org.lakehouse.client.api.dto.configs.datasource.ServiceDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
+import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.jinja.java.JinJavaFactory;
 import org.lakehouse.jinja.java.JinJavaUtils;
 import org.lakehouse.taskexecutor.processor.spark.k8snative.mappers.*;
+import org.lakehouse.test.config.configuration.FileLoader;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import static org.junit.Assert.*;
 
@@ -354,4 +357,69 @@ public class K8SConfigServiceTest {
         assertTrue(renderedJson.contains(".Data.data.user"));
     }
 
+    @Test
+    public void podTest() throws IOException, TaskConfigurationException {
+        Pod expected = ObjectMapping.stringToObject("""
+  {
+  "apiVersion" : "v1",
+  "kind" : "Pod",
+  "metadata" : {
+    "annotations" : {
+      "bao.openbao.org/agent-inject" : "true",
+      "bao.openbao.org/agent-inject-secret-spark-secrets.conf" : "secret/data/lakehouse/processingdb",
+      "bao.openbao.org/agent-inject-template-spark-secrets.conf" : "/vault/custom-templates/spark-secrets.tmpl",
+      "bao.openbao.org/role" : "spark-executor-role",
+      "lakehouse-management-task" : "regular-transaction_dds-compact-test"
+    },
+    "name" : "task-123-2-2133938070",
+    "namespace" : "lakehouse-management"
+  },
+  "spec" : {
+    "automountServiceAccountToken" : false,
+    "containers" : [ {
+      "args" : [ "--master", "k8s://https://kubernetes.default.svc:443", "--name", "regular-transaction_dds-compact-test", "--properties-file", "/bao/secrets/spark-secrets.conf", "--conf", "spark.sql.catalogImplementation=hive", "--conf", "spark.hadoop.fs.s3a.endpoint=http://minio:9000", "--conf", "spark.sql.catalog.lakehouse.uri=thrift://hive-metastore:9083", "--conf", "spark.sql.catalog.spark_catalog.warehouse=s3a://data/warehouse/", "--conf", "spark.driver.bindAddress=0.0.0.0", "--conf", "spark.sql.catalog.lakehouse=org.apache.iceberg.spark.SparkCatalog", "--conf", "spark.hadoop.fs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem", "--conf", "spark.kubernetes.namespace=lakehouse-management", "--conf", "spark.kubernetes.authenticate.executor.serviceAccountName=spark-driver-sa", "--conf", "spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions", "--conf", "spark.eventLog.dir=s3a://sparklogs/eventlog/", "--conf", "spark.kubernetes.authenticate.driver.serviceAccountName=spark-driver-sa", "--conf", "spark.kubernetes.executor.deleteOnTermination=true", "--conf", "spark.executor.memory=1g", "--conf", "spark.driver.memory=1g", "--conf", "spark.sql.catalog.lakehouse.type=hive", "--conf", "spark.sql.catalog.processing.type=hive", "--conf", "spark.hadoop.fs.s3a.path.style.access=true", "--conf", "spark.driver.host=$(POD_IP)", "--conf", "spark.sql.catalog.processing.url=jdbc:postgresql://db-dev:5432/postgresDB", "--conf", "spark.hive.s3.endpoint=http://minio:9000", "--conf", "spark.kubernetes.container.image=lakehouse-spark-aws:0.5.0", "--conf", "spark.kubernetes.executor.podNamePrefix=task-230-0-1599821857", "--conf", "spark.eventLog.enabled=true", "--conf", "spark.sql.catalog.processing=org.apache.spark.sql.execution.datasources.v2.jdbc.JDBCTableCatalog", "--conf", "spark.executor.extraJavaOptions=...", "--conf", "spark.driver.extraJavaOptions=...", "--conf", "spark.ui.enabled=true", "--class", "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication", "local:///opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.5.0-jar-with-dependencies.jar", "--scheduledTaskId=230", "--datasource.service.protocol=https", "--lakehouse.client.rest.config.server.url=http://lakehouse-management-config-service:8080", "--lakehouse.client.rest.scheduler.server.url=http://lakehouse-management-scheduler-service:8081" ],
+      "command" : [ "/opt/spark/bin/spark-submit" ],
+      "env" : [ {
+        "name" : "POD_IP",
+        "valueFrom" : {
+          "fieldRef" : {
+            "fieldPath" : "status.podIP"
+          }
+        }
+      } ],
+      "image" : "lakehouse-spark-aws:0.5.0",
+      "name" : "lakehouse-spark-driver",
+      "resources" : {
+        "limits" : {
+          "cpu" : "1",
+          "memory" : "1408Mi"
+        },
+        "requests" : {
+          "cpu" : "1",
+          "memory" : "1408Mi"
+        }
+      }
+    } ],
+    "hostIPC" : false,
+    "hostNetwork" : false,
+    "hostPID" : false,
+    "shareProcessNamespace" : false,
+    "restartPolicy" : "Never",
+    "serviceAccountName" : "spark-driver-sa"
+  }
+}
+""", Pod.class);
+        FileLoader fileLoader = new FileLoader();
+        DataSourceDTO k8slakehousestorage = fileLoader.loadDataSourceDTO("k8slakehousestorage");
+        SourceConfDTO sourceConfDTO = TestObjects.getSourceConfDTO();
+        sourceConfDTO.getTargetDataSet().setDataSourceKeyName(k8slakehousestorage.getKeyName());
+        Map<String,DataSourceDTO> datasources = new HashMap<>(sourceConfDTO.getDataSources());
+        datasources.put(k8slakehousestorage.getKeyName(),k8slakehousestorage);
+        sourceConfDTO.setDataSources(datasources);
+        Pod result = k8SConfigService.buildSparkDriverPod(sourceConfDTO,scheduledTaskDTO);
+        //String result = ObjectMapping.asJsonStringPretty(pod);
+        System.out.println("expected:" + ObjectMapping.asJsonStringPretty(expected));
+        System.out.println("result:" + ObjectMapping.asJsonStringPretty(result));
+        assertEquals(expected, result);
+    }
 }

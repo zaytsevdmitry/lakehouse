@@ -41,6 +41,7 @@
         <module>lakehouse-task-executor-spark-api</module>
         <module>lakehouse-task-executor-spark-dataset-app</module>
         <module>lakehouse-task-executor-spark-dq-app</module>
+        <module>lakehouse-gateway-for-spark-job</module>
     </modules>
     <properties>
         <maven.compiler.source>17</maven.compiler.source>

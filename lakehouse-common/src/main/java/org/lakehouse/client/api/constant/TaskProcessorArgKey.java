@@ -22,6 +22,6 @@ public class TaskProcessorArgKey {
     public static String SPARK_CATALOG_PREFIX = "spark.sql.catalog.";
     public static String K8S_NATIVE_PREFIX = "k8s.spark-native.";
     public static String K8S_NATIVE_MANIFEST = "manifest.";
-    public static String K8S_NATIVE_PROPERTY_FILE = "property-file";
+    public static String K8S_NATIVE_PROPERTIES_FILE = "properties-file";
 
 }

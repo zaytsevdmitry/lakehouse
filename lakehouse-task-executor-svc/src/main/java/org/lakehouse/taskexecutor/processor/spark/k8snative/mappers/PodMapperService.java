@@ -43,7 +43,7 @@ public class PodMapperService {
     public Pod buildPod(Map<String, String> manifestConf) throws TaskConfigurationException {
         Pod result = new PodBuilder()
                 .withApiVersion(manifestConf.getOrDefault("apiVersion","v1"))
-                .withKind(manifestConf.getOrDefault("kind","spark-task"))
+                .withKind(manifestConf.getOrDefault("kind","Pod"))
                 .withMetadata(metadataMapperService.buildObjectMeta(ConfUtil.extractConf(manifestConf,"metadata.")))
                 .withSpec(podSpecMapperService.fillPodSpec(ConfUtil.extractConf(manifestConf,"spec.")))
                 .build();

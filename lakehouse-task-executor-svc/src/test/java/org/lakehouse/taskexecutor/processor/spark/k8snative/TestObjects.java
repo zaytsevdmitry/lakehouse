@@ -17,7 +17,7 @@ public class TestObjects {
         DriverDTO driverDTO = new DriverDTO();
         driverDTO.setKeyName("spark_iceberg");
         driverDTO.setConnectionTemplates(Map.of(
-                Types.ConnectionType.spark, "{%set service=dataSources[dataSets[targetDataSetKeyName].dataSourceKeyName].service%}\n{%set protocol=taskProcessorArgs['datasource.service.protocol']%}\n{{protocol}}://{{service.host}}:{{service.port}}"
+                Types.ConnectionType.spark, "{%set service=dataSources[dataSets[targetDataSetKeyName].dataSourceKeyName].service%}{%set protocol=taskProcessorArgs['datasource.service.protocol']%}{{protocol}}://{{service.host}}:{{service.port}}"
         ));
 
         ServiceDTO serviceDTO = new ServiceDTO();

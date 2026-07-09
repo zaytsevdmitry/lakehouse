@@ -41,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -200,7 +201,7 @@ public class K8sConfigService extends ConfUtil {
         ).orElse("default"));
 
         compareAndGet(
-                PodKeys.METADATA_NAMESPACE,
+                PodKeys.SPEC_SERVICE_ACCOUNT_NAME,
                 manifestConf,
                 "spark.kubernetes.authenticate.driver.serviceAccountName",
                 sparkConf
@@ -223,12 +224,14 @@ public class K8sConfigService extends ConfUtil {
         String manifestValue = manifestConf.getOrDefault(manifestKey, null);
         String sparkK8sValue = sparkConf.getOrDefault(sparkKey, null);
 
-        if (!Objects.equals(manifestValue, sparkK8sValue))
-            throw new TaskConfigurationException(
-                    String.format(
-                            "\"spark.kubernetes.namespace\" and \"%s\" contains different values. Use the same values for both key or notting for default namespace, or use any one of keys", PodKeys.METADATA_NAMESPACE));
-
-        return Optional.of(Coalesce.apply(manifestValue, sparkK8sValue));
+        if (StringUtils.hasText(manifestValue) && StringUtils.hasText(sparkK8sValue)) {
+            if (!Objects.equals(manifestValue, sparkK8sValue)) {
+                throw new TaskConfigurationException(
+                        String.format(
+                                "\"%s\" and \"%s\" contains different values. Use any one of keys or the same values for both key", manifestKey,sparkKey));
+            }
+        }
+        return Optional.ofNullable(Coalesce.apply(manifestValue, sparkK8sValue));
     }
 
     /**
