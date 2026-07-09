@@ -19,6 +19,7 @@
         <module name="lakehouse-jinjava" />
         <module name="lakehouse-task-executor-spark-dataset-app" />
         <module name="lakehouse-ui-svc" />
+        <module name="lakehouse-gateway-for-spark-job" />
         <module name="lakehouse-scheduler-svc" />
         <module name="lakehouse-config-rest-client" />
         <module name="lakehouse-cli" />
@@ -37,6 +38,7 @@
       <module name="lakehouse-common-test" options="-parameters" />
       <module name="lakehouse-config-rest-client" options="-parameters" />
       <module name="lakehouse-config-svc" options="-parameters" />
+      <module name="lakehouse-gateway-for-spark-job" options="-parameters" />
       <module name="lakehouse-jinjava" options="-parameters" />
       <module name="lakehouse-scheduler-rest-client" options="-parameters" />
       <module name="lakehouse-scheduler-svc" options="-parameters" />

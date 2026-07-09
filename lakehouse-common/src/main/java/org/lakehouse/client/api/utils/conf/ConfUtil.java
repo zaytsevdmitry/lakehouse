@@ -51,7 +51,7 @@ public class ConfUtil {
      * @param conf - source map
      * @param startWith - prefix
      * @return result - rest of map, with rewrote keys
-     * @since 0.5.0
+     * @since 0.4.0
      * */
     public static Map<String, String> extractConf(Map<String, String> conf, String startWith) {
         if (conf == null || startWith == null) {
@@ -75,7 +75,7 @@ public class ConfUtil {
      * @param defaultValue - fallback value if key is not found
      * @return Long value
      * @throws TaskConfigurationException if parsing fails or key is missing without a default value
-     * @since 0.5.0
+     * @since 0.4.0
      */
     public static Long getLongByKey(Map<String, String> map, String key, Long defaultValue) throws TaskConfigurationException {
         if (map == null || key == null) {
@@ -111,7 +111,7 @@ public class ConfUtil {
      * @param defaultValue - fallback value if key is not found
      * @return boolean value
      * @throws TaskConfigurationException if the value is not a valid boolean representation
-     * @since 0.5.0
+     * @since 0.4.0
      */
     public static boolean getBooleanByKey(Map<String, String> map, String key, boolean defaultValue) throws TaskConfigurationException {
         if (map == null || key == null) {
@@ -143,7 +143,7 @@ public class ConfUtil {
      *
      * @param map - other generic types map
      * @return map of strings
-     * @since 0.5.0
+     * @since 0.4.0
      */
     public static <K,V> Map<String, String> castToStringMap(Map<K,V> map){
         return map
@@ -154,4 +154,5 @@ public class ConfUtil {
                         e -> e.getValue() != null ? e.getValue().toString() : ""
                 ));
     }
+
 }

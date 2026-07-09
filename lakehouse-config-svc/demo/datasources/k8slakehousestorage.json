@@ -8,10 +8,25 @@
     "port": "443",
     "urn": "",
     "properties": {
-      "k8s.spark-native.appResource": "file://opt/lakehouse/lakehouse-task-executor-spark-dataset-app.jar",
+      "datasource.service.protocol": "https",
+      "k8s.spark-native.appResource": "local:///opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.5.0-jar-with-dependencies.jar",
       "k8s.spark-native.businessTimeoutMinutes": "200",
-      "k8s.spark-native.mainClass": "org.apache.spark.examples.SparkPi",
+      "k8s.spark-native.command": "/opt/spark/bin/spark-submit",
+      "k8s.spark-native.mainClass": "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
+      "k8s.spark-native.manifest.metadata.annotations.bao.openbao.org/agent-inject-secret-spark-secrets.conf": "secret/data/lakehouse/processingdb",
+      "k8s.spark-native.manifest.metadata.annotations.bao.openbao.org/agent-inject-template-spark-secrets.conf": "/vault/custom-templates/spark-secrets.tmpl",
+      "k8s.spark-native.manifest.metadata.annotations.bao.openbao.org/agent-inject": "true",
+      "k8s.spark-native.manifest.metadata.annotations.bao.openbao.org/role": "spark-executor-role",
+      "k8s.spark-native.manifest.metadata.annotations.lakehouse-management-task": "regular-transaction_dds-compact-test",
       "k8s.spark-native.manifest.metadata.namespace": "lakehouse-management",
+      "k8s.spark-native.manifest.spec.containers.0.name": "spark-driver",
+      "k8s.spark-native.manifest.spec.containers.0.volumeMounts.0.mountPath": "/vault/custom-templates",
+      "k8s.spark-native.manifest.spec.containers.0.volumeMounts.0.name": "bao-template-vol",
+      "k8s.spark-native.manifest.spec.restartPolicy": "Never",
+      "k8s.spark-native.manifest.spec.serviceAccountName" : "spark-driver-sa",
+      "k8s.spark-native.manifest.spec.volumes.0.configMap.name": "openbao-spark-template",
+      "k8s.spark-native.manifest.spec.volumes.0.name": "bao-template-vol",
+      "k8s.spark-native.properties-file": "/bao/secrets/spark-secrets.conf",
       "k8s.spark-native.startupTimeoutMinutes": "2",
       "spark.driver.extraJavaOptions": "--add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/java.sql=ALL-UNNAMED --add-opens=java.sql/java.sql=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/jdk.internal.ref=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/sun.security.action=ALL-UNNAMED --add-opens=java.base/sun.util.calendar=ALL-UNNAMED --add-opens=java.security.jgss/sun.security.krb5=ALL-UNNAMED --add-opens=jdk.unsupported/sun.misc=ALL-UNNAMED -Djdk.reflect.useDirectMethodHandle=false -XX:+IgnoreUnrecognizedVMOptions",
       "spark.eventLog.dir": "s3a://sparklogs/eventlog/",
@@ -35,7 +50,6 @@
     }
   }
 ,
-
   "description": "Local datastore",
   "sqlTemplate" : {
     "tableDDLCompact" : "sql-template-spark_iceberg.tableDDLCompact.sql"

@@ -1,0 +1,1 @@
+{%set targetDataSet=dataSets[targetDataSetKeyName]%}{%set constraint=targetDataSet.constraints[constraintName]%}{%set refDataSetKeyName=constraint.reference.dataSetKeyName%}CONSTRAINT {{ constraintName }} FOREIGN KEY({{ constraint.columns }}) REFERENCES {{ refCat(refDataSetKeyName) }}({{ dataSets[refDataSetKeyName].constraints[constraint.reference.constraintName].columns }})

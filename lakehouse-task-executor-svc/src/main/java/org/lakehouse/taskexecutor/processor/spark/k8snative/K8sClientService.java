@@ -17,9 +17,11 @@
 
 package org.lakehouse.taskexecutor.processor.spark.k8snative;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.*;
 import org.lakehouse.client.api.exception.TaskFailedException;
+import org.lakehouse.client.api.utils.ObjectMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -45,18 +47,17 @@ public class K8sClientService {
 
     public void submit(
             KubernetesClient kubernetesClient,
-            String jsonConf,
+            Pod pod,
             long startupTimeoutMinutes,
             long businessTimeoutMinutes,
             boolean cleanUpIfFail,
             boolean logDeliveryIfFail
     ) throws TaskFailedException {
-        logger.info("Json conf is {}", jsonConf);
-
-        Pod pod = kubernetesClient.pods().load(new ByteArrayInputStream(jsonConf.getBytes(StandardCharsets.UTF_8))).item();
-
-        logger.info("Json conf loaded");
-
+        try {
+            logger.info("Json conf is {}", ObjectMapping.asJsonStringPretty(pod));
+        }catch (JsonProcessingException e){
+            logger.warn("Can't print pod to json", e);
+        }
         String namespace = pod.getMetadata().getNamespace();
         String name = pod.getMetadata().getName();
 

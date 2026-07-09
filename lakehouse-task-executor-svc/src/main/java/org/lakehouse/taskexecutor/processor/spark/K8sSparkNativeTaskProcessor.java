@@ -17,6 +17,7 @@
 
 package org.lakehouse.taskexecutor.processor.spark;
 
+import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;
@@ -64,7 +65,7 @@ public class K8sSparkNativeTaskProcessor implements TaskProcessor {
 
         KubernetesClient kubernetesClient = k8sClientService.buildKubernetesClient(masterUrl, namespace);
 
-        String json = k8SConfigService.extractAppConfJson(sourceConfDTO,scheduledTaskDTO);
+        Pod pod = k8SConfigService.buildSparkDriverPod(sourceConfDTO,scheduledTaskDTO);
 
         long startupTimeoutMinutes = K8sConfigService.getLongByKey(
                 K8sConfigService.castToStringMap(taskConf),
@@ -86,6 +87,6 @@ public class K8sSparkNativeTaskProcessor implements TaskProcessor {
                 "logDeliveryIfFail",
                 true);
 
-        k8sClientService.submit(kubernetesClient, json, startupTimeoutMinutes, businessTimeoutMinutes, cleanUpIfFail, logDeliveryIfFail);
+        k8sClientService.submit(kubernetesClient, pod, startupTimeoutMinutes, businessTimeoutMinutes, cleanUpIfFail, logDeliveryIfFail);
     }
 }

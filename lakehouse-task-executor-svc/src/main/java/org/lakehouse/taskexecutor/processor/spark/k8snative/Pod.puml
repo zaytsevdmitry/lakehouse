@@ -1,0 +1,90 @@
+@startuml
+skinparam handwritten false
+skinparam monochrome false
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    ArrowColor #555555
+    BorderColor #333333
+}
+
+class Pod {
+    + String apiVersion
+    + String kind
+    + ObjectMeta metadata
+    + PodSpec spec
+    + PodStatus status
+}
+
+class ObjectMeta {
+    + String name
+    + String namespace
+    + String uid
+    + Map<String, String> labels
+    + Map<String, String> annotations
+    + List<OwnerReference> ownerReferences
+}
+
+class OwnerReference {
+    + String apiVersion
+    + String kind
+    + String name
+    + String uid
+    + Boolean controller
+    + Boolean blockOwnerDeletion
+}
+
+class PodSpec {
+    + List<Container> containers
+    + List<Container> initContainers
+    + List<Volume> volumes
+    + String restartPolicy
+    + String serviceAccountName
+    + List<LocalObjectReference> imagePullSecrets
+    + String nodeName
+    + Map<String, String> nodeSelector
+}
+
+class PodStatus {
+    + String phase
+    + String podIP
+    + String hostIP
+    + List<PodCondition> conditions
+    + List<ContainerStatus> containerStatuses
+    + List<ContainerStatus> initContainerStatuses
+}
+
+class Container {
+    + String name
+    + String image
+    + List<String> command
+    + List<String> args
+    + List<ContainerPort> ports
+    + List<EnvVar> env
+    + ResourceRequirements resources
+    + List<VolumeMount> volumeMounts
+}
+
+class ContainerStatus {
+    + String name
+    + Boolean ready
+    + Integer restartCount
+    + String image
+    + String imageID
+    + ContainerState state
+}
+
+' Relationships
+Pod *--> "1" ObjectMeta : metadata
+Pod *--> "1" PodSpec : spec
+Pod *--> "1" PodStatus : status
+
+ObjectMeta *--> "0..*" OwnerReference : ownerReferences
+
+PodSpec *--> "0..*" Container : containers
+PodSpec *--> "0..*" Container : initContainers
+
+PodStatus *--> "0..*" ContainerStatus : containerStatuses
+PodStatus *--> "0..*" ContainerStatus : initContainerStatuses
+
+@enduml

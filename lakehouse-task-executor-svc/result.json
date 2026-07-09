@@ -1,31 +1,47 @@
 {
-  "apiVersion" : null,
-  "kind" : null,
+  "apiVersion" : "v1",
+  "kind" : "Pod",
   "metadata" : {
-    "name" : "task-100-1",
-    "namespace" : "lakehouse-management-ovrd"
+    "annotations" : {
+      ".lakehouse-management-task" : "123-2-Test_Schedule-Test_Act-quality-20260101 000000z",
+      "bao.openbao.org/agent-inject" : "true",
+      "bao.openbao.org/agent-inject-secret-spark-secrets.conf" : "secret/data/lakehouse/processingdb",
+      "bao.openbao.org/agent-inject-template-spark-secrets.conf" : "/vault/custom-templates/spark-secrets.tmpl",
+      "bao.openbao.org/role" : "spark-executor-role",
+      "lakehouse-management-task" : "regular-transaction_dds-compact-test"
+    },
+    "name" : "task-123-2-1782178706",
+    "namespace" : "lakehouse-management"
   },
   "spec" : {
-    "arguments" : [ "{\n  \"name\" : \"quality\",\n  \"taskExecutionServiceGroupName\" : \"default\",\n  \"taskProcessor\" : \"k8sSparkNativeTaskProcessor\",\n  \"taskProcessorBody\" : \"sparkTaskProcessorDQBody\",\n  \"importance\" : null,\n  \"description\" : null,\n  \"taskProcessorArgs\" : { },\n  \"id\" : 100,\n  \"scenarioActKeyName\" : \"Test_Act\",\n  \"scheduleKeyName\" : \"Test_Schedule\",\n  \"status\" : null,\n  \"targetDateTime\" : \"2026-01-01 00:00:00z\",\n  \"intervalStartDateTime\" : null,\n  \"intervalEndDateTime\" : null,\n  \"dataSetKeyName\" : null,\n  \"tryNum\" : 1\n}", "--lakehouse.client.rest.config.server.url=http://lakehouse-management-config-service:8080", "--lakehouse.taskexecutor.body.config.dq.kafka.producer.metric.value.topic=metric_value", "--protocol=https", "--lakehouse.taskexecutor.body.config.dq.kafka.producer.properties.bootstrap.servers=broker:9092" ],
-    "driver" : {
-      "cores" : 1,
-      "memory" : null,
-      "serviceAccount" : null
-    },
-    "executor" : null,
-    "image" : "apache/spark:3.5.0",
-    "mainApplicationFile" : "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dq-app-0.5.0-jar-with-dependencies.jar",
-    "mainClass" : "org.lakehouse.taskexecutor.spark.dq.SparkProcessorApplicationDQ",
-    "mode" : null,
-    "sparkConf" : {
-      "spark.driver.extraClassPath" : "/opt/drivers/postgresql-42.7.8.jar,/opt/drivers/iceberg-spark-runtime-3.5_2.12-1.9.2.jar,/opt/drivers/hadoop-aws-3.3.4.jar,/opt/drivers/aws-java-sdk-bundle-1.12.262.jar,/opt/drivers/wildfly-openssl-1.0.7.Final.jar",
-      "spark.eventLog.dir" : "s3a://sparklogs/eventlog/",
-      "spark.eventLog.enabled" : "true",
-      "spark.executor.memory" : "1g",
-      "spark.hadoop.fs.s3a.impl" : "org.apache.hadoop.fs.s3a.S3AFileSystem",
-      "spark.ui.enabled" : "true"
-    },
-    "sparkVersion" : null,
-    "type" : null
+    "automountServiceAccountToken" : false,
+    "containers" : [ {
+      "args" : [ "--master", "k8s://https://kubernetes.default.svc:443", "--name", "regular-transaction_dds-compact-test", "--properties-file", null, "--conf", "spark.executor.memory=1g", "--conf", "spark.sql.catalogImplementation=hive", "--conf", "spark.hadoop.fs.s3a.endpoint=http://minio:9000", "--conf", "spark.sql.catalog.lakehouse.uri=thrift://hive-metastore:9083", "--conf", "spark.hadoop.fs.s3a.secret.key=spark_pwd", "--conf", "spark.sql.catalog.lakehouse.type=hive", "--conf", "spark.sql.catalog.spark_catalog.warehouse=s3a://data/warehouse/", "--conf", "spark.hadoop.fs.s3a.access.key=spark_user", "--conf", "spark.sql.catalog.lakehouse=org.apache.iceberg.spark.SparkCatalog", "--conf", "spark.hadoop.fs.s3a.path.style.access=true", "--conf", "spark.hive.s3.endpoint=http://minio:9000", "--conf", "spark.hadoop.fs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem", "--conf", "spark.kubernetes.authenticate.executor.serviceAccountName=spark-driver-sa", "--conf", "spark.kubernetes.container.image=lakehouse-spark-aws:0.5.0", "--conf", "spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions", "--conf", "spark.kubernetes.executor.podNamePrefix=task-123-2-1782178706", "--conf", "spark.eventLog.dir=s3a://sparklogs/eventlog/", "--conf", "spark.eventLog.enabled=true", "--conf", "spark.kubernetes.authenticate.driver.serviceAccountName=spark-driver-sa", "--conf", "spark.executor.extraJavaOptions=--add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/java.sql=ALL-UNNAMED --add-opens=java.sql/java.sql=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/jdk.internal.ref=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/sun.security.action=ALL-UNNAMED --add-opens=java.base/sun.util.calendar=ALL-UNNAMED --add-opens=java.security.jgss/sun.security.krb5=ALL-UNNAMED --add-opens=jdk.unsupported/sun.misc=ALL-UNNAMED -Djdk.reflect.useDirectMethodHandle=false -XX:+IgnoreUnrecognizedVMOptions", "--conf", "spark.driver.extraJavaOptions=--add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/java.sql=ALL-UNNAMED --add-opens=java.sql/java.sql=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/jdk.internal.ref=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/sun.security.action=ALL-UNNAMED --add-opens=java.base/sun.util.calendar=ALL-UNNAMED --add-opens=java.security.jgss/sun.security.krb5=ALL-UNNAMED --add-opens=jdk.unsupported/sun.misc=ALL-UNNAMED -Djdk.reflect.useDirectMethodHandle=false -XX:+IgnoreUnrecognizedVMOptions", "--conf", "spark.ui.enabled=true", "--class", "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication", "local:///opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.5.0-jar-with-dependencies.jar", "--k8s.spark-operator.manifest.spec.mainClass=org.lakehouse.taskexecutor.spark.dq.SparkProcessorApplicationDQ", "--lakehouse.client.rest.config.server.url=", "--k8s.spark-operator.manifest.metadata.namespace=lakehouse-management-ovrd", "--lakehouse.taskexecutor.body.config.dq.kafka.producer.metric.value.topic=metric_value", "--scheduledTaskId=123", "--datasource.service.protocol=https", "--lakehouse.taskexecutor.body.config.dq.kafka.producer.properties.bootstrap.servers=broker:9092", "--k8s.spark-operator.manifest.spec.mainApplicationFile=/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dq-app-0.5.0-jar-with-dependencies.jar", "--k8s.spark-operator.manifest.spec.image=apache/spark:3.5.0", "--lakehouse.client.rest.scheduler.server.url=" ],
+      "command" : [ "/opt/spark/bin/spark-submit" ],
+      "env" : [ {
+        "name" : "POD_IP",
+        "valueFrom" : {
+          "fieldRef" : {
+            "fieldPath" : "status.podIP"
+          }
+        }
+      } ],
+      "image" : "lakehouse-spark-aws:0.5.0",
+      "name" : "lakehouse-spark-driver",
+      "resources" : {
+        "limits" : {
+          "cpu" : "1",
+          "memory" : "1408Mi"
+        },
+        "requests" : {
+          "cpu" : "1",
+          "memory" : "1408Mi"
+        }
+      }
+    } ],
+    "hostIPC" : false,
+    "hostNetwork" : false,
+    "hostPID" : false,
+    "shareProcessNamespace" : false
   }
 }

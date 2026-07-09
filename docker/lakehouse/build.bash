@@ -1,4 +1,4 @@
-  #!/usr/bin/env bash
+#!/usr/bin/env bash
 
 # "Lakehouse management tool" - the services set for managing data changes based on a metadata-driven approach
 # Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/lakehouse

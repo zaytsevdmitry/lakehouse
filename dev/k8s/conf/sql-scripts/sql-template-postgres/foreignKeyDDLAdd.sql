@@ -1,0 +1,1 @@
+ALTER TABLE  {{ ref(targetDataSetKeyName) }} ADD CONSTRAINT %s PRIMARY KEY (%s)
