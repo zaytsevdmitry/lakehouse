@@ -384,6 +384,31 @@ services:
       broker:
         condition: service_started
 
+  kyuubi:
+    image: lakehouse-kyuubi:0.5.0
+    container_name: kyuubi
+    ports:
+      - "10099:10099"
+    networks:
+      lakehouse_net:
+        ipv4_address: 172.20.193.160
+    environment:
+      SERVICE_NAME: "kyuubi"
+      SPARK_HOME: "/opt/spark"
+      KYUUBI_REST_FRONTEND_BIND_HOST: "0.0.0.0"
+      KYUUBI_REST_FRONTEND_BIND_PORT: 10099
+      KYUUBI_DEFAULTS: >
+        kyuubi.frontend.protocols=THRIFT_BINARY,REST
+        kyuubi.engine.type=SPARK_SQL
+        kyuubi.zookeeper.embedded.enable=false
+        kyuubi.ha.addresses=""
+        kyuubi.zookeeper.embedded.data.dir=/tmp/embedded_zookeeper
+    depends_on:
+      hive-metastore:
+        condition: service_started
+      minio-dev:
+        condition: service_healthy
+
 volumes:
   minio_storage:
     driver: local

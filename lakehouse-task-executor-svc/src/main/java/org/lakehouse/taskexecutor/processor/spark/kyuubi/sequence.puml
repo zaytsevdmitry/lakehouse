@@ -1,0 +1,98 @@
+@startuml
+' Настройка темной темы
+!theme cyborg
+skinparam BackgroundColor #1e1e24
+skinparam BoxPadding 15
+skinparam ParticipantPadding 12
+
+' Стилизация линий и текста
+skinparam SequenceLineColor #555566
+skinparam SequenceArrowColor #00ADB5
+skinparam SequenceActorBorderColor #00ADB5
+skinparam SequenceParticipantBorderColor #4E342E
+skinparam SequenceLifeLineBorderColor #00ADB5
+skinparam SequenceLifeLineBackgroundColor #222831
+
+' Стилизация блоков текста/примечаний
+skinparam NoteBackgroundColor #393E46
+skinparam NoteBorderColor #00ADB5
+skinparam NoteFontColor #EEEEEE
+
+autonumber
+
+actor "Клиент / Оркестратор\n(Неблокирующий поток)" as Client #00ADB5
+
+box "Инфраструктура Kyuubi & Discovery (HA)" #252A34
+    database "ZooKeeper" as ZK #FFD369
+    participant "Kyuubi Server" as Kyuubi #3F72AF
+end box
+
+box "Вычислительный кластер" #2B2E4A
+    participant "Новый Spark Engine\n(Выделенный Контекст)" as Engine #903749
+end box
+
+== <color:#00ADB5>Фаза 1: Обнаружение и Инициализация контекста</color> ==
+Client -> ZK : Запрос адреса Kyuubi
+ZK --> Client : Возврат IP:Port
+
+Client -> Kyuubi : Открытие подключения (OpenSession)
+activate Kyuubi #3F72AF
+Kyuubi -> Engine ** : 'spark-submit' (Запуск нового изолированного контекста)
+Engine --> Kyuubi : Регистрация движка по RPC
+Kyuubi --> Client : Сессия создана (Session ID)
+deactivate Kyuubi
+
+== <color:#00ADB5>Фаза 2: Асинхронное выполнение задачи (Неблокирующий режим)</color> ==
+Client -> Kyuubi : Отправка тяжелой задачи (ExecuteStatement)
+activate Kyuubi #3F72AF
+
+Kyuubi -> Engine : Передача вычислений в Spark
+activate Engine #903749
+
+' Мгновенный возврат управления клиенту
+Kyuubi --> Client : Мгновенный ответ: [OperationID, Status=RUNNING]
+deactivate Kyuubi
+note left Client #222831
+  **Поток клиента СВОБОДЕН.**
+  Сетевое соединение для выполнения
+  запроса закрыто, таймаут не грозит.
+end note
+
+loop Пока Status == RUNNING или PENDING
+    Client -> Kyuubi : Проверка статуса (GetOperationStatus + OperationID)
+    activate Kyuubi #3F72AF
+    Kyuubi --> Client : Возврат: [Status=RUNNING]
+    deactivate Kyuubi
+
+    Client -> Kyuubi : Запрос логов (FetchResults: LogType)
+    activate Kyuubi #3F72AF
+    Kyuubi --> Client : Потоковый вывод Spark-логов в консоль/оркестратор
+    deactivate Kyuubi
+
+    note over Client : Пауза (Sleep 5-10 сек)
+end
+
+== <color:#00ADB5>Фаза 3: Завершение и сбор результатов</color> ==
+Engine --> Kyuubi : Расчет завершен (Успех/Ошибка)
+deactivate Engine
+
+Client -> Kyuubi : Очередная проверка статуса
+activate Kyuubi #3F72AF
+Kyuubi --> Client : Возврат: [Status=FINISHED]
+deactivate Kyuubi
+
+Client -> Kyuubi : Запрос данных (FetchResults: DataType)
+activate Kyuubi #3F72AF
+Kyuubi --> Client : Передача итогового датасета
+deactivate Kyuubi
+
+== <color:#00ADB5>Фаза 4: Уничтожение контекста</color> ==
+Client -> Kyuubi : Закрытие подключения (CloseSession)
+activate Kyuubi #3F72AF
+Kyuubi -> Engine : Команда на остановку (Stop Engine)
+activate Engine #903749
+destroy Engine
+Kyuubi --> Client : Соединение закрыто, ресурсы кластера освобождены
+deactivate Kyuubi
+
+@enduml

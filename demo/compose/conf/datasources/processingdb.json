@@ -14,8 +14,7 @@
         "spark.sql.catalog.processing": "org.apache.spark.sql.execution.datasources.v2.jdbc.JDBCTableCatalog",
         "spark.sql.catalog.processing.url": "{{driver.connectionTemplates['jdbc']}}",
         "spark.sql.catalog.processing.user": "postgresUser",
-        "spark.sql.catalog.processing.password": "postgresPW",
-        "spark.sql.catalog.processing.type": "hive"
+        "spark.sql.catalog.processing.password": "postgresPW"
       }
     },
   "description": "Remote datastore processingdb"

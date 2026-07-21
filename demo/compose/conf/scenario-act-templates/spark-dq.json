@@ -18,72 +18,72 @@
     },
     {
       "name": "prepare",
-      "taskExecutionServiceGroupName": "spark-cluster",
-      "taskProcessor": "sparkStandAloneClusterTaskProcessor",
+      "taskExecutionServiceGroupName": "kyuubi",
+      "taskProcessor": "kyuubiSparkBatchTaskProcessor",
       "taskProcessorBody": "createTableSQLProcessorBody",
       "importance": "critical",
       "description": "load from remote datastore",
       "taskProcessorArgs": {
+        "datasource.service.protocol": "spark",
+        "deploy.kyuubi.url": "http://172.20.193.160:10099",
         "spark.ui.enabled": "true",
         "spark.executor.memory": "1g",
         "spark.driver.memory": "1g",
-        "datasource.service.protocol": "http",
-        "lakehouse.client.rest.config.server.url": "http://172.20.193.80:8080",
         "deploy.mainClass": "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
         "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.5.0-jar-with-dependencies.jar"
      }
     },
     {
       "name": "load",
-      "taskExecutionServiceGroupName": "spark-cluster",
-      "taskProcessor": "sparkStandAloneClusterTaskProcessor",
+      "taskExecutionServiceGroupName": "kyuubi",
+      "taskProcessor": "kyuubiSparkBatchTaskProcessor",
       "taskProcessorBody": "mergeSQLProcessorBody",
       "importance": "critical",
       "description": "load from remote datastore",
       "taskProcessorArgs": {
+        "datasource.service.protocol": "spark",
+        "deploy.kyuubi.url": "http://172.20.193.160:10099",
         "spark.ui.enabled": "true",
         "spark.executor.memory": "1g",
         "spark.driver.memory": "1g",
-        "datasource.service.protocol": "http",
-        "lakehouse.client.rest.config.server.url": "http://172.20.193.80:8080",
         "deploy.mainClass": "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
         "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.5.0-jar-with-dependencies.jar"
       }
     },
     {
       "name": "quality",
-      "taskExecutionServiceGroupName": "spark-cluster",
-      "taskProcessor": "sparkStandAloneClusterTaskProcessor",
+      "taskExecutionServiceGroupName": "kyuubi",
+      "taskProcessor": "kyuubiSparkBatchTaskProcessor",
       "taskProcessorBody": "sparkTaskProcessorDQBody",
       "importance": "critical",
       "description": "load from remote datastore",
       "taskProcessorArgs": {
+        "datasource.service.protocol": "spark",
+        "deploy.kyuubi.url": "http://172.20.193.160:10099",
         "spark.ui.enabled": "true",
         "spark.executor.memory": "1g",
         "spark.driver.memory": "1g",
-        "lakehouse.client.rest.config.server.url": "http://172.20.193.80:8080",
         "lakehouse.taskexecutor.body.config.dq.kafka.producer.properties.bootstrap.servers" : "broker:9092",
         "lakehouse.taskexecutor.body.config.dq.kafka.producer.metric.status.topic": "metric_status",
         "lakehouse.taskexecutor.body.config.dq.kafka.producer.testSet.status.topic": "metric_test_set_status",
         "lakehouse.taskexecutor.body.config.dq.kafka.producer.metric.value.topic": "metric_value",
-        "datasource.service.protocol": "http",
         "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dq-app-0.5.0-jar-with-dependencies.jar",
         "deploy.mainClass": "org.lakehouse.taskexecutor.spark.dq.SparkProcessorApplicationDQ"
       }
     },
     {
       "name": "compact",
-      "taskExecutionServiceGroupName": "spark-cluster",
-      "taskProcessor": "sparkStandAloneClusterTaskProcessor",
+      "taskExecutionServiceGroupName": "kyuubi",
+      "taskProcessor": "kyuubiSparkBatchTaskProcessor",
       "taskProcessorBody": "compactTableSQLProcessorBody",
       "importance": "critical",
       "description": "load from remote datastore",
       "taskProcessorArgs": {
+        "datasource.service.protocol": "spark",
+        "deploy.kyuubi.url": "http://172.20.193.160:10099",
         "spark.ui.enabled": "true",
         "spark.executor.memory": "1g",
         "spark.driver.memory": "1g",
-        "datasource.service.protocol": "http",
-        "lakehouse.client.rest.config.server.url": "http://172.20.193.80:8080",
         "deploy.mainClass": "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
         "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.5.0-jar-with-dependencies.jar"
       }

@@ -42,16 +42,16 @@ public class JinJavaUtils {
         return jinjava.render(template, localContext);
     }
 
-    public Map<String, String> renderMap(Map<String, String> map, Map<String, Object> localContext) {
+    public Map<String, String> renderMapValues(Map<String, String> map, Map<String, Object> localContext) {
         return map.entrySet().stream().map(e ->
                         Map.entry(
-                                jinjava.render(e.getKey(), localContext),
+                                e.getKey(),
                                 jinjava.render(e.getValue(), localContext)))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    public Map<String, String> renderMap(Map<String, String> map) {
-        return renderMap(map, new HashMap<>());
+    public Map<String, String> renderMapValues(Map<String, String> map) {
+        return renderMapValues(map, new HashMap<>());
     }
 
     public JinJavaUtils injectGlobalContext(Map<String,Object> map){

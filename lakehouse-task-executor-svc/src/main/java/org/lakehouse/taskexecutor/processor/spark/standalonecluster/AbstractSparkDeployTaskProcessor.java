@@ -42,8 +42,7 @@ import java.util.Map;
  * */
 public abstract class AbstractSparkDeployTaskProcessor extends AbstractTaskProcessor {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    protected final String MAIN_CLASS_KEY = "deploy.mainClass";
-    protected final String APP_RESOURCE_KEY = "deploy.appResource";
+
 
     public AbstractSparkDeployTaskProcessor() {
     }
@@ -51,7 +50,7 @@ public abstract class AbstractSparkDeployTaskProcessor extends AbstractTaskProce
     //todo other final status
     private final List<String> finalStatusNames = List.of("FINISHED", "KILLED", "FAILED", "ERROR");
     private final List<String> negativeStatusNames = List.of("KILLED", "FAILED" , "ERROR");
-
+    private final String urnV1 = "/v1/submissions";
     public boolean isStatusFinal(String statusName) {
         return finalStatusNames.contains(statusName);
     }
@@ -91,7 +90,7 @@ public abstract class AbstractSparkDeployTaskProcessor extends AbstractTaskProce
         CreateResponse createResponse = null;
         try {
 
-            createResponse =buildSparkRestClientApi(severUrl).createSubmission(createRequest);
+            createResponse =buildSparkRestClientApi(severUrl+ urnV1).createSubmission(createRequest);
 
         } catch (RestClientResponseException e) {
             throw new TaskConfigurationException("Deploy failed. Response error", e);

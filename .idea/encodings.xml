@@ -8,9 +8,11 @@
     <file url="file://$PROJECT_DIR$/lakehouse-config-rest-client/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/lakehouse-config-svc/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/lakehouse-jinjava/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/lakehouse-job-launcher-for-spark/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/lakehouse-rest-client-for-kyuubi/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/lakehouse-rest-client-for-spark/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/lakehouse-scheduler-rest-client/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/lakehouse-scheduler-svc/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/lakehouse-spark-rest-client/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/lakehouse-state-rest-client/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/lakehouse-state-svc/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/lakehouse-task-executor-api/src/main/java" charset="UTF-8" />

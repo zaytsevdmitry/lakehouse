@@ -1,0 +1,81 @@
+@startuml
+' Настройка темной темы
+!theme cyborg
+skinparam BackgroundColor #1e1e24
+skinparam BoxPadding 15
+skinparam ParticipantPadding 12
+
+' Стилизация линий и текста
+skinparam SequenceLineColor #555566
+skinparam SequenceArrowColor #00ADB5
+skinparam SequenceActorBorderColor #00ADB5
+skinparam SequenceParticipantBorderColor #4E342E
+skinparam SequenceLifeLineBorderColor #00ADB5
+skinparam SequenceLifeLineBackgroundColor #222831
+
+' Стилизация блоков текста/примечаний
+skinparam NoteBackgroundColor #393E46
+skinparam NoteBorderColor #00ADB5
+skinparam NoteFontColor #EEEEEE
+
+autonumber
+
+actor "Java Client / Orchestrator" as Client #00ADB5
+
+box "Kyuubi Infrastructure" #252A34
+    participant "Kyuubi Server\n(REST Endpoint)" as Kyuubi #3F72AF
+end box
+
+box "Compute Cluster" #2B2E4A
+    participant "Spark Batch Application\n(YARN / Kubernetes)" as Engine #903749
+end box
+
+== <color:#00ADB5>Phase 1: Submit Batch Job</color> ==
+
+Client -> Kyuubi : POST /api/v1/batches (JSON payload)
+activate Kyuubi #3F72AF
+Kyuubi -> Engine ** : Submit Spark Job (via spark-submit background process)
+Kyuubi --> Client : HTTP 201: Return Batch JSON [id, state=PENDING/RUNNING]
+deactivate Kyuubi
+
+note left Client #222831
+  **Client thread is FREE.**
+  The HTTP connection is closed.
+  No risk of connection timeouts.
+end note
+
+== <color:#00ADB5>Phase 2: Asynchronous Polling & Logging</color> ==
+
+loop While state == PENDING or RUNNING
+    Client -> Kyuubi : GET /api/v1/batches/{batchId}
+    activate Kyuubi #3F72AF
+    Kyuubi --> Client : HTTP 200: Return Batch JSON [state=RUNNING]
+    deactivate Kyuubi
+
+    Client -> Kyuubi : GET /api/v1/batches/{batchId}/localLog?from=-1&size=1000
+    activate Kyuubi #3F72AF
+    Kyuubi --> Client : HTTP 200: Return chunk of Spark application logs
+    deactivate Kyuubi
+
+    note over Client : Pause (Sleep 5-10 sec)
+end
+
+== <color:#00ADB5>Phase 3: Automated Job Completion</color> ==
+
+Engine -> Engine : Execution finished (Success or Failure)
+Engine --> Kyuubi : Update state in Kyuubi metadata storage
+destroy Engine
+
+Client -> Kyuubi : GET /api/v1/batches/{batchId}
+activate Kyuubi #3F72AF
+Kyuubi --> Client : HTTP 200: Return Batch JSON [state=FINISHED or ERROR]
+deactivate Kyuubi
+
+note over Client #222831
+  **Note on Results:**
+  Unlike JDBC, Spark Batch jobs write results
+  directly to target storage (Hive, Delta, S3, HDFS).
+  They do not return a final dataset over HTTP.
+end note
+
+@enduml

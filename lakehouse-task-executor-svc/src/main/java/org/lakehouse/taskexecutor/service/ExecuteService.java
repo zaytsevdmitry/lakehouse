@@ -63,6 +63,11 @@ public class ExecuteService {
         taskExecutionHeartBeatDTO.setLockId(scheduledTaskLockDTO.getLockId());
 
         try {
+            logger.info(
+                    "Run task processor {} for task {}",
+                    this.getClass().getName(),
+                    scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().buildTaskFullName());
+
             TaskProcessor p = (TaskProcessor) applicationContext.getBean(scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getTaskProcessor());
             SourceConfDTO sourceConfDTO = configRestClientApi.getSourceConfDTO(scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getDataSetKeyName());
             // made task globalContext based on task and source information
@@ -74,19 +79,14 @@ public class ExecuteService {
 
             p.runTask(sourceConfDTO,scheduledTaskLockDTO.getScheduledTaskEffectiveDTO(), jinJavaUtils);
             taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.SUCCESS));
-        } catch (TaskConfigurationException e) {
+        } catch (TaskConfigurationException | JsonProcessingException e) {
             logger.error("Task creation error ", e);
             taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.CONF_ERROR, e.toString()));
-        } catch (TaskFailedException e) {
+        } catch (TaskFailedException | RuntimeException e) {
             logger.error("Task execution error {}", e.getMessage());
-            logger.error(e.getMessage(),e);
+            logger.debug(e.getMessage(),e);
             taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.FAILED, e.toString()));
-        } catch (RuntimeException e) {
-            logger.error("Task execution error ", e);
-            taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.FAILED, e.toString()));
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        } finally {
+        }  finally {
             logger.info("Status {}", taskInstanceReleaseDTO.getTaskResult().getStatus());
             heardBeatService.stop(taskExecutionHeartBeatDTO);
             logger.info("Heart beat shutdown");

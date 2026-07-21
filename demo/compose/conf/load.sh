@@ -67,7 +67,7 @@ do
    curlPost 127.0.0.1:8080/v1_0/configs/drivers "drivers/$s.json"
 done
 
-for s in "processingdb" "lakehousestorage"
+for s in "processingdb" "lakehousestorage" "lakehousestorage1"
 do
    curlPost 127.0.0.1:8080/v1_0/configs/datasources "datasources/$s.json"
 done
@@ -93,7 +93,7 @@ do
 done
 
 
-for s in "state-service" "spark-cluster" "database"
+for s in "state-service" "spark-cluster" "database" "kyuubi"
 do
    curlPost 127.0.0.1:8080/v1_0/configs/taskexecutionservicegroups "taskexecutionservicegroups/$s.json"
 done

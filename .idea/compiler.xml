@@ -9,8 +9,8 @@
         <module name="lakehouse-state-rest-client" />
         <module name="lakehouse-common-rest-client" />
         <module name="lakehouse-common-test" />
-        <module name="lakehouse-spark-rest-client" />
         <module name="lakehouse-common" />
+        <module name="lakehouse-rest-client-for-kyuubi" />
         <module name="lakehouse-state-svc" />
         <module name="lakehouse-task-executor-spark-api" />
         <module name="lakehouse-config-svc" />
@@ -20,6 +20,7 @@
         <module name="lakehouse-task-executor-spark-dataset-app" />
         <module name="lakehouse-ui-svc" />
         <module name="lakehouse-scheduler-svc" />
+        <module name="lakehouse-rest-client-for-spark" />
         <module name="lakehouse-config-rest-client" />
         <module name="lakehouse-cli" />
         <module name="lakehouse-task-executor-spark-dq-app" />
@@ -28,6 +29,9 @@
         <module name="lakehouse-validators" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="lakehouse-job-launcher-for-spark" target="17" />
+    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
@@ -38,9 +42,11 @@
       <module name="lakehouse-config-rest-client" options="-parameters" />
       <module name="lakehouse-config-svc" options="-parameters" />
       <module name="lakehouse-jinjava" options="-parameters" />
+      <module name="lakehouse-job-launcher-for-spark" options="-parameters" />
+      <module name="lakehouse-rest-client-for-kyuubi" options="-parameters" />
+      <module name="lakehouse-rest-client-for-spark" options="-parameters" />
       <module name="lakehouse-scheduler-rest-client" options="-parameters" />
       <module name="lakehouse-scheduler-svc" options="-parameters" />
-      <module name="lakehouse-spark-rest-client" options="-parameters" />
       <module name="lakehouse-state-rest-client" options="-parameters" />
       <module name="lakehouse-state-svc" options="-parameters" />
       <module name="lakehouse-task-executor-api" options="-parameters" />
