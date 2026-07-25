@@ -1,0 +1,40 @@
+server:
+  port: 8090
+
+lakehouse:
+  task:
+    proxy4spark:
+      adapter: local
+      spark-master: "local[*]"
+      standalone:
+        rest-url: "http://localhost:6066"
+      yarn:
+        rest-url: "http://localhost:8088"
+      k8s:
+        namespace: "default"
+        rest-url: "http://kubernetes.default.svc"
+      scheduler:
+        poll-interval-ms: 5000
+        pool-size: 2
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgresDB?ApplicationName=TaskProxy4Spark
+    username: postgresUser
+    password: postgresPW
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    generate-ddl: true
+    ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+    hibernate:
+      transaction:
+        jta:
+          platform: org.hibernate.service.jta.platform.internal.JBossStandAloneJtaPlatform
+    properties:
+      jakarta:
+        persistence:
+          create-database-schemas: true
+      hibernate:
+        default_schema: lakehouse_proxy_spark

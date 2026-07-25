@@ -1,0 +1,40 @@
+@startuml
+title clearCompleted — POST /clear
+
+|#LightBlue|Controller|
+|#LightGreen|Service|
+|#LightYellow|Adapter|
+
+start
+
+|Controller|
+
+:HTTP POST /v1/submissions/clear;
+
+|Service|
+
+:SELECT * FROM spark_submissions WHERE status = COMPLETED;
+
+while (more submissions?) is (yes)
+
+    if (submissionId IS NOT NULL?) then (yes)
+
+        |Adapter|
+
+        :adapter.clearCompleted();
+
+    endif
+
+    |Service|
+
+    :DELETE FROM spark_submissions WHERE id = {id};
+
+endwhile (no)
+
+|Controller|
+
+:Return CreateSubmissionResponse(message=Cleared N submissions, success=true);
+
+stop
+
+@enduml

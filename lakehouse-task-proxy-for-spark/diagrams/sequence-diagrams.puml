@@ -1,0 +1,127 @@
+@startuml
+title Lakehouse Task Proxy for Spark — all endpoints
+
+skinparam backgroundColor #FEFEFE
+skinparam sequenceArrowThickness 1
+
+actor Client
+participant "Controller" as Ctrl
+participant "Service" as Svc
+participant "Scheduler\n(@Scheduled 5s)" as Sched
+participant "Adapter\n(Local / Standalone / K8s / YARN / MESOS)" as Adapter
+database "PostgreSQL" as PG
+participant "Cluster API" as ClusterAPI
+
+note over Client, ClusterAPI
+  **External statuses** (Spark REST API standard): WAITING, RUNNING, FINISHED, FAILED, KILLED, UNKNOWN
+  **Single ID model:** submissionId(external)=spark_submissions.id(proxy), realSubmissionId(internal)=spark_submissions.submission_id(driver-xxx)
+  **Adapter:** one adapter selected at startup via lakehouse.task.proxy4spark.adapter
+end note
+
+== 1. POST /create — save to DB ==
+
+Client -> Ctrl : POST /v1/submissions/create (CreateSubmissionRequest)
+Ctrl -> Svc : create(request)
+Svc -> PG : INSERT spark_submissions (status=QUEUED, submissionId=NULL, appResource, mainClass, sparkProperties) RETURNING id
+PG --> Svc : id = 42
+Svc --> Ctrl : CreateSubmissionResponse(submissionId:"42", message:"WAITING", success:true)
+Ctrl --> Client : 200 OK
+
+== 2. GET /status/{submissionId} — task status ==
+
+Client -> Ctrl : GET /v1/submissions/status/42
+Ctrl -> Svc : getStatus(42)
+Svc -> PG : findById(42)
+PG --> Svc : SparkSubmission(status:QUEUED)
+Svc -> Svc : internalStatus IN (QUEUED,CLAIMED,SUBMITTED)? → YES → WAITING
+Svc --> Ctrl : CreateSubmissionResponse(message:"WAITING", submissionId:"42")
+Ctrl --> Client : 200 OK
+
+== 3. Scheduler poll() — claim and execute ==
+
+Sched -> PG : claimTask(instanceId) UPDATE...SET status=CLAIMED WHERE status=QUEUED FOR UPDATE SKIP LOCKED RETURNING id,appResource,mainClass,sparkProperties
+PG --> Sched : row=(42,"app.jar","com.Main","{...}")
+Sched -> Sched : Deserialize sparkProperties
+Sched -> Adapter : adapter.createSubmission(request)
+Adapter -> Adapter : buildSparkSubmitCommand(): spark-submit --conf ... --class ... app.jar [appArgs...]
+Adapter -> ClusterAPI : ProcessBuilder.start() + process.waitFor()
+
+alt exitCode == 0
+
+    Adapter --> Sched : submissionId = "driver-abc-123"
+    Sched -> PG : completeTask(42, "driver-abc-123", "SUBMITTED", "spark-submit launched successfully")
+
+else exitCode != 0
+
+    Adapter --> Sched : throws RuntimeException
+    Sched -> PG : completeTask(42, NULL, "FAILED", "error: ...")
+
+end
+
+== 4. GET /status/{submissionId} — after submission ==
+
+Client -> Ctrl : GET /v1/submissions/status/42
+Ctrl -> Svc : getStatus(42)
+Svc -> PG : findById(42)
+PG --> Svc : {status:SUBMITTED, submissionId="driver-abc-123"}
+Svc -> Svc : internalStatus=SUBMITTED → IN (QUEUED,CLAIMED,SUBMITTED) → YES → WAITING
+Svc --> Ctrl : {message:"WAITING", submissionId:"42"}
+Ctrl --> Client : 200 OK
+
+== 5. GET /status/{submissionId} — cluster reports completed ==
+
+Client -> Ctrl : GET /v1/submissions/status/42
+Ctrl -> Svc : getStatus(42)
+Svc -> PG : findById(42)
+PG --> Svc : {status:COMPLETED, submissionId="driver-abc-123"}
+Svc -> Svc : internalStatus=COMPLETED → NOT IN (QUEUED,CLAIMED,SUBMITTED) → query cluster
+Svc -> Adapter : adapter.getSubmissionStatus("driver-abc-123")
+Adapter -> ClusterAPI : listNamespacedPod("default").labelSelector("spark-app=spark-driver,spark-submission-id=driver-abc-123").execute()
+ClusterAPI --> Adapter : V1PodList(podName="driver-abc-123-xxxxx")
+Adapter -> ClusterAPI : readNamespacedPod("driver-abc-123-xxxxx","default").execute()
+ClusterAPI --> Adapter : V1Pod(status.phase:"Succeeded")
+Adapter -> Adapter : ExternalStatus.fromK8sPhase("Succeeded") → FINISHED
+Adapter --> Svc : {message:"FINISHED", submissionId:"driver-abc-123"}
+Svc --> Ctrl : CreateSubmissionResponse
+Ctrl --> Client : 200 OK
+
+== 6. POST /kill/{submissionId} — kill task ==
+
+Client -> Ctrl : POST /v1/submissions/kill/42
+Ctrl -> Svc : kill(42)
+Svc -> PG : findById(42)
+PG --> Svc : {submissionId:"driver-abc-123"}
+Svc -> Adapter : adapter.killSubmission("driver-abc-123")
+Adapter -> ClusterAPI : listNamespacedPod("default").labelSelector(...).execute()
+ClusterAPI --> Adapter : V1PodList(podName="driver-abc-123-xxxxx")
+Adapter -> ClusterAPI : deleteNamespacedPod("driver-abc-123-xxxxx","default").execute()
+ClusterAPI --> Adapter : 200 OK
+Adapter --> Svc : {message:"KILLED", success:true}
+Svc -> PG : DELETE FROM spark_submissions WHERE id = 42
+Svc --> Ctrl : CreateSubmissionResponse(message:"KILLED", submissionId:"42")
+Ctrl --> Client : 200 OK
+
+== 7. POST /killall — kill all queued/claimed ==
+
+Client -> Ctrl : POST /v1/submissions/killall
+Ctrl -> Svc : killAll()
+Svc -> PG : DELETE FROM spark_submissions WHERE status IN (QUEUED, CLAIMED)
+Svc --> Ctrl : CreateSubmissionResponse(message:"KILLED N queued/claimed tasks")
+Ctrl --> Client : 200 OK
+
+== 8. POST /clear — clear completed ==
+
+Client -> Ctrl : POST /v1/submissions/clear
+Ctrl -> Svc : clear()
+Svc -> PG : SELECT * FROM spark_submissions WHERE status = COMPLETED
+
+loop for each completed submission
+    Svc -> Adapter : adapter.clearCompleted()
+    Adapter -> ClusterAPI : cluster-specific clear
+    Svc -> PG : DELETE FROM spark_submissions WHERE id = {id}
+end
+
+Svc --> Ctrl : CreateSubmissionResponse(message:"Cleared N submissions")
+Ctrl --> Client : 200 OK
+
+@enduml

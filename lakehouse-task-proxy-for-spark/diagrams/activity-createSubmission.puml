@@ -1,0 +1,21 @@
+@startuml
+title createSubmission — POST /create
+
+|#LightBlue|Controller|
+|#LightGreen|Service|
+
+start
+
+:HTTP POST /v1/submissions/create (CreateSubmissionRequest);
+
+|Service|
+
+:INSERT spark_submissions (status=QUEUED, submissionId=NULL, appResource, mainClass, sparkProperties) RETURNING id;
+
+|Controller|
+
+:Return CreateSubmissionResponse(submissionId=id, message=WAITING, success=true);
+
+stop
+
+@enduml
