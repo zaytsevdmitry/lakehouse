@@ -1,23 +1,10 @@
 server:
   port: 8090
 
-lakehouse:
-  task:
-    proxy4spark:
-      adapter: local
-      spark-master: "local[*]"
-      standalone:
-        rest-url: "http://localhost:6066"
-      yarn:
-        rest-url: "http://localhost:8088"
-      k8s:
-        namespace: "default"
-        rest-url: "http://kubernetes.default.svc"
-      scheduler:
-        poll-interval-ms: 5000
-        pool-size: 2
-
 spring:
+  threads:
+    virtual:
+      enabled: true
   datasource:
     url: jdbc:postgresql://localhost:5432/postgresDB?ApplicationName=TaskProxy4Spark
     username: postgresUser
@@ -38,3 +25,49 @@ spring:
           create-database-schemas: true
       hibernate:
         default_schema: lakehouse_proxy_spark
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+        step: 1m
+    tags:
+      application: lakehouse-task-proxy4spark
+
+lakehouse:
+  task:
+    proxy4spark:
+      adapter: local
+      spark-master: "local[*]"
+      standalone:
+        rest-url: "http://localhost:6066"
+        submission-id-pattern: '(driver-\d{14}-\d{4})'
+      yarn:
+        rest-url: "http://localhost:8088"
+        submission-id-pattern: 'Submitted application (application_\d+_\d+) to YARN'
+      k8s:
+        namespace: "default"
+        rest-url: "http://kubernetes.default.svc"
+        submission-id-pattern: '(?:driver\s+)?pod name:\s+([a-zA-Z0-9\-]+-driver)'
+      scheduler:
+        poll-interval-ms: 5000
+        pool-size: 2
+      inspection:
+        poll-interval-ms: 10000
+        pool-size: 2
+        batch-size: 10
+      cleanup:
+        poll-interval-ms: 60000
+        pool-size: 1
+        batch-size: 50
+        retention-seconds: 3600
+      metrics:
+        submission-timeout-seconds: 30

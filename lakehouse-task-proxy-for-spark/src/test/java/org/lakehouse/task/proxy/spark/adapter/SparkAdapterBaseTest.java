@@ -4,6 +4,7 @@ import org.apache.spark.launcher.SparkLauncher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.lakehouse.task.proxy.spark.dto.CreateSubmissionRequest;
+import org.lakehouse.task.proxy.spark.dto.SubmissionResponse;
 import org.lakehouse.task.proxy.spark.exception.CreateErrorException;
 
 import java.util.List;
@@ -17,7 +18,7 @@ class SparkAdapterBaseTest {
 
     @BeforeEach
     void setUp() {
-        adapter = new TestSparkAdapter("spark://test-master:7077");
+        adapter = new TestSparkAdapter("spark://test-master:7077", 30);
     }
 
     @Test
@@ -80,7 +81,12 @@ class SparkAdapterBaseTest {
     }
 
     @Test
-    void extractSubmissionId_throwsOnInvalidOutput() {
+    void extractSubmissionId_found() throws CreateErrorException {
+        assertEquals("submission-123", adapter.extractSubmissionId("output with submission-123 inside"));
+    }
+
+    @Test
+    void extractSubmissionId_notFound() {
         assertThrows(CreateErrorException.class, () -> adapter.extractSubmissionId("no-id-here"));
     }
 
@@ -91,8 +97,8 @@ class SparkAdapterBaseTest {
 
     static class TestSparkAdapter extends SparkAdapterBase {
 
-        public TestSparkAdapter(String masterUrl) {
-            super(masterUrl);
+        public TestSparkAdapter(String masterUrl, long submissionTimeoutSeconds) {
+            super(masterUrl, submissionTimeoutSeconds);
         }
 
         @Override
@@ -109,13 +115,13 @@ class SparkAdapterBaseTest {
         }
 
         @Override
-        public org.lakehouse.task.proxy.spark.dto.CreateSubmissionResponse killSubmission(String submissionId) {
-            return new org.lakehouse.task.proxy.spark.dto.CreateSubmissionResponse("KillResponse", "KILLED", null, submissionId, true);
+        public SubmissionResponse killSubmission(String submissionId) {
+            return new SubmissionResponse("KillResponse", "KILLED", null, submissionId, true);
         }
 
         @Override
-        public org.lakehouse.task.proxy.spark.dto.CreateSubmissionResponse killAllSubmissions() {
-            return new org.lakehouse.task.proxy.spark.dto.CreateSubmissionResponse("KillAllResponse", "KILLED", null, null, true);
+        public SubmissionResponse killAllSubmissions() {
+            return new SubmissionResponse("KillAllResponse", "KILLED", null, null, true);
         }
 
         @Override
@@ -124,8 +130,8 @@ class SparkAdapterBaseTest {
         }
 
         @Override
-        public org.lakehouse.task.proxy.spark.dto.CreateSubmissionResponse clearCompleted() {
-            return new org.lakehouse.task.proxy.spark.dto.CreateSubmissionResponse("ClearResponse", "OK", null, null, true);
+        public SubmissionResponse clearCompleted(String submissionId) {
+            return new SubmissionResponse("ClearResponse", "OK", null, submissionId, true);
         }
     }
 }

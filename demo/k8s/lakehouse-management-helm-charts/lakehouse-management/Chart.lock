@@ -20,5 +20,8 @@ dependencies:
 - name: spark-history
   repository: file://../spark-history
   version: 0.1.0
-digest: sha256:aea93fc08ba4ce6e084d50d35b372c0abbf82b41ef08d10a0559625606cedd1a
-generated: "2026-06-07T21:14:48.01848321+03:00"
+- name: lakehouse-task-proxy4spark
+  repository: file://../lakehouse-task-proxy4spark
+  version: 0.1.0
+digest: sha256:1db9c1b1b4deaf0d79d804bb577ccad607416410f03af875876c6a536ae10bee
+generated: "2026-07-25T20:00:41.637337812+03:00"

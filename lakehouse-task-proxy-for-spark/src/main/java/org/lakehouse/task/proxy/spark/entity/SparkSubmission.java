@@ -11,7 +11,11 @@ import java.time.Instant;
 public class SparkSubmission {
 
     public enum Status {
-        QUEUED, CLAIMED, SUBMITTED, COMPLETED, FAILED
+        WAITING, SUBMITTED, RUNNING, FINISHED, KILLED, FAILED, ERROR, UNKNOWN
+    }
+
+    public static boolean isFinalStatus(Status status) {
+        return status == Status.FINISHED || status == Status.KILLED || status == Status.FAILED || status == Status.ERROR;
     }
 
     @Id
@@ -23,16 +27,10 @@ public class SparkSubmission {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    private Status status = Status.QUEUED;
+    private Status status = Status.WAITING;
 
     @Column(name = "cluster_type", nullable = false)
     private String clusterType;
-
-    @Column(name = "claimed_by")
-    private String claimedBy;
-
-    @Column(name = "claimed_at")
-    private Instant claimedAt;
 
     @Column(name = "app_resource")
     private String appResource;
@@ -53,6 +51,14 @@ public class SparkSubmission {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
 
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt = Instant.now();
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = Instant.now();
+    }
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -64,12 +70,6 @@ public class SparkSubmission {
 
     public String getClusterType() { return clusterType; }
     public void setClusterType(String clusterType) { this.clusterType = clusterType; }
-
-    public String getClaimedBy() { return claimedBy; }
-    public void setClaimedBy(String claimedBy) { this.claimedBy = claimedBy; }
-
-    public Instant getClaimedAt() { return claimedAt; }
-    public void setClaimedAt(Instant claimedAt) { this.claimedAt = claimedAt; }
 
     public String getAppResource() { return appResource; }
     public void setAppResource(String appResource) { this.appResource = appResource; }
@@ -88,4 +88,7 @@ public class SparkSubmission {
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    public Instant getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
 }

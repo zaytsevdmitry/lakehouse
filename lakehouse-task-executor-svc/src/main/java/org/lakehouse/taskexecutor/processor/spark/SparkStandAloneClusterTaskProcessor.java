@@ -64,6 +64,9 @@ public class SparkStandAloneClusterTaskProcessor extends AbstractSparkDeployTask
             JinJavaUtils jinJavaUtils) throws TaskFailedException, TaskConfigurationException {
         String targetDataSetKeyName = scheduledTaskDTO.getDataSetKeyName();
 
+        Map<String, String> sparkProperties = SparkConfUtil.extractSparkConFromTaskConf(
+                sourceConfDTO, scheduledTaskDTO);
+
         ScheduledTaskDTO unSparkedTaskConfig = SparkConfUtil.unSparkConf(scheduledTaskDTO);
 
         DataSourceDTO dataSourceDTO = sourceConfDTO.getDataSourceDTOByDataSetKeyName(targetDataSetKeyName);
@@ -77,10 +80,7 @@ public class SparkStandAloneClusterTaskProcessor extends AbstractSparkDeployTask
         );
 
 
-       // try {
-            //todo clean it
-           // appArgs.add(ObjectMapping.asJsonStringPretty(unSparkedTaskConfig));
-            Map<String,String> argsMap = new HashMap<>(unSparkedTaskConfig.getTaskProcessorArgs());
+        Map<String,String> argsMap = new HashMap<>(unSparkedTaskConfig.getTaskProcessorArgs());
         argsMap.put("scheduledTaskId",String.valueOf(scheduledTaskDTO.getId()));
         argsMap.put(ConfigRestClientConstants.restConfKey, restConfUrl);
         argsMap.put(SchedulerRestClientConstants.restSchedulerKey, restSchedulerUrl);
@@ -92,14 +92,11 @@ public class SparkStandAloneClusterTaskProcessor extends AbstractSparkDeployTask
                 .toList());
 
         deploy(
-                scheduledTaskDTO.buildTaskFullName(),
                 mainClass,
                 appResource,
                 sparkRestDeployFactory.getServerUrl(sourceConfDTO,scheduledTaskDTO,jinJavaUtils),
-                SparkConfUtil.extractSparkConFromTaskConf(sourceConfDTO, scheduledTaskDTO),
+                sparkProperties,
                 appArgs);
-        //} catch (JsonProcessingException e) {
-        //    throw new TaskConfigurationException(e);
-//        }
+
     }
 }

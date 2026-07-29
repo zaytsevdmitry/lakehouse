@@ -19,23 +19,55 @@ public interface SparkSubmissionRepository extends JpaRepository<SparkSubmission
     @Query(value = """
             SELECT id, submission_id, cluster_type, app_resource, main_class, app_args, spark_properties
             FROM {h-schema}spark_submissions
-            WHERE status = 'QUEUED'
+            WHERE status = 'WAITING'
             ORDER BY created_at ASC
             FOR UPDATE SKIP LOCKED
             LIMIT 1
             """, nativeQuery = true)
     Object[] claimNextTask();
 
+    @Query(value = """
+            SELECT id, submission_id, cluster_type
+            FROM {h-schema}spark_submissions
+            WHERE status NOT IN ('FINISHED', 'KILLED', 'FAILED', 'ERROR')
+            ORDER BY created_at ASC
+            FOR UPDATE SKIP LOCKED
+            LIMIT :batchSize
+            """, nativeQuery = true)
+    List<Object[]> claimIncompleteTasks(@Param("batchSize") int batchSize);
+
+    @Query(value = """
+            SELECT id, submission_id, cluster_type
+            FROM {h-schema}spark_submissions
+            WHERE status IN ('FINISHED', 'KILLED', 'FAILED', 'ERROR')
+              AND updated_at < now() - (:retentionSeconds || ' seconds')::interval
+            ORDER BY updated_at ASC
+            FOR UPDATE SKIP LOCKED
+            LIMIT :batchSize
+            """, nativeQuery = true)
+    List<Object[]> claimForCleanup(@Param("batchSize") int batchSize,
+                                   @Param("retentionSeconds") long retentionSeconds);
+
+    @Query(value = """
+            SELECT id, submission_id, status
+            FROM {h-schema}spark_submissions
+            ORDER BY created_at ASC
+            FOR UPDATE SKIP LOCKED
+            LIMIT :batchSize
+            """, nativeQuery = true)
+    List<Object[]> claimAllTasks(@Param("batchSize") int batchSize);
+
     @Modifying
     @Transactional
     @Query(value = """
             UPDATE {h-schema}spark_submissions
-            SET status = 'CLAIMED',
-                claimed_by = :instanceId,
-                claimed_at = now()
+            SET status = :status,
+                message = :message
             WHERE id = :id
             """, nativeQuery = true)
-    void markClaimed(@Param("id") Long id, @Param("instanceId") String instanceId);
+    void updateStatus(@Param("id") Long id,
+                      @Param("status") String status,
+                      @Param("message") String message);
 
     @Modifying
     @Transactional
@@ -52,4 +84,12 @@ public interface SparkSubmissionRepository extends JpaRepository<SparkSubmission
                       @Param("message") String message);
 
     Optional<SparkSubmission> findByIdAndSubmissionIdIsNotNull(Long id);
+
+    @Modifying
+    @Transactional
+    @Query(value = """
+            DELETE FROM {h-schema}spark_submissions
+            WHERE id IN :ids
+            """, nativeQuery = true)
+    void deleteAllIds(@Param("ids") List<Long> ids);
 }

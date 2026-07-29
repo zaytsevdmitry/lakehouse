@@ -3,7 +3,7 @@ name: lakehouse-management
 description: Umbrella chart.
 type: application
 version: 0.1.0
-appVersion: "0.5.0"
+appVersion: "0.6.0"
 dependencies:
   - name: lakehouse-management-config-service
     version: "0.1.0"
@@ -27,4 +27,7 @@ dependencies:
   - name: spark-history
     version: 0.1.0
     repository: "file://../spark-history"
+  - name: lakehouse-task-proxy4spark
+    version: 0.1.0
+    repository: "file://../lakehouse-task-proxy4spark"
 

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record CreateSubmissionResponse(
+public record SubmissionResponse(
     @JsonProperty("action") String action,
     @JsonProperty("message") String message,
     @JsonProperty("serverSparkVersion") String serverSparkVersion,

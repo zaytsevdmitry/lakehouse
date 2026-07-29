@@ -19,10 +19,15 @@ package org.lakehouse.taskexecutor.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.lakehouse.client.api.constant.Status;
+import org.lakehouse.client.api.constant.SystemVarKeys;
+import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
+import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
+import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskExecutionHeartBeatDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskInstanceReleaseDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskResultDTO;
+import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.exception.TaskFailedException;
@@ -36,6 +41,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.Map;
 
 
 @Service
@@ -66,9 +74,9 @@ public class ExecuteService {
             TaskProcessor p = (TaskProcessor) applicationContext.getBean(scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getTaskProcessor());
             SourceConfDTO sourceConfDTO = configRestClientApi.getSourceConfDTO(scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getDataSetKeyName());
             // made task globalContext based on task and source information
-            JinJavaUtils jinJavaUtils = JinJavaFactory.getJinJavaUtils();
-            jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(sourceConfDTO));
-            jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(scheduledTaskLockDTO.getScheduledTaskEffectiveDTO()));
+            JinJavaUtils jinJavaUtils = renderProperties(
+                    sourceConfDTO,
+                    scheduledTaskLockDTO.getScheduledTaskEffectiveDTO());
 
             heardBeatService.start(taskExecutionHeartBeatDTO);
 
@@ -84,8 +92,6 @@ public class ExecuteService {
         } catch (RuntimeException e) {
             logger.error("Task execution error ", e);
             taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.FAILED, e.toString()));
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
         } finally {
             logger.info("Status {}", taskInstanceReleaseDTO.getTaskResult().getStatus());
             heardBeatService.stop(taskExecutionHeartBeatDTO);
@@ -104,6 +110,47 @@ public class ExecuteService {
         }
     }
 
+    private JinJavaUtils renderProperties(
+            SourceConfDTO sourceConfDTO,
+            ScheduledTaskDTO scheduledTaskDTO
+    ) throws TaskConfigurationException {
+        // made task globalContext based on task and source information
+        JinJavaUtils jinJavaUtils = JinJavaFactory.getJinJavaUtils();
 
+        Map<String,Object> localContext = new HashMap<>();
+
+        // resolve sources first
+        for(DriverDTO driverDTO:sourceConfDTO.getDrivers().values()){
+            localContext.put(SystemVarKeys.DRIVER_KEY, driverDTO);
+            for (DataSourceDTO dataSourceDTO: sourceConfDTO.getDataSources().values()){
+                if(dataSourceDTO.getDriverKeyName().equals(driverDTO.getKeyName())){
+                    localContext.put(SystemVarKeys.DATASOURCE_KEY, dataSourceDTO);
+                    localContext.put(SystemVarKeys.SERVICE_KEY, dataSourceDTO.getService());
+                    dataSourceDTO.getService().setProperties(jinJavaUtils.renderMap(dataSourceDTO.getService().getProperties(),localContext));
+                    for (DataSetDTO dataSetDTO:sourceConfDTO.getDataSets().values()){
+                        if (dataSetDTO.getDataSourceKeyName().equals(dataSourceDTO.getKeyName())){
+                            localContext.put(SystemVarKeys.DATASET_KEY, dataSetDTO);
+                            dataSetDTO.setProperties(jinJavaUtils.renderMap(dataSetDTO.getProperties(),localContext));
+                        }
+                    }
+                }
+            }
+        }
+
+        try {
+            jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(sourceConfDTO));
+            jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(scheduledTaskDTO));
+            for (DataSourceDTO ds: sourceConfDTO.getDataSources().values()){
+                ds.getService().setProperties(jinJavaUtils.renderMap(ds.getService().getProperties()));
+            }
+            for(DataSetDTO d: sourceConfDTO.getDataSets().values()){
+                d.setProperties(jinJavaUtils.renderMap(d.getProperties()));
+            }
+            scheduledTaskDTO.setTaskProcessorArgs(jinJavaUtils.renderMap(scheduledTaskDTO.getTaskProcessorArgs()));
+        } catch (JsonProcessingException e) {
+            throw new TaskConfigurationException(e);
+        }
+        return jinJavaUtils;
+    }
 
 }

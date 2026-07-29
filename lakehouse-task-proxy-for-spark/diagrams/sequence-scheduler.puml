@@ -1,27 +1,29 @@
 @startuml
-title Scheduler — spark_submissions claim → execute → complete
+title SparkSubmissionScheduler — claim → spark-submit → complete
 
 skinparam backgroundColor #FEFEFE
 skinparam sequenceArrowThickness 1
 
-participant "Scheduler\n(@Scheduled 5s)" as Sched
+participant "SparkSubmission\nScheduler" as Sched
 database "PostgreSQL" as PG
-participant "Adapter\n(Local / Standalone / K8s / YARN / MESOS)" as Adapter
-participant "spark-submit\n(ProcessBuilder)" as SparkCLI
+participant "SparkMetrics" as Metrics
+participant "Adapter" as Adapter
+participant "SparkLauncher" as SparkLauncher
 participant "Cluster" as Cluster
 
 == poll() start ==
 
-Sched -> Sched : log.info("Scheduler poll start")
+== 1. claimNextTask — FOR UPDATE SKIP LOCKED ==
 
-== 1. claimTask — FOR UPDATE SKIP LOCKED ==
-
-Sched -> PG : claimTask(instanceId)
+Sched -> PG : claimNextTask()
 
 note right of PG
-  UPDATE spark_submissions SET status='CLAIMED', claimed_by=:instanceId, claimed_at=now()
-  WHERE id=(SELECT id FROM spark_submissions WHERE status='QUEUED' ORDER BY created_at ASC FOR UPDATE SKIP LOCKED LIMIT 1)
-  RETURNING id, submission_id, cluster_type, app_resource, main_class, namespace, spark_properties
+  SELECT id, submission_id, cluster_type, app_resource, main_class, app_args, spark_properties
+  FROM spark_submissions
+  WHERE status = 'WAITING'
+  ORDER BY created_at ASC
+  FOR UPDATE SKIP LOCKED
+  LIMIT 1
 end note
 
 alt row == null (nothing to claim)
@@ -31,67 +33,78 @@ alt row == null (nothing to claim)
 
 else row returned
 
-    PG --> Sched : row=(42, null, "kubernetes", "app.jar", "com.Main", null, "{...}")
-    Sched -> Sched : id=row[0]=42, appResource=row[3]="app.jar", mainClass=row[4]="com.Main", sparkProperties=row[6]="{...}"
-    Sched -> Sched : log.info("Claimed task id=42 on instance={}", instanceId)
+    PG --> Sched : row=(42, null, "kubernetes", "app.jar", "com.Main", "[...]", "{...}")
+    Sched -> Sched : log.info("Claimed task id=42")
 
 end
 
-== 2. Deserialize sparkProperties ==
+== 2. Deserialize & Build request ==
 
-Sched -> Sched : deserializeProperties(sparkProperties) → Map<String,String>
+Sched -> Sched : deserializeProperties(sparkPropertiesJson) → Map
+Sched -> Sched : deserializeAppArgs(appArgsJson) → List
+Sched -> Sched : new CreateSubmissionRequest(null, appArgs, "app.jar", null, "com.Main", sparkProperties, null)
 
-== 3. Build CreateSubmissionRequest ==
+== 3. Metrics ==
 
-Sched -> Sched : new CreateSubmissionRequest(null, null, "app.jar", null, "com.Main", {spark.master:"k8s://...", ...}, null)
+Sched -> Metrics : recordRequest(clusterType)
+Sched -> Metrics : startTimer() → Timer.Sample
 
-== 4. createSubmission ==
+== 4. adapter.createSubmission(request) ==
 
 Sched -> Adapter : adapter.createSubmission(request)
-Adapter -> Adapter : submissionId = "driver-" + UUID ("driver-abc-123")
-Adapter -> Adapter : buildSparkSubmitCommand(): spark-submit --conf spark.master=k8s://... --class com.Main app.jar
-Adapter -> SparkCLI : pb.start() + process.waitFor()
-SparkCLI -> Cluster : Submit job to cluster (spark-submit launches driver)
+
+Adapter -> Adapter : buildSparkLauncher(request):
+  setMaster, setDeployMode("cluster"),
+  setConf, setMainClass, setAppResource, addAppArgs
+
+Adapter -> SparkLauncher : launcher.launch()
+SparkLauncher -> Cluster : spark-submit (driver launched)
+note right of SparkLauncher
+  process = launcher.launch()
+  process.waitFor(timeoutSeconds, SECONDS)
+  parallel stdout/stderr reading
+end note
 
 alt exitCode == 0
 
-    SparkCLI --> Adapter : exitCode = 0
-    Adapter -> Adapter : log.info("spark-submit completed successfully. submissionId=driver-abc-123")
+    SparkLauncher --> Adapter : exitCode = 0
+    Adapter -> Adapter : extractSubmissionId(output) → "driver-abc-123"
     Adapter --> Sched : submissionId = "driver-abc-123"
+
+    Sched -> Metrics : recordSuccess(clusterType)
+    Sched -> Metrics : recordDuration(sample, clusterType)
 
     == 5a. completeTask — SUBMITTED ==
 
     Sched -> PG : completeTask(42, "driver-abc-123", "SUBMITTED", "spark-submit launched successfully")
-
-    note right of PG
-      UPDATE spark_submissions
-      SET submission_id='driver-abc-123', status='SUBMITTED', message='spark-submit launched successfully'
-      WHERE id=42
-    end note
-
     PG --> Sched : void
-    Sched -> Sched : log.info("Task id=42 submitted. submissionId=driver-abc-123")
 
 else exitCode != 0
 
-    SparkCLI --> Adapter : exitCode = 1
-    Adapter -> Adapter : log.error("spark-submit failed with exit code 1. Output: ...")
-    Adapter -> Adapter : throw RuntimeException("spark-submit failed (exit 1): ...")
-    Adapter --> Sched : RuntimeException
+    SparkLauncher --> Adapter : exitCode = 1, error output
+    Adapter --> Sched : CreateErrorException
 
-    == 5b. completeTask — FAILED ==
+    Sched -> Metrics : recordFailed(clusterType)
+    Sched -> Metrics : recordDuration(sample, clusterType)
 
-    Sched -> Sched : log.error("Scheduler poll error for task id=42", e)
-    Sched -> PG : completeTask(42, null, "FAILED", "spark-submit failed (exit 1): ...")
+    == 5b. completeTask — ERROR ==
 
-    note right of PG
-      UPDATE spark_submissions
-      SET submission_id=null, status='FAILED', message='spark-submit failed (exit 1): ...'
-      WHERE id=42
-    end note
-
+    Sched -> PG : completeTask(42, null, "ERROR", "spark-submit failed (exit 1): ...")
     PG --> Sched : void
-    Sched -> Sched : log.error("Failed to mark task id=42 as FAILED")
+
+else process.waitFor timed out
+
+    SparkLauncher --> Adapter : process not finished after timeout
+    Adapter -> Adapter : process.destroyForcibly()
+    Adapter --> Sched : CreateErrorException("timeout")
+
+    Sched -> Metrics : recordTimeout(clusterType)
+    Sched -> Metrics : recordDuration(sample, clusterType)
+
+    == 5c. completeTask — ERROR (timeout) ==
+
+    Sched -> PG : completeTask(42, null, "ERROR", "spark-submit timed out after Ns")
+    PG --> Sched : void
 
 end
 

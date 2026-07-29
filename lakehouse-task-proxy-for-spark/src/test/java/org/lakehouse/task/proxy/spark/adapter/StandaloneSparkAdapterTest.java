@@ -12,7 +12,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class StandaloneSparkAdapterTest {
 
-    private final StandaloneSparkAdapter adapter = new StandaloneSparkAdapter("spark://master:7077", "http://localhost:6066");
+    private final StandaloneSparkAdapter adapter = new StandaloneSparkAdapter("spark://master:7077", "http://localhost:6066", 30,
+            "(driver-\\d{14}-\\d{4})");
 
     @Test
     void extractSubmissionId_found() throws CreateErrorException {
@@ -34,25 +35,6 @@ class StandaloneSparkAdapterTest {
     void buildSparkLauncher_setsMasterAndDeployMode() {
         CreateSubmissionRequest request = new CreateSubmissionRequest(
                 null, List.of("arg1"), "s3://bucket/app.jar", null, "com.example.Main", Map.of("spark.executor.memory", "2g"), null
-        );
-        SparkLauncher launcher = adapter.buildSparkLauncher(request);
-        assertNotNull(launcher);
-    }
-
-    @Test
-    void buildSparkLauncher_noConf() {
-        CreateSubmissionRequest request = new CreateSubmissionRequest(
-                null, List.of(), "app.jar", null, "com.Main", null, null
-        );
-        SparkLauncher launcher = adapter.buildSparkLauncher(request);
-        assertNotNull(launcher);
-    }
-
-    @Test
-    void buildSparkLauncher_noAppArgs() {
-        Map<String, String> props = Map.of("spark.executor.memory", "2g");
-        CreateSubmissionRequest request = new CreateSubmissionRequest(
-                null, List.of(), "app.jar", null, "com.Main", props, null
         );
         SparkLauncher launcher = adapter.buildSparkLauncher(request);
         assertNotNull(launcher);

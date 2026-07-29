@@ -8,42 +8,44 @@ import static org.junit.jupiter.api.Assertions.*;
 class KubernetesSparkAdapterTest {
 
     @Test
-    void extractSubmissionId_podsPattern() throws CreateErrorException {
-        KubernetesSparkAdapter k8sAdapter = new KubernetesSparkAdapter("k8s://host:443", null, "default");
-        String stdout = "INFO: Submitted pods/spark-driver-abc123 from submission spark-app-xyz\n" +
-                "Successfully created spark pod in namespace default";
+    void extractSubmissionId_driverPodNamePattern() throws CreateErrorException {
+        KubernetesSparkAdapter k8sAdapter = new KubernetesSparkAdapter("k8s://host:443", null, "default", 30,
+                "(?:driver\\s+)?pod name:\\s+([a-zA-Z0-9\\-]+-driver)");
+        String stdout = "INFO KubernetesClusterSubmissionClient: driver pod name: spark-analytics-job-123456-driver\n" +
+                "Successfully submitted";
         String submissionId = k8sAdapter.extractSubmissionId(stdout);
-        assertEquals("spark-driver-abc123", submissionId);
+        assertEquals("spark-analytics-job-123456-driver", submissionId);
     }
 
     @Test
-    void extractSubmissionId_driverPattern() throws CreateErrorException {
-        KubernetesSparkAdapter k8sAdapter = new KubernetesSparkAdapter("k8s://host:443", null, "default");
-        String stdout = "Starting driver pod driver-abc-123-def on k8s cluster\n" +
+    void extractSubmissionId_driverPodNamePatternWithHyphens() throws CreateErrorException {
+        KubernetesSparkAdapter k8sAdapter = new KubernetesSparkAdapter("k8s://host:443", null, "default", 30,
+                "(?:driver\\s+)?pod name:\\s+([a-zA-Z0-9\\-]+-driver)");
+        String stdout = "Submitted application driver pod name: 18-0-regular-transaction-dds-prepare-20250102T000000Z-driver\n" +
                 "Pod created successfully";
         String submissionId = k8sAdapter.extractSubmissionId(stdout);
-        assertEquals("driver-abc-123-def", submissionId);
-    }
-
-    @Test
-    void extractSubmissionId_podsPatternPreferredOverDriverPattern() throws CreateErrorException {
-        KubernetesSparkAdapter k8sAdapter = new KubernetesSparkAdapter("k8s://host:443", null, "default");
-        String stdout = "Submitted pods/spark-main-driver from spark driver-xyz\n" +
-                "Pod created";
-        String submissionId = k8sAdapter.extractSubmissionId(stdout);
-        assertEquals("spark-main-driver", submissionId);
+        assertEquals("18-0-regular-transaction-dds-prepare-20250102T000000Z-driver", submissionId);
     }
 
     @Test
     void extractSubmissionId_notFound() {
-        KubernetesSparkAdapter k8sAdapter = new KubernetesSparkAdapter("k8s://host:443", null, "default");
+        KubernetesSparkAdapter k8sAdapter = new KubernetesSparkAdapter("k8s://host:443", null, "default", 30,
+                "(?:driver\\s+)?pod name:\\s+([a-zA-Z0-9\\-]+-driver)");
         String stdout = "No submission info in this log line";
         assertThrows(CreateErrorException.class, () -> k8sAdapter.extractSubmissionId(stdout));
     }
 
     @Test
+    void extractSubmissionId_emptyOutput() {
+        KubernetesSparkAdapter k8sAdapter = new KubernetesSparkAdapter("k8s://host:443", null, "default", 30,
+                "(?:driver\\s+)?pod name:\\s+([a-zA-Z0-9\\-]+-driver)");
+        assertThrows(CreateErrorException.class, () -> k8sAdapter.extractSubmissionId(""));
+    }
+
+    @Test
     void constructorSetsMasterUrl() {
-        KubernetesSparkAdapter k8sAdapter = new KubernetesSparkAdapter("k8s://host:443", null, "default");
+        KubernetesSparkAdapter k8sAdapter = new KubernetesSparkAdapter("k8s://host:443", null, "default", 30,
+                "(?:driver\\s+)?pod name:\\s+([a-zA-Z0-9\\-]+-driver)");
         assertEquals("k8s://host:443", k8sAdapter.masterUrl);
     }
 }

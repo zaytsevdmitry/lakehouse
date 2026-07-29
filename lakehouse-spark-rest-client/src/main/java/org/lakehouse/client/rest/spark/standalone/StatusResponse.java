@@ -29,6 +29,7 @@ public class StatusResponse {
 }*/
     private String action;
     private String driverState;
+    private String message;
     private String serverSparkVersion;
     private String submissionId;
     private String workerHostPort;
@@ -83,5 +84,13 @@ public class StatusResponse {
 
     public void setWorkerId(String workerId) {
         this.workerId = workerId;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
     }
 }

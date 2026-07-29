@@ -1,11 +1,10 @@
 package org.lakehouse.task.proxy.spark.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.lakehouse.task.proxy.spark.adapter.SparkAdapter;
 import org.lakehouse.task.proxy.spark.config.ProxyConfig;
 import org.lakehouse.task.proxy.spark.dto.CreateSubmissionRequest;
-import org.lakehouse.task.proxy.spark.dto.CreateSubmissionResponse;
+import org.lakehouse.task.proxy.spark.dto.SubmissionResponse;
 import org.lakehouse.task.proxy.spark.dto.ExternalStatus;
 import org.lakehouse.task.proxy.spark.dto.SubmissionStatusResponse;
 import org.lakehouse.task.proxy.spark.entity.SparkSubmission;
@@ -13,6 +12,10 @@ import org.lakehouse.task.proxy.spark.repository.SparkSubmissionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class SparkProxyService {
@@ -22,15 +25,18 @@ public class SparkProxyService {
 
     private final SparkSubmissionRepository repository;
     private final SparkAdapter adapter;
+    private final TransactionTemplate transactionTemplate;
     private final String clusterType;
 
-    public SparkProxyService(SparkSubmissionRepository repository, SparkAdapter adapter, ProxyConfig config) {
+    public SparkProxyService(SparkSubmissionRepository repository, SparkAdapter adapter,
+                              TransactionTemplate transactionTemplate, ProxyConfig config) {
         this.repository = repository;
         this.adapter = adapter;
+        this.transactionTemplate = transactionTemplate;
         this.clusterType = config.getAdapter();
     }
 
-    public CreateSubmissionResponse create(CreateSubmissionRequest request) {
+    public SubmissionResponse create(CreateSubmissionRequest request) {
         SparkSubmission submission = new SparkSubmission();
         submission.setClusterType(clusterType);
         submission.setAppResource(request.appResource());
@@ -45,12 +51,12 @@ public class SparkProxyService {
         } catch (Exception e) {
             submission.setSparkProperties("{}");
         }
-        submission.setStatus(SparkSubmission.Status.QUEUED);
+        submission.setStatus(SparkSubmission.Status.WAITING);
 
         repository.save(submission);
         log.info("Created submission task id={}", submission.getId());
 
-        return new CreateSubmissionResponse(
+        return new SubmissionResponse(
                 "CreateSubmissionResponse",
                 ExternalStatus.WAITING.name(),
                 null,
@@ -69,41 +75,24 @@ public class SparkProxyService {
             return new SubmissionStatusResponse("StatusResponse", "NOT_FOUND", null, String.valueOf(id), false, "UNKNOWN", null, null);
         }
 
-        String internalStatus = submission.getStatus().name();
+        String status = submission.getStatus().name();
+        String externalStatus = ExternalStatus.fromInternal(status).name();
 
-        if (internalStatus.equals("QUEUED") || internalStatus.equals("CLAIMED")) {
-            return new SubmissionStatusResponse(
-                    "StatusResponse",
-                    "Task is " + internalStatus.toLowerCase(),
-                    null,
-                    String.valueOf(id),
-                    true,
-                    ExternalStatus.WAITING.name(),
-                    null, null
-            );
-        }
-
-        String realSubmissionId = submission.getSubmissionId();
-        if (realSubmissionId == null) {
-            String externalStatus = ExternalStatus.fromInternal(internalStatus).name();
-            return new SubmissionStatusResponse(
-                    "StatusResponse",
-                    externalStatus,
-                    null,
-                    String.valueOf(id),
-                    true,
-                    externalStatus,
-                    null, null
-            );
-        }
-
-        return adapter.getSubmissionStatus(realSubmissionId);
+        return new SubmissionStatusResponse(
+                "StatusResponse",
+                submission.getMessage() != null ? submission.getMessage() : externalStatus,
+                null,
+                submission.getSubmissionId(),
+                true,
+                externalStatus,
+                null, null
+        );
     }
 
-    public CreateSubmissionResponse kill(Long id) {
+    public SubmissionResponse kill(Long id) {
         SparkSubmission submission = repository.findById(id).orElse(null);
         if (submission == null) {
-            return new CreateSubmissionResponse
+            return new SubmissionResponse
                     ("KillResponse",
                             "NOT_FOUND",
                             null,
@@ -115,10 +104,10 @@ public class SparkProxyService {
         if (realSubmissionId == null) {
             repository.delete(submission);
             log.info("Deleted queued task id={}", id);
-            return new CreateSubmissionResponse("KillResponse", ExternalStatus.KILLED.name(), null, String.valueOf(id), true);
+            return new SubmissionResponse("KillResponse", ExternalStatus.KILLED.name(), null, String.valueOf(id), true);
         }
 
-        CreateSubmissionResponse result = adapter.killSubmission(realSubmissionId);
+        SubmissionResponse result = adapter.killSubmission(realSubmissionId);
         if (Boolean.TRUE.equals(result.success())) {
             repository.delete(submission);
             log.info("Killed and deleted submission id={}, submissionId={}", id, realSubmissionId);
@@ -126,35 +115,73 @@ public class SparkProxyService {
         return result;
     }
 
-    public CreateSubmissionResponse killAll() {
+    public SubmissionResponse killAll() {
         int deletedQueued = 0;
 
-        for (SparkSubmission sub : repository.findByStatus(SparkSubmission.Status.QUEUED)) {
-            repository.delete(sub);
-            deletedQueued++;
-        }
-        for (SparkSubmission sub : repository.findByStatus(SparkSubmission.Status.CLAIMED)) {
+        for (SparkSubmission sub : repository.findByStatus(SparkSubmission.Status.WAITING)) {
             repository.delete(sub);
             deletedQueued++;
         }
 
-        log.warn("Deleted {} queued/claimed tasks", deletedQueued);
-        return new CreateSubmissionResponse(
+        log.warn("Deleted {} queued tasks", deletedQueued);
+        return new SubmissionResponse(
                 "KillAllResponse",
-                ExternalStatus.KILLED.name() + " " + deletedQueued + " queued/claimed tasks",
+                ExternalStatus.KILLED.name() + " " + deletedQueued + " queued tasks",
                 null, null, true
         );
     }
 
-    public CreateSubmissionResponse clear() {
-        int cleared = 0;
+    public SubmissionResponse clear() {
+        record ClearResult(List<Long> toDelete, int killed) {}
 
-        for (SparkSubmission sub : repository.findByStatus(SparkSubmission.Status.COMPLETED)) {
-            adapter.clearCompleted();
-            repository.delete(sub);
-            cleared++;
+        ClearResult result = transactionTemplate.execute(status -> {
+            List<Long> ids = new ArrayList<>();
+            int killCount = 0;
+            List<Object[]> rows = repository.claimAllTasks(10000);
+            for (Object[] row : rows) {
+                Long id = ((Number) row[0]).longValue();
+                String submissionId = (String) row[1];
+                String statusStr = (String) row[2];
+
+                if (submissionId == null) {
+                    ids.add(id);
+                    continue;
+                }
+
+                boolean isTerminal = statusStr != null && SparkSubmission.isFinalStatus(
+                        SparkSubmission.Status.valueOf(statusStr));
+                if (isTerminal) {
+                    try {
+                        SubmissionResponse r = adapter.clearCompleted(submissionId);
+                        if (!Boolean.TRUE.equals(r.success())) {
+                            log.warn("clearCompleted returned failure for submission {}: {}", submissionId, r.message());
+                        }
+                    } catch (Exception e) {
+                        log.warn("Failed to clearCompleted submission {}: {}", submissionId, e.getMessage());
+                    }
+                } else {
+                    try {
+                        SubmissionResponse r = adapter.killSubmission(submissionId);
+                        if (Boolean.TRUE.equals(r.success())) {
+                            killCount++;
+                        }
+                    } catch (Exception e) {
+                        log.warn("Failed to kill submission {}: {}", submissionId, e.getMessage());
+                    }
+                }
+                ids.add(id);
+            }
+            return new ClearResult(ids, killCount);
+        });
+
+        for (Long id : result.toDelete()) {
+            repository.deleteById(id);
         }
 
-        return new CreateSubmissionResponse("ClearResponse", "Cleared " + cleared + " submissions", null, null, true);
+        adapter.postClear();
+
+        log.info("Clear completed: deleted {} records, killed={}", result.toDelete().size(), result.killed());
+        return new SubmissionResponse("ClearResponse",
+                "Cleared " + result.toDelete().size() + " submissions (killed " + result.killed() + ")", null, null, true);
     }
 }

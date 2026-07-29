@@ -1,0 +1,51 @@
+@startuml
+title SparkClusterStatusScheduler — inspect non-final tasks
+
+skinparam backgroundColor #FEFEFE
+skinparam sequenceArrowThickness 1
+
+participant "SparkClusterStatus\nScheduler" as Sched
+database "PostgreSQL" as PG
+participant "Adapter" as Adapter
+participant "Cluster API" as ClusterAPI
+
+== processBatch() — every pollIntervalMs, poolSize threads ==
+
+loop for each poolSize thread
+
+    Sched -> PG : claimIncompleteTasks(batchSize)
+
+    note right of PG
+      SELECT id, submission_id, cluster_type
+      FROM spark_submissions
+      WHERE status NOT IN ('FINISHED','KILLED','FAILED','ERROR')
+      ORDER BY created_at ASC
+      FOR UPDATE SKIP LOCKED
+      LIMIT :batchSize
+    end note
+
+    PG --> Sched : rows
+
+    loop for each row (id, submissionId, clusterType)
+
+        alt submissionId == null
+
+            Sched -> Sched : skip (not yet submitted)
+
+        else submissionId != null
+
+            Sched -> Adapter : adapter.getSubmissionStatus(submissionId)
+            Adapter -> ClusterAPI : [cluster-specific status query]
+            ClusterAPI --> Adapter : pod/app status
+            Adapter --> Sched : SubmissionStatusResponse(driverState:"RUNNING")
+
+            Sched -> Sched : ExternalStatus.fromInternal("RUNNING") → passthrough
+            Sched -> PG : updateStatus(id, "RUNNING", "Running")
+
+        end
+
+    end
+
+end
+
+@enduml

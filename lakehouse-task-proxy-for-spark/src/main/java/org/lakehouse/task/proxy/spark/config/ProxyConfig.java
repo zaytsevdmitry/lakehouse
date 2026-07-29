@@ -13,6 +13,9 @@ public class ProxyConfig {
     private final Yarn yarn = new Yarn();
     private final K8s k8s = new K8s();
     private final Scheduler scheduler = new Scheduler();
+    private final Inspection inspection = new Inspection();
+    private final Cleanup cleanup = new Cleanup();
+    private final Metrics metrics = new Metrics();
 
     public String getAdapter() { return adapter; }
     public void setAdapter(String adapter) { this.adapter = adapter; }
@@ -24,26 +27,38 @@ public class ProxyConfig {
     public Yarn getYarn() { return yarn; }
     public K8s getK8s() { return k8s; }
     public Scheduler getScheduler() { return scheduler; }
+    public Inspection getInspection() { return inspection; }
+    public Cleanup getCleanup() { return cleanup; }
+    public Metrics getMetrics() { return metrics; }
 
     public static class Standalone {
         private String restUrl = "http://localhost:6066";
+        private String submissionIdPattern = "(driver-\\d{14}-\\d{4})";
         public String getRestUrl() { return restUrl; }
         public void setRestUrl(String restUrl) { this.restUrl = restUrl; }
+        public String getSubmissionIdPattern() { return submissionIdPattern; }
+        public void setSubmissionIdPattern(String submissionIdPattern) { this.submissionIdPattern = submissionIdPattern; }
     }
 
     public static class Yarn {
         private String restUrl = "http://localhost:8088";
+        private String submissionIdPattern = "Submitted application (application_\\d+_\\d+) to YARN";
         public String getRestUrl() { return restUrl; }
         public void setRestUrl(String restUrl) { this.restUrl = restUrl; }
+        public String getSubmissionIdPattern() { return submissionIdPattern; }
+        public void setSubmissionIdPattern(String submissionIdPattern) { this.submissionIdPattern = submissionIdPattern; }
     }
 
     public static class K8s {
         private String namespace = "default";
         private String restUrl = "http://kubernetes.default.svc";
+        private String submissionIdPattern = "(?:driver\\s+)?pod name:\\s+([a-zA-Z0-9\\-]+-driver)";
         public String getNamespace() { return namespace; }
         public void setNamespace(String namespace) { this.namespace = namespace; }
         public String getRestUrl() { return restUrl; }
         public void setRestUrl(String restUrl) { this.restUrl = restUrl; }
+        public String getSubmissionIdPattern() { return submissionIdPattern; }
+        public void setSubmissionIdPattern(String submissionIdPattern) { this.submissionIdPattern = submissionIdPattern; }
     }
 
     public static class Scheduler {
@@ -53,5 +68,38 @@ public class ProxyConfig {
         public void setPollIntervalMs(long pollIntervalMs) { this.pollIntervalMs = pollIntervalMs; }
         public int getPoolSize() { return poolSize; }
         public void setPoolSize(int poolSize) { this.poolSize = poolSize; }
+    }
+
+    public static class Inspection {
+        private long pollIntervalMs = 10000;
+        private int poolSize = 2;
+        private int batchSize = 10;
+        public long getPollIntervalMs() { return pollIntervalMs; }
+        public void setPollIntervalMs(long pollIntervalMs) { this.pollIntervalMs = pollIntervalMs; }
+        public int getPoolSize() { return poolSize; }
+        public void setPoolSize(int poolSize) { this.poolSize = poolSize; }
+        public int getBatchSize() { return batchSize; }
+        public void setBatchSize(int batchSize) { this.batchSize = batchSize; }
+    }
+
+    public static class Cleanup {
+        private long pollIntervalMs = 60000;
+        private int poolSize = 1;
+        private int batchSize = 50;
+        private long retentionSeconds = 3600;
+        public long getPollIntervalMs() { return pollIntervalMs; }
+        public void setPollIntervalMs(long pollIntervalMs) { this.pollIntervalMs = pollIntervalMs; }
+        public int getPoolSize() { return poolSize; }
+        public void setPoolSize(int poolSize) { this.poolSize = poolSize; }
+        public int getBatchSize() { return batchSize; }
+        public void setBatchSize(int batchSize) { this.batchSize = batchSize; }
+        public long getRetentionSeconds() { return retentionSeconds; }
+        public void setRetentionSeconds(long retentionSeconds) { this.retentionSeconds = retentionSeconds; }
+    }
+
+    public static class Metrics {
+        private long submissionTimeoutSeconds = 30;
+        public long getSubmissionTimeoutSeconds() { return submissionTimeoutSeconds; }
+        public void setSubmissionTimeoutSeconds(long submissionTimeoutSeconds) { this.submissionTimeoutSeconds = submissionTimeoutSeconds; }
     }
 }

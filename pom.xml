@@ -10,7 +10,7 @@
     </parent>
     <groupId>lakehouse</groupId>
     <artifactId>lakehouse-parent</artifactId>
-    <version>0.5.0</version>
+    <version>0.6.0</version>
     <packaging>pom</packaging>
     <licenses>
         <license>
@@ -41,6 +41,8 @@
         <module>lakehouse-task-executor-spark-api</module>
         <module>lakehouse-task-executor-spark-dataset-app</module>
         <module>lakehouse-task-executor-spark-dq-app</module>
+        <module>lakehouse-task-proxy-for-spark</module>
+        <module>lakehouse-task-proxy-for-spark-api</module>
     </modules>
     <properties>
         <maven.compiler.source>17</maven.compiler.source>

@@ -45,7 +45,7 @@ public class JinJavaUtils {
     public Map<String, String> renderMap(Map<String, String> map, Map<String, Object> localContext) {
         return map.entrySet().stream().map(e ->
                         Map.entry(
-                                jinjava.render(e.getKey(), localContext),
+                                e.getKey(),
                                 jinjava.render(e.getValue(), localContext)))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }

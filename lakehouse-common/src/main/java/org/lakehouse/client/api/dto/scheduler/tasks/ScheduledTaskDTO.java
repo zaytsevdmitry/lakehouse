@@ -108,18 +108,6 @@ public class ScheduledTaskDTO extends TaskDTO {
     }
 
     @JsonIgnore
-    public String buildTaskFullName(){
-        return (String.format("%d-%d-%s-%s-%s-%s",
-                getId(),
-                getTryNum(),
-                getScheduleKeyName(),
-                getScenarioActKeyName(),
-                getName(),
-                getTargetDateTime()
-                        .replace("-","")
-                        .replace(":","")));
-    }
-    @JsonIgnore
     public String buildLockSource(){
         return String.format("%s.%s.%s",
                 getScheduleKeyName(),

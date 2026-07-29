@@ -229,4 +229,24 @@ lakehouse-management-task-executor-service:
     create: false              # do not create account, look lakehouse-management-task-executor-service
     name: "lakehouse-app-sa"
 
+lakehouse-task-proxy4spark:
+  image:
+    repository: lakehouse-task-proxy4spark
+    tag: "0.6.0"
+    pullPolicy: IfNotPresent
+  service:
+    type: NodePort
+    port: 8090
+  replicaCount: 1
+  adapter: k8s
+  sparkMaster: "k8s://https://kubernetes.default.svc"
+  k8s:
+    namespace: "lakehouse-management"
+    restUrl: "https://kubernetes.default.svc"
+  scheduler:
+    pollIntervalMs: 5000
+    poolSize: 2
+  metrics:
+    submissionTimeoutSeconds: 30
+
 

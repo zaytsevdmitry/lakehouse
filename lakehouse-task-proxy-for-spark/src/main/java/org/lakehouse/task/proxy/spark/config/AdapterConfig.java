@@ -20,23 +20,27 @@ public class AdapterConfig {
     @Bean
     public SparkAdapter sparkClusterAdapter(ProxyConfig config) {
         String adapterType = config.getAdapter().toLowerCase();
-        log.info("Creating adapter for type: {}", adapterType);
+        long timeout = config.getMetrics().getSubmissionTimeoutSeconds();
+        log.info("Creating adapter for type: {}, submissionTimeoutSeconds={}", adapterType, timeout);
 
         return switch (adapterType) {
-            case "standalone" -> new StandaloneSparkAdapter(config.getSparkMaster(), config.getStandalone().getRestUrl());
+            case "standalone" -> new StandaloneSparkAdapter(config.getSparkMaster(), config.getStandalone().getRestUrl(), timeout,
+                    config.getStandalone().getSubmissionIdPattern());
             case "k8s", "kubernetes" -> {
                 try {
                     String basePath = getBasePath(config.getK8s().getRestUrl());
                     log.info("K8s API base path: {}", basePath);
                     ApiClient apiClient = ClientBuilder.standard().setBasePath(basePath).build();
                     CoreV1Api coreV1Api = new CoreV1Api(apiClient);
-                    yield new KubernetesSparkAdapter(config.getSparkMaster(), coreV1Api, config.getK8s().getNamespace());
+                    yield new KubernetesSparkAdapter(config.getSparkMaster(), coreV1Api, config.getK8s().getNamespace(), timeout,
+                            config.getK8s().getSubmissionIdPattern());
                 } catch (IOException e) {
                     throw new RuntimeException("Failed to initialize Kubernetes client", e);
                 }
             }
-            case "yarn" -> new YarnSparkAdapter(config.getSparkMaster(), config.getYarn().getRestUrl());
-            case "mesos" -> new MesosSparkAdapter(config.getSparkMaster());
+            case "yarn" -> new YarnSparkAdapter(config.getSparkMaster(), config.getYarn().getRestUrl(), timeout,
+                    config.getYarn().getSubmissionIdPattern());
+            case "mesos" -> new MesosSparkAdapter(config.getSparkMaster(), timeout);
             default -> throw new IllegalArgumentException("Unsupported adapter type: " + adapterType);
         };
     }

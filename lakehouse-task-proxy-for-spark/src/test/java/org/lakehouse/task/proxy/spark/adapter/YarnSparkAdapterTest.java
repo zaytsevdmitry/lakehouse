@@ -6,13 +6,13 @@ import org.lakehouse.task.proxy.spark.dto.CreateSubmissionRequest;
 import org.lakehouse.task.proxy.spark.exception.CreateErrorException;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class YarnSparkAdapterTest {
 
-    private final YarnSparkAdapter adapter = new YarnSparkAdapter("yarn", "http://localhost:8088");
+    private final YarnSparkAdapter adapter = new YarnSparkAdapter("yarn", "http://localhost:8088", 30,
+            "Submitted application (application_\\d+_\\d+) to YARN");
 
     @Test
     void extractSubmissionId_found() throws CreateErrorException {

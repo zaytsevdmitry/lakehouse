@@ -1,14 +1,19 @@
 package org.lakehouse.task.proxy.spark.adapter;
 
 import org.lakehouse.task.proxy.spark.dto.CreateSubmissionRequest;
-import org.lakehouse.task.proxy.spark.dto.CreateSubmissionResponse;
+import org.lakehouse.task.proxy.spark.dto.SubmissionResponse;
 import org.lakehouse.task.proxy.spark.dto.SubmissionStatusResponse;
 import org.lakehouse.task.proxy.spark.exception.CreateErrorException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MesosSparkAdapter extends SparkAdapterBase {
-
-    public MesosSparkAdapter(String masterUrl) {
-        super(masterUrl);
+    private  final Logger log = LoggerFactory.getLogger(this.getClass());
+    public MesosSparkAdapter(String masterUrl, long submissionTimeoutSeconds) {
+        super(masterUrl, submissionTimeoutSeconds);
+        log.info("Initialised SparkAdapter is {} with masterUrl:{} ",
+                KubernetesSparkAdapter.class.getSimpleName(),
+                masterUrl);
     }
 
     @Override
@@ -22,26 +27,20 @@ public class MesosSparkAdapter extends SparkAdapterBase {
     }
 
     @Override
-    public CreateSubmissionResponse killSubmission(String submissionId) {
+    public SubmissionResponse killSubmission(String submissionId) {
         log.warn("MESOS killSubmission not yet implemented. submissionId={}", submissionId);
-        return new CreateSubmissionResponse("KillResponse", "MESOS adapter not implemented", null, submissionId, false);
+        return new SubmissionResponse("KillResponse", "MESOS adapter not implemented", null, submissionId, false);
     }
 
     @Override
-    public CreateSubmissionResponse killAllSubmissions() {
+    public SubmissionResponse killAllSubmissions() {
         log.warn("MESOS killAllSubmissions not yet implemented");
-        return new CreateSubmissionResponse("KillAllResponse", "MESOS adapter not implemented", null, null, false);
+        return new SubmissionResponse("KillAllResponse", "MESOS adapter not implemented", null, null, false);
     }
 
     @Override
     public SubmissionStatusResponse getSubmissionStatus(String submissionId) {
         log.warn("MESOS getSubmissionStatus not yet implemented. submissionId={}", submissionId);
         return new SubmissionStatusResponse("SparkStatusResponse", "MESOS adapter not implemented", null, submissionId, false, null, null, null);
-    }
-
-    @Override
-    public CreateSubmissionResponse clearCompleted() {
-        log.warn("MESOS clearCompleted not yet implemented");
-        return new CreateSubmissionResponse("ClearResponse", "MESOS adapter not implemented", null, null, false);
     }
 }

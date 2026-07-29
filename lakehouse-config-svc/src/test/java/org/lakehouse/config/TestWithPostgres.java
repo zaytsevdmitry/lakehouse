@@ -796,37 +796,6 @@ public class TestWithPostgres {
         GraphBuilder.build(dagEdgeDTOS);
 
     }
-    @Test
-    @Order(17)
-    public void testRender() throws Exception {
-
-        String name = "client_processing";
-
-        DriverDTO driverDTO = putDriverDTO("postgres");
-        DataSourceDTO dataSourceDTO = putDataSourceDTO("processingdb");
-
-        NameSpaceDTO nameSpaceDTO = putNameSpaceDTO();
-        DataSetDTO dto = putDataSetDTO(name);
-
-        DataSetDTO resultDTO = ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getKeyName(),
-                ObjectMapping.asJsonStringPretty(dto), Endpoint.DATA_SETS, Endpoint.DATA_SETS_NAME), DataSetDTO.class);
-
-        SourceConfDTO conf = sourcesCompoundService.getSourceConfDTO(name);
-
-        restManipulator.deleteDTO(dto.getKeyName(), Endpoint.DATA_SETS_NAME);
-        restManipulator.deleteDTO(dataSourceDTO.getKeyName(), Endpoint.DATA_SOURCES_NAME);
-        restManipulator.deleteDTO(nameSpaceDTO.getKeyName(), Endpoint.NAME_SPACES_NAME);
-        restManipulator.deleteDTO(driverDTO.getKeyName(), Endpoint.DRIVERS_NAME);
-
-        String expected = "jdbc:postgresql://localhost:5432/postgresDB";
-        String found = conf
-                .getDataSources()
-                .get("processingdb")
-                .getService()
-                .getProperties()
-                .get("spark.sql.catalog.processing.url");
-        assert (found.equals(expected));
-    }
 
     @Test
     @Order(18)

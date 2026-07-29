@@ -29,27 +29,29 @@ United namespace
 
 # Project status
 
-| Component                          | Status       | Documentation                                          |   
-|------------------------------------|--------------|--------------------------------------------------------|
-| [lakehouse-cli](lakehouse-cli)     | Prototype    | [doc](lakehouse-cli/doc/commandline.MD)                |
-| [lakehouse-common-rest-client](lakehouse-common-rest-client) | Candidate    |                                                        |
-| [lakehouse-common-test](lakehouse-common-test) | Candidate    |                                                        |
-| [lakehouse-config-rest-client](lakehouse-config-rest-client) | Candidate    |                                                        |
-| [lakehouse-config-svc](lakehouse-config-svc) | Candidate    | [doc](lakehouse-config-svc/doc/readme.md)              |
-| [lakehouse-scheduler-rest-client](lakehouse-scheduler-rest-client) | Candidate    |                                                        |
-| [lakehouse-scheduler-svc](lakehouse-scheduler-svc) | Candidate    | [doc](lakehouse-scheduler-svc/doc/readme.md)           |
-| [lakehouse-state-rest-client](lakehouse-state-rest-client) | Candidate    |                                                        |
-| [lakehouse-state-svc](lakehouse-state-svc) | Candidate    |                                                        |
-| [lakehouse-task-executor-api](lakehouse-task-executor-api) | Candidate    |                                                        |
-| [lakehouse-task-executor-rest-client](lakehouse-task-executor-rest-client) | Candidate    |                                                        |
-| [lakehouse-task-executor-svc](lakehouse-task-executor-svc) | Candidate    | [doc](lakehouse-task-executor-svc/readme.md)           |
-| [lakehouse-task-executor-spark-api](lakehouse-task-executor-spark-api) | Candidate    | [doc](lakehouse-task-executor-spark-api/doc/readme.md) |
-| [lakehouse-task-executor-spark-dataset-app](lakehouse-task-executor-spark-dataset-app) | Candidate    |                                                        |
-| [lakehouse-task-executor-spark-dq-app](lakehouse-task-executor-spark-dq-app) | Prototype    |                                                        |
-| [lakehouse-validators](lakehouse-validators) | Prototype    |                                                        |
-| [lakehouse-ui-svc](lakehouse-ui-svc) | Not designed |                                                        |
-| Authorization & security           | Not designed |                                                        |
-| [Docker](docker)             | Candidate | [doc](docker/readme.md)                                |
+| Component                                                                              | Status       | Documentation                                                                                            |   
+|----------------------------------------------------------------------------------------|--------------|----------------------------------------------------------------------------------------------------------|
+| [lakehouse-cli](lakehouse-cli)                                                         | Prototype    | [doc](lakehouse-cli/doc/commandline.MD)                                                                  |
+| [lakehouse-common-rest-client](lakehouse-common-rest-client)                           | Candidate    |                                                                                                          |
+| [lakehouse-common-test](lakehouse-common-test)                                         | Candidate    |                                                                                                          |
+| [lakehouse-config-rest-client](lakehouse-config-rest-client)                           | Candidate    |                                                                                                          |
+| [lakehouse-config-svc](lakehouse-config-svc)                                           | Candidate    | [doc](lakehouse-config-svc/doc/readme.md)                                                                |
+| [lakehouse-scheduler-rest-client](lakehouse-scheduler-rest-client)                     | Candidate    |                                                                                                          |
+| [lakehouse-scheduler-svc](lakehouse-scheduler-svc)                                     | Candidate    | [doc](lakehouse-scheduler-svc/doc/readme.md)                                                             |
+| [lakehouse-state-rest-client](lakehouse-state-rest-client)                             | Candidate    |                                                                                                          |
+| [lakehouse-state-svc](lakehouse-state-svc)                                             | Candidate    |                                                                                                          |
+| [lakehouse-task-executor-api](lakehouse-task-executor-api)                             | Candidate    |                                                                                                          |
+| [lakehouse-task-executor-rest-client](lakehouse-task-executor-rest-client)             | Candidate    |                                                                                                          |
+| [lakehouse-task-executor-svc](lakehouse-task-executor-svc)                             | Candidate    | [doc](lakehouse-task-executor-svc/readme.md)                                                             |
+| [lakehouse-task-executor-spark-api](lakehouse-task-executor-spark-api)                 | Candidate    | [doc](lakehouse-task-executor-spark-api/doc/readme.md)                                                   |
+| [lakehouse-task-executor-spark-dataset-app](lakehouse-task-executor-spark-dataset-app) | Candidate    |                                                                                                          |
+| [lakehouse-task-executor-spark-dq-app](lakehouse-task-executor-spark-dq-app)           | Prototype    |                                                                                                          |
+| [lakehouse-validators](lakehouse-validators)                                           | Prototype    |                                                                                                          |
+| [lakehouse-ui-svc](lakehouse-ui-svc)                                                   | Not designed |                                                                                                          |
+| [lakehouse-task-proxy-for-spark](lakehouse-task-proxy-for-spark)                       | Candidate| [doc en](lakehouse-task-proxy-for-spark/README.md) [doc ru](lakehouse-task-proxy-for-spark/README_ru.md) |
+| [lakehouse-task-proxy-for-spark-api](lakehouse-task-proxy-for-spark-api)               | Candidate|  |
+| Authorization & security                                                               | Not designed |                                                                                                          |
+| [Docker](docker)                                                                       | Candidate | [doc](docker/readme.md)                                                                                  |
 
 
 
@@ -69,17 +71,17 @@ United namespace
 
 # Copyright
 "Lakehouse management tool" - the services set for managing data changes based on a metadata-driven approach
-Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/lakehouse
+    Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/lakehouse
+    
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+    
+        https://www.apache.org/licenses/LICENSE-2.0.txt
+    
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as
-    published by the Free Software Foundation, either version 3 of the
-    License, or (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.

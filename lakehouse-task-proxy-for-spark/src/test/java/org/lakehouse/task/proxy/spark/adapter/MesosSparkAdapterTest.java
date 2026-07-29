@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class MesosSparkAdapterTest {
 
-    private final MesosSparkAdapter adapter = new MesosSparkAdapter("mesos://master:5050");
+    private final MesosSparkAdapter adapter = new MesosSparkAdapter("mesos://master:5050", 30);
 
     @Test
     void extractSubmissionId_alwaysThrows() {

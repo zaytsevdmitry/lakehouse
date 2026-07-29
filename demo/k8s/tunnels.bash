@@ -18,11 +18,12 @@
 
 for svc in \
   "spark-history 18080:18080" \
+  "lakehouse-task-proxy4spark 8090:8090" \
   "lakehouse-release-trino 9090:8080" \
   "minio 9001:9001" \
   "minio 9000:9000" \
   "lakehouse-management-config-service 8080:8080" \
-  "lakehouse-management-state-service 8081:8081" \
+  "lakehouse-management-state-service 8082:8082" \
   "db-dev 5432:5432" \
   "broker 9092:9092"
 do

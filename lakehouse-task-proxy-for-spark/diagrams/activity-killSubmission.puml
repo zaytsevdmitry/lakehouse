@@ -1,13 +1,11 @@
 @startuml
 title killSubmission — POST /kill/{submissionId}
 
-|#LightBlue|Controller|
-|#LightGreen|Service|
-|#LightYellow|Adapter|
+|Controller|
+|Service|
+|Adapter|
 
 start
-
-|Controller|
 
 :HTTP POST /v1/submissions/kill/{submissionId};
 
@@ -19,8 +17,7 @@ if (Record found?) then (yes)
 
     if (real submissionId IS NULL?) then (yes)
 
-        :Task not in cluster (QUEUED or CLAIMED);
-
+        :Task not in cluster (WAITING);
         :DELETE FROM spark_submissions WHERE id = {submissionId};
 
         |Controller|

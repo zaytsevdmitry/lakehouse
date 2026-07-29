@@ -1,13 +1,10 @@
 @startuml
-title getStatus — GET /status/{submissionId}
-
-|#LightBlue|Controller|
-|#LightGreen|Service|
-|#LightYellow|Adapter|
-
-start
+title getStatus — GET /status/{submissionId} (reads DB only)
 
 |Controller|
+|Service|
+
+start
 
 :HTTP GET /v1/submissions/status/{submissionId};
 
@@ -17,53 +14,20 @@ start
 
 if (Record found?) then (yes)
 
-    if (internalStatus IN (QUEUED, CLAIMED, SUBMITTED)?) then (yes)
+    :internalStatus = submission.getStatus().name();
+    :externalStatus = ExternalStatus.fromInternal(internalStatus);
+    :return SubmissionStatusResponse(driverState=externalStatus, submissionId=submission.getSubmissionId());
 
-        note right: Application registered on Master but waiting for resources,\nor scheduler hasn't reached it yet, or is currently processing it.
+    |Controller|
 
-        |Controller|
-
-        :Return CreateSubmissionResponse(message=WAITING, submissionId={submissionId}, success=true);
-        stop
-
-    else (no)
-
-        if (real submissionId IS NULL?) then (yes)
-
-            :ExternalStatus.fromInternal(internalStatus): COMPLETED→FINISHED, FAILED→FAILED;
-
-            |Controller|
-
-            :Return CreateSubmissionResponse(message=EXTERNAL_STATUS, submissionId={submissionId}, success=true);
-            stop
-
-        else (no)
-
-            |Adapter|
-
-            :adapter.getSubmissionStatus(realSubmissionId);
-
-            note right
-              Local: process.isAlive→RUNNING, exit 0→FINISHED, exit!=0→FAILED
-              Standalone: REST /v1/submissions/status/{id}, fromStandaloneState
-              K8s: fromK8sPhase (Pending→WAITING, Running→RUNNING, Succeeded→FINISHED, Failed→FAILED)
-              YARN: REST /ws/v1/cluster/apps/{id}, fromYarnState
-            end note
-
-            |Controller|
-
-            :Return CreateSubmissionResponse(message=EXTERNAL_STATUS, submissionId={submissionId});
-            stop
-
-        endif
-
-    endif
+    :Return 200 OK;
+    stop
 
 else (no)
 
     |Controller|
 
-    :Return CreateSubmissionResponse(message=NOT_FOUND, submissionId={submissionId}, success=false);
+    :Return SubmissionStatusResponse(message=NOT_FOUND, driverState=UNKNOWN, success=false);
     stop
 
 endif

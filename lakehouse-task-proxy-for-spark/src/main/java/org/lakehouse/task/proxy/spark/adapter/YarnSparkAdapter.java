@@ -3,10 +3,12 @@ package org.lakehouse.task.proxy.spark.adapter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.lakehouse.task.proxy.spark.dto.CreateSubmissionRequest;
-import org.lakehouse.task.proxy.spark.dto.CreateSubmissionResponse;
+import org.lakehouse.task.proxy.spark.dto.SubmissionResponse;
 import org.lakehouse.task.proxy.spark.dto.ExternalStatus;
 import org.lakehouse.task.proxy.spark.dto.SubmissionStatusResponse;
 import org.lakehouse.task.proxy.spark.exception.CreateErrorException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.client.RestClient;
 
@@ -16,20 +18,25 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class YarnSparkAdapter extends SparkAdapterBase {
-
+    private  final Logger log = LoggerFactory.getLogger(this.getClass());
     private static final String API_BASE = "/ws/v1/cluster";
-    private static final Pattern YARN_APP_PATTERN = Pattern.compile("Submitted application (application_\\d+_\\d+) to YARN");
+    private final Pattern yarnAppPattern;
 
     private final String restUrl;
 
-    public YarnSparkAdapter(String masterUrl, String restUrl) {
-        super(masterUrl);
+    public YarnSparkAdapter(String masterUrl, String restUrl, long submissionTimeoutSeconds, String submissionIdPattern) {
+        super(masterUrl, submissionTimeoutSeconds);
         this.restUrl = restUrl;
+        this.yarnAppPattern = Pattern.compile(submissionIdPattern);
+        log.info("Initialised SparkAdapter is {} with masterUrl:{} , control restUrl {}",
+                StandaloneSparkAdapter.class.getSimpleName(),
+                masterUrl,
+                restUrl );
     }
 
     @Override
     protected String extractSubmissionId(String output) throws CreateErrorException {
-        Matcher matcher = YARN_APP_PATTERN.matcher(output);
+        Matcher matcher = yarnAppPattern.matcher(output);
         if (matcher.find()) {
             return matcher.group(1);
         }
@@ -42,27 +49,27 @@ public class YarnSparkAdapter extends SparkAdapterBase {
     }
 
     @Override
-    public CreateSubmissionResponse killSubmission(String submissionId) {
+    public SubmissionResponse killSubmission(String submissionId) {
         RestClient restClient = RestClient.builder().baseUrl(restUrl).build();
         try {
             YarnAppInfo app = getApp(restClient, submissionId);
             if (app == null) {
-                return new CreateSubmissionResponse("KillResponse", ExternalStatus.UNKNOWN.name(), null, submissionId, false);
+                return new SubmissionResponse("KillResponse", ExternalStatus.UNKNOWN.name(), null, submissionId, false);
             }
             restClient.method(HttpMethod.DELETE)
                     .uri(API_BASE + "/apps/{appId}", submissionId)
                     .retrieve()
                     .body(YarnKillResponse.class);
             log.info("Killed YARN application {}", submissionId);
-            return new CreateSubmissionResponse("KillResponse", ExternalStatus.KILLED.name(), null, submissionId, true);
+            return new SubmissionResponse("KillResponse", ExternalStatus.KILLED.name(), null, submissionId, true);
         } catch (Exception e) {
             log.error("Failed to kill YARN application {}: {}", submissionId, e.getMessage(), e);
-            return new CreateSubmissionResponse("KillResponse", ExternalStatus.FAILED.name(), null, submissionId, false);
+            return new SubmissionResponse("KillResponse", ExternalStatus.FAILED.name(), null, submissionId, false);
         }
     }
 
     @Override
-    public CreateSubmissionResponse killAllSubmissions() {
+    public SubmissionResponse killAllSubmissions() {
         RestClient restClient = RestClient.builder().baseUrl(restUrl).build();
         try {
             List<YarnAppInfo> apps = listApps(restClient, "NEW,NEW_SAVING,SUBMITTED,ACCEPTED,RUNNING");
@@ -80,10 +87,10 @@ public class YarnSparkAdapter extends SparkAdapterBase {
                 }
             }
             log.warn("Killed {} YARN applications", killed);
-            return new CreateSubmissionResponse("KillAllResponse", ExternalStatus.KILLED.name() + " " + killed + " apps", null, null, true);
+            return new SubmissionResponse("KillAllResponse", ExternalStatus.KILLED.name() + " " + killed + " apps", null, null, true);
         } catch (Exception e) {
             log.error("Failed to list/kill YARN apps: {}", e.getMessage(), e);
-            return new CreateSubmissionResponse("KillAllResponse", ExternalStatus.FAILED.name(), null, null, false);
+            return new SubmissionResponse("KillAllResponse", ExternalStatus.FAILED.name(), null, null, false);
         }
     }
 
@@ -102,32 +109,6 @@ public class YarnSparkAdapter extends SparkAdapterBase {
         } catch (Exception e) {
             log.error("Failed to get YARN app status {}: {}", submissionId, e.getMessage(), e);
             return new SubmissionStatusResponse("SparkStatusResponse", ExternalStatus.UNKNOWN.name(), null, submissionId, false, null, null, null);
-        }
-    }
-
-    @Override
-    public CreateSubmissionResponse clearCompleted() {
-        RestClient restClient = RestClient.builder().baseUrl(restUrl).build();
-        try {
-            List<YarnAppInfo> apps = listApps(restClient, "FINISHED,FAILED,KILLED");
-            int cleared = 0;
-            for (YarnAppInfo app : apps) {
-                try {
-                    restClient.method(HttpMethod.DELETE)
-                            .uri(API_BASE + "/apps/{appId}", app.id)
-                            .retrieve()
-                            .body(YarnKillResponse.class);
-                    cleared++;
-                    log.info("Cleared YARN application {}", app.id);
-                } catch (Exception e) {
-                    log.error("Failed to clear YARN application {}: {}", app.id, e.getMessage(), e);
-                }
-            }
-            log.info("Cleared {} completed YARN applications", cleared);
-            return new CreateSubmissionResponse("ClearResponse", "Cleared " + cleared + " apps", null, null, true);
-        } catch (Exception e) {
-            log.error("Failed to list/clear YARN apps: {}", e.getMessage(), e);
-            return new CreateSubmissionResponse("ClearResponse", ExternalStatus.FAILED.name(), null, null, false);
         }
     }
 

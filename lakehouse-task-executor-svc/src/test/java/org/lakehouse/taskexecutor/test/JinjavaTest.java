@@ -53,6 +53,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.junit.Assert.assertEquals;
+
 @SpringBootTest(properties = {"spring.main.allow-bean-definition-overriding=true"})
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 
@@ -468,6 +470,29 @@ public class JinjavaTest {
         String result = jinJavaUtils.render(template,localContext);
 
         assert(expected.equals(result));
+    }
+    @Test
+    void getTaskFullName() throws JsonProcessingException {
+        // Arrange
+        ScheduledTaskDTO dto = new ScheduledTaskDTO();
+        dto.setScheduleKeyName("TestSchedule");
+        dto.setScenarioActKeyName("TestScenario");
+        dto.setId(11L);
+        dto.setName("task1");
+        dto.setTryNum(1);
+        dto.setTargetDateTime("2026-07-26 20:00:01Z");
+
+        // Вызываем функцию БЕЗ аргументов
+        String template = "{{ getTaskFullName() }}";
+
+        jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(dto));
+
+        // Act
+        String rendered = jinJavaUtils.render(template);
+
+        // Assert
+        String expected = "11-1-TestSchedule-TestScenario-task1-20260726-200001Z";
+        assertEquals (expected, rendered.trim());
     }
 
 }

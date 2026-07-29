@@ -1,20 +1,18 @@
 @startuml
 title killAllSubmissions — POST /killall
 
-|#LightBlue|Controller|
-|#LightGreen|Service|
+|Controller|
+|Service|
 
 start
-
-|Controller|
 
 :HTTP POST /v1/submissions/killall;
 
 |Service|
 
-:DELETE FROM spark_submissions WHERE status IN (QUEUED, CLAIMED);
+:DELETE FROM spark_submissions WHERE status = WAITING;
 
-:Return CreateSubmissionResponse(message=KILLED N queued/claimed tasks, success=true);
+:Return CreateSubmissionResponse(message=KILLED N waiting tasks, success=true);
 
 stop
 

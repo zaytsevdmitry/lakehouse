@@ -1,29 +1,36 @@
 package org.lakehouse.task.proxy.spark.adapter;
 
 import org.lakehouse.task.proxy.spark.dto.CreateSubmissionRequest;
-import org.lakehouse.task.proxy.spark.dto.CreateSubmissionResponse;
+import org.lakehouse.task.proxy.spark.dto.SubmissionResponse;
 import org.lakehouse.task.proxy.spark.dto.ExternalStatus;
 import org.lakehouse.task.proxy.spark.dto.SubmissionStatusResponse;
 import org.lakehouse.task.proxy.spark.exception.CreateErrorException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.client.RestClient;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class StandaloneSparkAdapter extends SparkAdapterBase {
-
-    private static final Pattern SUBMISSION_ID_PATTERN = Pattern.compile("(driver-\\d{14}-\\d{4})");
+    private  final Logger log = LoggerFactory.getLogger(this.getClass());
+    private final Pattern submissionIdPattern;
 
     private final String restUrl;
 
-    public StandaloneSparkAdapter(String masterUrl, String restUrl) {
-        super(masterUrl);
+    public StandaloneSparkAdapter(String masterUrl, String restUrl, long submissionTimeoutSeconds, String submissionIdPattern) {
+        super(masterUrl, submissionTimeoutSeconds);
         this.restUrl = restUrl;
+        this.submissionIdPattern = Pattern.compile(submissionIdPattern);
+        log.info("Initialised SparkAdapter is {} with masterUrl:{} , control restUrl {}",
+                StandaloneSparkAdapter.class.getSimpleName(),
+                masterUrl,
+                restUrl );
     }
 
     @Override
     protected String extractSubmissionId(String output) throws CreateErrorException {
-        Matcher matcher = SUBMISSION_ID_PATTERN.matcher(output);
+        Matcher matcher = submissionIdPattern.matcher(output);
         if (matcher.find()) {
             return matcher.group(1);
         }
@@ -36,30 +43,30 @@ public class StandaloneSparkAdapter extends SparkAdapterBase {
     }
 
     @Override
-    public CreateSubmissionResponse killSubmission(String submissionId) {
+    public SubmissionResponse killSubmission(String submissionId) {
         RestClient restClient = RestClient.builder().baseUrl(restUrl).build();
         try {
             return restClient.post()
                     .uri("/v1/submissions/kill/" + submissionId)
                     .retrieve()
-                    .body(CreateSubmissionResponse.class);
+                    .body(SubmissionResponse.class);
         } catch (Exception e) {
             log.error("Failed to kill standalone submission {}: {}", submissionId, e.getMessage(), e);
-            return new CreateSubmissionResponse("KillResponse", ExternalStatus.FAILED.name(), null, submissionId, false);
+            return new SubmissionResponse("KillResponse", ExternalStatus.FAILED.name(), null, submissionId, false);
         }
     }
 
     @Override
-    public CreateSubmissionResponse killAllSubmissions() {
+    public SubmissionResponse killAllSubmissions() {
         RestClient restClient = RestClient.builder().baseUrl(restUrl).build();
         try {
             return restClient.post()
                     .uri("/v1/submissions/killall")
                     .retrieve()
-                    .body(CreateSubmissionResponse.class);
+                    .body(SubmissionResponse.class);
         } catch (Exception e) {
             log.error("Failed to kill all standalone submissions: {}", e.getMessage(), e);
-            return new CreateSubmissionResponse("KillAllResponse", ExternalStatus.FAILED.name(), null, null, false);
+            return new SubmissionResponse("KillAllResponse", ExternalStatus.FAILED.name(), null, null, false);
         }
     }
 
@@ -99,16 +106,16 @@ public class StandaloneSparkAdapter extends SparkAdapterBase {
     }
 
     @Override
-    public CreateSubmissionResponse clearCompleted() {
+    public void postClear() {
         RestClient restClient = RestClient.builder().baseUrl(restUrl).build();
         try {
-            return restClient.post()
+            restClient.post()
                     .uri("/v1/submissions/clear")
                     .retrieve()
-                    .body(CreateSubmissionResponse.class);
+                    .toBodilessEntity();
+            log.info("Real standalone /clear succeeded");
         } catch (Exception e) {
-            log.error("Failed to clear standalone submissions: {}", e.getMessage(), e);
-            return new CreateSubmissionResponse("ClearResponse", ExternalStatus.FAILED.name(), null, null, false);
+            log.warn("Real standalone /clear not available (expected in Spark 3.5): {}", e.getMessage());
         }
     }
 }

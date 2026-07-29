@@ -35,8 +35,8 @@ sh install.bash
 - соберется helm chart
 - создано пространство имен lakehouse-management
 - учетные записи 
-  - lakehouse-app-sa - используется lakehouse-management-task-executor-service для отправки задач spark-operator
-  - spark-driver-sa  - используется spark-driver для взаимодействия с оператором, создаются экзекуторы
+  - lakehouse-app-sa - используется lakehouse-task-proxy4spark для отправки задачи посредством submit
+  - spark-driver-sa  - используется spark-driver , создаются экзекуторы
 - запустятся все сервисы
 # После установки
 
@@ -83,6 +83,11 @@ kubectl -n lakehouse-management get pods -o custom-columns="NAME:.metadata.name,
 ```shell
 kubectl -n lakehouse-management logs deployment/lakehouse-management-task-executor-service
 ```
+Просмотр task-proxy4spark
+```shell
+kubectl -n lakehouse-management logs deployment/lakehouse-task-proxy4spark
+```
+
 Просмотр лога драйвера, который упал с ошибкой
 ```shell
 kubectl -n lakehouse-management get pods|grep task| grep Error|awk '{print $1}'|xargs -r kubectl -n lakehouse-management logs

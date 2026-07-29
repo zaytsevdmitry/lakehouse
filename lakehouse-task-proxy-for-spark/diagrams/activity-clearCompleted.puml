@@ -1,29 +1,23 @@
 @startuml
 title clearCompleted — POST /clear
 
-|#LightBlue|Controller|
-|#LightGreen|Service|
-|#LightYellow|Adapter|
+|Controller|
+|Service|
+|Adapter|
 
 start
-
-|Controller|
 
 :HTTP POST /v1/submissions/clear;
 
 |Service|
 
-:SELECT * FROM spark_submissions WHERE status = COMPLETED;
+:SELECT * FROM spark_submissions WHERE status = FINISHED;
 
 while (more submissions?) is (yes)
 
-    if (submissionId IS NOT NULL?) then (yes)
+    |Adapter|
 
-        |Adapter|
-
-        :adapter.clearCompleted();
-
-    endif
+    :adapter.clearCompleted();
 
     |Service|
 

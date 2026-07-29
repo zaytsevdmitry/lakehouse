@@ -5,74 +5,82 @@ import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1PodList;
 import org.lakehouse.task.proxy.spark.dto.CreateSubmissionRequest;
-import org.lakehouse.task.proxy.spark.dto.CreateSubmissionResponse;
+import org.lakehouse.task.proxy.spark.dto.SubmissionResponse;
 import org.lakehouse.task.proxy.spark.dto.ExternalStatus;
 import org.lakehouse.task.proxy.spark.dto.SubmissionStatusResponse;
 import org.lakehouse.task.proxy.spark.exception.CreateErrorException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class KubernetesSparkAdapter extends SparkAdapterBase {
-
+    private  final Logger log = LoggerFactory.getLogger(this.getClass());
     private static final String LABEL_APP = "spark-app";
     private static final String DEFAULT_NAMESPACE = "default";
-    private static final Pattern K8S_POD_PATTERN = Pattern.compile("pods/(spark-\\S+)");
-    private static final Pattern K8S_DRIVER_PATTERN = Pattern.compile("driver-\\S+");
+    private final Pattern k8sDriverNamePattern;
 
     private final CoreV1Api coreV1Api;
     private final String defaultNamespace;
 
-    public KubernetesSparkAdapter(String masterUrl, CoreV1Api coreV1Api, String defaultNamespace) {
-        super(masterUrl);
+    public KubernetesSparkAdapter(String masterUrl, CoreV1Api coreV1Api, String defaultNamespace, long submissionTimeoutSeconds, String submissionIdPattern) {
+        super(masterUrl, submissionTimeoutSeconds);
         this.coreV1Api = coreV1Api;
         this.defaultNamespace = defaultNamespace;
+        this.k8sDriverNamePattern = Pattern.compile(submissionIdPattern, Pattern.CASE_INSENSITIVE);
+        log.info("Initialised SparkAdapter is {} with masterUrl:{} , namespace{}",
+                KubernetesSparkAdapter.class.getSimpleName(),
+                masterUrl,
+                defaultNamespace );
     }
 
     @Override
     protected String extractSubmissionId(String output) throws CreateErrorException {
-        Matcher podMatcher = K8S_POD_PATTERN.matcher(output);
-        if (podMatcher.find()) {
-            return podMatcher.group(1);
+        Matcher driverNameMatcher = k8sDriverNamePattern.matcher(output);
+        if (driverNameMatcher.find()) {
+            return driverNameMatcher.group(1);
         }
-        Matcher driverMatcher = K8S_DRIVER_PATTERN.matcher(output);
-        if (driverMatcher.find()) {
-            return driverMatcher.group(0);
-        }
-        throw new CreateErrorException("K8s driver pod name not found in output");
+        String snippet = output.length() > 2000 ? output.substring(0, 2000) + "..." : output;
+        log.error("K8s driver pod name not found in spark-submit output. Output:\n{}", snippet);
+        throw new CreateErrorException("K8s driver pod name not found in output. Output length: " + output.length());
     }
 
     private String resolveNamespace() {
         if (defaultNamespace != null && !defaultNamespace.isBlank()) {
             return defaultNamespace.trim();
         }
+        log.info("Namespace in configuration empty, used default");
         return DEFAULT_NAMESPACE;
     }
 
     @Override
     public String createSubmission(CreateSubmissionRequest request) throws CreateErrorException {
+        if (request.sparkProperties() != null) {
+            log.info("spark.app.name = {}", request.sparkProperties().get("spark.app.name"));
+        }
         return defaultCreateSubmission(request);
     }
 
     @Override
-    public CreateSubmissionResponse killSubmission(String submissionId) {
+    public SubmissionResponse killSubmission(String submissionId) {
         String namespace = resolveNamespace();
         String podName = findDriverPodName(submissionId, namespace);
         if (podName == null) {
-            return new CreateSubmissionResponse("KillResponse", ExternalStatus.UNKNOWN.name(), null, submissionId, false);
+            return new SubmissionResponse("KillResponse", ExternalStatus.UNKNOWN.name(), null, submissionId, false);
         }
         try {
             coreV1Api.deleteNamespacedPod(podName, namespace).execute();
             log.info("Deleted driver pod {} for submission {} in namespace {}", podName, submissionId, namespace);
-            return new CreateSubmissionResponse("KillResponse", ExternalStatus.KILLED.name(), null, submissionId, true);
+            return new SubmissionResponse("KillResponse", ExternalStatus.KILLED.name(), null, submissionId, true);
         } catch (ApiException e) {
             log.error("Failed to delete pod {}: {}", podName, e.getResponseBody(), e);
-            return new CreateSubmissionResponse("KillResponse", ExternalStatus.FAILED.name(), null, submissionId, false);
+            return new SubmissionResponse("KillResponse", ExternalStatus.FAILED.name(), null, submissionId, false);
         }
     }
 
     @Override
-    public CreateSubmissionResponse killAllSubmissions() {
+    public SubmissionResponse killAllSubmissions() {
         String namespace = resolveNamespace();
         try {
             V1PodList pods = coreV1Api.listNamespacedPod(namespace)
@@ -87,10 +95,10 @@ public class KubernetesSparkAdapter extends SparkAdapterBase {
                 }
             }
             log.warn("Deleted {} driver pods in namespace {}", deleted, namespace);
-            return new CreateSubmissionResponse("KillAllResponse", ExternalStatus.KILLED.name() + " " + deleted + " pods", null, null, true);
+            return new SubmissionResponse("KillAllResponse", ExternalStatus.KILLED.name() + " " + deleted + " pods", null, null, true);
         } catch (ApiException e) {
             log.error("Failed to kill all: {}", e.getResponseBody(), e);
-            return new CreateSubmissionResponse("KillAllResponse", ExternalStatus.FAILED.name(), null, null, false);
+            return new SubmissionResponse("KillAllResponse", ExternalStatus.FAILED.name(), null, null, false);
         }
     }
 
@@ -130,43 +138,31 @@ public class KubernetesSparkAdapter extends SparkAdapterBase {
     }
 
     @Override
-    public CreateSubmissionResponse clearCompleted() {
+    public SubmissionResponse clearCompleted(String submissionId) {
         String namespace = resolveNamespace();
+        String podName = findDriverPodName(submissionId, namespace);
+        if (podName == null) {
+            log.warn("K8s driver pod for submission {} not found during clear in namespace {}", submissionId, namespace);
+            return new SubmissionResponse("ClearResponse", "NOT_FOUND", null, submissionId, true);
+        }
         try {
-            V1PodList pods = coreV1Api.listNamespacedPod(namespace)
-                    .labelSelector(LABEL_APP + "=spark-driver")
-                    .execute();
-            int cleared = 0;
-            if (pods.getItems() != null) {
-                for (V1Pod pod : pods.getItems()) {
-                    String phase = pod.getStatus() != null ? pod.getStatus().getPhase() : null;
-                    ExternalStatus external = ExternalStatus.fromK8sPhase(phase);
-                    if (external == ExternalStatus.FINISHED || external == ExternalStatus.FAILED) {
-                        coreV1Api.deleteNamespacedPod(pod.getMetadata().getName(), namespace).execute();
-                        cleared++;
-                    }
-                }
-            }
-            log.info("Cleared {} completed pods in namespace {}", cleared, namespace);
-            return new CreateSubmissionResponse("ClearResponse", "Cleared " + cleared + " pods", null, null, true);
+            coreV1Api.deleteNamespacedPod(podName, namespace).execute();
+            log.info("Cleared K8s driver pod {} for submission {} in namespace {}", podName, submissionId, namespace);
+            return new SubmissionResponse("ClearResponse", ExternalStatus.FINISHED.name(), null, submissionId, true);
         } catch (ApiException e) {
-            log.error("Failed to clear: {}", e.getResponseBody(), e);
-            return new CreateSubmissionResponse("ClearResponse", ExternalStatus.FAILED.name(), null, null, false);
+            log.error("Failed to clear K8s pod {} for submission {}: {}", podName, submissionId, e.getResponseBody(), e);
+            return new SubmissionResponse("ClearResponse", ExternalStatus.FAILED.name(), null, submissionId, false);
         }
     }
 
     private String findDriverPodName(String submissionId, String namespace) {
+        if (submissionId == null || submissionId.isBlank()) return null;
         try {
-            String labelSelector = LABEL_APP + "=spark-driver,spark-submission-id=" + submissionId;
-            V1PodList pods = coreV1Api.listNamespacedPod(namespace)
-                    .labelSelector(labelSelector)
-                    .execute();
-            if (pods.getItems() != null && !pods.getItems().isEmpty()) {
-                return pods.getItems().get(0).getMetadata().getName();
-            }
+            coreV1Api.readNamespacedPod(submissionId, namespace).execute();
+            return submissionId;
         } catch (ApiException e) {
-            log.error("Failed to find driver pod for {} in namespace {}: {}", submissionId, namespace, e.getResponseBody(), e);
+            log.debug("Driver pod {} not found in namespace {}: {}", submissionId, namespace, e.getResponseBody());
+            return null;
         }
-        return null;
     }
 }

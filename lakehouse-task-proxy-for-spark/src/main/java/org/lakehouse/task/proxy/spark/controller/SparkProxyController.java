@@ -1,7 +1,7 @@
 package org.lakehouse.task.proxy.spark.controller;
 
 import org.lakehouse.task.proxy.spark.dto.CreateSubmissionRequest;
-import org.lakehouse.task.proxy.spark.dto.CreateSubmissionResponse;
+import org.lakehouse.task.proxy.spark.dto.SubmissionResponse;
 import org.lakehouse.task.proxy.spark.dto.SubmissionStatusResponse;
 import org.lakehouse.task.proxy.spark.service.SparkProxyService;
 import org.slf4j.Logger;
@@ -21,7 +21,7 @@ public class SparkProxyController {
     }
 
     @PostMapping("/create")
-    public CreateSubmissionResponse createSubmission(
+    public SubmissionResponse createSubmission(
             @RequestBody CreateSubmissionRequest request) {
         log.info("Received HTTP POST /create");
         return proxyService.create(request);
@@ -34,19 +34,19 @@ public class SparkProxyController {
     }
 
     @PostMapping("/kill/{submissionId}")
-    public CreateSubmissionResponse killSubmission(@PathVariable Long submissionId) {
+    public SubmissionResponse killSubmission(@PathVariable Long submissionId) {
         log.info("Received HTTP POST /kill/{}", submissionId);
         return proxyService.kill(submissionId);
     }
 
     @PostMapping("/killall")
-    public CreateSubmissionResponse killAllSubmissions() {
+    public SubmissionResponse killAllSubmissions() {
         log.warn("Received HTTP POST /killall");
         return proxyService.killAll();
     }
 
     @PostMapping("/clear")
-    public CreateSubmissionResponse clearCompleted() {
+    public SubmissionResponse clearCompleted() {
         log.info("Received HTTP POST /clear");
         return proxyService.clear();
     }

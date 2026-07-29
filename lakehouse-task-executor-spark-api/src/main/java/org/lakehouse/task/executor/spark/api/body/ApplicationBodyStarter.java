@@ -21,7 +21,6 @@ import org.apache.spark.sql.SparkSession;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.exception.TaskFailedException;
-import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
 import org.lakehouse.taskexecutor.api.processor.body.ProcessorBody;
 import org.lakehouse.validator.config.ValidationResult;
@@ -31,7 +30,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -98,7 +96,6 @@ public class ApplicationBodyStarter {
         logger.info("Received scheduledTaskId = {}. Requesting full body" , scheduledTaskId);
         SchedulerRestClientApi schedulerRestClientApi = applicationContext.getBean(SchedulerRestClientApi.class);
         ScheduledTaskDTO result = schedulerRestClientApi.getScheduledTaskDTO(scheduledTaskId);
-        logger.info("Received scheduledTask with full name={}", result.buildTaskFullName());
         logger.info("Validate task configuration");
         ValidationResult validationResult = ScheduledTaskDTOValidator.validate(result);
         if (!validationResult.isValid())
@@ -108,18 +105,6 @@ public class ApplicationBodyStarter {
 
         return result;
     }
-/*
-
-    public  <T> T  jsonToConf(String json, Class<T> clazz) throws TaskConfigurationException {
-
-        try {
-            logger.debug("Build {} from JSON\n{}",clazz.getSimpleName(),json);
-            return  ObjectMapping.stringToObject(json, clazz);
-        } catch (IOException e) {
-            throw new TaskConfigurationException(e);
-        }
-    }
-*/
 
     public enum ExitCode {
         TaskConfigurationException(10001),

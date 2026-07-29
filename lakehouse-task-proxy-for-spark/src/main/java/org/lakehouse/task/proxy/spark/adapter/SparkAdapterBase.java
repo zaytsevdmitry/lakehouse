@@ -2,6 +2,7 @@ package org.lakehouse.task.proxy.spark.adapter;
 
 import org.apache.spark.launcher.SparkLauncher;
 import org.lakehouse.task.proxy.spark.dto.CreateSubmissionRequest;
+import org.lakehouse.task.proxy.spark.dto.SubmissionResponse;
 import org.lakehouse.task.proxy.spark.exception.CreateErrorException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,14 +12,17 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public abstract class SparkAdapterBase implements SparkAdapter {
 
     protected final Logger log = LoggerFactory.getLogger(getClass());
     protected final String masterUrl;
+    private final long submissionTimeoutSeconds;
 
-    protected SparkAdapterBase(String masterUrl) {
+    protected SparkAdapterBase(String masterUrl, long submissionTimeoutSeconds) {
         this.masterUrl = masterUrl;
+        this.submissionTimeoutSeconds = submissionTimeoutSeconds;
     }
 
     protected String defaultCreateSubmission(CreateSubmissionRequest request) throws CreateErrorException {
@@ -27,24 +31,29 @@ public abstract class SparkAdapterBase implements SparkAdapter {
             log.info("Launching spark-submit via SparkLauncher");
             Process process = launcher.launch();
 
-            // Using StringBuffer because it is thread-safe for concurrent appends
             StringBuffer combinedOutput = new StringBuffer();
 
-            // Reading stdout and stderr concurrently to prevent OS buffer blocking
             Thread stdoutReader = new Thread(() -> readStream(process.getInputStream(), combinedOutput, "stdout"));
             Thread stderrReader = new Thread(() -> readStream(process.getErrorStream(), combinedOutput, "stderr"));
 
             stdoutReader.start();
             stderrReader.start();
 
-            // Wait for the process to exit
-            int exitCode = process.waitFor();
+            boolean finished = process.waitFor(submissionTimeoutSeconds, TimeUnit.SECONDS);
 
-            // Wait for the threads to finish consuming any remaining lines in the streams
-            stdoutReader.join(10000);
-            stderrReader.join(10000);
+            stdoutReader.join(5000);
+            stderrReader.join(5000);
 
             String output = combinedOutput.toString();
+
+            if (!finished) {
+                process.destroyForcibly();
+                log.error("spark-submit timed out after {}s. Output:\n{}", submissionTimeoutSeconds, output);
+                throw new CreateErrorException(
+                        "spark-submit timed out after " + submissionTimeoutSeconds + "s: " + output);
+            }
+
+            int exitCode = process.exitValue();
 
             if (exitCode == 0) {
                 String submissionId = extractSubmissionId(output);
@@ -56,19 +65,18 @@ public abstract class SparkAdapterBase implements SparkAdapter {
             }
 
         } catch (CreateErrorException e) {
-            // Preserving our domain-specific exception
             throw e;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new CreateErrorException("Spark submission process was interrupted", e);
         } catch (Exception e) {
-            // Wrapping generic standard/system exceptions into our domain exception
             throw new CreateErrorException("spark-submit error: " + e.getMessage(), e);
         }
     }
 
+    protected abstract String extractSubmissionId(String output) throws CreateErrorException;
+
     private void readStream(java.io.InputStream is, StringBuffer sb, String label) {
-        // try-with-resources guarantees the stream and reader are closed properly
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
             String line;
             while ((line = reader.readLine()) != null) {
@@ -78,9 +86,6 @@ public abstract class SparkAdapterBase implements SparkAdapter {
             log.error("Failed to read {}", label, e);
         }
     }
-
-
-    protected abstract String extractSubmissionId(String output) throws CreateErrorException;
 
     protected SparkLauncher buildSparkLauncher(CreateSubmissionRequest request) {
         Map<String, String> env = new HashMap<>();
@@ -92,14 +97,14 @@ public abstract class SparkAdapterBase implements SparkAdapter {
         launcher.setMaster(masterUrl);
         launcher.setDeployMode("cluster");
 
+        if (request.mainClass() != null) {
+            launcher.setMainClass(request.mainClass());
+        }
+
         if (request.sparkProperties() != null) {
             for (Map.Entry<String, String> entry : request.sparkProperties().entrySet()) {
                 launcher.setConf(entry.getKey(), entry.getValue());
             }
-        }
-
-        if (request.mainClass() != null) {
-            launcher.setMainClass(request.mainClass());
         }
 
         if (request.appResource() != null) {
@@ -113,4 +118,8 @@ public abstract class SparkAdapterBase implements SparkAdapter {
         return launcher;
     }
 
+    @Override
+    public SubmissionResponse clearCompleted(String submissionId) {
+        return new SubmissionResponse("ClearResponse", null, null, submissionId, true);
+    }
 }

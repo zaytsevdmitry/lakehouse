@@ -1,10 +1,10 @@
 # Lakehouse Task Proxy for Spark
 
-REST API прокси для запросов Spark Submit с очередью задач на PostgreSQL. Поддерживает несколько типов кластеров (Local, Standalone, Kubernetes, YARN, MESOS) и параллельное выполнение на нескольких экземплярах сервиса.
+REST API прокси для запросов Spark Submit с очередью задач на PostgreSQL. Поддерживает несколько типов кластеров (Standalone, Kubernetes, YARN, MESOS) и параллельное выполнение на нескольких экземплярах сервиса.
 
 ## Обзор
 
-Сервис выступает прокси между клиентами и кластерами Apache Spark. Он принимает запросы на отправку задач Spark через REST API (совместимый с [Spark Standalone REST API](https://spark.apache.org/docs/latest/submitting-applications.html#spark-submit-programmatic-interface)), очередяет их в PostgreSQL, а планировщик (scheduler) dispatch'ит их на нужный кластер через паттерн Adapter.
+Сервис выступает прокси между клиентами и кластерами Apache Spark. Он принимает запросы на отправку задач Spark через REST API (совместимый с [Spark Standalone REST API](https://spark.apache.org/docs/latest/submitting-applications.html#spark-submit-programmatic-interface)), формирует очередь в PostgreSQL, а планировщик (scheduler) отправляет их на нужный кластер через паттерн Adapter.
 
 **Ключевые возможности:**
 
@@ -13,6 +13,9 @@ REST API прокси для запросов Spark Submit с очередью �
 - Один адаптер выбирается при старте сервиса через конфигурацию
 - Паттерн Adapter для кластер-специфичных операций (kill, status, clear)
 - Внешняя модель статусов по стандарту Spark REST API
+- [Spark Launcher](https://mvnrepository.com/artifact/org.apache.spark/spark-launcher_2.12/3.5.8) для выполнения spark-submit
+- Virtual Threads для неблокирующего выполнения spark-submit (`spring.threads.virtual.enabled=true`)
+- OpenMetrics (Prometheus) метрики через `spring-boot-starter-actuator` + `micrometer-registry-prometheus`
 
 ## Архитектура
 
@@ -23,15 +26,21 @@ REST API прокси для запросов Spark Submit с очередью �
 └─────────────┘     └──────────────┘     └──────┬─────┘     └──────────────┘
                                                 │
                                                 ▼
-                                         ┌──────────────┐
-                                         │  Scheduler   │
-                                         │ (@Scheduled) │
-                                         └──────┬───────┘
+                                         ┌──────────────┐     ┌────────────┐
+                                         │  Scheduler   │────▶│ SparkMetrics│
+                                         │ (@Scheduled) │     │ (Prometheus)│
+                                         └──────┬───────┘     └────────────┘
                                                 │
                                                 ▼
+                                         ┌──────────────────┐
+                                         │sparkLauncherExecutor│
+                                         │ (Virtual Threads) │
+                                         └────────┬─────────┘
+                                                  │
+                                                  ▼
                                          ┌──────────────┐     ┌─────────────┐
                                          │   Adapter    │────▶│   Cluster   │
-                                         │(Local/Standalone/│ │   (API)     │
+                                         │(Standalone/  │     │   (API)     │
                                          │  K8s/YARN/…) │     └─────────────┘
                                          └──────────────┘
 ```
@@ -40,8 +49,8 @@ REST API прокси для запросов Spark Submit с очередью �
 
 | Модуль | Описание |
 |--------|----------|
-| `lakehouse-task-proxy-for-spark-api` | DTO (`CreateSubmissionRequest`, `CreateSubmissionResponse`, `ExternalStatus`) |
-| `lakehouse-task-proxy-for-spark` | Реализация сервиса (controller, service, adapters, scheduler) |
+| `lakehouse-task-proxy-for-spark-api` | DTO (`CreateSubmissionRequest`, `CreateSubmissionResponse`, `SubmissionStatusResponse`, `ExternalStatus`) |
+| `lakehouse-task-proxy-for-spark` | Реализация сервиса (controller, service, adapters, scheduler, metrics) |
 
 ## API Endpoints
 
@@ -60,7 +69,7 @@ REST API прокси для запросов Spark Submit с очередью �
 Сервис использует двойную модель ID:
 
 - **`submissionId`** (внешний) — proxy ID (`spark_submissions.id`), возвращается клиенту во всех ответах API. Клиент использует его для запроса статуса, kill и т.д.
-- **`realSubmissionId`** (внутренний) — реальный Spark driver ID (`spark_submissions.submission_id`, например `driver-abc-123`), хранится внутри и используется для общения с кластером.
+- **`realSubmissionId`** (внутренний) — реальный Spark driver ID (`spark_submissions.submission_id`, например `driver-abc-123`), хранится внутри и используется для общения с кластером. Парсится из stdout/stderr spark-submit через адаптер-специфичный `extractSubmissionId()` regex.
 
 Клиент всегда работает с proxy `submissionId`. Реальный Spark submission ID разрешается внутри через слой Adapter.
 
@@ -95,7 +104,7 @@ REST API прокси для запросов Spark Submit с очередью �
 
 ### GET /status/{submissionId}
 
-Если задача ещё в очереди (QUEUED/CLAIMED/SUBMITTED), возвращает `WAITING`. Когда задача в кластере (COMPLETED/FAILED), запрашивает статус напрямую у кластера.
+Если задача ещё в очереди (WAITING/SUBMITTED), возвращает `WAITING`. Когда задача в кластере (FINISHED/FAILED), запрашивает статус напрямую у кластера.
 
 ```json
 // Пока в очереди
@@ -132,31 +141,21 @@ REST API прокси для запросов Spark Submit с очередью �
 
 | Статус | Описание |
 |--------|----------|
-| `QUEUED` | Задача в очереди, ещё не забрана планировщиком |
-| `CLAIMED` | Планировщик забрал задачу, готовится к запуску |
+| `WAITING` | Задача в очереди, ещё не забрана планировщиком |
 | `SUBMITTED` | `spark-submit` успешно завершился (exit code 0) |
-| `COMPLETED` | Кластер сообщает об успехе |
+| `FINISHED` | Кластер сообщает об успехе |
 | `FAILED` | `spark-submit` завершился с ошибкой или кластер сообщает о сбое |
 
 ### Маппинг внутренних → внешних
 
 | Внутренний | Внешний |
 |-----------|---------|
-| `QUEUED` | `WAITING` |
-| `CLAIMED` | `WAITING` |
-| `SUBMITTED` | `WAITING` |
-| `COMPLETED` | `FINISHED` |
+| `WAITING` | `WAITING` |
+| `SUBMITTED` | `SUBMITTED` |
+| `FINISHED` | `FINISHED` |
 | `FAILED` | `FAILED` |
 
 ### Маппинг статусов кластеров
-
-**Local** (состояние процесса → внешний статус):
-
-| Состояние процесса | Внешний статус |
-|--------------------|---------------|
-| `process.isAlive()` | `RUNNING` |
-| exit code 0 | `FINISHED` |
-| exit code != 0 | `FAILED` |
 
 **Kubernetes** (фаза пода → внешний статус):
 
@@ -185,67 +184,157 @@ REST API прокси для запросов Spark Submit с очередью �
 
 | Значение | Адаптер |
 |----------|---------|
-| `local` | `LocalSparkClusterAdapter` |
-| `standalone` | `StandaloneSparkClusterAdapter` |
-| `k8s` / `kubernetes` | `KubernetesSparkClusterAdapter` |
-| `yarn` | `YarnSparkClusterAdapter` |
-| `mesos` | `MesosSparkClusterAdapter` |
+| `standalone` | `StandaloneSparkAdapter` |
+| `k8s` / `kubernetes` | `KubernetesSparkAdapter` |
+| `yarn` | `YarnSparkAdapter` |
+| `mesos` | `MesosSparkAdapter` |
 
 ## Адаптеры
 
 | Адаптер | Реализация | API кластера | Конфигурация URL |
 |---------|-----------|--------------|------------------|
-| `LocalSparkClusterAdapter` | ProcessBuilder (фоновый) | Локальный JVM процесс | N/A (нет API кластера) |
-| `StandaloneSparkClusterAdapter` | REST (RestClient) | Spark Master REST API | `lakehouse.task.proxy4spark.standalone.rest-url` |
-| `KubernetesSparkClusterAdapter` | Kubernetes Java client 27.0.0 | K8s API (pods) | `lakehouse.task.proxy4spark.k8s.rest-url` |
-| `YarnSparkClusterAdapter` | REST (RestClient) | YARN ResourceManager REST API | `lakehouse.task.proxy4spark.yarn.rest-url` |
-| `MesosSparkClusterAdapter` | Заглушка (не реализован) | — | — |
+| `StandaloneSparkAdapter` | SparkLauncher + REST (RestClient) | Spark Master REST API | `lakehouse.task.proxy4spark.standalone.rest-url` |
+| `KubernetesSparkAdapter` | SparkLauncher + Kubernetes Java client 27.0.0 | K8s API (pods) | `lakehouse.task.proxy4spark.k8s.rest-url` |
+| `YarnSparkAdapter` | SparkLauncher + REST (RestClient) | YARN ResourceManager REST API | `lakehouse.task.proxy4spark.yarn.rest-url` |
+| `MesosSparkAdapter` | Заглушка (не реализован) | — | — |
 
-### SparkClusterAdapter Interface
+### SparkAdapter Interface
 
 ```java
-public interface SparkClusterAdapter {
-    String createSubmission(CreateSubmissionRequest request);
+public interface SparkAdapter {
+    String createSubmission(CreateSubmissionRequest request) throws CreateErrorException;
     CreateSubmissionResponse killSubmission(String submissionId);
     CreateSubmissionResponse killAllSubmissions();
-    CreateSubmissionResponse getSubmissionStatus(String submissionId);
+    SubmissionStatusResponse getSubmissionStatus(String submissionId);
     CreateSubmissionResponse clearCompleted();
 }
 ```
 
-## Планировщик
+Все адаптеры наследуют `SparkAdapterBase`, который предоставляет:
+- `defaultCreateSubmission(request)` — создаёт `SparkLauncher`, вызывает `launch()`, параллельно читает stdout/stderr, ждёт завершения процесса с таймаутом, парсит submissionId через адаптер-специфичный `extractSubmissionId(output)`
+- `buildSparkLauncher(request)` — конфигурирует `SparkLauncher` (master, deploy mode, spark properties, main class, app resource, app args)
 
-Планировщик опрашивает PostgreSQL каждые 5 секунд (настраивается через `lakehouse.task.proxy4spark.scheduler.poll-interval-ms`):
+### SparkLauncher Execution Flow
 
-1. `claimTask()` — забирает самую старую `QUEUED` задачу через `FOR UPDATE SKIP LOCKED`
-2. `createSubmission()` — строит и запускает команду `spark-submit` через `ProcessBuilder`
-3. `completeTask()` — обновляет статус задачи на `SUBMITTED` (успех) или `FAILED` (ошибка)
+1. `SparkAdapterBase.buildSparkLauncher()` конфигурирует лаунчер (master, deploy mode, spark properties, main class, app resource, app args)
+2. `launcher.launch()` запускает процесс spark-submit
+3. Два параллельных потока читают stdout и stderr
+4. `process.waitFor(timeoutSeconds, SECONDS)` ждёт завершения
+5. При таймауте: `process.destroyForcibly()` + `CreateErrorException`
+6. При exit code 0: `extractSubmissionId(output)` парсит реальный Spark submission ID из вывода через адаптер-специфичный regex
+7. При exit code != 0: `CreateErrorException` с выводом
 
-Несколько экземпляров сервиса могут работать одновременно — блокировка на уровне базы данных предотвращает повторное взятие задачи.
+### Адаптер-специфичный извлечение submissionId
 
-## Запуск spark-submit
+| Адаптер | Regex | Пример |
+|---------|-------|--------|
+| Standalone | `(driver-\d{14}-\d{4})` | `driver-20240101120000-0001` |
+| YARN | `Submitted application (application_\d+_\d+) to YARN` | `application_20240101_0001` |
+| Kubernetes | `pods/(spark-\S+)` (fallback: `driver-\S+`) | `spark-driver-abc` |
+| Mesos | бросает `CreateErrorException` (не реализовано) | — |
 
-Сервис запускает `spark-submit` как локальный процесс через `ProcessBuilder`. Команда формируется из параметров запроса:
+## Планировщики
+
+Сервис использует три независимых планировщика, работающих параллельно. Каждый запущен на `ScheduledExecutorService`.
+
+### 1. SubmissionScheduler — Диспетчеризация задач
+
+Опрашивает PostgreSQL каждые N мс (`lakehouse.task.proxy4spark.scheduler.poll-interval-ms`, по умолчанию `5000`) с настраиваемым пулом потоков:
+
+1. `claimNextTask()` — SELECT самой старой `WAITING` задачи с `FOR UPDATE SKIP LOCKED` (возвращает null если задач нет)
+2. Десериализует `sparkProperties` и `appArgs` из JSON-колонок
+3. Вызывает `adapter.createSubmission(request)` — запускает `spark-submit` через `SparkLauncher`
+4. Записывает SparkMetrics (Counter + Timer с p50/p95/p99)
+5. При успехе: `repository.completeTask(id, submissionId, "SUBMITTED", ...)`
+6. При ошибке: `repository.completeTask(id, null, "ERROR", message)`
+
+```java
+ScheduledExecutorService — poolSize потоков, scheduleWithFixedDelay
+    ↓ claimNextTask() (FOR UPDATE SKIP LOCKED)
+    ↓ adapter.createSubmission(request)  ← процесс spark-submit
+    ↓ completeTask() / markFailed()
+```
+
+Несколько экземпляров сервиса могут работать одновременно — блокировка на уровне БД предотвращает повторное взятие задачи.
+
+### 2. ClusterStatusScheduler — Инспекция статусов
+
+Опрашивает PostgreSQL каждые N мс (`lakehouse.task.proxy4spark.inspection.poll-interval-ms`, по умолчанию `10000`):
+
+1. `claimIncompleteTasks(batchSize)` — SELECT незавершённых задач (status NOT IN `FINISHED`, `KILLED`, `FAILED`, `ERROR`) с `FOR UPDATE SKIP LOCKED`
+2. Для каждой строки с непустым `submissionId`: вызывает `adapter.getSubmissionStatus(submissionId)`
+3. Маппит ответ кластера во внешний статус через `ExternalStatus.fromInternal(driverState)`
+4. Обновляет статус задачи в БД: `repository.updateStatus(id, newStatus, message)`
+5. При ошибке (exception): устанавливает статус `UNKNOWN`
+
+Это держит БД синхронизированной с реальным состоянием кластера для задач в статусе SUBMITTED/RUNNING.
+
+### 3. CleanupScheduler — Сборка мусора
+
+Опрашивает PostgreSQL каждые N мс (`lakehouse.task.proxy4spark.cleanup.poll-interval-ms`, по умолчанию `60000`):
+
+1. `claimForCleanup(batchSize, retentionSeconds)` — SELECT завершённых задач (`FINISHED`, `KILLED`, `FAILED`, `ERROR`), чей `updated_at` старше `retentionSeconds`, с `FOR UPDATE SKIP LOCKED`
+2. Для каждой строки: вызывает `adapter.clearCompleted(submissionId)`:
+   - **Standalone / YARN / Mesos**: заглушка — сразу возвращает успех (нет кластерного API на одну задачу)
+   - **Kubernetes**: находит pod драйвера через `readNamespacedPod`, удаляет через `deleteNamespacedPod`; если pod не найден — WARN, но возвращает успех
+3. При успехе: ID добавляется в список на удаление
+4. При неудаче: строка пропускается (повтор на следующем цикле)
+5. `repository.deleteAllIds(toDelete)` — bulk DELETE оставшихся записей
+
+Конфигурация (`application.yml`):
+```yaml
+lakehouse:
+  task:
+    proxy4spark:
+      cleanup:
+        poll-interval-ms: 60000
+        pool-size: 1
+        batch-size: 50
+        retention-seconds: 3600  # только записи старше 1ч
+```
+
+## Метрики
+
+Сервис предоставляет OpenMetrics (Prometheus) метрики через Spring Boot Actuator.
+
+### Prometheus Endpoint
 
 ```
-spark-submit --conf spark.master=... --conf spark.app.name=... --class com.example.Main /path/to/app.jar arg1 arg2
+GET /actuator/prometheus
 ```
 
-### Требования к переменным окружения
-
-На хосте, где работает сервис, должны быть настроены следующие переменные окружения:
-
-- **`SPARK_HOME`** — путь к каталогу установки Spark (например, `/opt/spark`)
-- **`PATH`** — должен включать `$SPARK_HOME/bin`, чтобы команда `spark-submit` была доступна
-
-Пример:
-
-```bash
-export SPARK_HOME=/opt/spark
-export PATH=$SPARK_HOME/bin:$PATH
+Включается в `application.yml`:
+```yaml
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+        step: 1m
+    tags:
+      application: lakehouse-task-proxy4spark
 ```
 
-Без этих переменных планировщик не сможет найти и выполнить `spark-submit`.
+### Пользовательские метрики (SparkMetrics)
+
+| Метрика | Тип | Теги | Описание |
+|---------|-----|------|----------|
+| `lakehouse_task_proxy4spark_submission_requests_total` | Counter | `backend` | Общее количество запросов на отправку spark |
+| `lakehouse_task_proxy4spark_submission_result_total` | Counter | `backend`, `status` (success/failed/timeout) | Завершённые отправки по результату |
+| `lakehouse_task_proxy4spark_submission_duration_seconds` | Timer | `backend` | Время от запуска spark-submit до захвата submissionId (p50/p95/p99 гистограмма) |
+
+### MetricsConfig
+
+`MetricsConfig` конфигурирует:
+1. **`MeterRegistryCustomizer`** — глобальная конвенция именования, заменяющая точки на подчёркивания для совместимости с OpenMetrics
+2. **`sparkLauncherExecutor`** — virtual thread executor для работы spark-submit
 
 ## Конфигурация
 
@@ -255,22 +344,10 @@ export PATH=$SPARK_HOME/bin:$PATH
 server:
   port: 8090
 
-lakehouse:
-  task:
-    proxy4spark:
-      adapter: local
-      spark-master: "local[*]"
-      standalone:
-        rest-url: "http://localhost:6066"
-      yarn:
-        rest-url: "http://localhost:8088"
-      k8s:
-        namespace: "default"
-        rest-url: "http://kubernetes.default.svc"
-      scheduler:
-        poll-interval-ms: 5000
-
 spring:
+  threads:
+    virtual:
+      enabled: true
   datasource:
     url: jdbc:postgresql://localhost:5432/postgresDB?ApplicationName=TaskProxy4Spark
     username: postgresUser
@@ -284,15 +361,52 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+        step: 1m
+    tags:
+      application: lakehouse-task-proxy4spark
+
+lakehouse:
+  task:
+    proxy4spark:
+      adapter: standalone
+      spark-master: "local[*]"
+      standalone:
+        rest-url: "http://localhost:6066"
+      yarn:
+        rest-url: "http://localhost:8088"
+      k8s:
+        namespace: "default"
+        rest-url: "http://kubernetes.default.svc"
+      scheduler:
+        poll-interval-ms: 5000
+        pool-size: 2
+      metrics:
+        submission-timeout-seconds: 30
 ```
 
 ## Технологический стек
 
 - Java 23
-- Spring Boot (Web, Data JPA)
+- Spring Boot (Web, Data JPA, Actuator)
 - PostgreSQL
 - Kubernetes Java client 27.0.0
+- Spark Launcher (`spark-launcher_2.12:3.5.8`)
+- Micrometer + Prometheus (`micrometer-registry-prometheus`)
 - Jackson (JSON)
+- Virtual Threads (Java 21+)
 
 ## Структура проекта
 
@@ -301,6 +415,7 @@ lakehouse-task-proxy-for-spark-api/
   src/main/java/.../dto/
     CreateSubmissionRequest.java
     CreateSubmissionResponse.java
+    SubmissionStatusResponse.java
     ExternalStatus.java
 
 lakehouse-task-proxy-for-spark/
@@ -310,23 +425,28 @@ lakehouse-task-proxy-for-spark/
       GlobalExceptionHandler.java
     service/
       SparkProxyService.java
+      SparkMetrics.java
     entity/
       SparkSubmission.java
     repository/
       SparkSubmissionRepository.java
     adapter/
-      SparkClusterAdapter.java        (интерфейс)
-      SparkClusterAdapterBase.java    (абстрактный базовый)
-      LocalSparkClusterAdapter.java
-      StandaloneSparkClusterAdapter.java
-      KubernetesSparkClusterAdapter.java
-      YarnSparkClusterAdapter.java
-      MesosSparkClusterAdapter.java
+      SparkAdapter.java           (интерфейс)
+      SparkAdapterBase.java       (абстрактный базовый — логика SparkLauncher)
+      StandaloneSparkAdapter.java
+      KubernetesSparkAdapter.java
+      YarnSparkAdapter.java
+      MesosSparkAdapter.java
     scheduler/
-      SparkSubmissionScheduler.java
+      SubmissionScheduler.java
+      ClusterStatusScheduler.java
+      CleanupScheduler.java
     config/
       AdapterConfig.java
       ProxyConfig.java
+      MetricsConfig.java
+    exception/
+      CreateErrorException.java
   src/main/resources/
     application.yml
   diagrams/

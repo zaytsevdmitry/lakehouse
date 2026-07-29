@@ -20,7 +20,9 @@
         <module name="lakehouse-task-executor-spark-dataset-app" />
         <module name="lakehouse-ui-svc" />
         <module name="lakehouse-scheduler-svc" />
+        <module name="lakehouse-task-proxy-for-spark" />
         <module name="lakehouse-config-rest-client" />
+        <module name="lakehouse-task-proxy-for-spark-api" />
         <module name="lakehouse-cli" />
         <module name="lakehouse-task-executor-spark-dq-app" />
         <module name="lakehouse-task-executor-api" />
@@ -28,6 +30,11 @@
         <module name="lakehouse-validators" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="lakehouse-job-launcher-for-spark" target="17" />
+      <module name="lakehouse-rest-client-for-kyuubi" target="17" />
+      <module name="lakehouse-rest-client-for-spark" target="17" />
+    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
@@ -38,6 +45,7 @@
       <module name="lakehouse-config-rest-client" options="-parameters" />
       <module name="lakehouse-config-svc" options="-parameters" />
       <module name="lakehouse-jinjava" options="-parameters" />
+      <module name="lakehouse-job-launcher-for-spark" options="-parameters" />
       <module name="lakehouse-scheduler-rest-client" options="-parameters" />
       <module name="lakehouse-scheduler-svc" options="-parameters" />
       <module name="lakehouse-spark-rest-client" options="-parameters" />
@@ -49,6 +57,8 @@
       <module name="lakehouse-task-executor-spark-dataset-app" options="-parameters" />
       <module name="lakehouse-task-executor-spark-dq-app" options="-parameters" />
       <module name="lakehouse-task-executor-svc" options="-parameters" />
+      <module name="lakehouse-task-proxy-for-spark" options="-parameters" />
+      <module name="lakehouse-task-proxy-for-spark-api" options="-parameters" />
       <module name="lakehouse-ui-svc" options="-parameters" />
       <module name="lakehouse-validators" options="-parameters" />
     </option>

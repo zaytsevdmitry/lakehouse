@@ -102,6 +102,13 @@ public class JinJavaFactory {
                         TaskProcessConfigExtractor.class,
                         "extractColumnsCS",
                         Map.class));
+        jinjava.getGlobalContext().registerFunction(
+                new ELFunctionDefinition(
+                        "",
+                        "getTaskFullName",
+                        TaskProcessConfigExtractor.class,
+                        "getTaskFullName",
+                        new Class[0]));
 
         return new JinJavaUtils(jinjava);
     }

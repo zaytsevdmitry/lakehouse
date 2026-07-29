@@ -1,8 +1,8 @@
 @startuml
 title createSubmission — POST /create
 
-|#LightBlue|Controller|
-|#LightGreen|Service|
+|Controller|
+|Service|
 
 start
 
@@ -10,7 +10,7 @@ start
 
 |Service|
 
-:INSERT spark_submissions (status=QUEUED, submissionId=NULL, appResource, mainClass, sparkProperties) RETURNING id;
+:INSERT spark_submissions (status=WAITING, submissionId=NULL, appResource, mainClass, sparkProperties) RETURNING id;
 
 |Controller|
 
