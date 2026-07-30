@@ -1,3 +1,19 @@
+/*
+ * "Lakehouse management tool" - the services set for managing data changes based on a metadata-driven approach
+ * Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/lakehouse
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0.txt
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.lakehouse.task.proxy.spark.scheduler;
 
 import jakarta.annotation.PreDestroy;
@@ -75,6 +91,7 @@ public class CleanupScheduler {
             transactionTemplate.executeWithoutResult(status -> {
                 List<Object[]> rows = repository.claimForCleanup(batchSize, retentionSeconds);
                 if (rows.isEmpty()) {
+                    log.info("No submissions to clear");
                     return;
                 }
 
@@ -84,11 +101,15 @@ public class CleanupScheduler {
                     Long id = ((Number) row[0]).longValue();
                     String submissionId = (String) row[1];
 
-                    SubmissionResponse result = adapter.clearCompleted(submissionId);
-                    if (Boolean.TRUE.equals(result.success())) {
-                        toDelete.add(id);
-                    } else {
-                        log.warn("Failed to clear submission {} in cluster, will retry", submissionId);
+                    try {
+                        SubmissionResponse result = adapter.clearCompleted(submissionId);
+                        if (Boolean.TRUE.equals(result.success())) {
+                            toDelete.add(id);
+                        } else {
+                            log.warn("Failed to clear submission {} in cluster, will retry", submissionId);
+                        }
+                    } catch (Exception e) {
+                        log.warn("Error clearing submission {}, will retry: {}", submissionId, e.getMessage());
                     }
                 }
 

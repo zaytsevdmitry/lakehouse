@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.6.0] 2026-07-30
 
 ### lakehouse-task-proxy-for-spark — major refactoring & new schedulers
 
@@ -46,7 +46,7 @@
 
 ---
 
-## [0.5.0] — 2026-07-28
+## [0.5.0] — 2026-06-23
 
 ### Added
 - **`lakehouse-task-proxy-for-spark`** — new module: REST API proxy for Spark Submit with PostgreSQL-backed task queue
@@ -63,7 +63,7 @@
 
 ---
 
-## [0.4.0] — 2026-07-22
+## [0.4.0] — 2026-06-20
 
 ### Added
 - **Spark DQ module** (`lakehouse-task-executor-spark-dq-app`) — data quality validation as Spark job
@@ -76,7 +76,7 @@
 
 ---
 
-## [0.3.0] — 2026-07-15
+## [0.3.0] — 2026-04-23
 
 ### Added
 - **Spark K8s native task processor** — initial (later removed)
@@ -88,7 +88,7 @@
 
 ---
 
-## [0.2.0] — 2026-07-08
+## [0.2.0] — 2025-07-13
 
 ### Added
 - **State service** (`lakehouse-state-svc`) — manages dataset increment states (LOCKED, SUCCESS, etc.)
@@ -100,14 +100,14 @@
 
 ---
 
-## [0.1.1] — 2026-07-01
+## [0.1.1] — 2025-05-06
 
 ### Fixed
 - Documentation updates
 
 ---
 
-## [0.1.0] — 2026-06-25
+## [0.1.0] — 2024-06-16
 
 ### Added
 - Initial project structure

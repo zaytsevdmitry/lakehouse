@@ -43,7 +43,7 @@ class SparkProxyServiceTest {
     void setUp() {
         ProxyConfig config = new ProxyConfig();
         config.setAdapter("standalone");
-        service = new SparkProxyService(repository, adapter, transactionTemplate, config);
+        service = new SparkProxyService(repository, adapter, transactionTemplate);
         lenient().when(transactionTemplate.execute(any())).thenAnswer(inv -> {
             @SuppressWarnings("unchecked")
             TransactionCallback<Object> callback = inv.getArgument(0);

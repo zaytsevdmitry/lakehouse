@@ -1,3 +1,19 @@
+/*
+ * "Lakehouse management tool" - the services set for managing data changes based on a metadata-driven approach
+ * Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/lakehouse
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0.txt
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.lakehouse.task.proxy.spark.entity;
 
 import jakarta.persistence.*;
@@ -28,9 +44,6 @@ public class SparkSubmission {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private Status status = Status.WAITING;
-
-    @Column(name = "cluster_type", nullable = false)
-    private String clusterType;
 
     @Column(name = "app_resource")
     private String appResource;
@@ -67,9 +80,6 @@ public class SparkSubmission {
 
     public Status getStatus() { return status; }
     public void setStatus(Status status) { this.status = status; }
-
-    public String getClusterType() { return clusterType; }
-    public void setClusterType(String clusterType) { this.clusterType = clusterType; }
 
     public String getAppResource() { return appResource; }
     public void setAppResource(String appResource) { this.appResource = appResource; }

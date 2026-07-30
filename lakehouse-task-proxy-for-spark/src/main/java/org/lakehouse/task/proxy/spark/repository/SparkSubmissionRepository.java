@@ -1,3 +1,19 @@
+/*
+ * "Lakehouse management tool" - the services set for managing data changes based on a metadata-driven approach
+ * Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/lakehouse
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0.txt
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.lakehouse.task.proxy.spark.repository;
 
 import org.lakehouse.task.proxy.spark.entity.SparkSubmission;
@@ -17,7 +33,7 @@ public interface SparkSubmissionRepository extends JpaRepository<SparkSubmission
     List<SparkSubmission> findByStatus(SparkSubmission.Status status);
 
     @Query(value = """
-            SELECT id, submission_id, cluster_type, app_resource, main_class, app_args, spark_properties
+            SELECT id, submission_id, app_resource, main_class, app_args, spark_properties
             FROM {h-schema}spark_submissions
             WHERE status = 'WAITING'
             ORDER BY created_at ASC
@@ -27,7 +43,7 @@ public interface SparkSubmissionRepository extends JpaRepository<SparkSubmission
     Object[] claimNextTask();
 
     @Query(value = """
-            SELECT id, submission_id, cluster_type
+            SELECT id, submission_id
             FROM {h-schema}spark_submissions
             WHERE status NOT IN ('FINISHED', 'KILLED', 'FAILED', 'ERROR')
             ORDER BY created_at ASC
@@ -37,7 +53,7 @@ public interface SparkSubmissionRepository extends JpaRepository<SparkSubmission
     List<Object[]> claimIncompleteTasks(@Param("batchSize") int batchSize);
 
     @Query(value = """
-            SELECT id, submission_id, cluster_type
+            SELECT id, submission_id
             FROM {h-schema}spark_submissions
             WHERE status IN ('FINISHED', 'KILLED', 'FAILED', 'ERROR')
               AND updated_at < now() - (:retentionSeconds || ' seconds')::interval

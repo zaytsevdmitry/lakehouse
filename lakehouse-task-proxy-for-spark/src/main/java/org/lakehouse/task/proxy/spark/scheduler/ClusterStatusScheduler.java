@@ -1,3 +1,19 @@
+/*
+ * "Lakehouse management tool" - the services set for managing data changes based on a metadata-driven approach
+ * Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/lakehouse
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0.txt
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.lakehouse.task.proxy.spark.scheduler;
 
 import jakarta.annotation.PreDestroy;
@@ -79,7 +95,6 @@ public class ClusterStatusScheduler {
                 for (Object[] row : rows) {
                     Long id = ((Number) row[0]).longValue();
                     String submissionId = (String) row[1];
-                    String clusterType = (String) row[2];
 
                     if (submissionId == null) {
                         continue;
@@ -91,7 +106,10 @@ public class ClusterStatusScheduler {
                         ExternalStatus externalStatus = ExternalStatus.fromInternal(driverState);
                         String newStatus = externalStatus.name();
                         String message = response.message() != null ? response.message() : driverState;
-
+                        if (newStatus.equals(ExternalStatus.FINISHED.name())){
+                            // try to clear successes spark job
+                            adapter.clearCompleted(submissionId);
+                        }
                         repository.updateStatus(id, newStatus, message);
                         log.debug("Task id={} status updated to {} (submissionId={})", id, newStatus, submissionId);
                     } catch (Exception e) {
