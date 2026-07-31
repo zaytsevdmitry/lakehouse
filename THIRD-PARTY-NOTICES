@@ -5,16 +5,18 @@ This project incorporates components from the projects listed below.
 The original copyright notices and the licenses under which these 
 components are received are provided below.
 
-========================================================================
+=======================================================================
 1. Apache License, Version 2.0 Components
-========================================================================
+=======================================================================
 
 The following components are licensed under the Apache License, Version 2.0:
 
-* FasterXML Jackson Modules (com.fasterxml.jackson.core:jackson-databind, 
-  jackson-datatype-jsr310, jackson-module-scala_2.12)
+* FasterXML Jackson Components (com.fasterxml.jackson.core:jackson-databind,
+  jackson-annotations, com.fasterxml.jackson.datatype:jackson-datatype-jsr310,
+  com.fasterxml.jackson.module:jackson-module-scala_2.12,
+  jackson-module-parameter-names)
   Copyright (c) 2007- Tatu Saloranta (tatu.saloranta@iki.fi) and others.
-  
+
 * Apache Commons Codec (commons-codec:commons-codec)
   Copyright 2002-2024 The Apache Software Foundation.
 
@@ -30,14 +32,18 @@ The following components are licensed under the Apache License, Version 2.0:
 * Apache Kafka Clients (org.apache.kafka:kafka-clients)
   Copyright 2010-2024 The Apache Software Foundation.
 
-* Apache Spark (org.apache.spark:spark-core, spark-sql)
+* Apache Spark (org.apache.spark:spark-core, spark-sql, spark-launcher_2.12)
   Copyright 2014-2024 The Apache Software Foundation.
 
-* Spring Framework & Spring Boot Components (org.springframework.boot:*, org.springframework:*, org.springframework.kafka:*)
+* Spring Framework & Spring Boot Components (org.springframework.boot:*,
+  org.springframework:*, org.springframework.kafka:*)
   Copyright 2002-2025 VMware, Inc. or its affiliates / Broadcom.
 
-* Fabric8 Kubernetes Client & Mock Server (io.fabric8:kubernetes-client, kubernetes-server-mock)
-  Copyright (c) 2015 Red Hat, Inc.
+* Kubernetes Java Client (io.kubernetes:client-java)
+  Copyright 2020 The Kubernetes Authors.
+
+* Micrometer Registry Prometheus (io.micrometer:micrometer-registry-prometheus)
+  Copyright 2017-2024 VMware, Inc. or its affiliates / Broadcom.
 
 * Testcontainers (org.testcontainers:junit-jupiter, kafka, postgresql)
   Copyright (c) 2015-2024 Richard North and other contributors.
@@ -72,9 +78,9 @@ limitations under the License.
 (Full text: https://www.apache.org/licenses/LICENSE-2.0.txt)
 
 
-========================================================================
+=======================================================================
 2. MIT License Components
-========================================================================
+=======================================================================
 
 The following components are licensed under the MIT License:
 
@@ -106,9 +112,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 
-========================================================================
+=======================================================================
 3. PostgreSQL License (BSD 2-Clause derivative) Components
-========================================================================
+=======================================================================
 
 The following components are licensed under the PostgreSQL License:
 
@@ -136,9 +142,9 @@ BASIS, AND THE COPYRIGHT HOLDER HAS NO OBLIGATIONS TO PROVIDE MAINTENANCE,
 SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 
-========================================================================
+=======================================================================
 4. Eclipse Public License, Version 2.0 Components
-========================================================================
+=======================================================================
 
 The following components are licensed under the Eclipse Public License, Version 2.0:
 
@@ -152,9 +158,9 @@ The Eclipse Public License 2.0 (EPL-2.0) is available at https://eclipse.org.
 Source code for JUnit Jupiter can be obtained at https://github.com.
 
 
-========================================================================
+=======================================================================
 5. Common Public License, Version 1.0 Components
-========================================================================
+=======================================================================
 
 The following components are licensed under the Common Public License, Version 1.0:
 
@@ -166,4 +172,3 @@ The following components are licensed under the Common Public License, Version 1
 
 The Common Public License 1.0 (CPL-1.0) is available at https://opensource.org.
 Source code for JUnit 4 can be obtained at https://github.com.
-

@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: lakehouse-task-proxy4spark
+spec:
+  type: {{ .Values.proxy4spark.service.type }}
+  ports:
+    - port: {{ .Values.proxy4spark.service.port }}
+      targetPort: 8090
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: lakehouse-task-proxy4spark
+    app.kubernetes.io/instance: {{ .Release.Name }}

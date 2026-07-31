@@ -30,7 +30,6 @@ import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.rest.config.ConfigRestClientApiAbstract;
 import org.lakehouse.jinja.java.JinJavaFactory;
 import org.lakehouse.jinja.java.JinJavaUtils;
-import org.lakehouse.jinja.java.util.SourceConfUtil;
 import org.lakehouse.test.config.configuration.FileLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -163,7 +162,6 @@ public class ConfigRestClientApiTest extends ConfigRestClientApiAbstract {
                 .stream().map(this::getDriverDTO)
                 .collect(Collectors.toMap(DriverDTO::getKeyName,driverDTO -> driverDTO))
         );
-         new SourceConfUtil(jinJavaUtils).renderProperties(sourceConfDTO);
         return sourceConfDTO;
     }
 

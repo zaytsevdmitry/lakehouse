@@ -1,0 +1,65 @@
+@startuml
+title killSubmission — POST /kill/{submissionId}
+
+|Controller|
+|Service|
+|Adapter|
+
+start
+
+:HTTP POST /v1/submissions/kill/{submissionId};
+
+|Service|
+
+:SELECT * FROM spark_submissions WHERE id = {submissionId};
+
+if (Record found?) then (yes)
+
+    if (real submissionId IS NULL?) then (yes)
+
+        :Task not in cluster (WAITING);
+        :DELETE FROM spark_submissions WHERE id = {submissionId};
+
+        |Controller|
+
+        :Return CreateSubmissionResponse(message=KILLED, submissionId={submissionId}, success=true);
+        stop
+
+    else (no)
+
+        |Adapter|
+
+        :adapter.killSubmission(realSubmissionId);
+
+        if (success?) then (yes)
+
+            |Service|
+
+            :DELETE FROM spark_submissions WHERE id = {submissionId};
+
+            |Controller|
+
+            :Return CreateSubmissionResponse(message=KILLED, submissionId={submissionId}, success=true);
+            stop
+
+        else (no)
+
+            |Controller|
+
+            :Return CreateSubmissionResponse(message=FAILED, submissionId={submissionId}, success=false);
+            stop
+
+        endif
+
+    endif
+
+else (no)
+
+    |Controller|
+
+    :Return CreateSubmissionResponse(message=NOT_FOUND, submissionId={submissionId}, success=false);
+    stop
+
+endif
+
+@enduml

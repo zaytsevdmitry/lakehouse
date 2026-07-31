@@ -26,8 +26,7 @@ import org.lakehouse.config.repository.dq.QualityMetricsConfRepository;
 import org.lakehouse.config.service.dataset.DataSetService;
 import org.lakehouse.config.service.datasource.DataSourceService;
 import org.lakehouse.config.service.datasource.DriverService;
-import org.lakehouse.jinja.java.JinJavaUtils;
-import org.lakehouse.jinja.java.util.SourceConfUtil;
+
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -43,18 +42,15 @@ public class SourcesCompoundService {
     private final QualityMetricsConfRepository qualityMetricsConfRepository;
     private final DataSourceService dataSourceService;
     private final DriverService driverService;
-    private final JinJavaUtils jinJavaUtils;
     public SourcesCompoundService(
             DataSetService dataSetService,
             QualityMetricsConfRepository qualityMetricsConfRepository,
             DataSourceService dataSourceService,
-            DriverService driverService,
-            JinJavaUtils jinJavaUtils) {
+            DriverService driverService) {
         this.dataSetService = dataSetService;
         this.qualityMetricsConfRepository = qualityMetricsConfRepository;
         this.dataSourceService = dataSourceService;
         this.driverService = driverService;
-        this.jinJavaUtils = jinJavaUtils;
     }
 
     public SourceConfDTO getSourceConfDTO(String dataSetKeyName){
@@ -81,8 +77,6 @@ public class SourcesCompoundService {
                         .map(driverService::findById)
                         .collect(Collectors.toMap(DriverDTO::getKeyName,Function.identity()))
         );
-
-        new SourceConfUtil(jinJavaUtils).renderProperties(result);
         return result;
     }
 

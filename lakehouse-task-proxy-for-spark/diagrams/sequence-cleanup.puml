@@ -1,0 +1,63 @@
+@startuml
+title CleanupScheduler.processBatch() — sequence
+
+actor ScheduledExecutorService as Executor
+participant CleanupScheduler as Scheduler
+participant SparkAdapter as Adapter
+database DB as "PostgreSQL\n(spark_submissions)"
+participant TransactionTemplate as Tx
+
+Executor -> Scheduler: scheduleWithFixedDelay\n(pollIntervalMs)
+activate Scheduler
+
+Scheduler -> Tx: executeWithoutResult(status)
+activate Tx
+
+    Tx -> DB: claimForCleanup(batchSize, retentionSeconds)\n--\nSELECT id, submission_id\nFROM spark_submissions\nWHERE status IN ('FINISHED','KILLED','FAILED','ERROR')\n  AND updated_at < now() - retentionSeconds\nORDER BY updated_at ASC\nLIMIT batchSize\nFOR UPDATE SKIP LOCKED
+    activate DB
+    DB --> Tx: List<Object[]> {id, submission_id}
+    deactivate DB
+
+    alt rows.isEmpty()
+        Tx --> Scheduler: return
+    else rows found
+        loop for each row
+            Tx -> Adapter: clearCompleted(submissionId)
+            activate Adapter
+
+            alt adapter is Standalone/YARN/Mesos
+                Adapter --> Tx: stub → success=true
+            else adapter is Kubernetes
+                Adapter -> DB: readNamespacedPod(submissionId)
+                DB --> Adapter: pod or null
+                alt pod found
+                    Adapter -> DB: deleteNamespacedPod(podName)
+                    DB --> Adapter: void
+                    Adapter --> Tx: success=true
+                else pod not found
+                    Adapter --> Tx: success=true (WARN logged)
+                end
+            else API error
+                Adapter --> Tx: success=false
+            end
+
+            alt success
+                Tx -> Scheduler: add id to toDelete
+            else failure
+                Tx -> Scheduler: log warn, will retry
+            end
+        end
+
+        Tx -> DB: deleteAllIds(toDelete)\n--\nDELETE FROM spark_submissions\nWHERE id IN (:ids)
+        activate DB
+        DB --> Tx: void
+        deactivate DB
+
+        Tx -> Scheduler: log "deleted N terminal records"
+    end
+
+deactivate Tx
+
+deactivate Scheduler
+
+@enduml

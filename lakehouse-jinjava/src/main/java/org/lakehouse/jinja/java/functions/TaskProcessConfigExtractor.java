@@ -17,11 +17,14 @@
 
 package org.lakehouse.jinja.java.functions;
 
+import com.hubspot.jinjava.interpret.Context;
+import com.hubspot.jinjava.interpret.JinjavaInterpreter;
 import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.configs.NameDescriptionAbstract;
 import org.lakehouse.client.api.dto.configs.dataset.ColumnDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetConstraintDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
+import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.utils.ObjectMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,9 +33,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- *  {{source(dataSetKey)}} returns table
- */
+
 public class TaskProcessConfigExtractor {
     private static final Logger logger = LoggerFactory.getLogger(TaskProcessConfigExtractor.class);
     public static String ref(String dataSetKeyName) {
@@ -218,4 +219,40 @@ public class TaskProcessConfigExtractor {
         return  "{{dataSources[dataSets['"+dataSetKeyName + "'].dataSourceKeyName].catalogKeyName~'.'~" +
                 "dataSets['" + dataSetKeyName + "'].databaseSchemaName}}";
     }
+
+    public static String getTaskFullName() {
+        JinjavaInterpreter interpreter = JinjavaInterpreter.getCurrent();
+        if (interpreter == null) {
+            throw new IllegalStateException("JinjavaInterpreter is not bound to the current thread");
+        }
+
+        Context context = interpreter.getContext();
+        if (context == null) {
+            throw new IllegalArgumentException("Jinjava context cannot be null");
+        }
+
+        Object idObj = context.get("id");
+        if (idObj == null) throw new IllegalArgumentException("Property 'id' is missing");
+        long id = (idObj instanceof Number) ? ((Number) idObj).longValue() : Long.parseLong(String.valueOf(idObj));
+
+        Object tryNumObj = context.get("tryNum");
+        if (tryNumObj == null) throw new IllegalArgumentException("Property 'tryNum' is missing");
+        int tryNum = (tryNumObj instanceof Number) ? ((Number) tryNumObj).intValue() : Integer.parseInt(String.valueOf(tryNumObj));
+
+        String scheduleKeyName = String.valueOf(context.get("scheduleKeyName"));
+        String scenarioActKeyName = String.valueOf(context.get("scenarioActKeyName"));
+        String name = String.valueOf(context.get("name"));
+
+        Object targetDateTimeObj = context.get("targetDateTime");
+        if (targetDateTimeObj == null) throw new IllegalArgumentException("Property 'targetDateTime' is missing");
+
+        String formattedDate = String.valueOf(targetDateTimeObj)
+                .replace("-", "")
+                .replace(":", "")
+                .replace(" ", "-");
+
+        return String.format("%d-%d-%s-%s-%s-%s",
+                id, tryNum, scheduleKeyName, scenarioActKeyName, name, formattedDate);
+    }
+
 }

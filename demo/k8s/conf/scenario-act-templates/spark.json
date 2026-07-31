@@ -19,52 +19,61 @@
     {
       "name": "prepare",
       "taskExecutionServiceGroupName": "default",
-      "taskProcessor": "k8sSparkNativeTaskProcessor",
+      "taskProcessor": "sparkStandAloneClusterTaskProcessor",
       "taskProcessorBody": "createTableSQLProcessorBody",
       "importance": "critical",
       "description": "load from remote datastore",
       "taskProcessorArgs": {
         "spark.ui.enabled": "true",
+        "spark.app.name": "{{ getTaskFullName() }}",
+        "spark.kubernetes.driver.annotation.lakehouse-management-task": "{{ getTaskFullName() }}",
+        "spark.executor.cores": "1",
+        "spark.driver.cores": "1",
         "spark.executor.memory": "1g",
         "spark.driver.memory": "1g",
-        "datasource.service.protocol": "https",
-        "lakehouse.client.rest.config.server.url": "http://lakehouse-management-config-service:8080",
-        "k8s.spark-native.mainClass": "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
-        "k8s.spark-native.appResource": "local:///opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.5.0-jar-with-dependencies.jar"
+        "datasource.service.protocol": "http",
+        "deploy.mainClass": "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
+        "deploy.appResource": "local:///opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.6.0-jar-with-dependencies.jar"
       }
     },
     {
       "name": "load",
       "taskExecutionServiceGroupName": "default",
-      "taskProcessor": "k8sSparkNativeTaskProcessor",
+      "taskProcessor": "sparkStandAloneClusterTaskProcessor",
       "taskProcessorBody": "mergeSQLProcessorBody",
       "importance": "critical",
       "description": "load from remote datastore",
       "taskProcessorArgs": {
+        "spark.app.name": "{{ getTaskFullName() }}",
+        "spark.kubernetes.driver.annotation.lakehouse-management-task": "{{ getTaskFullName() }}",
         "spark.ui.enabled": "true",
+        "spark.executor.cores": "1",
+        "spark.driver.cores": "1",
         "spark.executor.memory": "1g",
         "spark.driver.memory": "1g",
-        "datasource.service.protocol": "https",
-        "lakehouse.client.rest.config.server.url": "http://lakehouse-management-config-service:8080",
-        "k8s.spark-native.mainClass": "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
-        "k8s.spark-native.appResource": "local:///opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.5.0-jar-with-dependencies.jar"
+        "datasource.service.protocol": "http",
+        "deploy.mainClass": "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
+        "deploy.appResource": "local:///opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.6.0-jar-with-dependencies.jar"
       }
     },
     {
       "name": "compact",
       "taskExecutionServiceGroupName": "default",
-      "taskProcessor": "k8sSparkNativeTaskProcessor",
+      "taskProcessor": "sparkStandAloneClusterTaskProcessor",
       "taskProcessorBody": "compactTableSQLProcessorBody",
       "importance": "critical",
       "description": "load from remote datastore",
       "taskProcessorArgs": {
+        "spark.app.name": "{{ getTaskFullName() }}",
+        "spark.kubernetes.driver.annotation.lakehouse-management-task": "{{ getTaskFullName() }}",
         "spark.ui.enabled": "true",
+        "spark.executor.cores": "1",
+        "spark.driver.cores": "1",
         "spark.executor.memory": "1g",
         "spark.driver.memory": "1g",
-        "datasource.service.protocol": "https",
-        "lakehouse.client.rest.config.server.url": "http://lakehouse-management-config-service:8080",
-        "k8s.spark-native.mainClass": "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
-        "k8s.spark-native.appResource": "local:///opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.5.0-jar-with-dependencies.jar"
+        "datasource.service.protocol": "http",
+        "deploy.mainClass": "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
+        "deploy.appResource": "local:///opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.6.0-jar-with-dependencies.jar"
       }
     },
     {

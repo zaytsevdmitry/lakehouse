@@ -1,0 +1,113 @@
+@startuml
+title SparkSubmissionScheduler — claim → spark-submit → complete
+
+skinparam backgroundColor #FEFEFE
+skinparam sequenceArrowThickness 1
+
+participant "SparkSubmission\nScheduler" as Sched
+database "PostgreSQL" as PG
+participant "SparkMetrics" as Metrics
+participant "Adapter" as Adapter
+participant "SparkLauncher" as SparkLauncher
+participant "Cluster" as Cluster
+
+== poll() start ==
+
+== 1. claimNextTask — FOR UPDATE SKIP LOCKED ==
+
+Sched -> PG : claimNextTask()
+
+note right of PG
+  SELECT id, submission_id, cluster_type, app_resource, main_class, app_args, spark_properties
+  FROM spark_submissions
+  WHERE status = 'WAITING'
+  ORDER BY created_at ASC
+  FOR UPDATE SKIP LOCKED
+  LIMIT 1
+end note
+
+alt row == null (nothing to claim)
+
+    PG --> Sched : null
+    Sched -> Sched : return (idle)
+
+else row returned
+
+    PG --> Sched : row=(42, null, "kubernetes", "app.jar", "com.Main", "[...]", "{...}")
+    Sched -> Sched : log.info("Claimed task id=42")
+
+end
+
+== 2. Deserialize & Build request ==
+
+Sched -> Sched : deserializeProperties(sparkPropertiesJson) → Map
+Sched -> Sched : deserializeAppArgs(appArgsJson) → List
+Sched -> Sched : new CreateSubmissionRequest(null, appArgs, "app.jar", null, "com.Main", sparkProperties, null)
+
+== 3. Metrics ==
+
+Sched -> Metrics : recordRequest(clusterType)
+Sched -> Metrics : startTimer() → Timer.Sample
+
+== 4. adapter.createSubmission(request) ==
+
+Sched -> Adapter : adapter.createSubmission(request)
+
+Adapter -> Adapter : buildSparkLauncher(request):
+  setMaster, setDeployMode("cluster"),
+  setConf, setMainClass, setAppResource, addAppArgs
+
+Adapter -> SparkLauncher : launcher.launch()
+SparkLauncher -> Cluster : spark-submit (driver launched)
+note right of SparkLauncher
+  process = launcher.launch()
+  process.waitFor(timeoutSeconds, SECONDS)
+  parallel stdout/stderr reading
+end note
+
+alt exitCode == 0
+
+    SparkLauncher --> Adapter : exitCode = 0
+    Adapter -> Adapter : extractSubmissionId(output) → "driver-abc-123"
+    Adapter --> Sched : submissionId = "driver-abc-123"
+
+    Sched -> Metrics : recordSuccess(clusterType)
+    Sched -> Metrics : recordDuration(sample, clusterType)
+
+    == 5a. completeTask — SUBMITTED ==
+
+    Sched -> PG : completeTask(42, "driver-abc-123", "SUBMITTED", "spark-submit launched successfully")
+    PG --> Sched : void
+
+else exitCode != 0
+
+    SparkLauncher --> Adapter : exitCode = 1, error output
+    Adapter --> Sched : CreateErrorException
+
+    Sched -> Metrics : recordFailed(clusterType)
+    Sched -> Metrics : recordDuration(sample, clusterType)
+
+    == 5b. completeTask — ERROR ==
+
+    Sched -> PG : completeTask(42, null, "ERROR", "spark-submit failed (exit 1): ...")
+    PG --> Sched : void
+
+else process.waitFor timed out
+
+    SparkLauncher --> Adapter : process not finished after timeout
+    Adapter -> Adapter : process.destroyForcibly()
+    Adapter --> Sched : CreateErrorException("timeout")
+
+    Sched -> Metrics : recordTimeout(clusterType)
+    Sched -> Metrics : recordDuration(sample, clusterType)
+
+    == 5c. completeTask — ERROR (timeout) ==
+
+    Sched -> PG : completeTask(42, null, "ERROR", "spark-submit timed out after Ns")
+    PG --> Sched : void
+
+end
+
+== poll() end ==
+
+@enduml

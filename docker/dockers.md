@@ -17,3 +17,7 @@
   - postgres
   - [lakehouse-task-executor-spark-dataset-app](../lakehouse-task-executor-spark-dataset-app) с кодом обработки данных на spark
   - [lakehouse-task-executor-spark-dq-app](../lakehouse-task-executor-spark-dq-app) с кодом операций Data Quality на Spark
+  
+- [lakehouse-task-proxy4spark](lakehouse-task-proxy4spark) -  образ основанный на  lakehouse-spark-aws
+  - jdk 23
+  

@@ -34,6 +34,7 @@ import org.springframework.web.util.DefaultUriBuilderFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Based on spark restapi
@@ -51,6 +52,8 @@ public abstract class AbstractSparkDeployTaskProcessor extends AbstractTaskProce
     //todo other final status
     private final List<String> finalStatusNames = List.of("FINISHED", "KILLED", "FAILED", "ERROR");
     private final List<String> negativeStatusNames = List.of("KILLED", "FAILED" , "ERROR");
+
+    private static final long RUNNING_TIMEOUT_MS = TimeUnit.MINUTES.toMillis(2);
 
     public boolean isStatusFinal(String statusName) {
         return finalStatusNames.contains(statusName);
@@ -71,7 +74,6 @@ public abstract class AbstractSparkDeployTaskProcessor extends AbstractTaskProce
 
 
     public void deploy(
-            String taskFullName,
             String mainClass,
             String appResource,
             String severUrl,
@@ -82,8 +84,6 @@ public abstract class AbstractSparkDeployTaskProcessor extends AbstractTaskProce
         createRequest.setMainClass(mainClass);
         createRequest.setAppResource(appResource);
 
-        logger.info("Set task name to spark property spark.app.name");
-        sparkProperties.put("spark.app.name", taskFullName);
         createRequest.setSparkProperties(sparkProperties);
 
         createRequest.setAppArgs(sparkArgs);
@@ -97,25 +97,37 @@ public abstract class AbstractSparkDeployTaskProcessor extends AbstractTaskProce
             throw new TaskConfigurationException("Deploy failed. Response error", e);
         }
         logger.info(
-                "Task {} submitted as {}",
-                taskFullName,
+                "Task  submitted as {}",
                 createResponse.getSubmissionId());
 
         StatusResponse status = null;
         boolean isFinished = false;
+        boolean isRunning = false;
+        long startTime = System.currentTimeMillis();
+
         while (!isFinished) {
             sleep(1000L);
             status =
                     buildSparkRestClientApi(severUrl)
                             .getStatus(createResponse.getSubmissionId());
             logger.info("Spark job status {}", status.getDriverState());
-            if (isStatusFinal(status.getDriverState()))
+
+            if (!isRunning && "RUNNING".equals(status.getDriverState())) {
+                isRunning = true;
+                logger.info("Spark job {} reached RUNNING state", createResponse.getSubmissionId());
+            }
+
+            if (isStatusFinal(status.getDriverState())) {
                 isFinished = true;
+            } else if (!isRunning
+                    && System.currentTimeMillis() - startTime > RUNNING_TIMEOUT_MS) {
+                throw new TaskFailedException(String.format(
+                        "Spark job did not reach RUNNING state within %d seconds. Last status: %s",
+                        TimeUnit.MILLISECONDS.toSeconds(RUNNING_TIMEOUT_MS),
+                        status.getDriverState()));
+            }
         }
         if (isStatusNegative(status.getDriverState()))
-            throw new TaskFailedException(String.format("Spark job state is %s", status.getDriverState()));
+            throw new TaskFailedException(String.format("Spark job state is %s. %s", status.getDriverState(), status.getMessage()));
     }
-
-
-
 }

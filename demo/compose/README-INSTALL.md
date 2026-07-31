@@ -7,8 +7,8 @@
 Перейти в терминале в корне проекта в каталог demo/compose. Там расположен файл docker-compose.yml
 Выполнить команду
 
-```
-docker compose down; docker compose up
+```shell
+docker compose up -d
 ```
 ### Совпадения имен
 Возможны ошибки о том, что контейнеры которые должны быть запущены уже существуют. Это либо контейнеры от предыдущих попыток запуска, либо одноименные контейнеры. Нужно убедиться, что они
@@ -18,7 +18,7 @@ docker compose down; docker compose up
 > 47230bbef2717dc571455f72bec3b4e3be2636d340e8dffac4c2d7e1cd4c1f5a". You have to remove (or rename) that container to be
 > able to reuse that name.
 
-``` 
+```shell
 docker container rm broker 
 docker container rm conf-svc 
 docker container rm db-dev
@@ -34,7 +34,8 @@ docker container rm state-svc
 docker container rm task-executor-svc-1
 docker container rm task-executor-svc-2 
 docker container rm task-executor-svc-3 
-docker container rm task-executor-svc-4 
+docker container rm lakehouse-task-proxy4spark
+
 ```
 #### Сеть
 В конфигурации определена сеть

@@ -1,0 +1,19 @@
+@startuml
+title killAllSubmissions — POST /killall
+
+|Controller|
+|Service|
+
+start
+
+:HTTP POST /v1/submissions/killall;
+
+|Service|
+
+:DELETE FROM spark_submissions WHERE status = WAITING;
+
+:Return CreateSubmissionResponse(message=KILLED N waiting tasks, success=true);
+
+stop
+
+@enduml

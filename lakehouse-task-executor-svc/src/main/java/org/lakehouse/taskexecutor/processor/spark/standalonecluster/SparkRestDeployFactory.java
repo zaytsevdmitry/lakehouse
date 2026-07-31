@@ -51,9 +51,8 @@ public class SparkRestDeployFactory {
         if(!scheduledTaskDTO.getTaskProcessorArgs().containsKey(SystemVarKeys.DATASOURCE_SERVICE_PROTOCOL_NAME_KEY))
             throw new TaskConfigurationException(
                     String.format(
-                            "Key '%s' is not present in TaskProcessorArgs %s",
-                            SystemVarKeys.DATASOURCE_SERVICE_PROTOCOL_NAME_KEY,
-                            scheduledTaskDTO.buildTaskFullName() ));
+                            "Key '%s' is not present in TaskProcessorArgs",
+                            SystemVarKeys.DATASOURCE_SERVICE_PROTOCOL_NAME_KEY));
 
 
         String template = driverDTO.getConnectionTemplates().get(Types.ConnectionType.spark);

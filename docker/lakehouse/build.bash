@@ -1,4 +1,4 @@
-  #!/usr/bin/env bash
+#!/usr/bin/env bash
 
 # "Lakehouse management tool" - the services set for managing data changes based on a metadata-driven approach
 # Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/lakehouse
@@ -18,7 +18,7 @@
 
 set -e
 set -v
-export LH_VERSION=0.5.0
+export LH_VERSION=0.6.0
 pwd
 mkdir -p ./opt
 export CODE_ROOT="../.."

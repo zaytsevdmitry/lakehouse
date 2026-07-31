@@ -1,0 +1,35 @@
+@startuml
+title getStatus — GET /status/{submissionId} (reads DB only)
+
+|Controller|
+|Service|
+
+start
+
+:HTTP GET /v1/submissions/status/{submissionId};
+
+|Service|
+
+:SELECT * FROM spark_submissions WHERE id = {submissionId};
+
+if (Record found?) then (yes)
+
+    :internalStatus = submission.getStatus().name();
+    :externalStatus = ExternalStatus.fromInternal(internalStatus);
+    :return SubmissionStatusResponse(driverState=externalStatus, submissionId=submission.getSubmissionId());
+
+    |Controller|
+
+    :Return 200 OK;
+    stop
+
+else (no)
+
+    |Controller|
+
+    :Return SubmissionStatusResponse(message=NOT_FOUND, driverState=UNKNOWN, success=false);
+    stop
+
+endif
+
+@enduml
