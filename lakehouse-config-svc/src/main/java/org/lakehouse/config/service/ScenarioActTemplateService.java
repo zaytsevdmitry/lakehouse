@@ -27,11 +27,15 @@ import org.lakehouse.config.entities.templates.TemplateScenarioAct;
 import org.lakehouse.config.entities.templates.TemplateTask;
 import org.lakehouse.config.entities.templates.TemplateTaskEdge;
 import org.lakehouse.config.entities.templates.TemplateTaskProcessorArg;
+import org.lakehouse.config.exception.DriverNotFoundException;
 import org.lakehouse.config.mapper.Mapper;
 import org.lakehouse.config.repository.*;
+import org.lakehouse.config.service.datasource.DriverService;
+import org.lakehouse.config.service.datasource.SQLTemplateService;
 import org.lakehouse.validator.config.ScenarioActTemplateConfValidator;
 import org.lakehouse.validator.config.ValidationResult;
 import org.lakehouse.validator.exception.DTOValidationException;
+import org.lakehouse.validator.task.TaskDTOValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -51,13 +55,15 @@ public class ScenarioActTemplateService {
     private final ScheduleRepository scheduleRepository;
     private final ScheduleConfigProducerService scheduleConfigProducerService;
     private final Mapper mapper;
+    private final DriverService driverService;
+    private final SQLTemplateService sqlTemplateService;
 
     public ScenarioActTemplateService(ScenarioActTemplateRepository scenarioActTemplateRepository,
                                       TaskTemplateRepository taskTemplateRepository,
                                       TemplateTaskProcessorArgRepository executionModuleArgRepository,
                                       TaskExecutionServiceGroupRepository taskExecutionServiceGroupRepository,
                                       TemplateTaskEdgeRepository templateTaskEdgeRepository, ScenarioActRepository scenarioActRepository, ScheduleRepository scheduleRepository, org.lakehouse.config.service.ScheduleConfigProducerService scheduleConfigProducerService,
-                                      Mapper mapper) {
+                                      Mapper mapper, DriverService driverService, SQLTemplateService sqlTemplateService) {
         this.scenarioActTemplateRepository = scenarioActTemplateRepository;
         this.taskTemplateRepository = taskTemplateRepository;
         this.executionModuleArgRepository = executionModuleArgRepository;
@@ -67,6 +73,8 @@ public class ScenarioActTemplateService {
         this.scheduleRepository = scheduleRepository;
         this.scheduleConfigProducerService = scheduleConfigProducerService;
         this.mapper = mapper;
+        this.driverService = driverService;
+        this.sqlTemplateService = sqlTemplateService;
     }
 
     public TaskDTO findTaskByScenarioActTemplateAndTaskName(
@@ -102,6 +110,7 @@ public class ScenarioActTemplateService {
                     dagEdgeDTO.setTo(templateTaskEdge.getToTaskTemplate().getName());
                     return dagEdgeDTO;
                 }).collect(Collectors.toSet()));
+
         return result;
     }
 
@@ -136,13 +145,22 @@ public class ScenarioActTemplateService {
             return new HashSet<>();
     }
 
-    @Transactional
-    public ScenarioActTemplateDTO save(ScenarioActTemplateDTO scenarioActTemplateDTO) {
-
+    private void validate(ScenarioActTemplateDTO scenarioActTemplateDTO){
+        logger.info("Validation of scenarioActTemplate {}",scenarioActTemplateDTO.getKeyName());
         ValidationResult vr = ScenarioActTemplateConfValidator.validate(scenarioActTemplateDTO);
+
+        logger.info("Validate tasks of scenarioActTemplate {}",scenarioActTemplateDTO.getKeyName());
+        for (TaskDTO taskDTO : scenarioActTemplateDTO.getTasks()) {
+            vr.getDescriptions().addAll(TaskDTOValidator.validate(taskDTO).getDescriptions());
+        }
 
         if (!vr.isValid())
             throw new DTOValidationException(vr.getDescriptions());
+
+    }
+    @Transactional
+    public ScenarioActTemplateDTO save(ScenarioActTemplateDTO scenarioActTemplateDTO) {
+        validate(scenarioActTemplateDTO);
 
         TemplateScenarioAct templateScenarioAct = mapScenarioToEntity(scenarioActTemplateDTO);
         templateTaskEdgeRepository.findByTemplateScenarioActKeyName(templateScenarioAct.getKeyName()).forEach(templateTaskEdgeRepository::delete);
@@ -158,7 +176,7 @@ public class ScenarioActTemplateService {
 
         Map<String, TemplateTask> taskTemplates = new HashMap<>();
 
-        scenarioActTemplateDTO.getTasks().forEach(taskDTO -> {
+        for (TaskDTO taskDTO: scenarioActTemplateDTO.getTasks()){
 
             TemplateTask templateTaskBefore = new TemplateTask();
             templateTaskBefore.setScenarioTemplate(templateScenarioAct);
@@ -168,12 +186,21 @@ public class ScenarioActTemplateService {
             templateTaskBefore.setTaskProcessorBody(taskDTO.getTaskProcessorBody());
             templateTaskBefore.setTaskExecutionServiceGroup(
                     taskExecutionServiceGroupRepository.getReferenceById(taskDTO.getTaskExecutionServiceGroupName()));
+            if (taskDTO.getDriverKeyName() != null)
+                try {
+                    templateTaskBefore.setDriver(driverService.findDriverById(taskDTO.getDriverKeyName()));
+                }catch (DriverNotFoundException e){
+                    logger.error(e.getMessage(),e);
+                    throw e;
+                }
 
             templateTaskBefore.setDescription(taskDTO.getDescription());
 
             logger.info("Save ScenarioActTemplate.name={}, taskTemplate.name={}", scenarioActTemplateDTO.getKeyName(), templateTaskBefore.getName());
 
             TemplateTask templateTaskAfter = taskTemplateRepository.save(templateTaskBefore);
+
+            sqlTemplateService.save(templateTaskAfter, taskDTO.getSqlTemplate());
 
             taskTemplates.put(templateTaskBefore.getName(), templateTaskBefore);
 
@@ -189,7 +216,7 @@ public class ScenarioActTemplateService {
                 executionModuleArg.setValue(v);
                 executionModuleArgRepository.save(executionModuleArg);
             });
-        });
+        };
 
         scenarioActTemplateDTO.getDagEdges().forEach(dagEdgeDTO -> {
             TemplateTaskEdge templateTaskEdge = new TemplateTaskEdge();

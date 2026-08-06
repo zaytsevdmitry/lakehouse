@@ -71,3 +71,7 @@ lakehouse:
         retention-seconds: 3600
       metrics:
         submission-timeout-seconds: 30
+
+  health:
+    liveness-path: /healthz
+    readiness-path: /readyz

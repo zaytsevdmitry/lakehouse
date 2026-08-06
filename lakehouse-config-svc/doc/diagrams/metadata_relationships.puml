@@ -1,0 +1,93 @@
+@startuml
+' https://plantuml.com/use-case-diagram
+' Схема взаимоотношений объектов метаданных lakehouse-config-svc
+' см. ../content_configuration/content_configuration.md
+left to right direction
+skinparam packageStyle rectangle
+title Взаимоотношения объектов конфигурации (metadata configuration)
+
+package "Базовые объекты" {
+
+    (Namespace) as NS
+    (Driver) as DRV
+    (Script) as SCR
+    (TaskExecutionServiceGroup) as TESG
+}
+
+package "Источники и объекты данных" {
+
+    (DataSource) as DS
+    (Service) as SVC
+    (SQLTemplate) as SQLT
+    (ScriptReference) as SCRF
+    (DataSet) as DST
+    (Column) as COL
+    (Constraint) as CONS
+    (QualityMetric) as QM
+}
+
+package "Расписания и исполнение" {
+
+    (Schedule) as SCH
+    (ScenarioAct) as SA
+    (ScenarioActTemplate) as SAT
+    (Task) as TASK
+    (DAGEdge) as DAGE
+}
+
+package "Производные объекты (compound)" {
+
+    (SourceConfDTO) as SRC
+    (ModelScript) as MOD
+}
+
+' ---- Вложенные объекты (композиция) ----
+DST *-- COL : columnSchema
+DST *-- CONS : constraints
+DST *-- SQLT : sqlTemplate (переопределяет)
+DS *-- SVC : service (вложенный объект)
+DS *-- SQLT : sqlTemplate (переопределяет)
+DRV *-- SQLT : sqlTemplate (базовый)
+SCH *-- SA : scenarioActs
+SCH *-- DAGE : scenarioActEdges (граф сценариев)
+SA *-- TASK : tasks (переопределяют шаблон)
+SA *-- DAGE : dagEdges (граф задач)
+SAT *-- TASK : tasks (типовые задачи)
+SAT *-- DAGE : dagEdges (граф задач)
+
+' ---- Ссылки по ключам (ассоциации) ----
+DST --> NS : nameSpaceKeyName (принадлежность)
+DST --> DS : dataSourceKeyName (расположение)
+DS --> DRV : driverKeyName (экземпляр драйвера)
+DST --> DST : sources (зависимость от других датасетов)
+DST --> SCRF : scripts (коллекция ссылок)
+SCRF --> SCR : key
+SQLT --> SCR : значения шаблона - ссылки на скрипты
+QM --> DST : datasetKeyName (привязка метрики к датасету)
+SA --> DST : dataSet (обслуживаемый датасет)
+SA --> SAT : scenarioActTemplate (шаблон действия)
+TASK --> TESG : taskExecutionServiceGroupName (маршрутизация)
+SRC --> DST : срез метаданных датасета и зависимостей
+MOD --> DST : сборка скрипта модели датасета
+
+note right of SQLT
+  Не самостоятельная конфигурация.
+  Слияние при разрешении:
+  DataSet > DataSource > Driver
+end note
+
+note bottom of TASK
+  Задача - атомарное действие,
+  используется только в составе
+  ScenarioAct / ScenarioActTemplate.
+end note
+
+note right of SRC
+  GET /v1_0/configs/compound/sources/dataset/{keyName}
+end note
+
+note right of MOD
+  GET /v1_0/configs/compound/dataset/model/script/dataset/{keyName}
+end note
+
+@enduml

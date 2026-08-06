@@ -25,7 +25,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 
 @SpringBootApplication(scanBasePackages = {
         "org.lakehouse.scheduler",
-        "org.lakehouse.client.rest.config"},
+        "org.lakehouse.client.rest.config",
+        "org.lakehouse.health"},
 scanBasePackageClasses = {JinJavaConfiguration.class})
 
 @EnableConfigurationProperties(value = {ScheduleConfigConsumerKafkaConfigurationProperties.class})

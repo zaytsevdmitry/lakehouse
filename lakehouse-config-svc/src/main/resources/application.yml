@@ -39,4 +39,8 @@ lakehouse:
             properties:
               bootstrap.servers: localhost:9092
 
+  health:
+    liveness-path: /healthz
+    readiness-path: /readyz
+
 

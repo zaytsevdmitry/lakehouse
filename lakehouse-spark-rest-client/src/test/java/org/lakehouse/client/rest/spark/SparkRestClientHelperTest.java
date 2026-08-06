@@ -23,7 +23,7 @@ import org.junit.runner.RunWith;
 import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.client.rest.spark.standalone.CreateRequest;
 import org.lakehouse.client.rest.spark.standalone.CreateResponse;
-import org.lakehouse.test.config.configuration.FileLoader;
+import org.lakehouse.test.config.util.FileLoader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
 import org.springframework.http.MediaType;

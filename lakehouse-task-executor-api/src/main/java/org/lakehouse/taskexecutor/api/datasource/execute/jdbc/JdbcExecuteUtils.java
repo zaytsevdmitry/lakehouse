@@ -39,10 +39,9 @@ public class JdbcExecuteUtils extends ExecuteUtilsAbstract {
 
     public JdbcExecuteUtils(
             JinJavaUtils jinJavaUtils,
-            DataSourceDTO dataSourceDTO,
-            DriverDTO driverDTO
+            DataSourceDTO dataSourceDTO
             ) {
-        super(jinJavaUtils, dataSourceDTO, driverDTO);
+        super(jinJavaUtils, dataSourceDTO);
     }
 
     

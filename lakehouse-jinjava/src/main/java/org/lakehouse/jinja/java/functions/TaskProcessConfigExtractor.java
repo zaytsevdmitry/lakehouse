@@ -59,10 +59,11 @@ public class TaskProcessConfigExtractor {
             throw new IllegalArgumentException("Attribute 'dataSetKeyName' can not be blank");
         try {
 
-            String result = "{%set catalog_name=dataSources[dataSets['" + dataSetKeyName + "'].dataSourceKeyName].catalogKeyName %}" +
-                    "{{ catalog_name~'.'" +
+            String result = "{{ " +
+                    "dataSets['" + dataSetKeyName + "'].dataSourceKeyName~'.'" +
                     "~dataSets['" + dataSetKeyName + "'].databaseSchemaName~'.'" +
-                    "~dataSets['" + dataSetKeyName + "'].tableName }}";
+                    "~dataSets['" + dataSetKeyName + "'].tableName " +
+                    "}}";
             System.out.println(result);
             return result;
         } catch (Exception e) {
@@ -216,8 +217,8 @@ public class TaskProcessConfigExtractor {
             logger.error("error in Jinjava function. Attribute 'dataSetKeyName' can not be blank");
             throw new IllegalArgumentException("Attribute 'dataSetKeyName' can not be blank");
         }
-        return  "{{dataSources[dataSets['"+dataSetKeyName + "'].dataSourceKeyName].catalogKeyName~'.'~" +
-                "dataSets['" + dataSetKeyName + "'].databaseSchemaName}}";
+        return  "{{dataSets['" + dataSetKeyName + "'].dataSourceKeyName~'.'~" +
+                  "dataSets['" + dataSetKeyName + "'].databaseSchemaName}}";
     }
 
     public static String getTaskFullName() {

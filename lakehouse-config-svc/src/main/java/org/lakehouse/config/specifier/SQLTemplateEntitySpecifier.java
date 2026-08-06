@@ -19,26 +19,26 @@ package org.lakehouse.config.specifier;
 
 import org.lakehouse.config.entities.KeyValueAbstract;
 import org.lakehouse.config.entities.SQLTemplate;
-import org.lakehouse.config.entities.dataset.DataSet;
-import org.lakehouse.config.entities.datasource.DataSource;
 import org.lakehouse.config.entities.datasource.Driver;
+import org.lakehouse.config.entities.scenario.ScenarioActTask;
+import org.lakehouse.config.entities.templates.TemplateTask;
 import org.lakehouse.config.mapper.keyvalue.KeyValueEntitySpecifierAbstract;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public  class SQLTemplateEntitySpecifier extends KeyValueEntitySpecifierAbstract {
     private final Driver driver;
-    private final DataSource dataSource;
-    private final DataSet dataSet;
+    private final ScenarioActTask scenarioActTask;
+    private final TemplateTask templateTask;
 
     public SQLTemplateEntitySpecifier(
             JpaRepository jpaRepository,
             Driver driver,
-            DataSource dataSource,
-            DataSet dataSet) {
+            ScenarioActTask scenarioActTask,
+            TemplateTask templateTask) {
         super(jpaRepository);
         this.driver = driver;
-        this.dataSource = dataSource;
-        this.dataSet = dataSet;
+        this.scenarioActTask = scenarioActTask;
+        this.templateTask = templateTask;
     }
 
 
@@ -46,8 +46,8 @@ public  class SQLTemplateEntitySpecifier extends KeyValueEntitySpecifierAbstract
     public KeyValueAbstract entityFeel(KeyValueAbstract keyValueAbstract) {
         SQLTemplate result = (SQLTemplate) keyValueAbstract;
         result.setDriver(driver);
-        result.setDataSource(dataSource);
-        result.setDataSet(dataSet);
+        result.setScenarioActTask(scenarioActTask);
+        result.setTemplateTask(templateTask);
         return result;
     }
 

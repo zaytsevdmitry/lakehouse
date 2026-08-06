@@ -32,6 +32,7 @@
         <module>lakehouse-cli</module>
         <module>lakehouse-common-test</module>
         <module>lakehouse-common-rest-client</module>
+        <module>lakehouse-common-health</module>
         <module>lakehouse-state-svc</module>
         <module>lakehouse-jinjava</module>
         <module>lakehouse-task-executor-rest-client</module>

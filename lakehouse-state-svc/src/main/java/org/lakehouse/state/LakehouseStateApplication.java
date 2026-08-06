@@ -20,7 +20,9 @@ package org.lakehouse.state;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {
+        "org.lakehouse.state",
+        "org.lakehouse.health"})
 public class LakehouseStateApplication {
     public static void main(String[] args) {
 

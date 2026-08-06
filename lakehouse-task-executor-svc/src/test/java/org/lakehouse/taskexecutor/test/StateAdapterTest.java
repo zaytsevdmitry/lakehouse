@@ -39,7 +39,7 @@ import org.lakehouse.taskexecutor.processor.state.LockedStateTaskProcessor;
 import org.lakehouse.taskexecutor.processor.state.SuccessStateTaskProcessor;
 import org.lakehouse.taskexecutor.test.stub.StateRestClientApiTest;
 import org.lakehouse.test.config.api.ConfigRestClientApiTest;
-import org.lakehouse.test.config.configuration.FileLoader;
+import org.lakehouse.test.config.util.FileLoader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ConfigurableApplicationContext;

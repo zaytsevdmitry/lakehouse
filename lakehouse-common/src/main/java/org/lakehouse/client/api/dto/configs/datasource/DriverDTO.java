@@ -27,9 +27,7 @@ import java.util.Objects;
 public class DriverDTO {
     private String keyName;
     private String description;
-    private Map<Types.ConnectionType,String> connectionTemplates = new HashMap<>();
     private SQLTemplateDTO sqlTemplate;
-    private Types.DataSourceType dataSourceType;
     public String getKeyName() {
         return keyName;
     }
@@ -38,13 +36,7 @@ public class DriverDTO {
         this.keyName = keyName;
     }
 
-    public Map<Types.ConnectionType, String> getConnectionTemplates() {
-        return connectionTemplates;
-    }
 
-    public void setConnectionTemplates(Map<Types.ConnectionType, String> connectionTemplates) {
-        this.connectionTemplates = connectionTemplates;
-    }
 
     public String getDescription() {
         return description;
@@ -62,28 +54,25 @@ public class DriverDTO {
         this.sqlTemplate = sqlTemplate;
     }
 
-    public Types.DataSourceType getDataSourceType() {
-        return dataSourceType;
-    }
 
-    public void setDataSourceType(Types.DataSourceType dataSourceType) {
-        this.dataSourceType = dataSourceType;
+    @Override
+    public String toString() {
+        return "DriverDTO{" +
+                "keyName='" + keyName + '\'' +
+                ", description='" + description + '\'' +
+                ", sqlTemplate=" + sqlTemplate +
+                '}';
     }
 
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         DriverDTO driverDTO = (DriverDTO) o;
-        return Objects.equals(getKeyName(), driverDTO.getKeyName()) && Objects.equals(getDescription(), driverDTO.getDescription()) && Objects.equals(getConnectionTemplates(), driverDTO.getConnectionTemplates()) && Objects.equals(getSqlTemplate(), driverDTO.getSqlTemplate()) && getDataSourceType() == driverDTO.getDataSourceType();
+        return Objects.equals(getKeyName(), driverDTO.getKeyName()) && Objects.equals(getDescription(), driverDTO.getDescription()) && Objects.equals(getSqlTemplate(), driverDTO.getSqlTemplate());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getKeyName(), getDescription(), getConnectionTemplates(), getSqlTemplate(), getDataSourceType());
-    }
-
-    @Override
-    public String toString() {
-        return "DriverDTO{" + "keyName='" + keyName + '\'' + ", description='" + description + '\'' + ", connectionTemplates=" + connectionTemplates + ", sqlTemplate=" + sqlTemplate + ", dataSourceType=" + dataSourceType + '}';
+        return Objects.hash(getKeyName(), getDescription(), getSqlTemplate());
     }
 }

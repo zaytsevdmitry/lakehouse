@@ -120,23 +120,17 @@ public class ExecuteService {
         Map<String,Object> localContext = new HashMap<>();
 
         // resolve sources first
-        for(DriverDTO driverDTO:sourceConfDTO.getDrivers().values()){
-            localContext.put(SystemVarKeys.DRIVER_KEY, driverDTO);
-            for (DataSourceDTO dataSourceDTO: sourceConfDTO.getDataSources().values()){
-                if(dataSourceDTO.getDriverKeyName().equals(driverDTO.getKeyName())){
-                    localContext.put(SystemVarKeys.DATASOURCE_KEY, dataSourceDTO);
-                    localContext.put(SystemVarKeys.SERVICE_KEY, dataSourceDTO.getService());
-                    dataSourceDTO.getService().setProperties(jinJavaUtils.renderMap(dataSourceDTO.getService().getProperties(),localContext));
-                    for (DataSetDTO dataSetDTO:sourceConfDTO.getDataSets().values()){
-                        if (dataSetDTO.getDataSourceKeyName().equals(dataSourceDTO.getKeyName())){
-                            localContext.put(SystemVarKeys.DATASET_KEY, dataSetDTO);
-                            dataSetDTO.setProperties(jinJavaUtils.renderMap(dataSetDTO.getProperties(),localContext));
-                        }
-                    }
+        for (DataSourceDTO dataSourceDTO: sourceConfDTO.getDataSources().values()){
+            localContext.put(SystemVarKeys.DATASOURCE_KEY, dataSourceDTO);
+            localContext.put(SystemVarKeys.SERVICE_KEY, dataSourceDTO.getService());
+            dataSourceDTO.getService().setProperties(jinJavaUtils.renderMap(dataSourceDTO.getService().getProperties(),localContext));
+            for (DataSetDTO dataSetDTO:sourceConfDTO.getDataSets().values()){
+                if (dataSetDTO.getDataSourceKeyName().equals(dataSourceDTO.getKeyName())){
+                    localContext.put(SystemVarKeys.DATASET_KEY, dataSetDTO);
+                    dataSetDTO.setProperties(jinJavaUtils.renderMap(dataSetDTO.getProperties(),localContext));
                 }
             }
         }
-
         try {
             jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(sourceConfDTO));
             jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(scheduledTaskDTO));

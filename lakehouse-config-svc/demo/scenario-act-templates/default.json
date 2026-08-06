@@ -23,6 +23,7 @@
       "taskProcessorBody": "mergeSQLProcessorBody",
       "importance": "critical",
       "description": "load from remote datastore",
+      "driverKeyName": "postgres",
       "taskProcessorArgs": {
         "spark.executor.memory": "5g",
         "spark.driver.memory": "2g"

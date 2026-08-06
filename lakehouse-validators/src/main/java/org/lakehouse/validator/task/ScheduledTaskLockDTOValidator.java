@@ -30,7 +30,6 @@ public class ScheduledTaskLockDTOValidator {
                         .addAll(ScheduledTaskDTOValidator
                                 .validate(scheduledTaskLockDTO.getScheduledTaskEffectiveDTO()).getDescriptions());
             }
-            result.setValid(result.getDescriptions().isEmpty());
             return result;
     }
 }

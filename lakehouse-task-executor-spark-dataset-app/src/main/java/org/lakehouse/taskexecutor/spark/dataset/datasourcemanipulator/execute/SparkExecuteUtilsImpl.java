@@ -41,9 +41,8 @@ public class SparkExecuteUtilsImpl
     public SparkExecuteUtilsImpl(
             JinJavaUtils jinJavaUtils,
             DataSourceDTO dataSourceDTO,
-            DriverDTO driverDTO,
             SparkSession sparkSession) {
-        super(jinJavaUtils, dataSourceDTO, driverDTO);
+        super(jinJavaUtils, dataSourceDTO);
         this.sparkSession = sparkSession;
     }
 

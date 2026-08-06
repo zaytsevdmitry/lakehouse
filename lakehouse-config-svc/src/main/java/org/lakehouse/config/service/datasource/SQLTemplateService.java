@@ -22,9 +22,9 @@ import org.lakehouse.client.api.dto.common.SQLTemplateDTO;
 import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.config.entities.KeyValueAbstract;
 import org.lakehouse.config.entities.SQLTemplate;
-import org.lakehouse.config.entities.dataset.DataSet;
-import org.lakehouse.config.entities.datasource.DataSource;
 import org.lakehouse.config.entities.datasource.Driver;
+import org.lakehouse.config.entities.scenario.ScenarioActTask;
+import org.lakehouse.config.entities.templates.TemplateTask;
 import org.lakehouse.config.exception.ConfigCorruptException;
 import org.lakehouse.config.mapper.keyvalue.KeyValueEntityMerger;
 import org.lakehouse.config.repository.SQLTemplateRepository;
@@ -51,44 +51,57 @@ public class SQLTemplateService {
                 ,driver,null,null
         );
     }
-    public void save(DataSource dataSource,SQLTemplateDTO sqlTemplateDTO) {
+    public void save(ScenarioActTask scenarioActTask, SQLTemplateDTO sqlTemplateDTO) {
         save(sqlTemplateRepository
-                .findByDataSourceKeyName(dataSource.getKeyName()),
+                .findByScenarioActTaskId(scenarioActTask.getId()),
                 sqlTemplateDTO,
-                null,dataSource,null);
+                null,scenarioActTask,null);
     }
-    public void save(DataSet dataSet,SQLTemplateDTO sqlTemplateDTO) {
+    public void save(TemplateTask templateTask,SQLTemplateDTO sqlTemplateDTO) {
         save(sqlTemplateRepository
-                        .findByDataSourceKeyName(dataSet.getKeyName()),
+                        .findByTemplateTaskId(templateTask.getId()),
                 sqlTemplateDTO,
-                null,null,dataSet);
+                null,null,templateTask);
     }
     private void save(
             List<SQLTemplate> sqlTemplates,
             SQLTemplateDTO sqlTemplateDTO,
             Driver driver,
-            DataSource dataSource,
-            DataSet dataSet) {
-        try {
-            new KeyValueEntityMerger(
-                    new SQLTemplateEntitySpecifier(sqlTemplateRepository,driver,dataSource,dataSet))
-                    .mergeAbstractKeyValues(
-                            sqlTemplates
-                                    .stream()
-                                    .map(dataSourceProperty -> (KeyValueAbstract) dataSourceProperty )
-                                    .toList(),
-                            ObjectMapping
-                                    .asMapOfStrings(sqlTemplateDTO)
-                                    .entrySet()
-                                    .stream()
-                                    .filter(s->s.getValue()!=null)
-                                    .collect(Collectors.toMap(Map.Entry::getKey,Map.Entry::getValue))
-                    );
-        } catch (JsonProcessingException e) {
-            throw new ConfigCorruptException(e);
+            ScenarioActTask scenarioActTask,
+            TemplateTask templateTask) {
+        //clean up if sqlTemplateDTO null
+        if (sqlTemplateDTO == null) {
+            if (driver != null)
+                sqlTemplateRepository.deleteAll(sqlTemplateRepository.findByDriverKeyName(driver.getKeyName()));
+            if (scenarioActTask != null)
+                sqlTemplateRepository.deleteAll(sqlTemplateRepository.findByScenarioActTaskId(scenarioActTask.getId()));
+            if (templateTask != null)
+                sqlTemplateRepository.deleteAll(sqlTemplateRepository.findByTemplateTaskId(templateTask.getId()));
+        }
+        else {
+            try {
+                new KeyValueEntityMerger(
+                        new SQLTemplateEntitySpecifier(sqlTemplateRepository, driver, scenarioActTask, templateTask))
+                        .mergeAbstractKeyValues(
+                                sqlTemplates
+                                        .stream()
+                                        .map(dataSourceProperty -> (KeyValueAbstract) dataSourceProperty)
+                                        .toList(),
+                                ObjectMapping
+                                        .asMapOfStrings(sqlTemplateDTO)
+                                        .entrySet()
+                                        .stream()
+                                        .filter(s -> s.getValue() != null)
+                                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+                        );
+            } catch (JsonProcessingException e) {
+                throw new ConfigCorruptException(e);
+            }
         }
     }
     private SQLTemplateDTO mapSQSqlTemplateToDTO(List<SQLTemplate> sqlTemplates) {
+        if (sqlTemplates.isEmpty())
+            return null;
         try {
             return ObjectMapping.stringToObject(
                     ObjectMapping.asJsonStringPretty(
@@ -105,11 +118,11 @@ public class SQLTemplateService {
     public SQLTemplateDTO getSqlTemplateDTO(Driver driver)  {
         return mapSQSqlTemplateToDTO(sqlTemplateRepository.findByDriverKeyName(driver.getKeyName()));
     }
-    public SQLTemplateDTO getSqlTemplateDTO(DataSource dataSource)  {
-        return mapSQSqlTemplateToDTO(sqlTemplateRepository.findByDataSourceKeyName(dataSource.getKeyName()));
+    public SQLTemplateDTO getSqlTemplateDTO(TemplateTask templateTask)  {
+        return mapSQSqlTemplateToDTO(sqlTemplateRepository.findByTemplateTaskId(templateTask.getId()));
     }
-    public SQLTemplateDTO getSqlTemplateDTO(DataSet dataSet)  {
-        return mapSQSqlTemplateToDTO(sqlTemplateRepository.findByDataSetKeyName(dataSet.getKeyName()));
+    public SQLTemplateDTO getSqlTemplateDTO(ScenarioActTask scenarioActTask)  {
+        return mapSQSqlTemplateToDTO(sqlTemplateRepository.findByScenarioActTaskId(scenarioActTask.getId()));
     }
 
 }

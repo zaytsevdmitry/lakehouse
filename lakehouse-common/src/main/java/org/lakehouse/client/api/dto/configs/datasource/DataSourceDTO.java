@@ -17,17 +17,18 @@
 
 package org.lakehouse.client.api.dto.configs.datasource;
 
+import org.lakehouse.client.api.constant.DatabaseProtocol;
+import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.common.SQLTemplateDTO;
 
 import java.util.Objects;
 
 public class DataSourceDTO {
     private String keyName;
-    private String catalogKeyName;
     ServiceDTO service;
     private String description;
-    private SQLTemplateDTO sqlTemplate = new SQLTemplateDTO();
-    private String driverKeyName;
+    private DatabaseProtocol databaseProtocol;
+    private Types.DataSourceType dataSourceType;
 
     public DataSourceDTO() {
     }
@@ -48,22 +49,6 @@ public class DataSourceDTO {
         this.description = description;
     }
 
-    public SQLTemplateDTO getSqlTemplate() {
-        return sqlTemplate;
-    }
-
-    public void setSqlTemplate(SQLTemplateDTO sqlTemplate) {
-        this.sqlTemplate = sqlTemplate;
-    }
-
-    public String getDriverKeyName() {
-        return driverKeyName;
-    }
-
-    public void setDriverKeyName(String driverKeyName) {
-        this.driverKeyName = driverKeyName;
-    }
-
     public ServiceDTO getService() {
         return service;
     }
@@ -72,15 +57,30 @@ public class DataSourceDTO {
         this.service = service;
     }
 
+    public void setDatabaseProtocol(DatabaseProtocol databaseProtocol) {
+        this.databaseProtocol = databaseProtocol;
+    }
+
+    public DatabaseProtocol getDatabaseProtocol() {
+        return databaseProtocol;
+    }
+
+    public Types.DataSourceType getDataSourceType() {
+        return dataSourceType;
+    }
+
+    public void setDataSourceType(Types.DataSourceType dataSourceType) {
+        this.dataSourceType = dataSourceType;
+    }
+
     @Override
     public String toString() {
         return "DataSourceDTO{" +
                 "keyName='" + keyName + '\'' +
-                ", catalogName='" + catalogKeyName + '\'' +
                 ", service=" + service +
                 ", description='" + description + '\'' +
-                ", sqlTemplate=" + sqlTemplate +
-                ", driverKeyName='" + driverKeyName + '\'' +
+                ", databaseProtocol=" + databaseProtocol +
+                ", dataSourceType=" + dataSourceType +
                 '}';
     }
 
@@ -88,19 +88,11 @@ public class DataSourceDTO {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         DataSourceDTO that = (DataSourceDTO) o;
-        return Objects.equals(getKeyName(), that.getKeyName()) && Objects.equals(getCatalogKeyName(), that.getCatalogKeyName()) && Objects.equals(getService(), that.getService()) && Objects.equals(getDescription(), that.getDescription()) && Objects.equals(getSqlTemplate(), that.getSqlTemplate()) && Objects.equals(getDriverKeyName(), that.getDriverKeyName());
+        return Objects.equals(getKeyName(), that.getKeyName()) && Objects.equals(getService(), that.getService()) && Objects.equals(getDescription(), that.getDescription()) && getDatabaseProtocol() == that.getDatabaseProtocol() && getDataSourceType() == that.getDataSourceType();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getKeyName(), getCatalogKeyName(), getService(), getDescription(), getSqlTemplate(), getDriverKeyName());
-    }
-
-    public String getCatalogKeyName() {
-        return catalogKeyName;
-    }
-
-    public void setCatalogKeyName(String catalogKeyName) {
-        this.catalogKeyName = catalogKeyName;
+        return Objects.hash(getKeyName(), getService(), getDescription(), getDatabaseProtocol(), getDataSourceType());
     }
 }

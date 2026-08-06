@@ -1,7 +1,5 @@
 {
   "keyName": "lakehousestorage",
-  "catalogKeyName":"lakehouse",
-  "driverKeyName":"spark_iceberg",
   "service":
     {
       "host": "localhost",
@@ -9,14 +7,13 @@
       "urn": "",
       "properties": {
         "spark.sql.extensions": "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
-        "spark.sql.catalog.lakehouse": "org.apache.iceberg.spark.SparkCatalog",
-        "spark.sql.catalog.lakehouse.type": "hadoop",
-        "spark.sql.catalog.lakehouse.warehouse": "$PWD/warehouse"
+        "spark.sql.catalog.lakehousestorage": "org.apache.iceberg.spark.SparkCatalog",
+        "spark.sql.catalog.lakehousestorage.type": "hadoop",
+        "spark.sql.catalog.lakehousestorage.warehouse": "$PWD/warehouse"
       }
     },
   "description": "Local datastore",
-  "sqlTemplate" : {
-    "tableDDLCompact" : "sql-template-spark_iceberg.tableDDLCompact.sql"
-  }
+  "dataSourceType" : "iceberg",
+  "databaseProtocol": "s3"
 }
 

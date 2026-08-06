@@ -20,20 +20,23 @@ package org.lakehouse.config.service;
 import jakarta.transaction.Transactional;
 import org.lakehouse.client.api.dto.configs.DagEdgeDTO;
 import org.lakehouse.client.api.dto.configs.schedule.*;
-import org.lakehouse.client.api.utils.Coalesce;
 import org.lakehouse.client.api.utils.DateTimeUtils;
+import org.lakehouse.client.api.utils.DtoMergeUtils;
 import org.lakehouse.config.entities.Schedule;
 import org.lakehouse.config.entities.scenario.*;
 import org.lakehouse.config.exception.*;
 import org.lakehouse.config.mapper.Mapper;
 import org.lakehouse.config.repository.*;
 import org.lakehouse.config.repository.dataset.DataSetRepository;
+import org.lakehouse.config.service.datasource.DriverService;
+import org.lakehouse.config.service.datasource.SQLTemplateService;
 import org.lakehouse.validator.config.ScheduleConfValidator;
 import org.lakehouse.validator.config.ValidationResult;
 import org.lakehouse.validator.exception.DTOValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -54,6 +57,9 @@ public class ScheduleService {
     private final ScheduleConfigProducerService scheduleConfigProducerService;
     private final ScenarioActTaskExecutionModuleArgRepository scenarioActTaskExecutionModuleArgRepository;
     private final Mapper mapper;
+    private final DriverService driverService;
+    private final SQLTemplateService sqlTemplateService;
+    private final DtoMergeUtils dtoMergeUtils;
 
     public ScheduleService(
             ScheduleRepository scheduleRepository,
@@ -67,7 +73,7 @@ public class ScheduleService {
             ScenarioActTemplateService scenarioActTemplateService,
             ScheduleConfigProducerService scheduleConfigProducerService,
             ScenarioActTaskExecutionModuleArgRepository scenarioActTaskExecutionModuleArgRepository,
-            Mapper mapper) {
+            Mapper mapper, DriverService driverService, SQLTemplateService sqlTemplateService, DtoMergeUtils dtoMergeUtils) {
         this.scheduleRepository = scheduleRepository;
         this.dataSetRepository = dataSetRepository;
         this.scenarioActTemplateRepository = scenarioActTemplateRepository;
@@ -81,6 +87,9 @@ public class ScheduleService {
         this.scenarioActTaskExecutionModuleArgRepository = scenarioActTaskExecutionModuleArgRepository;
 
         this.mapper = mapper;
+        this.driverService = driverService;
+        this.sqlTemplateService = sqlTemplateService;
+        this.dtoMergeUtils = dtoMergeUtils;
     }
 
     private ScheduleScenarioActDTO mapScheduleScenarioActToDTO(ScenarioAct scenarioAct) {
@@ -239,10 +248,18 @@ public class ScheduleService {
                 task.setTaskProcessorBody(taskDTO.getTaskProcessorBody());
                 task.setTaskExecutionServiceGroup(taskExecutionServiceGroupRepository
                         .getReferenceById(taskDTO.getTaskExecutionServiceGroupName()));
-
+                if (StringUtils.hasText( taskDTO.getDriverKeyName() ))
+                    try {
+                        task.setDriver(driverService.findDriverById(taskDTO.getDriverKeyName()));
+                    } catch (DriverNotFoundException e) {
+                        logger.error(e.getMessage(),e);
+                        throw e;
+                    }
                 task.setDescription(taskDTO.getDescription());
 
                 ScenarioActTask resultTask = scenarioActTaskRepository.save(task);
+
+                sqlTemplateService.save(resultTask, taskDTO.getSqlTemplate());
 
                 scenarioActTaskMap.put(resultTask.getName(), resultTask);
 
@@ -311,7 +328,7 @@ public class ScheduleService {
 
     }
 
-    private TaskDTO matchTaskWithTemplate(
+   /* private TaskDTO matchTaskWithTemplate(
             TaskDTO taskDTO,
             TaskDTO taskTemplate) {
 
@@ -334,7 +351,7 @@ public class ScheduleService {
         result.setTaskProcessorBody(Coalesce.apply(taskDTO.getTaskProcessorBody(),taskTemplate.getTaskProcessorBody()));
         result.setTaskExecutionServiceGroupName(Coalesce.apply(taskDTO.getTaskExecutionServiceGroupName(), taskTemplate.getTaskExecutionServiceGroupName()));
         return result;
-    }
+    }*/
 
 
     public TaskDTO getEffectiveTaskDTO(String scheduleName, String scenarioActName, String taskName) {
@@ -361,7 +378,7 @@ public class ScheduleService {
                             scenarioAct.getScenarioActTemplate().getKeyName(),
                             taskName);
 
-        TaskDTO result = matchTaskWithTemplate(taskDTO, taskTemplate);
+        TaskDTO result = dtoMergeUtils.merge(taskTemplate,taskDTO, TaskDTO.class); //matchTaskWithTemplate(taskDTO, taskTemplate);
         if (result == null)
             throw new TaskEffectiveNotFoundException(scheduleName, scenarioActName, taskName);
         return result;
@@ -388,6 +405,7 @@ public class ScheduleService {
             ScheduleDTO scheduleDTO,
             Map<String, ScenarioActTemplateDTO> actTemplateDTOMap
     ) {
+
         ScheduleEffectiveDTO result = new ScheduleEffectiveDTO();
         Schedule schedule = findById(scheduleDTO.getKeyName());
         result.setEnabled(scheduleDTO.isEnabled());
@@ -415,10 +433,11 @@ public class ScheduleService {
                                             actTemplateDTOMap.get(sa.getScenarioActTemplate())));
                     resultAct.setDagEdges(edgeDTOSet.stream().collect(Collectors.toSet()));
 
-                    //vertices
+                    // vertices
                     Map<String, TaskDTO> taskDTOmap =
                             sa.getTasks()
-                                    .stream().collect(Collectors.toMap(TaskDTO::getName, taskDTO -> taskDTO));
+                                    .stream()
+                                    .collect(Collectors.toMap(TaskDTO::getName, taskDTO -> taskDTO));
 
                     Map<String, TaskDTO> taskDTOTemplatesMap =
                             scenarioActTemplateService
@@ -437,7 +456,7 @@ public class ScheduleService {
                             .stream()
                             .map(taskName -> {
                                 logger.info("Get EffectiveTaskDTO {}.{}.{}", schedule.getKeyName(),resultAct.getName(), taskName);
-                                return matchTaskWithTemplate(taskDTOmap.get(taskName), taskDTOTemplatesMap.get(taskName));
+                                return dtoMergeUtils.merge(taskDTOTemplatesMap.get(taskName),taskDTOmap.get(taskName), TaskDTO.class);//matchTaskWithTemplate(taskDTOmap.get(taskName), taskDTOTemplatesMap.get(taskName));
                             })
                             .collect(Collectors.toSet()));
 

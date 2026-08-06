@@ -31,10 +31,14 @@ import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.client.api.utils.conf.SparkConfUtil;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.client.rest.exception.ScriptBuildException;
+import org.lakehouse.jinja.java.JinJavaFactory;
 import org.lakehouse.taskexecutor.api.datasource.DataSourceManipulator;
+import org.lakehouse.taskexecutor.api.datasource.DataSourceManipulatorFactory;
 import org.lakehouse.taskexecutor.api.datasource.exception.CreateException;
 import org.lakehouse.taskexecutor.api.datasource.exception.DropException;
+import org.lakehouse.taskexecutor.api.factory.SQLTemplateFactory;
 import org.lakehouse.taskexecutor.api.processor.body.ProcessorBody;
+import org.lakehouse.taskexecutor.spark.dataset.datasourcemanipulator.SparkDataSourceManipulatorFactory;
 import org.lakehouse.taskexecutor.spark.dq.configuration.DqMetricConfigProducerKafkaConfigurationProperties;
 import org.lakehouse.test.config.api.ConfigRestClientApiTest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +64,7 @@ import java.util.Map;
 @SpringBootTest(properties = {
        "lakehouse.taskexecutor.body.config.dq.kafka.producer.metric.status.topic=metric_status",
         "lakehouse.client.rest.config.server.url=http://192.1.193.80:8080",
+        "lakehouse.client.rest.scheduler.server.url=http://192.1.193.80:8080",
         "lakehouse.taskexecutor.body.config.dq.kafka.producer.metric.value.topic=metric_value",
         "lakehouse.taskexecutor.body.config.dq.kafka.producer.testSet.status.topic=metric_test_set_status"
 })
@@ -75,7 +80,8 @@ public class SparkTaskProcessorBodyTest2 {
     @Configuration
     @ComponentScan(
         basePackages = {
-                "org.lakehouse.taskexecutor.spark.dq"
+                "org.lakehouse.taskexecutor.spark.dq",
+                "org.lakehouse.taskexecutor.api"
         })
     @EnableConfigurationProperties(DqMetricConfigProducerKafkaConfigurationProperties.class)
     static class ContextConfiguration {
@@ -93,21 +99,26 @@ public class SparkTaskProcessorBodyTest2 {
             ScheduledTaskDTO scheduledTaskDTO = new  TaskConfigTestFactory().loadScheduledTaskLockDTO(trnddsDatasetName,"load").getScheduledTaskEffectiveDTO();
 
             Map.of(
-                            "spark.sql.catalog.processing", "org.apache.spark.sql.execution.datasources.v2.jdbc.JDBCTableCatalog",
-                            "spark.sql.catalog.processing.url", postgres.getJdbcUrl(),
-                            "spark.sql.catalog.processing.user", postgres.getUsername(),
-                            "spark.sql.catalog.processing.password", postgres.getPassword())
+                            "spark.sql.catalog.processingdb", "org.apache.spark.sql.execution.datasources.v2.jdbc.JDBCTableCatalog",
+                            "spark.sql.catalog.processingdb.url", postgres.getJdbcUrl(),
+                            "spark.sql.catalog.processingdb.user", postgres.getUsername(),
+                            "spark.sql.catalog.processingdb.password", postgres.getPassword())
                     .forEach((k,v) ->
                             sourceConfDTO.getDataSourceDTOByDataSetKeyName(trnDatasetName).getService().getProperties().put(k, v));
 
             SparkConfUtil.extractSparkConFromTaskConf(sourceConfDTO,scheduledTaskDTO).forEach(conf::set);
             return SparkSession.builder().master("local").config(conf).getOrCreate();        }
+        @Bean
+        DataSourceManipulatorFactory getDataSourceManipulatorFactory(SparkSession sparkSession){
+            return new SparkDataSourceManipulatorFactory(sparkSession);
+        }
     }
     @Autowired
     ConfigurableApplicationContext applicationContext;
 
     @Autowired ConfigRestClientApi configRestClientApi;
-
+    @Autowired
+    SQLTemplateFactory sqlTemplateFactory;
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine").withDatabaseName("test")
             .withUsername("name").withPassword("password");
@@ -140,22 +151,24 @@ public class SparkTaskProcessorBodyTest2 {
                 .fileToObject(
                         new File(getClass().getClassLoader().getResource("en2end.json").toURI()),
                         ScheduledTaskDTO.class);
+        scheduledTaskDTO.setDriverKeyName("spark_iceberg");
         SparkSession sparkSession = applicationContext.getBean(SparkSession.class);
-
         DataSourceManipulator dsm = DataManipulators
                 .getIcebergDataSourceManipulator(
+                        sqlTemplateFactory,
+                        scheduledTaskDTO,
                         sparkSession,
                         trnddsDatasetName,
                         applicationContext.getBean(ConfigRestClientApi.class)
                         );
 
         dsm.createTableIfNotExists();
-        String sql = "insert into `lakehouse`.`default`.`transaction_dds` (" +
+        String sql = "insert into `lakehousestorage`.`default`.`transaction_dds` (" +
                 " id ,amount ,client_id, client_name,commission ,provider_id, reg_date_time  )" +
                 "values(" +
                 "1,   9282.88,1,        'myTestClient', 400.55, 1, timestamp '2025-01-01T00:00:00Z')";
         sparkSession.sql(sql).show();
-        sql = "select * from `lakehouse`.`default`.`transaction_dds`";
+        sql = "select * from `lakehousestorage`.`default`.`transaction_dds`";
         sparkSession.sql(sql).show();
 
 
@@ -173,18 +186,20 @@ public class SparkTaskProcessorBodyTest2 {
 
         DataSourceManipulator dsm = DataManipulators
                 .getIcebergDataSourceManipulator(
+                        sqlTemplateFactory,
+                        scheduledTaskDTO,
                         sparkSession,
                         trnddsDatasetName,
-                        applicationContext.getBean(ConfigRestClientApi.class)
+                        configRestClientApi
                 );
 
         dsm.createTableIfNotExists();
-        String sql = "insert into `lakehouse`.`default`.`transaction_dds` (" +
+        String sql = "insert into `lakehousestorage`.`default`.`transaction_dds` (" +
                 " id ,amount ,client_id, client_name,commission ,provider_id, reg_date_time  )" +
                 "values(" +
                 "1,   9282.88,1,        'myTestClient', 400.55, 1, timestamp '2025-01-01T00:00:00Z')";
         sparkSession.sql(sql).show();
-        sql = "select * from `lakehouse`.`default`.`transaction_dds`";
+        sql = "select * from `lakehousestorage`.`default`.`transaction_dds`";
         sparkSession.sql(sql).show();
         QualityMetricsConfDTO qualityMetricsConfDTO = configRestClientApi.getQualityMetricsConf("transaction_dds_qm");
         String s = configRestClientApi.getScriptByListOfReference(qualityMetricsConfDTO.getThresholds().get("non_zero_count_th").getScripts());

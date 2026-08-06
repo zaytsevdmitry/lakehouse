@@ -68,4 +68,8 @@ lakehouse:
         lag-when-failed: 1000
         lag-when-config-failed: 120000
 
+  health:
+    liveness-path: /healthz
+    readiness-path: /readyz
+
 

@@ -1,0 +1,47 @@
+server:
+  port: 8099
+
+spring:
+  threads:
+    virtual:
+      enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  level:
+    org:
+      springframework:
+        web: INFO
+
+lakehouse:
+  client:
+    rest:
+      config:
+        server:
+          url: http://localhost:8080
+  ui:
+    health-check-timeout-ms: 3000
+    services:
+      - name: lakehouse-config-svc
+        url: http://localhost:8080
+        health-check-url: http://localhost:8080/healthz
+      - name: lakehouse-scheduler-svc
+        url: http://localhost:8081
+        health-check-url: http://localhost:8081/healthz
+      - name: lakehouse-state-svc
+        url: http://localhost:8082
+        health-check-url: http://localhost:8082/healthz
+      - name: lakehouse-task-executor-svc
+        url: http://localhost:8089
+        health-check-url: http://localhost:8089/healthz
+      - name: lakehouse-task-proxy-for-spark
+        url: http://localhost:8090
+        health-check-url: http://localhost:8090/healthz

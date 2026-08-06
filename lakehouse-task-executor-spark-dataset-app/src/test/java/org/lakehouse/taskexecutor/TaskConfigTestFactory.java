@@ -22,7 +22,7 @@ import org.lakehouse.client.api.dto.configs.schedule.TaskDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
-import org.lakehouse.test.config.configuration.FileLoader;
+import org.lakehouse.test.config.util.FileLoader;
 
 import java.io.IOException;
 
@@ -65,6 +65,7 @@ public class TaskConfigTestFactory {
         result.setScenarioActKeyName("unknown");
         result.setStatus(Status.Task.RUNNING);
         result.setTaskExecutionServiceGroupName("unknown");
+        result.setDriverKeyName("spark_iceberg");
         return result;
     }
 }

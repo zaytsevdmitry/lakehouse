@@ -7,6 +7,7 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="lakehouse-state-rest-client" />
+        <module name="lakehouse-common-health" />
         <module name="lakehouse-common-rest-client" />
         <module name="lakehouse-common-test" />
         <module name="lakehouse-spark-rest-client" />
@@ -40,6 +41,7 @@
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="lakehouse-cli" options="-parameters" />
       <module name="lakehouse-common" options="-parameters" />
+      <module name="lakehouse-common-health" options="-parameters" />
       <module name="lakehouse-common-rest-client" options="-parameters" />
       <module name="lakehouse-common-test" options="-parameters" />
       <module name="lakehouse-config-rest-client" options="-parameters" />

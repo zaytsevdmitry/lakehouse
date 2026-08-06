@@ -18,6 +18,9 @@
 package org.lakehouse.config.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+import org.lakehouse.config.entities.datasource.Driver;
 
 import java.util.Objects;
 
@@ -44,7 +47,10 @@ public abstract class TaskAbstract {
 
 
     @ManyToOne
-    @JoinColumn(foreignKey = @ForeignKey(name = "task__task_execution_service_group_fk"))
+    @OnDelete(action = OnDeleteAction.RESTRICT)
+    private Driver driver;
+
+    @ManyToOne
     private TaskExecutionServiceGroup taskExecutionServiceGroup;
 
 
@@ -113,15 +119,23 @@ public abstract class TaskAbstract {
         this.taskProcessorBody = taskProcessorBody;
     }
 
+    public Driver getDriver() {
+        return driver;
+    }
+
+    public void setDriver(Driver driver) {
+        this.driver = driver;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         TaskAbstract that = (TaskAbstract) o;
-        return Objects.equals(getId(), that.getId()) && Objects.equals(getName(), that.getName()) && Objects.equals(getDescription(), that.getDescription()) && Objects.equals(getTaskProcessor(), that.getTaskProcessor()) && Objects.equals(getTaskProcessorBody(), that.getTaskProcessorBody()) && Objects.equals(getImportance(), that.getImportance()) && Objects.equals(getTaskExecutionServiceGroup(), that.getTaskExecutionServiceGroup());
+        return Objects.equals(getId(), that.getId()) && Objects.equals(getName(), that.getName()) && Objects.equals(getDescription(), that.getDescription()) && Objects.equals(getTaskProcessor(), that.getTaskProcessor()) && Objects.equals(getTaskProcessorBody(), that.getTaskProcessorBody()) && Objects.equals(getImportance(), that.getImportance()) && Objects.equals(getDriver(), that.getDriver()) && Objects.equals(getTaskExecutionServiceGroup(), that.getTaskExecutionServiceGroup());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getName(), getDescription(), getTaskProcessor(), getTaskProcessorBody(), getImportance(), getTaskExecutionServiceGroup());
+        return Objects.hash(getId(), getName(), getDescription(), getTaskProcessor(), getTaskProcessorBody(), getImportance(), getDriver(), getTaskExecutionServiceGroup());
     }
 }

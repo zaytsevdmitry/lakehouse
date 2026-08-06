@@ -36,7 +36,7 @@ import org.lakehouse.scheduler.service.BuildService;
 import org.lakehouse.scheduler.service.ManageStateService;
 import org.lakehouse.scheduler.service.ScheduleTaskInstanceService;
 import org.lakehouse.test.config.api.ConfigRestClientApiTest;
-import org.lakehouse.test.config.configuration.FileLoader;
+import org.lakehouse.test.config.util.FileLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -227,7 +227,7 @@ public class SchedulesTest {
         List<ScheduleInstance> siList = scheduleInstanceRepository.findAll();
         assert (siList.size() == 1);
         List<ScheduleTaskInstance> stiList = scheduleTaskInstanceRepository.findByStatus(Status.Task.NEW);
-        assert (stiList.size() == 21);
+        assert (stiList.size() == 31);
     }
 
     private void run() {

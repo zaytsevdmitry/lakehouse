@@ -29,7 +29,6 @@ import org.lakehouse.client.rest.config.ConfigRestClientConstants;
 import org.lakehouse.client.rest.scheduler.SchedulerRestClientConstants;
 import org.lakehouse.jinja.java.JinJavaUtils;
 import org.lakehouse.taskexecutor.processor.spark.standalonecluster.AbstractSparkDeployTaskProcessor;
-import org.lakehouse.taskexecutor.processor.spark.standalonecluster.SparkRestDeployFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,15 +43,13 @@ import java.util.Map;
 @Service(value = "sparkStandAloneClusterTaskProcessor")
 public class SparkStandAloneClusterTaskProcessor extends AbstractSparkDeployTaskProcessor {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final SparkRestDeployFactory sparkRestDeployFactory;
+
     private final String restConfUrl;
     private final String restSchedulerUrl;
 
     public SparkStandAloneClusterTaskProcessor(
-            SparkRestDeployFactory sparkRestDeployFactory,
             @Value("${lakehouse.client.rest.config.server.url}") String restConfUrl,
             @Value("${lakehouse.client.rest.scheduler.server.url}") String restSchedulerUrl) {
-        this.sparkRestDeployFactory = sparkRestDeployFactory;
         this.restConfUrl = restConfUrl;
         this.restSchedulerUrl = restSchedulerUrl;
     }
@@ -94,9 +91,9 @@ public class SparkStandAloneClusterTaskProcessor extends AbstractSparkDeployTask
         deploy(
                 mainClass,
                 appResource,
-                sparkRestDeployFactory.getServerUrl(sourceConfDTO,scheduledTaskDTO,jinJavaUtils),
+                getMasterUrl(scheduledTaskDTO),
                 sparkProperties,
                 appArgs);
-
     }
+
 }

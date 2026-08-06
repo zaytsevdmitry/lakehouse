@@ -33,7 +33,6 @@ public class ScheduledTaskDTOValidator {
                 if (scheduledTaskDTO.getIntervalEndDateTime() == null)
                     result.getDescriptions().add(String.format("%s.getScheduledTaskEffectiveDTO.getIntervalEndDateTime can't be null", ScheduledTaskDTO.class.getSimpleName()));
             }
-            result.setValid(result.getDescriptions().isEmpty());
             return result;
     }
 }

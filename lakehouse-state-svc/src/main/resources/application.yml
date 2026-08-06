@@ -21,3 +21,8 @@ spring:
           create-database-schemas: true
       hibernate:
         default_schema: lakehouse_state
+
+lakehouse:
+  health:
+    liveness-path: /healthz
+    readiness-path: /readyz

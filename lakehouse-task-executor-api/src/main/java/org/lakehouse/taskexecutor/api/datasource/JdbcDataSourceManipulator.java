@@ -72,7 +72,7 @@ public class JdbcDataSourceManipulator implements DataSourceManipulator {
                     new HashMap<>());
 
         } catch (ExecuteException e) {
-            throw new CreateException(e);
+            throw new CreateException(e.fillInStackTrace());
         }
     }
 

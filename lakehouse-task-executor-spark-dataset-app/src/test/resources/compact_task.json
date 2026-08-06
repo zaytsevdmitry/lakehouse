@@ -15,5 +15,6 @@
   "intervalStartDateTime" : "2025-01-01T00:00:00Z",
   "intervalEndDateTime" : "2025-01-02T00:00:00Z",
   "dataSetKeyName" : "transaction_dds",
+  "driverKeyName" : "spark_iceberg",
   "tryNum" : null
 }

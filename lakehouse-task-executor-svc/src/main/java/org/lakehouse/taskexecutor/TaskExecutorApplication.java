@@ -34,7 +34,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @ComponentScan(
         basePackages = {
                 "org.lakehouse.taskexecutor",
-                "org.lakehouse.client.rest.state"
+                "org.lakehouse.client.rest.state",
+                "org.lakehouse.health"
         },
         basePackageClasses = {
                 ConfigRestClientConfiguration.class,

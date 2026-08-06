@@ -1,0 +1,135 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam roundcorner 10
+skinparam shading false
+
+skinparam package {
+    BackgroundColor<<Source>> #EBF5FB
+    BorderColor<<Source>> #2980B9
+    BackgroundColor<<Target>> #E8F8F5
+    BorderColor<<Target>> #117A65
+}
+
+skinparam class {
+    BackgroundColor #White
+    ArrowColor #566573
+}
+
+package "Исходные Java DTO (lakehouse-config-svc)" <<Source>> {
+    class NameSpaceDTO {
+        +String keyName
+        +String description
+    }
+
+    class ServiceDTO {
+        +String host
+        +String urn
+        +Map<String, String> properties
+    }
+
+    class DriverDTO {
+        +Types.DataSourceType dataSourceType
+        +SQLTemplateDTO sqlTemplate
+    }
+
+    class DataSourceDTO {
+        +String keyName
+        +String driverKeyName
+        +String catalogKeyName
+        +ServiceDTO service
+        +SQLTemplateDTO sqlTemplate
+    }
+
+    class ColumnDTO {
+        +String name
+        +String dataType
+        +boolean nullable
+        +String description
+    }
+
+    class DataSetSourceDTO {
+        +String dataSetKeyName
+    }
+
+    class DataSetDTO {
+        +String tableName
+        +String databaseSchemaName
+        +String nameSpaceKeyName
+        +String dataSourceKeyName
+        +List<ColumnDTO> columnSchema
+        +Map<String, DataSetSourceDTO> sources
+        +SQLTemplateDTO sqlTemplate
+    }
+}
+
+package "Контракты OpenMetadata API (JSON Requests)" <<Target>> {
+    class "PUT /api/v1/domains" as CreateDomainRequest {
+        +name: String
+        +description: String
+    }
+
+    class "PUT /api/v1/services/database" as CreateDatabaseServiceRequest {
+        +name: String
+        +serviceType: String [DeltaLake]
+        +domain: String
+        +connection.config.metastoreUri: String
+        +connection.config.connectionArguments: Map
+    }
+
+    class "PUT /api/v1/databases" as CreateDatabaseRequest {
+        +name: String [spark_catalog]
+        +service: String [FQN]
+    }
+
+    class "PUT /api/v1/databaseSchemas" as CreateDatabaseSchemaRequest {
+        +name: String
+        +database: String [FQN]
+        +domain: String
+    }
+
+    class "PUT /api/v1/tables" as CreateTableRequest {
+        +name: String
+        +databaseSchema: String [FQN]
+        +columns: List<Column>
+        +extension.sqlTemplate: Object
+    }
+
+    class "PUT /api/v1/lineage" as AddLineageRequest {
+        +edge.fromEntity: EntityReference
+        +edge.toEntity: EntityReference
+    }
+}
+
+' ---- Процесс Маппинга и Трансформации ----
+
+' 1. Намеспейс в Домен
+NameSpaceDTO::keyName --> CreateDomainRequest::name : " Прямой маппинг"
+NameSpaceDTO::description --> CreateDomainRequest::description
+
+' 2. Сервис + Драйвер + Источник в DatabaseService
+DataSourceDTO::keyName --> CreateDatabaseServiceRequest::name : " Имя инстанса"
+DriverDTO::dataSourceType --> CreateDatabaseServiceRequest::serviceType : " Конвертация типа"
+NameSpaceDTO::keyName --> CreateDatabaseServiceRequest::domain : " Контекст домена"
+ServiceDTO::urn --> CreateDatabaseServiceRequest::connection.config.metastoreUri : " Thrift URL"
+ServiceDTO::properties --> CreateDatabaseServiceRequest::connection.config.connectionArguments : " Доп. параметры"
+
+' 3. Фиксация каталога под Spark 3.5
+DataSourceDTO::catalogKeyName --> CreateDatabaseRequest::name : " ВСЕГДА 'spark_catalog'"
+DataSourceDTO::keyName --> CreateDatabaseRequest::service : " Указание на родителя"
+
+' 4. Создание схемы (слоя)
+DataSetDTO::databaseSchemaName --> CreateDatabaseSchemaRequest::name : " Имя слоя (b2b_vault)"
+NameSpaceDTO::keyName --> CreateDatabaseSchemaRequest::domain : " Каскадный домен"
+
+' 5. Создание таблицы и колонок
+DataSetDTO::tableName --> CreateTableRequest::name
+ColumnDTO --> CreateTableRequest::columns : " Преобразование\n массива колонок"
+DataSetDTO::sqlTemplate --> CreateTableRequest::extension.sqlTemplate : " Кастомное\n расширение"
+
+' 6. Извлечение графа зависимостей
+DataSetDTO::sources --> AddLineageRequest : " Извлекается из таблицы\n в изолированное ребро графа"
+DataSetDTO::tableName --> AddLineageRequest::edge.toEntity : " Целевой датасет"
+DataSetSourceDTO::dataSetKeyName --> AddLineageRequest::edge.fromEntity : " Исходный датасет"
+
+@enduml

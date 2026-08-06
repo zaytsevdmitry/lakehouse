@@ -11,7 +11,7 @@
       "dataSet": "transaction_processing",
       "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
       "intervalEnd": "{{ targetDateTimeTZ }}",
-      "scenarioActTemplate": null,
+      "scenarioActTemplate": "default",
       "tasks": [
         {
           "name": "begin",
@@ -26,7 +26,9 @@
           "taskProcessor": "jdbcTaskProcessor",
           "taskProcessorBody": "createTableSQLProcessorBody",
           "importance": "critical",
+          "driverKeyName": "postgres",
           "description": "Create table if not exists",
+
           "taskProcessorArgs": {
           }
         },
@@ -68,7 +70,7 @@
     {
       "name": "client_processing",
       "dataSet": "client_processing",
-      "scenarioActTemplate": null,
+      "scenarioActTemplate": "default",
       "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
       "intervalEnd": "{{ targetDateTimeTZ }}",
       "tasks": [
@@ -86,6 +88,7 @@
           "taskProcessorBody": "createTableSQLProcessorBody",
           "importance": "critical",
           "description": "Create table if not exists",
+          "driverKeyName" : "postgres",
           "taskProcessorArgs": {
           }
         },
@@ -127,7 +130,7 @@
     {
       "name": "transaction_dds",
       "dataSet": "transaction_dds",
-      "scenarioActTemplate": "default",
+      "scenarioActTemplate": "spark",
       "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
       "intervalEnd": "{{ targetDateTimeTZ }}",
       "tasks": [
@@ -138,6 +141,7 @@
           "taskProcessorBody": "mergeSQLProcessorBody",
           "importance": "critical",
           "description": "Not exists in template",
+          "driverKeyName": "spark_iceberg",
           "taskProcessorArgs": {
             "spark.executor.memory": "5g",
             "spark.driver.memory": "2g"
@@ -167,14 +171,14 @@
     {
       "name": "aggregation_pay_per_client_daily_mart",
       "dataSet": "aggregation_pay_per_client_daily_mart",
-      "scenarioActTemplate": "default",
+      "scenarioActTemplate": "spark",
       "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
       "intervalEnd": "{{ targetDateTimeTZ }}"
     },
     {
       "name": "aggregation_pay_per_client_total_mart",
       "dataSet": "aggregation_pay_per_client_total_mart",
-      "scenarioActTemplate": "default",
+      "scenarioActTemplate": "spark",
       "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
       "intervalEnd": "{{ targetDateTimeTZ }}"
     }

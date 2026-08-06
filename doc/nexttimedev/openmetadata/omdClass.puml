@@ -1,0 +1,158 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam roundcorner 5
+
+title Объектная модель сущностей OpenMetadata Core (API Entities)
+
+' ==========================================
+' ПАКЕТ: GOVERNANCE & BUSINESS CONTEXT
+' ==========================================
+package "Governance & Business" {
+    class Domain {
+        + id: UUID
+        + name: String [Finance]
+        + displayName: String
+        + domainType: String [Functional]
+    }
+}
+
+' ==========================================
+' ПАКЕТ: SERVICES (INFRASTRUCTURE)
+' ==========================================
+package "Services (Infrastructure)" {
+    class DatabaseService {
+        + id: UUID
+        + name: String [trino_prod]
+        + serviceType: DatabaseServiceType [Trino|Spark|Postgres]
+        + connection: JSON
+    }
+
+    class StorageService {
+        + id: UUID
+        + name: String [s3_lakehouse_prod]
+        + serviceType: StorageServiceType [S3]
+        + connection: JSON
+    }
+
+    class PipelineService {
+        + id: UUID
+        + name: String [lakehouse_orchestrator]
+        + serviceType: PipelineServiceType [Airflow|Custom]
+    }
+}
+
+' ==========================================
+' ПАКЕТ: DATA ASSETS & PHYSICAL LAYERS
+' ==========================================
+package "Data Assets & Logical Topology" {
+    class Database {
+        + id: UUID
+        + name: String [hive]
+        + fullyQualifiedName: String [trino_prod.hive]
+    }
+
+    class DatabaseSchema {
+        + id: UUID
+        + name: String [sales]
+        + fullyQualifiedName: String [trino_prod.hive.sales]
+    }
+
+    class Container {
+        + id: UUID
+        + name: String [raw-zone]
+        + prefix: String [/data/raw]
+        + fullPath: String [s3://bucket/data/raw]
+        + fullyQualifiedName: String [s3_lakehouse_prod.raw-zone]
+    }
+
+    class Table {
+        + id: UUID
+        + name: String [orders]
+        + fullyQualifiedName: String [trino_prod.hive.sales.orders]
+        + tableType: TableType [Regular|External]
+        + sourceUrl: String [s3://...]
+    }
+
+    class Column {
+        + name: String [order_id]
+        + dataType: DataType [VARCHAR|NUMERIC|TIMESTAMP]
+        + dataTypeDisplay: String
+        + constraint: ColumnConstraint [PRIMARY_KEY|NOT_NULL]
+    }
+}
+
+' ==========================================
+' ПАКЕТ: ORCHESTRATION & PIPELINES
+' ==========================================
+package "Pipeline & Orchestration" {
+    class Pipeline {
+        + id: UUID
+        + name: String [finance_daily_sync]
+        + sourceUrl: String
+    }
+
+    class Task {
+        + name: String [run_spark_job]
+        + taskType: String
+        + taskSQL: String
+    }
+}
+
+' ==========================================
+' ПАКЕТ: DATA QUALITY & OBSERVABILITY
+' ==========================================
+package "Data Quality" {
+    class TestDefinition {
+        + id: UUID
+        + name: String [column_values_to_be_not_null]
+        + testResultType: String
+    }
+
+    class TestCase {
+        + id: UUID
+        + name: String [orders_amount_not_null]
+        + fullyQualifiedName: String
+        + testSuite: EntityReference
+        + testDefinition: EntityReference
+        + parameterValues: List<JSON>
+    }
+}
+
+' ==========================================
+' ОТНОШЕНИЯ И ИЕРАРХИЯ СУЩНОСТЕЙ OPENMETADATA
+' ==========================================
+
+' Сквозная привязка к бизнес-доменам
+Table "0..*" --> "0..1" Domain : domain
+Container "0..*" --> "0..1" Domain : domain
+Pipeline "0..*" --> "0..1" Domain : domain
+
+' Иерархия вычислительного движка/БД (Trino/Spark/RDBMS)
+DatabaseService "1" *-- "0..*" Database : содержит
+Database "1" *-- "0..*" DatabaseSchema : содержит
+DatabaseSchema "1" *-- "0..*" Table : содержит
+
+' Структура объектного хранилища (S3)
+StorageService "1" *-- "0..*" Container : содержит
+Container "1" *-- "0..*" Container : children (Вложенные папки/бакеты)
+
+' Связь таблицы (вычислений) с физическими файлами (хранением)
+Table "0..*" --> "0..1" Container : считывает/записывает (через sourceUrl / Location)
+
+' Внутренняя структура таблиц
+Table "1" *-- "1..*" Column : columns
+
+' Оркестрация (Пайплайны)
+PipelineService "1" *-- "0..*" Pipeline : содержит
+Pipeline "1" *-- "0..*" Task : tasks
+
+' Data Quality (Тесты качества)
+TestCase "0..*" --> "1" Table : entityLink (Привязка к таблице/колонке)
+TestCase "0..*" --> "1" TestDefinition : использует
+
+' Lineage (Происхождение данных) - Реализуется через скрытую сущность EntityLineage в API
+Table "0..*" ..> "0..*" Table : Lineage Edge (Зависимость таблиц)
+Pipeline "0..*" ..> "0..*" Table : Lineage Process (Пайплайн, обновляющий таблицу)
+
+@enduml

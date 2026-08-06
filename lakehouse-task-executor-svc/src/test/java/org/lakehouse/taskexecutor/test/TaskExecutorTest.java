@@ -36,7 +36,10 @@ import org.lakehouse.client.api.serialization.task.ScheduledTaskMsgKafkaDeserial
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
+import org.lakehouse.client.rest.config.configuration.ConfigRestClientConfiguration;
+import org.lakehouse.client.rest.scheduler.configuration.SchedulerRestClientConfiguration;
 import org.lakehouse.client.rest.state.StateRestClientApi;
+import org.lakehouse.client.rest.state.configuration.StateRestClientConfiguration;
 import org.lakehouse.jinja.java.JinJavaFactory;
 import org.lakehouse.jinja.java.JinJavaUtils;
 import org.lakehouse.jinja.java.configuration.JinJavaConfiguration;
@@ -45,20 +48,20 @@ import org.lakehouse.taskexecutor.api.processor.body.sql.AppendSQLProcessorBody;
 import org.lakehouse.taskexecutor.api.processor.body.sql.CreateTableSQLProcessorBody;
 import org.lakehouse.taskexecutor.api.processor.body.sql.MergeSQLProcessorBody;
 import org.lakehouse.taskexecutor.configuration.DataSourceManipulatorFactoryConfiguration;
+import org.lakehouse.taskexecutor.configuration.ScheduledTaskKafkaConfigurationProperties;
 import org.lakehouse.taskexecutor.processor.jdbc.JdbcTaskProcessor;
 import org.lakehouse.taskexecutor.processor.state.DependencyCheckStateTaskProcessor;
 import org.lakehouse.taskexecutor.processor.state.LockedStateTaskProcessor;
 import org.lakehouse.taskexecutor.processor.state.SuccessStateTaskProcessor;
 import org.lakehouse.taskexecutor.test.stub.StateRestClientApiTest;
 import org.lakehouse.test.config.api.ConfigRestClientApiTest;
+import org.lakehouse.test.config.util.FileLoader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.*;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -71,24 +74,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * VM options for Spark java 17 capability :(
- * --add-exports java.base/sun.nio.ch=ALL-UNNAMED
- * --add-opens=java.base/java.lang=ALL-UNNAMED
- * --add-opens=java.base/java.lang.invoke=ALL-UNNAMED
- * --add-opens=java.base/java.lang.reflect=ALL-UNNAMED
- * --add-opens=java.base/java.io=ALL-UNNAMED
- * --add-opens=java.base/java.net=ALL-UNNAMED
- * --add-opens=java.base/java.nio=ALL-UNNAMED
- * --add-opens=java.base/java.util=ALL-UNNAMED
- * --add-opens=java.base/java.util.concurrent=ALL-UNNAMED
- * --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED
- * --add-opens=java.base/sun.nio.ch=ALL-UNNAMED
- * --add-opens=java.base/sun.nio.cs=ALL-UNNAMED
- * --add-opens=java.base/sun.security.action=ALL-UNNAMED
- * --add-opens=java.base/sun.util.calendar=ALL-UNNAMED
- * --add-opens=java.security.jgss/sun.security.krb5=ALL-UNNAMED
- */
+
 
 @SpringBootTest(
         properties = {"spring.main.allow-bean-definition-overriding=true",
@@ -98,17 +84,20 @@ import java.util.Map;
                 "lakehouse.client.rest.state=http://state.test.lakehouse.org:12345",
                 "lakehouse.client.rest.spark.server.url=http://localhost:6066/v1/submissions"
         })
-@Import({
-        JdbcTaskProcessor.class,
-        CreateTableSQLProcessorBody.class,
-        MergeSQLProcessorBody.class,
-        AppendSQLProcessorBody.class,
-        LockedStateTaskProcessor.class,
-        DependencyCheckStateTaskProcessor.class,
-        SuccessStateTaskProcessor.class,
-        DataSourceManipulatorFactoryConfiguration.class
 
-})
+@EnableConfigurationProperties(value = {
+        ScheduledTaskKafkaConfigurationProperties.class})
+@ComponentScan(
+        basePackages = {
+                "org.lakehouse.taskexecutor",
+                "org.lakehouse.taskexecutor.test",
+                "org.lakehouse.client.rest.state",
+                "org.lakehouse.health"
+        },
+        basePackageClasses = {
+                ConfigRestClientConfiguration.class,
+                SchedulerRestClientConfiguration.class,
+                StateRestClientConfiguration.class})
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TaskExecutorTest {
 
@@ -226,11 +215,12 @@ public class TaskExecutorTest {
         result.setTaskProcessor(taskDTO.getTaskProcessor());
         result.setScheduleKeyName(scheduleEffectiveDTO.getKeyName());
         result.setScenarioActKeyName("act");
+        result.setDriverKeyName(taskDTO.getDriverKeyName());
+        result.setSqlTemplate(taskDTO.getSqlTemplate());
         return result;
     }
 
     private ServiceDTO parceUrlToServiceDTO(String url, String user, String password) {
-        //"jdbc:postgresql://localhost:5432/mydb?sslmode=disable";
         String[] arr = url.replaceAll("jdbc:postgresql://", "").split("/");
         ServiceDTO result = new ServiceDTO();
         result.setUrn(arr[1]);
@@ -279,15 +269,10 @@ public class TaskExecutorTest {
         //begin
         runTaskProcessor(
                         getTaskByDatasetName(scheduleEffectiveDTO, ds.getKeyName(), "begin"));
-        //assert (begin.runTask().equals(Status.Task.SUCCESS));
-        // check =
-      /*  runTaskProcessor(
-                        getTaskByDatasetName(scheduleEffectiveDTO, ds.getKeyName(), "check"));*/
-        //assert (check.runTask().equals(Status.Task.SUCCESS));
-        // finally =
+
         runTaskProcessor(
                         getTaskByDatasetName(scheduleEffectiveDTO, ds.getKeyName(), "finally"));
-        //assert (fin.runTask().equals(Status.Task.SUCCESS));
+
     }
 
     @Test
@@ -300,5 +285,24 @@ public class TaskExecutorTest {
         runTaskProcessor(
                         getTaskByDatasetName(scheduleEffectiveDTO, "client_processing", "load"));
     }
+    @Test
+    void jdbcUrlBuilder() throws IOException {
 
+        FileLoader fileLoader = new FileLoader();
+        String dataSetKeyName = "transaction_processing";
+        DataSetDTO dataSetDTO = fileLoader.loadDataSetDTO(dataSetKeyName);
+        DataSourceDTO dataSourceDTO = fileLoader.loadDataSourceDTO(dataSetDTO.getDataSourceKeyName());
+
+        String result = dataSourceDTO.getDatabaseProtocol().buildConnectionStringTemplate(
+                dataSourceDTO.getService().getHost(),
+                Integer.parseInt(dataSourceDTO.getService().getPort()),
+                dataSourceDTO.getService().getUrn()
+        );
+
+        String expected = "jdbc:postgresql://localhost:5432/postgresDB";
+        System.out.println(expected);
+        System.out.println(result);
+        assert (result.equals(expected));
+
+    }
 }

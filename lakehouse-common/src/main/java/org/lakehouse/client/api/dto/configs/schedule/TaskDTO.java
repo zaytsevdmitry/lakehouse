@@ -17,6 +17,8 @@
 
 package org.lakehouse.client.api.dto.configs.schedule;
 
+import org.lakehouse.client.api.dto.common.SQLTemplateDTO;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -28,6 +30,8 @@ public class TaskDTO {
     private String taskProcessorBody;
     private String importance;
     private String description;
+    private String driverKeyName;
+    private SQLTemplateDTO sqlTemplate;
     private Map<String, String> taskProcessorArgs = new HashMap<>();
 
     public String getName() {
@@ -42,8 +46,8 @@ public class TaskDTO {
         return taskExecutionServiceGroupName;
     }
 
-    public void setTaskExecutionServiceGroupName(String taskExecutionServiceGroupkey) {
-        this.taskExecutionServiceGroupName = taskExecutionServiceGroupkey;
+    public void setTaskExecutionServiceGroupName(String taskExecutionServiceGroupName) {
+        this.taskExecutionServiceGroupName = taskExecutionServiceGroupName;
     }
 
     public String getTaskProcessor() {
@@ -74,6 +78,14 @@ public class TaskDTO {
         return taskProcessorArgs;
     }
 
+    public SQLTemplateDTO getSqlTemplate() {
+        return sqlTemplate;
+    }
+
+    public void setSqlTemplate(SQLTemplateDTO sqlTemplate) {
+        this.sqlTemplate = sqlTemplate;
+    }
+
     public void setTaskProcessorArgs(Map<String, String> taskProcessorArgs) {
         this.taskProcessorArgs = taskProcessorArgs;
     }
@@ -90,16 +102,34 @@ public class TaskDTO {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         TaskDTO taskDTO = (TaskDTO) o;
-        return Objects.equals(getName(), taskDTO.getName()) && Objects.equals(getTaskExecutionServiceGroupName(), taskDTO.getTaskExecutionServiceGroupName()) && Objects.equals(getTaskProcessor(), taskDTO.getTaskProcessor()) && Objects.equals(getTaskProcessorBody(), taskDTO.getTaskProcessorBody()) && Objects.equals(getImportance(), taskDTO.getImportance()) && Objects.equals(getDescription(), taskDTO.getDescription()) && Objects.equals(getTaskProcessorArgs(), taskDTO.getTaskProcessorArgs());
+        return Objects.equals(getName(), taskDTO.getName()) && Objects.equals(getTaskExecutionServiceGroupName(), taskDTO.getTaskExecutionServiceGroupName()) && Objects.equals(getTaskProcessor(), taskDTO.getTaskProcessor()) && Objects.equals(getTaskProcessorBody(), taskDTO.getTaskProcessorBody()) && Objects.equals(getImportance(), taskDTO.getImportance()) && Objects.equals(getDescription(), taskDTO.getDescription()) && Objects.equals(getDriverKeyName(), taskDTO.getDriverKeyName()) && Objects.equals(getSqlTemplate(), taskDTO.getSqlTemplate()) && Objects.equals(getTaskProcessorArgs(), taskDTO.getTaskProcessorArgs());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getName(), getTaskExecutionServiceGroupName(), getTaskProcessor(), getTaskProcessorBody(), getImportance(), getDescription(), getTaskProcessorArgs());
+        return Objects.hash(getName(), getTaskExecutionServiceGroupName(), getTaskProcessor(), getTaskProcessorBody(), getImportance(), getDescription(), getDriverKeyName(), getSqlTemplate(), getTaskProcessorArgs());
     }
 
     @Override
     public String toString() {
-        return "TaskDTO{" + "name='" + name + '\'' + ", taskExecutionServiceGroupName='" + taskExecutionServiceGroupName + '\'' + ", taskProcessor='" + taskProcessor + '\'' + ", taskProcessorBody='" + taskProcessorBody + '\'' + ", importance='" + importance + '\'' + ", description='" + description + '\'' + ", taskProcessorArgs=" + taskProcessorArgs + '}';
+        return "TaskDTO{" +
+                "name='" + name + '\'' +
+                ", taskExecutionServiceGroupName='" + taskExecutionServiceGroupName + '\'' +
+                ", taskProcessor='" + taskProcessor + '\'' +
+                ", taskProcessorBody='" + taskProcessorBody + '\'' +
+                ", importance='" + importance + '\'' +
+                ", description='" + description + '\'' +
+                ", driver='" + driverKeyName + '\'' +
+                ", sqlTemplate=" + sqlTemplate +
+                ", taskProcessorArgs=" + taskProcessorArgs +
+                '}';
+    }
+
+    public String getDriverKeyName() {
+        return driverKeyName;
+    }
+
+    public void setDriverKeyName(String driverKeyName) {
+        this.driverKeyName = driverKeyName;
     }
 }

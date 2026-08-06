@@ -45,12 +45,12 @@ public class CatalogActivatorService {
         log.info("Before activate catalogs");
         sparkSession.catalog().listCatalogs().show();
         for (DataSourceDTO dataSourceDTO:sourceConfDTO.getDataSources().values()){
-            activateOne(dataSourceDTO.getCatalogKeyName());
+            activateOne(dataSourceDTO.getKeyName());
         }
         log.info("After activate catalogs");
         sparkSession.catalog().listCatalogs().show();
         //  to target catalog
         log.info("Switch to target catalog");
-        sparkSession.catalog().setCurrentCatalog(sourceConfDTO.getTargetDataSource().getCatalogKeyName());
+        sparkSession.catalog().setCurrentCatalog(sourceConfDTO.getTargetDataSource().getKeyName());
     }
 }
