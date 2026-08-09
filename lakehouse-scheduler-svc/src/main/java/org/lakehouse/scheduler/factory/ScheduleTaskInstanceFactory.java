@@ -70,6 +70,8 @@ public class ScheduleTaskInstanceFactory {
         result.setTaskProcessor(taskDTO.getTaskProcessor());
         result.setTaskProcessorBody(taskDTO.getTaskProcessorBody());
         result.setTaskProcessorArgs(taskDTO.getTaskProcessorArgs());
+        result.setDriverKeyName(taskDTO.getDriverKeyName());
+        result.setSqlTemplate(taskDTO.getSqlTemplate());
         result.setName(sti.getName());
         result.setStatus(sti.getStatus());
         result.setTaskExecutionServiceGroupName(taskDTO.getTaskExecutionServiceGroupName());

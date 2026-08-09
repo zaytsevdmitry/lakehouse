@@ -1,13 +1,13 @@
 /*
  * "Lakehouse management tool" - the services set for managing data changes based on a metadata-driven approach
  * Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/lakehouse
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     https://www.apache.org/licenses/LICENSE-2.0.txt
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,16 +17,11 @@
 
 package org.lakehouse.config.repository;
 
-import org.lakehouse.config.entities.templates.TemplateTask;
+import org.lakehouse.config.entities.task.TaskProcessorArg;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
-import java.util.Optional;
 
-public interface TaskTemplateRepository extends JpaRepository<TemplateTask, Long> {
-
-    List<TemplateTask> findByTemplateScenarioActKeyName(String scenarioActTemplateName);
-
-    //@Query("select p from TemplateTask p where p.templateScenarioAct.keyName = ?1 and p.name = ?2")
-    Optional<TemplateTask> findByTemplateScenarioActKeyNameAndName(String scenarioActTemplateName, String name);
+public interface TaskProcessorArgRepository extends JpaRepository<TaskProcessorArg, Long> {
+    List<TaskProcessorArg> findByTaskId(Long id);
 }

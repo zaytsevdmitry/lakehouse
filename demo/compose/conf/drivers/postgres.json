@@ -1,9 +1,6 @@
 {
   "keyName" : "postgres",
   "description" : null,
-  "connectionTemplates" : {
-    "jdbc" : "jdbc:postgresql://{{service.host}}:{{service.port}}/{{service.urn}}"
-  },
   "sqlTemplate" : {
     "databaseSchemaName" : "sql-template-postgres.databaseSchemaName.sql",
     "databaseSchemaDDLCreate" : "sql-template-postgres.databaseSchemaDDLCreate.sql",
@@ -37,6 +34,5 @@
     "checkConstraintDDL" : "sql-template-postgres.checkConstraintDDL.sql",
     "checkConstraintDDLAdd" : "sql-template-postgres.checkConstraintDDLAdd.sql",
     "checkConstraintCheckIntegrity" : "sql-template-postgres.checkConstraintCheckIntegrity.sql"
-  },
-  "dataSourceType" : "database"
+  }
 }

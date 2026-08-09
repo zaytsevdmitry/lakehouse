@@ -21,12 +21,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
-import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
+import org.lakehouse.client.api.dto.configs.schedule.*;
 import org.lakehouse.client.api.dto.configs.dq.QualityMetricsConfDTO;
-import org.lakehouse.client.api.dto.configs.schedule.ScenarioActTemplateDTO;
-import org.lakehouse.client.api.dto.configs.schedule.ScheduleDTO;
-import org.lakehouse.client.api.dto.configs.schedule.ScheduleEffectiveDTO;
-import org.lakehouse.client.api.dto.configs.schedule.TaskExecutionServiceGroupDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +43,7 @@ public class FileLoader {
     public final String dataSourcesDir = rootPath.concat("/datasources");
     public final String driversDir = rootPath.concat("/drivers");
     public final String qualityMetricsDir = rootPath.concat("/quality-metrics");
+    public final String taskTemplatesDir = rootPath.concat("/task-templates");
 
     private List<String> getFilenames(String directoryName) {
         List<String> result = new ArrayList<>();
@@ -79,6 +76,13 @@ public class FileLoader {
                 .readValue(
                         new File(String.format(driversDir.concat("/%s.json"), name)), DriverDTO.class);
     }
+
+    public TaskDTO loadTaskDTO(String name) throws IOException {
+        return objectMapper
+                .readValue(
+                        new File(String.format(taskTemplatesDir.concat("/%s.json"), name)), TaskDTO.class);
+    }
+
     public Map<String, DriverDTO> loadAllDrivers() {
         return getFilenames(driversDir)
                 .stream()

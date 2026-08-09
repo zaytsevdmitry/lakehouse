@@ -18,7 +18,7 @@
 package org.lakehouse.config.service.datasource;
 
 import jakarta.transaction.Transactional;
-import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
+import org.lakehouse.client.api.dto.configs.schedule.DriverDTO;
 import org.lakehouse.config.entities.datasource.Driver;
 import org.lakehouse.config.exception.DriverNotFoundException;
 import org.lakehouse.config.repository.datasource.DriverRepository;

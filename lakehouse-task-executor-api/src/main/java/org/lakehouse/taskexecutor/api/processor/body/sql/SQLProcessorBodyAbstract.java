@@ -19,7 +19,6 @@ package org.lakehouse.taskexecutor.api.processor.body.sql;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.lakehouse.client.api.dto.common.SQLTemplateDTO;
-import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;

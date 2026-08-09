@@ -23,20 +23,22 @@ import org.lakehouse.client.api.dto.configs.schedule.*;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.api.utils.DtoMergeUtils;
 import org.lakehouse.config.entities.Schedule;
-import org.lakehouse.config.entities.scenario.*;
-import org.lakehouse.config.exception.*;
-import org.lakehouse.config.mapper.Mapper;
+import org.lakehouse.config.entities.scenario.ScenarioAct;
+import org.lakehouse.config.entities.scenario.ScenarioActEdge;
+import org.lakehouse.config.entities.scenario.ScenarioActTaskEdge;
+import org.lakehouse.config.entities.task.Task;
+import org.lakehouse.config.exception.DataSetNotFoundException;
+import org.lakehouse.config.exception.ScenarioActNotFoundException;
+import org.lakehouse.config.exception.ScheduleNotFoundException;
+import org.lakehouse.config.exception.TaskEffectiveNotFoundException;
 import org.lakehouse.config.repository.*;
 import org.lakehouse.config.repository.dataset.DataSetRepository;
-import org.lakehouse.config.service.datasource.DriverService;
-import org.lakehouse.config.service.datasource.SQLTemplateService;
 import org.lakehouse.validator.config.ScheduleConfValidator;
 import org.lakehouse.validator.config.ValidationResult;
 import org.lakehouse.validator.exception.DTOValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -50,16 +52,12 @@ public class ScheduleService {
     private final ScenarioActTemplateRepository scenarioActTemplateRepository;
     private final ScenarioActRepository scenarioActRepository;
     private final ScenarioActEdgeRepository scenarioActEdgeRepository;
-    private final ScenarioActTaskRepository scenarioActTaskRepository;
+    private final TaskRepository taskRepository;
     private final ScenarioActTaskEdgeRepository scenarioActTaskEdgeRepository;
-    private final TaskExecutionServiceGroupRepository taskExecutionServiceGroupRepository;
     private final ScenarioActTemplateService scenarioActTemplateService;
     private final ScheduleConfigProducerService scheduleConfigProducerService;
-    private final ScenarioActTaskExecutionModuleArgRepository scenarioActTaskExecutionModuleArgRepository;
-    private final Mapper mapper;
-    private final DriverService driverService;
-    private final SQLTemplateService sqlTemplateService;
     private final DtoMergeUtils dtoMergeUtils;
+    private final TaskService taskService;
 
     public ScheduleService(
             ScheduleRepository scheduleRepository,
@@ -67,63 +65,71 @@ public class ScheduleService {
             ScenarioActTemplateRepository scenarioActTemplateRepository,
             ScenarioActRepository scenarioActRepository,
             ScenarioActEdgeRepository scenarioActEdgeRepository,
-            ScenarioActTaskRepository scenarioActTaskRepository,
+            TaskRepository taskRepository,
             ScenarioActTaskEdgeRepository scenarioActTaskEdgeRepository,
-            TaskExecutionServiceGroupRepository taskExecutionServiceGroupRepository,
             ScenarioActTemplateService scenarioActTemplateService,
             ScheduleConfigProducerService scheduleConfigProducerService,
-            ScenarioActTaskExecutionModuleArgRepository scenarioActTaskExecutionModuleArgRepository,
-            Mapper mapper, DriverService driverService, SQLTemplateService sqlTemplateService, DtoMergeUtils dtoMergeUtils) {
+            DtoMergeUtils dtoMergeUtils,
+            TaskService taskService) {
         this.scheduleRepository = scheduleRepository;
         this.dataSetRepository = dataSetRepository;
         this.scenarioActTemplateRepository = scenarioActTemplateRepository;
         this.scenarioActRepository = scenarioActRepository;
         this.scenarioActEdgeRepository = scenarioActEdgeRepository;
-        this.scenarioActTaskRepository = scenarioActTaskRepository;
+        this.taskRepository = taskRepository;
         this.scenarioActTaskEdgeRepository = scenarioActTaskEdgeRepository;
-        this.taskExecutionServiceGroupRepository = taskExecutionServiceGroupRepository;
         this.scenarioActTemplateService = scenarioActTemplateService;
         this.scheduleConfigProducerService = scheduleConfigProducerService;
-        this.scenarioActTaskExecutionModuleArgRepository = scenarioActTaskExecutionModuleArgRepository;
-
-        this.mapper = mapper;
-        this.driverService = driverService;
-        this.sqlTemplateService = sqlTemplateService;
+        this.taskService = taskService;
         this.dtoMergeUtils = dtoMergeUtils;
     }
 
-    private ScheduleScenarioActDTO mapScheduleScenarioActToDTO(ScenarioAct scenarioAct) {
-        logger.info("mapScheduleScenarioActToDTO: {}", scenarioAct.getName());
-        ScheduleScenarioActDTO result = new ScheduleScenarioActDTO();
+    private void mapScheduleScenarioActToDTOBase(
+            ScenarioAct scenarioAct,
+            Set<TaskDTO> taskDTOSet,
+            Set<DagEdgeDTO> edgeDTOSet,
+            ScheduleScenarioActAbstract result
+            ){
         result.setName(scenarioAct.getName());
         result.setDataSet(scenarioAct.getDataSet().getKeyName());
         result.setIntervalStart(scenarioAct.getIntervalStart());
         result.setIntervalEnd(scenarioAct.getIntervalEnd());
+        result.setTasks(taskDTOSet);
+        result.setDagEdges(edgeDTOSet);
+
+    }
+    private ScheduleScenarioActDTO mapScheduleScenarioActToDTO(ScenarioAct scenarioAct) {
+        logger.info("mapScheduleScenarioActToDTO: {}", scenarioAct.getName());
+        ScheduleScenarioActDTO result = new ScheduleScenarioActDTO();
         if (scenarioAct.getScenarioActTemplate() != null)
             result.setScenarioActTemplate(scenarioAct.getScenarioActTemplate().getKeyName());
-        result.setTasks(scenarioActTaskRepository
-                .findByScenarioActId(scenarioAct.getId())
-                .stream()
-                .map(sat -> mapper
-                        .mapTaskToDTO(sat, getScenarioActTaskExecutionModuleArgsByScenarioActTask(sat.getId())))
-                .collect(Collectors.toSet())
-        );
-        result.setDagEdges(
-                scenarioActTaskEdgeRepository
+
+        mapScheduleScenarioActToDTOBase(
+                scenarioAct,
+                taskRepository
                         .findByScenarioActId(scenarioAct.getId())
                         .stream()
-                        .map(sate -> {
-                            DagEdgeDTO dagEdgeDTO = new DagEdgeDTO();
-                            dagEdgeDTO.setFrom(sate.getFromScenarioActTask());
-                            dagEdgeDTO.setTo(sate.getToScenarioActTask());
-
-                            return dagEdgeDTO;
-                        })
-                        .collect(Collectors.toSet())
+                        .map(taskService::mapTaskToDTO)
+                        .collect(Collectors.toSet()),
+                getDagEdgeDTOSetByAct(scenarioAct),
+                result
         );
         return result;
     }
 
+    private Set<DagEdgeDTO> getDagEdgeDTOSetByAct(ScenarioAct scenarioAct){
+        return scenarioActTaskEdgeRepository
+                .findByScenarioActId(scenarioAct.getId())
+                .stream()
+                .map(sate -> {
+                    DagEdgeDTO dagEdgeDTO = new DagEdgeDTO();
+                    dagEdgeDTO.setFrom(sate.getFromScenarioActTask());
+                    dagEdgeDTO.setTo(sate.getToScenarioActTask());
+
+                    return dagEdgeDTO;
+                })
+                .collect(Collectors.toSet());
+    }
 
     private ScenarioAct mapScheduleScenarioActToEntity(Schedule schedule,
                                                        ScheduleScenarioActDTO scheduleScenarioActDTO) {
@@ -152,19 +158,24 @@ public class ScheduleService {
         return result;
     }
 
+
+    private void mapScheduleToDTOBase(Schedule schedule, ScheduleAbstract scheduleAbstractResult) {
+
+        scheduleAbstractResult.setKeyName(schedule.getKeyName());
+        scheduleAbstractResult.setDescription(schedule.getDescription());
+        scheduleAbstractResult.setIntervalExpression(schedule.getIntervalExpression());
+        scheduleAbstractResult.setStartDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(schedule.getStartDateTime()));
+        scheduleAbstractResult.setEnabled(schedule.isEnabled());
+        scheduleAbstractResult.setScenarioActEdges(scenarioActEdgeRepository.findByScheduleKeyName(schedule.getKeyName()).stream()
+                .map(this::mapScenarioActEdgesToDTO).collect(Collectors.toSet()));
+
+    }
     private ScheduleDTO mapScheduleToDTO(Schedule schedule) {
         ScheduleDTO result = new ScheduleDTO();
-        result.setKeyName(schedule.getKeyName());
-        result.setDescription(schedule.getDescription());
-        result.setIntervalExpression(schedule.getIntervalExpression());
-        result.setStartDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(schedule.getStartDateTime()));
-        result.setEnabled(schedule.isEnabled());
+                mapScheduleToDTOBase(schedule, result);
         result.setScenarioActs(scenarioActRepository.findByScheduleKeyName(schedule.getKeyName()).stream()
                 .map(this::mapScheduleScenarioActToDTO).collect(Collectors.toSet()));
-        result.setScenarioActEdges(scenarioActEdgeRepository.findByScheduleKeyName(schedule.getKeyName()).stream()
-                .map(this::mapScenarioActEdgesToDTO).collect(Collectors.toSet()));
         return result;
-
     }
 
     private Schedule mapScheduleToEntity(Schedule schedule, ScheduleDTO scheduleDTO) {
@@ -187,7 +198,6 @@ public class ScheduleService {
         scenarioActRepository.findByScheduleNameAndActName(schedule.getKeyName(), dagEdgeDTO.getTo())
                 .ifPresent(result::setToScenarioAct);
         return result;
-
     }
 
     public List<ScheduleDTO> findAll() {
@@ -236,42 +246,11 @@ public class ScheduleService {
         scheduleDTO.getScenarioActs().stream().forEach(saDto -> {
 
             ScenarioAct scenarioAct = scenarioActMap.get(saDto.getName());
-            Map<String, ScenarioActTask> scenarioActTaskMap = new HashMap<String, ScenarioActTask>();
 
-            saDto.getTasks().stream().forEach(taskDTO -> {
-
-                ScenarioActTask task = new ScenarioActTask();
-                task.setScenarioAct(scenarioAct);
-                task.setName(taskDTO.getName());
-                task.setImportance(taskDTO.getImportance());
-                task.setTaskProcessor(taskDTO.getTaskProcessor());
-                task.setTaskProcessorBody(taskDTO.getTaskProcessorBody());
-                task.setTaskExecutionServiceGroup(taskExecutionServiceGroupRepository
-                        .getReferenceById(taskDTO.getTaskExecutionServiceGroupName()));
-                if (StringUtils.hasText( taskDTO.getDriverKeyName() ))
-                    try {
-                        task.setDriver(driverService.findDriverById(taskDTO.getDriverKeyName()));
-                    } catch (DriverNotFoundException e) {
-                        logger.error(e.getMessage(),e);
-                        throw e;
-                    }
-                task.setDescription(taskDTO.getDescription());
-
-                ScenarioActTask resultTask = scenarioActTaskRepository.save(task);
-
-                sqlTemplateService.save(resultTask, taskDTO.getSqlTemplate());
-
-                scenarioActTaskMap.put(resultTask.getName(), resultTask);
-
-                taskDTO.getTaskProcessorArgs().forEach((k, v) -> {
-                    ScenarioActTaskProcessorArg executionModuleArg = new ScenarioActTaskProcessorArg();
-                    executionModuleArg.setScenarioActTask(resultTask);
-                    executionModuleArg.setKey(k);
-                    executionModuleArg.setValue(v);
-                    scenarioActTaskExecutionModuleArgRepository.save(executionModuleArg);
-                });
-
-            });
+            Map<String, TaskService.SaveTaskResult> savedTasks = new HashMap<>();
+            for (TaskDTO taskDTO: saDto.getTasks()) {
+                savedTasks.put(taskDTO.getName(), taskService.save(taskDTO,null,scenarioAct));
+            }
 
             saDto.getDagEdges().forEach(dagEdgeDTO -> {
                 ScenarioActTaskEdge scenarioActTaskEdge = new ScenarioActTaskEdge();
@@ -303,85 +282,55 @@ public class ScheduleService {
         scheduleRepository.deleteById(name);
     }
 
+    public ScheduleEffectiveDTO mapScheduleDTOAndResolveTemplateV2(String scheduleKeyName){
+         Schedule schedule = scheduleRepository
+                 .findById(scheduleKeyName)
+                 .orElseThrow(() -> new ScheduleNotFoundException(String.format("Schedule with name %s not found", scheduleKeyName)));
 
-    public ScheduleEffectiveDTO findEffectiveScheduleDTOById(String name) {
+        ScheduleEffectiveDTO result = new ScheduleEffectiveDTO();
+        mapScheduleToDTOBase(schedule,result);
+        result.setLastChangedDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(schedule.getLastChangedDateTime()));
+        result.setLastChangeNumber(schedule.getLastChangeNumber());
+        for (ScenarioAct scenarioAct: scenarioActRepository.findByScheduleKeyName(scheduleKeyName)){
+
+            Set<DagEdgeDTO> edgeDTOSet = new HashSet<>();
+            if (scenarioAct.getScenarioActTemplate() != null){
+
+                ScenarioActTemplateDTO scenarioActTemplateDTO = scenarioActTemplateService
+                        .findById(scenarioAct.getScenarioActTemplate().getKeyName());
+
+                edgeDTOSet.addAll(scenarioActTemplateDTO.getDagEdges());
+                edgeDTOSet.addAll(getDagEdgeDTOSetByAct(scenarioAct));
+            }
+            ScheduleScenarioActEffectiveDTO scheduleScenarioActEffectiveDTO = new ScheduleScenarioActEffectiveDTO();
+
+            mapScheduleScenarioActToDTOBase(
+                    scenarioAct,
+                    taskService.getEffectiveTaskDTOSet(scenarioAct),
+                    edgeDTOSet,
+                    scheduleScenarioActEffectiveDTO);
+
+            result.getScenarioActs().add(scheduleScenarioActEffectiveDTO);
+        }
+
+        return result;
+    }
+    public ScheduleEffectiveDTO findEffectiveScheduleDTOById(String scheduleKeyname) {
         try {
 
-            return mapScheduleDTOAndResolveTemplate(
-                    this.findDtoById(name),
-                    scenarioActTemplateService.findAllAsMap());
+            return mapScheduleDTOAndResolveTemplateV2(scheduleKeyname);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
-
-
-    private Map<String, String> getScenarioActTaskExecutionModuleArgsByScenarioActTask(Long scenarioActTaskId) {
-        return scenarioActTaskExecutionModuleArgRepository
-                .findByScenarioActTaskId(scenarioActTaskId)
-                .stream()
-                .collect(
-                        Collectors
-                                .toMap(
-                                        ScenarioActTaskProcessorArg::getKey,
-                                        ScenarioActTaskProcessorArg::getValue));
-
-    }
-
-   /* private TaskDTO matchTaskWithTemplate(
-            TaskDTO taskDTO,
-            TaskDTO taskTemplate) {
-
-        if (taskDTO == null && taskTemplate == null) {
-            logger.error("Internal error both arguments are null");
-            throw new TaskEffectiveMatchException("Internal error both arguments are null");
-        }
-        if (taskTemplate == null)
-            return taskDTO;
-
-        if (taskDTO == null)
-            return taskTemplate;
-
-        TaskDTO result = new TaskDTO();
-        result.setName(Coalesce.apply(taskDTO.getName(), taskTemplate.getName()));
-        result.setDescription(Coalesce.apply(taskDTO.getDescription(), taskTemplate.getDescription()));
-        result.setImportance(Coalesce.apply(taskDTO.getImportance(), taskTemplate.getImportance()));
-        result.setTaskProcessorArgs(Coalesce.applyRewriteStringMap(taskDTO.getTaskProcessorArgs(), taskTemplate.getTaskProcessorArgs()));
-        result.setTaskProcessor(Coalesce.apply(taskDTO.getTaskProcessor(), taskTemplate.getTaskProcessor()));
-        result.setTaskProcessorBody(Coalesce.apply(taskDTO.getTaskProcessorBody(),taskTemplate.getTaskProcessorBody()));
-        result.setTaskExecutionServiceGroupName(Coalesce.apply(taskDTO.getTaskExecutionServiceGroupName(), taskTemplate.getTaskExecutionServiceGroupName()));
-        return result;
-    }*/
-
 
     public TaskDTO getEffectiveTaskDTO(String scheduleName, String scenarioActName, String taskName) {
         logger.info("Get EffectiveTaskDTO {}.{}.{}",scheduleName,scenarioActName,taskName);
         ScenarioAct scenarioAct = scenarioActRepository.findByScheduleNameAndActName(scheduleName, scenarioActName)
                 .orElseThrow(() -> new ScenarioActNotFoundException(scheduleName, scenarioActName));
 
-        Optional<ScenarioActTask> scenarioActTask = scenarioActTaskRepository
-                .findByScenarioActIdAndName(scenarioAct.getId(), taskName);
+        return taskService.getEffectiveTaskDTO(scenarioAct,taskName);
 
-
-        TaskDTO taskDTO = null;
-
-        if (scenarioActTask.isPresent())
-            taskDTO = mapper
-                    .mapTaskToDTO(
-                            scenarioActTask.get(),
-                            getScenarioActTaskExecutionModuleArgsByScenarioActTask(scenarioActTask.get().getId()));
-
-        TaskDTO taskTemplate = null;
-        if (scenarioAct.getScenarioActTemplate() != null)
-            taskTemplate = scenarioActTemplateService
-                    .findTaskByScenarioActTemplateAndTaskName(
-                            scenarioAct.getScenarioActTemplate().getKeyName(),
-                            taskName);
-
-        TaskDTO result = dtoMergeUtils.merge(taskTemplate,taskDTO, TaskDTO.class); //matchTaskWithTemplate(taskDTO, taskTemplate);
-        if (result == null)
-            throw new TaskEffectiveNotFoundException(scheduleName, scenarioActName, taskName);
-        return result;
     }
 
     public List<ScheduleEffectiveDTO> findScheduleEffectiveDTOSByChangeDateTime(OffsetDateTime dateTime) {
@@ -391,9 +340,7 @@ public class ScheduleService {
                 .stream()
                 .map(s -> {
                             try {
-                                return mapScheduleDTOAndResolveTemplate(
-                                        mapScheduleToDTO(s),
-                                        actTemplateMap);
+                                return mapScheduleDTOAndResolveTemplateV2(s.getKeyName());
                             } catch (Exception e) {
                                 throw new RuntimeException(e);
                             }
@@ -401,72 +348,4 @@ public class ScheduleService {
                 ).toList();
     }
 
-    private ScheduleEffectiveDTO mapScheduleDTOAndResolveTemplate(
-            ScheduleDTO scheduleDTO,
-            Map<String, ScenarioActTemplateDTO> actTemplateDTOMap
-    ) {
-
-        ScheduleEffectiveDTO result = new ScheduleEffectiveDTO();
-        Schedule schedule = findById(scheduleDTO.getKeyName());
-        result.setEnabled(scheduleDTO.isEnabled());
-        result.setKeyName(scheduleDTO.getKeyName());
-        result.setIntervalExpression(scheduleDTO.getIntervalExpression());
-        result.setStartDateTime(scheduleDTO.getStartDateTime());
-        result.setStopDateTime(scheduleDTO.getStopDateTime());
-        result.setScenarioActEdges(scheduleDTO.getScenarioActEdges());
-        result.setDescription(scheduleDTO.getDescription());
-        result.setLastChangedDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(schedule.getLastChangedDateTime()));
-        result.setLastChangeNumber(schedule.getLastChangeNumber());
-        result.setScenarioActs(
-                scheduleDTO.getScenarioActs().stream().map(sa -> {
-
-                    ScheduleScenarioActEffectiveDTO resultAct = new ScheduleScenarioActEffectiveDTO();
-                    resultAct.setName(sa.getName());
-                    resultAct.setDataSet(sa.getDataSet());
-                    resultAct.setIntervalStart(sa.getIntervalStart());
-                    resultAct.setIntervalEnd(sa.getIntervalEnd());
-                    // edges
-                    Set<DagEdgeDTO> edgeDTOSet = new HashSet<>(sa.getDagEdges());
-                    edgeDTOSet.addAll(
-                            scenarioActTemplateService
-                                    .getDagEdgeDTOListNullSafe(
-                                            actTemplateDTOMap.get(sa.getScenarioActTemplate())));
-                    resultAct.setDagEdges(edgeDTOSet.stream().collect(Collectors.toSet()));
-
-                    // vertices
-                    Map<String, TaskDTO> taskDTOmap =
-                            sa.getTasks()
-                                    .stream()
-                                    .collect(Collectors.toMap(TaskDTO::getName, taskDTO -> taskDTO));
-
-                    Map<String, TaskDTO> taskDTOTemplatesMap =
-                            scenarioActTemplateService
-                                    .getTaskDTOListNullSafe(
-                                            actTemplateDTOMap
-                                                    .get(sa.getScenarioActTemplate()))
-                                    .stream()
-                                    .collect(Collectors.toMap(TaskDTO::getName, taskDTO -> taskDTO));
-
-                    Set<String> taskNames = new HashSet<>();
-                    taskNames.addAll(taskDTOmap.keySet());
-                    taskNames.addAll(taskDTOTemplatesMap.keySet());
-
-
-                    resultAct.setTasks(taskNames
-                            .stream()
-                            .map(taskName -> {
-                                logger.info("Get EffectiveTaskDTO {}.{}.{}", schedule.getKeyName(),resultAct.getName(), taskName);
-                                return dtoMergeUtils.merge(taskDTOTemplatesMap.get(taskName),taskDTOmap.get(taskName), TaskDTO.class);//matchTaskWithTemplate(taskDTOmap.get(taskName), taskDTOTemplatesMap.get(taskName));
-                            })
-                            .collect(Collectors.toSet()));
-
-                    return resultAct;
-                }).collect(Collectors.toSet())
-        );
-
-        ValidationResult vr = ScheduleConfValidator.validate(scheduleDTO);
-        if (!vr.isValid())
-            throw new DTOValidationException(vr.getDescriptions());
-        return result;
-    }
 }

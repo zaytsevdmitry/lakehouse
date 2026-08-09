@@ -22,8 +22,4 @@ import org.lakehouse.config.entities.KeyEntityAbstract;
 
 @Entity
 public class Driver extends KeyEntityAbstract {
-
-
-
-
 }

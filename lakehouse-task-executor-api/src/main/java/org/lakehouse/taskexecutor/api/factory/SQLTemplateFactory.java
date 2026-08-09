@@ -18,7 +18,6 @@
 package org.lakehouse.taskexecutor.api.factory;
 
 import org.lakehouse.client.api.dto.common.SQLTemplateDTO;
-import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
 import org.lakehouse.client.api.dto.configs.schedule.TaskDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.utils.DtoMergeUtils;

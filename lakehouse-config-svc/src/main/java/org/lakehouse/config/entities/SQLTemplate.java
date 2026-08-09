@@ -21,29 +21,23 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.lakehouse.config.entities.datasource.Driver;
-import org.lakehouse.config.entities.scenario.ScenarioActTask;
 import org.lakehouse.config.entities.script.Script;
-import org.lakehouse.config.entities.templates.TemplateTask;
+import org.lakehouse.config.entities.task.Task;
 
 import java.util.Objects;
 
 @Entity
 @Table(uniqueConstraints = {
-        @UniqueConstraint(name = "sql_template_driver_scenario_act_task_key_uk", columnNames = {"driver_key_name", "scenario_act_task_name", "template_task_name", "key"})
+        @UniqueConstraint(name = "sql_template_task_key_uk", columnNames = {"task_id", "key"})
 }
 )
 public class SQLTemplate extends KeyValueAbstract {
 
 
     @ManyToOne
-    @JoinColumn(foreignKey = @ForeignKey(name = "sql_template__scenario_act_task_fk"))
+    @JoinColumn(name = "task_id", foreignKey = @ForeignKey(name = "sql_template__task_fk"))
     @OnDelete(action = OnDeleteAction.CASCADE)
-    private ScenarioActTask scenarioActTask;
-
-    @ManyToOne
-    @JoinColumn(foreignKey = @ForeignKey(name = "sql_template__template_task_fk"))
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    private TemplateTask templateTask;
+    private Task task;
 
     @ManyToOne
     @JoinColumn(foreignKey = @ForeignKey(name = "sql_template__driver_fk"))
@@ -58,20 +52,12 @@ public class SQLTemplate extends KeyValueAbstract {
     public SQLTemplate() {
     }
 
-    public TemplateTask getTemplateTask() {
-        return templateTask;
+    public Task getTask() {
+        return task;
     }
 
-    public void setTemplateTask(TemplateTask templateTask) {
-        this.templateTask = templateTask;
-    }
-
-    public ScenarioActTask getScenarioActTask() {
-        return scenarioActTask;
-    }
-
-    public void setScenarioActTask(ScenarioActTask scenarioActTask) {
-        this.scenarioActTask = scenarioActTask;
+    public void setTask(Task task) {
+        this.task = task;
     }
 
     public Driver getDriver() {
@@ -98,11 +84,11 @@ public class SQLTemplate extends KeyValueAbstract {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         SQLTemplate that = (SQLTemplate) o;
-        return Objects.equals(getScenarioActTask(), that.getScenarioActTask()) && Objects.equals(getTemplateTask(), that.getTemplateTask()) && Objects.equals(getDriver(), that.getDriver()) && Objects.equals(getValue(), that.getValue());
+        return Objects.equals(getTask(), that.getTask()) && Objects.equals(getDriver(), that.getDriver()) && Objects.equals(getValue(), that.getValue());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), getScenarioActTask(), getTemplateTask(), getDriver(), getValue());
+        return Objects.hash(super.hashCode(), getTask(), getDriver(), getValue());
     }
 }

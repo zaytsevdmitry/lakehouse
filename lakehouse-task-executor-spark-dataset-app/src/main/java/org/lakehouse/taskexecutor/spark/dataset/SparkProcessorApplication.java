@@ -17,6 +17,7 @@
 
 package org.lakehouse.taskexecutor.spark.dataset;
 
+import org.lakehouse.client.api.utils.DtoMergeUtils;
 import org.lakehouse.client.rest.config.configuration.ConfigRestClientConfiguration;
 import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
 import org.lakehouse.client.rest.scheduler.configuration.SchedulerRestClientConfiguration;

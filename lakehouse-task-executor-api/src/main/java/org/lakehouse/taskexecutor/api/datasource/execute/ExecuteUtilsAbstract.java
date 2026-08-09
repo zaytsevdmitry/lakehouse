@@ -17,10 +17,7 @@
 
 package org.lakehouse.taskexecutor.api.datasource.execute;
 
-import org.lakehouse.client.api.constant.SystemVarKeys;
-import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
-import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
 import org.lakehouse.client.api.dto.configs.datasource.ServiceDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.jinja.java.JinJavaUtils;

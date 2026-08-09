@@ -24,12 +24,14 @@ public class TaskDTOValidator {
 
     public static ValidationResult validate(TaskDTO taskDTO)  {
         ValidationResult result = new ValidationResult();
-        if (!StringUtils.hasText(taskDTO.getTaskExecutionServiceGroupName()))
-            result.getDescriptions().add(String.format("Task %s.The \"taskExecutionServiceGroupName\" field is required", taskDTO.getName()));
-        if (!StringUtils.hasText(taskDTO.getTaskProcessor()))
-            result.getDescriptions().add(String.format("Task %s.The \"taskProcessor\" field is required", taskDTO.getName()));
-        if (!StringUtils.hasText(taskDTO.getName()))
-            result.getDescriptions().add("The \"name\" field is required");
+        if (!StringUtils.hasText(taskDTO.getTemplate())){
+            if (!StringUtils.hasText(taskDTO.getTaskExecutionServiceGroupName()))
+                result.getDescriptions().add(String.format("Task %s.The \"taskExecutionServiceGroupName\" field is required", taskDTO.getName()));
+            if (!StringUtils.hasText(taskDTO.getTaskProcessor()))
+                result.getDescriptions().add(String.format("Task %s.The \"taskProcessor\" field is required", taskDTO.getName()));
+            if (!StringUtils.hasText(taskDTO.getName()))
+                result.getDescriptions().add("The \"name\" field is required");
+        }
         return result;
     }
 }

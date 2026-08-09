@@ -237,6 +237,7 @@
     "dataSet" : "client_processing",
     "tasks" : [ {
       "name" : "begin",
+      "template" : "beginTemplate",
       "taskExecutionServiceGroupName" : "default",
       "taskProcessor" : "lockedStateTaskProcessor",
       "taskProcessorBody" : null,
@@ -449,6 +450,7 @@
     "dataSet" : "transaction_processing",
     "tasks" : [ {
       "name" : "begin",
+      "template" : "beginTemplate",
       "taskExecutionServiceGroupName" : "default",
       "taskProcessor" : "lockedStateTaskProcessor",
       "taskProcessorBody" : null,

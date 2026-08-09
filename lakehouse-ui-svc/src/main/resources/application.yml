@@ -1,5 +1,5 @@
 server:
-  port: 8099
+  port: 8084
 
 spring:
   threads:
@@ -39,9 +39,9 @@ lakehouse:
       - name: lakehouse-state-svc
         url: http://localhost:8082
         health-check-url: http://localhost:8082/healthz
-      - name: lakehouse-task-executor-svc
-        url: http://localhost:8089
-        health-check-url: http://localhost:8089/healthz
+      - name: lakehouse-task-executor-svc-1
+        url: http://localhost:8091
+        health-check-url: http://localhost:8091/healthz
       - name: lakehouse-task-proxy-for-spark
-        url: http://localhost:8090
-        health-check-url: http://localhost:8090/healthz
+        url: http://localhost:8099
+        health-check-url: http://localhost:8099/healthz

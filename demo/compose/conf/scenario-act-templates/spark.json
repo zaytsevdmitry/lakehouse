@@ -4,10 +4,7 @@
   "tasks": [
     {
       "name": "check",
-      "taskExecutionServiceGroupName": "state-service",
-      "taskProcessor": "dependencyCheckStateTaskProcessor",
-      "importance": "critical",
-      "description": "Dependency check"
+      "template": "checkTemplate"
     },
     {
       "name": "begin",
@@ -23,6 +20,7 @@
       "taskProcessorBody": "createTableSQLProcessorBody",
       "importance": "critical",
       "description": "load from remote datastore",
+      "driverKeyName": "spark_iceberg",
       "taskProcessorArgs": {
         "spark.ui.enabled": "true",
         "spark.app.name": "{{ getTaskFullName() }}",
@@ -30,9 +28,9 @@
         "spark.driver.cores": "1",
         "spark.executor.memory": "1g",
         "spark.driver.memory": "1g",
-        "datasource.service.protocol": "http",
+        "deploy.clusterUrl": "http://172.20.193.160:8099/v1/submissions",
         "deploy.mainClass": "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
-        "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.6.0-jar-with-dependencies.jar"
+        "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.7.0-jar-with-dependencies.jar"
       }
     },
     {
@@ -42,6 +40,7 @@
       "taskProcessorBody": "mergeSQLProcessorBody",
       "importance": "critical",
       "description": "load from remote datastore",
+      "driverKeyName": "spark_iceberg",
       "taskProcessorArgs": {
         "spark.ui.enabled": "true",
         "spark.app.name": "{{ getTaskFullName() }}",
@@ -49,9 +48,9 @@
         "spark.driver.cores": "1",
         "spark.executor.memory": "1g",
         "spark.driver.memory": "1g",
-        "datasource.service.protocol": "http",
+        "deploy.clusterUrl": "http://172.20.193.160:8099/v1/submissions",
         "deploy.mainClass": "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
-        "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.6.0-jar-with-dependencies.jar"
+        "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.7.0-jar-with-dependencies.jar"
       }
     },
     {
@@ -61,6 +60,7 @@
       "taskProcessorBody": "compactTableSQLProcessorBody",
       "importance": "critical",
       "description": "load from remote datastore",
+      "driverKeyName": "spark_iceberg",
       "taskProcessorArgs": {
         "spark.ui.enabled": "true",
         "spark.app.name": "{{ getTaskFullName() }}",
@@ -68,9 +68,9 @@
         "spark.driver.cores": "1",
         "spark.executor.memory": "1g",
         "spark.driver.memory": "1g",
-        "datasource.service.protocol": "http",
+        "deploy.clusterUrl": "http://172.20.193.160:8099/v1/submissions",
         "deploy.mainClass": "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
-        "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.6.0-jar-with-dependencies.jar"
+        "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.7.0-jar-with-dependencies.jar"
       }
     },
     {

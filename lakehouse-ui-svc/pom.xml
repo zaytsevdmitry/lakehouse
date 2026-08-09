@@ -6,7 +6,7 @@
     <parent>
         <groupId>lakehouse</groupId>
         <artifactId>lakehouse-parent</artifactId>
-        <version>0.6.0</version>
+        <version>0.7.0</version>
     </parent>
 
     <artifactId>lakehouse-ui-svc</artifactId>
@@ -31,7 +31,7 @@
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-config-rest-client</artifactId>
-            <version>0.6.0</version>
+            <version>0.7.0</version>
         </dependency>
 
         <dependency>

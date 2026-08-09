@@ -15,17 +15,16 @@
  * limitations under the License.
  */
 
-package org.lakehouse.taskexecutor.spark.dq.configuration;
+package org.lakehouse.config.exception;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.lakehouse.client.api.utils.DtoMergeUtils;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
-@Configuration
-public class DtoMergeUtilsConfiguration {
-    @Bean
-    public DtoMergeUtils getDtoMergeUtils(ObjectMapper objectMapper){
-        return new DtoMergeUtils(objectMapper);
+@ResponseStatus(value = HttpStatus.NOT_FOUND)
+public class TaskNotFoundException extends RuntimeException {
+
+    public TaskNotFoundException(String msg) {
+        super(msg);
     }
+
 }

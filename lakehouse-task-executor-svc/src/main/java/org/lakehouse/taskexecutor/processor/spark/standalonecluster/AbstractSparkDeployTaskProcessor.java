@@ -17,11 +17,7 @@
 
 package org.lakehouse.taskexecutor.processor.spark.standalonecluster;
 
-import org.lakehouse.client.api.constant.SystemVarKeys;
-import org.lakehouse.client.api.constant.Types;
-import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
-import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.client.rest.RestClientHelper;
@@ -30,7 +26,6 @@ import org.lakehouse.client.rest.spark.SparkRestClientApiImpl;
 import org.lakehouse.client.rest.spark.standalone.CreateRequest;
 import org.lakehouse.client.rest.spark.standalone.CreateResponse;
 import org.lakehouse.client.rest.spark.standalone.StatusResponse;
-import org.lakehouse.jinja.java.JinJavaUtils;
 import org.lakehouse.taskexecutor.processor.AbstractTaskProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

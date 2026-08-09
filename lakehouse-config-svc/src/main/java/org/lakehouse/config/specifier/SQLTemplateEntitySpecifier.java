@@ -20,25 +20,21 @@ package org.lakehouse.config.specifier;
 import org.lakehouse.config.entities.KeyValueAbstract;
 import org.lakehouse.config.entities.SQLTemplate;
 import org.lakehouse.config.entities.datasource.Driver;
-import org.lakehouse.config.entities.scenario.ScenarioActTask;
-import org.lakehouse.config.entities.templates.TemplateTask;
+import org.lakehouse.config.entities.task.Task;
 import org.lakehouse.config.mapper.keyvalue.KeyValueEntitySpecifierAbstract;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public  class SQLTemplateEntitySpecifier extends KeyValueEntitySpecifierAbstract {
     private final Driver driver;
-    private final ScenarioActTask scenarioActTask;
-    private final TemplateTask templateTask;
+    private final Task task;
 
     public SQLTemplateEntitySpecifier(
             JpaRepository jpaRepository,
             Driver driver,
-            ScenarioActTask scenarioActTask,
-            TemplateTask templateTask) {
+            Task task) {
         super(jpaRepository);
         this.driver = driver;
-        this.scenarioActTask = scenarioActTask;
-        this.templateTask = templateTask;
+        this.task = task;
     }
 
 
@@ -46,8 +42,7 @@ public  class SQLTemplateEntitySpecifier extends KeyValueEntitySpecifierAbstract
     public KeyValueAbstract entityFeel(KeyValueAbstract keyValueAbstract) {
         SQLTemplate result = (SQLTemplate) keyValueAbstract;
         result.setDriver(driver);
-        result.setScenarioActTask(scenarioActTask);
-        result.setTemplateTask(templateTask);
+        result.setTask(task);
         return result;
     }
 

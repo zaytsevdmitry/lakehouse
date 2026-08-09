@@ -21,10 +21,10 @@ kubectl get pods -A
 #helm uninstall lakehouse-release -n lakehouse-management
 helm dependency update ./lakehouse-management-helm-charts/lakehouse-management
 
-minikube image rm lakehouse:0.6.0
-minikube image load lakehouse:0.6.0
-minikube image rm lakehouse-spark-aws:0.6.0
-minikube image load lakehouse-spark-aws:0.6.0
+minikube image rm lakehouse:0.7.0
+minikube image load lakehouse:0.7.0
+minikube image rm lakehouse-spark-aws:0.7.0
+minikube image load lakehouse-spark-aws:0.7.0
 minikube image load postgres:latest
 minikube image load apache/kafka:latest
 
@@ -61,7 +61,7 @@ kubectl exec -ti openbao-0 -n openbao -- bao auth enable kubernetes
 
 kubectl exec -ti openbao-0 -n openbao -- bao write auth/kubernetes/config \
     kubernetes_host="https://default.svc"
-minikube image load lakehouse:0.6.0
+minikube image load lakehouse:0.7.0
 minikube image pull postgres:latest
 minikube image pull apache/kafka:latest
 

@@ -20,6 +20,7 @@ package org.lakehouse.config.entities.templates;
 import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.lakehouse.config.entities.task.Task;
 
 import java.util.Objects;
 
@@ -38,12 +39,12 @@ public class TemplateTaskEdge {
     private TemplateScenarioAct templateScenarioAct;
 
     @ManyToOne
-    @JoinColumn(foreignKey = @ForeignKey(name = "task_template_edge__from_task_template_fk"))
-    private TemplateTask fromTemplateTask;
+    @JoinColumn(name = "from_task_id", foreignKey = @ForeignKey(name = "task_template_edge__from_task_fk"))
+    private Task fromTask;
 
     @ManyToOne
-    @JoinColumn(foreignKey = @ForeignKey(name = "task_template_edge__to_task_template_fk"))
-    private TemplateTask toTemplateTask;
+    @JoinColumn(name = "to_task_id", foreignKey = @ForeignKey(name = "task_template_edge__to_task_fk"))
+    private Task toTask;
 
     public TemplateTaskEdge() {
     }
@@ -64,20 +65,20 @@ public class TemplateTaskEdge {
         this.templateScenarioAct = templateScenarioAct;
     }
 
-    public TemplateTask getFromTaskTemplate() {
-        return fromTemplateTask;
+    public Task getFromTask() {
+        return fromTask;
     }
 
-    public void setFromTaskTemplate(TemplateTask fromTemplateTask) {
-        this.fromTemplateTask = fromTemplateTask;
+    public void setFromTask(Task fromTask) {
+        this.fromTask = fromTask;
     }
 
-    public TemplateTask getToTaskTemplate() {
-        return toTemplateTask;
+    public Task getToTask() {
+        return toTask;
     }
 
-    public void setToTaskTemplate(TemplateTask toTemplateTask) {
-        this.toTemplateTask = toTemplateTask;
+    public void setToTask(Task toTask) {
+        this.toTask = toTask;
     }
 
     @Override
@@ -89,12 +90,12 @@ public class TemplateTaskEdge {
         TemplateTaskEdge that = (TemplateTaskEdge) o;
         return Objects.equals(getId(), that.getId())
                 && Objects.equals(getScenarioActTemplate(), that.getScenarioActTemplate())
-                && Objects.equals(getFromTaskTemplate(), that.getFromTaskTemplate())
-                && Objects.equals(getToTaskTemplate(), that.getToTaskTemplate());
+                && Objects.equals(getFromTask(), that.getFromTask())
+                && Objects.equals(getToTask(), that.getToTask());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getScenarioActTemplate(), getFromTaskTemplate(), getToTaskTemplate());
+        return Objects.hash(getId(), getScenarioActTemplate(), getFromTask(), getToTask());
     }
 }

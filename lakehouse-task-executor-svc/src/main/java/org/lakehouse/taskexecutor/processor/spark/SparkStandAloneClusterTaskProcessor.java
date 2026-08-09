@@ -18,6 +18,7 @@
 package org.lakehouse.taskexecutor.processor.spark;
 
 
+import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;
@@ -64,6 +65,19 @@ public class SparkStandAloneClusterTaskProcessor extends AbstractSparkDeployTask
         Map<String, String> sparkProperties = SparkConfUtil.extractSparkConFromTaskConf(
                 sourceConfDTO, scheduledTaskDTO);
 
+        sourceConfDTO.getDataSources().forEach((s, dataSourceDTO) -> {
+            if (dataSourceDTO.getDataSourceType().equals(Types.DataSourceType.database)){
+                String key = String.format("spark.sql.catalog.%s.url", dataSourceDTO.getKeyName());
+                if (!sparkProperties.containsKey(key)){
+                    sparkProperties.put(
+                            key,
+                            dataSourceDTO.getDatabaseProtocol().buildConnectionStringTemplate(
+                                    dataSourceDTO.getService().getHost(),
+                                    Integer.parseInt(dataSourceDTO.getService().getPort()),
+                                    dataSourceDTO.getService().getUrn()));
+                }
+            }
+        });
         ScheduledTaskDTO unSparkedTaskConfig = SparkConfUtil.unSparkConf(scheduledTaskDTO);
 
         DataSourceDTO dataSourceDTO = sourceConfDTO.getDataSourceDTOByDataSetKeyName(targetDataSetKeyName);

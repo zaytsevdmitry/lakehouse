@@ -41,6 +41,9 @@ public class Endpoint {
     public final static String DRIVERS = CONFIGS + "/drivers";
     public final static String DRIVERS_NAME = DRIVERS + "/{keyName}";
 
+    public final static String TASKS_TEMPLATE = CONFIGS + "/tasks";
+    public final static String TASKS_TEMPLATE_NAME = TASKS_TEMPLATE + "/{name}";
+
     public final static String DATA_SOURCES = CONFIGS + "/datasources";
     public final static String DATA_SOURCES_NAME = DATA_SOURCES + "/{keyName}";
 

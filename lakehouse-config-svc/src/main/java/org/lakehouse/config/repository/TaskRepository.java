@@ -1,13 +1,13 @@
 /*
  * "Lakehouse management tool" - the services set for managing data changes based on a metadata-driven approach
  * Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/lakehouse
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     https://www.apache.org/licenses/LICENSE-2.0.txt
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,11 +17,18 @@
 
 package org.lakehouse.config.repository;
 
-import org.lakehouse.config.entities.scenario.ScenarioActTaskProcessorArg;
+import org.lakehouse.config.entities.task.Task;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
-public interface ScenarioActTaskExecutionModuleArgRepository extends JpaRepository<ScenarioActTaskProcessorArg, Long> {
-    List<ScenarioActTaskProcessorArg> findByScenarioActTaskId(Long id);
+public interface TaskRepository extends JpaRepository<Task, Long> {
+
+    List<Task> findByScenarioActId(Long id);
+    List<Task> findByTemplateScenarioActIsNullAndScenarioActIsNull();
+    List<Task> findByTemplateScenarioActKeyName(String scenarioActTemplateName);
+    Optional<Task> findByNameAndTemplateScenarioActIsNullAndScenarioActIsNull(String name);
+    Optional<Task> findByScenarioActIdAndName(Long id, String name);
+    Optional<Task> findByTemplateScenarioActKeyNameAndName(String scenarioActTemplateName, String name);
 }

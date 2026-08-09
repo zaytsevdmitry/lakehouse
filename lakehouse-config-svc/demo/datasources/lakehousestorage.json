@@ -16,4 +16,3 @@
   "dataSourceType" : "iceberg",
   "databaseProtocol": "s3"
 }
-

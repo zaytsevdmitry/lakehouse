@@ -23,8 +23,7 @@ import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.config.entities.KeyValueAbstract;
 import org.lakehouse.config.entities.SQLTemplate;
 import org.lakehouse.config.entities.datasource.Driver;
-import org.lakehouse.config.entities.scenario.ScenarioActTask;
-import org.lakehouse.config.entities.templates.TemplateTask;
+import org.lakehouse.config.entities.task.Task;
 import org.lakehouse.config.exception.ConfigCorruptException;
 import org.lakehouse.config.mapper.keyvalue.KeyValueEntityMerger;
 import org.lakehouse.config.repository.SQLTemplateRepository;
@@ -48,40 +47,31 @@ public class SQLTemplateService {
         save(sqlTemplateRepository
                         .findByDriverKeyName(driver.getKeyName()),
                 sqlTemplateDTO
-                ,driver,null,null
+                ,driver,null
         );
     }
-    public void save(ScenarioActTask scenarioActTask, SQLTemplateDTO sqlTemplateDTO) {
+    public void save(Task task, SQLTemplateDTO sqlTemplateDTO) {
         save(sqlTemplateRepository
-                .findByScenarioActTaskId(scenarioActTask.getId()),
+                .findByTaskId(task.getId()),
                 sqlTemplateDTO,
-                null,scenarioActTask,null);
-    }
-    public void save(TemplateTask templateTask,SQLTemplateDTO sqlTemplateDTO) {
-        save(sqlTemplateRepository
-                        .findByTemplateTaskId(templateTask.getId()),
-                sqlTemplateDTO,
-                null,null,templateTask);
+                null,task);
     }
     private void save(
             List<SQLTemplate> sqlTemplates,
             SQLTemplateDTO sqlTemplateDTO,
             Driver driver,
-            ScenarioActTask scenarioActTask,
-            TemplateTask templateTask) {
+            Task task) {
         //clean up if sqlTemplateDTO null
         if (sqlTemplateDTO == null) {
             if (driver != null)
                 sqlTemplateRepository.deleteAll(sqlTemplateRepository.findByDriverKeyName(driver.getKeyName()));
-            if (scenarioActTask != null)
-                sqlTemplateRepository.deleteAll(sqlTemplateRepository.findByScenarioActTaskId(scenarioActTask.getId()));
-            if (templateTask != null)
-                sqlTemplateRepository.deleteAll(sqlTemplateRepository.findByTemplateTaskId(templateTask.getId()));
+            if (task != null)
+                sqlTemplateRepository.deleteAll(sqlTemplateRepository.findByTaskId(task.getId()));
         }
         else {
             try {
                 new KeyValueEntityMerger(
-                        new SQLTemplateEntitySpecifier(sqlTemplateRepository, driver, scenarioActTask, templateTask))
+                        new SQLTemplateEntitySpecifier(sqlTemplateRepository, driver, task))
                         .mergeAbstractKeyValues(
                                 sqlTemplates
                                         .stream()
@@ -118,11 +108,8 @@ public class SQLTemplateService {
     public SQLTemplateDTO getSqlTemplateDTO(Driver driver)  {
         return mapSQSqlTemplateToDTO(sqlTemplateRepository.findByDriverKeyName(driver.getKeyName()));
     }
-    public SQLTemplateDTO getSqlTemplateDTO(TemplateTask templateTask)  {
-        return mapSQSqlTemplateToDTO(sqlTemplateRepository.findByTemplateTaskId(templateTask.getId()));
-    }
-    public SQLTemplateDTO getSqlTemplateDTO(ScenarioActTask scenarioActTask)  {
-        return mapSQSqlTemplateToDTO(sqlTemplateRepository.findByScenarioActTaskId(scenarioActTask.getId()));
+    public SQLTemplateDTO getSqlTemplateDTO(Task task)  {
+        return mapSQSqlTemplateToDTO(sqlTemplateRepository.findByTaskId(task.getId()));
     }
 
 }

@@ -1,0 +1,10 @@
+{
+  "name": "prepareJdbc",
+  "taskExecutionServiceGroupName": "database",
+  "taskProcessor": "jdbcTaskProcessor",
+  "taskProcessorBody": "createTableSQLProcessorBody",
+  "importance": "critical",
+  "description": "Create table if not exists",
+  "driverKeyName": "postgres",
+  "executionModuleArgs": {}
+}

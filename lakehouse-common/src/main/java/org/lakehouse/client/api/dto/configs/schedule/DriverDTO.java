@@ -15,13 +15,10 @@
  * limitations under the License.
  */
 
-package org.lakehouse.client.api.dto.configs.datasource;
+package org.lakehouse.client.api.dto.configs.schedule;
 
-import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.common.SQLTemplateDTO;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 public class DriverDTO {

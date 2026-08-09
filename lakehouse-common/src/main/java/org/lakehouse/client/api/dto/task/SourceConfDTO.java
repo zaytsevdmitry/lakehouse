@@ -20,7 +20,6 @@ package org.lakehouse.client.api.dto.task;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
-import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
 
 import java.util.HashMap;
 import java.util.Map;

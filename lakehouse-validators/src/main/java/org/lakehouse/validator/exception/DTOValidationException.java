@@ -33,7 +33,7 @@ public class DTOValidationException extends RuntimeException {
     public DTOValidationException(List<String> strings) {
 
         super(String.join("\n", strings));
-        logger.error(strings.stream().collect(Collectors.joining("\n")));
+        logger.error(strings.stream().collect(Collectors.joining(".\n")));
 
     }
 
