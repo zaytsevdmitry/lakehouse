@@ -432,7 +432,7 @@ public class TestWithPostgres {
         ScheduleScenarioActDTO emptyScenario = new ScheduleScenarioActDTO();
         emptyScenario.setIntervalStart("1");
         emptyScenario.setIntervalEnd("2");
-        emptyScenario.setDataSet(dto.getKeyName());
+        emptyScenario.setDataSetKeyName(dto.getKeyName());
         scheduleDTO.setScenarioActs(Set.of(emptyScenario));
         scheduleDTO.setScenarioActEdges(new HashSet<>());
         scheduleDTO.setIntervalExpression("*****");
@@ -1010,7 +1010,7 @@ public class TestWithPostgres {
         Endpoint.SCHEDULED_TASKS_LOCK_HEARTBEAT,
         Endpoint.SCHEDULED_TASKS_ID,
         Endpoint.STATE,
-        Endpoint.STATE_DATASET,
+        Endpoint.STATE_DATASET_WRONG,
         Endpoint.TASK_EXECUTOR,
         Endpoint.TASK_EXECUTOR_PROCESSOR,
         Endpoint.TASK_EXECUTOR_PROCESSOR_CONFIG,

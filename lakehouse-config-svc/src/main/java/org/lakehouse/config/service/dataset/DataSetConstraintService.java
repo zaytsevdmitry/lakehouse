@@ -141,8 +141,10 @@ public class DataSetConstraintService {
             if (dataSetConstraint.getType().equals(Types.Constraint.foreign)) {
                 ForeignKeyReferenceDTO foreignKeyReferenceDTO = new ForeignKeyReferenceDTO();
                 foreignKeyReferenceRepository.findByDataSetConstraintId(dataSetConstraint.getId()).ifPresent(foreignKeyReference -> {
-                    foreignKeyReferenceDTO.setDataSetKeyName(foreignKeyReference.getDataSetConstraint().getDataSet().getKeyName());
-                    foreignKeyReferenceDTO.setConstraintName(foreignKeyReference.getDataSetConstraint().getName());
+                    foreignKeyReferenceDTO.setDataSetKeyName(
+                            foreignKeyReference.getRefDataSetConstraint().getDataSet().getKeyName());
+                    foreignKeyReferenceDTO.setConstraintName(
+                            foreignKeyReference.getRefDataSetConstraint().getName());
                     foreignKeyReferenceDTO.setOnDelete(foreignKeyReference.getOnDelete());
                     foreignKeyReferenceDTO.setOnUpdate(foreignKeyReference.getOnUpdate());
                     result.setReference(foreignKeyReferenceDTO);

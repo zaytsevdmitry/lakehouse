@@ -70,4 +70,12 @@ public interface ScheduleInstanceRepository extends JpaRepository<ScheduleInstan
             """)
     List<ScheduleInstance> findByScheduleNameNotSuccessOrderByTargetExecutionDateTimeAsc(String scheduleName,
                                                                                          Limit limit);
+
+    @Query("""
+            select si\s
+            from ScheduleInstance si\s
+            where si.targetExecutionDateTime >= ?1
+            and si.targetExecutionDateTime <= ?2
+            order by si.targetExecutionDateTime desc""")
+    List<ScheduleInstance> findAllByTargetExecutionDateTimeBetween(OffsetDateTime start, OffsetDateTime end);
 }

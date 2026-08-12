@@ -32,7 +32,8 @@ public class Endpoint {
     public final static String SCRIPT_BY_KEY = CONFIGS + "/scripts/{key}";
 
     public final static String DATA_SETS = CONFIGS + "/datasets";
-    public final static String DATA_SETS_NAME = CONFIGS + "/datasets" + "/{keyName}";
+    public final static String DATA_SETS_NAME = CONFIGS + DATA_SETS + "/{keyName}";
+    public final static String DATA_LINEAGE_DATASET = CONFIGS + "/lineage" + DATA_SETS + "/{keyName}";
 
     public final static String QUALITY_METRICS = CONFIGS + "/quality/metrics";
     public final static String QUALITY_METRICS_NAME = QUALITY_METRICS + "/{keyName}";
@@ -66,6 +67,8 @@ public class Endpoint {
     public final static String SCHEDULE = ROOT_API_V1_0 + "/schedule";
     public final static String SCHEDULE_NAME = ROOT_API_V1_0 + "/schedule/name={name}/limit={limit}";
     public final static String SCHEDULE_ID = ROOT_API_V1_0 + "/schedule/id={id}";
+    public final static String SCHEDULE_DAG = ROOT_API_V1_0 + "/schedule/dag";
+    public final static String SCHEDULE_DAG_ID = SCHEDULE_DAG + "/id={id}";
     public final static String TASKS = ROOT_API_V1_0 + "/tasks";
     public final static String SCHEDULED_TASKS = TASKS + "/scheduledtasks";
     public final static String SCHEDULED_TASKS_LOCK_BY_ID = SCHEDULED_TASKS + "/lock/taskId/{id}/service/{serviceId}";
@@ -77,6 +80,7 @@ public class Endpoint {
 // state-svc
     public final static String STATE = ROOT_API_V1_0 + "/state";
     public final static String STATE_DATASET = STATE + "/dataset";
+    public final static String STATE_DATASET_WRONG = STATE + "/dataset/wrong";
 //task executor-svc
     public final static String TASK_EXECUTOR = ROOT_API_V1_0 + "/taskexecutor";
     public final static String TASK_EXECUTOR_PROCESSOR = TASK_EXECUTOR + "/processor";

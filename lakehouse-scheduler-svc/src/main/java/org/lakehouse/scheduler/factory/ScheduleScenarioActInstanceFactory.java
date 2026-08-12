@@ -29,7 +29,7 @@ public class ScheduleScenarioActInstanceFactory {
         ScheduleScenarioActInstance result = new ScheduleScenarioActInstance();
         result.setName(scheduleScenarioActEffectiveDTO.getName());
         result.setScheduleInstance(scheduleInstance);
-        result.setConfDataSetKeyName(scheduleScenarioActEffectiveDTO.getDataSet());
+        result.setConfDataSetKeyName(scheduleScenarioActEffectiveDTO.getDataSetKeyName());
         result.setStatus(Status.ScenarioAct.NEW);
         return result;
     }

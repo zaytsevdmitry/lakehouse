@@ -99,7 +99,7 @@ public class ScheduleConfValidator {
                                             .map(TaskDTO::getName)
                                             .collect(Collectors.toSet()),
                                     ssa.getDagEdges()));
-            if (ssa.getDataSet() == null || ssa.getDataSet().isEmpty())
+            if (ssa.getDataSetKeyName() == null || ssa.getDataSetKeyName().isEmpty())
                 descriptions.add(String.format("Error %S.%S. DataSet key name is empty", scheduleDTO.getKeyName(), ssa.getName()));
 
             if (ssa.getIntervalStart() == null || ssa.getIntervalStart().isEmpty())

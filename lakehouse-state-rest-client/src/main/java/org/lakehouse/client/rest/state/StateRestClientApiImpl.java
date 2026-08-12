@@ -20,8 +20,14 @@ package org.lakehouse.client.rest.state;
 import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.api.dto.state.DataSetIntervalDTO;
 import org.lakehouse.client.api.dto.state.DataSetStateDTO;
-import org.lakehouse.client.api.dto.state.DataSetStateResponseDTO;
+import org.lakehouse.client.api.dto.state.DataSetWrongStateResponseDTO;
 import org.lakehouse.client.rest.RestClientHelper;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 
 
 public class StateRestClientApiImpl implements StateRestClientApi {
@@ -39,15 +45,21 @@ public class StateRestClientApiImpl implements StateRestClientApi {
     }
 
     @Override
-    public DataSetStateResponseDTO getDataSetStateResponseDTO(DataSetIntervalDTO dataSetIntervalDTO) {
+    public DataSetWrongStateResponseDTO getDataSetStateResponseDTO(DataSetIntervalDTO dataSetIntervalDTO) {
         return restClientHelper.getDtoOne(
                 dataSetIntervalDTO,
-				/*Map.of(
-						"dataSetKeyName",dataSetIntervalDTO.getDataSetKeyName(),
-						"intervalStartDateTime", dataSetIntervalDTO.getIntervalStartDateTime(),
-						"intervalEndDateTime", dataSetIntervalDTO.getIntervalEndDateTime()
-				),*/
-                Endpoint.STATE_DATASET,
-                DataSetStateResponseDTO.class);
+                Endpoint.STATE_DATASET_WRONG,
+                DataSetWrongStateResponseDTO.class);
+    }
+
+    @Override
+    public List<DataSetStateDTO> getStatesByDataSetAndInterval(DataSetIntervalDTO dataSetIntervalDTO) {
+        return Arrays.asList(Objects.requireNonNull(restClientHelper.getRestClient()
+                .method(HttpMethod.GET)
+                .uri(Endpoint.STATE_DATASET)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(dataSetIntervalDTO)
+                .retrieve()
+                .body(DataSetStateDTO[].class)));
     }
 }

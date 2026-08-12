@@ -17,13 +17,12 @@
 package org.lakehouse.ui.service;
 
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
-import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
-import org.lakehouse.client.api.dto.configs.datasource.ServiceDTO;
+import org.lakehouse.client.api.dto.configs.dataset.DataSetLineageDTO;
+import org.lakehouse.client.api.dto.configs.dataset.DataSetConstraintDTO;
+import org.lakehouse.client.api.dto.configs.dataset.ForeignKeyReferenceDTO;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
-import org.lakehouse.ui.dto.CatalogNodeDTO;
-import org.lakehouse.ui.dto.DataSetNodeDTO;
-import org.lakehouse.ui.dto.DataSourceNodeDTO;
-import org.lakehouse.ui.dto.ServiceInfoDTO;
+import org.lakehouse.ui.dto.CatalogTreeNodeDTO;
+import org.lakehouse.ui.dto.ConstraintDTO;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -31,6 +30,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 public class CatalogService {
@@ -41,70 +41,122 @@ public class CatalogService {
         this.configRestClientApi = configRestClientApi;
     }
 
-    public List<CatalogNodeDTO> getCatalogTree() {
-        List<DataSourceDTO> dataSources = configRestClientApi.getDataSourceDTOList();
+    public List<CatalogTreeNodeDTO> getCatalogTree() {
         List<DataSetDTO> dataSets = configRestClientApi.getDataSetDTOList();
 
-        Map<String, DataSourceNodeDTO> dataSourceByKeyName = new LinkedHashMap<>();
-        for (DataSourceDTO dataSource : dataSources) {
-            dataSourceByKeyName.put(dataSource.getKeyName(), toDataSourceNodeDTO(dataSource));
+        Map<String, CatalogTreeNodeDTO> dataSourceByKeyName = new LinkedHashMap<>();
+        for (DataSetDTO dataSet : dataSets) {
+            dataSourceByKeyName
+                    .computeIfAbsent(dataSet.getDataSourceKeyName(), keyName -> {
+                        CatalogTreeNodeDTO node = new CatalogTreeNodeDTO();
+                        node.setKeyName(keyName);
+                        return node;
+                    });
         }
 
         for (DataSetDTO dataSet : dataSets) {
-            DataSourceNodeDTO owner = dataSourceByKeyName.get(dataSet.getDataSourceKeyName());
-            if (owner != null) {
-                owner.getDataSets().add(toDataSetNodeDTO(dataSet));
+            CatalogTreeNodeDTO dataSourceNode = dataSourceByKeyName.get(dataSet.getDataSourceKeyName());
+            if (dataSourceNode == null) {
+                continue;
             }
+            CatalogTreeNodeDTO schemaNode = dataSourceNode.getChildren().stream()
+                    .filter(node -> Objects.equals(node.getDatabaseSchemaName(), dataSet.getDatabaseSchemaName()))
+                    .findFirst()
+                    .orElse(null);
+            if (schemaNode == null) {
+                schemaNode = new CatalogTreeNodeDTO();
+                schemaNode.setKeyName(dataSet.getDatabaseSchemaName());
+                schemaNode.setDatabaseSchemaName(dataSet.getDatabaseSchemaName());
+                schemaNode.setDataSourceKeyName(dataSet.getDataSourceKeyName());
+                dataSourceNode.getChildren().add(schemaNode);
+            }
+            CatalogTreeNodeDTO tableNode = new CatalogTreeNodeDTO();
+            tableNode.setKeyName(dataSet.getKeyName());
+            tableNode.setTableName(dataSet.getTableName());
+            tableNode.setDatabaseSchemaName(dataSet.getDatabaseSchemaName());
+            tableNode.setDataSourceKeyName(dataSet.getDataSourceKeyName());
+            schemaNode.getChildren().add(tableNode);
         }
 
-        Map<String, CatalogNodeDTO> catalogByKeyName = new LinkedHashMap<>();
-        for (DataSourceNodeDTO node : dataSourceByKeyName.values()) {
-            DataSourceDTO dataSource = findDataSource(dataSources, node.getKeyName());
-            String catalogKeyName = dataSource != null && dataSource.getKeyName() != null
-                    ? dataSource.getKeyName() : "default";
-            catalogByKeyName
-                    .computeIfAbsent(catalogKeyName, CatalogNodeDTO::new)
-                    .getDataSources()
-                    .add(node);
+        List<CatalogTreeNodeDTO> result = new ArrayList<>(dataSourceByKeyName.values());
+        for (CatalogTreeNodeDTO dataSourceNode : result) {
+            dataSourceNode.getChildren().sort(Comparator.comparing(
+                    CatalogTreeNodeDTO::getDatabaseSchemaName, Comparator.nullsLast(String::compareTo)));
+            for (CatalogTreeNodeDTO schemaNode : dataSourceNode.getChildren()) {
+                schemaNode.setBadge(schemaNode.getChildren().size());
+                schemaNode.getChildren().sort(
+                        Comparator.comparing(CatalogTreeNodeDTO::getTableName, Comparator.nullsLast(String::compareTo))
+                                .thenComparing(CatalogTreeNodeDTO::getKeyName, Comparator.nullsLast(String::compareTo)));
+            }
+            dataSourceNode.setBadge(dataSourceNode.getChildren().size());
         }
-
-        List<CatalogNodeDTO> result = new ArrayList<>(catalogByKeyName.values());
-        result.sort(Comparator.comparing(CatalogNodeDTO::getCatalogKeyName, Comparator.nullsLast(String::compareTo)));
-        result.forEach(CatalogService::sortNode);
+        result.sort(Comparator.comparing(CatalogTreeNodeDTO::getKeyName, Comparator.nullsLast(String::compareTo)));
         return result;
     }
 
-    private DataSourceNodeDTO toDataSourceNodeDTO(DataSourceDTO dataSource) {
-        DataSourceNodeDTO node = new DataSourceNodeDTO();
-        node.setKeyName(dataSource.getKeyName());
-        node.setDescription(dataSource.getDescription());
-        ServiceDTO service = dataSource.getService();
-        if (service != null) {
-            node.setService(new ServiceInfoDTO(service.getHost(), service.getPort(), service.getUrn()));
+    public DataSetDTO getDataSet(String keyName) {
+        return configRestClientApi.getDataSetDTO(keyName);
+    }
+
+    public DataSetLineageDTO getLineage(String keyName) {
+        return configRestClientApi.getDataSetLineageDTO(keyName);
+    }
+
+    public List<ConstraintDTO> getConstraints(String keyName) {
+        DataSetDTO dataSet = configRestClientApi.getDataSetDTO(keyName);
+        if (dataSet == null || dataSet.getConstraints() == null) {
+            return List.of();
         }
-        return node;
+
+        List<ConstraintDTO> result = new ArrayList<>();
+        dataSet.getConstraints().forEach((name, constraint) -> {
+            ConstraintDTO dto = new ConstraintDTO();
+            dto.setName(name);
+            if (constraint.getType() != null) {
+                dto.setType(constraint.getType().toString());
+            }
+            dto.setColumns(constraint.getColumns());
+            dto.setEnabled(constraint.isEnabled());
+            if (constraint.getConstraintLevelCheck() != null) {
+                dto.setConstraintLevelCheck(constraint.getConstraintLevelCheck().toString());
+            }
+            dto.setCheckExpr(constraint.getCheckExpr());
+            dto.setTableConstraintDDLCreateOverride(constraint.getTableConstraintDDLCreateOverride());
+            dto.setTableConstraintDDLAddOverride(constraint.getTableConstraintDDLAddOverride());
+
+            ForeignKeyReferenceDTO reference = constraint.getReference();
+            if (reference != null) {
+                dto.setReferenceConstraintName(reference.getConstraintName());
+                if (reference.getOnDelete() != null) {
+                    dto.setOnDelete(reference.getOnDelete().getValue());
+                }
+                if (reference.getOnUpdate() != null) {
+                    dto.setOnUpdate(reference.getOnUpdate().getValue());
+                }
+                DataSetDTO referenced = configRestClientApi.getDataSetDTO(reference.getDataSetKeyName());
+                if (referenced != null) {
+                    dto.setReferencedTable(joinKey(
+                            referenced.getDataSourceKeyName(),
+                            referenced.getDatabaseSchemaName(),
+                            referenced.getTableName()));
+                }
+            }
+            result.add(dto);
+        });
+        return result;
     }
 
-    private DataSetNodeDTO toDataSetNodeDTO(DataSetDTO dataSet) {
-        DataSetNodeDTO node = new DataSetNodeDTO();
-        node.setKeyName(dataSet.getKeyName());
-        node.setNameSpaceKeyName(dataSet.getNameSpaceKeyName());
-        node.setDatabaseSchemaName(dataSet.getDatabaseSchemaName());
-        node.setTableName(dataSet.getTableName());
-        node.setDescription(dataSet.getDescription());
-        return node;
-    }
-
-    private DataSourceDTO findDataSource(List<DataSourceDTO> dataSources, String keyName) {
-        return dataSources.stream()
-                .filter(ds -> keyName.equals(ds.getKeyName()))
-                .findFirst()
-                .orElse(null);
-    }
-
-    private static void sortNode(CatalogNodeDTO catalog) {
-        catalog.getDataSources().sort(Comparator.comparing(DataSourceNodeDTO::getKeyName, Comparator.nullsLast(String::compareTo)));
-        catalog.getDataSources().forEach(ds -> ds.getDataSets().sort(
-                Comparator.comparing(DataSetNodeDTO::getKeyName, Comparator.nullsLast(String::compareTo))));
+    private String joinKey(String... parts) {
+        StringBuilder sb = new StringBuilder();
+        for (String part : parts) {
+            if (part == null || part.isEmpty()) {
+                continue;
+            }
+            if (sb.length() > 0) {
+                sb.append('.');
+            }
+            sb.append(part);
+        }
+        return sb.toString();
     }
 }

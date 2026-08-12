@@ -17,15 +17,17 @@
 package org.lakehouse.ui.service;
 
 import org.junit.jupiter.api.Test;
+import org.lakehouse.client.api.constant.Types;
+import org.lakehouse.client.api.dto.configs.dataset.DataSetConstraintDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
-import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
-import org.lakehouse.client.api.dto.configs.datasource.ServiceDTO;
+import org.lakehouse.client.api.dto.configs.dataset.ForeignKeyReferenceDTO;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
-import org.lakehouse.ui.dto.CatalogNodeDTO;
-import org.lakehouse.ui.dto.DataSetNodeDTO;
-import org.lakehouse.ui.dto.DataSourceNodeDTO;
+import org.lakehouse.ui.dto.CatalogTreeNodeDTO;
+import org.lakehouse.ui.dto.ConstraintDTO;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -34,47 +36,104 @@ import static org.mockito.Mockito.when;
 class CatalogServiceTest {
 
     @Test
-    void buildsCatalogTreeGroupingDataSourcesByCatalogAndDataSetsByDataSource() {
+    void buildsCatalogTreeGroupingByDataSourceSchemaAndTable() {
         ConfigRestClientApi api = mock(ConfigRestClientApi.class);
 
-        DataSourceDTO lakehouseStorage = dataSource("lakehousestorage", "127.0.0.1", "5432", "lakehouse");
-        DataSourceDTO demo = dataSource("demo", "127.0.0.1", "5432", "demo");
-        when(api.getDataSourceDTOList()).thenReturn(List.of(demo, lakehouseStorage));
-
         DataSetDTO transaction = dataSet("transaction_processing", "demo", "public", "transaction_t");
-        when(api.getDataSetDTOList()).thenReturn(List.of(transaction));
+        DataSetDTO order = dataSet("order_processing", "demo", "public", "order_t");
+        DataSetDTO item = dataSet("item_processing", "demo", "internal", "item_t");
+        when(api.getDataSetDTOList()).thenReturn(List.of(order, item, transaction));
 
-        List<CatalogNodeDTO> tree = new CatalogService(api).getCatalogTree();
+        List<CatalogTreeNodeDTO> tree = new CatalogService(api).getCatalogTree();
 
-        assertThat(tree).hasSize(2);
-        CatalogNodeDTO demoCatalog = tree.get(0);
-        assertThat(demoCatalog.getCatalogKeyName()).isEqualTo("demo");
-        assertThat(demoCatalog.getDataSources()).hasSize(1);
-        DataSourceNodeDTO demoDs = demoCatalog.getDataSources().get(0);
-        assertThat(demoDs.getKeyName()).isEqualTo("demo");
-        assertThat(demoDs.getService().getHost()).isEqualTo("127.0.0.1");
-        assertThat(demoDs.getService().getPort()).isEqualTo("5432");
-        assertThat(demoDs.getDataSets()).hasSize(1);
-        DataSetNodeDTO dataset = demoDs.getDataSets().get(0);
-        assertThat(dataset.getKeyName()).isEqualTo("transaction_processing");
-        assertThat(dataset.getTableName()).isEqualTo("transaction_t");
+        assertThat(tree).hasSize(1);
+        CatalogTreeNodeDTO demoDataSource = tree.get(0);
+        assertThat(demoDataSource.getKeyName()).isEqualTo("demo");
+        assertThat(demoDataSource.getBadge()).isEqualTo(2);
 
-        CatalogNodeDTO lakehouseCatalog = tree.get(1);
-        assertThat(lakehouseCatalog.getCatalogKeyName()).isEqualTo("lakehousestorage");
-        DataSourceNodeDTO lakehouseDs = lakehouseCatalog.getDataSources().get(0);
-        assertThat(lakehouseDs.getKeyName()).isEqualTo("lakehousestorage");
-        assertThat(lakehouseDs.getDataSets()).isEmpty();
+        CatalogTreeNodeDTO internalSchema = demoDataSource.getChildren().get(0);
+        assertThat(internalSchema.getDatabaseSchemaName()).isEqualTo("internal");
+        assertThat(internalSchema.getDataSourceKeyName()).isEqualTo("demo");
+        assertThat(internalSchema.getBadge()).isEqualTo(1);
+        assertThat(internalSchema.getChildren()).hasSize(1);
+        assertThat(internalSchema.getChildren().get(0).getTableName()).isEqualTo("item_t");
+
+        CatalogTreeNodeDTO publicSchema = demoDataSource.getChildren().get(1);
+        assertThat(publicSchema.getDatabaseSchemaName()).isEqualTo("public");
+        assertThat(publicSchema.getBadge()).isEqualTo(2);
+        assertThat(publicSchema.getChildren()).extracting(CatalogTreeNodeDTO::getTableName)
+                .containsExactly("order_t", "transaction_t");
     }
 
-    private DataSourceDTO dataSource(String keyName, String host, String port, String urn) {
-        DataSourceDTO dto = new DataSourceDTO();
-        dto.setKeyName(keyName);
-        ServiceDTO serviceDTO = new ServiceDTO();
-        serviceDTO.setHost(host);
-        serviceDTO.setPort(port);
-        serviceDTO.setUrn(urn);
-        dto.setService(serviceDTO);
-        return dto;
+    @Test
+    void buildsEmptyTreeWhenNoDataSetsConfigured() {
+        ConfigRestClientApi api = mock(ConfigRestClientApi.class);
+        when(api.getDataSetDTOList()).thenReturn(List.of());
+
+        List<CatalogTreeNodeDTO> tree = new CatalogService(api).getCatalogTree();
+
+        assertThat(tree).isEmpty();
+    }
+
+    @Test
+    void buildsConstraintRowsFlatteningReferenceIntoReferencedTable() {
+        ConfigRestClientApi api = mock(ConfigRestClientApi.class);
+
+        DataSetDTO order = dataSet("order_processing", "demo", "public", "order_t");
+        DataSetConstraintDTO pk = new DataSetConstraintDTO();
+        pk.setType(Types.Constraint.primary);
+        pk.setColumns("order_id");
+        pk.setConstraintLevelCheck(Types.ConstraintLevelCheck.construct);
+
+        DataSetConstraintDTO fk = new DataSetConstraintDTO();
+        fk.setType(Types.Constraint.foreign);
+        fk.setColumns("customer_id");
+        fk.setConstraintLevelCheck(Types.ConstraintLevelCheck.none);
+        ForeignKeyReferenceDTO reference = new ForeignKeyReferenceDTO();
+        reference.setDataSetKeyName("customer_processing");
+        reference.setConstraintName("pk_customer");
+        reference.setOnDelete(Types.ReferenceAction.CASCADE);
+        reference.setOnUpdate(Types.ReferenceAction.NO_ACTION);
+        fk.setReference(reference);
+
+        Map<String, DataSetConstraintDTO> constraints = new LinkedHashMap<>();
+        constraints.put("pk_order", pk);
+        constraints.put("fk_order_customer", fk);
+        order.setConstraints(constraints);
+
+        DataSetDTO customer = dataSet("customer_processing", "demo", "public", "customer_t");
+        when(api.getDataSetDTO("order_processing")).thenReturn(order);
+        when(api.getDataSetDTO("customer_processing")).thenReturn(customer);
+
+        List<ConstraintDTO> rows = new CatalogService(api).getConstraints("order_processing");
+
+        assertThat(rows).hasSize(2);
+        ConstraintDTO pkRow = rows.get(0);
+        assertThat(pkRow.getName()).isEqualTo("pk_order");
+        assertThat(pkRow.getType()).isEqualTo("primary");
+        assertThat(pkRow.getColumns()).isEqualTo("order_id");
+        assertThat(pkRow.isEnabled()).isTrue();
+        assertThat(pkRow.getConstraintLevelCheck()).isEqualTo("construct");
+        assertThat(pkRow.getReferencedTable()).isNull();
+
+        ConstraintDTO fkRow = rows.get(1);
+        assertThat(fkRow.getName()).isEqualTo("fk_order_customer");
+        assertThat(fkRow.getType()).isEqualTo("foreign");
+        assertThat(fkRow.getConstraintLevelCheck()).isEqualTo("none");
+        assertThat(fkRow.getReferencedTable()).isEqualTo("demo.public.customer_t");
+        assertThat(fkRow.getReferenceConstraintName()).isEqualTo("pk_customer");
+        assertThat(fkRow.getOnDelete()).isEqualTo("CASCADE");
+        assertThat(fkRow.getOnUpdate()).isEqualTo("NO ACTION");
+    }
+
+    @Test
+    void returnsEmptyConstraintsWhenDataSetHasNoConstraints() {
+        ConfigRestClientApi api = mock(ConfigRestClientApi.class);
+        when(api.getDataSetDTO("order_processing")).thenReturn(dataSet("order_processing", "demo", "public", "order_t"));
+
+        List<ConstraintDTO> rows = new CatalogService(api).getConstraints("order_processing");
+
+        assertThat(rows).isEmpty();
     }
 
     private DataSetDTO dataSet(String keyName, String dataSourceKeyName, String schema, String table) {

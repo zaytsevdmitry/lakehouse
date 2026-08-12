@@ -18,7 +18,8 @@
 package org.lakehouse.state.service;
 
 import org.lakehouse.client.api.constant.Status;
-import org.lakehouse.client.api.dto.state.DataSetStateResponseDTO;
+import org.lakehouse.client.api.dto.state.DataSetStateDTO;
+import org.lakehouse.client.api.dto.state.DataSetWrongStateResponseDTO;
 import org.lakehouse.state.entity.DataSetState;
 import org.lakehouse.state.exception.LockedStateRuntimeException;
 import org.lakehouse.state.factory.MergeResult;
@@ -31,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -95,12 +97,22 @@ public class StateService {
 
     }
 
-    public DataSetStateResponseDTO getStateByInterval(
+    public List<DataSetStateDTO>  getStatesByDataSetAndInterval(
+            String dataSetKeyName,
+            OffsetDateTime intervalStartDateTime,
+            OffsetDateTime intervalEndDateTime) {
+        return dataSetStateRepository
+                .findIntersection(dataSetKeyName,intervalStartDateTime,intervalEndDateTime)
+                .stream()
+                .map(StateMapper::getDataSetStateDTO)
+                .toList();
+    }
+        public DataSetWrongStateResponseDTO getWrongStateByInterval(
             String dataSetKeyName,
             OffsetDateTime intervalStartDateTime,
             OffsetDateTime intervalEndDateTime) {
 
-        DataSetStateResponseDTO result = new DataSetStateResponseDTO();
+        DataSetWrongStateResponseDTO result = new DataSetWrongStateResponseDTO();
 
         List<DataSetState> dataSetStates = dataSetStateRepository
                 .findIntersection(

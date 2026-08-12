@@ -22,10 +22,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class DataSetStateResponseDTO {
+public class DataSetWrongStateResponseDTO {
     private List<DataSetStateDTO> wrongStates = new ArrayList<>();
 
-    public DataSetStateResponseDTO() {
+    public DataSetWrongStateResponseDTO() {
 
     }
 
@@ -41,7 +41,7 @@ public class DataSetStateResponseDTO {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        DataSetStateResponseDTO that = (DataSetStateResponseDTO) o;
+        DataSetWrongStateResponseDTO that = (DataSetWrongStateResponseDTO) o;
         return Objects.equals(getWrongStates(), that.getWrongStates());
     }
 

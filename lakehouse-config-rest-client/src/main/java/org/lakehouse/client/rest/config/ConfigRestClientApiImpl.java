@@ -20,6 +20,7 @@ package org.lakehouse.client.rest.config;
 import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
+import org.lakehouse.client.api.dto.configs.dataset.DataSetLineageDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.configs.schedule.DriverDTO;
 import org.lakehouse.client.api.dto.configs.dq.QualityMetricsConfDTO;
@@ -59,6 +60,11 @@ public class ConfigRestClientApiImpl extends ConfigRestClientApiAbstract {
 
     public DataSetDTO getDataSetDTO(String keyName) {
         return restClientHelper.getDtoOne(keyName, Endpoint.DATA_SETS_NAME, DataSetDTO.class);
+    }
+
+    @Override
+    public DataSetLineageDTO getDataSetLineageDTO(String keyName) {
+        return restClientHelper.getDtoOne(keyName, Endpoint.DATA_LINEAGE_DATASET, DataSetLineageDTO.class);
     }
 
     public ScenarioActTemplateDTO getScenarioActTemplateDTO(String keyName) {

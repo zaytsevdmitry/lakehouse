@@ -16,9 +16,13 @@
  */
 package org.lakehouse.ui.controller;
 
-import org.lakehouse.ui.dto.CatalogNodeDTO;
+import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
+import org.lakehouse.client.api.dto.configs.dataset.DataSetLineageDTO;
+import org.lakehouse.ui.dto.CatalogTreeNodeDTO;
+import org.lakehouse.ui.dto.ConstraintDTO;
 import org.lakehouse.ui.service.CatalogService;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -35,7 +39,22 @@ public class CatalogController {
     }
 
     @GetMapping("/tree")
-    public List<CatalogNodeDTO> getCatalogTree() {
+    public List<CatalogTreeNodeDTO> getCatalogTree() {
         return catalogService.getCatalogTree();
+    }
+
+    @GetMapping("/dataset/{keyName}")
+    public DataSetDTO getDataSet(@PathVariable String keyName) {
+        return catalogService.getDataSet(keyName);
+    }
+
+    @GetMapping("/dataset/{keyName}/lineage")
+    public DataSetLineageDTO getLineage(@PathVariable String keyName) {
+        return catalogService.getLineage(keyName);
+    }
+
+    @GetMapping("/dataset/{keyName}/constraints")
+    public List<ConstraintDTO> getConstraints(@PathVariable String keyName) {
+        return catalogService.getConstraints(keyName);
     }
 }

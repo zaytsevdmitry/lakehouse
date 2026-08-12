@@ -22,6 +22,7 @@ import org.lakehouse.client.api.constant.SystemVarKeys;
 import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
 import org.lakehouse.client.api.dto.configs.ScriptReferenceDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
+import org.lakehouse.client.api.dto.configs.dataset.DataSetLineageDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.configs.schedule.DriverDTO;
 import org.lakehouse.client.api.dto.configs.dq.QualityMetricsConfDTO;
@@ -92,6 +93,11 @@ public class ConfigRestClientApiTest extends ConfigRestClientApiAbstract {
     @Override
     public DataSetDTO getDataSetDTO(String name) {
         return dataSetDTOMap.get(name);
+    }
+
+    @Override
+    public DataSetLineageDTO getDataSetLineageDTO(String name) {
+        return new DataSetLineageDTO();
     }
 
     @Override

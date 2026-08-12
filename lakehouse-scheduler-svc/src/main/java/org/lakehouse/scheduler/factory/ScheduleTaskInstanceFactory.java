@@ -97,7 +97,7 @@ public class ScheduleTaskInstanceFactory {
         result.setIntervalStartDateTime(jinJavaUtils.render(actDTO.getIntervalStart(),localContext));
         result.setIntervalEndDateTime(jinJavaUtils.render(actDTO.getIntervalEnd(),localContext));
         result.setTargetDateTime(targetEDTStr);
-        result.setDataSetKeyName(actDTO.getDataSet());
+        result.setDataSetKeyName(actDTO.getDataSetKeyName());
         return result;
     }
 }

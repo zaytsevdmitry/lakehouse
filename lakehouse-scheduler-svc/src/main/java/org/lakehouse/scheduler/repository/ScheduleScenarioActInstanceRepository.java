@@ -50,4 +50,7 @@ public interface ScheduleScenarioActInstanceRepository extends JpaRepository<Sch
                                 where ssai.id = sti.scheduleScenarioActInstance.id\s
                                 and sti.status != 'SUCCESS')""")
     List<ScheduleScenarioActInstance> findScenarioActReadyToSuccess();
+
+
+    List<ScheduleScenarioActInstance> findByScheduleInstanceId(Long scheduleInstanceId);
 }

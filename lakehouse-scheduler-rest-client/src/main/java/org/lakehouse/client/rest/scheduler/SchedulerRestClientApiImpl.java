@@ -18,12 +18,17 @@
 package org.lakehouse.client.rest.scheduler;
 
 import org.lakehouse.client.api.constant.Endpoint;
+import org.lakehouse.client.api.dto.common.IntervalDTO;
+import org.lakehouse.client.api.dto.scheduler.ScheduleInstanceDTO;
+import org.lakehouse.client.api.dto.scheduler.ScheduleInstanceDAGDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskExecutionHeartBeatDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskInstanceReleaseDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskMsgDTO;
 import org.lakehouse.client.rest.RestClientHelper;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 
 import java.util.Arrays;
 import java.util.List;
@@ -95,4 +100,23 @@ public class SchedulerRestClientApiImpl implements SchedulerRestClientApi {
         return restClientHelper.deleteDtoByName(name, Endpoint.SCHEDULED_TASKS_ID);
     }
 
+    @Override
+    public List<ScheduleInstanceDTO> getAllByInterval(IntervalDTO intervalDTO) {
+        return Arrays.asList(Objects.requireNonNull(restClientHelper.getRestClient()
+                .method(HttpMethod.GET)
+                .uri(Endpoint.SCHEDULE)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(intervalDTO)
+                .retrieve()
+                .body(ScheduleInstanceDTO[].class)));
+    }
+
+    @Override
+    public ScheduleInstanceDAGDTO getScheduleInstanceDAGDTOById(Long id) {
+        return restClientHelper.getRestClient()
+                .get()
+                .uri(Endpoint.SCHEDULE_DAG_ID, id)
+                .retrieve()
+                .body(ScheduleInstanceDAGDTO.class);
+    }
 }

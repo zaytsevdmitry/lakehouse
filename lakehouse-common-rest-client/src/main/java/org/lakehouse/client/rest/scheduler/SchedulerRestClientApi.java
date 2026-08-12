@@ -17,6 +17,9 @@
 
 package org.lakehouse.client.rest.scheduler;
 
+import org.lakehouse.client.api.dto.common.IntervalDTO;
+import org.lakehouse.client.api.dto.scheduler.ScheduleInstanceDTO;
+import org.lakehouse.client.api.dto.scheduler.ScheduleInstanceDAGDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskExecutionHeartBeatDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskInstanceReleaseDTO;
@@ -44,4 +47,8 @@ public interface SchedulerRestClientApi {
     public int lockHeartBeat(TaskExecutionHeartBeatDTO taskExecutionHeartBeat);
 
     public int lockRelease(TaskInstanceReleaseDTO taskInstanceReleaseDTO);
+
+    public List<ScheduleInstanceDTO> getAllByInterval(IntervalDTO intervalDTO);
+
+    public ScheduleInstanceDAGDTO getScheduleInstanceDAGDTOById(Long id);
 }

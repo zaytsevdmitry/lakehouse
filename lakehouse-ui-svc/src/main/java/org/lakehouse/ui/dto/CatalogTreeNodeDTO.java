@@ -16,13 +16,17 @@
  */
 package org.lakehouse.ui.dto;
 
-public class DataSetNodeDTO {
+import java.util.ArrayList;
+import java.util.List;
+
+public class CatalogTreeNodeDTO {
 
     private String keyName;
-    private String nameSpaceKeyName;
+    private String dataSourceKeyName;
     private String databaseSchemaName;
     private String tableName;
-    private String description;
+    private Integer badge;
+    private List<CatalogTreeNodeDTO> children = new ArrayList<>();
 
     public String getKeyName() {
         return keyName;
@@ -32,12 +36,12 @@ public class DataSetNodeDTO {
         this.keyName = keyName;
     }
 
-    public String getNameSpaceKeyName() {
-        return nameSpaceKeyName;
+    public String getDataSourceKeyName() {
+        return dataSourceKeyName;
     }
 
-    public void setNameSpaceKeyName(String nameSpaceKeyName) {
-        this.nameSpaceKeyName = nameSpaceKeyName;
+    public void setDataSourceKeyName(String dataSourceKeyName) {
+        this.dataSourceKeyName = dataSourceKeyName;
     }
 
     public String getDatabaseSchemaName() {
@@ -56,11 +60,19 @@ public class DataSetNodeDTO {
         this.tableName = tableName;
     }
 
-    public String getDescription() {
-        return description;
+    public Integer getBadge() {
+        return badge;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setBadge(Integer badge) {
+        this.badge = badge;
+    }
+
+    public List<CatalogTreeNodeDTO> getChildren() {
+        return children;
+    }
+
+    public void setChildren(List<CatalogTreeNodeDTO> children) {
+        this.children = children;
     }
 }

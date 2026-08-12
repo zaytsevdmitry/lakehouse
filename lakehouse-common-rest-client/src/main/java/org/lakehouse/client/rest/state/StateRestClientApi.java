@@ -19,12 +19,15 @@ package org.lakehouse.client.rest.state;
 
 import org.lakehouse.client.api.dto.state.DataSetIntervalDTO;
 import org.lakehouse.client.api.dto.state.DataSetStateDTO;
-import org.lakehouse.client.api.dto.state.DataSetStateResponseDTO;
+import org.lakehouse.client.api.dto.state.DataSetWrongStateResponseDTO;
+
+import java.util.List;
 
 
 public interface StateRestClientApi {
     public int setDataSetStateDTO(DataSetStateDTO dataSetStateDTO);
 
-    public DataSetStateResponseDTO getDataSetStateResponseDTO(DataSetIntervalDTO dataSetIntervalDTO);
+    public DataSetWrongStateResponseDTO getDataSetStateResponseDTO(DataSetIntervalDTO dataSetIntervalDTO);
 
+    public List<DataSetStateDTO> getStatesByDataSetAndInterval(DataSetIntervalDTO dataSetIntervalDTO);
 }

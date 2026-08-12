@@ -49,7 +49,7 @@ public class TaskConfigTestFactory {
                 .loadScheduleEffectiveDTO()
                 .getScenarioActs()
                 .stream()
-                .filter(a -> a.getDataSet().equals(dataSetKeyName))
+                .filter(a -> a.getDataSetKeyName().equals(dataSetKeyName))
                 .flatMap(a-> a.getTasks().stream())
                 .filter(taskDTO -> taskDTO.getName().equals(taskName))
                 .toList().get(0);

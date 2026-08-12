@@ -44,15 +44,8 @@ import org.lakehouse.jinja.java.JinJavaFactory;
 import org.lakehouse.jinja.java.JinJavaUtils;
 import org.lakehouse.jinja.java.configuration.JinJavaConfiguration;
 import org.lakehouse.taskexecutor.api.processor.TaskProcessor;
-import org.lakehouse.taskexecutor.api.processor.body.sql.AppendSQLProcessorBody;
-import org.lakehouse.taskexecutor.api.processor.body.sql.CreateTableSQLProcessorBody;
-import org.lakehouse.taskexecutor.api.processor.body.sql.MergeSQLProcessorBody;
-import org.lakehouse.taskexecutor.configuration.DataSourceManipulatorFactoryConfiguration;
 import org.lakehouse.taskexecutor.configuration.ScheduledTaskKafkaConfigurationProperties;
 import org.lakehouse.taskexecutor.processor.jdbc.JdbcTaskProcessor;
-import org.lakehouse.taskexecutor.processor.state.DependencyCheckStateTaskProcessor;
-import org.lakehouse.taskexecutor.processor.state.LockedStateTaskProcessor;
-import org.lakehouse.taskexecutor.processor.state.SuccessStateTaskProcessor;
 import org.lakehouse.taskexecutor.test.stub.StateRestClientApiTest;
 import org.lakehouse.test.config.api.ConfigRestClientApiTest;
 import org.lakehouse.test.config.util.FileLoader;
@@ -201,7 +194,7 @@ public class TaskExecutorTest {
         TaskDTO taskDTO = scheduleEffectiveDTO
                 .getScenarioActs()
                 .stream()
-                .filter(s -> s.getDataSet().equals(dataSetKeyName))
+                .filter(s -> s.getDataSetKeyName().equals(dataSetKeyName))
                 .flatMap(s -> s.getTasks().stream().filter(t -> t.getName().equals(taskName)))
                 .toList().get(0);
         ScheduledTaskDTO result = new ScheduledTaskDTO();

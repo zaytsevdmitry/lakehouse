@@ -26,11 +26,9 @@ import org.lakehouse.config.entities.Schedule;
 import org.lakehouse.config.entities.scenario.ScenarioAct;
 import org.lakehouse.config.entities.scenario.ScenarioActEdge;
 import org.lakehouse.config.entities.scenario.ScenarioActTaskEdge;
-import org.lakehouse.config.entities.task.Task;
 import org.lakehouse.config.exception.DataSetNotFoundException;
 import org.lakehouse.config.exception.ScenarioActNotFoundException;
 import org.lakehouse.config.exception.ScheduleNotFoundException;
-import org.lakehouse.config.exception.TaskEffectiveNotFoundException;
 import org.lakehouse.config.repository.*;
 import org.lakehouse.config.repository.dataset.DataSetRepository;
 import org.lakehouse.validator.config.ScheduleConfValidator;
@@ -91,7 +89,7 @@ public class ScheduleService {
             ScheduleScenarioActAbstract result
             ){
         result.setName(scenarioAct.getName());
-        result.setDataSet(scenarioAct.getDataSet().getKeyName());
+        result.setDataSetKeyName(scenarioAct.getDataSet().getKeyName());
         result.setIntervalStart(scenarioAct.getIntervalStart());
         result.setIntervalEnd(scenarioAct.getIntervalEnd());
         result.setTasks(taskDTOSet);
@@ -138,8 +136,8 @@ public class ScheduleService {
         result.setName(scheduleScenarioActDTO.getName());
         result.setSchedule(schedule);
         result.setDataSet(
-                dataSetRepository.findById(scheduleScenarioActDTO.getDataSet()).orElseThrow(() -> new DataSetNotFoundException(
-                        String.format("Data set name %s not found", scheduleScenarioActDTO.getDataSet()))));
+                dataSetRepository.findById(scheduleScenarioActDTO.getDataSetKeyName()).orElseThrow(() -> new DataSetNotFoundException(
+                        String.format("Data set name %s not found", scheduleScenarioActDTO.getDataSetKeyName()))));
 
         if (scheduleScenarioActDTO.getScenarioActTemplate() != null)
             result.setScenarioActTemplate(

@@ -8,7 +8,7 @@
   "scenarioActs": [
     {
       "name": "transaction_processing",
-      "dataSet": "transaction_processing",
+      "dataSetKeyName": "transaction_processing",
       "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
       "intervalEnd": "{{ targetDateTimeTZ }}",
       "scenarioActTemplate": null,
@@ -67,7 +67,7 @@
     },
     {
       "name": "client_processing",
-      "dataSet": "client_processing",
+      "dataSetKeyName": "client_processing",
       "scenarioActTemplate": null,
       "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
       "intervalEnd": "{{ targetDateTimeTZ }}",
@@ -126,7 +126,7 @@
     },
     {
       "name": "transaction_dds",
-      "dataSet": "transaction_dds",
+      "dataSetKeyName": "transaction_dds",
       "scenarioActTemplate": "default",
       "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
       "intervalEnd": "{{ targetDateTimeTZ }}",
@@ -166,14 +166,14 @@
     },
     {
       "name": "aggregation_pay_per_client_daily_mart",
-      "dataSet": "aggregation_pay_per_client_daily_mart",
+      "dataSetKeyName": "aggregation_pay_per_client_daily_mart",
       "scenarioActTemplate": "default",
       "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
       "intervalEnd": "{{ targetDateTimeTZ }}"
     },
     {
       "name": "aggregation_pay_per_client_total_mart",
-      "dataSet": "aggregation_pay_per_client_total_mart",
+      "dataSetKeyName": "aggregation_pay_per_client_total_mart",
       "scenarioActTemplate": "default",
       "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
       "intervalEnd": "{{ targetDateTimeTZ }}"

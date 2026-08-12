@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 
 public class ScheduleScenarioActAbstract {
     private String name;
-    private String dataSet;
+    private String dataSetKeyName;
     private Set<TaskDTO> tasks = new HashSet<>();
     private Set<DagEdgeDTO> dagEdges = new HashSet<>();
     private String intervalStart;
@@ -41,12 +41,12 @@ public class ScheduleScenarioActAbstract {
         this.name = name;
     }
 
-    public String getDataSet() {
-        return dataSet;
+    public String getDataSetKeyName() {
+        return dataSetKeyName;
     }
 
-    public void setDataSet(String dataSet) {
-        this.dataSet = dataSet;
+    public void setDataSetKeyName(String dataSetKeyName) {
+        this.dataSetKeyName = dataSetKeyName;
     }
 
     public Set<TaskDTO> getTasks() {
@@ -87,7 +87,7 @@ public class ScheduleScenarioActAbstract {
         if (o == null || getClass() != o.getClass()) return false;
         ScheduleScenarioActAbstract that = (ScheduleScenarioActAbstract) o;
         return Objects.equals(getName(), that.getName())
-                && Objects.equals(getDataSet(), that.getDataSet())
+                && Objects.equals(getDataSetKeyName(), that.getDataSetKeyName())
                 && Objects.equals(getTasks(), that.getTasks())
                 && Objects.equals(getDagEdges(), that.getDagEdges())
                 && Objects.equals(getIntervalStart(), that.getIntervalStart())
@@ -96,6 +96,6 @@ public class ScheduleScenarioActAbstract {
 
     @Override
     public int hashCode() {
-        return Objects.hash(getName(), getDataSet(), getTasks(), getDagEdges(), getIntervalStart(), getIntervalEnd());
+        return Objects.hash(getName(), getDataSetKeyName(), getTasks(), getDagEdges(), getIntervalStart(), getIntervalEnd());
     }
 }

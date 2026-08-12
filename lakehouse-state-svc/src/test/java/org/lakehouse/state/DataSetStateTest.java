@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.*;
 import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.state.DataSetStateDTO;
-import org.lakehouse.client.api.dto.state.DataSetStateResponseDTO;
+import org.lakehouse.client.api.dto.state.DataSetWrongStateResponseDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.state.entity.DataSetState;
 import org.lakehouse.state.exception.LockedStateRuntimeException;
@@ -292,18 +292,18 @@ public class DataSetStateTest {
 
         dataSetStateRepository.findIntersection(dataSetKeyName, intervalStartDateTime, intervalEndDateTime).forEach(state -> System.out.println("intersection " + state.toString()));
 
-        DataSetStateResponseDTO dataSetStateResponseDTO = stateService.getStateByInterval(dataSetKeyName, intervalStartDateTime, intervalEndDateTime);
-        dataSetStateResponseDTO
+        DataSetWrongStateResponseDTO dataSetWrongStateResponseDTO = stateService.getWrongStateByInterval(dataSetKeyName, intervalStartDateTime, intervalEndDateTime);
+        dataSetWrongStateResponseDTO
                 .getWrongStates()
                 .stream()
                 .forEach(state -> System.out.println("wrongStates " + state.toString()));
 
-        assert (dataSetStateResponseDTO
+        assert (dataSetWrongStateResponseDTO
                 .getWrongStates()
                 .size() == 4
         );
 
-        assert (dataSetStateResponseDTO
+        assert (dataSetWrongStateResponseDTO
                 .getWrongStates()
                 .stream()
                 .filter(i ->
@@ -312,7 +312,7 @@ public class DataSetStateTest {
                                 i.getStatus().equals(failedState.getStatus())
                 ).toList().size() == 1
         );
-        assert (dataSetStateResponseDTO
+        assert (dataSetWrongStateResponseDTO
                 .getWrongStates()
                 .stream()
                 .filter(i ->
@@ -321,7 +321,7 @@ public class DataSetStateTest {
                                 i.getStatus() == null
                 ).toList().size() == 1
         );
-        assert (dataSetStateResponseDTO
+        assert (dataSetWrongStateResponseDTO
                 .getWrongStates()
                 .stream()
                 .filter(i ->
@@ -330,7 +330,7 @@ public class DataSetStateTest {
                                 i.getStatus() == null
                 ).toList().size() == 1
         );
-        assert (dataSetStateResponseDTO
+        assert (dataSetWrongStateResponseDTO
                 .getWrongStates()
                 .stream()
                 .filter(i ->

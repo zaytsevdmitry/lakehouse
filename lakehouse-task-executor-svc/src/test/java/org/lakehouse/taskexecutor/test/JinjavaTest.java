@@ -138,7 +138,7 @@ public class JinjavaTest {
                 .getScheduleEffectiveDTO(null)
                 .getScenarioActs()
                 .stream()
-                .filter(a-> a.getDataSet().equals("transaction_dds"))
+                .filter(a-> a.getDataSetKeyName().equals("transaction_dds"))
                 .flatMap(s-> s.getTasks()
                         .stream()
                         .filter(t-> t.getName().equals("load"))

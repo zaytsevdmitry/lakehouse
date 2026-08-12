@@ -8,21 +8,21 @@
   "scenarioActs": [
     {
       "name": "transaction_dds",
-      "dataSet": "transaction_dds",
+      "dataSetKeyName": "transaction_dds",
       "scenarioActTemplate": "spark-dq",
       "intervalStart": "{{ addmonths(targetDateTime, -1) }}",
       "intervalEnd": "{{ targetDateTime }}"
     },
     {
       "name": "aggregation_pay_per_client_daily_mart",
-      "dataSet": "aggregation_pay_per_client_daily_mart",
+      "dataSetKeyName": "aggregation_pay_per_client_daily_mart",
       "scenarioActTemplate": "spark",
       "intervalStart": "{{ addmonths(targetDateTime, -1) }}",
       "intervalEnd": "{{ targetDateTime }}"
     },
     {
       "name": "aggregation_pay_per_client_total_mart",
-      "dataSet": "aggregation_pay_per_client_total_mart",
+      "dataSetKeyName": "aggregation_pay_per_client_total_mart",
       "scenarioActTemplate": "spark",
       "intervalStart": "{{ addmonths(targetDateTime, -1) }}",
       "intervalEnd": "{{ targetDateTime }}"

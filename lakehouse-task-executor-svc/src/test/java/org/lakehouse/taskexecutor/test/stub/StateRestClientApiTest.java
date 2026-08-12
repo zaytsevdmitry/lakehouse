@@ -20,7 +20,7 @@ package org.lakehouse.taskexecutor.test.stub;
 import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.state.DataSetIntervalDTO;
 import org.lakehouse.client.api.dto.state.DataSetStateDTO;
-import org.lakehouse.client.api.dto.state.DataSetStateResponseDTO;
+import org.lakehouse.client.api.dto.state.DataSetWrongStateResponseDTO;
 import org.lakehouse.client.rest.state.StateRestClientApi;
 
 import java.util.ArrayList;
@@ -45,13 +45,20 @@ public class StateRestClientApiTest implements StateRestClientApi {
     }
 
     @Override
-    public DataSetStateResponseDTO getDataSetStateResponseDTO(DataSetIntervalDTO dataSetIntervalDTO) {
-        DataSetStateResponseDTO result = new DataSetStateResponseDTO();
+    public DataSetWrongStateResponseDTO getDataSetStateResponseDTO(DataSetIntervalDTO dataSetIntervalDTO) {
+        DataSetWrongStateResponseDTO result = new DataSetWrongStateResponseDTO();
         result.setWrongStates(
                 testCollection
                         .stream()
                         .filter(dataSetStateDTO -> !dataSetStateDTO.getStatus().equals(Status.DataSet.SUCCESS.label))
                         .toList());
         return result;
+    }
+
+    @Override
+    public List<DataSetStateDTO> getStatesByDataSetAndInterval(DataSetIntervalDTO dataSetIntervalDTO) {
+        return testCollection
+                .stream()
+                .toList();
     }
 }

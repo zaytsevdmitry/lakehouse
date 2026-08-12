@@ -23,7 +23,9 @@ import org.lakehouse.ui.config.UiServiceProperties;
 
 @SpringBootApplication(scanBasePackages = {
         "org.lakehouse.ui",
-        "org.lakehouse.client.rest.config"})
+        "org.lakehouse.client.rest.config",
+        "org.lakehouse.client.rest.state",
+        "org.lakehouse.client.rest.scheduler"})
 @EnableConfigurationProperties(UiServiceProperties.class)
 public class LakehouseUiApplication {
 

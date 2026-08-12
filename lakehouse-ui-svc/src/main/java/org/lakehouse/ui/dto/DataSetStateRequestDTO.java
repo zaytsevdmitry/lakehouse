@@ -16,34 +16,33 @@
  */
 package org.lakehouse.ui.dto;
 
-import java.util.ArrayList;
-import java.util.List;
+public class DataSetStateRequestDTO {
 
-public class CatalogNodeDTO {
+    private String dataSetKeyName;
+    private String fromDate;
+    private String toDate;
 
-    private String catalogKeyName;
-    private List<DataSourceNodeDTO> dataSources = new ArrayList<>();
-
-    public CatalogNodeDTO() {
+    public String getDataSetKeyName() {
+        return dataSetKeyName;
     }
 
-    public CatalogNodeDTO(String catalogKeyName) {
-        this.catalogKeyName = catalogKeyName;
+    public void setDataSetKeyName(String dataSetKeyName) {
+        this.dataSetKeyName = dataSetKeyName;
     }
 
-    public String getCatalogKeyName() {
-        return catalogKeyName;
+    public String getFromDate() {
+        return fromDate;
     }
 
-    public void setCatalogKeyName(String catalogKeyName) {
-        this.catalogKeyName = catalogKeyName;
+    public void setFromDate(String fromDate) {
+        this.fromDate = fromDate;
     }
 
-    public List<DataSourceNodeDTO> getDataSources() {
-        return dataSources;
+    public String getToDate() {
+        return toDate;
     }
 
-    public void setDataSources(List<DataSourceNodeDTO> dataSources) {
-        this.dataSources = dataSources;
+    public void setToDate(String toDate) {
+        this.toDate = toDate;
     }
 }

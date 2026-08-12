@@ -16,42 +16,24 @@
  */
 package org.lakehouse.ui.dto;
 
-public class ServiceInfoDTO {
+public class ScheduleRequestDTO {
 
-    private String host;
-    private String port;
-    private String urn;
+    private String fromDate;
+    private String toDate;
 
-    public ServiceInfoDTO() {
+    public String getFromDate() {
+        return fromDate;
     }
 
-    public ServiceInfoDTO(String host, String port, String urn) {
-        this.host = host;
-        this.port = port;
-        this.urn = urn;
+    public void setFromDate(String fromDate) {
+        this.fromDate = fromDate;
     }
 
-    public String getHost() {
-        return host;
+    public String getToDate() {
+        return toDate;
     }
 
-    public void setHost(String host) {
-        this.host = host;
-    }
-
-    public String getPort() {
-        return port;
-    }
-
-    public void setPort(String port) {
-        this.port = port;
-    }
-
-    public String getUrn() {
-        return urn;
-    }
-
-    public void setUrn(String urn) {
-        this.urn = urn;
+    public void setToDate(String toDate) {
+        this.toDate = toDate;
     }
 }
