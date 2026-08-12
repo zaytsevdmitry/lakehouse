@@ -16,10 +16,14 @@
  */
 package org.lakehouse.ui.dto;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ScheduleRequestDTO {
 
     private String fromDate;
     private String toDate;
+    private List<String> names = new ArrayList<>();
 
     public String getFromDate() {
         return fromDate;
@@ -35,5 +39,13 @@ public class ScheduleRequestDTO {
 
     public void setToDate(String toDate) {
         this.toDate = toDate;
+    }
+
+    public List<String> getNames() {
+        return names;
+    }
+
+    public void setNames(List<String> names) {
+        this.names = names == null ? new ArrayList<>() : names;
     }
 }

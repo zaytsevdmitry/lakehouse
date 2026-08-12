@@ -42,14 +42,30 @@ export async function fetchStates(dataSetKeyName, fromDate, toDate) {
   return response.json();
 }
 
-export async function fetchSchedules(fromDate, toDate) {
+export async function fetchSchedules(fromDate, toDate, names = []) {
   const response = await fetch('/api/schedules', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ fromDate, toDate }),
+    body: JSON.stringify({ fromDate, toDate, names }),
   });
   if (!response.ok) {
     throw new Error(`Failed to load schedules: ${response.status} ${await response.text()}`);
+  }
+  return response.json();
+}
+
+export async function fetchScheduleHeaders() {
+  const response = await fetch('/api/schedules/headers');
+  if (!response.ok) {
+    throw new Error(`Failed to load schedule headers: ${response.status} ${await response.text()}`);
+  }
+  return response.json();
+}
+
+export async function fetchScheduleInstanceDAG(id) {
+  const response = await fetch(`/api/schedules/dag/${id}`);
+  if (!response.ok) {
+    throw new Error(`Failed to load schedule instance DAG: ${response.status} ${await response.text()}`);
   }
   return response.json();
 }

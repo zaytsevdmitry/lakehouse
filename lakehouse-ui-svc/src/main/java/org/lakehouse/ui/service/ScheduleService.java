@@ -17,26 +17,50 @@
 package org.lakehouse.ui.service;
 
 import org.lakehouse.client.api.dto.common.IntervalDTO;
+import org.lakehouse.client.api.dto.scheduler.ScheduleInstanceDAGDTO;
 import org.lakehouse.client.api.dto.scheduler.ScheduleInstanceDTO;
+import org.lakehouse.client.api.dto.configs.schedule.ScheduleHeaderDTO;
+import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
 import org.lakehouse.ui.dto.ScheduleRequestDTO;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 @Service
 public class ScheduleService {
 
     private final SchedulerRestClientApi schedulerRestClientApi;
+    private final ConfigRestClientApi configRestClientApi;
 
-    public ScheduleService(SchedulerRestClientApi schedulerRestClientApi) {
+    public ScheduleService(
+            SchedulerRestClientApi schedulerRestClientApi,
+            ConfigRestClientApi configRestClientApi) {
         this.schedulerRestClientApi = schedulerRestClientApi;
+        this.configRestClientApi = configRestClientApi;
     }
 
     public List<ScheduleInstanceDTO> getSchedules(ScheduleRequestDTO request) {
         IntervalDTO interval = new IntervalDTO();
         interval.setIntervalStartDateTime(request.getFromDate());
         interval.setIntervalEndDateTime(request.getToDate());
-        return schedulerRestClientApi.getAllByInterval(interval);
+
+        List<String> names = request.getNames();
+        if (names == null || names.isEmpty()) {
+            return schedulerRestClientApi.getAllByInterval(interval);
+        }
+        return names.stream()
+                .flatMap(name -> schedulerRestClientApi.getAllByInterval(name, interval).stream())
+                .toList();
+
+    }
+
+    public List<ScheduleHeaderDTO> getScheduleHeaders() {
+        return configRestClientApi.getScheduleHeaderDTOList();
+    }
+
+    public ScheduleInstanceDAGDTO getScheduleInstanceDAG(Long id) {
+        return schedulerRestClientApi.getScheduleInstanceDAGDTOById(id);
     }
 }

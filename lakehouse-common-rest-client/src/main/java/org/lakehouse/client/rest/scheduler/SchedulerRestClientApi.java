@@ -50,5 +50,7 @@ public interface SchedulerRestClientApi {
 
     public List<ScheduleInstanceDTO> getAllByInterval(IntervalDTO intervalDTO);
 
+    public List<ScheduleInstanceDTO> getAllByInterval(String name, IntervalDTO intervalDTO);
+
     public ScheduleInstanceDAGDTO getScheduleInstanceDAGDTOById(Long id);
 }

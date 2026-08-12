@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -42,24 +43,27 @@ public class ScheduleInstanceController {
     }
 
     @GetMapping(Endpoint.SCHEDULE)
-    List<ScheduleInstanceDTO> getAll() {
+    public List<ScheduleInstanceDTO> getAll() {
         return manageStateService.findAll();
     }
 
     @GetMapping(value = Endpoint.SCHEDULE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    List<ScheduleInstanceDTO> getAllByInterval(@RequestBody IntervalDTO intervalDTO) {
+    public List<ScheduleInstanceDTO> getAllByInterval(
+            @RequestParam(required = false) String name,
+            @RequestBody IntervalDTO intervalDTO) {
         return manageStateService.findAllByInterval(
+                name,
                 DateTimeUtils.parseDateTimeFormatWithTZ(intervalDTO.getIntervalStartDateTime()),
                 DateTimeUtils.parseDateTimeFormatWithTZ(intervalDTO.getIntervalEndDateTime()));
     }
 
     @GetMapping(Endpoint.SCHEDULE_NAME)
-    List<ScheduleInstanceDTO> getAllByName(@PathVariable String name, @PathVariable int limit) {
+    public List<ScheduleInstanceDTO> getAllByName(@PathVariable String name, @PathVariable int limit) {
         return manageStateService.findAllByName(name, limit);
     }
 
     @DeleteMapping(Endpoint.SCHEDULE_ID)
-    void getAllByName(@PathVariable Long id) {
+    public void getAllByName(@PathVariable Long id) {
         manageStateService.delete(id);
     }
 

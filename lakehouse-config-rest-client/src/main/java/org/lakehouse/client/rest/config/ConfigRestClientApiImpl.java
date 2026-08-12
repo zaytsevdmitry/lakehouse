@@ -167,6 +167,14 @@ public class ConfigRestClientApiImpl extends ConfigRestClientApiAbstract {
                 .body(ScheduleDTO[].class));
     }
 
+    public List<ScheduleHeaderDTO> getScheduleHeaderDTOList() {
+        return Arrays.asList(restClientHelper.getRestClient()
+                .get()
+                .uri(Endpoint.SCHEDULES_HEADERS)
+                .retrieve()
+                .body(ScheduleHeaderDTO[].class));
+    }
+
     public List<ScheduleEffectiveDTO> getScheduleEffectiveDTOList(OffsetDateTime dt) {
         return Arrays.asList(restClientHelper.getRestClient()
                 .get()

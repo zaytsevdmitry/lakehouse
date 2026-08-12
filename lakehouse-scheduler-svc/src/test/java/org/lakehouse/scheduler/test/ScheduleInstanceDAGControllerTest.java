@@ -15,12 +15,13 @@
  * limitations under the License.
  */
 
-package org.lakehouse.scheduler.controller;
+package org.lakehouse.scheduler.test;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.scheduler.ScheduleInstanceDAGDTO;
+import org.lakehouse.scheduler.controller.ScheduleInstanceDAGController;
 import org.lakehouse.scheduler.service.ScheduleInstanceDAGService;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

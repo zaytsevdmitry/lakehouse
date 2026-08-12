@@ -20,6 +20,7 @@ package org.lakehouse.config.controller;
 import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.api.dto.configs.schedule.ScheduleDTO;
 import org.lakehouse.client.api.dto.configs.schedule.ScheduleEffectiveDTO;
+import org.lakehouse.client.api.dto.configs.schedule.ScheduleHeaderDTO;
 import org.lakehouse.client.api.dto.configs.schedule.TaskDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.config.service.ScheduleService;
@@ -39,6 +40,11 @@ public class ScheduleController {
     @GetMapping(Endpoint.SCHEDULES)
     List<ScheduleDTO> findAll() {
         return scheduleService.findAll();
+    }
+
+    @GetMapping(Endpoint.SCHEDULES_HEADERS)
+    List<ScheduleHeaderDTO> findAllHeaders() {
+        return scheduleService.findAllHeaders();
     }
 
     @PostMapping(Endpoint.SCHEDULES)

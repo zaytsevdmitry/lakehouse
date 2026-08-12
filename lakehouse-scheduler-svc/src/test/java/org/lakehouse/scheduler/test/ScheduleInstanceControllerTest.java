@@ -15,13 +15,14 @@
  * limitations under the License.
  */
 
-package org.lakehouse.scheduler.controller;
+package org.lakehouse.scheduler.test;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.common.IntervalDTO;
 import org.lakehouse.client.api.dto.scheduler.ScheduleInstanceDTO;
+import org.lakehouse.scheduler.controller.ScheduleInstanceController;
 import org.lakehouse.scheduler.service.ManageStateService;
 import org.lakehouse.scheduler.service.ScheduleTaskInstanceService;
 import org.mockito.ArgumentCaptor;
@@ -31,6 +32,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -58,16 +60,16 @@ class ScheduleInstanceControllerTest {
         expected.setConfigScheduleKeyName("daily");
         expected.setTargetExecutionDateTime("2024-06-01T10:00:00+00:00");
         expected.setStatus(Status.Schedule.SUCCESS);
-        when(manageStateService.findAllByInterval(any(), any())).thenReturn(List.of(expected));
+        when(manageStateService.findAllByInterval(eq(expected.getConfigScheduleKeyName()), any(), any())).thenReturn(List.of(expected));
 
-        List<ScheduleInstanceDTO> result = controller.getAllByInterval(intervalDTO);
+        List<ScheduleInstanceDTO> result = controller.getAllByInterval(expected.getConfigScheduleKeyName(), intervalDTO);
 
         assertEquals(1, result.size());
         assertEquals(expected, result.get(0));
 
         ArgumentCaptor<OffsetDateTime> startCaptor = ArgumentCaptor.forClass(OffsetDateTime.class);
         ArgumentCaptor<OffsetDateTime> endCaptor = ArgumentCaptor.forClass(OffsetDateTime.class);
-        verify(manageStateService).findAllByInterval(startCaptor.capture(), endCaptor.capture());
+        verify(manageStateService).findAllByInterval(eq(expected.getConfigScheduleKeyName()), startCaptor.capture(), endCaptor.capture());
         assertEquals(OffsetDateTime.parse("2024-01-01T00:00:00+00:00"), startCaptor.getValue());
         assertEquals(OffsetDateTime.parse("2024-12-31T23:59:59+00:00"), endCaptor.getValue());
     }
@@ -77,11 +79,11 @@ class ScheduleInstanceControllerTest {
         IntervalDTO intervalDTO = new IntervalDTO();
         intervalDTO.setIntervalStartDateTime("2024-01-01T00:00:00+00:00");
         intervalDTO.setIntervalEndDateTime("2024-01-02T00:00:00+00:00");
-        when(manageStateService.findAllByInterval(any(), any())).thenReturn(List.of());
+        when(manageStateService.findAllByInterval(eq(null), any(), any())).thenReturn(List.of());
 
-        List<ScheduleInstanceDTO> result = controller.getAllByInterval(intervalDTO);
+        List<ScheduleInstanceDTO> result = controller.getAllByInterval(null,intervalDTO);
 
-        assertEquals(0, result.size());
-        verify(manageStateService).findAllByInterval(any(), any());
+assertEquals(0, result.size());
+verify(manageStateService).findAllByInterval(eq(null), any(), any());
     }
 }

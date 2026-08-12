@@ -33,7 +33,7 @@ public class ScheduleInstanceDAGController {
     }
 
     @GetMapping(Endpoint.SCHEDULE_DAG_ID)
-    ScheduleInstanceDAGDTO getById(@PathVariable Long id) {
+    public ScheduleInstanceDAGDTO getById(@PathVariable Long id) {
         return scheduleInstanceDAGService.findById(id);
     }
 }

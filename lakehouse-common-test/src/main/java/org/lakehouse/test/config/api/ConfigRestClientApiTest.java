@@ -210,6 +210,11 @@ public class ConfigRestClientApiTest extends ConfigRestClientApiAbstract {
     }
 
     @Override
+    public List<ScheduleHeaderDTO> getScheduleHeaderDTOList() {
+        return List.of();
+    }
+
+    @Override
     public List<ScheduleEffectiveDTO> getScheduleEffectiveDTOList(OffsetDateTime dt) {
         return List.of();
     }

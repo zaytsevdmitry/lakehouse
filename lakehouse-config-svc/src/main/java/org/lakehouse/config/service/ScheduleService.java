@@ -202,6 +202,21 @@ public class ScheduleService {
         return scheduleRepository.findAll().stream().map(this::mapScheduleToDTO).toList();
     }
 
+    private ScheduleHeaderDTO mapScheduleToHeaderDTO(Schedule schedule) {
+        ScheduleHeaderDTO result = new ScheduleHeaderDTO();
+        result.setKeyName(schedule.getKeyName());
+        result.setDescription(schedule.getDescription());
+        result.setIntervalExpression(schedule.getIntervalExpression());
+        result.setStartDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(schedule.getStartDateTime()));
+        result.setStopDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(schedule.getEndDateTime()));
+        result.setEnabled(schedule.isEnabled());
+        return result;
+    }
+
+    public List<ScheduleHeaderDTO> findAllHeaders() {
+        return scheduleRepository.findAll().stream().map(this::mapScheduleToHeaderDTO).toList();
+    }
+
     @Transactional
     public ScheduleDTO save(ScheduleDTO scheduleDTO) {
 

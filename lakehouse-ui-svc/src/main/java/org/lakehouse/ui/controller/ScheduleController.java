@@ -16,9 +16,13 @@
  */
 package org.lakehouse.ui.controller;
 
+import org.lakehouse.client.api.dto.configs.schedule.ScheduleHeaderDTO;
+import org.lakehouse.client.api.dto.scheduler.ScheduleInstanceDAGDTO;
 import org.lakehouse.client.api.dto.scheduler.ScheduleInstanceDTO;
 import org.lakehouse.ui.dto.ScheduleRequestDTO;
 import org.lakehouse.ui.service.ScheduleService;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -39,5 +43,15 @@ public class ScheduleController {
     @PostMapping
     public List<ScheduleInstanceDTO> getSchedules(@RequestBody ScheduleRequestDTO request) {
         return scheduleService.getSchedules(request);
+    }
+
+    @GetMapping("/headers")
+    public List<ScheduleHeaderDTO> getScheduleHeaders() {
+        return scheduleService.getScheduleHeaders();
+    }
+
+    @GetMapping("/dag/{id}")
+    public ScheduleInstanceDAGDTO getScheduleInstanceDAG(@PathVariable Long id) {
+        return scheduleService.getScheduleInstanceDAG(id);
     }
 }

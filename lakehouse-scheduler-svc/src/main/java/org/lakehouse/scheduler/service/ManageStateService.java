@@ -215,9 +215,13 @@ public class ManageStateService {
         return ScheduleInstanceFactory.scheduleInstanceDTOList(scheduleInstanceRepository.findAll());
     }
 
-    public List<ScheduleInstanceDTO> findAllByInterval(OffsetDateTime intervalStartDateTime, OffsetDateTime intervalEndDateTime) {
+    public List<ScheduleInstanceDTO> findAllByInterval(String name, OffsetDateTime intervalStartDateTime, OffsetDateTime intervalEndDateTime) {
+        if (name == null || name.isBlank())
+            return ScheduleInstanceFactory.scheduleInstanceDTOList(
+                    scheduleInstanceRepository.findAllByTargetExecutionDateTimeBetween(intervalStartDateTime, intervalEndDateTime));
         return ScheduleInstanceFactory.scheduleInstanceDTOList(
-                scheduleInstanceRepository.findAllByTargetExecutionDateTimeBetween(intervalStartDateTime, intervalEndDateTime));
+                scheduleInstanceRepository.findAllByScheduleNameAndTargetExecutionDateTimeBetween(
+                        name, intervalStartDateTime, intervalEndDateTime));
     }
 
     public List<ScheduleInstanceDTO> findAllByName(String name, int limit) {

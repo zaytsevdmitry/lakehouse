@@ -55,6 +55,7 @@ public class Endpoint {
 
     public final static String SCHEDULES = CONFIGS + "/schedules";
     public final static String SCHEDULES_NAME = SCHEDULES + "/{keyName}";
+    public final static String SCHEDULES_HEADERS = SCHEDULES + "/headers";
     public final static String EFFECTIVE_SCHEDULES_ROOT = CONFIGS + "/effective/schedules";
     public final static String EFFECTIVE_SCHEDULES_FROM_DT = EFFECTIVE_SCHEDULES_ROOT + "/fromdt/{dt}";
     public final static String EFFECTIVE_SCHEDULES_NAME = EFFECTIVE_SCHEDULES_ROOT + "/schedule/{keyName}";

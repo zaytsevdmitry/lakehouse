@@ -81,6 +81,11 @@ public class SchedulerRestClientApiErrorTest implements SchedulerRestClientApi {
     }
 
     @Override
+    public List<ScheduleInstanceDTO> getAllByInterval(String name, IntervalDTO intervalDTO) {
+        return List.of();
+    }
+
+    @Override
     public ScheduleInstanceDAGDTO getScheduleInstanceDAGDTOById(Long id) {
         return null;
     }

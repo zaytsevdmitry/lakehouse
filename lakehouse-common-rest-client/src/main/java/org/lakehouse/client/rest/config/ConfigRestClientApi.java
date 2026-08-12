@@ -77,6 +77,8 @@ public interface ConfigRestClientApi {
 
     List<ScheduleDTO> getScheduleDTOList();
 
+    List<ScheduleHeaderDTO> getScheduleHeaderDTOList();
+
     List<ScheduleEffectiveDTO> getScheduleEffectiveDTOList(OffsetDateTime dt);
 
     List<TaskExecutionServiceGroupDTO> getTaskExecutionServiceGroupDTOList();

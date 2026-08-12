@@ -85,6 +85,33 @@ class SchedulerRestClientApiTest {
     }
 
     @Test
+    void getAllByIntervalWithNameSendsNameQueryParamAndReturnsSchedules() throws Exception {
+        IntervalDTO intervalDTO = new IntervalDTO();
+        intervalDTO.setIntervalStartDateTime("2024-01-01T00:00:00+00:00");
+        intervalDTO.setIntervalEndDateTime("2024-12-31T23:59:59+00:00");
+
+        ScheduleInstanceDTO instance = new ScheduleInstanceDTO();
+        instance.setId(1L);
+        instance.setConfigScheduleKeyName("daily");
+        instance.setTargetExecutionDateTime("2024-06-01T10:00:00+00:00");
+        instance.setStatus(Status.Schedule.SUCCESS);
+
+        server.expect(requestTo(Endpoint.SCHEDULE + "?name=daily"))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(objectMapper.writeValueAsString(intervalDTO)))
+                .andRespond(withSuccess(
+                        objectMapper.writeValueAsString(List.of(instance)),
+                        MediaType.APPLICATION_JSON));
+
+        List<ScheduleInstanceDTO> factList = client.getAllByInterval("daily", intervalDTO);
+
+        assertThat(factList).hasSize(1);
+        assertThat(factList.get(0).getId()).isEqualTo(instance.getId());
+        assertThat(factList.get(0).getConfigScheduleKeyName()).isEqualTo("daily");
+        server.verify();
+    }
+
+    @Test
     void getDAGByIdSendsGetAndReturnsScheduleInstanceDAGDTO() throws Exception {
         ScheduleInstanceDAGDTO dag = new ScheduleInstanceDAGDTO();
         dag.setId(1L);

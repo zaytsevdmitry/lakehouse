@@ -30,6 +30,7 @@ import org.lakehouse.client.rest.RestClientHelper;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 
+import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -102,13 +103,25 @@ public class SchedulerRestClientApiImpl implements SchedulerRestClientApi {
 
     @Override
     public List<ScheduleInstanceDTO> getAllByInterval(IntervalDTO intervalDTO) {
+        return getAllByInterval(null, intervalDTO);
+    }
+
+    @Override
+    public List<ScheduleInstanceDTO> getAllByInterval(String name, IntervalDTO intervalDTO) {
         return Arrays.asList(Objects.requireNonNull(restClientHelper.getRestClient()
                 .method(HttpMethod.GET)
-                .uri(Endpoint.SCHEDULE)
+                .uri(getAllByIntervalUri(name))
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(intervalDTO)
                 .retrieve()
                 .body(ScheduleInstanceDTO[].class)));
+    }
+
+    private java.net.URI getAllByIntervalUri(String name) {
+        if (name == null || name.isBlank()) {
+            return URI.create(Endpoint.SCHEDULE);
+        }
+        return URI.create(Endpoint.SCHEDULE + "?name=" + name);
     }
 
     @Override
