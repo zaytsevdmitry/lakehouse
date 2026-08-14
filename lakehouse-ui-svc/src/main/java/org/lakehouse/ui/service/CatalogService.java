@@ -20,6 +20,7 @@ import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetLineageDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetConstraintDTO;
 import org.lakehouse.client.api.dto.configs.dataset.ForeignKeyReferenceDTO;
+import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.ui.dto.CatalogTreeNodeDTO;
 import org.lakehouse.ui.dto.ConstraintDTO;
@@ -100,6 +101,18 @@ public class CatalogService {
 
     public DataSetLineageDTO getLineage(String keyName) {
         return configRestClientApi.getDataSetLineageDTO(keyName);
+    }
+
+    public String getScript(String key) {
+        return configRestClientApi.getScript(key);
+    }
+
+    public String getDataSetModelScript(String keyName) {
+        return configRestClientApi.getDataSetModelScript(keyName);
+    }
+
+    public DataSourceDTO getDataSource(String keyName) {
+        return configRestClientApi.getDataSourceDTO(keyName);
     }
 
     public List<ConstraintDTO> getConstraints(String keyName) {

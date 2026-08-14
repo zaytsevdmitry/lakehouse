@@ -63,7 +63,18 @@ function PipelineActNode({ data }) {
   );
 }
 
-const NODE_TYPES = { pipelineAct: PipelineActNode };
+function PipelineTaskNode({ data }) {
+  const statusClass = data.status ? ` dag-node--${String(data.status).toLowerCase()}` : '';
+  return (
+    <div className={`dag-node dag-node--task${statusClass}`}>
+      <Handle type="target" position={Position.Left} className="dag-handle dag-handle--target" />
+      <Handle type="source" position={Position.Right} className="dag-handle dag-handle--source" />
+      {data.label}
+    </div>
+  );
+}
+
+const NODE_TYPES = { pipelineAct: PipelineActNode, pipelineTask: PipelineTaskNode };
 
 function buildLayout(dag) {
   const acts = dag.scenarioActs || [];
@@ -141,11 +152,11 @@ function buildLayout(dag) {
     act._layout.tiles.forEach((tile) => {
       nodes.push({
         id: tile.id,
+        type: 'pipelineTask',
         parentId: `act:${act.id}`,
         extent: 'parent',
         position: tile.pos,
         data: { label: tile.task.name, status: tile.task.status, task: tile.task, act },
-        className: `dag-node dag-node--task${tile.task.status ? ` dag-node--${String(tile.task.status).toLowerCase()}` : ''}`,
         draggable: false,
       });
     });

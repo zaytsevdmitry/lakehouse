@@ -3,6 +3,7 @@ import { fetchCatalogTree, fetchServices } from './api.js';
 import CatalogsSection from './components/CatalogsSection.jsx';
 import SchedulesSection from './components/SchedulesSection.jsx';
 import ServicesSection from './components/ServicesSection.jsx';
+import SparkJobsSection from './components/SparkJobsSection.jsx';
 
 const THEME_KEY = 'lakehouse-theme';
 
@@ -85,6 +86,12 @@ export default function App() {
         >
           Schedules
         </button>
+        <button
+          className={`section-switcher-button ${activeSection === 'sparkjobs' ? 'section-switcher-button--active' : ''}`}
+          onClick={() => activateSection('sparkjobs')}
+        >
+          SparkJobs
+        </button>
       </nav>
       <main className="app-main">
         {createdSections.has('catalog') && (
@@ -95,6 +102,11 @@ export default function App() {
         {createdSections.has('schedules') && (
           <div className="section-pane" hidden={activeSection !== 'schedules'}>
             <SchedulesSection />
+          </div>
+        )}
+        {createdSections.has('sparkjobs') && (
+          <div className="section-pane" hidden={activeSection !== 'sparkjobs'}>
+            <SparkJobsSection />
           </div>
         )}
         {createdSections.has('services') && (

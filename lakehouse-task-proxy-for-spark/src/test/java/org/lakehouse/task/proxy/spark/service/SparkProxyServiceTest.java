@@ -3,9 +3,13 @@ package org.lakehouse.task.proxy.spark.service;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.hibernate.query.TypedParameterValue;
 import org.lakehouse.task.proxy.spark.adapter.SparkAdapter;
 import org.lakehouse.task.proxy.spark.config.ProxyConfig;
 import org.lakehouse.task.proxy.spark.dto.CreateSubmissionRequest;
+import org.lakehouse.task.proxy.spark.dto.SparkProxySubmissionPropertiesDTO;
+import org.lakehouse.task.proxy.spark.dto.SparkProxySubmissionsRequest;
+import org.lakehouse.task.proxy.spark.dto.SparkProxySubmissionsResponse;
 import org.lakehouse.task.proxy.spark.dto.SubmissionResponse;
 import org.lakehouse.task.proxy.spark.dto.ExternalStatus;
 import org.lakehouse.task.proxy.spark.dto.SubmissionStatusResponse;
@@ -13,10 +17,12 @@ import org.lakehouse.task.proxy.spark.entity.SparkSubmission;
 import org.lakehouse.task.proxy.spark.repository.SparkSubmissionRepository;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -24,6 +30,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 class SparkProxyServiceTest {
@@ -163,6 +170,126 @@ class SparkProxyServiceTest {
         SubmissionStatusResponse response = service.getStatus(1L);
         assertEquals(ExternalStatus.UNKNOWN.name(), response.driverState());
         assertTrue(response.success());
+    }
+
+    // --- getSubmissions ---
+
+    private SparkSubmission submission(Long id, SparkSubmission.Status status, long order) {
+        SparkSubmission s = new SparkSubmission();
+        s.setId(id);
+        s.setStatus(status);
+        s.setSubmissionId("driver-" + order);
+        s.setAppResource("app-" + order);
+        s.setAppArgs("[\"--input\"]");
+        s.setSparkProperties("{\"spark.cores\": \"2\"}");
+        return s;
+    }
+
+    @Test
+    void getSubmissions_returnsPageWithNextCursor() {
+        List<SparkSubmission> rows = new ArrayList<>();
+        for (int i = 1; i <= 21; i++) {
+            rows.add(submission((long) i, SparkSubmission.Status.RUNNING, i));
+        }
+        when(repository.findSubmissions(isNull(), any(TypedParameterValue.class), any(TypedParameterValue.class), any(TypedParameterValue.class), any(PageRequest.class)))
+                .thenReturn(rows);
+
+        SparkProxySubmissionsResponse response = service.getSubmissions(
+                new SparkProxySubmissionsRequest(20, null, null, null, null, null));
+
+        assertThat(response.items()).hasSize(20);
+        assertThat(response.meta().hasMore()).isTrue();
+        assertThat(response.meta().nextCursor()).isEqualTo(20L);
+        assertThat(response.meta().limit()).isEqualTo(20);
+        assertThat(response.items().get(0).appArgs()).isEqualTo(List.of("--input"));
+    }
+
+    @Test
+    void getSubmissions_noMorePages_returnsNullCursor() {
+        List<SparkSubmission> rows = new ArrayList<>();
+        for (int i = 1; i <= 15; i++) {
+            rows.add(submission((long) i, SparkSubmission.Status.RUNNING, i));
+        }
+        when(repository.findSubmissions(isNull(), any(TypedParameterValue.class), any(TypedParameterValue.class), any(TypedParameterValue.class), any(PageRequest.class)))
+                .thenReturn(rows);
+
+        SparkProxySubmissionsResponse response = service.getSubmissions(
+                new SparkProxySubmissionsRequest(20, null, null, null, null, null));
+
+        assertThat(response.items()).hasSize(15);
+        assertThat(response.meta().hasMore()).isFalse();
+        assertThat(response.meta().nextCursor()).isNull();
+    }
+
+    @Test
+    void getSubmissions_returnsEmptyWhenNothingMatches() {
+        when(repository.findSubmissions(isNull(), any(TypedParameterValue.class), any(TypedParameterValue.class), any(TypedParameterValue.class), any(PageRequest.class)))
+                .thenReturn(List.of());
+
+        SparkProxySubmissionsResponse response = service.getSubmissions(
+                new SparkProxySubmissionsRequest(null, null, null, null, null, null));
+
+        assertThat(response.items()).isEmpty();
+        assertThat(response.meta().hasMore()).isFalse();
+        assertThat(response.meta().nextCursor()).isNull();
+        assertThat(response.meta().limit()).isEqualTo(20);
+    }
+
+    @Test
+    void getSubmissions_byId_ignoresPaginationAndFilters() {
+        SparkSubmission s = submission(7L, SparkSubmission.Status.FINISHED, 7);
+        when(repository.findById(7L)).thenReturn(Optional.of(s));
+
+        SparkProxySubmissionsResponse response = service.getSubmissions(
+                new SparkProxySubmissionsRequest(5, 3L, 7L, "RUNNING", "2026-01-01T00:00:00Z", "2026-02-01T00:00:00Z"));
+
+        assertThat(response.items()).hasSize(1);
+        assertThat(response.items().get(0).id()).isEqualTo(7L);
+        assertThat(response.meta().hasMore()).isFalse();
+        assertThat(response.meta().nextCursor()).isNull();
+        verify(repository, never()).findSubmissions(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void getSubmissions_byId_notFound_returnsEmpty() {
+        when(repository.findById(99L)).thenReturn(Optional.empty());
+
+        SparkProxySubmissionsResponse response = service.getSubmissions(
+                new SparkProxySubmissionsRequest(null, null, 99L, null, null, null));
+
+        assertThat(response.items()).isEmpty();
+        assertThat(response.meta().hasMore()).isFalse();
+        assertThat(response.meta().nextCursor()).isNull();
+    }
+
+    @Test
+    void getSubmissions_clampsLimitToMax() {
+        when(repository.findSubmissions(isNull(), any(TypedParameterValue.class), any(TypedParameterValue.class), any(TypedParameterValue.class), any(PageRequest.class)))
+                .thenReturn(List.of());
+
+        SparkProxySubmissionsResponse response = service.getSubmissions(
+                new SparkProxySubmissionsRequest(1000, null, null, null, null, null));
+
+        assertThat(response.meta().limit()).isEqualTo(100);
+        verify(repository).findSubmissions(isNull(), any(TypedParameterValue.class), any(TypedParameterValue.class), any(TypedParameterValue.class),
+                argThat(p -> p.getPageSize() == 101));
+    }
+
+    @Test
+    void getSubmissions_clampsLimitToMin() {
+        when(repository.findSubmissions(isNull(), any(TypedParameterValue.class), any(TypedParameterValue.class), any(TypedParameterValue.class), any(PageRequest.class)))
+                .thenReturn(List.of());
+
+        SparkProxySubmissionsResponse response = service.getSubmissions(
+                new SparkProxySubmissionsRequest(0, null, null, null, null, null));
+
+        assertThat(response.meta().limit()).isEqualTo(1);
+    }
+
+    @Test
+    void getSubmissions_invalidStatus_throws() {
+        assertThrows(IllegalArgumentException.class,
+                () -> service.getSubmissions(new SparkProxySubmissionsRequest(null, null, null, "BOGUS", null, null)));
     }
 
     // --- kill ---
@@ -323,5 +450,29 @@ class SparkProxyServiceTest {
         verify(adapter).clearCompleted(eq("driver-fail-456"));
         verify(repository).deleteById(4L);
         verify(adapter).postClear();
+    }
+
+    @Test
+    void getSparkProperties_returnsParsedProperties() {
+        SparkSubmission s = new SparkSubmission();
+        s.setId(7L);
+        s.setSubmissionId("driver-7");
+        s.setSparkProperties("{\"spark.cores\": \"2\", \"spark.memory\": \"1g\"}");
+
+        when(repository.findById(7L)).thenReturn(Optional.of(s));
+
+        SparkProxySubmissionPropertiesDTO dto = service.getSparkProperties(7L);
+
+        assertThat(dto).isNotNull();
+        assertThat(dto.id()).isEqualTo(7L);
+        assertThat(dto.submissionId()).isEqualTo("driver-7");
+        assertThat(dto.sparkProperties()).isEqualTo(Map.of("spark.cores", "2", "spark.memory", "1g"));
+    }
+
+    @Test
+    void getSparkProperties_missingReturnsNull() {
+        when(repository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThat(service.getSparkProperties(99L)).isNull();
     }
 }

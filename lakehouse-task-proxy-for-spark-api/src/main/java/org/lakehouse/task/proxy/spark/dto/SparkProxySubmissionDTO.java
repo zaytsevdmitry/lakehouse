@@ -14,23 +14,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lakehouse.ui;
+package org.lakehouse.task.proxy.spark.dto;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.lakehouse.ui.config.UiServiceProperties;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-@SpringBootApplication(scanBasePackages = {
-        "org.lakehouse.ui",
-        "org.lakehouse.client.rest.config",
-        "org.lakehouse.client.rest.state",
-        "org.lakehouse.client.rest.scheduler",
-        "org.lakehouse.client.rest.taskproxy"})
-@EnableConfigurationProperties(UiServiceProperties.class)
-public class LakehouseUiApplication {
+import java.time.Instant;
 
-    public static void main(String[] args) {
-        SpringApplication.run(LakehouseUiApplication.class, args);
-    }
-}
+@JsonIgnoreProperties(ignoreUnknown = true)
+public record SparkProxySubmissionDTO(
+    @JsonProperty("id") Long id,
+    @JsonProperty("submission_id") String submissionId,
+    @JsonProperty("status") String status,
+    @JsonProperty("app_resource") String appResource,
+    @JsonProperty("main_class") String mainClass,
+    @JsonProperty("app_args") Object appArgs,
+    @JsonProperty("message") String message,
+    @JsonProperty("created_at") Instant createdAt,
+    @JsonProperty("updated_at") Instant updatedAt
+) {}

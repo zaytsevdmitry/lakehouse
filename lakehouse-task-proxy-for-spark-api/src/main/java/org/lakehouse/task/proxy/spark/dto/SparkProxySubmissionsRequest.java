@@ -14,23 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.lakehouse.ui;
+package org.lakehouse.task.proxy.spark.dto;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.lakehouse.ui.config.UiServiceProperties;
-
-@SpringBootApplication(scanBasePackages = {
-        "org.lakehouse.ui",
-        "org.lakehouse.client.rest.config",
-        "org.lakehouse.client.rest.state",
-        "org.lakehouse.client.rest.scheduler",
-        "org.lakehouse.client.rest.taskproxy"})
-@EnableConfigurationProperties(UiServiceProperties.class)
-public class LakehouseUiApplication {
-
-    public static void main(String[] args) {
-        SpringApplication.run(LakehouseUiApplication.class, args);
-    }
-}
+public record SparkProxySubmissionsRequest(
+    Integer limit,
+    Long lastId,
+    Long id,
+    String status,
+    String dateFrom,
+    String dateTo
+) {}

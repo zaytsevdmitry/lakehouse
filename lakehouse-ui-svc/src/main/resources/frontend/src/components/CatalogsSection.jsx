@@ -1,45 +1,49 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { fetchConstraints, fetchDataSet, fetchStates } from '../api.js';
+import { fetchConstraints, fetchDataSet, fetchDataSource, fetchStates } from '../api.js';
 import LineageTab from './LineageTab.jsx';
+import ModelTab from './ModelTab.jsx';
+import RelationsTab from './RelationsTab.jsx';
 
 const TREE_MIN_PERCENT = 20;
 const TREE_MAX_PERCENT = 80;
 const TREE_DEFAULT_PERCENT = 30;
 
-function TreeNode({ nodeId, label, badge, icon, depth, children, selected, onSelect }) {
+function TreeNode({ node, depth, selected, onSelect }) {
   const [expanded, setExpanded] = useState(depth === 0);
-  const hasChildren = children && children.length > 0;
+  const hasChildren = node.children && node.children.length > 0;
+  const isSelected = selected && selected.nodeId === node.nodeId;
 
   const handleClick = (e) => {
     e.stopPropagation();
     if (hasChildren) {
       setExpanded(!expanded);
-    } else if (onSelect) {
-      onSelect(nodeId);
+    }
+    if (onSelect) {
+      onSelect(node);
     }
   };
 
   return (
     <div className="tree-node">
       <div
-        className={`tree-row ${hasChildren ? 'tree-row--branch' : ''} ${selected ? 'tree-row--selected' : ''}`}
+        className={`tree-row ${hasChildren ? 'tree-row--branch' : ''} ${isSelected ? 'tree-row--selected' : ''}`}
         style={{ paddingLeft: `${depth * 20 + 8}px` }}
         onClick={handleClick}
-        title={label}
+        title={node.label}
       >
         <span className="tree-chevron">
           {hasChildren ? (expanded ? '\u25BC' : '\u25B6') : ''}
         </span>
-        <span className="tree-icon">{icon}</span>
-        <span className="tree-label">{label}</span>
-        {badge != null && <span className="tree-badge">{badge}</span>}
+        <span className="tree-icon">{node.icon}</span>
+        <span className="tree-label">{node.label}</span>
+        {node.badge != null && <span className="tree-badge">{node.badge}</span>}
       </div>
       {expanded &&
         hasChildren &&
-        children.map((child) => (
+        node.children.map((child) => (
           <TreeNode
             key={child.nodeId}
-            {...child}
+            node={child}
             depth={depth + 1}
             selected={selected}
             onSelect={onSelect}
@@ -61,6 +65,148 @@ function getInitialDates() {
   const from = new Date();
   from.setMonth(from.getMonth() - 1);
   return { fromDate: toDateInputValue(from), toDate: toDateInputValue(today) };
+}
+
+function Field({ label, value }) {
+  return (
+    <div className="dataset-field">
+      <label>{label}</label>
+      <input type="text" value={value || ''} readOnly />
+    </div>
+  );
+}
+
+function ServicePropertiesTable({ properties }) {
+  const [filter, setFilter] = useState('');
+  const entries = Object.entries(properties || {}).filter(([key, value]) => {
+    const needle = filter.trim().toLowerCase();
+    if (!needle) return true;
+    return String(key).toLowerCase().includes(needle) || String(value).toLowerCase().includes(needle);
+  });
+
+  return (
+    <div className="service-properties">
+      <input
+        className="service-properties-filter"
+        type="text"
+        placeholder="Filter key / value..."
+        value={filter}
+        onChange={(e) => setFilter(e.target.value)}
+      />
+      <table className="states-table">
+        <thead>
+          <tr>
+            <th>Key</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          {entries.length === 0 ? (
+            <tr>
+              <td colSpan={2}>No properties found.</td>
+            </tr>
+          ) : (
+            entries.map(([key, value]) => (
+              <tr key={key}>
+                <td>{key}</td>
+                <td>{value}</td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function DataSourcePanel({ dataSourceKeyName }) {
+  const [dataSource, setDataSource] = useState(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('datasource');
+
+  useEffect(() => {
+    if (!dataSourceKeyName) {
+      setDataSource(null);
+      return;
+    }
+    setLoading(true);
+    setError('');
+    fetchDataSource(dataSourceKeyName)
+      .then(setDataSource)
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, [dataSourceKeyName]);
+
+  if (!dataSourceKeyName) {
+    return <div className="empty-box">Select a data source in the tree.</div>;
+  }
+  if (loading) {
+    return <div className="empty-box">Loading...</div>;
+  }
+  if (error) {
+    return <div className="error-box">Error: {error}</div>;
+  }
+  if (!dataSource) {
+    return <div className="empty-box">No data source found.</div>;
+  }
+  const service = dataSource.service;
+  return (
+    <div className="tabs">
+      <div className="tab-list">
+        <button
+          className={`tab ${activeTab === 'datasource' ? 'tab--active' : ''}`}
+          onClick={() => setActiveTab('datasource')}
+        >
+          DataSource
+        </button>
+        <button
+          className={`tab ${activeTab === 'service' ? 'tab--active' : ''}`}
+          onClick={() => setActiveTab('service')}
+        >
+          Service
+        </button>
+      </div>
+      <div className="tab-content">
+        {activeTab === 'datasource' && (
+          <div className="dataset-fields">
+            <Field label="Key name" value={dataSource.keyName} />
+            <Field label="Description" value={dataSource.description} />
+            <Field label="Database protocol" value={dataSource.databaseProtocol} />
+            <Field label="Data source type" value={dataSource.dataSourceType} />
+          </div>
+        )}
+        {activeTab === 'service' &&
+          (service ? (
+            <div className="dataset-fields">
+              <Field label="Host" value={service.host} />
+              <Field label="Port" value={service.port} />
+              <Field label="Urn" value={service.urn} />
+            </div>
+          ) : (
+            <div className="empty-box">No service found.</div>
+          ))}
+        {activeTab === 'service' && service && <ServicePropertiesTable properties={service.properties} />}
+      </div>
+    </div>
+  );
+}
+
+function SchemaPanel({ schema }) {
+  return (
+    <div className="tabs">
+      <div className="tab-list">
+        <button className="tab tab--active">Schema</button>
+      </div>
+      <div className="tab-content">
+        <div className="dataset-fields">
+          <Field label="Key name" value={schema.keyName} />
+          <Field label="Data source" value={schema.dataSourceKeyName} />
+          <Field label="Database schema" value={schema.databaseSchemaName} />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function StatesTab({ dataSetKeyName }) {
@@ -269,11 +415,76 @@ function DatasetFields({ dataSet, loading, error }) {
   return (
     <div className="dataset-fields">
       {fields.map(([label, value]) => (
-        <div className="dataset-field" key={label}>
-          <label>{label}</label>
-          <input type="text" value={value || ''} readOnly />
-        </div>
+        <Field key={label} label={label} value={value} />
       ))}
+    </div>
+  );
+}
+
+function TableTabs({ dataSet, loading, error, activeTab, onTabChange }) {
+  return (
+    <div className="tabs">
+      <div className="tab-list">
+        <button
+          className={`tab ${activeTab === 'dataset' ? 'tab--active' : ''}`}
+          onClick={() => onTabChange('dataset')}
+        >
+          Dataset
+        </button>
+        <button
+          className={`tab ${activeTab === 'states' ? 'tab--active' : ''}`}
+          onClick={() => onTabChange('states')}
+        >
+          States
+        </button>
+        <button
+          className={`tab ${activeTab === 'columns' ? 'tab--active' : ''}`}
+          onClick={() => onTabChange('columns')}
+        >
+          Columns
+        </button>
+        <button
+          className={`tab ${activeTab === 'constraints' ? 'tab--active' : ''}`}
+          onClick={() => onTabChange('constraints')}
+        >
+          Constraints
+        </button>
+        <button
+          className={`tab ${activeTab === 'lineage' ? 'tab--active' : ''}`}
+          onClick={() => onTabChange('lineage')}
+        >
+          Lineage
+        </button>
+        <button
+          className={`tab ${activeTab === 'model' ? 'tab--active' : ''}`}
+          onClick={() => onTabChange('model')}
+        >
+          Model
+        </button>
+        <button
+          className={`tab ${activeTab === 'relations' ? 'tab--active' : ''}`}
+          onClick={() => onTabChange('relations')}
+        >
+          Relations
+        </button>
+      </div>
+      <div className="tab-content">
+        {activeTab === 'dataset' && (
+          <DatasetFields dataSet={dataSet} loading={loading} error={error} />
+        )}
+        {activeTab === 'states' && (
+          <StatesTab dataSetKeyName={dataSet ? dataSet.keyName : null} />
+        )}
+        {activeTab === 'columns' && <ColumnsTab dataSet={dataSet} />}
+        {activeTab === 'constraints' && (
+          <ConstraintsTab dataSetKeyName={dataSet ? dataSet.keyName : null} />
+        )}
+        {activeTab === 'lineage' && (
+          <LineageTab dataSetKeyName={dataSet ? dataSet.keyName : null} />
+        )}
+        {activeTab === 'model' && <ModelTab dataSet={dataSet} />}
+        {activeTab === 'relations' && <RelationsTab dataSet={dataSet} />}
+      </div>
     </div>
   );
 }
@@ -282,7 +493,7 @@ export default function CatalogsSection({ catalogs, error }) {
   const containerRef = useRef(null);
   const [treePercent, setTreePercent] = useState(TREE_DEFAULT_PERCENT);
   const [dragging, setDragging] = useState(false);
-  const [selectedKeyName, setSelectedKeyName] = useState(null);
+  const [selectedNode, setSelectedNode] = useState(null);
   const [dataSet, setDataSet] = useState(null);
   const [dataSetError, setDataSetError] = useState('');
   const [loadingDataSet, setLoadingDataSet] = useState(false);
@@ -306,30 +517,39 @@ export default function CatalogsSection({ catalogs, error }) {
     };
   }, [dragging]);
 
-  const selectTable = useCallback((nodeId) => {
-    setLoadingDataSet(true);
-    setDataSetError('');
-    fetchDataSet(nodeId)
-      .then((loaded) => {
-        setDataSet(loaded);
-        setSelectedKeyName(nodeId);
-      })
-      .catch((e) => setDataSetError(e.message))
-      .finally(() => setLoadingDataSet(false));
+  const selectNode = useCallback((node) => {
+    setSelectedNode(node);
+    setActiveTab('dataset');
+    if (node.type === 'table') {
+      setLoadingDataSet(true);
+      setDataSetError('');
+      fetchDataSet(node.keyName)
+        .then(setDataSet)
+        .catch((e) => setDataSetError(e.message))
+        .finally(() => setLoadingDataSet(false));
+    }
   }, []);
 
   const buildTree = (rootNodes) =>
     rootNodes.map((dataSource) => ({
+      type: 'datasource',
+      keyName: dataSource.keyName,
       nodeId: `datasource/${dataSource.keyName}`,
       label: dataSource.keyName,
       icon: '\u{1F5C4}\u{FE0F}',
       badge: dataSource.badge,
       children: dataSource.children.map((schema) => ({
+        type: 'schema',
+        keyName: schema.keyName,
+        dataSourceKeyName: dataSource.keyName,
+        databaseSchemaName: schema.keyName,
         nodeId: `datasource/${dataSource.keyName}/schema/${schema.keyName}`,
         label: schema.keyName,
         icon: '\u{1F4C1}',
         badge: schema.badge,
         children: schema.children.map((table) => ({
+          type: 'table',
+          keyName: table.keyName,
           nodeId: table.keyName,
           label: table.tableName || table.keyName,
           icon: '\u{1F4BE}',
@@ -353,10 +573,10 @@ export default function CatalogsSection({ catalogs, error }) {
               {buildTree(catalogs).map((node) => (
                 <TreeNode
                   key={node.nodeId}
-                  {...node}
+                  node={node}
                   depth={0}
-                  selected={selectedKeyName}
-                  onSelect={selectTable}
+                  selected={selectedNode}
+                  onSelect={selectNode}
                 />
               ))}
             </div>
@@ -369,59 +589,22 @@ export default function CatalogsSection({ catalogs, error }) {
             }}
           />
           <div className="catalog-pane catalog-pane--tabs">
-            <div className="tabs">
-              <div className="tab-list">
-                <button
-                  className={`tab ${activeTab === 'dataset' ? 'tab--active' : ''}`}
-                  onClick={() => setActiveTab('dataset')}
-                >
-                  Dataset
-                </button>
-                <button
-                  className={`tab ${activeTab === 'states' ? 'tab--active' : ''}`}
-                  onClick={() => setActiveTab('states')}
-                >
-                  States
-                </button>
-                <button
-                  className={`tab ${activeTab === 'columns' ? 'tab--active' : ''}`}
-                  onClick={() => setActiveTab('columns')}
-                >
-                  Columns
-                </button>
-                <button
-                  className={`tab ${activeTab === 'constraints' ? 'tab--active' : ''}`}
-                  onClick={() => setActiveTab('constraints')}
-                >
-                  Constraints
-                </button>
-                <button
-                  className={`tab ${activeTab === 'lineage' ? 'tab--active' : ''}`}
-                  onClick={() => setActiveTab('lineage')}
-                >
-                  Lineage
-                </button>
-              </div>
-              <div className="tab-content">
-                {activeTab === 'dataset' && (
-                  <DatasetFields
-                    dataSet={dataSet}
-                    loading={loadingDataSet}
-                    error={dataSetError}
-                  />
-                )}
-                {activeTab === 'states' && (
-                  <StatesTab dataSetKeyName={dataSet ? dataSet.keyName : null} />
-                )}
-                {activeTab === 'columns' && <ColumnsTab dataSet={dataSet} />}
-                {activeTab === 'constraints' && (
-                  <ConstraintsTab dataSetKeyName={dataSet ? dataSet.keyName : null} />
-                )}
-                {activeTab === 'lineage' && (
-                  <LineageTab dataSetKeyName={dataSet ? dataSet.keyName : null} />
-                )}
-              </div>
-            </div>
+            {!selectedNode && <div className="empty-box">Select an item in the tree.</div>}
+            {selectedNode && selectedNode.type === 'datasource' && (
+              <DataSourcePanel dataSourceKeyName={selectedNode.keyName} />
+            )}
+            {selectedNode && selectedNode.type === 'schema' && (
+              <SchemaPanel schema={selectedNode} />
+            )}
+            {selectedNode && selectedNode.type === 'table' && (
+              <TableTabs
+                dataSet={dataSet}
+                loading={loadingDataSet}
+                error={dataSetError}
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+              />
+            )}
           </div>
         </div>
       )}

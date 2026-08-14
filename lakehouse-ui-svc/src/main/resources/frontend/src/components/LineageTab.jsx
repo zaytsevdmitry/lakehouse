@@ -1,7 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Background, Controls, MarkerType, ReactFlow } from '@xyflow/react';
+import { Background, Controls, Handle, MarkerType, Position, ReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { fetchLineage } from '../api.js';
+
+function LineageNode({ data }) {
+  return (
+    <div className="lineage-node">
+      <Handle type="target" position={Position.Left} className="dag-handle dag-handle--target" />
+      <Handle type="source" position={Position.Right} className="dag-handle dag-handle--source" />
+      {data.label}
+    </div>
+  );
+}
+
+const NODE_TYPES = { lineageNode: LineageNode };
 
 const CENTER_X = 400;
 const CENTER_Y = 200;
@@ -64,6 +76,7 @@ function buildLayout(center, vertices, edges) {
   const nodes = [
     {
       id: `node:${center}`,
+      type: 'lineageNode',
       position: { x: CENTER_X, y: CENTER_Y },
       data: { label: center },
       style: CENTER_STYLE,
@@ -82,6 +95,7 @@ function buildLayout(center, vertices, edges) {
       layerKeys.forEach((key, i) => {
         nodes.push({
           id: `node:${key}`,
+          type: 'lineageNode',
           position: {
             x: CENTER_X + direction * d * COLUMN_WIDTH,
             y: CENTER_Y + (i - (layerKeys.length - 1) / 2) * VERTICAL_GAP,
@@ -146,6 +160,7 @@ function LineageTab({ dataSetKeyName }) {
           <ReactFlow
             nodes={nodes}
             edges={edges}
+            nodeTypes={NODE_TYPES}
             fitView
             fitViewOptions={{ padding: 0.2 }}
             proOptions={{ hideAttribution: true }}

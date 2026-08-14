@@ -44,6 +44,7 @@
         <module>lakehouse-task-executor-spark-dq-app</module>
         <module>lakehouse-task-proxy-for-spark</module>
         <module>lakehouse-task-proxy-for-spark-api</module>
+        <module>lakehouse-task-proxy-for-spark-rest-client</module>
     </modules>
     <properties>
         <maven.compiler.source>17</maven.compiler.source>

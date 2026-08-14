@@ -47,6 +47,12 @@
         </dependency>
 
         <dependency>
+            <groupId>lakehouse</groupId>
+            <artifactId>lakehouse-task-proxy-for-spark-rest-client</artifactId>
+            <version>0.7.0</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>

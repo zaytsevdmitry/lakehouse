@@ -4,11 +4,15 @@ import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.hibernate.query.TypedParameterValue;
+import org.hibernate.type.StandardBasicTypes;
 import org.lakehouse.task.proxy.spark.entity.SparkSubmission;
 import org.lakehouse.task.proxy.spark.repository.SparkSubmissionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -259,6 +263,124 @@ class SparkSubmissionRepositoryTest {
             List<Object[]> rows = repository.claimAllTasks(3);
 
             assertThat(rows).hasSize(3);
+        }
+    }
+
+    @Nested
+    class FindSubmissions {
+
+        private static TypedParameterValue typed(Instant value) {
+            return new TypedParameterValue(StandardBasicTypes.INSTANT, value);
+        }
+
+        private static TypedParameterValue typedLong(Long value) {
+            return new TypedParameterValue(StandardBasicTypes.LONG, value);
+        }
+
+        private SparkSubmission subWith(SparkSubmission.Status status, Instant createdAt, long order) {
+            SparkSubmission s = sub(status);
+            s.setCreatedAt(createdAt);
+            s.setSubmissionId("driver-" + order);
+            s.setAppResource("app-" + order);
+            return s;
+        }
+
+        @Test
+        void returnsAllWithoutFiltersOrderedByIdDesc() {
+            for (int i = 1; i <= 5; i++) {
+                repository.save(sub(SparkSubmission.Status.RUNNING));
+            }
+
+            List<SparkSubmission> rows = repository.findSubmissions(
+                    null, typed(null), typed(null), typedLong(null),
+                    PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "id")));
+
+            assertThat(rows).hasSize(5);
+            for (int i = 1; i < rows.size(); i++) {
+                assertThat(rows.get(i).getId()).isLessThan(rows.get(i - 1).getId());
+            }
+        }
+
+        @Test
+        void filtersByStatus() {
+            repository.save(sub(SparkSubmission.Status.WAITING));
+            repository.save(sub(SparkSubmission.Status.RUNNING));
+            repository.save(sub(SparkSubmission.Status.FINISHED));
+
+            List<SparkSubmission> rows = repository.findSubmissions(
+                    SparkSubmission.Status.RUNNING, typed(null), typed(null), typedLong(null),
+                    PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "id")));
+
+            assertThat(rows).hasSize(1);
+            assertThat(rows.get(0).getStatus()).isEqualTo(SparkSubmission.Status.RUNNING);
+        }
+
+        @Test
+        void filtersByCreatedAtRange() {
+            Instant base = Instant.now();
+            repository.save(subWith(SparkSubmission.Status.RUNNING, base.minusSeconds(100), 1));
+            repository.save(subWith(SparkSubmission.Status.RUNNING, base.minusSeconds(50), 2));
+            repository.save(subWith(SparkSubmission.Status.RUNNING, base.plusSeconds(50), 3));
+
+            List<SparkSubmission> rows = repository.findSubmissions(
+                    null, typed(base.minusSeconds(60)), typed(base), typedLong(null),
+                    PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "id")));
+
+            assertThat(rows).hasSize(1);
+            assertThat(rows.get(0).getSubmissionId()).isEqualTo("driver-2");
+        }
+
+        @Test
+        void filtersByLastIdCursor() {
+            SparkSubmission s1 = repository.save(sub(SparkSubmission.Status.RUNNING));
+            SparkSubmission s2 = repository.save(sub(SparkSubmission.Status.RUNNING));
+
+            List<SparkSubmission> rows = repository.findSubmissions(
+                    null, typed(null), typed(null), typedLong(s2.getId()),
+                    PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "id")));
+
+            assertThat(rows).hasSize(1);
+            assertThat(rows.get(0).getId()).isEqualTo(s1.getId());
+        }
+
+        @Test
+        void combinesFilters() {
+            Instant base = Instant.now();
+            SparkSubmission waiting = subWith(SparkSubmission.Status.WAITING, base.minusSeconds(50), 1);
+            repository.save(waiting);
+            SparkSubmission running = subWith(SparkSubmission.Status.RUNNING, base.minusSeconds(100), 2);
+            repository.save(running);
+
+            List<SparkSubmission> rows = repository.findSubmissions(
+                    SparkSubmission.Status.WAITING, typed(base.minusSeconds(60)), typed(null), typedLong(null),
+                    PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "id")));
+
+            assertThat(rows).hasSize(1);
+            assertThat(rows.get(0).getId()).isEqualTo(waiting.getId());
+        }
+
+        @Test
+        void appliesPageLimit() {
+            for (int i = 0; i < 5; i++) {
+                repository.save(sub(SparkSubmission.Status.RUNNING));
+            }
+
+            List<SparkSubmission> rows = repository.findSubmissions(
+                    null, typed(null), typed(null), typedLong(null),
+                    PageRequest.of(0, 2, Sort.by(Sort.Direction.DESC, "id")));
+
+            assertThat(rows).hasSize(2);
+        }
+
+        @Test
+        void returnsEmptyWhenNothingMatches() {
+            repository.save(sub(SparkSubmission.Status.RUNNING));
+
+            List<SparkSubmission> rows = repository.findSubmissions(
+                    SparkSubmission.Status.FINISHED, typed(null), typed(null), typedLong(null),
+                    PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "id")));
+
+            assertThat(rows).isEmpty();
         }
     }
 

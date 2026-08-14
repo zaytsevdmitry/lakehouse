@@ -23,7 +23,10 @@ import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 
 @Entity
-@Table(name = "spark_submissions")
+@Table(name = "spark_submissions", indexes = {
+        @Index(name = "idx_spark_submissions_status_id", columnList = "status, id DESC"),
+        @Index(name = "idx_spark_submissions_created_at_id", columnList = "created_at DESC, id DESC")
+})
 public class SparkSubmission {
 
     public enum Status {

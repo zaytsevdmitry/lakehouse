@@ -87,5 +87,14 @@ public class Endpoint {
     public final static String TASK_EXECUTOR_PROCESSOR = TASK_EXECUTOR + "/processor";
     public final static String TASK_EXECUTOR_PROCESSOR_CONFIG = TASK_EXECUTOR_PROCESSOR + "/config";
     public final static String TASK_EXECUTOR_PROCESSOR_GET_BY_LOCK_ID = TASK_EXECUTOR_PROCESSOR_CONFIG + "/lock/{id}";
+//task-proxy-for-spark
+    public final static String SPARK_PROXY_SUBMISSIONS = "/v1/submissions";
+    public final static String SPARK_PROXY_SUBMISSIONS_CREATE = SPARK_PROXY_SUBMISSIONS + "/create";
+    public final static String SPARK_PROXY_SUBMISSIONS_STATUS = SPARK_PROXY_SUBMISSIONS + "/status/{submissionId}";
+    public final static String SPARK_PROXY_SUBMISSIONS_KILL = SPARK_PROXY_SUBMISSIONS + "/kill/{submissionId}";
+    public final static String SPARK_PROXY_SUBMISSIONS_KILL_ALL = SPARK_PROXY_SUBMISSIONS + "/killall";
+    public final static String SPARK_PROXY_SUBMISSIONS_CLEAR = SPARK_PROXY_SUBMISSIONS + "/clear";
+    public final static String SPARK_PROXY_SUBMISSIONS_QUERY = "/api/v1/spark-proxy-submissions";
+    public final static String SPARK_PROXY_SUBMISSIONS_PROPERTIES = SPARK_PROXY_SUBMISSIONS_QUERY + "/{id}/spark-properties";
 
 }

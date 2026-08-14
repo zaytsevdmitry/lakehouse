@@ -33,6 +33,9 @@ lakehouse:
       scheduler:
         server:
           url: http://localhost:8081
+      task-proxy-for-spark:
+        server:
+          url: http://localhost:8099
     ui:
       health-check-timeout-ms: 3000
       services:

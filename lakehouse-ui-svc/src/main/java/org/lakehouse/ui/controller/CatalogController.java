@@ -18,6 +18,7 @@ package org.lakehouse.ui.controller;
 
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetLineageDTO;
+import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.ui.dto.CatalogTreeNodeDTO;
 import org.lakehouse.ui.dto.ConstraintDTO;
 import org.lakehouse.ui.service.CatalogService;
@@ -56,5 +57,20 @@ public class CatalogController {
     @GetMapping("/dataset/{keyName}/constraints")
     public List<ConstraintDTO> getConstraints(@PathVariable String keyName) {
         return catalogService.getConstraints(keyName);
+    }
+
+    @GetMapping("/script/{key}")
+    public String getScript(@PathVariable String key) {
+        return catalogService.getScript(key);
+    }
+
+    @GetMapping("/dataset/{keyName}/model-script")
+    public String getDataSetModelScript(@PathVariable String keyName) {
+        return catalogService.getDataSetModelScript(keyName);
+    }
+
+    @GetMapping("/datasource/{keyName}")
+    public DataSourceDTO getDataSource(@PathVariable String keyName) {
+        return catalogService.getDataSource(keyName);
     }
 }
