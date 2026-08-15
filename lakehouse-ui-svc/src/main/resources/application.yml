@@ -5,6 +5,12 @@ spring:
   threads:
     virtual:
       enabled: true
+  web:
+    resources:
+      cache:
+        cachecontrol:
+          no-cache: true
+          max-age: 0s
 
 management:
   endpoints:
@@ -54,3 +60,29 @@ lakehouse:
         - name: lakehouse-task-proxy-for-spark
           url: http://localhost:8099
           health-check-url: http://localhost:8099/healthz
+        - name: postgres-db
+          url: http://localhost:5432
+          health-check-url: localhost:5432
+          check-type: tcp
+        - name: kafka-broker
+          url: http://localhost:9092
+          health-check-url: localhost:9092
+          check-type: tcp
+      vertices:
+        config-svc: lakehouse-config-svc
+        scheduler-svc: lakehouse-scheduler-svc
+        state-svc: lakehouse-state-svc
+        task-executor-1: lakehouse-task-executor-svc-1
+        spark-proxy: lakehouse-task-proxy-for-spark
+        postgres: postgres-db
+        kafka: kafka-broker
+      edges:
+        config-svc:
+          - state-svc
+          - scheduler-svc
+        scheduler-svc:
+          - task-executor-1
+        state-svc:
+          - task-executor-1
+        task-executor-1:
+          - spark-proxy

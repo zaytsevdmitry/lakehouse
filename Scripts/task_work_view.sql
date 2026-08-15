@@ -17,6 +17,7 @@ from lakehouse_scheduler.schedule_task_instance sti
 join lakehouse_scheduler.schedule_scenario_act_instance ssai on ssai.id =sti.schedule_scenario_act_instance_id
 join lakehouse_scheduler.schedule_instance si on si.id = ssai.schedule_instance_id
 left join lakehouse_scheduler.schedule_task_instance_execution_lock stiel on stiel.schedule_task_instance_id  = sti.id
-where ssai.status not in ('NEW', 'SUCCESS')
+-- where ssai.status not in ('NEW', 'SUCCESS')
+where sti.id=1129
 order by sti.id 
 ;

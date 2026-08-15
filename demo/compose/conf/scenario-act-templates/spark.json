@@ -11,7 +11,7 @@
       "taskExecutionServiceGroupName": "state-service",
       "taskProcessor": "lockedStateTaskProcessor",
       "importance": "critical",
-      "description": "Made interval status RUNNING"
+      "description": "Made interval status LOCKED"
     },
     {
       "name": "prepare",

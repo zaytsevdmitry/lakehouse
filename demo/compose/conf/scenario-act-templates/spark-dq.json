@@ -14,7 +14,7 @@
       "taskExecutionServiceGroupName": "state-service",
       "taskProcessor": "lockedStateTaskProcessor",
       "importance": "critical",
-      "description": "Made interval status RUNNING"
+      "description": "Made interval status LOCKED"
     },
     {
       "name": "prepare",
@@ -25,11 +25,11 @@
       "description": "load from remote datastore",
       "driverKeyName": "spark_iceberg",
       "taskProcessorArgs": {
-        "deploy.clusterUrl": "http://172.20.193.160:8099/v1/submissions",
         "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.7.0-jar-with-dependencies.jar",
+        "deploy.clusterUrl": "http://172.20.193.160:8099/v1/submissions",
         "deploy.mainClass": "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
-        "spark.driver.cores": "1",
         "spark.app.name": "{{ getTaskFullName() }}",
+        "spark.driver.cores": "1",
         "spark.driver.memory": "1g",
         "spark.executor.cores": "1",
         "spark.executor.memory": "1g",

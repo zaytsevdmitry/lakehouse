@@ -181,9 +181,9 @@ services:
           cpus: "2"
           memory: 4g
 
-  conf-svc:
+  lakehouse-config-svc:
     image: lakehouse:0.7.0
-    container_name: conf-svc
+    container_name: lakehouse-config-svc
     ports:
       - "8080:8080"
     networks:
@@ -200,9 +200,9 @@ services:
       broker:
         condition: service_started
 
-  scheduler-svc:
+  lakehouse-scheduler-svc:
     image: lakehouse:0.7.0
-    container_name: scheduler-svc
+    container_name: lakehouse-scheduler-svc
     ports:
       - "8081:8081"
     networks:
@@ -216,19 +216,19 @@ services:
       -Dlakehouse.scheduler.registration.delay-ms=5000 
       -Dlakehouse.scheduler.run.delay-ms=5000 
       -Dlakehouse.scheduler.resolvedeps.delay-ms=5000 
-      -Dlakehouse.client.rest.config.server.url=http://conf-svc:8080 
+      -Dlakehouse.client.rest.config.server.url=http://lakehouse-config-svc:8080 
       -jar /opt/lakehouse-scheduler-svc-0.7.0-jar-with-dependencies.jar"
     depends_on:
       db-dev:
         condition: service_healthy
       broker:
         condition: service_started
-      conf-svc:
+      lakehouse-config-svc:
         condition: service_started
 
-  state-svc:
+  lakehouse-state-svc:
     image: lakehouse:0.7.0
-    container_name: state-svc
+    container_name: lakehouse-state-svc
     ports:
       - "8082:8082"
     networks:
@@ -242,9 +242,9 @@ services:
       db-dev:
         condition: service_healthy
 
-  lakehouse-task-executor-svc-1:
+  lakehouse-task-executor-svc-database:
     image: lakehouse:0.7.0
-    container_name: task-executor-svc-1
+    container_name: task-executor-svc-database
     hostname: task-executor-svc-1
     ports:
       - "8091:8091"
@@ -254,9 +254,9 @@ services:
     command: [
       "java",
       "-Dserver.port=8091",
-      "-Dlakehouse.client.rest.config.server.url=http://conf-svc:8080",
-      "-Dlakehouse.client.rest.scheduler.server.url=http://scheduler-svc:8081",
-      "-Dlakehouse.client.rest.state.server.url=http://state-svc:8082",
+      "-Dlakehouse.client.rest.config.server.url=http://lakehouse-config-svc:8080",
+      "-Dlakehouse.client.rest.scheduler.server.url=http://lakehouse-scheduler-svc:8081",
+      "-Dlakehouse.client.rest.state.server.url=http://lakehouse-state-svc:8082",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id=database",
       "-Dlakehouse.task-executor.service.id=database",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1",
@@ -266,17 +266,17 @@ services:
     depends_on:
       broker:
         condition: service_started
-      conf-svc:
+      lakehouse-config-svc:
         condition: service_started
-      scheduler-svc:
+      lakehouse-scheduler-svc:
         condition: service_started
-      state-svc:
+      lakehouse-state-svc:
         condition: service_started
 
-  lakehouse-task-executor-svc-2:
+  lakehouse-task-executor-svc-spark:
     image: lakehouse:0.7.0
-    container_name: task-executor-svc-2
-    hostname: task-executor-svc-2
+    container_name: task-executor-svc-spark
+    hostname: task-executor-svc-spark
     networks:
       lakehouse_net:
         ipv4_address: 172.20.193.130
@@ -285,9 +285,9 @@ services:
     command: [
       "java",
       "-Dserver.port=8092",
-      "-Dlakehouse.client.rest.config.server.url=http://conf-svc:8080",
-      "-Dlakehouse.client.rest.scheduler.server.url=http://scheduler-svc:8081",
-      "-Dlakehouse.client.rest.state.server.url=http://state-svc:8082",
+      "-Dlakehouse.client.rest.config.server.url=http://lakehouse-config-svc:8080",
+      "-Dlakehouse.client.rest.scheduler.server.url=http://lakehouse-scheduler-svc:8081",
+      "-Dlakehouse.client.rest.state.server.url=http://lakehouse-state-svc:8082",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id=spark-cluster",
       "-Dlakehouse.task-executor.service.id=spark-exec-1",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1",
@@ -297,17 +297,17 @@ services:
     depends_on:
       broker:
         condition: service_started
-      conf-svc:
+      lakehouse-config-svc:
         condition: service_started
-      scheduler-svc:
+      lakehouse-scheduler-svc:
         condition: service_started
-      state-svc:
+      lakehouse-state-svc:
         condition: service_started
 
-  lakehouse-task-executor-svc-3:
+  lakehouse-task-executor-svc-state:
     image: lakehouse:0.7.0
-    container_name: task-executor-svc-3
-    hostname: task-executor-svc-3
+    container_name: lakehouse-task-executor-svc-state
+    hostname: lakehouse-task-executor-svc-state
     networks:
       lakehouse_net:
         ipv4_address: 172.20.193.140
@@ -316,9 +316,9 @@ services:
     command: [
       "java",
       "-Dserver.port=8093",
-      "-Dlakehouse.client.rest.config.server.url=http://conf-svc:8080",
-      "-Dlakehouse.client.rest.scheduler.server.url=http://scheduler-svc:8081",
-      "-Dlakehouse.client.rest.state.server.url=http://state-svc:8082",
+      "-Dlakehouse.client.rest.config.server.url=http://lakehouse-config-svc:8080",
+      "-Dlakehouse.client.rest.scheduler.server.url=http://lakehouse-scheduler-svc:8081",
+      "-Dlakehouse.client.rest.state.server.url=http://lakehouse-state-svc:8082",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id=state-service",
       "-Dlakehouse.task-executor.service.id=state-service",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1",
@@ -328,19 +328,19 @@ services:
     depends_on:
       broker:
         condition: service_started
-      conf-svc:
+      lakehouse-config-svc:
         condition: service_started
-      scheduler-svc:
+      lakehouse-scheduler-svc:
         condition: service_started
-      state-svc:
+      lakehouse-state-svc:
         condition: service_started
 
   trino:
     image: "trinodb/trino:478"
     ports:
-      - "9090:8080"
+      - "9090:9090"
     volumes:
-      - ./conf_infra/trino/etc:/usr/lib/trino/etc:ro
+      - ./conf_infra/trino/etc:/etc/trino
       - ./conf_infra/trino/catalog:/etc/trino/catalog
     networks:
       lakehouse_net:
@@ -377,12 +377,115 @@ services:
     depends_on:
       broker:
         condition: service_started
-      conf-svc:
+      lakehouse-config-svc:
         condition: service_started
-      scheduler-svc:
+      lakehouse-scheduler-svc:
         condition: service_started
-      state-svc:
+      lakehouse-state-svc:
         condition: service_started
+
+  lakehouse-ui-svc:
+    image: lakehouse:0.7.0
+    container_name: lakehouse-ui-svc
+    hostname: lakehouse-ui-svc
+    networks:
+      lakehouse_net:
+        ipv4_address: 172.20.193.170
+    ports:
+      - "8084:8084"
+    command: [
+      "java",
+      "-Dlakehouse.ui.health-check-timeout-ms=3000",
+      "-Dlakehouse.ui.services[0].name=lakehouse-config-svc",
+      "-Dlakehouse.ui.services[0].url=http://172.20.193.80:8080",
+      "-Dlakehouse.ui.services[0].health-check-url=http://172.20.193.80:8080/healthz",
+      "-Dlakehouse.ui.services[1].name=lakehouse-scheduler-svc",
+      "-Dlakehouse.ui.services[1].url=http://172.20.193.90:8081",
+      "-Dlakehouse.ui.services[1].health-check-url=http://172.20.193.90:8081/healthz",
+      "-Dlakehouse.ui.services[2].name=lakehouse-state-svc",
+      "-Dlakehouse.ui.services[2].url=http://172.20.193.100:8082",
+      "-Dlakehouse.ui.services[2].health-check-url=http://172.20.193.100:8082/healthz",
+      "-Dlakehouse.ui.services[3].name=lakehouse-task-proxy-for-spark",
+      "-Dlakehouse.ui.services[3].url=http://172.20.193.160:8099",
+      "-Dlakehouse.ui.services[3].health-check-url=http://172.20.193.160:8099/healthz",
+      "-Dlakehouse.ui.services[4].name=lakehouse-task-executor-svc-database",
+      "-Dlakehouse.ui.services[4].url=http://172.20.193.110:8091",
+      "-Dlakehouse.ui.services[4].health-check-url=http://172.20.193.110:8091/healthz",
+      "-Dlakehouse.ui.services[5].name=lakehouse-task-executor-svc-spark",
+      "-Dlakehouse.ui.services[5].url=http://172.20.193.130:8092",
+      "-Dlakehouse.ui.services[5].health-check-url=http://172.20.193.130:8092/healthz",
+      "-Dlakehouse.ui.services[6].name=lakehouse-task-executor-svc-state",
+      "-Dlakehouse.ui.services[6].url=http://172.20.193.140:8093",
+      "-Dlakehouse.ui.services[6].health-check-url=http://172.20.193.140:8093/healthz",
+      "-Dlakehouse.ui.services[7].name=lakehouse-trino",
+      "-Dlakehouse.ui.services[7].url=http://172.20.193.120:9090",
+      "-Dlakehouse.ui.services[7].health-check-url=http://172.20.193.120:9090",
+      "-Dlakehouse.ui.services[8].name=lakehouse-spark-master",
+      "-Dlakehouse.ui.services[8].url=http://172.20.193.40:8400",
+      "-Dlakehouse.ui.services[8].health-check-url=http://172.20.193.40:8400",
+      "-Dlakehouse.ui.services[9].name=lakehouse-spark-worker",
+      "-Dlakehouse.ui.services[9].url=http://172.20.193.50:8401",
+      "-Dlakehouse.ui.services[9].health-check-url=http://172.20.193.50:8401",
+      "-Dlakehouse.ui.services[10].name=lakehouse-spark-history",
+      "-Dlakehouse.ui.services[10].url=http://172.20.193.70:18080",
+      "-Dlakehouse.ui.services[10].health-check-url=http://172.20.193.70:18080",
+      "-Dlakehouse.ui.services[11].name=lakehouse-minio",
+      "-Dlakehouse.ui.services[11].url=http://172.20.193.30:9001",
+      "-Dlakehouse.ui.services[11].health-check-url=http://172.20.193.30:9000/minio/health/live",
+      "-Dlakehouse.ui.services[12].name=db-dev",
+      "-Dlakehouse.ui.services[12].url=http://172.20.193.10:5432",
+      "-Dlakehouse.ui.services[12].health-check-url=172.20.193.10:5432",
+      "-Dlakehouse.ui.services[12].check-type=tcp",
+      "-Dlakehouse.ui.services[13].name=kafka-broker",
+      "-Dlakehouse.ui.services[13].url=http://172.20.193.20:9092",
+      "-Dlakehouse.ui.services[13].health-check-url=172.20.193.20:9092",
+      "-Dlakehouse.ui.services[13].check-type=tcp",
+      "-Dlakehouse.client.rest.config.server.url=http://172.20.193.80:8080",
+      "-Dlakehouse.client.rest.state.server.url=http://172.20.193.100:8082",
+      "-Dlakehouse.client.rest.scheduler.server.url=http://172.20.193.90:8081",
+      "-Dlakehouse.client.rest.task-proxy-for-spark.server.url=http://172.20.193.160:8099",
+      "-Dlakehouse.ui.vertices.lakehouse-config-svc=lakehouse-config-svc",
+      "-Dlakehouse.ui.vertices.topic-schedule-conf=kafka-broker",
+      "-Dlakehouse.ui.vertices.topic-tasks=kafka-broker",
+      "-Dlakehouse.ui.vertices.lakehouse-scheduler-svc=lakehouse-scheduler-svc",
+      "-Dlakehouse.ui.vertices.lakehouse-task-executor-svc-database=lakehouse-task-executor-svc-database",
+      "-Dlakehouse.ui.vertices.lakehouse-task-executor-svc-spark=lakehouse-task-executor-svc-spark",
+      "-Dlakehouse.ui.vertices.lakehouse-task-executor-svc-state=lakehouse-task-executor-svc-state",
+      "-Dlakehouse.ui.vertices.lakehouse-state-svc=lakehouse-state-svc",
+      "-Dlakehouse.ui.vertices.lakehouse-task-proxy-for-spark=lakehouse-task-proxy-for-spark",
+      "-Dlakehouse.ui.vertices.processingdb=db-dev",
+      "-Dlakehouse.ui.vertices.confdb=db-dev",
+      "-Dlakehouse.ui.vertices.schedulerdb=db-dev",
+      "-Dlakehouse.ui.vertices.sparkproxydb=db-dev",
+      "-Dlakehouse.ui.vertices.lakehouse-spark-master=lakehouse-spark-master",
+      "-Dlakehouse.ui.vertices.lakehouse-spark-worker=lakehouse-spark-worker",
+      "-Dlakehouse.ui.vertices.lakehouse-minio=lakehouse-minio",
+      "-Dlakehouse.ui.vertices.lakehouse-trino=lakehouse-trino",
+      "-Dlakehouse.ui.vertices.lakehouse-spark-history=lakehouse-spark-history",
+      "-Dlakehouse.ui.edges.lakehouse-config-svc[0]=confdb",
+      "-Dlakehouse.ui.edges.lakehouse-config-svc[1]=topic-schedule-conf",
+      "-Dlakehouse.ui.edges.lakehouse-config-svc[2]=lakehouse-scheduler-svc",
+      "-Dlakehouse.ui.edges.topic-schedule-conf[0]=lakehouse-scheduler-svc",
+      "-Dlakehouse.ui.edges.lakehouse-scheduler-svc[0]=topic-tasks",
+      "-Dlakehouse.ui.edges.lakehouse-scheduler-svc[1]=schedulerdb",
+      "-Dlakehouse.ui.edges.topic-tasks[0]=lakehouse-task-executor-svc-database",
+      "-Dlakehouse.ui.edges.topic-tasks[1]=lakehouse-task-executor-svc-spark",
+      "-Dlakehouse.ui.edges.topic-tasks[2]=lakehouse-task-executor-svc-state",
+      "-Dlakehouse.ui.edges.lakehouse-task-executor-svc-state[0]=lakehouse-state-svc",
+      "-Dlakehouse.ui.edges.lakehouse-task-executor-svc-state[1]=lakehouse-scheduler-svc",
+      "-Dlakehouse.ui.edges.lakehouse-task-executor-svc-spark[0]=lakehouse-task-proxy-for-spark",
+      "-Dlakehouse.ui.edges.lakehouse-task-executor-svc-spark[1]=lakehouse-scheduler-svc",
+      "-Dlakehouse.ui.edges.lakehouse-task-executor-svc-database[0]=processingdb",
+      "-Dlakehouse.ui.edges.lakehouse-task-executor-svc-database[1]=lakehouse-scheduler-svc",
+      "-Dlakehouse.ui.edges.lakehouse-task-proxy-for-spark[0]=sparkproxydb",
+      "-Dlakehouse.ui.edges.lakehouse-task-proxy-for-spark[1]=lakehouse-spark-master",
+      "-Dlakehouse.ui.edges.lakehouse-spark-master[0]=lakehouse-spark-worker",
+      "-Dlakehouse.ui.edges.lakehouse-spark-worker[0]=lakehouse-minio",
+      "-Dlakehouse.ui.edges.lakehouse-minio[0]=lakehouse-trino",
+      "-Dlakehouse.ui.edges.lakehouse-minio[1]=lakehouse-spark-history",
+      "-jar", "/opt/lakehouse-ui-svc-0.7.0-jar-with-dependencies.jar"
+    ]
+
 
 volumes:
   minio_storage:

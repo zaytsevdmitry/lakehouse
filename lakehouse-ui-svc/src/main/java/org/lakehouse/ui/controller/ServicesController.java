@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/services")
@@ -37,5 +38,15 @@ public class ServicesController {
     @GetMapping
     public List<ServiceNodeDTO> getServices() {
         return servicesService.getServices();
+    }
+
+    @GetMapping("/edges")
+    public Map<String, List<String>> getEdges() {
+        return servicesService.getEdges();
+    }
+
+    @GetMapping("/vertices")
+    public Map<String, String> getVertices() {
+        return servicesService.getVertices();
     }
 }

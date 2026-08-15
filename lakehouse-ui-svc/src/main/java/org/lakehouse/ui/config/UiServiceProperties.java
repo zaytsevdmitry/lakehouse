@@ -19,12 +19,18 @@ package org.lakehouse.ui.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @ConfigurationProperties(prefix = "lakehouse.ui")
 public class UiServiceProperties {
 
     private List<Service> services = new ArrayList<>();
+
+    private Map<String, List<String>> edges = new HashMap<>();
+
+    private Map<String, String> vertices = new HashMap<>();
 
     public List<Service> getServices() {
         return services;
@@ -34,10 +40,27 @@ public class UiServiceProperties {
         this.services = services;
     }
 
+    public Map<String, List<String>> getEdges() {
+        return edges;
+    }
+
+    public void setEdges(Map<String, List<String>> edges) {
+        this.edges = edges == null ? new HashMap<>() : edges;
+    }
+
+    public Map<String, String> getVertices() {
+        return vertices;
+    }
+
+    public void setVertices(Map<String, String> vertices) {
+        this.vertices = vertices == null ? new HashMap<>() : vertices;
+    }
+
     public static class Service {
         private String name;
         private String url;
         private String healthCheckUrl = "";
+        private String checkType = "http";
 
         public String getName() {
             return name;
@@ -61,6 +84,14 @@ public class UiServiceProperties {
 
         public void setHealthCheckUrl(String healthCheckUrl) {
             this.healthCheckUrl = healthCheckUrl;
+        }
+
+        public String getCheckType() {
+            return checkType;
+        }
+
+        public void setCheckType(String checkType) {
+            this.checkType = checkType;
         }
     }
 }

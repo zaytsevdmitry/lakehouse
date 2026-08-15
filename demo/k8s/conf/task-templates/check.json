@@ -1,0 +1,7 @@
+{
+  "name": "checkTemplate",
+  "taskExecutionServiceGroupName": "default",
+  "taskProcessor": "dependencyCheckStateTaskProcessor",
+  "importance": "critical",
+  "description": "Dependency check"
+}

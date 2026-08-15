@@ -1,7 +1,7 @@
 proxy4spark:
   image:
     repository: lakehouse-task-proxy4spark
-    tag: "0.6.0"
+    tag: "0.7.0"
     pullPolicy: IfNotPresent
 
   service:
@@ -28,6 +28,7 @@ proxy4spark:
   k8s:
     namespace: "lakehouse-management"
     restUrl: "https://kubernetes.default.svc"
+    submissionIdPattern: "submission ID [a-zA-Z0-9-]+:([a-zA-Z0-9\\-]+-driver)"
 
   # Scheduler
   scheduler:

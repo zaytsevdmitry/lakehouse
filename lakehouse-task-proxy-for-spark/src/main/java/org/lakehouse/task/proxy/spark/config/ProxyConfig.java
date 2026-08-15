@@ -68,7 +68,7 @@ public class ProxyConfig {
     public static class K8s {
         private String namespace = "default";
         private String restUrl = "http://kubernetes.default.svc";
-        private String submissionIdPattern = "(?:driver\\s+)?pod name:\\s+([a-zA-Z0-9\\-]+-driver)";
+        private String submissionIdPattern = "submission ID [a-zA-Z0-9-]+:([a-zA-Z0-9\\-]+-driver)";
         public String getNamespace() { return namespace; }
         public void setNamespace(String namespace) { this.namespace = namespace; }
         public String getRestUrl() { return restUrl; }

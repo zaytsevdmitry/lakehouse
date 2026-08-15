@@ -22,7 +22,13 @@ export LH_VERSION=0.7.0
 pwd
 mkdir -p ./opt
 export CODE_ROOT="../.."
-for app in "lakehouse-scheduler-svc" "lakehouse-cli" "lakehouse-config-svc" "lakehouse-task-executor-svc" "lakehouse-state-svc"
+for app in \
+  "lakehouse-scheduler-svc" \
+  "lakehouse-cli" \
+  "lakehouse-config-svc" \
+  "lakehouse-task-executor-svc" \
+  "lakehouse-state-svc" \
+  "lakehouse-ui-svc"
 do
   echo "Coping files $CODE_ROOT/$app/target/$app-$LH_VERSION-jar-with-dependencies.jar"
   cp -f $CODE_ROOT/$app/target/$app-$LH_VERSION-jar-with-dependencies.jar ./opt/

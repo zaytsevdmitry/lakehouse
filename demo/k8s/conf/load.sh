@@ -35,6 +35,7 @@ check_config_svc_ready() {
 function curlPost() {
     URL=$1
     JSON_FILE=$2
+    echo "Post to ${URL} file ${JSON_FILE}"
     curl -f -i -X POST $URL -H "Content-Type: application/json" --show-error  --data-binary "@./$JSON_FILE"
     if [ $? -ne 0 ]; then
       echo "cURL error: $output"
@@ -67,6 +68,16 @@ do
    curlPost 127.0.0.1:8080/v1_0/configs/drivers "drivers/$s.json"
 done
 
+for s in "default"
+do
+   curlPost 127.0.0.1:8080/v1_0/configs/taskexecutionservicegroups "taskexecutionservicegroups/$s.json"
+done
+
+for s in "begin" "check" "prepare-jdbc" "spark" "spark-dq-template-task"
+do
+   curlPost 127.0.0.1:8080/v1_0/configs/tasks "task-templates/$s.json"
+done
+
 for s in "processingdb" "lakehousestorage"
 do
    curlPost 127.0.0.1:8080/v1_0/configs/datasources "datasources/$s.json"
@@ -90,12 +101,6 @@ done
 for s in "client_processing" "transaction_processing" "transaction_dds" "aggregation_pay_per_client_daily_mart" "aggregation_pay_per_client_total_mart"
 do
    curlPost 127.0.0.1:8080/v1_0/configs/datasets "datasets/$s.json"
-done
-
-
-for s in "default"
-do
-   curlPost 127.0.0.1:8080/v1_0/configs/taskexecutionservicegroups "taskexecutionservicegroups/$s.json"
 done
 
 for s in "database" "spark" "spark-dq"

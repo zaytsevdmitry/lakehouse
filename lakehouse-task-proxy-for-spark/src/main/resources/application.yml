@@ -56,7 +56,7 @@ lakehouse:
       k8s:
         namespace: "default"
         rest-url: "http://kubernetes.default.svc"
-        submission-id-pattern: '(?:driver\s+)?pod name:\s+([a-zA-Z0-9\-]+-driver)'
+        submission-id-pattern: 'submission ID [a-zA-Z0-9-]+:([a-zA-Z0-9\-]+-driver)'
       scheduler:
         poll-interval-ms: 5000
         pool-size: 2

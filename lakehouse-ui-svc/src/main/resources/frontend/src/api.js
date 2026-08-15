@@ -102,6 +102,22 @@ export async function fetchServices() {
   return response.json();
 }
 
+export async function fetchServiceEdges() {
+  const response = await fetch('/api/services/edges');
+  if (!response.ok) {
+    throw new Error(`Failed to load service edges: ${response.status} ${await response.text()}`);
+  }
+  return response.json();
+}
+
+export async function fetchServiceVertices() {
+  const response = await fetch('/api/services/vertices');
+  if (!response.ok) {
+    throw new Error(`Failed to load service vertices: ${response.status} ${await response.text()}`);
+  }
+  return response.json();
+}
+
 function buildQuery(params) {
   const search = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {

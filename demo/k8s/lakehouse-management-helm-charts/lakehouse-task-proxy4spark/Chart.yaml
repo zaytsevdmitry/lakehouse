@@ -3,4 +3,4 @@ name: lakehouse-task-proxy4spark
 description: REST API proxy for Spark Submit requests with PostgreSQL-backed task queue
 type: application
 version: 0.1.0
-appVersion: "0.6.0"
+appVersion: "0.7.0"

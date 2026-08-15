@@ -25,7 +25,8 @@ for svc in \
   "lakehouse-management-config-service 8080:8080" \
   "lakehouse-management-state-service 8082:8082" \
   "db-dev 5432:5432" \
-  "broker 9092:9092"
+  "broker 9092:9092" \
+  "lakehouse-management-ui-svc 8084:8084"
 do
   set -- $svc
   kubectl port-forward svc/$1 $2 -n lakehouse-management &

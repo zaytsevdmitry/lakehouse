@@ -28,6 +28,8 @@ public class ServicesService {
 
     public static final String STATUS_UP = "UP";
     public static final String STATUS_DOWN = "DOWN";
+    public static final String CHECK_TYPE_HTTP = "http";
+    public static final String CHECK_TYPE_TCP = "tcp";
 
     private final UiServiceProperties properties;
     private final HealthChecker healthChecker;
@@ -46,9 +48,24 @@ public class ServicesService {
                     String healthCheckUrl = service.getHealthCheckUrl() == null || service.getHealthCheckUrl().isBlank()
                             ? service.getUrl() : service.getHealthCheckUrl();
                     node.setHealthCheckUrl(healthCheckUrl);
-                    node.setStatus(healthChecker.isAlive(healthCheckUrl) ? STATUS_UP : STATUS_DOWN);
+                    node.setStatus(isAlive(service, healthCheckUrl) ? STATUS_UP : STATUS_DOWN);
                     return node;
                 })
                 .toList();
+    }
+
+    private boolean isAlive(UiServiceProperties.Service service, String target) {
+        if (CHECK_TYPE_TCP.equalsIgnoreCase(service.getCheckType())) {
+            return healthChecker.isPortOpen(target);
+        }
+        return healthChecker.isAlive(target);
+    }
+
+    public Map<String, List<String>> getEdges() {
+        return properties.getEdges();
+    }
+
+    public Map<String, String> getVertices() {
+        return properties.getVertices();
     }
 }

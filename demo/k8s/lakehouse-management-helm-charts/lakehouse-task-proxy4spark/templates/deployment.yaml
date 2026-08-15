@@ -43,6 +43,8 @@ spec:
               value: {{ .Values.proxy4spark.k8s.namespace | quote }}
             - name: LAKEHOUSE_TASK_PROXY4SPARK_K8S_REST-URL
               value: {{ .Values.proxy4spark.k8s.restUrl | quote }}
+            - name: LAKEHOUSE_TASK_PROXY4SPARK_K8S_SUBMISSION-ID-PATTERN
+              value: {{ .Values.proxy4spark.k8s.submissionIdPattern | quote }}
             - name: LAKEHOUSE_TASK_PROXY4SPARK_SCHEDULER_POLL-INTERVAL-MS
               value: {{ .Values.proxy4spark.scheduler.pollIntervalMs | quote }}
             - name: LAKEHOUSE_TASK_PROXY4SPARK_SCHEDULER_POOL-SIZE
@@ -63,4 +65,12 @@ spec:
               value: "1m"
             - name: MANAGEMENT_METRICS_TAGS_APPLICATION
               value: "lakehouse-task-proxy4spark"
-          command: [ "/opt/java/jdk-23.0.2/bin/java", "-jar", "/opt/lakehouse-task-spark-apps/lakehouse-task-proxy-for-spark-0.6.0-jar-with-dependencies.jar"]
+          volumeMounts:
+            - name: spark-defaults
+              mountPath: /opt/spark/conf/spark-defaults.conf
+              subPath: spark-defaults.conf
+          command: [ "/opt/java/jdk-23.0.2/bin/java", "-jar", "/opt/lakehouse-task-spark-apps/lakehouse-task-proxy-for-spark-0.7.0-jar-with-dependencies.jar"]
+      volumes:
+        - name: spark-defaults
+          configMap:
+            name: spark-defaults-conf
