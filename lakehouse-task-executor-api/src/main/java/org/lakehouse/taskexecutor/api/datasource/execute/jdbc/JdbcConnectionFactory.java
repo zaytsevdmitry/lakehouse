@@ -43,9 +43,9 @@ public class JdbcConnectionFactory {
                                 .collect(Collectors.toMap(
                                         Map.Entry::getKey,
                                         Map.Entry::getValue)));
-        logger.info("Try connect to {}", URL_KEY);
+        logger.info("Trying to connect to {}", URL_KEY);
         Connection conn = DriverManager.getConnection(url, info);
-        logger.info("Connection established successfully of {}", url);
+        logger.info("Connection to {} established successfully", url);
         return conn;
     }
 }

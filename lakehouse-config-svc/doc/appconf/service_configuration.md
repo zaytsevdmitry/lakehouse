@@ -32,5 +32,9 @@ lakehouse:
         kafka:
           producer:
             properties: # https://kafka.apache.org/41/configuration/producer-configs/
-              bootstrap.servers: localhost:9092        
+              bootstrap.servers: localhost:9092
+
+  health: # Эндпоинты проверки состояния сервиса
+    liveness-path: /healthz # Liveness-проба
+    readiness-path: /readyz # Readiness-проба
 ```

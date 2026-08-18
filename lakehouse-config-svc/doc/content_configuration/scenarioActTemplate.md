@@ -31,7 +31,7 @@
       "taskProcessorBody": "createTableSQLProcessorBody",
       "importance": "critical",
       "description": "Create table if not exists",
-      "executionModuleArgs": {
+      "taskProcessorArgs": {
       }
     },
     {
@@ -41,7 +41,7 @@
       "taskProcessorBody": "mergeSQLProcessorBody",
       "importance": "critical",
       "description": "load data",
-      "executionModuleArgs": {
+      "taskProcessorArgs": {
       }
     },
     {

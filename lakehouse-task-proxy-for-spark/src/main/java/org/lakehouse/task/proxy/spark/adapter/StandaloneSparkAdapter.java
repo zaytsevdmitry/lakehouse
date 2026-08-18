@@ -38,7 +38,7 @@ public class StandaloneSparkAdapter extends SparkAdapterBase {
         super(masterUrl, submissionTimeoutSeconds);
         this.restUrl = restUrl;
         this.submissionIdPattern = Pattern.compile(submissionIdPattern);
-        log.info("Initialised SparkAdapter is {} with masterUrl:{} , control restUrl {}",
+        log.info("Initialised SparkAdapter {} with masterUrl: {}, control restUrl {}",
                 StandaloneSparkAdapter.class.getSimpleName(),
                 masterUrl,
                 restUrl );

@@ -122,7 +122,7 @@ public class DataSetService {
 
     private DataSet findByName(String name) {
         return dataSetRepository.findById(name).orElseThrow(() -> {
-            logger.info("Can't get data set name: {}", name);
+            logger.info("Cannot get data set name: {}", name);
             return new DataSetNotFoundException(name);
         });
     }

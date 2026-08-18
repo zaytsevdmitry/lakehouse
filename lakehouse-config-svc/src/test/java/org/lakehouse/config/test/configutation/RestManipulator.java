@@ -37,8 +37,8 @@ public class RestManipulator {
 
     public String writeAndReadDTOTest(String keyName, String jsonString, String urlTemplate, String urlTemplateName)
             throws Exception {
-        logger.info("writeAndReadDTOTest keyName={}", keyName);
-        logger.info("Mock urlTemplate={}", urlTemplate);
+        logger.info("writeAndReadDTOTest: keyName={}", keyName);
+        logger.info("Mock POST urlTemplate={}", urlTemplate);
         this.mockMvc
                 .perform(post(urlTemplate)
                         .content(jsonString)
@@ -46,14 +46,14 @@ public class RestManipulator {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated());
 
-        logger.info("Mock urlTemplate={} status", urlTemplate);
+        logger.info("Mock GET urlTemplate={} status", urlTemplate);
         this.mockMvc.perform(get(urlTemplate)).andDo(print()).andExpect(status().isOk());
 
-        logger.info("Mock urlTemplate={} take back", urlTemplate);
+        logger.info("Mock GET urlTemplate={} take back", urlTemplate);
         MvcResult mvcResult = this.mockMvc.perform(get(urlTemplateName, keyName)).andExpect(status().isOk())
                 .andReturn();
 
-        logger.info("Mock urlTemplate={} return", urlTemplate);
+        logger.info("Mock GET urlTemplate={} return", urlTemplate);
         return mvcResult.getResponse().getContentAsString();
     }
 

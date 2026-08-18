@@ -2,4 +2,5 @@
 [*] --> NEW: Created
 NEW --> RUNNING: scenario acts can be RUNNING
 RUNNING --> SUCCESS: All scenario acts in SUCCESS state
+SUCCESS --> [*]
 @enduml

@@ -74,6 +74,7 @@ public class TaskService {
         result.setTemplate(taskDTO.getTemplate());
         result.setDescription(taskDTO.getDescription());
         result.setImportance(taskDTO.getImportance());
+        result.setMaxRetries(taskDTO.getMaxRetries());
         result.setTaskProcessor(taskDTO.getTaskProcessor());
         result.setTaskProcessorBody(taskDTO.getTaskProcessorBody());
         if (StringUtils.hasText(taskDTO.getTaskExecutionServiceGroupName()))
@@ -93,8 +94,8 @@ public class TaskService {
     public record SaveTaskResult(Task task, TaskDTO taskDTO) {}
 
     public SaveTaskResult save(TaskDTO taskDTO, TemplateScenarioAct templateScenarioAct, ScenarioAct scenarioAct) {
-        logger.info("Save task.name={}", taskDTO.getName());
-        logger.info("Validation task.name={}", taskDTO.getName());
+        logger.info("Saving task.name={}", taskDTO.getName());
+        logger.info("Validating task.name={}", taskDTO.getName());
         ValidationResult vr = TaskDTOValidator.validate(taskDTO);
         if (!vr.isValid())
             throw new DTOValidationException(vr.getDescriptions());
@@ -105,10 +106,10 @@ public class TaskService {
         task.setTemplateScenarioAct(templateScenarioAct);
         task.setScenarioAct(scenarioAct);
 
-        logger.info("Save sqlTemplate of task.name={}", taskDTO.getName());
+        logger.info("Saving sqlTemplate of task.name={}", taskDTO.getName());
         sqlTemplateService.save(task, taskDTO.getSqlTemplate());
 
-        logger.info("Save taskProcessorArgs of task.name={}", taskDTO.getName());
+        logger.info("Saving taskProcessorArgs of task.name={}", taskDTO.getName());
         saveArgs(task, taskDTO);
 
         logger.info("Saved task.name={}", taskDTO.getName());
@@ -181,6 +182,7 @@ public class TaskService {
         taskDTO.setName(task.getName());
         taskDTO.setDescription(task.getDescription());
         taskDTO.setImportance(task.getImportance());
+        taskDTO.setMaxRetries(task.getMaxRetries());
         taskDTO.setTaskProcessor(task.getTaskProcessor());
         taskDTO.setTaskProcessorBody(task.getTaskProcessorBody());
         if (task.getTaskExecutionServiceGroup()!= null)
@@ -247,7 +249,7 @@ public class TaskService {
     public TaskDTO getEffectiveTaskDTO(ScenarioAct scenarioAct, String taskName) {
         String scheduleName = scenarioAct.getSchedule().getKeyName();
         String scenarioActName = scenarioAct.getScenarioActTemplate().getKeyName();
-        logger.info("Get EffectiveTaskDTO {}.{}.{}",scheduleName,scenarioActName,taskName);
+        logger.info("Getting EffectiveTaskDTO {}.{}.{}",scheduleName,scenarioActName,taskName);
 
         TaskDTO scenarioActTaskDTO = taskRepository.findByScenarioActIdAndName(scenarioAct.getId(), taskName).map(this::mapTaskToDTO).orElse(null);
 

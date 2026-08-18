@@ -5,26 +5,43 @@ scale 650 width
 
 
 state Schedule{
-
-
-
+  state "NEW" as Schedule.NEW
+  state "RUNNING" as Schedule.RUNNING
+  state "SUCCESS" as Schedule.SUCCESS
 }
 state ScenarioAct{
-
+  state "NEW" as ScenarioAct.NEW
+  state "RUNNING" as ScenarioAct.RUNNING
+  state "SUCCESS" as ScenarioAct.SUCCESS
 }
 state Task{
+  state "NEW" as Task.NEW
+  state "QUEUED" as Task.QUEUED
+  state "RUNNING" as Task.RUNNING
+  state "SUCCESS" as Task.SUCCESS
+  state "FAILED" as Task.FAILED
+  state "CONF_ERROR" as Task.CONF_ERROR
 }
 
 [*] --> Schedule.NEW
+Schedule.NEW-->Schedule.RUNNING
+Schedule.RUNNING-->Schedule.SUCCESS
+
+[*] --> ScenarioAct.NEW
 Schedule.NEW-->ScenarioAct.NEW
-Schedule.RUNNING-->ScenarioAct.RUNNING
+ScenarioAct.NEW-->ScenarioAct.RUNNING
+ScenarioAct.RUNNING-->ScenarioAct.SUCCESS
+
+[*] --> Task.NEW
 ScenarioAct.NEW-->Task.NEW
-Schedule.NEW->Schedule.RUNNING
-ScenarioAct.RUNNING--->Task.QUEUED
-Task.RUNNING-->Task.SUCCESS
-Task.SUCCESS->ScenarioAct.SUCCESS
-ScenarioAct.SUCCESS->Schedule.SUCCESS
+Task.NEW-->Task.QUEUED
 Task.QUEUED --> Task.RUNNING
+Task.RUNNING-->Task.SUCCESS
 Task.RUNNING->Task.FAILED
-Task.FAILED-->Task.QUEUED
+Task.RUNNING->Task.CONF_ERROR
+Task.FAILED-->Task.NEW: retry
+Task.CONF_ERROR-->Task.NEW: retry
+
+ScenarioAct.SUCCESS->Schedule.SUCCESS
+Task.SUCCESS->ScenarioAct.SUCCESS
 @enduml

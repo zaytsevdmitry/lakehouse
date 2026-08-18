@@ -1,14 +1,13 @@
 # Источники данных (datasources)
-Служит для определения источников данных. Расширяет конфигурацию driver.
+Служит для определения источников данных.
 ## Поля объекта
 | Поле                                | Назначение                                                                                                                                                         |
 |:------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | keyName                             | Уникальный идентификатов                                                                                                                                           | 
-| driverKeyName                       | Указывает на конфигурацию-драйвер, чьим экземпляром является текущий источник                                                                                      |
-| catalogKeyName                      | Указывает на каталог. Все датасеты связанные с источником будут определять местонахождение таблицы в указанном каталоге( если каталог поддерживается исполнителем) |
 | [service](#Вложенный-объект-сервис) | Описывает параметры подключения, для создания сессии или передачи комманд                                                                                          |
 | description                         | Описание для документирования                                                                                                                                      | 
-| [sqlTemplate](sqlTemplate.md)       | Реализует адаптацию диалекта. Переопределяет элементы указанные в [драйвере](drivers.md)                                                                           |
+| databaseProtocol                    | Протокол подключения к источнику                                                                                                                                   |
+| dataSourceType                      | Тип источника. <br/>**database** - для баз данных,<br/> **[iceberg](https://iceberg.apache.org/)** - для таблиц в формате файлов iceberg | 
 
 ## Вложенный объект сервис
 | Поле       | Назначение                                              |
@@ -25,26 +24,20 @@
 ```json
 {
   "keyName": "processingdb",
-  "driverKeyName":"postgres",
-  "catalogKeyName":"processing",
   "service":
-    {
-      "host": "192.1.193.10",
-      "port": "5432",
-      "urn": "postgresDB",
-      "properties": {
-        "password": "postgresPW",
-        "user": "postgresUser",
-        "fetchSize": "10000",
-        "spark.sql.catalog.processing": "org.apache.spark.sql.execution.datasources.v2.jdbc.JDBCTableCatalog",
-        "spark.sql.catalog.processing.url": "{{driver.connectionTemplates['jdbc']}}",
-        "spark.sql.catalog.processing.user": "postgresUser",
-        "spark.sql.catalog.processing.password": "postgresPW",
-        "spark.sql.catalog.processing.type": "hive"
-      }
-    },
+  {
+    "host": "172.20.193.10",
+    "port": "5432",
+    "urn": "postgresDB",
+    "properties": {
+      "password": "postgresPW",
+      "user": "postgresUser",
+      "fetchSize": "10000"
+    }
+  },
   "description": "Remote datastore processingdb",
-  "sqlTemplate" : {}
+  "dataSourceType": "database",
+  "databaseProtocol": "postgresql"
 }
 
 

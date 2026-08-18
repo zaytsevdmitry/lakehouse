@@ -54,7 +54,7 @@ public class DataSetConstraintService {
                 dataSetConstraint.setId(found.get(0).getId());
                 logger.info("Constraint {} will be updated. metricId is {}", dataSetConstraint.getName(), dataSetConstraint.getId());
             }else {
-                logger.info("Constrain {} will be added. metricId is null", dataSetConstraint.getName());
+                logger.info("Constraint {} will be added. metricId is null", dataSetConstraint.getName());
             }
             return dataSetConstraint;
         }).toList();

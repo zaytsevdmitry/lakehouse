@@ -6,6 +6,7 @@
   "description": "load from remote datastore",
   "driverKeyName": "spark_iceberg",
   "taskProcessorArgs": {
+    "spark.kubernetes.driver.pod.name":"task-{{ id }}-{{tryNum}}-{{name}}-driver",
     "spark.app.name": "{{ id }}-{{tryNum}}-{{name}}",
     "spark.kubernetes.submission.waitAppCompletion": "false",
     "spark.kubernetes.executor.deleteOnTermination": "true",

@@ -33,7 +33,7 @@ public class MetricDQStatusKafkaSerializer implements Serializer<MetricDQStatusD
     public byte[] serialize(String topic, MetricDQStatusDTO data) {
         try {
             if (data == null) {
-                logger.info("Null received at serializing");
+                logger.info("Null received during serialization");
                 return null;
             }
             logger.info("Serializing...");

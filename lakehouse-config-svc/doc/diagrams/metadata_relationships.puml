@@ -39,15 +39,16 @@ package "Производные объекты (compound)" {
 
     (SourceConfDTO) as SRC
     (ModelScript) as MOD
+    (Lineage) as LNG
 }
 
 ' ---- Вложенные объекты (композиция) ----
 DST *-- COL : columnSchema
 DST *-- CONS : constraints
-DST *-- SQLT : sqlTemplate (переопределяет)
+DST *-- DST : sources (зависимость от других датасетов)
 DS *-- SVC : service (вложенный объект)
-DS *-- SQLT : sqlTemplate (переопределяет)
 DRV *-- SQLT : sqlTemplate (базовый)
+TASK *-- SQLT : sqlTemplate (переопределяет драйвер)
 SCH *-- SA : scenarioActs
 SCH *-- DAGE : scenarioActEdges (граф сценариев)
 SA *-- TASK : tasks (переопределяют шаблон)
@@ -58,8 +59,7 @@ SAT *-- DAGE : dagEdges (граф задач)
 ' ---- Ссылки по ключам (ассоциации) ----
 DST --> NS : nameSpaceKeyName (принадлежность)
 DST --> DS : dataSourceKeyName (расположение)
-DS --> DRV : driverKeyName (экземпляр драйвера)
-DST --> DST : sources (зависимость от других датасетов)
+TASK --> DRV : driverKeyName (используемый драйвер)
 DST --> SCRF : scripts (коллекция ссылок)
 SCRF --> SCR : key
 SQLT --> SCR : значения шаблона - ссылки на скрипты
@@ -69,17 +69,19 @@ SA --> SAT : scenarioActTemplate (шаблон действия)
 TASK --> TESG : taskExecutionServiceGroupName (маршрутизация)
 SRC --> DST : срез метаданных датасета и зависимостей
 MOD --> DST : сборка скрипта модели датасета
+LNG --> DST : граф зависимостей датасета
 
 note right of SQLT
   Не самостоятельная конфигурация.
   Слияние при разрешении:
-  DataSet > DataSource > Driver
+  Task > Driver
 end note
 
 note bottom of TASK
-  Задача - атомарное действие,
-  используется только в составе
-  ScenarioAct / ScenarioActTemplate.
+  Задача - атомарное действие.
+  Используется в составе
+  ScenarioAct / ScenarioActTemplate
+  либо как самостоятельный шаблон (/v1_0/configs/tasks).
 end note
 
 note right of SRC
@@ -88,6 +90,10 @@ end note
 
 note right of MOD
   GET /v1_0/configs/compound/dataset/model/script/dataset/{keyName}
+end note
+
+note right of LNG
+  GET /v1_0/configs/lineage/datasets/{keyName}
 end note
 
 @enduml

@@ -84,10 +84,10 @@ public class SparkExecuteUtilsImpl
 
     public Dataset<Row> executeQuery(String sql, Map<String, Object> localContext) throws ExecuteException {
 
-        logger.info("Render query  {}", sql);
+        logger.info("Rendering query {}", sql);
         String renderedSQL = getjinJavaUtils().render(sql,localContext);
 
-        logger.info("Execute query {}", renderedSQL);
+        logger.info("Executing query {}", renderedSQL);
         return sparkSession.sql(renderedSQL);
     }
 }

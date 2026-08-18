@@ -91,7 +91,7 @@ public class StateService {
                                 newState.getIntervalEndDateTime());
         MergeResult mergeResult = stateFactory.merge(newState, current);
         mergeResult.getAfterChange().forEach(dataSetState -> logger.info("merged {}", dataSetState));
-        mergeResult.getForRemove().forEach(dataSetState -> logger.info("for remove {}", dataSetState));
+        mergeResult.getForRemove().forEach(dataSetState -> logger.info("to remove {}", dataSetState));
         dataSetStateRepository.deleteAll(mergeResult.getForRemove());
         dataSetStateRepository.saveAll(mergeResult.getAfterChange());
 

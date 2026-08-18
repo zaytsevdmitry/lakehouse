@@ -55,7 +55,7 @@ public class ConfUtil {
      * */
     public static Map<String, String> extractConf(Map<String, String> conf, String startWith) {
         if (conf == null || startWith == null) {
-            logger.warn("{}.extractConf Map or 'startWith' is empty", ConfUtil.class.getName());
+            logger.warn("{}.extractConf: map or 'startWith' is empty", ConfUtil.class.getName());
             return new HashMap<>();
         }
         return conf.entrySet()
@@ -79,7 +79,7 @@ public class ConfUtil {
      */
     public static Long getLongByKey(Map<String, String> map, String key, Long defaultValue) throws TaskConfigurationException {
         if (map == null || key == null) {
-            logger.warn("{}.getLongByKey Map or key is empty", ConfUtil.class.getName());
+            logger.warn("{}.getLongByKey: map or key is empty", ConfUtil.class.getName());
             return getLongDefaultOrThrow(key, defaultValue);
         }
 
@@ -115,7 +115,7 @@ public class ConfUtil {
      */
     public static boolean getBooleanByKey(Map<String, String> map, String key, boolean defaultValue) throws TaskConfigurationException {
         if (map == null || key == null) {
-            logger.warn("{}.getBooleanByKey Map or key is empty", ConfUtil.class.getName());
+            logger.warn("{}.getBooleanByKey: map or key is empty", ConfUtil.class.getName());
             return defaultValue;
         }
 

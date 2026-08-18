@@ -79,17 +79,17 @@ public class QualityMetricRunner {
     }
 
     public void run() throws TaskFailedException, TaskConfigurationException {
-        logger.info("QualityMetric {} ran ", qualityMetricsConfDTO.getKeyName());
+        logger.info("QualityMetric {} ran", qualityMetricsConfDTO.getKeyName());
         saveMetric(Status.DQMetric.RUNNING);
 
         for (Map.Entry<String, QualityMetricsConfTestSetDTO> testSet : qualityMetricsConfDTO.getTestSets().entrySet()) {
-            logger.info("Try to create test set view {}.{}", qualityMetricsConfDTO.getKeyName(),testSet.getKey());
+            logger.info("Trying to create test set view {}.{}", qualityMetricsConfDTO.getKeyName(),testSet.getKey());
             createTempView(testSet);
         }
 
         if (qualityMetricsConfDTO.getMetric() != null){
             // for thresholds
-            logger.info("Try to create test set view {}.metric", qualityMetricsConfDTO.getKeyName());
+            logger.info("Trying to create test set view {}.metric", qualityMetricsConfDTO.getKeyName());
             createTempView(Map.entry(qualityMetricsConfDTO.getKeyName(),qualityMetricsConfDTO.getMetric()));
             // for save metrics
             if (qualityMetricsConfDTO.isSave()) {
@@ -106,9 +106,9 @@ public class QualityMetricRunner {
 
         // perform threshold violation
         List<String> violated = new ArrayList<>();
-        logger.info("Try to run thresholds {}", qualityMetricsConfDTO.getKeyName());
+        logger.info("Trying to run thresholds {}", qualityMetricsConfDTO.getKeyName());
         for (Map.Entry<String, QualityMetricsConfTestSetDTO> testSet : qualityMetricsConfDTO.getThresholds().entrySet()) {
-            logger.info("Try to run threshold {}.{}", qualityMetricsConfDTO.getKeyName(),testSet.getKey());
+            logger.info("Trying to run threshold {}.{}", qualityMetricsConfDTO.getKeyName(),testSet.getKey());
 
             if (createDataset(testSet).count() > 0) {
                 violated.add(testSet.getKey());
@@ -154,7 +154,7 @@ public class QualityMetricRunner {
     }
 
     private void saveMetric(Status.DQMetric status){
-        logger.info("Save metric status {} is {}", qualityMetricsConfDTO.getKeyName(), status.label);
+        logger.info("Saving metric status {}: {}", qualityMetricsConfDTO.getKeyName(), status.label);
         MetricDQStatusDTO metric = new MetricDQStatusDTO(
                 metricId,
                 sourceConfDTO.getTargetDataSource().getKeyName(),
@@ -168,6 +168,6 @@ public class QualityMetricRunner {
                 qualityMetricsConfDTO.getKeyName()
         );
         MetricDQProducerService.send(metric);
-        logger.info("Metric status sends");
+        logger.info("Metric status sent");
     }
 }

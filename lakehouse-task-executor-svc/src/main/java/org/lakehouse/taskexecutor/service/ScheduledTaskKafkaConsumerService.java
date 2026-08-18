@@ -113,7 +113,7 @@ public class ScheduledTaskKafkaConsumerService {
         } catch (HttpClientErrorException.NotFound nfe) {
             logger.info("Already resolved {}", nfe.getMessage());
         } catch (HttpServerErrorException e) {
-            logger.warn("can't get the lock for  task: id={} taskGroup {}, tryNum {}",
+            logger.warn("Cannot get the lock for task: id={} taskGroup {}, tryNum {}",
                     scheduledTaskMsgDTO.getId(),
                     scheduledTaskMsgDTO.getTaskExecutionServiceGroupName(),
                     tryNum);
@@ -122,7 +122,7 @@ public class ScheduledTaskKafkaConsumerService {
             logger.info("Waiting {} ms", maxLockRetriesDuration);
             Thread.sleep(maxLockRetriesDuration);
             tryNum++;
-            logger.info("Retry {} to lock lockId={}, task={}, scheduleName={}, scheduleTargetTimestamp={}, scenarioActName={} ",
+            logger.info("Retry {} to lock lockId={}, task={}, scheduleName={}, scheduleTargetTimestamp={}, scenarioActName={}",
                     tryNum,
                     taskInstanceLockDTO.getLockId(),
                     taskInstanceLockDTO.getScheduledTaskEffectiveDTO().getName(),

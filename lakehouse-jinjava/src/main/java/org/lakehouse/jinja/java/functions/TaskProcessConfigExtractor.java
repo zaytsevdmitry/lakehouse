@@ -38,7 +38,7 @@ public class TaskProcessConfigExtractor {
     private static final Logger logger = LoggerFactory.getLogger(TaskProcessConfigExtractor.class);
     public static String ref(String dataSetKeyName) {
         if (dataSetKeyName == null || dataSetKeyName.isBlank()){
-            logger.error("error in Jinjava function. Attribute 'dataSet' can not be blank");
+            logger.error("Error in Jinjava function. Attribute 'dataSet' cannot be blank");
             throw new IllegalArgumentException("Attribute 'dataSet' can not be blank");
         }
         else {
@@ -214,7 +214,7 @@ public class TaskProcessConfigExtractor {
 
     public static String refCatSchema(String dataSetKeyName){
         if (dataSetKeyName == null || dataSetKeyName.isBlank()){
-            logger.error("error in Jinjava function. Attribute 'dataSetKeyName' can not be blank");
+            logger.error("Error in Jinjava function. Attribute 'dataSetKeyName' cannot be blank");
             throw new IllegalArgumentException("Attribute 'dataSetKeyName' can not be blank");
         }
         return  "{{dataSets['" + dataSetKeyName + "'].dataSourceKeyName~'.'~" +

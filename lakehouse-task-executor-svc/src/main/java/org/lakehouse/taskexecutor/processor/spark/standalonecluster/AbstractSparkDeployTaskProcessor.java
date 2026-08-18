@@ -129,6 +129,11 @@ public abstract class AbstractSparkDeployTaskProcessor extends AbstractTaskProce
                         TimeUnit.MILLISECONDS.toSeconds(RUNNING_TIMEOUT_MS),
                         status.getDriverState()));
             }
+            if (isRunning && "UNKNOWN".equals(status.getDriverState())){
+                throw new TaskFailedException(String.format(
+                        "Spark job UNKNOWN state after RUNNING state. Check cluster task information for submissionId=%s",
+                        status.getSubmissionId()));
+            }
         }
         if (isStatusNegative(status.getDriverState()))
             throw new TaskFailedException(String.format("Spark job state is %s. %s", status.getDriverState(), status.getMessage()));

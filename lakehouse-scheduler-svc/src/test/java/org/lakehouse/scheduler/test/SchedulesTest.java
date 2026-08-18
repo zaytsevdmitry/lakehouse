@@ -389,4 +389,41 @@ public class SchedulesTest {
 
     }
 
+    @Test
+    @Order(6)
+    public void retryLimitedByMaxRetries() throws IOException {
+        ScheduleEffectiveDTO sef = fileLoader.loadScheduleEffectiveDTO();
+        buildService.registration(sef);
+        buildService.buildAll();
+
+        List<ScheduleTaskInstance> tasks = scheduleTaskInstanceRepository.findByStatus(Status.Task.NEW);
+        assert (tasks.size() == 31);
+
+        ScheduleTaskInstance exhausted = tasks.get(0);
+        exhausted.setStatus(Status.Task.FAILED);
+        exhausted.setMaxRetries(2);
+        exhausted.setReTryNum(2);
+        exhausted.setEndDateTime(DateTimeUtils.now().minusSeconds(60));
+        scheduleTaskInstanceRepository.save(exhausted);
+
+        ScheduleTaskInstance unlimited = tasks.get(1);
+        unlimited.setStatus(Status.Task.FAILED);
+        unlimited.setMaxRetries(-1);
+        unlimited.setEndDateTime(DateTimeUtils.now().minusSeconds(60));
+        scheduleTaskInstanceRepository.save(unlimited);
+
+        ScheduleTaskInstance stillAllowed = tasks.get(2);
+        stillAllowed.setStatus(Status.Task.FAILED);
+        stillAllowed.setMaxRetries(5);
+        stillAllowed.setReTryNum(2);
+        stillAllowed.setEndDateTime(DateTimeUtils.now().minusSeconds(60));
+        scheduleTaskInstanceRepository.save(stillAllowed);
+
+        int retried = scheduleTaskInstanceService.reTryFailedTasks();
+        assert (retried == 2);
+        assert (scheduleTaskInstanceRepository.findById(exhausted.getId()).get().getStatus().equals(Status.Task.FAILED));
+        assert (scheduleTaskInstanceRepository.findById(unlimited.getId()).get().getStatus().equals(Status.Task.NEW));
+        assert (scheduleTaskInstanceRepository.findById(stillAllowed.getId()).get().getStatus().equals(Status.Task.NEW));
+    }
+
 }

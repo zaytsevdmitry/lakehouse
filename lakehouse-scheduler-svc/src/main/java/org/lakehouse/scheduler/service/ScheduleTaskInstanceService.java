@@ -29,6 +29,7 @@ import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskMsgDTO;
 import org.lakehouse.client.api.utils.Coalesce;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
+import org.lakehouse.scheduler.configuration.SchedulerTaskRetryProperties;
 import org.lakehouse.scheduler.entities.ScheduleTaskInstance;
 import org.lakehouse.scheduler.entities.ScheduleTaskInstanceDependency;
 import org.lakehouse.scheduler.entities.ScheduleTaskInstanceExecutionLock;
@@ -46,6 +47,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,6 +63,7 @@ public class ScheduleTaskInstanceService {
     private final ScheduledTaskDTOProducerService scheduledTaskDTOProducerService;
     private final ConfigRestClientApi configRestClientApi;
     private final ScheduleTaskInstanceFactory scheduleTaskInstanceFactory;
+    private final SchedulerTaskRetryProperties schedulerTaskRetryProperties;
 
     public ScheduleTaskInstanceService(
             ScheduleTaskInstanceRepository repository,
@@ -69,7 +72,8 @@ public class ScheduleTaskInstanceService {
             ScheduledTaskDTOProducerService scheduledTaskDTOProducerService,
             ScheduledTaskForProducerMessagesRepository scheduledTaskForProducerMessagesRepository,
             ConfigRestClientApi configRestClientApi,
-            ScheduleTaskInstanceFactory scheduleTaskInstanceFactory
+            ScheduleTaskInstanceFactory scheduleTaskInstanceFactory,
+            SchedulerTaskRetryProperties schedulerTaskRetryProperties
 
     ) {
         this.repository = repository;
@@ -79,6 +83,7 @@ public class ScheduleTaskInstanceService {
         this.configRestClientApi = configRestClientApi;
         this.scheduledTaskDTOProducerService = scheduledTaskDTOProducerService;
         this.scheduleTaskInstanceFactory = scheduleTaskInstanceFactory;
+        this.schedulerTaskRetryProperties = schedulerTaskRetryProperties;
     }
 
 
@@ -108,14 +113,14 @@ public class ScheduleTaskInstanceService {
 
             ScheduledTaskMsgDTO scheduledTaskMsgDTO = new ScheduledTaskMsgDTO();
             scheduledTaskMsgDTO.setId(message.getScheduleTaskInstance().getId());
-            logger.info("schedule {} scenarioact {} task {}", message.getScheduleTaskInstance().getScheduleScenarioActInstance()
+            logger.info("schedule={} scenarioAct={} task={}", message.getScheduleTaskInstance().getScheduleScenarioActInstance()
                             .getScheduleInstance()
                             .getConfigScheduleKeyName(),
                     message.getScheduleTaskInstance().getScheduleScenarioActInstance().getConfDataSetKeyName(),
                     message.getScheduleTaskInstance().getName());
             TaskDTO t = null;
 
-            logger.info("Get effective taskDTO for schedule={} scenarioAct={} task={}",
+            logger.info("Getting effective taskDTO for schedule={} scenarioAct={} task={}",
                     message.getScheduleTaskInstance().getScheduleScenarioActInstance()
                             .getScheduleInstance()
                             .getConfigScheduleKeyName(),
@@ -256,7 +261,7 @@ public class ScheduleTaskInstanceService {
         Long idL = Long.valueOf(id);
         return mapScheduledTaskLockDTO(
                 executionLockRepository.findById(idL).orElseThrow(() -> {
-                    logger.info("Can't get lock id: {}", idL);
+                    logger.info("Cannot get lock id: {}", idL);
                     return new ScheduledTaskInstanceLockNotFoundException(idL);
                 }));
 
@@ -280,7 +285,9 @@ public class ScheduleTaskInstanceService {
                 repository
                         .findByStatus(Status.Task.FAILED)
                         .stream()
-                        .filter(sti -> DateTimeUtils.now().minusSeconds(10) //todo move to application properties
+                        .filter(this::retryAllowed)
+                        .filter(sti -> DateTimeUtils.now()
+                                .minus(Duration.ofMillis(schedulerTaskRetryProperties.getLagWhenFailed()))
                                 .isAfter(
                                         Coalesce.apply(
                                                 sti.getEndDateTime(),
@@ -290,7 +297,9 @@ public class ScheduleTaskInstanceService {
                 repository
                         .findByStatus(Status.Task.CONF_ERROR)
                         .stream()
-                        .filter(sti -> DateTimeUtils.now().minusMinutes(4) //todo move to application properties
+                        .filter(this::retryAllowed)
+                        .filter(sti -> DateTimeUtils.now()
+                                .minus(Duration.ofMillis(schedulerTaskRetryProperties.getLagWhenConfigFailed()))
                                 .isAfter(
                                         Coalesce.apply(
                                                 sti.getEndDateTime(),
@@ -310,6 +319,12 @@ public class ScheduleTaskInstanceService {
         return l.size();
     }
 
+    private boolean retryAllowed(ScheduleTaskInstance sti) {
+        return sti.getMaxRetries() == null
+                || sti.getMaxRetries() <= 0
+                || sti.getReTryNum() < sti.getMaxRetries();
+    }
+
     public int heartBeatLimitExceeded() {
 
         List<ScheduleTaskInstanceExecutionLock> locks = executionLockRepository
@@ -324,7 +339,7 @@ public class ScheduleTaskInstanceService {
                     new TaskInstanceReleaseDTO(
                             l.getId(),
                             new TaskResultDTO(Status.Task.FAILED, "Heart beat limit exceeded")));
-            logger.info("Heart beat limit exceeded of lock {}", l);
+            logger.info("Heartbeat limit exceeded for lock {}", l);
         });
 
         return locks.size();

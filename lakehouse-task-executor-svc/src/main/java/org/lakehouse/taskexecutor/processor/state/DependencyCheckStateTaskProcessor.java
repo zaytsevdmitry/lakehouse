@@ -53,7 +53,7 @@ public class DependencyCheckStateTaskProcessor extends AbstractStateTaskProcesso
         dataSetIntervalDTO.setIntervalStartDateTime(intervalStartDateTime);
         dataSetIntervalDTO.setIntervalEndDateTime(intervalEndDateTime);
 
-        logger.info("get interval {}", dataSetIntervalDTO);
+        logger.info("Getting interval {}", dataSetIntervalDTO);
 
         if(dataSetIntervalDTO.getIntervalStartDateTime() == null
         || dataSetIntervalDTO.getIntervalEndDateTime() ==null

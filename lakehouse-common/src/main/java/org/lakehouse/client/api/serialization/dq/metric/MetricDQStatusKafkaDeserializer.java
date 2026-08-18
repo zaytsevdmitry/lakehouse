@@ -33,7 +33,7 @@ public class MetricDQStatusKafkaDeserializer implements Deserializer<MetricDQSta
     public MetricDQStatusDTO deserialize(String topic, byte[] data) {
         try {
             if (data == null) {
-                logger.info("Null received at deserializing");
+                logger.info("Null received during deserialization");
                 return null;
             }
             logger.info("Deserializing...");

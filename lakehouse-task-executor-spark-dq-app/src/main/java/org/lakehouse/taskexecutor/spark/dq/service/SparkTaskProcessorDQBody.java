@@ -75,9 +75,9 @@ public class SparkTaskProcessorDQBody  implements ProcessorBody {
                 .filter(QualityMetricsConfDTO::isEnabled)
                 .toList();
         if(qualityMetricsConfs.isEmpty()){
-            logger.warn("Found no one QualityMetricsConf of {}", scheduledTaskDTO.getDataSetKeyName());
+            logger.warn("Found no QualityMetricsConf for {}", scheduledTaskDTO.getDataSetKeyName());
         }else {
-            logger.info("Found {} of QualityMetricsConf for {}", qualityMetricsConfs.size(), scheduledTaskDTO.getDataSetKeyName());
+            logger.info("Found {} QualityMetricsConf for {}", qualityMetricsConfs.size(), scheduledTaskDTO.getDataSetKeyName());
         }
         return qualityMetricsConfs;
     }
@@ -96,7 +96,7 @@ public class SparkTaskProcessorDQBody  implements ProcessorBody {
 
         for (QualityMetricsConfDTO  qualityMetricsConfDTO: getQualityMetricsConfs(scheduledTaskDTO)) {
             long metricId = getMetricId(sourceConfDTO,scheduledTaskDTO,qualityMetricsConfDTO);
-            logger.info("Run QualityMetricsConf {}", qualityMetricsConfDTO.toString());
+            logger.info("Running QualityMetricsConf {}", qualityMetricsConfDTO.toString());
             new QualityMetricRunner(
                     metricId,
                     sourceConfDTO,

@@ -130,10 +130,10 @@ public class ScenarioActTemplateService {
     }
 
     private void validate(ScenarioActTemplateDTO scenarioActTemplateDTO){
-        logger.info("Validation of scenarioActTemplate {}",scenarioActTemplateDTO.getKeyName());
+        logger.info("Validating scenarioActTemplate {}",scenarioActTemplateDTO.getKeyName());
         ValidationResult vr = ScenarioActTemplateConfValidator.validate(scenarioActTemplateDTO);
 
-        logger.info("Validate tasks of scenarioActTemplate {}",scenarioActTemplateDTO.getKeyName());
+        logger.info("Validating tasks of scenarioActTemplate {}",scenarioActTemplateDTO.getKeyName());
         for (TaskDTO taskDTO : scenarioActTemplateDTO.getTasks()) {
             vr.getDescriptions().addAll(TaskDTOValidator.validate(taskDTO).getDescriptions());
         }
@@ -152,17 +152,17 @@ public class ScenarioActTemplateService {
 
         taskRepository.findByTemplateScenarioActKeyName(templateScenarioAct.getKeyName()).forEach(
                 task -> {
-                    logger.info("Delete task {}.{}", templateScenarioAct.getKeyName(), task.getName());
+                    logger.info("Deleting task {}.{}", templateScenarioAct.getKeyName(), task.getName());
                     taskRepository.delete(task);
                 });
 
         taskRepository.findByTemplateScenarioActKeyName(templateScenarioAct.getKeyName()).forEach(task ->
                 logger.info("Found task {}.{}", templateScenarioAct.getKeyName(), task.getName()));
 
-        logger.info("Save ScenarioActTemplate.name={}", scenarioActTemplateDTO.getKeyName());
+        logger.info("Saving ScenarioActTemplate.name={}", scenarioActTemplateDTO.getKeyName());
         TemplateScenarioAct result = scenarioActTemplateRepository.save(templateScenarioAct);
 
-        logger.info("Save ScenarioActTemplate.name={} tasks", scenarioActTemplateDTO.getKeyName());
+        logger.info("Saving ScenarioActTemplate.name={} tasks", scenarioActTemplateDTO.getKeyName());
         Map<String, TaskService.SaveTaskResult> savedTasks = new HashMap<>();
         for (TaskDTO taskDTO: scenarioActTemplateDTO.getTasks()) {
             savedTasks.put(taskDTO.getName(), taskService.save(taskDTO,templateScenarioAct,null));

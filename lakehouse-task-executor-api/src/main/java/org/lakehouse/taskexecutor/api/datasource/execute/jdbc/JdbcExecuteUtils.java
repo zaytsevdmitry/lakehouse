@@ -56,12 +56,12 @@ public class JdbcExecuteUtils extends ExecuteUtilsAbstract {
 
     @Override
     public void execute(String sql, Map<String,Object> localContext) throws ExecuteException {
-        logger.info("Execute SQL command: {}", sql);
+        logger.info("Executing SQL command: {}", sql);
 
         try (Connection connection = getConnection();
              Statement statement = connection.createStatement()) {
             String renderedSQL = getjinJavaUtils().render(sql,localContext);
-            logger.info("Execute renderedSQL command: {}", renderedSQL);
+            logger.info("Executing renderedSQL command: {}", renderedSQL);
             statement.execute(renderedSQL);
         } catch (SQLException | TaskConfigurationException  e) {
             logger.info(e.getLocalizedMessage());

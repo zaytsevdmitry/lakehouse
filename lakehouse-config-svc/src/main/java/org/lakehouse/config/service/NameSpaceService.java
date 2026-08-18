@@ -62,7 +62,7 @@ public class NameSpaceService {
 
     public NameSpaceDTO findByName(String name) {
         return mapToDTO(nameSpaceRepository.findById(name).orElseThrow(() -> {
-            logger.info("Can't get name: {}", name);
+            logger.info("Cannot get name: {}", name);
             return new NameSpaceNotFoundException(name);
         }));
     }

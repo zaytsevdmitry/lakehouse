@@ -70,6 +70,9 @@ public class Task  {
     @Column(nullable = true)
     private String importance;
 
+    @Column(nullable = true)
+    private Integer maxRetries;
+
 
     @ManyToOne
     @JoinColumn(name = "driver_id", foreignKey = @ForeignKey(name = "task__driver_fk"))
@@ -145,6 +148,14 @@ public class Task  {
 
     public void setImportance(String importance) {
         this.importance = importance;
+    }
+
+    public Integer getMaxRetries() {
+        return maxRetries;
+    }
+
+    public void setMaxRetries(Integer maxRetries) {
+        this.maxRetries = maxRetries;
     }
 
     public TaskExecutionServiceGroup getTaskExecutionServiceGroup() {

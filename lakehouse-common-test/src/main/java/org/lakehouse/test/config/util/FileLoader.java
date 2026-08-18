@@ -116,7 +116,7 @@ public class FileLoader {
     private final String dataSetDir = rootPath.concat("/datasets");
 
     public DataSetDTO loadDataSetDTO(String name) throws IOException {
-        logger.info("Load file of DataSetDTO {}", name);
+        logger.info("Loading file of DataSetDTO {}", name);
         return objectMapper.readValue(new File(String.format(dataSetDir.concat("/%s.json"), name)), DataSetDTO.class);
     }
 

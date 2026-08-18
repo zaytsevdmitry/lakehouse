@@ -29,6 +29,7 @@ public class DtoMergeUtilsTest {
         template.setImportance("LOW");
         template.setTaskProcessor("SparkProcessor");
         template.setDescription("Base description");
+        template.setMaxRetries(5);
 
         Map<String, String> templateArgs = new HashMap<>();
         templateArgs.put("spark.master", "local[*]");
@@ -53,6 +54,11 @@ public class DtoMergeUtilsTest {
         patchArgs.put("spark.driver.memory", "1g");   // Should add a new key
         patch.setTaskProcessorArgs(patchArgs);
 
+        TaskDTO patchWithMaxRetries = new TaskDTO();
+        patchWithMaxRetries.setMaxRetries(10);
+        TaskDTO resultOverride = mergeUtils.merge(template, patchWithMaxRetries, TaskDTO.class);
+        Assert.assertEquals("Non-null patch maxRetries should overwrite template value", Integer.valueOf(10), resultOverride.getMaxRetries());
+
         SQLTemplateDTO patchSql = new SQLTemplateDTO();
         patchSql.setDatabaseSchemaName(null); // Nested null should keep template value
         patchSql.setTableFullName("analytics_zone.events"); // Nested non-null should overwrite
@@ -70,6 +76,7 @@ public class DtoMergeUtilsTest {
         Assert.assertEquals("Non-null patch value should overwrite template importance", "HIGH", result.getImportance());
         Assert.assertEquals("Implicitly null patch field should retain template value", "SparkProcessor", result.getTaskProcessor());
         Assert.assertEquals("Empty string in patch should overwrite template description", "", result.getDescription());
+        Assert.assertEquals("Null patch maxRetries should retain template value", Integer.valueOf(5), result.getMaxRetries());
 
         // Verify Map merging logic
         Map<String, String> mergedArgs = result.getTaskProcessorArgs();

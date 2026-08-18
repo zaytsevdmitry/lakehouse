@@ -100,7 +100,7 @@ public class ObjectActionsHelper {
         strings.add(String.format(rowFormat, header));
         strings.add(separator);
         body.forEach(v ->
-                strings.add(String.format(rowFormat, v))
+                strings.add(String.format(rowFormat,    v))
         );
         strings.add(separator);
 

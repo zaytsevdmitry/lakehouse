@@ -82,19 +82,19 @@ public class ExecuteService {
             p.runTask(sourceConfDTO,scheduledTaskLockDTO.getScheduledTaskEffectiveDTO(), jinJavaUtils);
             taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.SUCCESS));
         } catch (TaskConfigurationException e) {
-            logger.error("Task creation error ", e);
+            logger.error("Task creation error", e);
             taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.CONF_ERROR, e.toString()));
         } catch (TaskFailedException e) {
             logger.error("Task execution error {}", e.getMessage());
             logger.error(e.getMessage(),e);
             taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.FAILED, e.toString()));
         } catch (RuntimeException e) {
-            logger.error("Task execution error ", e);
+            logger.error("Task execution error", e);
             taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.FAILED, e.toString()));
         } finally {
             logger.info("Status {}", taskInstanceReleaseDTO.getTaskResult().getStatus());
             heardBeatService.stop(taskExecutionHeartBeatDTO);
-            logger.info("Heart beat shutdown");
+            logger.info("Heartbeat shutdown");
 
             logger.info(
                     "Release lockid={}, task={}, scheduleName={}, scheduleTargetTimestamp={}, scenarioActName={}, status={}",

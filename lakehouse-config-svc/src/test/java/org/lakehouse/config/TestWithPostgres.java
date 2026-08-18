@@ -541,7 +541,7 @@ public class TestWithPostgres {
             for (TaskDTO t: a.getTasks()) {
                 taskValidationResult.getDescriptions().addAll(TaskDTOValidator.validate(t).getDescriptions());
                 if(!taskValidationResult.isValid()) {
-                    logger.error("Validation error {}.{}", a.getName(), t.getName());
+                    logger.error("Validation error for {}.{}", a.getName(), t.getName());
                     taskValidationResult.getDescriptions().forEach(logger::error);
                     throw new Exception("Expect validation error ");
                 }
@@ -550,7 +550,7 @@ public class TestWithPostgres {
             for (TaskDTO t: a.getTasks()) {
                 taskValidationResult.getDescriptions().addAll(TaskDTOValidator.validate(t).getDescriptions());
                 if(!taskValidationResult.isValid()) {
-                    logger.error("Validation error {}.{}", a.getName(), t.getName());
+                    logger.error("Validation error for {}.{}", a.getName(), t.getName());
                     taskValidationResult.getDescriptions().forEach(logger::error);
                     throw new Exception("Result validation error ");
                 }

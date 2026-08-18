@@ -4,28 +4,18 @@ class ScheduleEffectiveDTO.java
 
 ScheduleConfigConsumerService.listen -->   BuildService.registration : put ScheduleEffectiveDTO
 
-InternalSchedulerService.buildAll --> BuildService.buildAll : call
+InternalScheduler.build --> BuildService.buildAll : call
 
+InternalScheduler.resolveDependency -->ManageStateService.setScenariosActsStatusToSuccess
+InternalScheduler.resolveDependency --->ScheduleTaskInstanceService.successResolvedDependency
 
+InternalScheduler.run -->		ManageStateService.runAll
+InternalScheduler.run -->		ManageStateService.runNewScenariosActs
+InternalScheduler.run --->	ScheduleTaskInstanceService.addTaskToQueue
+InternalScheduler.run ---> ScheduleTaskInstanceService.produceScheduledTasks
+InternalScheduler.run -->		ManageStateService.successSchedules
 
-
-InternalSchedulerService.resolveDependency -->ManageStateService.setScenariosActsStatusToSuccess
-InternalSchedulerService.resolveDependency --->ScheduleTaskInstanceService.successResolvedDependency
-
-'ScheduleConfigConsumerService.listen -> BuildService.findAndRegisterNewSchedule : scheduleEffectiveDTO
-
-'InternalSchedulerService.java -> BuildService
-
-InternalSchedulerService.runAll -->		ManageStateService.successSchedules
-
-InternalSchedulerService.runAll -->		ManageStateService.runSchedules
-InternalSchedulerService.runAll -->		ManageStateService.runNewScenariosActs
-InternalSchedulerService.runAll --->	ScheduleTaskInstanceService.addTaskToQueue
-InternalSchedulerService.runAll ---> ScheduleTaskInstanceService.produceScheduledTasks
-
-InternalSchedulerService.reTryFailedTasks ---> ScheduleTaskInstanceService.heartBeatLimitExceeded
-InternalSchedulerService.reTryFailedTasks ---> ScheduleTaskInstanceService.reTryFailedTasks
-
+InternalScheduler.reTryFailedTasked ---> ScheduleTaskInstanceService.heartBeatLimitExceeded
+InternalScheduler.reTryFailedTasked ---> ScheduleTaskInstanceService.reTryFailedTasks
 
 @enduml
-

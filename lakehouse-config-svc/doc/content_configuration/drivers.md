@@ -1,33 +1,21 @@
 # Драйвер (driver)
 Конфигурация позволяющая адаптировать разные реализации хранилищ с подобным по отношению к друг другу функционалом.
-Таким как вставка строк, создание и удаление таблиц, слияние данных и тд. Адоптация достигается путем шаблонизации. 
-Предусмотрено два шаблона: шаблон строки подключения и диалекта SQL(или иного командного языка). 
+Таким как вставка строк, создание и удаление таблиц, слияние данных и тд. Адоптация достигается путем шаблонизации диалекта SQL(или иного командного языка). 
 ## Поля объекта
  Поле                          | Назначение                                                                                                                               |
 |:------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------|
 | keyName                       | Уникальный идентификатов                                                                                                                 | 
-| connectionTemplates           | Содержит список возможных шаблонов образования строки подключения. Поддерживаются ключи spark, jdbc                                      |0
 | [sqlTemplate](sqlTemplate.md) | Реализует адаптацию диалекта.                                                                                                            |
 | description                   | Описание для документирования                                                                                                            | 
-| dataSourceType                | Тип источника. <br/>**database** - для баз данных,<br/> **[iceberg](https://iceberg.apache.org/)** - для таблиц в формате файлов iceberg | 
 
-connectionTemplates применяется в механизме разрешения конфигурации. В контекст будет помещено поле [service из datasource](datasources.md#вложенный-объект-сервис)
-```json
-  "connectionTemplates": {
-    "jdbc" : "jdbc:postgresql://{{service.host}}:{{service.port}}/{{service.urn}}",
-   "spark" : "{%set service=dataSources[dataSets[targetDataSetKeyName].dataSourceKeyName].service%}{{taskProcessorArgs.protocol}}://{{service.host}}:{{service.port}}"
-},
-
-```
+Драйвер задает базовый шаблон диалекта, который переопределяется на более частных уровнях ([источник данных](datasources.md), [задача](tasks.md)).
+Ссылка на драйвер производится в [задаче](tasks.md) через поле driverKeyName.
 
 **Пример**
 ```json
 {
   "keyName" : "postgres",
   "description" : null,
-  "connectionTemplates" : {
-    "jdbc" : "jdbc:postgresql://{{service.host}}:{{service.port}}/{{service.urn}}"
-  },
   "sqlTemplate" : {
     "databaseSchemaName" : "sql-template-postgres.databaseSchemaName.sql",
     "databaseSchemaDDLCreate" : "sql-template-postgres.databaseSchemaDDLCreate.sql",
@@ -61,8 +49,7 @@ connectionTemplates применяется в механизме разреше�
     "checkConstraintDDL" : "sql-template-postgres.checkConstraintDDL.sql",
     "checkConstraintDDLAdd" : "sql-template-postgres.checkConstraintDDLAdd.sql",
     "checkConstraintCheckIntegrity" : "sql-template-postgres.checkConstraintCheckIntegrity.sql"
-  },
-  "dataSourceType" : "database"
+  }
 }
 ```
 

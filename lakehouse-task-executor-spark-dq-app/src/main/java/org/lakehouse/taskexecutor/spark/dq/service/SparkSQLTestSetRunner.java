@@ -54,7 +54,7 @@ public class SparkSQLTestSetRunner implements TestSetRunner {
             ScheduledTaskDTO scheduledTaskDTO,
             JinJavaUtils jinJavaUtils) throws TaskConfigurationException {
         String script = null;
-        logger.info("Take script from config of {}",qualityMetricsConfTestSetDTO.getKey());
+        logger.info("Taking script from config of {}",qualityMetricsConfTestSetDTO.getKey());
         List<ScriptReferenceDTO> scriptReferences = qualityMetricsConfTestSetDTO.getValue()
                 .getScripts();
         logger.info("Script reference count {}", scriptReferences.size());
@@ -65,7 +65,7 @@ public class SparkSQLTestSetRunner implements TestSetRunner {
             throw new TaskConfigurationException(e);
         }
 
-        sparkSession.log().info("Script template  is: [ {} ]", script);
+        sparkSession.log().info("Script template is: [ {} ]", script);
         String sql = jinJavaUtils.render(script);
         sparkSession.log().info("Query is:[ {} ]",sql);
         Dataset<Row> result = sparkSession.sql(sql);

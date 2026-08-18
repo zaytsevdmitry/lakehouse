@@ -230,7 +230,7 @@ public class ScheduleService {
                         .orElse(new Schedule());
 
         if (scheduleDTO.equals(mapScheduleToDTO(currentScheduleVersion))) {
-            logger.info("Schedule configs equals");
+            logger.info("Schedule configs are equal");
             return scheduleDTO;
         }
 
@@ -285,7 +285,7 @@ public class ScheduleService {
 
     public Schedule findById(String name) {
         return scheduleRepository.findById(name).orElseThrow(() -> {
-            logger.info("Can't get name: {}", name);
+            logger.info("Cannot get name: {}", name);
             return new ScheduleNotFoundException(name);
         });
     }
@@ -338,7 +338,7 @@ public class ScheduleService {
     }
 
     public TaskDTO getEffectiveTaskDTO(String scheduleName, String scenarioActName, String taskName) {
-        logger.info("Get EffectiveTaskDTO {}.{}.{}",scheduleName,scenarioActName,taskName);
+        logger.info("Getting EffectiveTaskDTO {}.{}.{}",scheduleName,scenarioActName,taskName);
         ScenarioAct scenarioAct = scenarioActRepository.findByScheduleNameAndActName(scheduleName, scenarioActName)
                 .orElseThrow(() -> new ScenarioActNotFoundException(scheduleName, scenarioActName));
 

@@ -61,6 +61,12 @@ public class TaskDTO {
     private String importance;
 
     /**
+     * Maximum number of retries. Positive value limits retries; null, zero and negative
+     * values mean unlimited retries.
+     */
+    private Integer maxRetries;
+
+    /**
      * Brief description of the task.
      */
     private String description;
@@ -121,6 +127,14 @@ public class TaskDTO {
         this.importance = importance;
     }
 
+    public Integer getMaxRetries() {
+        return maxRetries;
+    }
+
+    public void setMaxRetries(Integer maxRetries) {
+        this.maxRetries = maxRetries;
+    }
+
     public String getDescription() {
         return description;
     }
@@ -170,6 +184,7 @@ public class TaskDTO {
                 ", taskProcessor='" + taskProcessor + '\'' +
                 ", taskProcessorBody='" + taskProcessorBody + '\'' +
                 ", importance='" + importance + '\'' +
+                ", maxRetries=" + maxRetries +
                 ", description='" + description + '\'' +
                 ", driverKeyName='" + driverKeyName + '\'' +
                 ", sqlTemplate=" + sqlTemplate +
@@ -181,12 +196,12 @@ public class TaskDTO {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         TaskDTO taskDTO = (TaskDTO) o;
-        return Objects.equals(getName(), taskDTO.getName()) && Objects.equals(getTemplate(), taskDTO.getTemplate()) && Objects.equals(getTaskExecutionServiceGroupName(), taskDTO.getTaskExecutionServiceGroupName()) && Objects.equals(getTaskProcessor(), taskDTO.getTaskProcessor()) && Objects.equals(getTaskProcessorBody(), taskDTO.getTaskProcessorBody()) && Objects.equals(getImportance(), taskDTO.getImportance()) && Objects.equals(getDescription(), taskDTO.getDescription()) && Objects.equals(getDriverKeyName(), taskDTO.getDriverKeyName()) && Objects.equals(getSqlTemplate(), taskDTO.getSqlTemplate()) && Objects.equals(getTaskProcessorArgs(), taskDTO.getTaskProcessorArgs());
+        return Objects.equals(getName(), taskDTO.getName()) && Objects.equals(getTemplate(), taskDTO.getTemplate()) && Objects.equals(getTaskExecutionServiceGroupName(), taskDTO.getTaskExecutionServiceGroupName()) && Objects.equals(getTaskProcessor(), taskDTO.getTaskProcessor()) && Objects.equals(getTaskProcessorBody(), taskDTO.getTaskProcessorBody()) && Objects.equals(getImportance(), taskDTO.getImportance()) && Objects.equals(getMaxRetries(), taskDTO.getMaxRetries()) && Objects.equals(getDescription(), taskDTO.getDescription()) && Objects.equals(getDriverKeyName(), taskDTO.getDriverKeyName()) && Objects.equals(getSqlTemplate(), taskDTO.getSqlTemplate()) && Objects.equals(getTaskProcessorArgs(), taskDTO.getTaskProcessorArgs());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getName(), getTemplate(), getTaskExecutionServiceGroupName(), getTaskProcessor(), getTaskProcessorBody(), getImportance(), getDescription(), getDriverKeyName(), getSqlTemplate(), getTaskProcessorArgs());
+        return Objects.hash(getName(), getTemplate(), getTaskExecutionServiceGroupName(), getTaskProcessor(), getTaskProcessorBody(), getImportance(), getMaxRetries(), getDescription(), getDriverKeyName(), getSqlTemplate(), getTaskProcessorArgs());
     }
 
 }

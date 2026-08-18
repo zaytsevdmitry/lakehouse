@@ -55,6 +55,9 @@ public class ScheduleTaskInstance {
     @Column(nullable = false, columnDefinition = "int default 0")
     private int reTryNum = 0;
 
+    @Column(nullable = false, columnDefinition = "int default -1")
+    private Integer maxRetries = -1;
+
     private String serviceId;
 
     private String causes;
@@ -111,6 +114,14 @@ public class ScheduleTaskInstance {
         this.reTryNum = reTryNum;
     }
 
+    public Integer getMaxRetries() {
+        return maxRetries;
+    }
+
+    public void setMaxRetries(Integer maxRetries) {
+        this.maxRetries = maxRetries;
+    }
+
     public ScheduleScenarioActInstance getScheduleScenarioActInstance() {
         return scheduleScenarioActInstance;
     }
@@ -143,12 +154,12 @@ public class ScheduleTaskInstance {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ScheduleTaskInstance that = (ScheduleTaskInstance) o;
-        return getReTryNum() == that.getReTryNum() && Objects.equals(getId(), that.getId()) && Objects.equals(getName(), that.getName()) && Objects.equals(getScheduleScenarioActInstance(), that.getScheduleScenarioActInstance()) && Objects.equals(getBeginDateTime(), that.getBeginDateTime()) && Objects.equals(getEndDateTime(), that.getEndDateTime()) && Objects.equals(getStatus(), that.getStatus()) && Objects.equals(getServiceId(), that.getServiceId()) && Objects.equals(getCauses(), that.getCauses());
+        return getReTryNum() == that.getReTryNum() && Objects.equals(getId(), that.getId()) && Objects.equals(getName(), that.getName()) && Objects.equals(getScheduleScenarioActInstance(), that.getScheduleScenarioActInstance()) && Objects.equals(getBeginDateTime(), that.getBeginDateTime()) && Objects.equals(getEndDateTime(), that.getEndDateTime()) && Objects.equals(getStatus(), that.getStatus()) && Objects.equals(getMaxRetries(), that.getMaxRetries()) && Objects.equals(getServiceId(), that.getServiceId()) && Objects.equals(getCauses(), that.getCauses());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getName(), getScheduleScenarioActInstance(), getBeginDateTime(), getEndDateTime(), getStatus(), getReTryNum(), getServiceId(), getCauses());
+        return Objects.hash(getId(), getName(), getScheduleScenarioActInstance(), getBeginDateTime(), getEndDateTime(), getStatus(), getReTryNum(), getMaxRetries(), getServiceId(), getCauses());
     }
 
     @Override
@@ -161,6 +172,7 @@ public class ScheduleTaskInstance {
                 ", endDateTime=" + endDateTime +
                 ", status='" + status + '\'' +
                 ", reTryCount=" + reTryNum +
+                ", maxRetries=" + maxRetries +
                 ", serviceId='" + serviceId + '\'' +
                 ", causes='" + causes + '\'' +
                 '}';

@@ -67,7 +67,7 @@ public class InternalScheduler {
     public void build() {
 
         List<ScheduleProduceMessage> scheduleProduceMessages = scheduleProduceMessageRepository.findAllWithLimit(Limit.of(sendLimit));
-        logger.info("Found {} schedule config for send", scheduleProduceMessages.size());
+        logger.info("Found {} schedule configs to send", scheduleProduceMessages.size());
         for (ScheduleProduceMessage scheduleProduceMessage: scheduleProduceMessages) {
             //scheduleProduceMessages.forEach(scheduleProduceMessage -> {
             ScheduleEffectiveDTO scheduleEffectiveDTO = scheduleService.findEffectiveScheduleDTOById(scheduleProduceMessage.getSchedule().getKeyName());
