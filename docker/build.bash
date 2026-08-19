@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+java -version
 set -e
 set -v
 cd  ../
@@ -32,4 +32,4 @@ bash ./build.bash
 cd ../lakehouse-task-proxy4spark
 bash ./build.bash
 
-docker images | grep lakehouse | grep '0.6.0'
+docker images | grep lakehouse | grep '0.7.0'

@@ -20,13 +20,11 @@ package org.lakehouse.config.service.compound;
 import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
-import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.config.repository.dq.QualityMetricsConfRepository;
 import org.lakehouse.config.service.dataset.DataSetService;
 import org.lakehouse.config.service.datasource.DataSourceService;
 import org.lakehouse.config.service.datasource.DriverService;
-
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -66,16 +64,6 @@ public class SourcesCompoundService {
                         .stream()
                         .map(dataSourceService::findById)
                         .collect(Collectors.toMap(DataSourceDTO::getKeyName, Function.identity()))
-        );
-        result.setDrivers(
-                result.getDataSources()
-                        .values()
-                        .stream()
-                        .map(DataSourceDTO::getDriverKeyName)
-                        .collect(Collectors.toSet())
-                        .stream()
-                        .map(driverService::findById)
-                        .collect(Collectors.toMap(DriverDTO::getKeyName,Function.identity()))
         );
         return result;
     }

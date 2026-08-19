@@ -23,7 +23,9 @@ import org.lakehouse.client.api.constant.Types;
 import java.util.Objects;
 
 public class ForeignKeyReferenceDTO {
+    /** referenced dataset */
     private String dataSetKeyName;
+    /** referenced constraint name */
     private String constraintName;
     private Types.ReferenceAction onDelete;
     private Types.ReferenceAction onUpdate;

@@ -18,6 +18,7 @@
 package org.lakehouse.taskexecutor.processor.spark;
 
 
+import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;
@@ -29,7 +30,6 @@ import org.lakehouse.client.rest.config.ConfigRestClientConstants;
 import org.lakehouse.client.rest.scheduler.SchedulerRestClientConstants;
 import org.lakehouse.jinja.java.JinJavaUtils;
 import org.lakehouse.taskexecutor.processor.spark.standalonecluster.AbstractSparkDeployTaskProcessor;
-import org.lakehouse.taskexecutor.processor.spark.standalonecluster.SparkRestDeployFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,15 +44,13 @@ import java.util.Map;
 @Service(value = "sparkStandAloneClusterTaskProcessor")
 public class SparkStandAloneClusterTaskProcessor extends AbstractSparkDeployTaskProcessor {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final SparkRestDeployFactory sparkRestDeployFactory;
+
     private final String restConfUrl;
     private final String restSchedulerUrl;
 
     public SparkStandAloneClusterTaskProcessor(
-            SparkRestDeployFactory sparkRestDeployFactory,
             @Value("${lakehouse.client.rest.config.server.url}") String restConfUrl,
             @Value("${lakehouse.client.rest.scheduler.server.url}") String restSchedulerUrl) {
-        this.sparkRestDeployFactory = sparkRestDeployFactory;
         this.restConfUrl = restConfUrl;
         this.restSchedulerUrl = restSchedulerUrl;
     }
@@ -67,6 +65,19 @@ public class SparkStandAloneClusterTaskProcessor extends AbstractSparkDeployTask
         Map<String, String> sparkProperties = SparkConfUtil.extractSparkConFromTaskConf(
                 sourceConfDTO, scheduledTaskDTO);
 
+        sourceConfDTO.getDataSources().forEach((s, dataSourceDTO) -> {
+            if (dataSourceDTO.getDataSourceType().equals(Types.DataSourceType.database)){
+                String key = String.format("spark.sql.catalog.%s.url", dataSourceDTO.getKeyName());
+                if (!sparkProperties.containsKey(key)){
+                    sparkProperties.put(
+                            key,
+                            dataSourceDTO.getDatabaseProtocol().buildConnectionStringTemplate(
+                                    dataSourceDTO.getService().getHost(),
+                                    Integer.parseInt(dataSourceDTO.getService().getPort()),
+                                    dataSourceDTO.getService().getUrn()));
+                }
+            }
+        });
         ScheduledTaskDTO unSparkedTaskConfig = SparkConfUtil.unSparkConf(scheduledTaskDTO);
 
         DataSourceDTO dataSourceDTO = sourceConfDTO.getDataSourceDTOByDataSetKeyName(targetDataSetKeyName);
@@ -94,9 +105,9 @@ public class SparkStandAloneClusterTaskProcessor extends AbstractSparkDeployTask
         deploy(
                 mainClass,
                 appResource,
-                sparkRestDeployFactory.getServerUrl(sourceConfDTO,scheduledTaskDTO,jinJavaUtils),
+                getMasterUrl(scheduledTaskDTO),
                 sparkProperties,
                 appArgs);
-
     }
+
 }

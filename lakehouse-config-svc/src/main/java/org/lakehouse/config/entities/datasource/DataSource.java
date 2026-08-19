@@ -17,9 +17,12 @@
 
 package org.lakehouse.config.entities.datasource;
 
-import jakarta.persistence.*;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import org.lakehouse.client.api.constant.DatabaseProtocol;
+import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.config.entities.KeyEntityAbstract;
 
 import java.util.Objects;
@@ -27,31 +30,31 @@ import java.util.Objects;
 @Entity
 public class DataSource extends KeyEntityAbstract {
 
-    @ManyToOne
-    @JoinColumn(foreignKey = @ForeignKey(name = "data_source__driver_fk"))
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    private Driver driver;
-
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String catalogKeyName;
+
+    private Types.DataSourceType dataSourceType;
+    @Enumerated(EnumType.STRING)
+    @Column
+    private DatabaseProtocol databaseProtocol;
 
     public DataSource() {
     }
 
-    public Driver getDriver() {
-        return driver;
+    public Types.DataSourceType getDataSourceType() {
+        return dataSourceType;
     }
 
-    public void setDriver(Driver driver) {
-        this.driver = driver;
+    public void setDataSourceType(Types.DataSourceType dataSourceType) {
+        this.dataSourceType = dataSourceType;
     }
 
-    public String getCatalogKeyName() {
-        return catalogKeyName;
+    public DatabaseProtocol getDatabaseProtocol() {
+        return databaseProtocol;
     }
 
-    public void setCatalogKeyName(String catalogKeyName) {
-        this.catalogKeyName = catalogKeyName;
+    public void setDatabaseProtocol(DatabaseProtocol databaseProtocol) {
+        this.databaseProtocol = databaseProtocol;
     }
 
     @Override
@@ -59,11 +62,19 @@ public class DataSource extends KeyEntityAbstract {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         DataSource that = (DataSource) o;
-        return Objects.equals(getDriver(), that.getDriver()) && Objects.equals(getCatalogKeyName(), that.getCatalogKeyName());
+        return getDataSourceType() == that.getDataSourceType() && getDatabaseProtocol() == that.getDatabaseProtocol();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), getDriver(), getCatalogKeyName());
+        return Objects.hash(super.hashCode(), getDataSourceType(), getDatabaseProtocol());
+    }
+
+    @Override
+    public String toString() {
+        return "DataSource{" +
+                "dataSourceType=" + dataSourceType +
+                ", databaseProtocol=" + databaseProtocol +
+                '}';
     }
 }

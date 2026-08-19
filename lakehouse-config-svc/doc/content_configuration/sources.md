@@ -1,12 +1,12 @@
-# Описание данных и их источников
+# Data description and their sources
 
 ##  /v1_0/configs/compound/sources/dataset/{keyName}
-GET - соберет срез метаданных связанных с датасетом, в том числе зависимости модели и конструктивов
-> Пример, где {keyName} = transaction_dds
+GET - collects a slice of metadata related to the dataset, including model and construct dependencies
+> Example, where {keyName} = transaction_dds
 
-> |jq для вывода структуры в удобно читаемом виде
+> |jq to output the structure in a readable form
 
 ```bash
 curl -X GET http://localhost:8080/v1_0/configs/compound/sources/dataset/transaction_dds |jq 
 ```
-Возвращаемый объект [SourceConfDTO.java](../../../lakehouse-common/src/main/java/org/lakehouse/client/api/dto/task/SourceConfDTO.java)
+The returned object [SourceConfDTO.java](../../../lakehouse-common/src/main/java/org/lakehouse/client/api/dto/task/SourceConfDTO.java)

@@ -23,13 +23,16 @@ import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.taskexecutor.api.datasource.DataSourceManipulatorFactory;
 import org.lakehouse.taskexecutor.api.datasource.exception.CompactException;
+import org.lakehouse.taskexecutor.api.factory.SQLTemplateFactory;
 import org.springframework.stereotype.Service;
 
 @Service
 public class CompactTableSQLProcessorBody extends ScriptSQLProcessorBodyAbstract {
-    public CompactTableSQLProcessorBody(ConfigRestClientApi configRestClientApi,
-                                        DataSourceManipulatorFactory dataSourceManipulatorFactory) {
-        super(configRestClientApi, dataSourceManipulatorFactory);
+    public CompactTableSQLProcessorBody(
+            ConfigRestClientApi configRestClientApi,
+            DataSourceManipulatorFactory dataSourceManipulatorFactory,
+            SQLTemplateFactory sqlTemplateFactory) {
+        super(configRestClientApi, dataSourceManipulatorFactory, sqlTemplateFactory);
     }
 
 

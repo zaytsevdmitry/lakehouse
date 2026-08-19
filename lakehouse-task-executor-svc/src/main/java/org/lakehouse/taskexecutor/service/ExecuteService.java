@@ -22,7 +22,6 @@ import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.constant.SystemVarKeys;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
-import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskExecutionHeartBeatDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskInstanceReleaseDTO;
@@ -83,19 +82,19 @@ public class ExecuteService {
             p.runTask(sourceConfDTO,scheduledTaskLockDTO.getScheduledTaskEffectiveDTO(), jinJavaUtils);
             taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.SUCCESS));
         } catch (TaskConfigurationException e) {
-            logger.error("Task creation error ", e);
+            logger.error("Task creation error", e);
             taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.CONF_ERROR, e.toString()));
         } catch (TaskFailedException e) {
             logger.error("Task execution error {}", e.getMessage());
             logger.error(e.getMessage(),e);
             taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.FAILED, e.toString()));
         } catch (RuntimeException e) {
-            logger.error("Task execution error ", e);
+            logger.error("Task execution error", e);
             taskInstanceReleaseDTO.setTaskResult(new TaskResultDTO(Status.Task.FAILED, e.toString()));
         } finally {
             logger.info("Status {}", taskInstanceReleaseDTO.getTaskResult().getStatus());
             heardBeatService.stop(taskExecutionHeartBeatDTO);
-            logger.info("Heart beat shutdown");
+            logger.info("Heartbeat shutdown");
 
             logger.info(
                     "Release lockid={}, task={}, scheduleName={}, scheduleTargetTimestamp={}, scenarioActName={}, status={}",
@@ -120,23 +119,17 @@ public class ExecuteService {
         Map<String,Object> localContext = new HashMap<>();
 
         // resolve sources first
-        for(DriverDTO driverDTO:sourceConfDTO.getDrivers().values()){
-            localContext.put(SystemVarKeys.DRIVER_KEY, driverDTO);
-            for (DataSourceDTO dataSourceDTO: sourceConfDTO.getDataSources().values()){
-                if(dataSourceDTO.getDriverKeyName().equals(driverDTO.getKeyName())){
-                    localContext.put(SystemVarKeys.DATASOURCE_KEY, dataSourceDTO);
-                    localContext.put(SystemVarKeys.SERVICE_KEY, dataSourceDTO.getService());
-                    dataSourceDTO.getService().setProperties(jinJavaUtils.renderMap(dataSourceDTO.getService().getProperties(),localContext));
-                    for (DataSetDTO dataSetDTO:sourceConfDTO.getDataSets().values()){
-                        if (dataSetDTO.getDataSourceKeyName().equals(dataSourceDTO.getKeyName())){
-                            localContext.put(SystemVarKeys.DATASET_KEY, dataSetDTO);
-                            dataSetDTO.setProperties(jinJavaUtils.renderMap(dataSetDTO.getProperties(),localContext));
-                        }
-                    }
+        for (DataSourceDTO dataSourceDTO: sourceConfDTO.getDataSources().values()){
+            localContext.put(SystemVarKeys.DATASOURCE_KEY, dataSourceDTO);
+            localContext.put(SystemVarKeys.SERVICE_KEY, dataSourceDTO.getService());
+            dataSourceDTO.getService().setProperties(jinJavaUtils.renderMap(dataSourceDTO.getService().getProperties(),localContext));
+            for (DataSetDTO dataSetDTO:sourceConfDTO.getDataSets().values()){
+                if (dataSetDTO.getDataSourceKeyName().equals(dataSourceDTO.getKeyName())){
+                    localContext.put(SystemVarKeys.DATASET_KEY, dataSetDTO);
+                    dataSetDTO.setProperties(jinJavaUtils.renderMap(dataSetDTO.getProperties(),localContext));
                 }
             }
         }
-
         try {
             jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(sourceConfDTO));
             jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(scheduledTaskDTO));

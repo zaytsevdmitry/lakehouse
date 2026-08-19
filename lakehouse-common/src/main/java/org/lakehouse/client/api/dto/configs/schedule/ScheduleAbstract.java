@@ -26,50 +26,12 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-public class ScheduleAbstract extends KeyNameDescriptionAbstract {
-    @Serial
-    private static final long serialVersionUID = 5872306801909970542L;
-    private String intervalExpression;
-    private String startDateTime; // use DateTimeUtils.strEquals to compare
-    private String stopDateTime;
+public class ScheduleAbstract extends ScheduleHeaderDTO {
     private Set<DagEdgeDTO> scenarioActEdges = new HashSet<>();
-    private boolean enabled;
 
     public ScheduleAbstract() {
     }
 
-    public String getIntervalExpression() {
-        return intervalExpression;
-    }
-
-    public void setIntervalExpression(String intervalExpression) {
-        this.intervalExpression = intervalExpression;
-    }
-
-    public String getStartDateTime() {
-        return startDateTime;
-    }
-
-    public void setStartDateTime(String startDateTime) {
-        this.startDateTime = startDateTime;
-    }
-
-    public String getStopDateTime() {
-        return stopDateTime;
-    }
-
-    public void setStopDateTime(String stopDateTime) {
-        this.stopDateTime = stopDateTime;
-    }
-
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
 
     public Set<DagEdgeDTO> getScenarioActEdges() {
         return scenarioActEdges;

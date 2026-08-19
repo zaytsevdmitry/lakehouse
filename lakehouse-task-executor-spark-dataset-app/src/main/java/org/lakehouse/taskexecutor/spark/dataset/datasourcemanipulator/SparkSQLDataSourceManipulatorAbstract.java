@@ -50,9 +50,9 @@ public abstract class SparkSQLDataSourceManipulatorAbstract implements DataSourc
     public void createTableIfNotExists() throws CreateException {
 
         try {
-            logger.info("Try to create database schema {}", dataSetDTO().getDatabaseSchemaName());
+            logger.info("Trying to create database schema {}", dataSetDTO().getDatabaseSchemaName());
             executeUtils().execute(sqlTemplateResolver().getDatabaseSchemaDDLCreate(), classContext);
-            logger.info("Try to create table {}",dataSetDTO().getTableName());
+            logger.info("Trying to create table {}",dataSetDTO().getTableName());
             executeUtils().execute(sqlTemplateResolver().getTableDDLCreate(), classContext);
         }catch (ExecuteException e){
             throw new CreateException(e);

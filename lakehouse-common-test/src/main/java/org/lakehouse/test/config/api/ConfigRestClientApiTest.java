@@ -22,15 +22,16 @@ import org.lakehouse.client.api.constant.SystemVarKeys;
 import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
 import org.lakehouse.client.api.dto.configs.ScriptReferenceDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
+import org.lakehouse.client.api.dto.configs.dataset.DataSetLineageDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
-import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
+import org.lakehouse.client.api.dto.configs.schedule.DriverDTO;
 import org.lakehouse.client.api.dto.configs.dq.QualityMetricsConfDTO;
 import org.lakehouse.client.api.dto.configs.schedule.*;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.rest.config.ConfigRestClientApiAbstract;
 import org.lakehouse.jinja.java.JinJavaFactory;
 import org.lakehouse.jinja.java.JinJavaUtils;
-import org.lakehouse.test.config.configuration.FileLoader;
+import org.lakehouse.test.config.util.FileLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,6 +93,11 @@ public class ConfigRestClientApiTest extends ConfigRestClientApiAbstract {
     @Override
     public DataSetDTO getDataSetDTO(String name) {
         return dataSetDTOMap.get(name);
+    }
+
+    @Override
+    public DataSetLineageDTO getDataSetLineageDTO(String name) {
+        return new DataSetLineageDTO();
     }
 
     @Override
@@ -157,11 +163,7 @@ public class ConfigRestClientApiTest extends ConfigRestClientApiAbstract {
                 .collect(Collectors.toMap(DataSourceDTO::getKeyName, dataSourceDTO -> dataSourceDTO))
         );
 
-        sourceConfDTO.setDrivers(
-        sourceConfDTO.getDataSources().values().stream().map(DataSourceDTO::getDriverKeyName).collect(Collectors.toSet())
-                .stream().map(this::getDriverDTO)
-                .collect(Collectors.toMap(DriverDTO::getKeyName,driverDTO -> driverDTO))
-        );
+
         return sourceConfDTO;
     }
 
@@ -204,6 +206,11 @@ public class ConfigRestClientApiTest extends ConfigRestClientApiAbstract {
 
     @Override
     public List<ScheduleDTO> getScheduleDTOList() {
+        return List.of();
+    }
+
+    @Override
+    public List<ScheduleHeaderDTO> getScheduleHeaderDTOList() {
         return List.of();
     }
 

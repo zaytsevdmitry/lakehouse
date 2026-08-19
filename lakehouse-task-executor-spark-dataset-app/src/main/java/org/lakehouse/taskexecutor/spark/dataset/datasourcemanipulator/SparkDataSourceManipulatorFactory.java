@@ -22,9 +22,7 @@ import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.common.SQLTemplateDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
-import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
-import org.lakehouse.client.api.factory.SQLTemplateFactory;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.jinja.java.JinJavaUtils;
 import org.lakehouse.taskexecutor.api.datasource.DataSourceManipulator;
@@ -44,16 +42,21 @@ public class SparkDataSourceManipulatorFactory implements DataSourceManipulatorF
         this.sparkSession = sparkSession;
     }
     @Override
-    public DataSourceManipulator buildDataSourceManipulator(DriverDTO targetDriver, DataSourceDTO targetDataSource, DataSetDTO targetDataSet, JinJavaUtils jinJavaUtils, ConfigRestClientApi configRestClientApi) throws TaskConfigurationException {
+    public DataSourceManipulator buildDataSourceManipulator(
+            DataSourceDTO targetDataSource,
+            DataSetDTO targetDataSet,
+            SQLTemplateDTO sqlTemplateDTO,
+            JinJavaUtils jinJavaUtils,
+            ConfigRestClientApi configRestClientApi) throws TaskConfigurationException {
         DataSourceManipulator result = null;
-        if (targetDriver.getDataSourceType().equals(Types.DataSourceType.database)){
+        if (targetDataSource.getDataSourceType().equals(Types.DataSourceType.database)){
             result = new DataSourceManipulatorFactoryImpl().buildDataSourceManipulator(
-                    targetDriver,targetDataSource,targetDataSet,jinJavaUtils,configRestClientApi
-            );// JdbcDataSourceManipulator(parameter);//JdbcSparkSQLDataSourceManipulator(parameter);
+                    targetDataSource,targetDataSet,sqlTemplateDTO,
+                    jinJavaUtils,configRestClientApi
+            );
         }else {
 
-            SparkExecuteUtils executeUtils = new SparkExecuteUtilsImpl(jinJavaUtils, targetDataSource, targetDriver, sparkSession);
-            SQLTemplateDTO sqlTemplateDTO = SQLTemplateFactory.mergeSqlTemplate(targetDriver,targetDataSource,targetDataSet);
+            SparkExecuteUtils executeUtils = new SparkExecuteUtilsImpl(jinJavaUtils, targetDataSource, sparkSession);
 
             SparkSQLDataSourceManipulatorParameter parameter = null;
             parameter = new SparkSQLDataSourceManipulatorParameterImpl(sparkSession,executeUtils,
@@ -61,16 +64,16 @@ public class SparkDataSourceManipulatorFactory implements DataSourceManipulatorF
                     targetDataSet);
 
 
-            if (targetDriver.getDataSourceType().equals(Types.DataSourceType.iceberg)) {
+            if (targetDataSource.getDataSourceType().equals(Types.DataSourceType.iceberg)) {
                 result = new IcebergSparkSQLDataSourceManipulator(parameter);
-            } else if (targetDriver.getDataSourceType().equals(Types.DataSourceType.file)) {
+            } else if (targetDataSource.getDataSourceType().equals(Types.DataSourceType.file)) {
                 result = new FileSparkSQLDataSourceManipulator(parameter);
             } else {
                 throw new UnsuportedDataSourceException(
                         String.format(
                                 "Driver %s unsupported. Wrong DataSourceType %s",
-                                targetDriver.getKeyName(),
-                                targetDriver.getDataSourceType()
+                                targetDataSource.getKeyName(),
+                                targetDataSource.getDataSourceType()
                         ));
             }
         }

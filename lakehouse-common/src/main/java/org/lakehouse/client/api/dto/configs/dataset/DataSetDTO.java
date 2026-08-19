@@ -46,7 +46,6 @@ public class DataSetDTO implements Serializable {
     private List<ScriptReferenceDTO> scripts = new ArrayList<>();
     private String description;
     private Map<String, DataSetConstraintDTO> constraints = new HashMap<>();
-    private SQLTemplateDTO sqlTemplate = new SQLTemplateDTO();
     private String partitionStmt;
 
     public DataSetDTO() {
@@ -152,24 +151,38 @@ public class DataSetDTO implements Serializable {
         this.tableName = tableName;
     }
 
-    public SQLTemplateDTO getSqlTemplate() {
-        return sqlTemplate;
-    }
-
-    public void setSqlTemplate(SQLTemplateDTO sqlTemplate) {
-        this.sqlTemplate = sqlTemplate;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         DataSetDTO that = (DataSetDTO) o;
-        return Objects.equals(getKeyName(), that.getKeyName()) && Objects.equals(getNameSpaceKeyName(), that.getNameSpaceKeyName()) && Objects.equals(getDataSourceKeyName(), that.getDataSourceKeyName()) && Objects.equals(getDatabaseSchemaName(), that.getDatabaseSchemaName()) && Objects.equals(getTableName(), that.getTableName()) && Objects.equals(getSources(), that.getSources()) && Objects.equals(getColumnSchema(), that.getColumnSchema()) && Objects.equals(getProperties(), that.getProperties()) && Objects.equals(getScripts(), that.getScripts()) && Objects.equals(getDescription(), that.getDescription()) && Objects.equals(getConstraints(), that.getConstraints()) && Objects.equals(getSqlTemplate(), that.getSqlTemplate()) && Objects.equals(getPartitionStmt(), that.getPartitionStmt());
+        return Objects.equals(getKeyName(), that.getKeyName()) &&
+                Objects.equals(getNameSpaceKeyName(), that.getNameSpaceKeyName()) &&
+                Objects.equals(getDataSourceKeyName(), that.getDataSourceKeyName()) &&
+                Objects.equals(getDatabaseSchemaName(), that.getDatabaseSchemaName()) &&
+                Objects.equals(getTableName(), that.getTableName()) &&
+                Objects.equals(getSources(), that.getSources()) &&
+                Objects.equals(getColumnSchema(), that.getColumnSchema()) &&
+                Objects.equals(getProperties(), that.getProperties()) &&
+                Objects.equals(getScripts(), that.getScripts()) &&
+                Objects.equals(getDescription(), that.getDescription()) &&
+                Objects.equals(getConstraints(), that.getConstraints()) &&
+                Objects.equals(getPartitionStmt(), that.getPartitionStmt());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getKeyName(), getNameSpaceKeyName(), getDataSourceKeyName(), getDatabaseSchemaName(), getTableName(), getSources(), getColumnSchema(), getProperties(), getScripts(), getDescription(), getConstraints(), getSqlTemplate(), getPartitionStmt());
+        return Objects.hash(getKeyName(),
+                getNameSpaceKeyName(),
+                getDataSourceKeyName(),
+                getDatabaseSchemaName(),
+                getTableName(),
+                getSources(),
+                getColumnSchema(),
+                getProperties(),
+                getScripts(),
+                getDescription(),
+                getConstraints(),
+                getPartitionStmt());
     }
 
     @Override
@@ -186,7 +199,6 @@ public class DataSetDTO implements Serializable {
                 ", scripts=" + scripts +
                 ", description='" + description + '\'' +
                 ", constraints=" + constraints +
-                ", sqlTemplate=" + sqlTemplate +
                 ", partitionStmt='" + partitionStmt + '\'' +
                 '}';
     }

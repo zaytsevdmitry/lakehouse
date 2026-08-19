@@ -13,7 +13,7 @@ config:
     pathStyleAccess: "true"
   image:
     repository: lakehouse-hms
-    tag: "0.6.0"
+    tag: "0.7.0"
     pullPolicy: IfNotPresent
   hiveConfig:
     databaseType: "postgres"

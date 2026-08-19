@@ -1,0 +1,170 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam roundcorner 5
+
+title Архитектурная модель метаданных (Интеграция с OpenMetadata API)
+
+' ==========================================
+' ПАКЕТ: БИЗНЕС-КОНТЕКСТ
+' ==========================================
+package "Бизнес-контекст" {
+    class Domain {
+        + name: String [Finance]
+        + displayName: String
+        + domainType: String [Functional]
+    }
+}
+
+' ==========================================
+' ПАКЕТ: ИНФРАСТРУКТУРНЫЕ СЕРВИСЫ
+' ==========================================
+package "Инфраструктура и Подключения" {
+    class DatabaseService {
+        + name: String [trino_prod]
+        + serviceType: String [Trino|Postgres]
+        + connectionConfig: JSON
+    }
+
+    class StorageService {
+        + name: String [s3_lakehouse_prod]
+        + serviceType: String [S3]
+    }
+
+    class Driver {
+        + driverKeyName: String
+    }
+
+    class TaskExecutionServiceGroup {
+        + groupName: String
+    }
+}
+
+' ==========================================
+' ПАКЕТ: ТОПОЛОГИЯ И ХРАНЕНИЕ DATA LAKE
+' ==========================================
+package "Топология и Физическое хранение" {
+    class Database {
+        + name: String [hive]
+    }
+
+    class DatabaseSchema {
+        + name: String [sales]
+    }
+
+    class ContainerS3 {
+        + name: String [raw-zone]
+        + prefix: String [/data/raw]
+        + fullPath: String [s3://bucket/data/raw]
+    }
+}
+
+' ==========================================
+' ПАКЕТ: ОБЪЕКТЫ ДАННЫХ (ЯДРО)
+' ==========================================
+package "Объекты данных" {
+    class DataSet {
+        + name: String [orders]
+        + displayName: String
+        + tableType: String [Regular]
+        + sourceUrl: String [s3://...]
+    }
+
+    class Column {
+        + name: String
+        + dataType: String [VARCHAR|NUMERIC]
+        + dataTypeDisplay: String
+        + description: String
+    }
+
+    class TableConstraint {
+        + constraintType: String [PRIMARY_KEY]
+        + columns: List<String>
+    }
+
+    class QualityMetric {
+        + metricName: String
+        + value: Double
+    }
+
+    class SQLTemplate {
+        + templateBody: String
+    }
+
+    class ScriptReference {
+        + refKey: String
+    }
+
+    class Script {
+        + body: String
+    }
+}
+
+' ==========================================
+' ПАКЕТ: РАСПИСАНИЯ И ИСПОЛНЕНИЕ
+' ==========================================
+package "Расписания и Исполнение (Пайплайны)" {
+    class Schedule {
+        + cronExpression: String
+    }
+    class ScenarioActTemplate {
+        + templateId: String
+    }
+    class ScenarioAct {
+        + actId: String
+    }
+    class Task {
+        + taskId: String
+        + command: String
+    }
+    class DAGEdge {
+        + fromTask: String
+        + toTask: String
+    }
+}
+
+' ==========================================
+' СВЯЗИ И СТРУКТУРА (АССОЦИАЦИИ И КОМПОЗИЦИИ)
+' ==========================================
+
+' Логическая привязка к домену OpenMetadata
+DataSet "0..*" --> "1" Domain : domain (Бизнес-контекст)
+
+' Иерархия Баз Данных (Для Trino/Spark/RDBMS)
+DatabaseService "1" *-- "0..*" Database
+Database "1" *-- "0..*" DatabaseSchema
+DatabaseSchema "1" *-- "0..*" DataSet : содержит (FQDN: service.db.schema.table)
+
+' Структура Object Storage (S3)
+StorageService "1" *-- "0..*" ContainerS3
+DataSet "0..*" --> "0..1" ContainerS3 : sourceUrl (Физическое расположение файлов)
+
+' Драйверы и шаблоны
+DatabaseService "0..*" --> "1" Driver : использует
+Driver "1" *-- "0..1" SQLTemplate : базовый
+DataSet "1" *-- "0..1" SQLTemplate : переопределяет
+
+' Внутренняя структура датасета
+DataSet "1" *-- "1..*" Column : columnSchema
+DataSet "1" *-- "0..*" TableConstraint : tableConstraints
+DataSet "0..*" --> "0..*" DataSet : sources (Data Lineage / Зависимости)
+QualityMetric "0..*" --> "1" DataSet : datasetKeyName (Тесты качества)
+
+' Скрипты
+DataSet "1" *-- "0..*" ScriptReference
+ScriptReference "1" --> "1" Script
+SQLTemplate "0..*" --> "0..*" Script : использует
+
+' Связь инфраструктуры с вычислениями
+Task "0..*" --> "1" TaskExecutionServiceGroup : маршрутизация
+
+' Оркестрация процессов
+Schedule "1" *-- "0..*" ScenarioAct
+Schedule "1" *-- "0..*" DAGEdge : scenarioActEdges
+ScenarioAct "1" *-- "0..*" Task : переопределяет
+ScenarioAct "1" *-- "0..*" DAGEdge : dagEdges
+ScenarioAct "0..*" --> "1" ScenarioActTemplate
+ScenarioActTemplate "1" *-- "1..*" Task : типовые задачи
+ScenarioActTemplate "1" *-- "0..*" DAGEdge
+
+@enduml

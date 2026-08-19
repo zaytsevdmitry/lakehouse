@@ -1,13 +1,13 @@
-# Пространство имен (namespace)
-Служит для привязки [датасетов](https://github.com/zaytsevdmitry/Data-engineering-theories/blob/main/DataManagement/AbstractEntities/DataSet.MD). Может использоваться в качестве определения проекта, разделения по источникам в mesh подходе и тд
-## Поля объекта
-| Поле        | Назначение                    |
+# Namespace
+Used to bind [datasets](https://github.com/zaytsevdmitry/Data-engineering-theories/blob/main/DataManagement/AbstractEntities/DataSet.MD). Can be used to define a project, separate by source in a mesh approach, etc.
+## Object fields
+| Field       | Purpose                       |
 |:------------|:------------------------------|
-| keyName     | Уникальный идентификатов      | 
-| description | Описание для документирования | 
+| keyName     | Unique identifier             | 
+| description | Description for documentation | 
 
 
-**Пример**
+**Example**
 ```json
 {
   "keyName": "DEMO",
@@ -17,6 +17,6 @@
 
 
 ##  /v1_0/configs/nameSpaces
-Предоставит все объекты списком
+Returns all objects as a list
 ##  /v1_0/configs/nameSpaces/{keyName}
-Манипуляция конкретным объектом по ключу
+Manipulates a specific object by key

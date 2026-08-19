@@ -20,14 +20,13 @@ package org.lakehouse.state.controller;
 import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.api.dto.state.DataSetIntervalDTO;
 import org.lakehouse.client.api.dto.state.DataSetStateDTO;
-import org.lakehouse.client.api.dto.state.DataSetStateResponseDTO;
+import org.lakehouse.client.api.dto.state.DataSetWrongStateResponseDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.state.mapper.StateMapper;
 import org.lakehouse.state.service.StateService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 public class StateController {
@@ -37,10 +36,10 @@ public class StateController {
         this.stateService = stateService;
     }
 
-    @PostMapping(Endpoint.STATE_DATASET)
-    DataSetStateResponseDTO getStateByInterval(
+    @PostMapping(Endpoint.STATE_DATASET_WRONG)
+    DataSetWrongStateResponseDTO getStateByInterval(
             @RequestBody DataSetIntervalDTO dataSetIntervalDTO) {
-        return stateService.getStateByInterval(
+        return stateService.getWrongStateByInterval(
                 dataSetIntervalDTO.getDataSetKeyName(),
                 DateTimeUtils.parseDateTimeFormatWithTZ(dataSetIntervalDTO.getIntervalStartDateTime()),
                 DateTimeUtils.parseDateTimeFormatWithTZ(dataSetIntervalDTO.getIntervalEndDateTime()));
@@ -53,5 +52,14 @@ public class StateController {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @GetMapping(Endpoint.STATE_DATASET)
+    List<DataSetStateDTO> getStatesByDataSetAndInterval(@RequestBody DataSetIntervalDTO dataSetIntervalDTO){
+        return stateService.getStatesByDataSetAndInterval(
+                dataSetIntervalDTO.getDataSetKeyName(),
+                DateTimeUtils.parseDateTimeFormatWithTZ(dataSetIntervalDTO.getIntervalStartDateTime()),
+                DateTimeUtils.parseDateTimeFormatWithTZ(dataSetIntervalDTO.getIntervalEndDateTime()));
+
     }
 }

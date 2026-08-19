@@ -55,7 +55,7 @@ public class InternalScheduler {
     public void build() {
         int rows;
         rows = buildService.buildAll();
-        logger.info("built {} schedules", rows);
+        logger.info("Built {} schedules", rows);
     }
 
     /**

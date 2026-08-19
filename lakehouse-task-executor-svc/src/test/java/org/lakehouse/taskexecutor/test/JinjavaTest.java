@@ -29,7 +29,7 @@ import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetConstraintDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
-import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
+import org.lakehouse.client.api.dto.configs.schedule.DriverDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;
@@ -39,7 +39,7 @@ import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.jinja.java.JinJavaFactory;
 import org.lakehouse.jinja.java.JinJavaUtils;
 import org.lakehouse.test.config.api.ConfigRestClientApiTest;
-import org.lakehouse.test.config.configuration.FileLoader;
+import org.lakehouse.test.config.util.FileLoader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
@@ -138,7 +138,7 @@ public class JinjavaTest {
                 .getScheduleEffectiveDTO(null)
                 .getScenarioActs()
                 .stream()
-                .filter(a-> a.getDataSet().equals("transaction_dds"))
+                .filter(a-> a.getDataSetKeyName().equals("transaction_dds"))
                 .flatMap(s-> s.getTasks()
                         .stream()
                         .filter(t-> t.getName().equals("load"))
@@ -158,7 +158,7 @@ public class JinjavaTest {
         scheduledTaskLockDTO.setScheduledTaskEffectiveDTO(taskDTO);
         SourceConfDTO sourceConfDTO = configRestClientApiTest.getSourceConfDTO("transaction_dds");
         String dataSetKeyName = "transaction_dds";
-        Map<String, Object> context = ObjectMapping.asMap(sourceConfDTO);//ObjectMapping.asMap(fileLoader.loadDataSetDTO(dataSetKeyName));
+        Map<String, Object> context = ObjectMapping.asMap(sourceConfDTO);
         String rendered = jinJavaUtils.render("{{ targetDataSetKeyName }}",context);
         String renderedMap = jinJavaUtils.render("{{ dataSets['transaction_dds'].fullTableName }}",context);
         String rendered2 = jinJavaUtils.render("",context);
@@ -172,8 +172,6 @@ public class JinjavaTest {
         stubDriverDTO.setKeyName("stubDriver");
         DataSourceDTO stubDataSource = new DataSourceDTO();
         stubDataSource.setKeyName("stubDataSource");
-        stubDataSource.setCatalogKeyName("StubCatalogName");
-        stubDataSource.setDriverKeyName(stubDriverDTO.getKeyName());
         DataSetDTO dataSetDTO = new DataSetDTO();
         dataSetDTO.setDataSourceKeyName(stubDataSource.getKeyName());
         dataSetDTO.setTableName("testTable");
@@ -181,7 +179,6 @@ public class JinjavaTest {
         dataSetDTO.setKeyName("testDataSet");
         conf.setDataSets(Map.of(dataSetDTO.getKeyName(),dataSetDTO));
         conf.setDataSources(Map.of(stubDataSource.getKeyName(),stubDataSource));
-        conf.setDrivers(Map.of(stubDriverDTO.getKeyName(),stubDriverDTO));
         conf.setTargetDataSetKeyName(dataSetDTO.getKeyName());
         return conf;
     }
@@ -222,15 +219,16 @@ public class JinjavaTest {
         SourceConfDTO conf = getStubSourceConfDTO();
 
         String template = "{{ refCat('" + conf.getTargetDataSetKeyName() + "') }}";
+        System.out.println("template:" + template);
 
         Map<String, Object> context = ObjectMapping.asMap(conf);
         String renderedTemplate = jinJavaUtils.render(template, context);
-        System.out.println(renderedTemplate);
+        System.out.println("rendered:" + renderedTemplate);
 
-        String expected = conf.getTargetDataSource().getCatalogKeyName() + "."
+        String expected = conf.getTargetDataSource().getKeyName() + "."
                 + conf.getTargetDataSet().getDatabaseSchemaName()+"."
                 + conf.getTargetDataSet().getTableName();
-        System.out.println(expected);
+        System.out.println("expected:" + expected);
 
         assert (renderedTemplate.equals(expected));
     }
@@ -336,7 +334,6 @@ public class JinjavaTest {
         DataSetDTO foreignDataSetDTO = fileLoader.loadDataSetDTO("client_processing");
 
         SourceConfDTO conf = new SourceConfDTO();
-        conf.setDrivers(Map.of(driverDTO.getKeyName(),driverDTO));
         conf.setTargetDataSetKeyName(targetDataSet.getKeyName());
         conf.setDataSources(Map.of(dataSourceDTO.getKeyName(),dataSourceDTO));
         conf.setDataSets(Map.of(
@@ -378,7 +375,7 @@ public class JinjavaTest {
         DataSetDTO foreignDataSetDTO = fileLoader.loadDataSetDTO("client_processing");
 
         SourceConfDTO conf = new SourceConfDTO();
-        conf.setDrivers(Map.of(driverDTO.getKeyName(),driverDTO));
+       // conf.setDrivers(Map.of(driverDTO.getKeyName(),driverDTO));
         conf.setTargetDataSetKeyName(targetDataSet.getKeyName());
         conf.setDataSources(Map.of(dataSourceDTO.getKeyName(),dataSourceDTO));
         conf.setDataSets(Map.of(
@@ -422,40 +419,8 @@ public class JinjavaTest {
 
         assert (expected.equals(result));
     }
-    @Test
-    void dataSourcePropsRender() throws IOException {
-        FileLoader fileLoader = new FileLoader();
-        DataSourceDTO dataSourceDTO = fileLoader.loadDataSourceDTO("processingdb");
-        DriverDTO driverDTO = fileLoader.loadDriverDTO(dataSourceDTO.getDriverKeyName());
 
-        Map<String,Object> localContext = new HashMap<>();
-        localContext.put(SystemVarKeys.DRIVER_KEY, driverDTO);
-        localContext.put(SystemVarKeys.SERVICE_KEY,dataSourceDTO.getService());
-        String expected = "jdbc:postgresql://localhost:5432/postgresDB";
-        String template = "{{driver.connectionTemplates['jdbc']}}";//dataSourceDTO.getServices().get(0).getProperties().get("spark.sql.catalog.processingdb.url");
-        String result = jinJavaUtils.render(template,localContext);
-        assert expected.equals(result);
-    }
 
-    @Test
-    void sparkRestUrlRender() throws JsonProcessingException {
-
-        String dataSetKeyName = "transaction_dds";
-        SourceConfDTO sourceConfDTO = configRestClientApi.getSourceConfDTO(dataSetKeyName);
-        String template = sourceConfDTO.getTargetDriver().getConnectionTemplates().get(Types.ConnectionType.spark);
-        JinJavaUtils jinJavaUtils = JinJavaFactory.getJinJavaUtils();
-        ScheduledTaskDTO scheduledTaskDTO = new ScheduledTaskDTO();
-
-        scheduledTaskDTO.getTaskProcessorArgs().put(SystemVarKeys.DATASOURCE_SERVICE_PROTOCOL_NAME_KEY,"http");
-
-        jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(sourceConfDTO));
-        jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(scheduledTaskDTO));
-        String url = jinJavaUtils.render(template);
-        System.out.println(url);
-        System.out.println(template);
-        assert ("http://localhost:6066".equals(url));
-
-    }
 
     @Test
     void catalogDataBaseSchema() throws JsonProcessingException {
@@ -466,7 +431,7 @@ public class JinjavaTest {
         Map<String,Object> localContext = ObjectMapping.asMap(sourceConfDTO);
 
         String template = "{{refCatSchema(" + SystemVarKeys.TARGET_DATASET_KEY_NAME + ")}}";
-        String expected = "lakehouse.default";
+        String expected = "lakehousestorage.default";
         String result = jinJavaUtils.render(template,localContext);
 
         assert(expected.equals(result));

@@ -4,20 +4,11 @@
   "tasks": [
     {
       "name": "begin",
-      "taskExecutionServiceGroupName": "default",
-      "taskProcessor": "lockedStateTaskProcessor",
-      "importance": "critical",
-      "description": "Made dataset interval status Locked"
+      "template": "beginTemplate"
     },
     {
       "name": "prepare",
-      "taskExecutionServiceGroupName": "default",
-      "taskProcessor": "jdbcTaskProcessor",
-      "taskProcessorBody": "createTableSQLProcessorBody",
-      "importance": "critical",
-      "description": "Create table if not exists",
-      "executionModuleArgs": {
-      }
+      "template": "prepareJdbc"
     },
     {
       "name": "load",
@@ -26,6 +17,7 @@
       "taskProcessorBody": "mergeSQLProcessorBody",
       "importance": "critical",
       "description": "load data",
+      "driverKeyName": "postgres",
       "executionModuleArgs": {
       }
     },

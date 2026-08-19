@@ -1,0 +1,10 @@
+ui-svc:
+  image:
+    repository: lakehouse
+    tag: "0.7.0"
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    type: NodePort
+    port: 8084
+    targetPort: 8084

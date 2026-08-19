@@ -41,6 +41,6 @@ public interface ScheduleTaskInstanceRepository extends JpaRepository<ScheduleTa
             	)
             """)
     List<ScheduleTaskInstance> findReadyToQueue();
-
     List<ScheduleTaskInstance> findByStatus(Status.Task status);
+    List<ScheduleTaskInstance> findByScheduleScenarioActInstanceId(Long scheduleScenarioActInstanceId);
 }

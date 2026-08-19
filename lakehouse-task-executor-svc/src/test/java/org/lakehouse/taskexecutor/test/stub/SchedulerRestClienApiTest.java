@@ -17,6 +17,9 @@
 
 package org.lakehouse.taskexecutor.test.stub;
 
+import org.lakehouse.client.api.dto.common.IntervalDTO;
+import org.lakehouse.client.api.dto.scheduler.ScheduleInstanceDTO;
+import org.lakehouse.client.api.dto.scheduler.ScheduleInstanceDAGDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskExecutionHeartBeatDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskInstanceReleaseDTO;
@@ -78,5 +81,20 @@ public class SchedulerRestClienApiTest implements SchedulerRestClientApi {
     @Override
     public int lockRelease(TaskInstanceReleaseDTO taskInstanceReleaseDTO) {
         return 0;
+    }
+
+    @Override
+    public List<ScheduleInstanceDTO> getAllByInterval(IntervalDTO intervalDTO) {
+        return List.of();
+    }
+
+    @Override
+    public List<ScheduleInstanceDTO> getAllByInterval(String name, IntervalDTO intervalDTO) {
+        return List.of();
+    }
+
+    @Override
+    public ScheduleInstanceDAGDTO getScheduleInstanceDAGDTOById(Long id) {
+        return null;
     }
 }

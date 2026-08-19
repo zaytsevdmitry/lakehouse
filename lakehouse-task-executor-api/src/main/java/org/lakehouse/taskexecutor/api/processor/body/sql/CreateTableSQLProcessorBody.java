@@ -23,14 +23,16 @@ import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.taskexecutor.api.datasource.DataSourceManipulatorFactory;
 import org.lakehouse.taskexecutor.api.datasource.exception.CreateException;
+import org.lakehouse.taskexecutor.api.factory.SQLTemplateFactory;
 import org.springframework.stereotype.Service;
 
 @Service(value = "createTableSQLProcessorBody")
 public class CreateTableSQLProcessorBody extends SQLProcessorBodyAbstract{
     public CreateTableSQLProcessorBody(
             ConfigRestClientApi configRestClientApi,
-            DataSourceManipulatorFactory dataSourceManipulatorFactory) {
-        super(configRestClientApi,dataSourceManipulatorFactory);
+            DataSourceManipulatorFactory dataSourceManipulatorFactory,
+            SQLTemplateFactory sqlTemplateFactory) {
+        super(configRestClientApi,dataSourceManipulatorFactory, sqlTemplateFactory);
     }
 
     @Override

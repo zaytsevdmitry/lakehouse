@@ -71,6 +71,16 @@
       "type": "primary",
       "columns": "id",
       "constraintLevelCheck": "dataQuality"
+    },
+    "transaction_processing_client_fk": {
+      "type": "foreign",
+      "columns": "client_id",
+      "reference": {
+        "dataSetKeyName": "client_processing",
+        "constraintName": "client_processing_pk"
+      },
+      "enabled": true,
+      "constraintLevelCheck": "construct"
     }
   },
   "properties": {

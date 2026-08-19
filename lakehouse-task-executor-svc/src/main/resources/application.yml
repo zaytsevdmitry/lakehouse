@@ -29,3 +29,7 @@ lakehouse:
               group.id: default
               auto.offset.reset: earliest
             topics: scheduled_task_msg
+
+  health:
+    liveness-path: /healthz
+    readiness-path: /readyz

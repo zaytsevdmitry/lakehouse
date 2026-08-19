@@ -18,9 +18,11 @@
 package org.lakehouse.taskexecutor.api.processor.body.sql;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.lakehouse.client.api.dto.common.SQLTemplateDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
+import org.lakehouse.taskexecutor.api.factory.SQLTemplateFactory;
 import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.jinja.java.JinJavaFactory;
@@ -32,15 +34,22 @@ import org.lakehouse.taskexecutor.api.processor.body.ProcessorBody;
 public abstract class SQLProcessorBodyAbstract implements ProcessorBody{
     private final ConfigRestClientApi configRestClientApi;
     private final DataSourceManipulatorFactory dataSourceManipulatorFactory;
-    protected SQLProcessorBodyAbstract(ConfigRestClientApi configRestClientApi, DataSourceManipulatorFactory dataSourceManipulatorFactory) {
+    private final SQLTemplateFactory sqlTemplateFactory;
+    protected SQLProcessorBodyAbstract(
+            ConfigRestClientApi configRestClientApi,
+            DataSourceManipulatorFactory dataSourceManipulatorFactory, SQLTemplateFactory sqlTemplateFactory) {
         this.configRestClientApi = configRestClientApi;
         this.dataSourceManipulatorFactory = dataSourceManipulatorFactory;
+        this.sqlTemplateFactory = sqlTemplateFactory;
     }
 
     public DataSourceManipulator getTargetDataSourceManipulator(
             ScheduledTaskDTO scheduledTaskDTO)
             throws TaskConfigurationException {
         SourceConfDTO sourceConfDTO = configRestClientApi.getSourceConfDTO(scheduledTaskDTO.getDataSetKeyName());
+
+        SQLTemplateDTO sqlTemplateDTO = sqlTemplateFactory.mergeSqlTemplate(scheduledTaskDTO);
+
         JinJavaUtils jinJavaUtils = JinJavaFactory.getJinJavaUtils();
         try {
             jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(sourceConfDTO));
@@ -51,9 +60,9 @@ public abstract class SQLProcessorBodyAbstract implements ProcessorBody{
         }
         return dataSourceManipulatorFactory
                 .buildDataSourceManipulator(
-                        sourceConfDTO.getTargetDriver(),
                         sourceConfDTO.getTargetDataSource(),
                         sourceConfDTO.getTargetDataSet(),
+                        sqlTemplateDTO,
                         jinJavaUtils,
                         configRestClientApi);
     }

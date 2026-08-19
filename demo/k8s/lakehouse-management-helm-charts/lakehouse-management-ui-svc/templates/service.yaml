@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: lakehouse-management-ui-svc
+spec:
+  type: NodePort
+  ports:
+    - port: 8084
+      targetPort: 8084
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: lakehouse-management-ui-svc
+    app.kubernetes.io/instance: {{ .Release.Name }}

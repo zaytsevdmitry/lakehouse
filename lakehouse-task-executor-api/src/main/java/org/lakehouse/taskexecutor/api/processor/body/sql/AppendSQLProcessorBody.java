@@ -23,6 +23,7 @@ import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.taskexecutor.api.datasource.DataSourceManipulator;
 import org.lakehouse.taskexecutor.api.datasource.DataSourceManipulatorFactory;
+import org.lakehouse.taskexecutor.api.factory.SQLTemplateFactory;
 import org.springframework.stereotype.Service;
 
 @Service(value = "appendSQLProcessorBody")
@@ -31,8 +32,9 @@ public class AppendSQLProcessorBody extends ScriptSQLProcessorBodyAbstract {
 
     public AppendSQLProcessorBody(
             ConfigRestClientApi configRestClientApi,
-            DataSourceManipulatorFactory dataSourceManipulatorFactory) {
-        super(configRestClientApi,dataSourceManipulatorFactory);
+            DataSourceManipulatorFactory dataSourceManipulatorFactory,
+            SQLTemplateFactory sqlTemplateFactory) {
+        super(configRestClientApi,dataSourceManipulatorFactory,sqlTemplateFactory);
 
         this.configRestClientApi = configRestClientApi;
     }

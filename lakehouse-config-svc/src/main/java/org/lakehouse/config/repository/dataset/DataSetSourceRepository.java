@@ -27,6 +27,7 @@ import java.util.Optional;
 public interface DataSetSourceRepository extends JpaRepository<DataSetSource, Long> {
 
     List<DataSetSource> findByDataSetKeyName(String dataSetName);
+    List<DataSetSource> findBySourceKeyName(String sourceKeyName);
     List<DataSetSource> findByQualityMetricsConfKeyName(String keyName);
 
 	@Query("select p from DataSetSource p where p.dataSet.keyName = ?1 and p.source.keyName = ?2")

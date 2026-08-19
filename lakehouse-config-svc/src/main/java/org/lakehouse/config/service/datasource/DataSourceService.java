@@ -87,10 +87,9 @@ public class DataSourceService {
         DataSourceDTO result = new DataSourceDTO();
         result.setKeyName(dataSource.getKeyName());
         result.setDescription(dataSource.getDescription());
-        result.setDriverKeyName(dataSource.getDriver().getKeyName());
         result.setService(findDataSourceService(dataSource.getKeyName()));
-        result.setSqlTemplate(sqlTemplateService.getSqlTemplateDTO(dataSource));
-        result.setCatalogKeyName(dataSource.getCatalogKeyName());
+        result.setDataSourceType(dataSource.getDataSourceType());
+        result.setDatabaseProtocol(dataSource.getDatabaseProtocol());
         return result;
     }
 
@@ -99,8 +98,8 @@ public class DataSourceService {
         DataSource result = new DataSource();
         result.setKeyName(dataSourceDTO.getKeyName());
         result.setDescription(dataSourceDTO.getDescription());
-        result.setDriver(driverService.findDriverById(dataSourceDTO.getDriverKeyName()));
-        result.setCatalogKeyName(dataSourceDTO.getCatalogKeyName());
+        result.setDataSourceType(dataSourceDTO.getDataSourceType());
+        result.setDatabaseProtocol(dataSourceDTO.getDatabaseProtocol());
         return result;
     }
 
@@ -164,8 +163,6 @@ public class DataSourceService {
 
          saveSvcProperty(dataSourceSvcItem,dataSourceDTO.getService().getProperties());
 
-        //sql templates
-        sqlTemplateService.save(dataSource,dataSourceDTO.getSqlTemplate());
 
         return mapDataSourceToDTO(dataSource);
     }

@@ -23,6 +23,7 @@ import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.taskexecutor.api.datasource.DataSourceManipulatorFactory;
 import org.lakehouse.taskexecutor.api.datasource.exception.ExecuteException;
 import org.lakehouse.taskexecutor.api.datasource.execute.ExecuteUtils;
+import org.lakehouse.taskexecutor.api.factory.SQLTemplateFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,8 +34,9 @@ public abstract class ScriptSQLProcessorBodyAbstract extends SQLProcessorBodyAbs
 
     public ScriptSQLProcessorBodyAbstract(
             ConfigRestClientApi configRestClientApi,
-            DataSourceManipulatorFactory  dataSourceManipulatorFactory) {
-        super(configRestClientApi,dataSourceManipulatorFactory);
+            DataSourceManipulatorFactory  dataSourceManipulatorFactory,
+            SQLTemplateFactory sqlTemplateFactory) {
+        super(configRestClientApi,dataSourceManipulatorFactory,sqlTemplateFactory);
 
     }
 

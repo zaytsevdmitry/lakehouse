@@ -1,9 +1,6 @@
 {
   "keyName" : "spark_iceberg",
   "description" : null,
-  "connectionTemplates" : {
-    "spark" : "{%set service=dataSources[dataSets[targetDataSetKeyName].dataSourceKeyName].service%}{%set protocol=taskProcessorArgs['datasource.service.protocol']%}{{protocol}}://{{service.host}}:{{service.port}}"
-  },
   "sqlTemplate" : {
     "databaseSchemaName" : "sql-template-spark_iceberg.databaseSchemaName.sql",
     "databaseSchemaDDLCreate" : "sql-template-spark_iceberg.databaseSchemaDDLCreate.sql",
@@ -37,6 +34,6 @@
     "checkConstraintDDL" : "sql-template-spark_iceberg.checkConstraintDDL.sql",
     "checkConstraintDDLAdd" : "sql-template-spark_iceberg.checkConstraintDDLAdd.sql",
     "checkConstraintCheckIntegrity" : "sql-template-spark_iceberg.checkConstraintCheckIntegrity.sql"
-  },
-  "dataSourceType" : "iceberg"
+  }
+
 }

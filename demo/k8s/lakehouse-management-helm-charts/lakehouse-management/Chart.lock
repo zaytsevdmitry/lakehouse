@@ -23,5 +23,8 @@ dependencies:
 - name: lakehouse-task-proxy4spark
   repository: file://../lakehouse-task-proxy4spark
   version: 0.1.0
-digest: sha256:1db9c1b1b4deaf0d79d804bb577ccad607416410f03af875876c6a536ae10bee
-generated: "2026-07-25T20:00:41.637337812+03:00"
+- name: lakehouse-management-ui-svc
+  repository: file://../lakehouse-management-ui-svc
+  version: 0.1.0
+digest: sha256:427514feba0368c57b21b6a5f63a64268ce16ebc562f65270bace6c56a965c69
+generated: "2026-08-15T20:25:16.000259639+03:00"

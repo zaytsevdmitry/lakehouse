@@ -1,340 +1,539 @@
 {
-  "keyName": "initial",
-  "description": "initial schedule for client transactions",
-  "intervalExpression": "0 0 1 1 * *",
-  "startDateTime": "2020-12-31T21:00:00Z",
-  "stopDateTime": null,
-  "scenarioActEdges": [
-    {
-      "from": "transaction_processing",
-      "to": "transaction_dds"
-    },
-    {
-      "from": "transaction_dds",
-      "to": "aggregation_pay_per_client_daily_mart"
-    },
-    {
-      "from": "client_processing",
-      "to": "transaction_dds"
-    },
-    {
-      "from": "transaction_dds",
-      "to": "aggregation_pay_per_client_total_mart"
-    }
-  ],
-  "enabled": true,
-  "lastChangeNumber": 1,
-  "lastChangedDateTime": "2025-06-28T07:05:16.712465Z",
-  "scenarioActs": [
-    {
-      "name": "aggregation_pay_per_client_daily_mart",
-      "dataSet": "aggregation_pay_per_client_daily_mart",
-      "tasks": [
-        {
-          "name": "check",
-          "taskExecutionServiceGroupName": "default",
-          "taskProcessor": "dependencyCheckStateTaskProcessor",
-          "importance": "critical",
-          "description": "Dependency check",
-          "taskProcessorArgs": {}
-        },
-        {
-          "name": "finally",
-          "taskExecutionServiceGroupName": "default",
-          "taskProcessor": "successStateTaskProcessor",
-          "importance": "critical",
-          "description": "DataSet success",
-          "taskProcessorArgs": {}
-        },
-        {
-          "name": "begin",
-          "taskExecutionServiceGroupName": "default",
-          "taskProcessor": "lockedStateTaskProcessor",
-          "importance": "critical",
-          "description": "Made interval status RUNNING",
-          "taskProcessorArgs": {}
-        },
-        {
-          "name": "load",
-          "taskExecutionServiceGroupName": "default",
-          "taskProcessor": "sparkStandAloneClusterTaskProcessor",
-          "taskProcessorBody": "mergeSQLProcessorBody",
-          "importance": "critical",
-          "description": "load from remote datastore",
-          "taskProcessorArgs": {
-            "spark.executor.memory": "5g",
-            "spark.driver.memory": "2g"
-            }
-        }
-      ],
-      "dagEdges": [
-        {
-          "from": "check",
-          "to": "load"
-        },
-        {
-          "from": "begin",
-          "to": "check"
-        },
-        {
-          "from": "load",
-          "to": "finally"
-        }
-      ],
-      "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
-      "intervalEnd": "{{ targetDateTimeTZ }}"
-    },
-    {
-      "name": "aggregation_pay_per_client_total_mart",
-      "dataSet": "aggregation_pay_per_client_total_mart",
-      "tasks": [
-        {
-          "name": "check",
-          "taskExecutionServiceGroupName": "default",
-          "taskProcessor": "dependencyCheckStateTaskProcessor",
-          "importance": "critical",
-          "description": "Dependency check",
-          "taskProcessorArgs": {}
-        },
-        {
-          "name": "finally",
-          "taskExecutionServiceGroupName": "default",
-          "taskProcessor": "successStateTaskProcessor",
-          "importance": "critical",
-          "description": "DataSet success",
-          "taskProcessorArgs": {}
-        },
-        {
-          "name": "begin",
-          "taskExecutionServiceGroupName": "default",
-          "taskProcessor": "lockedStateTaskProcessor",
-          "importance": "critical",
-          "description": "Made interval status RUNNING",
-          "taskProcessorArgs": {}
-        },
-        {
-          "name": "load",
-          "taskExecutionServiceGroupName": "default",
-          "taskProcessor": "sparkStandAloneClusterTaskProcessor",
-          "taskProcessorBody": "mergeSQLProcessorBody",
-          "importance": "critical",
-          "description": "load from remote datastore",
-          "taskProcessorArgs": {
-            "spark.executor.memory": "5g",
-            "spark.driver.memory": "2g"
-            }
-        }
-      ],
-      "dagEdges": [
-        {
-          "from": "check",
-          "to": "load"
-        },
-        {
-          "from": "begin",
-          "to": "check"
-        },
-        {
-          "from": "load",
-          "to": "finally"
-        }
-      ],
-      "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
-      "intervalEnd": "{{ targetDateTimeTZ }}"
-    },
-    {
-      "name": "client_processing",
-      "dataSet": "client_processing",
-      "tasks": [
-        {
-          "name": "begin",
-          "taskExecutionServiceGroupName": "default",
-          "taskProcessor": "lockedStateTaskProcessor",
-          "importance": "critical",
-          "description": "Made interval status RUNNING",
-          "taskProcessorArgs": {}
-        },
-        {
-          "name": "prepare",
-          "taskExecutionServiceGroupName": "default",
-          "taskProcessor": "jdbcTaskProcessor",
-          "taskProcessorBody": "createTableSQLProcessorBody",
-          "importance": "critical",
-          "description": "Create table if not exists",
-          "taskProcessorArgs": {
-          }
-        },
-        {
-          "name": "load",
-          "taskExecutionServiceGroupName": "default",
-          "taskProcessor": "jdbcTaskProcessor",
-          "taskProcessorBody": "mergeSQLProcessorBody",
-          "importance": "critical",
-          "description": "override load",
-          "taskProcessorArgs": {
-            "spark.executor.memory": "1g",
-            "spark.executor.cores": "2"
-          }
-        },
-        {
-          "name": "success",
-          "taskExecutionServiceGroupName": "default",
-          "taskProcessor": "successStateTaskProcessor",
-          "importance": "critical",
-          "description": "DataSet success",
-          "taskProcessorArgs": {}
-        }
-      ],
-      "dagEdges": [
-        {
-          "from": "begin",
-          "to": "prepare"
-        },
-        {
-          "from": "load",
-          "to": "success"
-        },
-        {
-          "from": "prepare",
-          "to": "load"
-        }
-      ],
-      "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
-      "intervalEnd": "{{ targetDateTimeTZ }}"
-    },
-    {
-      "name": "transaction_dds",
-      "dataSet": "transaction_dds",
-      "tasks": [
-        {
-          "name": "check",
-          "taskExecutionServiceGroupName": "default",
-          "taskProcessor": "dependencyCheckStateTaskProcessor",
-          "importance": "critical",
-          "description": "Dependency check",
-          "taskProcessorArgs": {}
-        },
-        {
-          "name": "load",
-          "taskExecutionServiceGroupName": "default",
-          "taskProcessor": "sparkStandAloneClusterTaskProcessor",
-          "taskProcessorBody": "mergeSQLProcessorBody",
-          "importance": "critical",
-          "description": "override load",
-          "taskProcessorArgs": {
-            "spark.executor.memory": "1g",
-            "spark.driver.memory": "2g",
-            "spark.executor.cores": "2"
-            }
-        },
-        {
-          "name": "finally",
-          "taskExecutionServiceGroupName": "default",
-          "taskProcessor": "successStateTaskProcessor",
-          "importance": "critical",
-          "description": "DataSet success",
-          "taskProcessorArgs": {}
-        },
-        {
-          "name": "begin",
-          "taskExecutionServiceGroupName": "default",
-          "taskProcessor": "lockedStateTaskProcessor",
-          "importance": "critical",
-          "description": "Made interval status RUNNING",
-          "taskProcessorArgs": {}
-        },
-        {
-          "name": "extend",
-          "taskExecutionServiceGroupName": "default",
-          "taskProcessor": "sparkStandAloneClusterTaskProcessor",
-          "taskProcessorBody": "mergeSQLProcessorBody",
-          "importance": "critical",
-          "description": "Not exists in template",
-          "taskProcessorArgs": {
-            "spark.executor.memory": "5g",
-            "spark.driver.memory": "2g"}
-        }
-      ],
-      "dagEdges": [
-        {
-          "from": "check",
-          "to": "load"
-        },
-        {
-          "from": "extend",
-          "to": "load"
-        },
-        {
-          "from": "begin",
-          "to": "check"
-        },
-        {
-          "from": "load",
-          "to": "finally"
-        }
-      ],
-      "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
-      "intervalEnd": "{{ targetDateTimeTZ }}"
-    },
-    {
-      "name": "transaction_processing",
-      "dataSet": "transaction_processing",
-      "tasks": [
-        {
-          "name": "begin",
-          "taskExecutionServiceGroupName": "default",
-          "taskProcessor": "lockedStateTaskProcessor",
-          "importance": "critical",
-          "description": "Made interval status RUNNING",
-          "taskProcessorArgs": {}
-        },
-        {
-          "name": "prepare",
-          "taskExecutionServiceGroupName": "default",
-          "taskProcessor": "jdbcTaskProcessor",
-          "taskProcessorBody": "createTableSQLProcessorBody",
-          "importance": "critical",
-          "description": "Create table if not exists",
-          "taskProcessorArgs": {
-          }
-        },
-        {
-          "name": "load",
-          "taskExecutionServiceGroupName": "default",
-          "taskProcessor": "jdbcTaskProcessor",
-          "taskProcessorBody": "appendSQLProcessorBody",
-          "importance": "critical",
-          "description": "override load",
-          "taskProcessorArgs": {
-            "spark.executor.memory": "1g",
-            "spark.executor.cores": "2"
-          }
-        },
-        {
-          "name": "success",
-          "taskExecutionServiceGroupName": "default",
-          "taskProcessor": "successStateTaskProcessor",
-          "importance": "critical",
-          "description": "DataSet success",
-          "taskProcessorArgs": {}
-        }
-      ],
-      "dagEdges": [
-        {
-          "from": "begin",
-          "to": "prepare"
-        },
-        {
-          "from": "prepare",
-          "to": "load"
-        },
-        {
-          "from": "load",
-          "to": "success"
-        }
-      ],
-      "intervalStart": "{{ adddays(targetDateTimeTZ, -1) }}",
-      "intervalEnd": "{{ targetDateTimeTZ }}"
-    }
-  ]
+  "keyName" : "initial",
+  "description" : "initial schedule for client transactions",
+  "intervalExpression" : "0 0 1 1 * *",
+  "startDateTime" : "2020-12-31T21:00:00Z",
+  "stopDateTime" : null,
+  "scenarioActEdges" : [ {
+    "from" : "transaction_processing",
+    "to" : "transaction_dds"
+  }, {
+    "from" : "client_processing",
+    "to" : "transaction_dds"
+  }, {
+    "from" : "transaction_dds",
+    "to" : "aggregation_pay_per_client_total_mart"
+  }, {
+    "from" : "transaction_dds",
+    "to" : "aggregation_pay_per_client_daily_mart"
+  } ],
+  "enabled" : true,
+  "lastChangeNumber" : 1,
+  "lastChangedDateTime" : "2026-08-05T08:08:26.480062Z",
+  "scenarioActs" : [ {
+    "name" : "aggregation_pay_per_client_daily_mart",
+    "dataSetKeyName" : "aggregation_pay_per_client_daily_mart",
+    "tasks" : [ {
+      "name" : "begin",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "lockedStateTaskProcessor",
+      "taskProcessorBody" : null,
+      "importance" : "critical",
+      "description" : "Made interval status RUNNING",
+      "driverKeyName" : null,
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : { }
+    }, {
+      "name" : "check",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "dependencyCheckStateTaskProcessor",
+      "taskProcessorBody" : null,
+      "importance" : "critical",
+      "description" : "Dependency check",
+      "driverKeyName" : null,
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : { }
+    }, {
+      "name" : "compact",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "k8sSparkNativeTaskProcessor",
+      "taskProcessorBody" : "compactTableSQLProcessorBody",
+      "importance" : "critical",
+      "description" : "load from remote datastore",
+      "driverKeyName" : "spark_iceberg",
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : {
+        "datasource.service.protocol" : "https",
+        "k8s.spark-native.mainApplicationFile" : "local:///opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.5.0-jar-with-dependencies.jar",
+        "k8s.spark-native.mainClass" : "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
+        "lakehouse.client.rest.config.server.url" : "http://lakehouse-management-config-service:8080",
+        "spark.driver.memory" : "1g",
+        "spark.executor.memory" : "1g",
+        "spark.ui.enabled" : "true"
+      }
+    }, {
+      "name" : "finally",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "successStateTaskProcessor",
+      "taskProcessorBody" : null,
+      "importance" : "critical",
+      "description" : "DataSet success",
+      "driverKeyName" : null,
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : { }
+    }, {
+      "name" : "load",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "k8sSparkNativeTaskProcessor",
+      "taskProcessorBody" : "mergeSQLProcessorBody",
+      "importance" : "critical",
+      "description" : "load from remote datastore",
+      "driverKeyName" : "spark_iceberg",
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : {
+        "datasource.service.protocol" : "https",
+        "k8s.spark-native.mainApplicationFile" : "local:///opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.5.0-jar-with-dependencies.jar",
+        "k8s.spark-native.mainClass" : "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
+        "lakehouse.client.rest.config.server.url" : "http://lakehouse-management-config-service:8080",
+        "spark.driver.memory" : "1g",
+        "spark.executor.memory" : "1g",
+        "spark.ui.enabled" : "true"
+      }
+    }, {
+      "name" : "prepare",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "k8sSparkNativeTaskProcessor",
+      "taskProcessorBody" : "createTableSQLProcessorBody",
+      "importance" : "critical",
+      "description" : "load from remote datastore",
+      "driverKeyName" : "spark_iceberg",
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : {
+        "datasource.service.protocol" : "https",
+        "k8s.spark-native.mainApplicationFile" : "local:///opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.5.0-jar-with-dependencies.jar",
+        "k8s.spark-native.mainClass" : "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
+        "lakehouse.client.rest.config.server.url" : "http://lakehouse-management-config-service:8080",
+        "spark.driver.memory" : "1g",
+        "spark.executor.memory" : "1g",
+        "spark.ui.enabled" : "true"
+      }
+    } ],
+    "dagEdges" : [ {
+      "from" : "begin",
+      "to" : "prepare"
+    }, {
+      "from" : "check",
+      "to" : "begin"
+    }, {
+      "from" : "compact",
+      "to" : "finally"
+    }, {
+      "from" : "load",
+      "to" : "compact"
+    }, {
+      "from" : "prepare",
+      "to" : "load"
+    } ],
+    "intervalStart" : "{{ adddays(targetDateTimeTZ, -1) }}",
+    "intervalEnd" : "{{ targetDateTimeTZ }}"
+  }, {
+    "name" : "aggregation_pay_per_client_total_mart",
+    "dataSetKeyName" : "aggregation_pay_per_client_total_mart",
+    "tasks" : [ {
+      "name" : "begin",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "lockedStateTaskProcessor",
+      "taskProcessorBody" : null,
+      "importance" : "critical",
+      "description" : "Made interval status RUNNING",
+      "driverKeyName" : null,
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : { }
+    }, {
+      "name" : "check",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "dependencyCheckStateTaskProcessor",
+      "taskProcessorBody" : null,
+      "importance" : "critical",
+      "description" : "Dependency check",
+      "driverKeyName" : null,
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : { }
+    }, {
+      "name" : "compact",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "k8sSparkNativeTaskProcessor",
+      "taskProcessorBody" : "compactTableSQLProcessorBody",
+      "importance" : "critical",
+      "description" : "load from remote datastore",
+      "driverKeyName" : "spark_iceberg",
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : {
+        "datasource.service.protocol" : "https",
+        "k8s.spark-native.mainApplicationFile" : "local:///opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.5.0-jar-with-dependencies.jar",
+        "k8s.spark-native.mainClass" : "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
+        "lakehouse.client.rest.config.server.url" : "http://lakehouse-management-config-service:8080",
+        "spark.driver.memory" : "1g",
+        "spark.executor.memory" : "1g",
+        "spark.ui.enabled" : "true"
+      }
+    }, {
+      "name" : "finally",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "successStateTaskProcessor",
+      "taskProcessorBody" : null,
+      "importance" : "critical",
+      "description" : "DataSet success",
+      "driverKeyName" : null,
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : { }
+    }, {
+      "name" : "load",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "k8sSparkNativeTaskProcessor",
+      "taskProcessorBody" : "mergeSQLProcessorBody",
+      "importance" : "critical",
+      "description" : "load from remote datastore",
+      "driverKeyName" : "spark_iceberg",
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : {
+        "datasource.service.protocol" : "https",
+        "k8s.spark-native.mainApplicationFile" : "local:///opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.5.0-jar-with-dependencies.jar",
+        "k8s.spark-native.mainClass" : "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
+        "lakehouse.client.rest.config.server.url" : "http://lakehouse-management-config-service:8080",
+        "spark.driver.memory" : "1g",
+        "spark.executor.memory" : "1g",
+        "spark.ui.enabled" : "true"
+      }
+    }, {
+      "name" : "prepare",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "k8sSparkNativeTaskProcessor",
+      "taskProcessorBody" : "createTableSQLProcessorBody",
+      "importance" : "critical",
+      "description" : "load from remote datastore",
+      "driverKeyName" : "spark_iceberg",
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : {
+        "datasource.service.protocol" : "https",
+        "k8s.spark-native.mainApplicationFile" : "local:///opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.5.0-jar-with-dependencies.jar",
+        "k8s.spark-native.mainClass" : "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
+        "lakehouse.client.rest.config.server.url" : "http://lakehouse-management-config-service:8080",
+        "spark.driver.memory" : "1g",
+        "spark.executor.memory" : "1g",
+        "spark.ui.enabled" : "true"
+      }
+    } ],
+    "dagEdges" : [ {
+      "from" : "begin",
+      "to" : "prepare"
+    }, {
+      "from" : "check",
+      "to" : "begin"
+    }, {
+      "from" : "compact",
+      "to" : "finally"
+    }, {
+      "from" : "load",
+      "to" : "compact"
+    }, {
+      "from" : "prepare",
+      "to" : "load"
+    } ],
+    "intervalStart" : "{{ adddays(targetDateTimeTZ, -1) }}",
+    "intervalEnd" : "{{ targetDateTimeTZ }}"
+  }, {
+    "name" : "client_processing",
+    "dataSetKeyName" : "client_processing",
+    "tasks" : [ {
+      "name" : "begin",
+      "template" : "beginTemplate",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "lockedStateTaskProcessor",
+      "taskProcessorBody" : null,
+      "importance" : "critical",
+      "description" : "Made interval status RUNNING",
+      "driverKeyName" : null,
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : { }
+    }, {
+      "name" : "check",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "dependencyCheckStateTaskProcessor",
+      "taskProcessorBody" : null,
+      "importance" : "critical",
+      "description" : "Dependency check",
+      "driverKeyName" : null,
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : { }
+    }, {
+      "name" : "finally",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "successStateTaskProcessor",
+      "taskProcessorBody" : null,
+      "importance" : "critical",
+      "description" : "DataSet success",
+      "driverKeyName" : null,
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : { }
+    }, {
+      "name" : "load",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "jdbcTaskProcessor",
+      "taskProcessorBody" : "mergeSQLProcessorBody",
+      "importance" : "critical",
+      "description" : "override load",
+      "driverKeyName" : "postgres",
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : {
+        "spark.driver.memory" : "2g",
+        "spark.executor.cores" : "2",
+        "spark.executor.memory" : "1g"
+      }
+    }, {
+      "name" : "prepare",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "jdbcTaskProcessor",
+      "taskProcessorBody" : "createTableSQLProcessorBody",
+      "importance" : "critical",
+      "description" : "Create table if not exists",
+      "driverKeyName" : "postgres",
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : { }
+    }, {
+      "name" : "success",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "successStateTaskProcessor",
+      "taskProcessorBody" : null,
+      "importance" : "critical",
+      "description" : "DataSet success",
+      "driverKeyName" : null,
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : { }
+    } ],
+    "dagEdges" : [ {
+      "from" : "begin",
+      "to" : "check"
+    }, {
+      "from" : "begin",
+      "to" : "prepare"
+    }, {
+      "from" : "check",
+      "to" : "load"
+    }, {
+      "from" : "load",
+      "to" : "finally"
+    }, {
+      "from" : "load",
+      "to" : "success"
+    }, {
+      "from" : "prepare",
+      "to" : "load"
+    } ],
+    "intervalStart" : "{{ adddays(targetDateTimeTZ, -1) }}",
+    "intervalEnd" : "{{ targetDateTimeTZ }}"
+  }, {
+    "name" : "transaction_dds",
+    "dataSetKeyName" : "transaction_dds",
+    "tasks" : [ {
+      "name" : "begin",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "lockedStateTaskProcessor",
+      "taskProcessorBody" : null,
+      "importance" : "critical",
+      "description" : "Made interval status RUNNING",
+      "driverKeyName" : null,
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : { }
+    }, {
+      "name" : "check",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "dependencyCheckStateTaskProcessor",
+      "taskProcessorBody" : null,
+      "importance" : "critical",
+      "description" : "Dependency check",
+      "driverKeyName" : null,
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : { }
+    }, {
+      "name" : "compact",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "k8sSparkNativeTaskProcessor",
+      "taskProcessorBody" : "compactTableSQLProcessorBody",
+      "importance" : "critical",
+      "description" : "load from remote datastore",
+      "driverKeyName" : "spark_iceberg",
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : {
+        "datasource.service.protocol" : "https",
+        "k8s.spark-native.mainApplicationFile" : "local:///opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.5.0-jar-with-dependencies.jar",
+        "k8s.spark-native.mainClass" : "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
+        "lakehouse.client.rest.config.server.url" : "http://lakehouse-management-config-service:8080",
+        "spark.driver.memory" : "1g",
+        "spark.executor.memory" : "1g",
+        "spark.ui.enabled" : "true"
+      }
+    }, {
+      "name" : "extend",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "sparkStandAloneClusterTaskProcessor",
+      "taskProcessorBody" : "mergeSQLProcessorBody",
+      "importance" : "critical",
+      "description" : "Not exists in template",
+      "driverKeyName" : "spark_iceberg",
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : {
+        "spark.driver.memory" : "2g",
+        "spark.executor.memory" : "5g"
+      }
+    }, {
+      "name" : "finally",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "successStateTaskProcessor",
+      "taskProcessorBody" : null,
+      "importance" : "critical",
+      "description" : "DataSet success",
+      "driverKeyName" : null,
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : { }
+    }, {
+      "name" : "load",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "sparkStandAloneClusterTaskProcessor",
+      "taskProcessorBody" : "mergeSQLProcessorBody",
+      "importance" : "critical",
+      "description" : "override load",
+      "driverKeyName" : "spark_iceberg",
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : {
+        "datasource.service.protocol" : "https",
+        "k8s.spark-native.mainApplicationFile" : "local:///opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.5.0-jar-with-dependencies.jar",
+        "k8s.spark-native.mainClass" : "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
+        "lakehouse.client.rest.config.server.url" : "http://lakehouse-management-config-service:8080",
+        "spark.driver.memory" : "2g",
+        "spark.executor.cores" : "2",
+        "spark.executor.memory" : "1g",
+        "spark.ui.enabled" : "true"
+      }
+    }, {
+      "name" : "prepare",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "k8sSparkNativeTaskProcessor",
+      "taskProcessorBody" : "createTableSQLProcessorBody",
+      "importance" : "critical",
+      "description" : "load from remote datastore",
+      "driverKeyName" : "spark_iceberg",
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : {
+        "datasource.service.protocol" : "https",
+        "k8s.spark-native.mainApplicationFile" : "local:///opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.5.0-jar-with-dependencies.jar",
+        "k8s.spark-native.mainClass" : "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
+        "lakehouse.client.rest.config.server.url" : "http://lakehouse-management-config-service:8080",
+        "spark.driver.memory" : "1g",
+        "spark.executor.memory" : "1g",
+        "spark.ui.enabled" : "true"
+      }
+    } ],
+    "dagEdges" : [ {
+      "from" : "begin",
+      "to" : "prepare"
+    }, {
+      "from" : "check",
+      "to" : "begin"
+    }, {
+      "from" : "compact",
+      "to" : "finally"
+    }, {
+      "from" : "extend",
+      "to" : "load"
+    }, {
+      "from" : "load",
+      "to" : "compact"
+    }, {
+      "from" : "prepare",
+      "to" : "load"
+    } ],
+    "intervalStart" : "{{ adddays(targetDateTimeTZ, -1) }}",
+    "intervalEnd" : "{{ targetDateTimeTZ }}"
+  }, {
+    "name" : "transaction_processing",
+    "dataSetKeyName" : "transaction_processing",
+    "tasks" : [ {
+      "name" : "begin",
+      "template" : "beginTemplate",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "lockedStateTaskProcessor",
+      "taskProcessorBody" : null,
+      "importance" : "critical",
+      "description" : "Made interval status RUNNING",
+      "driverKeyName" : null,
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : { }
+    }, {
+      "name" : "check",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "dependencyCheckStateTaskProcessor",
+      "taskProcessorBody" : null,
+      "importance" : "critical",
+      "description" : "Dependency check",
+      "driverKeyName" : null,
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : { }
+    }, {
+      "name" : "finally",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "successStateTaskProcessor",
+      "taskProcessorBody" : null,
+      "importance" : "critical",
+      "description" : "DataSet success",
+      "driverKeyName" : null,
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : { }
+    }, {
+      "name" : "load",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "jdbcTaskProcessor",
+      "taskProcessorBody" : "appendSQLProcessorBody",
+      "importance" : "critical",
+      "description" : "override load",
+      "driverKeyName" : "postgres",
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : {
+        "spark.driver.memory" : "2g",
+        "spark.executor.cores" : "2",
+        "spark.executor.memory" : "1g"
+      }
+    }, {
+      "name" : "prepare",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "jdbcTaskProcessor",
+      "taskProcessorBody" : "createTableSQLProcessorBody",
+      "importance" : "critical",
+      "description" : "Create table if not exists",
+      "driverKeyName" : "postgres",
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : { }
+    }, {
+      "name" : "success",
+      "taskExecutionServiceGroupName" : "default",
+      "taskProcessor" : "successStateTaskProcessor",
+      "taskProcessorBody" : null,
+      "importance" : "critical",
+      "description" : "DataSet success",
+      "driverKeyName" : null,
+      "sqlTemplate" : null,
+      "taskProcessorArgs" : { }
+    } ],
+    "dagEdges" : [ {
+      "from" : "begin",
+      "to" : "check"
+    }, {
+      "from" : "begin",
+      "to" : "prepare"
+    }, {
+      "from" : "check",
+      "to" : "load"
+    }, {
+      "from" : "load",
+      "to" : "finally"
+    }, {
+      "from" : "load",
+      "to" : "success"
+    }, {
+      "from" : "prepare",
+      "to" : "load"
+    } ],
+    "intervalStart" : "{{ adddays(targetDateTimeTZ, -1) }}",
+    "intervalEnd" : "{{ targetDateTimeTZ }}"
+  } ]
 }

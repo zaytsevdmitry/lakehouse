@@ -17,6 +17,7 @@
 
 package org.lakehouse.taskexecutor.processor.spark.standalonecluster;
 
+import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.exception.TaskFailedException;
 import org.lakehouse.client.rest.RestClientHelper;
@@ -45,6 +46,8 @@ public abstract class AbstractSparkDeployTaskProcessor extends AbstractTaskProce
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     protected final String MAIN_CLASS_KEY = "deploy.mainClass";
     protected final String APP_RESOURCE_KEY = "deploy.appResource";
+    protected final String CLUSTER_URL_KEY = "deploy.clusterUrl";
+    private final String urnV1 = "/v1/submissions";
 
     public AbstractSparkDeployTaskProcessor() {
     }
@@ -89,13 +92,13 @@ public abstract class AbstractSparkDeployTaskProcessor extends AbstractTaskProce
         createRequest.setAppArgs(sparkArgs);
 
         CreateResponse createResponse = null;
+
         try {
-
             createResponse =buildSparkRestClientApi(severUrl).createSubmission(createRequest);
-
         } catch (RestClientResponseException e) {
             throw new TaskConfigurationException("Deploy failed. Response error", e);
         }
+
         logger.info(
                 "Task  submitted as {}",
                 createResponse.getSubmissionId());
@@ -110,7 +113,7 @@ public abstract class AbstractSparkDeployTaskProcessor extends AbstractTaskProce
             status =
                     buildSparkRestClientApi(severUrl)
                             .getStatus(createResponse.getSubmissionId());
-            logger.info("Spark job status {}", status.getDriverState());
+            logger.info("Spark job {} status {}", status.getSubmissionId(), status.getDriverState());
 
             if (!isRunning && "RUNNING".equals(status.getDriverState())) {
                 isRunning = true;
@@ -126,8 +129,23 @@ public abstract class AbstractSparkDeployTaskProcessor extends AbstractTaskProce
                         TimeUnit.MILLISECONDS.toSeconds(RUNNING_TIMEOUT_MS),
                         status.getDriverState()));
             }
+            if (isRunning && "UNKNOWN".equals(status.getDriverState())){
+                throw new TaskFailedException(String.format(
+                        "Spark job UNKNOWN state after RUNNING state. Check cluster task information for submissionId=%s",
+                        status.getSubmissionId()));
+            }
         }
         if (isStatusNegative(status.getDriverState()))
             throw new TaskFailedException(String.format("Spark job state is %s. %s", status.getDriverState(), status.getMessage()));
+    }
+    public String getMasterUrl(
+            ScheduledTaskDTO scheduledTaskDTO) throws TaskConfigurationException {
+
+        String result =  scheduledTaskDTO.getTaskProcessorArgs().getOrDefault(CLUSTER_URL_KEY,"");
+
+        if ("".equals(result))
+            throw new TaskConfigurationException(String.format("Cluster url is empty %s", CLUSTER_URL_KEY));
+
+       return result;
     }
 }

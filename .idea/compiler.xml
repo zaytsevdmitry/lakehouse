@@ -7,6 +7,7 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="lakehouse-state-rest-client" />
+        <module name="lakehouse-common-health" />
         <module name="lakehouse-common-rest-client" />
         <module name="lakehouse-common-test" />
         <module name="lakehouse-spark-rest-client" />
@@ -27,6 +28,7 @@
         <module name="lakehouse-task-executor-spark-dq-app" />
         <module name="lakehouse-task-executor-api" />
         <module name="lakehouse-task-executor-rest-client" />
+        <module name="lakehouse-task-proxy-for-spark-rest-client" />
         <module name="lakehouse-validators" />
       </profile>
     </annotationProcessing>
@@ -40,6 +42,7 @@
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="lakehouse-cli" options="-parameters" />
       <module name="lakehouse-common" options="-parameters" />
+      <module name="lakehouse-common-health" options="-parameters" />
       <module name="lakehouse-common-rest-client" options="-parameters" />
       <module name="lakehouse-common-test" options="-parameters" />
       <module name="lakehouse-config-rest-client" options="-parameters" />
@@ -59,6 +62,7 @@
       <module name="lakehouse-task-executor-svc" options="-parameters" />
       <module name="lakehouse-task-proxy-for-spark" options="-parameters" />
       <module name="lakehouse-task-proxy-for-spark-api" options="-parameters" />
+      <module name="lakehouse-task-proxy-for-spark-rest-client" options="-parameters" />
       <module name="lakehouse-ui-svc" options="-parameters" />
       <module name="lakehouse-validators" options="-parameters" />
     </option>

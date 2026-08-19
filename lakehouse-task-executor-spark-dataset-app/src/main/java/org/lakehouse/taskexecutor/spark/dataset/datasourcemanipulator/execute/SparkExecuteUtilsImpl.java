@@ -21,7 +21,6 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
-import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
 import org.lakehouse.jinja.java.JinJavaUtils;
 import org.lakehouse.taskexecutor.api.datasource.exception.ExecuteException;
 import org.lakehouse.taskexecutor.api.datasource.execute.ExecuteUtilsAbstract;
@@ -41,9 +40,8 @@ public class SparkExecuteUtilsImpl
     public SparkExecuteUtilsImpl(
             JinJavaUtils jinJavaUtils,
             DataSourceDTO dataSourceDTO,
-            DriverDTO driverDTO,
             SparkSession sparkSession) {
-        super(jinJavaUtils, dataSourceDTO, driverDTO);
+        super(jinJavaUtils, dataSourceDTO);
         this.sparkSession = sparkSession;
     }
 
@@ -86,10 +84,10 @@ public class SparkExecuteUtilsImpl
 
     public Dataset<Row> executeQuery(String sql, Map<String, Object> localContext) throws ExecuteException {
 
-        logger.info("Render query  {}", sql);
+        logger.info("Rendering query {}", sql);
         String renderedSQL = getjinJavaUtils().render(sql,localContext);
 
-        logger.info("Execute query {}", renderedSQL);
+        logger.info("Executing query {}", renderedSQL);
         return sparkSession.sql(renderedSQL);
     }
 }

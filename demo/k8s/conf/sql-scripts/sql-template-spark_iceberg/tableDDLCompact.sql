@@ -1,4 +1,4 @@
-{%set catalog_name=dataSources[dataSets[targetDataSetKeyName].dataSourceKeyName].catalogKeyName  %}
+{%set catalog_name=dataSources[dataSets[targetDataSetKeyName].dataSourceKeyName].keyName  %}
 CALL {{catalog_name}}.system.rewrite_data_files(
   table => '{{ refCat(targetDataSetKeyName) }}',
   options => map(

@@ -18,7 +18,7 @@
 package org.lakehouse.config.controller;
 
 import org.lakehouse.client.api.constant.Endpoint;
-import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
+import org.lakehouse.client.api.dto.configs.schedule.DriverDTO;
 import org.lakehouse.config.service.datasource.DriverService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -40,8 +40,8 @@ public class DriverController {
 
     @PostMapping(Endpoint.DRIVERS)
     @ResponseStatus(HttpStatus.CREATED)
-    DriverDTO put(@RequestBody DriverDTO dataSourceDTO) {
-        return driverService.save(dataSourceDTO);
+    DriverDTO put(@RequestBody DriverDTO driverDTO) {
+        return driverService.save(driverDTO);
     }
 
     @GetMapping(Endpoint.DRIVERS_NAME)

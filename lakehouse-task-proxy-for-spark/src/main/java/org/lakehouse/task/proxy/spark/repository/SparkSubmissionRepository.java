@@ -17,6 +17,8 @@
 package org.lakehouse.task.proxy.spark.repository;
 
 import org.lakehouse.task.proxy.spark.entity.SparkSubmission;
+import org.hibernate.query.TypedParameterValue;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -98,6 +100,19 @@ public interface SparkSubmissionRepository extends JpaRepository<SparkSubmission
                       @Param("submissionId") String submissionId,
                       @Param("status") String status,
                       @Param("message") String message);
+
+    @Query("""
+            SELECT s FROM SparkSubmission s
+            WHERE (:status IS NULL OR s.status = :status)
+              AND (cast(:dateFrom as timestamp) IS NULL OR s.createdAt >= :dateFrom)
+              AND (cast(:dateTo as timestamp) IS NULL OR s.createdAt <= :dateTo)
+              AND (cast(:lastId as long) IS NULL OR s.id < :lastId)
+            """)
+    List<SparkSubmission> findSubmissions(@Param("status") SparkSubmission.Status status,
+                                          @Param("dateFrom") TypedParameterValue dateFrom,
+                                          @Param("dateTo") TypedParameterValue dateTo,
+                                          @Param("lastId") TypedParameterValue lastId,
+                                          Pageable pageable);
 
     Optional<SparkSubmission> findByIdAndSubmissionIdIsNotNull(Long id);
 

@@ -25,10 +25,9 @@ import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
 import org.lakehouse.client.api.dto.configs.dataset.ColumnDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
-import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
+import org.lakehouse.client.api.dto.configs.schedule.DriverDTO;
 import org.lakehouse.client.api.dto.configs.dq.QualityMetricsConfDTO;
 import org.lakehouse.client.api.dto.configs.schedule.*;
-import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.config.entities.KeyValueAbstract;
@@ -36,7 +35,6 @@ import org.lakehouse.config.entities.Schedule;
 import org.lakehouse.config.entities.datasource.DataSource;
 import org.lakehouse.config.entities.datasource.DataSourceProperty;
 import org.lakehouse.config.entities.scenario.ScenarioAct;
-import org.lakehouse.config.mapper.Mapper;
 import org.lakehouse.config.mapper.keyvalue.KeyValueEntityMerger;
 import org.lakehouse.config.mapper.keyvalue.PropertiesIUDCase;
 import org.lakehouse.config.repository.ScenarioActRepository;
@@ -47,14 +45,19 @@ import org.lakehouse.config.repository.dataset.DataSetSourceRepository;
 import org.lakehouse.config.repository.dataset.ForeignKeyReferenceRepository;
 import org.lakehouse.config.service.ScenarioActTemplateService;
 import org.lakehouse.config.service.ScheduleService;
+import org.lakehouse.config.service.TaskService;
 import org.lakehouse.config.service.compound.SourcesCompoundService;
+import org.lakehouse.config.service.datasource.SQLTemplateService;
 import org.lakehouse.config.service.dq.QualityMetricsConfService;
 import org.lakehouse.config.specifier.DataSourcePropertyKeyValueEntitySpecifier;
 import org.lakehouse.config.test.configutation.RestManipulator;
 import org.lakehouse.jinja.java.JinJavaUtils;
 import org.lakehouse.jinja.java.configuration.JinJavaConfiguration;
-import org.lakehouse.test.config.configuration.FileLoader;
+import org.lakehouse.test.config.util.FileLoader;
+import org.lakehouse.test.config.util.StringFileWriter;
 import org.lakehouse.validator.config.ScheduleConfValidator;
+import org.lakehouse.validator.config.ValidationResult;
+import org.lakehouse.validator.task.TaskDTOValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -100,7 +103,11 @@ public class TestWithPostgres {
     @Autowired
     ScenarioActTemplateService scenarioActTemplateService;
     @Autowired
+    TaskService taskService;
+    @Autowired
     QualityMetricsConfService qualityMetricsConfService;
+    @Autowired
+    SQLTemplateService sqlTemplateService;
     @Autowired
     ScheduleRepository scheduleRepository;
     @Autowired
@@ -218,8 +225,8 @@ public class TestWithPostgres {
         assert (resultDTO.equals(dto));
     }
 
-    private ScenarioActTemplateDTO putScenarioDTO() throws Exception {
-        ScenarioActTemplateDTO dto = fileLoader.loadScenarioDTO();
+    private ScenarioActTemplateDTO putScenarioDTO(String name) throws Exception {
+        ScenarioActTemplateDTO dto = fileLoader.loadScenarioDTO(name);
         return ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getKeyName(),
                         ObjectMapping.asJsonStringPretty(dto), Endpoint.SCENARIOS, Endpoint.SCENARIOS_NAME),
                 ScenarioActTemplateDTO.class);
@@ -229,10 +236,14 @@ public class TestWithPostgres {
     @Order(3)
     void shouldTestScenarioDTO() throws Exception {
         TaskExecutionServiceGroupDTO taskExecutionServiceGroupDTO = putTaskExecutionServiceGroupDTO();
-        ScenarioActTemplateDTO dto = fileLoader.loadScenarioDTO();
-        ScenarioActTemplateDTO resultDTO = putScenarioDTO();
+        DriverDTO driverDTO = putDriverDTO("postgres");
+        ScenarioActTemplateDTO dto = fileLoader.loadScenarioDTO("default");
+        ScenarioActTemplateDTO resultDTO = putScenarioDTO(dto.getKeyName());
         restManipulator.deleteDTO(dto.getKeyName(), Endpoint.SCENARIOS_NAME);
         restManipulator.deleteDTO(taskExecutionServiceGroupDTO.getName(), Endpoint.TASK_EXECUTION_SERVICE_GROUPS_NAME);
+        restManipulator.deleteDTO(driverDTO.getKeyName(), Endpoint.DRIVERS_NAME);
+        StringFileWriter.writeString("tmp/shouldTestScenarioDTO/expectedScenarioActTemplateDTO.json", ObjectMapping.asJsonStringPretty(dto));
+        StringFileWriter.writeString("tmp/shouldTestScenarioDTO/resultedScenarioActTemplateDTO.json", ObjectMapping.asJsonStringPretty(resultDTO));
         assert (resultDTO.equals(dto));
     }
 
@@ -354,6 +365,7 @@ public class TestWithPostgres {
     void scenarioActTemplateChange() throws Exception {
 
         putTaskExecutionServiceGroupDTO();
+        DriverDTO driverDTO = putDriverDTO("postgres");
         ScenarioActTemplateDTO beforeWrite = fileLoader.loadScenarioActTemplateDTO("default");
         ScenarioActTemplateDTO afterWrite = scenarioActTemplateService.save(beforeWrite);
         assert (afterWrite.equals(beforeWrite));
@@ -362,13 +374,16 @@ public class TestWithPostgres {
         TaskDTO newTask = new TaskDTO();
         newTask.setName("newTask");
         newTask.setTaskExecutionServiceGroupName("default");
-        newTask.setTaskProcessor("");
+        newTask.setTaskProcessor("MyTestTaskProcessor");
         newTask.setImportance("critical");
         Set<TaskDTO> taskDTOS = new HashSet<>();
         taskDTOS.addAll(beforeChange.getTasks());
         taskDTOS.add(newTask);
         beforeChange.setTasks(taskDTOS);
         ScenarioActTemplateDTO afterChange = scenarioActTemplateService.save(beforeChange);
+        scenarioActTemplateService.deleteById(afterChange.getKeyName());
+        restManipulator.deleteDTO(driverDTO.getKeyName(), Endpoint.DRIVERS_NAME);
+
         assert (afterChange.equals(beforeChange));
     }
 
@@ -378,6 +393,11 @@ public class TestWithPostgres {
                 ObjectMapping.asJsonStringPretty(dto), Endpoint.SCHEDULES, Endpoint.SCHEDULES_NAME), ScheduleDTO.class);
     }
 
+    private TaskDTO putTaskDTO(String name) throws Exception {
+        TaskDTO dto = fileLoader.loadTaskDTO(name);
+        return ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getName(),
+                ObjectMapping.asJsonStringPretty(dto), Endpoint.TASKS_TEMPLATE, Endpoint.TASKS_TEMPLATE_NAME), TaskDTO.class);
+    }
     @Test
     @Order(9)
     void scenarioActRepositoryFindByScheduleName() throws Exception {
@@ -412,7 +432,7 @@ public class TestWithPostgres {
         ScheduleScenarioActDTO emptyScenario = new ScheduleScenarioActDTO();
         emptyScenario.setIntervalStart("1");
         emptyScenario.setIntervalEnd("2");
-        emptyScenario.setDataSet(dto.getKeyName());
+        emptyScenario.setDataSetKeyName(dto.getKeyName());
         scheduleDTO.setScenarioActs(Set.of(emptyScenario));
         scheduleDTO.setScenarioActEdges(new HashSet<>());
         scheduleDTO.setIntervalExpression("*****");
@@ -474,6 +494,7 @@ public class TestWithPostgres {
         logger.info("{} {} {}", postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 
         NameSpaceDTO nameSpaceDTO = putNameSpaceDTO();
+
         // datastores
         DriverDTO pgDriverDTO = putDriverDTO("postgres");
         DriverDTO sparkDriverDTO = putDriverDTO("spark_iceberg");
@@ -497,8 +518,10 @@ public class TestWithPostgres {
         assert (resultTransactionddsDTOV2.equals(sourceTransactionddsDTOV2));
 
         TaskExecutionServiceGroupDTO defaultTaskExecutionServiceGroupDTO = putTaskExecutionServiceGroupDTO();
-        ScenarioActTemplateDTO scenarioActTemplateDTO = putScenarioDTO();
+        ScenarioActTemplateDTO scenarioActTemplateDTODefault = putScenarioDTO("default");
+        ScenarioActTemplateDTO scenarioActTemplateDTOSpark = putScenarioDTO("spark");
         // schedules
+        TaskDTO taskTemplateDTOBegin = putTaskDTO("begin-template");
         ScheduleDTO initialScheduleDTO = fileLoader.loadScheduleDTO("initial");
         ScheduleDTO regularScheduleDTO = fileLoader.loadScheduleDTO("regular");
         ScheduleDTO resultInitialScheduleDTO = putScheduleDTO("initial");
@@ -511,13 +534,35 @@ public class TestWithPostgres {
         ScheduleEffectiveDTO scheduleEffectiveDTOExpected = fileLoader.loadScheduleEffectiveDTO();
         ScheduleEffectiveDTO scheduleEffectiveDTOResult = scheduleService
                 .findEffectiveScheduleDTOById(initialScheduleDTO.getKeyName());
+
+        ValidationResult taskValidationResult = new ValidationResult();
+
+        for (ScheduleScenarioActEffectiveDTO a: scheduleEffectiveDTOExpected.getScenarioActs())
+            for (TaskDTO t: a.getTasks()) {
+                taskValidationResult.getDescriptions().addAll(TaskDTOValidator.validate(t).getDescriptions());
+                if(!taskValidationResult.isValid()) {
+                    logger.error("Validation error for {}.{}", a.getName(), t.getName());
+                    taskValidationResult.getDescriptions().forEach(logger::error);
+                    throw new Exception("Expect validation error ");
+                }
+            }
+        for (ScheduleScenarioActEffectiveDTO a: scheduleEffectiveDTOResult.getScenarioActs())
+            for (TaskDTO t: a.getTasks()) {
+                taskValidationResult.getDescriptions().addAll(TaskDTOValidator.validate(t).getDescriptions());
+                if(!taskValidationResult.isValid()) {
+                    logger.error("Validation error for {}.{}", a.getName(), t.getName());
+                    taskValidationResult.getDescriptions().forEach(logger::error);
+                    throw new Exception("Result validation error ");
+                }
+            }
+
+
         //lastChangeTime untestable
         scheduleEffectiveDTOExpected.setLastChangedDateTime(scheduleEffectiveDTOResult.getLastChangedDateTime());
-        System.out.println("expected--->" + ObjectMapping.asJsonStringPretty(scheduleEffectiveDTOExpected));
-        System.out.println("result--->" + ObjectMapping.asJsonStringPretty(scheduleEffectiveDTOResult));
+        StringFileWriter.writeString("tmp/shouldTestAllDTO/scheduleEffectiveDTOExpected.json", ObjectMapping.asJsonStringPretty(scheduleEffectiveDTOExpected));
+        StringFileWriter.writeString("tmp/shouldTestAllDTO/scheduleEffectiveDTOResult.json" , ObjectMapping.asJsonStringPretty(scheduleEffectiveDTOResult));
 
 
-        assert (scheduleEffectiveDTOResult.equals(scheduleEffectiveDTOExpected));
         scheduleEffectiveDTOResult.getScenarioActs().stream()
                 .forEach(s -> {
                     s.getTasks().forEach(taskDTO -> {
@@ -529,13 +574,6 @@ public class TestWithPostgres {
 
                 });
 
-        assert (scheduleEffectiveDTOResult.getLastChangeNumber() != null);
-        assert (scheduleEffectiveDTOResult.getLastChangedDateTime() != null);
-        assert (scheduleEffectiveDTOResult.getScenarioActs() != null);
-        assert (scheduleEffectiveDTOResult.getIntervalExpression() != null);
-        assert (scheduleEffectiveDTOResult.getStartDateTime() != null);
-        assert (scheduleEffectiveDTOResult.getScenarioActEdges() != null);
-        //------------------------------------
 
         //all task in source schedule present in effective version
         initialScheduleDTO.getScenarioActs().forEach(sae -> {
@@ -563,14 +601,25 @@ public class TestWithPostgres {
         restManipulator.deleteDTO(transactionProcessingDTO.getKeyName(), Endpoint.DATA_SETS_NAME);
         restManipulator.deleteDTO(clientProcessingDTO.getKeyName(), Endpoint.DATA_SETS_NAME);
 
-        restManipulator.deleteDTO(scenarioActTemplateDTO.getKeyName(), Endpoint.SCENARIOS_NAME);
-        restManipulator.deleteDTO(defaultTaskExecutionServiceGroupDTO.getName(),
-                Endpoint.TASK_EXECUTION_SERVICE_GROUPS_NAME);
+        restManipulator.deleteDTO(scenarioActTemplateDTODefault.getKeyName(), Endpoint.SCENARIOS_NAME);
+        restManipulator.deleteDTO(scenarioActTemplateDTOSpark.getKeyName(), Endpoint.SCENARIOS_NAME);
+
         restManipulator.deleteDTO(mydbDataSourceDTO.getKeyName(), Endpoint.DATA_SOURCES_NAME);
         restManipulator.deleteDTO(someelsedbDataSourceDTO.getKeyName(), Endpoint.DATA_SOURCES_NAME);
         restManipulator.deleteDTO(nameSpaceDTO.getKeyName(), Endpoint.NAME_SPACES_NAME);
         restManipulator.deleteDTO(pgDriverDTO.getKeyName(), Endpoint.DRIVERS_NAME);
         restManipulator.deleteDTO(sparkDriverDTO.getKeyName(), Endpoint.DRIVERS_NAME);
+        restManipulator.deleteDTO(taskTemplateDTOBegin.getName(),Endpoint.TASKS_TEMPLATE_NAME);
+        restManipulator.deleteDTO(defaultTaskExecutionServiceGroupDTO.getName(),
+                Endpoint.TASK_EXECUTION_SERVICE_GROUPS_NAME);
+        assert (scheduleEffectiveDTOResult.equals(scheduleEffectiveDTOExpected));
+        assert (scheduleEffectiveDTOResult.getLastChangeNumber() != null);
+        assert (scheduleEffectiveDTOResult.getLastChangedDateTime() != null);
+        assert (scheduleEffectiveDTOResult.getScenarioActs() != null);
+        assert (scheduleEffectiveDTOResult.getIntervalExpression() != null);
+        assert (scheduleEffectiveDTOResult.getStartDateTime() != null);
+        assert (scheduleEffectiveDTOResult.getScenarioActEdges() != null);
+        //------------------------------------
 
     }
 
@@ -599,15 +648,23 @@ public class TestWithPostgres {
         DataSetDTO resultAggdaily = putDataSetDTO("aggregation_pay_per_client_daily_mart");
         DataSetDTO resultAggTotal = putDataSetDTO("aggregation_pay_per_client_total_mart");
 
-        ScenarioActTemplateDTO scenarioActTemplateDTO = putScenarioDTO();
+        ScenarioActTemplateDTO scenarioActTemplateDTODefault = putScenarioDTO("default");
+        ScenarioActTemplateDTO scenarioActTemplateDTOSpark = putScenarioDTO("spark");
         ScheduleDTO initialScheduleDTO = putScheduleDTO("initial");
 
         // override template
         TaskDTO loadTaskDTOExpected = new TaskDTO();
         Map<String, String> loadExpectArgs = new HashMap<>();
-        loadExpectArgs.put("spark.executor.memory", "1g");
-        loadExpectArgs.put("spark.executor.cores", "2");
-        loadExpectArgs.put("spark.driver.memory", "2g");
+        loadExpectArgs.putAll(Map.of(
+                "datasource.service.protocol" , "https",
+                "k8s.spark-native.mainApplicationFile" , "local:///opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.5.0-jar-with-dependencies.jar",
+                "k8s.spark-native.mainClass" , "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
+                "lakehouse.client.rest.config.server.url" , "http://lakehouse-management-config-service:8080",
+                "spark.driver.memory" , "2g",
+                "spark.executor.cores", "2",
+                "spark.executor.memory", "1g",
+                "spark.ui.enabled" , "true"
+        ));
         loadTaskDTOExpected.setTaskProcessorArgs(loadExpectArgs);
         loadTaskDTOExpected.setName("load");
         loadTaskDTOExpected.setTaskExecutionServiceGroupName("default");
@@ -615,9 +672,12 @@ public class TestWithPostgres {
         loadTaskDTOExpected.setTaskProcessorBody("mergeSQLProcessorBody");
         loadTaskDTOExpected.setImportance("critical");
         loadTaskDTOExpected.setDescription("override load");
+        loadTaskDTOExpected.setDriverKeyName("spark_iceberg");
+
         TaskDTO loadTaskDTO = scheduleService.getEffectiveTaskDTO(initialScheduleDTO.getKeyName(), "transaction_dds", "load");
         //todo debug
-        System.out.println("expect --->\n" + ObjectMapping.asJsonStringPretty(loadTaskDTOExpected));
+        StringFileWriter.writeString("tmp/shouldTestEffectiveTask/loadTaskDTOExpected.json", ObjectMapping.asJsonStringPretty(loadTaskDTOExpected));
+        StringFileWriter.writeString("tmp/shouldTestEffectiveTask/loadTaskDTOResulted.json", ObjectMapping.asJsonStringPretty(loadTaskDTO));
         System.out.println("result --->\n" + ObjectMapping.asJsonStringPretty(loadTaskDTO));
         assert (loadTaskDTO.equals(loadTaskDTOExpected));
 
@@ -633,13 +693,15 @@ public class TestWithPostgres {
         extendTaskDTOExpected.setTaskProcessorBody("mergeSQLProcessorBody");
         extendTaskDTOExpected.setImportance("critical");
         extendTaskDTOExpected.setDescription("Not exists in template");
-        TaskDTO extendTaskDTO = scheduleService.getEffectiveTaskDTO(initialScheduleDTO.getKeyName(), "transaction_dds", "extend");
-        assert (extendTaskDTO.equals(extendTaskDTOExpected));
+        extendTaskDTOExpected.setDriverKeyName("spark_iceberg");
+        TaskDTO extendTaskDTOResulted = scheduleService.getEffectiveTaskDTO(initialScheduleDTO.getKeyName(), "transaction_dds", "extend");
 
+        StringFileWriter.writeString("tmp/shouldTestEffectiveTask/extendTaskDTOExpected.json", ObjectMapping.asJsonStringPretty(extendTaskDTOExpected));
+        StringFileWriter.writeString("tmp/shouldTestEffectiveTask/extendTaskDTOResulted.json", ObjectMapping.asJsonStringPretty(extendTaskDTOResulted));
+        assert (extendTaskDTOResulted.equals(extendTaskDTOExpected));
 
         // exists only in template
         TaskDTO mergeTaskDTOExpected = new TaskDTO();
-        Map<String, String> mergeTaskDTOExpectedArgs = new HashMap<>();
 
         mergeTaskDTOExpected.setName("check");
         mergeTaskDTOExpected.setTaskExecutionServiceGroupName("default");
@@ -647,6 +709,8 @@ public class TestWithPostgres {
         mergeTaskDTOExpected.setImportance("critical");
         mergeTaskDTOExpected.setDescription("Dependency check");
         TaskDTO mergeTaskDTO = scheduleService.getEffectiveTaskDTO(initialScheduleDTO.getKeyName(), "transaction_dds", "check");
+        StringFileWriter.writeString("tmp/shouldTestEffectiveTask/mergeTaskDTOExpected.json", ObjectMapping.asJsonStringPretty(mergeTaskDTOExpected));
+        StringFileWriter.writeString("tmp/shouldTestEffectiveTask/mergeTaskDTOResulted.json", ObjectMapping.asJsonStringPretty(mergeTaskDTO));
         assert (mergeTaskDTO.equals(mergeTaskDTOExpected));
 
         // delete
@@ -656,7 +720,8 @@ public class TestWithPostgres {
         restManipulator.deleteDTO(resultTransactionddsDTO.getKeyName(), Endpoint.DATA_SETS_NAME);
         restManipulator.deleteDTO(transactionProcessingDTO.getKeyName(), Endpoint.DATA_SETS_NAME);
         restManipulator.deleteDTO(clientProcessingDTO.getKeyName(), Endpoint.DATA_SETS_NAME);
-        restManipulator.deleteDTO(scenarioActTemplateDTO.getKeyName(), Endpoint.SCENARIOS_NAME);
+        restManipulator.deleteDTO(scenarioActTemplateDTODefault.getKeyName(), Endpoint.SCENARIOS_NAME);
+        restManipulator.deleteDTO(scenarioActTemplateDTOSpark.getKeyName(), Endpoint.SCENARIOS_NAME);
         restManipulator.deleteDTO(defaultTaskExecutionServiceGroupDTO.getName(),
                 Endpoint.TASK_EXECUTION_SERVICE_GROUPS_NAME);
         restManipulator.deleteDTO(mydbDataSourceDTO.getKeyName(), Endpoint.DATA_SOURCES_NAME);
@@ -664,6 +729,7 @@ public class TestWithPostgres {
         restManipulator.deleteDTO(nameSpaceDTO.getKeyName(), Endpoint.NAME_SPACES_NAME);
         restManipulator.deleteDTO(pgDriverDTO.getKeyName(), Endpoint.DRIVERS_NAME);
         restManipulator.deleteDTO(sparkDriverDTO.getKeyName(), Endpoint.DRIVERS_NAME);
+
     }
 
     @Test
@@ -671,7 +737,6 @@ public class TestWithPostgres {
     void mergePropertiesMapper() throws Exception {
         DataSource dataSource = new DataSource();
         dataSource.setKeyName("testDataSource");
-        Mapper mapper = new Mapper();
         DataSourceProperty kveForDelete = new DataSourceProperty();
         kveForDelete.setId(1L);
         kveForDelete.setDataSource(dataSource);
@@ -800,6 +865,7 @@ public class TestWithPostgres {
     @Test
     @Order(18)
     void shouldLoadDQConfig() throws Exception {
+        logger.info(postgres.getJdbcUrl());
         //prepare
         scenarioActRepository.deleteAll();
         scheduleRepository.deleteAll();
@@ -855,6 +921,50 @@ public class TestWithPostgres {
         assert(expected.equals(result2));
 
     }
+
+    @Test
+    @Order(19)
+    void shouldTestTaskDTO() throws Exception {
+        TaskExecutionServiceGroupDTO groupDTO = putTaskExecutionServiceGroupDTO();
+
+        // standalone task with template field
+        TaskDTO dto = new TaskDTO();
+        dto.setName("standaloneTask");
+        dto.setTemplate("baseTask");
+        dto.setTaskExecutionServiceGroupName("default");
+        dto.setTaskProcessor("MyTestTaskProcessor");
+        dto.setTaskProcessorBody("mergeSQLProcessorBody");
+        dto.setImportance("critical");
+        dto.setTaskProcessorArgs(Map.of("spark.executor.memory", "1g"));
+
+        TaskDTO result = taskService.save(dto,null, null).taskDTO();
+        assert (result.equals(dto));
+        assert (taskService.findByName(dto.getName(), null, null).equals(dto));
+        assert (taskService.findAll().stream().anyMatch(t -> t.getName().equals(dto.getName())));
+        taskService.deleteByName(dto.getName(),null, null);
+
+        // scenario act template task with template field
+        DriverDTO driverDTO = putDriverDTO("postgres");
+        ScenarioActTemplateDTO scenario = fileLoader.loadScenarioActTemplateDTO("default");
+        TaskDTO templateTask = new TaskDTO();
+        templateTask.setName("templatedTask");
+        templateTask.setTemplate("baseTask");
+        templateTask.setTaskExecutionServiceGroupName("default");
+        templateTask.setTaskProcessor("MyTestTaskProcessor");
+        templateTask.setImportance("critical");
+        Set<TaskDTO> taskDTOS = new HashSet<>(scenario.getTasks());
+        taskDTOS.add(templateTask);
+        scenario.setTasks(taskDTOS);
+        scenarioActTemplateService.save(scenario);
+        ScenarioActTemplateDTO readBack = scenarioActTemplateService.findById(scenario.getKeyName());
+        assert (readBack.getTasks().stream()
+                .anyMatch(t -> t.getName().equals("templatedTask") && "baseTask".equals(t.getTemplate())));
+        scenarioActTemplateService.deleteById(scenario.getKeyName());
+        restManipulator.deleteDTO(driverDTO.getKeyName(), Endpoint.DRIVERS_NAME);
+
+        restManipulator.deleteDTO(groupDTO.getName(), Endpoint.TASK_EXECUTION_SERVICE_GROUPS_NAME);
+    }
+
     @Test
     void printEndpoints() throws JsonProcessingException {
 
@@ -900,7 +1010,7 @@ public class TestWithPostgres {
         Endpoint.SCHEDULED_TASKS_LOCK_HEARTBEAT,
         Endpoint.SCHEDULED_TASKS_ID,
         Endpoint.STATE,
-        Endpoint.STATE_DATASET,
+        Endpoint.STATE_DATASET_WRONG,
         Endpoint.TASK_EXECUTOR,
         Endpoint.TASK_EXECUTOR_PROCESSOR,
         Endpoint.TASK_EXECUTOR_PROCESSOR_CONFIG,

@@ -114,4 +114,19 @@ public class ScheduledTaskDTO extends TaskDTO {
                 getScenarioActKeyName(),
                 getTargetDateTime());
     }
+
+    @Override
+    public String toString() {
+        return "ScheduledTaskDTO{" +
+                "id=" + id +
+                ", scenarioActKeyName='" + scenarioActKeyName + '\'' +
+                ", scheduleKeyName='" + scheduleKeyName + '\'' +
+                ", status=" + status +
+                ", targetDateTime='" + targetDateTime + '\'' +
+                ", intervalStartDateTime='" + intervalStartDateTime + '\'' +
+                ", intervalEndDateTime='" + intervalEndDateTime + '\'' +
+                ", dataSetKeyName='" + dataSetKeyName + '\'' +
+                ", tryNum=" + tryNum +
+                '}';
+    }
 }

@@ -27,7 +27,7 @@ public class MesosSparkAdapter extends SparkAdapterBase {
     private  final Logger log = LoggerFactory.getLogger(this.getClass());
     public MesosSparkAdapter(String masterUrl, long submissionTimeoutSeconds) {
         super(masterUrl, submissionTimeoutSeconds);
-        log.info("Initialised SparkAdapter is {} with masterUrl:{} ",
+        log.info("Initialised SparkAdapter {} with masterUrl: {}",
                 KubernetesSparkAdapter.class.getSimpleName(),
                 masterUrl);
     }

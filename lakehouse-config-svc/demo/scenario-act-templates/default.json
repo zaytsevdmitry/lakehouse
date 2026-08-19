@@ -4,10 +4,7 @@
   "tasks": [
     {
       "name": "begin",
-      "taskExecutionServiceGroupName": "default",
-      "taskProcessor": "lockedStateTaskProcessor",
-      "importance": "critical",
-      "description": "Made interval status RUNNING"
+      "template" : "beginTemplate"
     },
     {
       "name": "check",
@@ -23,6 +20,7 @@
       "taskProcessorBody": "mergeSQLProcessorBody",
       "importance": "critical",
       "description": "load from remote datastore",
+      "driverKeyName": "postgres",
       "taskProcessorArgs": {
         "spark.executor.memory": "5g",
         "spark.driver.memory": "2g"

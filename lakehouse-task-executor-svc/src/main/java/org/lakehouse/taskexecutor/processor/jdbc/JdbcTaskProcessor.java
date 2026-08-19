@@ -17,10 +17,12 @@
 
 package org.lakehouse.taskexecutor.processor.jdbc;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.exception.TaskFailedException;
+import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.jinja.java.JinJavaUtils;
 import org.lakehouse.taskexecutor.api.processor.TaskProcessor;
 import org.lakehouse.taskexecutor.api.processor.body.ProcessorBody;
@@ -45,8 +47,29 @@ public  class JdbcTaskProcessor implements TaskProcessor {
             ScheduledTaskDTO scheduledTaskDTO,
             JinJavaUtils jinJavaUtils) throws TaskFailedException, TaskConfigurationException {
         logger.info("Making JDBC command class body instance {}", scheduledTaskDTO.getTaskProcessorBody());
-
+        validateTask(scheduledTaskDTO);
         ProcessorBody b = (ProcessorBody) applicationContext.getBean(scheduledTaskDTO.getTaskProcessorBody());
         b.run(scheduledTaskDTO);
+    }
+
+    private void validateTask(ScheduledTaskDTO scheduledTaskDTO) throws  TaskConfigurationException {
+
+        if (scheduledTaskDTO.getDriverKeyName() == null || scheduledTaskDTO.getDriverKeyName().isBlank()){
+            try {
+                if (scheduledTaskDTO.getSqlTemplate() == null || ObjectMapping.asMap(scheduledTaskDTO.getSqlTemplate()).isEmpty()) {
+                    throw new TaskConfigurationException(
+                            String.format(
+                                    "Task configuration error. driverKeyName or sqlTemplate must be present in the task configuration %s.%s.%s",
+                                    scheduledTaskDTO.getScheduleKeyName(),
+                                    scheduledTaskDTO.getScenarioActKeyName(),
+                                    scheduledTaskDTO.getName()
+                                    ));
+                }
+            }catch (JsonProcessingException e){
+                throw new TaskConfigurationException(e);
+            }
+        }
+
+
     }
 }

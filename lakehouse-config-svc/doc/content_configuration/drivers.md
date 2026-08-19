@@ -1,33 +1,21 @@
-# Драйвер (driver)
-Конфигурация позволяющая адаптировать разные реализации хранилищ с подобным по отношению к друг другу функционалом.
-Таким как вставка строк, создание и удаление таблиц, слияние данных и тд. Адоптация достигается путем шаблонизации. 
-Предусмотрено два шаблона: шаблон строки подключения и диалекта SQL(или иного командного языка). 
-## Поля объекта
- Поле                          | Назначение                                                                                                                               |
-|:------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------|
-| keyName                       | Уникальный идентификатов                                                                                                                 | 
-| connectionTemplates           | Содержит список возможных шаблонов образования строки подключения. Поддерживаются ключи spark, jdbc                                      |0
-| [sqlTemplate](sqlTemplate.md) | Реализует адаптацию диалекта.                                                                                                            |
-| description                   | Описание для документирования                                                                                                            | 
-| dataSourceType                | Тип источника. <br/>**database** - для баз данных,<br/> **[iceberg](https://iceberg.apache.org/)** - для таблиц в формате файлов iceberg | 
+# Driver
+Configuration that adapts different storage implementations with similar functionality relative to each other.
+Such as inserting rows, creating and dropping tables, merging data, etc. Adaptation is achieved by templating the SQL dialect (or another command language). 
+## Object fields
+| Field                             | Purpose                                                                                                                               |
+|:----------------------------------|:--------------------------------------------------------------------------------------------------------------------------------------|
+| keyName                           | Unique identifier                                                                                                                     | 
+| [sqlTemplate](sqlTemplate.md)     | Implements dialect adaptation.                                                                                                        |
+| description                       | Description for documentation                                                                                                         | 
 
-connectionTemplates применяется в механизме разрешения конфигурации. В контекст будет помещено поле [service из datasource](datasources.md#вложенный-объект-сервис)
-```json
-  "connectionTemplates": {
-    "jdbc" : "jdbc:postgresql://{{service.host}}:{{service.port}}/{{service.urn}}",
-   "spark" : "{%set service=dataSources[dataSets[targetDataSetKeyName].dataSourceKeyName].service%}{{taskProcessorArgs.protocol}}://{{service.host}}:{{service.port}}"
-},
+The driver defines the base dialect template, which is overridden at more specific levels ([data source](datasources.md), [task](tasks.md)).
+A reference to the driver is made in a [task](tasks.md) via the driverKeyName field.
 
-```
-
-**Пример**
+**Example**
 ```json
 {
   "keyName" : "postgres",
   "description" : null,
-  "connectionTemplates" : {
-    "jdbc" : "jdbc:postgresql://{{service.host}}:{{service.port}}/{{service.urn}}"
-  },
   "sqlTemplate" : {
     "databaseSchemaName" : "sql-template-postgres.databaseSchemaName.sql",
     "databaseSchemaDDLCreate" : "sql-template-postgres.databaseSchemaDDLCreate.sql",
@@ -61,13 +49,12 @@ connectionTemplates применяется в механизме разреше�
     "checkConstraintDDL" : "sql-template-postgres.checkConstraintDDL.sql",
     "checkConstraintDDLAdd" : "sql-template-postgres.checkConstraintDDLAdd.sql",
     "checkConstraintCheckIntegrity" : "sql-template-postgres.checkConstraintCheckIntegrity.sql"
-  },
-  "dataSourceType" : "database"
+  }
 }
 ```
 
 
 ##  /v1_0/configs/drivers
-Выводит список объектов
+Returns a list of objects
 ##  /v1_0/configs/drivers/{keyName}
-Манипуляция конкретным объектом по ключу
+Manipulates a specific object by key

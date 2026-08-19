@@ -18,7 +18,6 @@
 package org.lakehouse.taskexecutor.api.datasource.execute.jdbc;
 
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
-import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.jinja.java.JinJavaUtils;
 import org.lakehouse.taskexecutor.api.datasource.exception.ExecuteException;
@@ -39,10 +38,9 @@ public class JdbcExecuteUtils extends ExecuteUtilsAbstract {
 
     public JdbcExecuteUtils(
             JinJavaUtils jinJavaUtils,
-            DataSourceDTO dataSourceDTO,
-            DriverDTO driverDTO
+            DataSourceDTO dataSourceDTO
             ) {
-        super(jinJavaUtils, dataSourceDTO, driverDTO);
+        super(jinJavaUtils, dataSourceDTO);
     }
 
     
@@ -58,12 +56,12 @@ public class JdbcExecuteUtils extends ExecuteUtilsAbstract {
 
     @Override
     public void execute(String sql, Map<String,Object> localContext) throws ExecuteException {
-        logger.info("Execute SQL command: {}", sql);
+        logger.info("Executing SQL command: {}", sql);
 
         try (Connection connection = getConnection();
              Statement statement = connection.createStatement()) {
             String renderedSQL = getjinJavaUtils().render(sql,localContext);
-            logger.info("Execute renderedSQL command: {}", renderedSQL);
+            logger.info("Executing renderedSQL command: {}", renderedSQL);
             statement.execute(renderedSQL);
         } catch (SQLException | TaskConfigurationException  e) {
             logger.info(e.getLocalizedMessage());

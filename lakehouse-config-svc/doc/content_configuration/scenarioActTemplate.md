@@ -1,14 +1,14 @@
-# Шаблон действия сценария
-Предназначен для шаблонизации при повторном использовании действий сценария. В нем можно определить из каких типовых задач должено состоять действие, в каком порядке они должны быть выполнены, с какими параметрами.
+# Scenario act template
+Intended for templating when scenario acts are reused. It defines what typical tasks the act should consist of, in what order they should be executed, and with what parameters.
 
 
 
-## Поля объекта
- Поле                                           | Назначение                                                                                        | 
-|:-----------------------------------------------|:--------------------------------------------------------------------------------------------------|
-| keyName                                        | Уникальный идентификатор                                                                          |
-| tasks                                          | Список задач, при наличии шаблона переопределяет одноименные задачи, остальные добавляет в список |
-| dagEdges                                       | Направленный граф задач, при наличии шаблон , переопределяет и встраивается в шаблон              |
+## Object fields
+| Field    | Purpose                                                                                        | 
+|:---------|:-----------------------------------------------------------------------------------------------|
+| keyName  | Unique identifier                                                                              |
+| tasks    | List of tasks; when a template is present, overrides same-named tasks, adds the rest to the list|
+| dagEdges | Directed task graph; when a template is present, overrides and embeds into the template        |
 
 
 
@@ -31,7 +31,7 @@
       "taskProcessorBody": "createTableSQLProcessorBody",
       "importance": "critical",
       "description": "Create table if not exists",
-      "executionModuleArgs": {
+      "taskProcessorArgs": {
       }
     },
     {
@@ -41,7 +41,7 @@
       "taskProcessorBody": "mergeSQLProcessorBody",
       "importance": "critical",
       "description": "load data",
-      "executionModuleArgs": {
+      "taskProcessorArgs": {
       }
     },
     {
@@ -72,6 +72,6 @@
 
 
 ##  /v1_0/configs/scenarios
-Список сценариев
+List of scenarios
 ##  /v1_0/configs/scenarios/{keyName}
-Манипуляция конкретным объектом по ключу
+Manipulates a specific object by key

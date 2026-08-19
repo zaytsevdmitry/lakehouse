@@ -17,6 +17,7 @@
 
 package org.lakehouse.scheduler.repository;
 
+import org.lakehouse.scheduler.entities.ScheduleTaskInstance;
 import org.lakehouse.scheduler.entities.ScheduleTaskInstanceDependency;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -26,6 +27,8 @@ import java.util.List;
 
 @Transactional
 public interface ScheduleTaskInstanceDependencyRepository extends JpaRepository<ScheduleTaskInstanceDependency, Long> {
+
+    List<ScheduleTaskInstanceDependency> findByScheduleTaskInstance(ScheduleTaskInstance scheduleTaskInstance);
 
 
     @Query("""

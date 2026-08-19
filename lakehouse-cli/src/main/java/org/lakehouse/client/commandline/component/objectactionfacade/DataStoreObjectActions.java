@@ -49,8 +49,7 @@ public class DataStoreObjectActions implements ConfigObjectActions {
                 new String[]{"name", "description", "driver"},
                 l.stream().map(o -> new String[]{
                         o.getKeyName(),
-                        o.getDescription(),
-                        o.getDriverKeyName()
+                        o.getDescription()
                 }).toList());
     }
 

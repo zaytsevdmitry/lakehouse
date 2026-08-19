@@ -31,6 +31,7 @@ import org.springframework.context.annotation.ComponentScan;
 @SpringBootApplication
 @ComponentScan(
         basePackages = {
+                "org.lakehouse.taskexecutor.api",
                 "org.lakehouse.taskexecutor.spark.dq"
         },
         basePackageClasses = {

@@ -53,6 +53,8 @@ public class ScheduleTaskInstanceFactory {
         result.setName(taskDTO.getName());
         result.setScheduleScenarioActInstance(scheduleScenarioActInstance);
         result.setStatus(Status.Task.NEW);
+        if (taskDTO.getMaxRetries() != null)
+            result.setMaxRetries(taskDTO.getMaxRetries());
         return result;
     }
 
@@ -70,6 +72,9 @@ public class ScheduleTaskInstanceFactory {
         result.setTaskProcessor(taskDTO.getTaskProcessor());
         result.setTaskProcessorBody(taskDTO.getTaskProcessorBody());
         result.setTaskProcessorArgs(taskDTO.getTaskProcessorArgs());
+        result.setMaxRetries(taskDTO.getMaxRetries());
+        result.setDriverKeyName(taskDTO.getDriverKeyName());
+        result.setSqlTemplate(taskDTO.getSqlTemplate());
         result.setName(sti.getName());
         result.setStatus(sti.getStatus());
         result.setTaskExecutionServiceGroupName(taskDTO.getTaskExecutionServiceGroupName());
@@ -95,7 +100,7 @@ public class ScheduleTaskInstanceFactory {
         result.setIntervalStartDateTime(jinJavaUtils.render(actDTO.getIntervalStart(),localContext));
         result.setIntervalEndDateTime(jinJavaUtils.render(actDTO.getIntervalEnd(),localContext));
         result.setTargetDateTime(targetEDTStr);
-        result.setDataSetKeyName(actDTO.getDataSet());
+        result.setDataSetKeyName(actDTO.getDataSetKeyName());
         return result;
     }
 }

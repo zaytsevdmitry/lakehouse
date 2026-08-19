@@ -1,0 +1,88 @@
+server:
+  port: 8084
+
+spring:
+  threads:
+    virtual:
+      enabled: true
+  web:
+    resources:
+      cache:
+        cachecontrol:
+          no-cache: true
+          max-age: 0s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  level:
+    org:
+      springframework:
+        web: INFO
+
+lakehouse:
+  client:
+    rest:
+      config:
+        server:
+          url: http://localhost:8080
+      state:
+        server:
+          url: http://localhost:8082
+      scheduler:
+        server:
+          url: http://localhost:8081
+      task-proxy-for-spark:
+        server:
+          url: http://localhost:8099
+    ui:
+      health-check-timeout-ms: 3000
+      services:
+        - name: lakehouse-config-svc
+          url: http://localhost:8080
+          health-check-url: http://localhost:8080/healthz
+        - name: lakehouse-scheduler-svc
+          url: http://localhost:8081
+          health-check-url: http://localhost:8081/healthz
+        - name: lakehouse-state-svc
+          url: http://localhost:8082
+          health-check-url: http://localhost:8082/healthz
+        - name: lakehouse-task-executor-svc-1
+          url: http://localhost:8091
+          health-check-url: http://localhost:8091/healthz
+        - name: lakehouse-task-proxy-for-spark
+          url: http://localhost:8099
+          health-check-url: http://localhost:8099/healthz
+        - name: postgres-db
+          url: http://localhost:5432
+          health-check-url: localhost:5432
+          check-type: tcp
+        - name: kafka-broker
+          url: http://localhost:9092
+          health-check-url: localhost:9092
+          check-type: tcp
+      vertices:
+        config-svc: lakehouse-config-svc
+        scheduler-svc: lakehouse-scheduler-svc
+        state-svc: lakehouse-state-svc
+        task-executor-1: lakehouse-task-executor-svc-1
+        spark-proxy: lakehouse-task-proxy-for-spark
+        postgres: postgres-db
+        kafka: kafka-broker
+      edges:
+        config-svc:
+          - state-svc
+          - scheduler-svc
+        scheduler-svc:
+          - task-executor-1
+        state-svc:
+          - task-executor-1
+        task-executor-1:
+          - spark-proxy

@@ -47,7 +47,6 @@ public class ScenarioActTemplateConfValidator {
                         scenarioActTemplateDTO.getTasks().stream().map(TaskDTO::getName).collect(Collectors.toSet()),
                         scenarioActTemplateDTO.getDagEdges())
                 .forEach(s -> {
-                    result.setValid(false);
                     result.getDescriptions().add(s);
                 });
 

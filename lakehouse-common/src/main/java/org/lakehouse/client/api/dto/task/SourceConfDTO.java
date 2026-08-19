@@ -20,7 +20,6 @@ package org.lakehouse.client.api.dto.task;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
-import org.lakehouse.client.api.dto.configs.datasource.DriverDTO;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +27,7 @@ import java.util.Objects;
 
 public class SourceConfDTO {
     private String targetDataSetKeyName;
-    private Map<String, DriverDTO> drivers = new HashMap<>();
+
     private Map<String, DataSourceDTO> dataSources = new HashMap<>();
     private Map<String, DataSetDTO> dataSets = new HashMap<>();
 
@@ -38,14 +37,6 @@ public class SourceConfDTO {
 
     public void setTargetDataSetKeyName(String targetDataSetKeyName) {
         this.targetDataSetKeyName = targetDataSetKeyName;
-    }
-
-    public Map<String, DriverDTO> getDrivers() {
-        return drivers;
-    }
-
-    public void setDrivers(Map<String, DriverDTO> drivers) {
-        this.drivers = drivers;
     }
 
     public Map<String, DataSourceDTO> getDataSources() {
@@ -68,19 +59,20 @@ public class SourceConfDTO {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         SourceConfDTO that = (SourceConfDTO) o;
-        return Objects.equals(targetDataSetKeyName, that.targetDataSetKeyName) && Objects.equals(drivers, that.drivers) && Objects.equals(dataSources, that.dataSources) && Objects.equals(dataSets, that.dataSets);
+        return Objects.equals(targetDataSetKeyName, that.targetDataSetKeyName)
+                //&& Objects.equals(drivers, that.drivers)
+                && Objects.equals(dataSources, that.dataSources) && Objects.equals(dataSets, that.dataSets);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(targetDataSetKeyName, drivers, dataSources, dataSets);
+        return Objects.hash(targetDataSetKeyName, dataSources, dataSets);
     }
 
     @Override
     public String toString() {
         return "SourceConfDTO{" +
                 "targetDataSetKeyName='" + targetDataSetKeyName + '\'' +
-                ", drivers=" + drivers +
                 ", dataSources=" + dataSources +
                 ", dataSets=" + dataSets +
                 '}';
@@ -91,14 +83,6 @@ public class SourceConfDTO {
         return getDataSources().get( getDataSets().get(dataSetKeyName).getDataSourceKeyName());
     }
 
-    @JsonIgnore
-    public DriverDTO getDriverDTOByDataSetKeyName(String dataSetKeyName){
-        return getDrivers()
-                .get(getDataSources()
-                        .get(getDataSets()
-                                .get(dataSetKeyName).getDataSourceKeyName())
-                        .getDriverKeyName());
-    }
 
     @JsonIgnore
     public DataSetDTO getTargetDataSet(){
@@ -108,11 +92,5 @@ public class SourceConfDTO {
     @JsonIgnore
     public DataSourceDTO getTargetDataSource(){
         return getDataSources().get( getTargetDataSet().getDataSourceKeyName());
-    }
-    @JsonIgnore
-    public DriverDTO getTargetDriver(){
-        return getDrivers()
-                .get(getTargetDataSource()
-                        .getDriverKeyName());
     }
 }

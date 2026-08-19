@@ -114,7 +114,7 @@ public class ManageStateService {
             findNextScheduleInstanceOrNull(sir, scheduleEffectiveDTO).ifPresentOrElse((scheduleInstance -> {
 
                 if (scheduleInstance.getStatus().equals(Status.Schedule.NEW)) {
-                    logger.info("Next schedule of {} is found", scheduleEffectiveDTO.getKeyName());
+                    logger.info("Next schedule {} found", scheduleEffectiveDTO.getKeyName());
                     scheduleInstance.setStatus(Status.Schedule.RUNNING);
                     sir.setScheduleInstance(scheduleInstance);
 
@@ -122,7 +122,7 @@ public class ManageStateService {
                     scheduleInstanceRunningRepository.save(sir);
                     result.addAndGet(1);
                 }else {
-                    logger.info("Next schedule of {} found but status not {}. Current status {}",
+                    logger.info("Next schedule {} found but status is not {}. Current status is {}",
                             scheduleEffectiveDTO.getKeyName(),
                             Status.Schedule.RUNNING,
                             scheduleInstance.getStatus()
@@ -130,7 +130,7 @@ public class ManageStateService {
                 }
 
             }),
-                    () -> logger.info("Next schedule of {} not found", scheduleEffectiveDTO.getKeyName()));
+                    () -> logger.info("Next schedule {} not found", scheduleEffectiveDTO.getKeyName()));
         });
         return result.get();
     }
@@ -213,6 +213,15 @@ public class ManageStateService {
 
     public List<ScheduleInstanceDTO> findAll() {
         return ScheduleInstanceFactory.scheduleInstanceDTOList(scheduleInstanceRepository.findAll());
+    }
+
+    public List<ScheduleInstanceDTO> findAllByInterval(String name, OffsetDateTime intervalStartDateTime, OffsetDateTime intervalEndDateTime) {
+        if (name == null || name.isBlank())
+            return ScheduleInstanceFactory.scheduleInstanceDTOList(
+                    scheduleInstanceRepository.findAllByTargetExecutionDateTimeBetween(intervalStartDateTime, intervalEndDateTime));
+        return ScheduleInstanceFactory.scheduleInstanceDTOList(
+                scheduleInstanceRepository.findAllByScheduleNameAndTargetExecutionDateTimeBetween(
+                        name, intervalStartDateTime, intervalEndDateTime));
     }
 
     public List<ScheduleInstanceDTO> findAllByName(String name, int limit) {

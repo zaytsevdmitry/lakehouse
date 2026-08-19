@@ -45,7 +45,7 @@ public class KubernetesSparkAdapter extends SparkAdapterBase {
         this.coreV1Api = coreV1Api;
         this.defaultNamespace = defaultNamespace;
         this.k8sDriverNamePattern = Pattern.compile(submissionIdPattern, Pattern.CASE_INSENSITIVE);
-        log.info("Initialised SparkAdapter is {} with masterUrl:{} , namespace{}",
+        log.info("Initialised SparkAdapter {} with masterUrl: {}, namespace {}",
                 KubernetesSparkAdapter.class.getSimpleName(),
                 masterUrl,
                 defaultNamespace );
@@ -66,7 +66,7 @@ public class KubernetesSparkAdapter extends SparkAdapterBase {
         if (defaultNamespace != null && !defaultNamespace.isBlank()) {
             return defaultNamespace.trim();
         }
-        log.info("Namespace in configuration empty, used default");
+        log.info("Namespace in configuration is empty, using default");
         return DEFAULT_NAMESPACE;
     }
 

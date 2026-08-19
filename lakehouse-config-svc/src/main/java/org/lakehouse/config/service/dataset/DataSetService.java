@@ -90,7 +90,6 @@ public class DataSetService {
         result.setProperties(properties);
         logger.info("");
         result.setColumnSchema(dataSetColumnService.mapColumnDTOList( dataSetColumnService.getDataSetColumns(dataSet.getKeyName())));
-        result.setSqlTemplate(sqlTemplateService.getSqlTemplateDTO(dataSet));
         return result;
     }
 
@@ -123,7 +122,7 @@ public class DataSetService {
 
     private DataSet findByName(String name) {
         return dataSetRepository.findById(name).orElseThrow(() -> {
-            logger.info("Can't get data set name: {}", name);
+            logger.info("Cannot get data set name: {}", name);
             return new DataSetNotFoundException(name);
         });
     }
@@ -163,8 +162,6 @@ public class DataSetService {
 
         logger.info("Saving dataSetDTO={} constraints", dataSetDTO.getKeyName());
         dataSetConstraintService.applyConstraints(dataSet,dataSetDTO.getConstraints());
-
-        sqlTemplateService.save(dataSet,dataSetDTO.getSqlTemplate());
 
         logger.info("Saving dataSetDTO={} reload", dataSetDTO.getKeyName());
         return mapDataSetToDTO(dataSet);

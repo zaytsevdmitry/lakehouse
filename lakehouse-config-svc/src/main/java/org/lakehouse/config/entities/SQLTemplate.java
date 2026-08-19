@@ -20,28 +20,24 @@ package org.lakehouse.config.entities;
 import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
-import org.lakehouse.config.entities.dataset.DataSet;
-import org.lakehouse.config.entities.datasource.DataSource;
 import org.lakehouse.config.entities.datasource.Driver;
 import org.lakehouse.config.entities.script.Script;
+import org.lakehouse.config.entities.task.Task;
 
 import java.util.Objects;
 
 @Entity
 @Table(uniqueConstraints = {
-        @UniqueConstraint(name = "sql_template_driver_datasource_dataset_key_uk", columnNames = {"driver_key_name", "data_source_key_name", "data_set_key_name", "key"})
+        @UniqueConstraint(name = "sql_template_task_key_uk", columnNames = {"task_id", "key"})
 }
 )
 public class SQLTemplate extends KeyValueAbstract {
-    @ManyToOne
-    @JoinColumn(foreignKey = @ForeignKey(name = "sql_template__data_source_fk"))
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    private DataSource dataSource;
+
 
     @ManyToOne
-    @JoinColumn(foreignKey = @ForeignKey(name = "sql_template__data_set_fk"))
+    @JoinColumn(name = "task_id", foreignKey = @ForeignKey(name = "sql_template__task_fk"))
     @OnDelete(action = OnDeleteAction.CASCADE)
-    private DataSet dataSet;
+    private Task task;
 
     @ManyToOne
     @JoinColumn(foreignKey = @ForeignKey(name = "sql_template__driver_fk"))
@@ -56,20 +52,12 @@ public class SQLTemplate extends KeyValueAbstract {
     public SQLTemplate() {
     }
 
-    public DataSource getDataSource() {
-        return dataSource;
+    public Task getTask() {
+        return task;
     }
 
-    public void setDataSource(DataSource dataSource) {
-        this.dataSource = dataSource;
-    }
-
-    public DataSet getDataSet() {
-        return dataSet;
-    }
-
-    public void setDataSet(DataSet dataSet) {
-        this.dataSet = dataSet;
+    public void setTask(Task task) {
+        this.task = task;
     }
 
     public Driver getDriver() {
@@ -96,11 +84,11 @@ public class SQLTemplate extends KeyValueAbstract {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         SQLTemplate that = (SQLTemplate) o;
-        return Objects.equals(getDataSource(), that.getDataSource()) && Objects.equals(getDataSet(), that.getDataSet()) && Objects.equals(getDriver(), that.getDriver());
+        return Objects.equals(getTask(), that.getTask()) && Objects.equals(getDriver(), that.getDriver()) && Objects.equals(getValue(), that.getValue());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), getDataSource(), getDataSet(), getDriver());
+        return Objects.hash(super.hashCode(), getTask(), getDriver(), getValue());
     }
 }

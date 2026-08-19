@@ -32,7 +32,8 @@ public class Endpoint {
     public final static String SCRIPT_BY_KEY = CONFIGS + "/scripts/{key}";
 
     public final static String DATA_SETS = CONFIGS + "/datasets";
-    public final static String DATA_SETS_NAME = CONFIGS + "/datasets" + "/{keyName}";
+    public final static String DATA_SETS_NAME = CONFIGS + DATA_SETS + "/{keyName}";
+    public final static String DATA_LINEAGE_DATASET = CONFIGS + "/lineage" + DATA_SETS + "/{keyName}";
 
     public final static String QUALITY_METRICS = CONFIGS + "/quality/metrics";
     public final static String QUALITY_METRICS_NAME = QUALITY_METRICS + "/{keyName}";
@@ -40,6 +41,9 @@ public class Endpoint {
 
     public final static String DRIVERS = CONFIGS + "/drivers";
     public final static String DRIVERS_NAME = DRIVERS + "/{keyName}";
+
+    public final static String TASKS_TEMPLATE = CONFIGS + "/tasks";
+    public final static String TASKS_TEMPLATE_NAME = TASKS_TEMPLATE + "/{name}";
 
     public final static String DATA_SOURCES = CONFIGS + "/datasources";
     public final static String DATA_SOURCES_NAME = DATA_SOURCES + "/{keyName}";
@@ -51,6 +55,7 @@ public class Endpoint {
 
     public final static String SCHEDULES = CONFIGS + "/schedules";
     public final static String SCHEDULES_NAME = SCHEDULES + "/{keyName}";
+    public final static String SCHEDULES_HEADERS = SCHEDULES + "/headers";
     public final static String EFFECTIVE_SCHEDULES_ROOT = CONFIGS + "/effective/schedules";
     public final static String EFFECTIVE_SCHEDULES_FROM_DT = EFFECTIVE_SCHEDULES_ROOT + "/fromdt/{dt}";
     public final static String EFFECTIVE_SCHEDULES_NAME = EFFECTIVE_SCHEDULES_ROOT + "/schedule/{keyName}";
@@ -63,6 +68,8 @@ public class Endpoint {
     public final static String SCHEDULE = ROOT_API_V1_0 + "/schedule";
     public final static String SCHEDULE_NAME = ROOT_API_V1_0 + "/schedule/name={name}/limit={limit}";
     public final static String SCHEDULE_ID = ROOT_API_V1_0 + "/schedule/id={id}";
+    public final static String SCHEDULE_DAG = ROOT_API_V1_0 + "/schedule/dag";
+    public final static String SCHEDULE_DAG_ID = SCHEDULE_DAG + "/id={id}";
     public final static String TASKS = ROOT_API_V1_0 + "/tasks";
     public final static String SCHEDULED_TASKS = TASKS + "/scheduledtasks";
     public final static String SCHEDULED_TASKS_LOCK_BY_ID = SCHEDULED_TASKS + "/lock/taskId/{id}/service/{serviceId}";
@@ -74,10 +81,20 @@ public class Endpoint {
 // state-svc
     public final static String STATE = ROOT_API_V1_0 + "/state";
     public final static String STATE_DATASET = STATE + "/dataset";
+    public final static String STATE_DATASET_WRONG = STATE + "/dataset/wrong";
 //task executor-svc
     public final static String TASK_EXECUTOR = ROOT_API_V1_0 + "/taskexecutor";
     public final static String TASK_EXECUTOR_PROCESSOR = TASK_EXECUTOR + "/processor";
     public final static String TASK_EXECUTOR_PROCESSOR_CONFIG = TASK_EXECUTOR_PROCESSOR + "/config";
     public final static String TASK_EXECUTOR_PROCESSOR_GET_BY_LOCK_ID = TASK_EXECUTOR_PROCESSOR_CONFIG + "/lock/{id}";
+//task-proxy-for-spark
+    public final static String SPARK_PROXY_SUBMISSIONS = "/v1/submissions";
+    public final static String SPARK_PROXY_SUBMISSIONS_CREATE = SPARK_PROXY_SUBMISSIONS + "/create";
+    public final static String SPARK_PROXY_SUBMISSIONS_STATUS = SPARK_PROXY_SUBMISSIONS + "/status/{submissionId}";
+    public final static String SPARK_PROXY_SUBMISSIONS_KILL = SPARK_PROXY_SUBMISSIONS + "/kill/{submissionId}";
+    public final static String SPARK_PROXY_SUBMISSIONS_KILL_ALL = SPARK_PROXY_SUBMISSIONS + "/killall";
+    public final static String SPARK_PROXY_SUBMISSIONS_CLEAR = SPARK_PROXY_SUBMISSIONS + "/clear";
+    public final static String SPARK_PROXY_SUBMISSIONS_QUERY = "/api/v1/spark-proxy-submissions";
+    public final static String SPARK_PROXY_SUBMISSIONS_PROPERTIES = SPARK_PROXY_SUBMISSIONS_QUERY + "/{id}/spark-properties";
 
 }

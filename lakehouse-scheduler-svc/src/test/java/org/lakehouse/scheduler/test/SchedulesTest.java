@@ -36,7 +36,7 @@ import org.lakehouse.scheduler.service.BuildService;
 import org.lakehouse.scheduler.service.ManageStateService;
 import org.lakehouse.scheduler.service.ScheduleTaskInstanceService;
 import org.lakehouse.test.config.api.ConfigRestClientApiTest;
-import org.lakehouse.test.config.configuration.FileLoader;
+import org.lakehouse.test.config.util.FileLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -227,7 +227,7 @@ public class SchedulesTest {
         List<ScheduleInstance> siList = scheduleInstanceRepository.findAll();
         assert (siList.size() == 1);
         List<ScheduleTaskInstance> stiList = scheduleTaskInstanceRepository.findByStatus(Status.Task.NEW);
-        assert (stiList.size() == 21);
+        assert (stiList.size() == 31);
     }
 
     private void run() {
@@ -387,6 +387,43 @@ public class SchedulesTest {
         buildService.buildAll();
         assert (scheduleInstanceRepository.findAll().size() == 1);
 
+    }
+
+    @Test
+    @Order(6)
+    public void retryLimitedByMaxRetries() throws IOException {
+        ScheduleEffectiveDTO sef = fileLoader.loadScheduleEffectiveDTO();
+        buildService.registration(sef);
+        buildService.buildAll();
+
+        List<ScheduleTaskInstance> tasks = scheduleTaskInstanceRepository.findByStatus(Status.Task.NEW);
+        assert (tasks.size() == 31);
+
+        ScheduleTaskInstance exhausted = tasks.get(0);
+        exhausted.setStatus(Status.Task.FAILED);
+        exhausted.setMaxRetries(2);
+        exhausted.setReTryNum(2);
+        exhausted.setEndDateTime(DateTimeUtils.now().minusSeconds(60));
+        scheduleTaskInstanceRepository.save(exhausted);
+
+        ScheduleTaskInstance unlimited = tasks.get(1);
+        unlimited.setStatus(Status.Task.FAILED);
+        unlimited.setMaxRetries(-1);
+        unlimited.setEndDateTime(DateTimeUtils.now().minusSeconds(60));
+        scheduleTaskInstanceRepository.save(unlimited);
+
+        ScheduleTaskInstance stillAllowed = tasks.get(2);
+        stillAllowed.setStatus(Status.Task.FAILED);
+        stillAllowed.setMaxRetries(5);
+        stillAllowed.setReTryNum(2);
+        stillAllowed.setEndDateTime(DateTimeUtils.now().minusSeconds(60));
+        scheduleTaskInstanceRepository.save(stillAllowed);
+
+        int retried = scheduleTaskInstanceService.reTryFailedTasks();
+        assert (retried == 2);
+        assert (scheduleTaskInstanceRepository.findById(exhausted.getId()).get().getStatus().equals(Status.Task.FAILED));
+        assert (scheduleTaskInstanceRepository.findById(unlimited.getId()).get().getStatus().equals(Status.Task.NEW));
+        assert (scheduleTaskInstanceRepository.findById(stillAllowed.getId()).get().getStatus().equals(Status.Task.NEW));
     }
 
 }

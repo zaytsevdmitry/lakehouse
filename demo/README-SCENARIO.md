@@ -132,4 +132,6 @@ regular тоже начнет работать в феврале, но он су
 
 - [trino_kafka_metric_status.sql](../Scripts/trino_kafka_metric_status.sql) - trino подключен к kafka и позволяет собрать статус обработки DQ
 
+- [UI](http://localhost:8084/)
+
 

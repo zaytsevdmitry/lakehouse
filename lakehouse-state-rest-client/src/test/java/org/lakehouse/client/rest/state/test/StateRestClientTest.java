@@ -24,7 +24,7 @@ import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.state.DataSetIntervalDTO;
 import org.lakehouse.client.api.dto.state.DataSetStateDTO;
-import org.lakehouse.client.api.dto.state.DataSetStateResponseDTO;
+import org.lakehouse.client.api.dto.state.DataSetWrongStateResponseDTO;
 import org.lakehouse.client.rest.state.StateRestClientApi;
 import org.lakehouse.client.rest.state.configuration.StateRestClientConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,7 +80,7 @@ public class StateRestClientTest {
 
         DataSetStateDTO dataSetStateDTOExpect = getDataSetStateDTOExpect();
 
-        server.expect(requestTo(Endpoint.STATE_DATASET))
+        server.expect(requestTo(Endpoint.STATE_DATASET_WRONG))
                 .andExpect(method(HttpMethod.PUT))
                 .andExpect(content().json(objectMapper.writeValueAsString(dataSetStateDTOExpect)))
                 .andRespond(withSuccess());
@@ -96,15 +96,15 @@ public class StateRestClientTest {
         interval.setIntervalStartDateTime("2025-03-01T00:00:00.0Z");
         interval.setIntervalEndDateTime("2025-03-02T00:00:00.0Z");
 
-        DataSetStateResponseDTO expectResponse = new DataSetStateResponseDTO();
+        DataSetWrongStateResponseDTO expectResponse = new DataSetWrongStateResponseDTO();
 
         server.expect(ExpectedCount.manyTimes(),
-                        requestTo(Endpoint.STATE_DATASET))
+                        requestTo(Endpoint.STATE_DATASET_WRONG))
                 .andExpect(method(HttpMethod.POST))
                 .andExpect(content().json(objectMapper.writeValueAsString(interval)))
                 .andRespond(withSuccess(objectMapper.writeValueAsString(expectResponse), MediaType.APPLICATION_JSON));
 
-        DataSetStateResponseDTO result = client.getDataSetStateResponseDTO(interval);
+        DataSetWrongStateResponseDTO result = client.getDataSetStateResponseDTO(interval);
 
         assert (result.equals(expectResponse));
     }

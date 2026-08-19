@@ -24,11 +24,12 @@ import org.apache.spark.sql.SparkSession;
 import org.lakehouse.client.api.dto.configs.dataset.ColumnDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetConstraintDTO;
 import org.lakehouse.client.api.dto.configs.dq.QualityMetricsConfTestSetDTO;
+import org.lakehouse.client.api.dto.configs.schedule.TaskDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.factory.ConstructFactory;
-import org.lakehouse.client.api.factory.SQLTemplateFactory;
+import org.lakehouse.taskexecutor.api.factory.SQLTemplateFactory;
 import org.lakehouse.jinja.java.JinJavaUtils;
 import org.lakehouse.taskexecutor.spark.dq.runner.TestSetRunner;
 import org.lakehouse.taskexecutor.spark.dq.runner.integrity.Check;
@@ -44,9 +45,10 @@ public class ConstraintTestSetRunner implements TestSetRunner {
     private final  Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final SparkSession sparkSession;
-
-    public ConstraintTestSetRunner(SparkSession sparkSession) {
+    private final SQLTemplateFactory sqlTemplateFactory;
+    public ConstraintTestSetRunner(SparkSession sparkSession, SQLTemplateFactory sqlTemplateFactory) {
         this.sparkSession = sparkSession;
+        this.sqlTemplateFactory = sqlTemplateFactory;
     }
 
     @Override
@@ -57,7 +59,7 @@ public class ConstraintTestSetRunner implements TestSetRunner {
             JinJavaUtils jinJavaUtils
             ) throws TaskConfigurationException, JsonProcessingException {
 
-        Check check = prepareCheck(sourceConfDTO, jinJavaUtils);
+        Check check = prepareCheck(scheduledTaskDTO, jinJavaUtils);
 
         Map<String, DataSetConstraintDTO>  constraints = ConstructFactory.constraintsEnabled(sourceConfDTO.getTargetDataSet());
 
@@ -78,12 +80,9 @@ public class ConstraintTestSetRunner implements TestSetRunner {
         return result;
     }
 
-    private Check prepareCheck(SourceConfDTO sourceConfDTO, JinJavaUtils jinJavaUtils) throws TaskConfigurationException {
+    private Check prepareCheck(TaskDTO taskDTO, JinJavaUtils jinJavaUtils) throws TaskConfigurationException {
         return new CheckImpl(
-                SQLTemplateFactory.mergeSqlTemplate(
-                        sourceConfDTO.getTargetDriver(),
-                        sourceConfDTO.getTargetDataSource(),
-                        sourceConfDTO.getTargetDataSet()),
+                sqlTemplateFactory.mergeSqlTemplate(taskDTO),
                 sparkSession,
                 jinJavaUtils);
     }

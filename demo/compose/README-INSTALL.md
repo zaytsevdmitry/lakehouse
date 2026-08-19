@@ -72,7 +72,7 @@ All configurations loaded
 
 ### Зависимость ключей в конфигурациях
 
-![зависимость ключей в конфигурациях](../../doc/entities_design/logical_entities_dependency.png)
+![зависимость ключей в конфигурациях](../../doc-ru/entities_design/logical_entities_dependency.png)
 
 
 ## Ссылки
@@ -84,6 +84,7 @@ All configurations loaded
 
 [spark-history](http://localhost:18080/)
 
+[UI](http://localhost:8084/)
 
 ## Поток управления
 

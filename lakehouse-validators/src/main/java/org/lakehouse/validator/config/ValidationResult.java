@@ -47,12 +47,10 @@ public class ValidationResult {
     }
 
     public boolean isValid() {
-        return valid;
+        return getDescriptions().isEmpty();
     }
 
-    public void setValid(boolean valid) {
-        this.valid = valid;
-    }
+
 
     @Override
     public boolean equals(Object o) {

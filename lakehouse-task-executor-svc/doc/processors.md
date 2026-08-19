@@ -1,116 +1,116 @@
-# Взаимодействие с сервисом расписаний
+# Interaction with the scheduler service
 ![ServiceWorkSequence.png](uml/ServiceWorkSequence.png)
 
-## Процесс конфигурирования
-Процесс конфигурирования основан на заполнении двух важных историй
-- Источники данных
+## Configuration process
+The configuration process is based on filling two important stories
+- Data sources
   - [drivers](../../lakehouse-config-svc/doc/content_configuration/drivers.md)
     - [datasources](../../lakehouse-config-svc/doc/content_configuration/datasources.md)
       - [datasets](../../lakehouse-config-svc/doc/content_configuration/datasets.md)
-- Расписания
+- Schedules
   - [scenarioActTemplate](../../lakehouse-config-svc/doc/content_configuration/scenarioActTemplate.md)
     - [schedules.md](../../lakehouse-config-svc/doc/content_configuration/schedules.md)
 
-Эти конфигурации должны быть заполнены и переданы в сервис config-svc.
-Для работы конкретной задачи исполнителем которой является объект *TaskProcessor конфигурация источника (назначения) обогащается в объект [sources.md](../../lakehouse-config-svc/doc/content_configuration/sources.md).
-Производится это на стороне сервиса конфигурации, любой разрабатываемый *TaskProcessor *TaskProcessorBody может получить его по ключевому имени датасета.
+These configurations must be filled in and passed to the config-svc service.
+To run a specific task whose executor is the *TaskProcessor object, the source (target) configuration is enriched into the [sources.md](../../lakehouse-config-svc/doc/content_configuration/sources.md) object.
+This is done on the side of the configuration service, any developed *TaskProcessor *TaskProcessorBody can obtain it by the dataset key name.
 
-Сервис конфигурации получив конфигурацию расписания публикует его в kafka topic, а сервис расписаний прослушивает его и формирует расписания.
-Идентификаторы задач готовых к выполнению отправляются в kafka topic, который прослушивают экземпляры task-executor-svc.
-Получив идентификатор один task-executor-svc блокирует задачу в scheduler-svc, получая в ответ полное описание задачи. 
-Это слитый вариант задачи состоящий из объединения назначенного шаблона задачи и перегруженных значений указанных для конкретной задачи.
+The configuration service, having received the schedule configuration, publishes it to a kafka topic, and the scheduler service listens to it and forms schedules.
+Identifiers of tasks ready for execution are sent to a kafka topic listened to by task-executor-svc instances.
+Having received the identifier, one task-executor-svc locks the task in scheduler-svc, receiving in response the full task description.
+This is a merged version of the task consisting of the union of the assigned task template and the overridden values specified for the specific task.
 
-Таким образом для работы сервиса task-executor-svc требуется наличие config-svc и scheduler-svc.
-Временное отсутствие одного из них приведет к аварии задачи. 
-scheduler-svc должен будет повторить задачу, это сглаживает проблему перезапуска экземпляров.
+Thus, for the task-executor-svc service to work, config-svc and scheduler-svc are required.
+A temporary absence of one of them will lead to a task failure.
+scheduler-svc will have to retry the task, which smooths over the problem of instance restarts.
 
-# Параметризация задачи
-## параметр taskProcessor
-То что исполняет задачу.
+# Task parameterization
+## taskProcessor parameter
+What executes the task.
 ![TaskProcessors.png](uml/TaskProcessors.png)
 
 
-> Имя процессора указывается с буквенного символа в нижнем регистре в camelCase
+> The processor name is specified starting with a lowercase letter in camelCase
 
 
-###  [Spark-задачи](../../lakehouse-task-executor-spark-api/doc/readme.md)
-  * sparkStandAloneClusterTaskProcessor [SparkStandAloneClusterTaskProcessor.java](../src/main/java/org/lakehouse/taskexecutor/processor/spark/SparkStandAloneClusterTaskProcessor.java) запускает тело задачи на удаленном spark standalone кластере в виде spark-job через REST API `/v1/submissions`.
+###  [Spark tasks](../../lakehouse-task-executor-spark-api/doc/readme.md)
+  * sparkStandAloneClusterTaskProcessor [SparkStandAloneClusterTaskProcessor.java](../src/main/java/org/lakehouse/taskexecutor/processor/spark/SparkStandAloneClusterTaskProcessor.java) runs the task body on a remote spark standalone cluster as a spark-job through the REST API `/v1/submissions`.
 
-**Архитектура Spark-процессоров:**
+**Architecture of Spark processors:**
 
 ```
 SparkStandAloneClusterTaskProcessor
-  └─ extends AbstractSparkDeployTaskProcessor  (логика деплоя через Spark REST API)
+  └─ extends AbstractSparkDeployTaskProcessor  (deploy logic via Spark REST API)
        └─ extends AbstractTaskProcessor
-  └─ использует SparkRestDeployFactory  (формирование URL сервера)
+  └─ uses SparkRestDeployFactory  (server URL building)
 ```
 
-- `AbstractSparkDeployTaskProcessor` — абстрактный базовый класс, реализует:
-  - `deploy(mainClass, appResource, serverUrl, sparkProperties, appArgs)` — отправляет POST `/v1/submissions/create`, ожидает переход в `RUNNING` (таймаут 2 мин), затем ожидает финального статуса (`FINISHED`/`KILLED`/`FAILED`/`ERROR`)
-  - Строит `SparkRestClientApi` через `buildSparkRestClientApi(baseURI)` на `RestClient`
-- `SparkRestDeployFactory.getServerUrl()` — извлекает шаблон connection типа `spark` из драйвера целевого datasource, рендерит через Jinja, добавляет `/v1/submissions`
+- `AbstractSparkDeployTaskProcessor` — abstract base class, implements:
+  - `deploy(mainClass, appResource, serverUrl, sparkProperties, appArgs)` — sends POST `/v1/submissions/create`, waits for the transition to `RUNNING` (2 min timeout), then waits for the final status (`FINISHED`/`KILLED`/`FAILED`/`ERROR`)
+  - Builds `SparkRestClientApi` via `buildSparkRestClientApi(baseURI)` on `RestClient`
+- `SparkRestDeployFactory.getServerUrl()` — extracts the connection template of the `spark` type from the driver of the target datasource, renders it through Jinja, appends `/v1/submissions`
 
-Ничего не знают о логике задачи. Ответственность — разбор конфигурации, чтобы параметризовать spark-driver в конкретном кластере.
-Не работают с локальным запуском драйвера, т.к. это сильно утяжелит сам сервис и размоет границы его ответственности.
+They know nothing about the task logic. Responsibility — parsing the configuration to parameterize the spark-driver in a specific cluster.
+They do not work with local driver launch, since this would heavily burden the service itself and blur the boundaries of its responsibility.
 
-Конфигурация разделяется на три разных типа:
+The configuration is divided into three different types:
 
 - **sparkConf**
-  - Производится обход параметров всех datasource, которые выступают в роли зависимости. Фильтруется вложенный объект `service.properties`. Отбираются все параметры, начинающиеся на `spark.sql.catalog`.
-  - Производится обход параметров целевого datasource. Фильтруется вложенный объект `service.properties`. Отбираются все параметры, начинающиеся на `spark.`. Отобранные параметры перезапишут полученные выше, если встретятся одинаковые ключи.
-  - Производится обход `taskProcessorArgs`. Отбираются все параметры, начинающиеся на `spark.`. Отобранные параметры перезапишут полученные выше, если встретятся одинаковые ключи.
+  - All datasources acting as dependencies are iterated. The nested `service.properties` object is filtered. All parameters starting with `spark.sql.catalog` are selected.
+  - The target datasource parameters are iterated. The nested `service.properties` object is filtered. All parameters starting with `spark.` are selected. The selected parameters will override those obtained above if the same keys are encountered.
+  - `taskProcessorArgs` are iterated. All parameters starting with `spark.` are selected. The selected parameters will override those obtained above if the same keys are encountered.
 
-  > Почему порядок именно такой: datasource заполняется один и на множество датасетов, поэтому содержит наиболее обобщённые параметры. Его удобно использовать для параметров по умолчанию. taskProcessorArgs могут быть разными в задачах, обслуживающих одну и ту же таблицу (dataset), поэтому в зависимости от конкретной операции могут меняться значения и состав параметров. Например, для одной операции требуется больше памяти, а для другой — больше ядер.
+  > Why this exact order: a datasource is filled once and for many datasets, therefore it contains the most general parameters. It is convenient to use it for default parameters. taskProcessorArgs can differ in tasks serving the same table (dataset), therefore depending on the specific operation the values and composition of parameters may change. For example, one operation requires more memory, and another — more cores.
 
-- **Чистые атрибуты приложения**
-  - Берутся `taskProcessorArgs` и отбрасываются все параметры, начинающиеся на `spark.`, т.к. их передача избыточна для сети.
+- **Pure application attributes**
+  - `taskProcessorArgs` are taken and all parameters starting with `spark.` are discarded, since passing them over the network is redundant.
 
-- **Манифест k8s** (не реализован, зарезервировано)
-  - Предполагается обход параметров целевого datasource с фильтром `k8s.spark-operator` и обход `taskProcessorArgs` с тем же фильтром.
+- **k8s manifest** (not implemented, reserved)
+  - It is assumed to iterate the target datasource parameters with the `k8s.spark-operator` filter and iterate `taskProcessorArgs` with the same filter.
 
-### Порядок извлечения sparkConf в SparkStandAloneClusterTaskProcessor.runTask()
+### The order of sparkConf extraction in SparkStandAloneClusterTaskProcessor.runTask()
 
-1. **`SparkConfUtil.extractSparkConFromTaskConf(sourceConfDTO, scheduledTaskDTO)`** — сбор и слияние spark-свойств в три прохода (приоритет — от низшего к высшему):
-   1. `spark.sql.catalog.*` из всех datasource-зависимостей (кроме целевого)
-   2. Все `spark.*` из целевого datasource
-   3. Все `spark.*` из `taskProcessorArgs` задачи
-2. **`SparkConfUtil.unSparkConf(scheduledTaskDTO)`** — удаление spark-ключей из `taskProcessorArgs` перед отправкой в spark-driver
-3. Разрешение `mainClass` и `appResource`: taskProcessorArgs → datasource service.properties (через `Coalesce.apply`)
-4. Формирование `appArgs`: unSparkedTaskConfig + `scheduledTaskId`, `restConfKey`, `restSchedulerKey`
-5. Вызов `deploy(mainClass, appResource, serverUrl, sparkProperties, appArgs)`
+1. **`SparkConfUtil.extractSparkConFromTaskConf(sourceConfDTO, scheduledTaskDTO)`** — collecting and merging spark properties in three passes (priority — from lowest to highest):
+   1. `spark.sql.catalog.*` from all datasource dependencies (except the target)
+   2. All `spark.*` from the target datasource
+   3. All `spark.*` from the task's `taskProcessorArgs`
+2. **`SparkConfUtil.unSparkConf(scheduledTaskDTO)`** — removing spark keys from `taskProcessorArgs` before sending them to the spark-driver
+3. Resolving `mainClass` and `appResource`: taskProcessorArgs → datasource service.properties (via `Coalesce.apply`)
+4. Building `appArgs`: unSparkedTaskConfig + `scheduledTaskId`, `restConfKey`, `restSchedulerKey`
+5. Calling `deploy(mainClass, appResource, serverUrl, sparkProperties, appArgs)`
 
 
-### Работа со статусной моделью датасета
-Требует доступности state-svc. Временное отсутствие приведет к аварии задачи.
-scheduler-svc должен будет повторить задачу, это сглаживает проблему перезапуска экземпляров.
+### Working with the dataset state model
+Requires state-svc availability. A temporary absence will lead to a task failure.
+scheduler-svc will have to retry the task, which smooths over the problem of instance restarts.
 
-  * [LockedStateTaskProcessor.java](../src/main/java/org/lakehouse/taskexecutor/processor/state/LockedStateTaskProcessor.java) Переводит инкремент датасета в статус Locked — заблокирован. Это показывает другим процессам, что они НЕ могут работать с интервалом данных датасета.
-  * [SuccessStateTaskProcessor.java](../src/main/java/org/lakehouse/taskexecutor/processor/state/SuccessStateTaskProcessor.java) Переводит инкремент датасета в статус Success — успешен. Это показывает другим процессам, что они могут работать с интервалом данных датасета.
-  * [DependencyCheckStateTaskProcessor.java](../src/main/java/org/lakehouse/taskexecutor/processor/state/DependencyCheckStateTaskProcessor.java) Проверяет статус датасета. Применяется для проверки состояния зависимостей и текущего датасета.
+  * [LockedStateTaskProcessor.java](../src/main/java/org/lakehouse/taskexecutor/processor/state/LockedStateTaskProcessor.java) Moves the dataset increment to the Locked status — locked. This shows other processes that they CANNOT work with the dataset data interval.
+  * [SuccessStateTaskProcessor.java](../src/main/java/org/lakehouse/taskexecutor/processor/state/SuccessStateTaskProcessor.java) Moves the dataset increment to the Success status — successful. This shows other processes that they CAN work with the dataset data interval.
+  * [DependencyCheckStateTaskProcessor.java](../src/main/java/org/lakehouse/taskexecutor/processor/state/DependencyCheckStateTaskProcessor.java) Checks the dataset status. Used to check the state of dependencies and the current dataset.
 
-### Работа с базами данных (JDBC)
+### Working with databases (JDBC)
 [JdbcTaskProcessor.java](../src/main/java/org/lakehouse/taskexecutor/processor/jdbc/JdbcTaskProcessor.java)
-- всегда работает через jdbc драйвер, который должен быть помещен в classpath
-- ничего не знает про синтаксис БД, с которой работает, потому что это ответственность соответствующего [sqlTemplate.md](../../lakehouse-config-svc/doc/content_configuration/sqlTemplate.md)
-- отвечает только за определение из параметра задачи `taskProcessorBody` и его запуск
+- always works through a jdbc driver that must be placed on the classpath
+- knows nothing about the syntax of the database it works with, because this is the responsibility of the corresponding [sqlTemplate.md](../../lakehouse-config-svc/doc/content_configuration/sqlTemplate.md)
+- is responsible only for determining the `taskProcessorBody` from the task parameter and running it
 
 ## TaskProcessorBody
-Код, который выносится из TaskProcessor для пере-использования другими TaskProcessor или исполнения вне приложения.
+Code that is extracted from the TaskProcessor for reuse by other TaskProcessors or execution outside the application.
 
 ![TaskProcessorBody.png](uml/TaskProcessorBody.png)
 
-TaskProcessorBody, использующие шаблоны SQLTemplate, совместимы с Spark-задачами и [JdbcTaskProcessor.java](../src/main/java/org/lakehouse/taskexecutor/processor/jdbc/JdbcTaskProcessor.java):
+TaskProcessorBody implementations using SQLTemplate templates are compatible with Spark tasks and [JdbcTaskProcessor.java](../src/main/java/org/lakehouse/taskexecutor/processor/jdbc/JdbcTaskProcessor.java):
 * [AppendSQLProcessorBody.java](../../lakehouse-task-executor-api/src/main/java/org/lakehouse/taskexecutor/api/processor/body/sql/AppendSQLProcessorBody.java)
-  Помещает модель в insert и выполняет запрос
+  Places the model into an insert and executes the query
 * [CompactTableSQLProcessorBody.java](../../lakehouse-task-executor-api/src/main/java/org/lakehouse/taskexecutor/api/processor/body/sql/CompactTableSQLProcessorBody.java)
-  Выполняет команду из шаблона tableDDLCompact
+  Executes the command from the tableDDLCompact template
 * [CreateTableSQLProcessorBody.java](../../lakehouse-task-executor-api/src/main/java/org/lakehouse/taskexecutor/api/processor/body/sql/CreateTableSQLProcessorBody.java)
-  Выполняет команду из шаблона tableDDLCreate, схему тоже создаст из шаблона схемы
+  Executes the command from the tableDDLCreate template, the schema will also be created from the schema template
 * [MergeSQLProcessorBody.java](../../lakehouse-task-executor-api/src/main/java/org/lakehouse/taskexecutor/api/processor/body/sql/MergeSQLProcessorBody.java)
-  Помещает модель в merge и выполняет запрос
+  Places the model into a merge and executes the query
 
-Эти body ничего не знают про окружение, где они будут работать, и синтаксис языка.
-Они знают только какой шаблон надо извлечь, формируют уникальный jinja контекст, передают это всё в абстрактную среду исполнения, которая рендерит шаблон и исполняет его в конкретном окружении (RDBMS, TRINO или SPARK).
+These bodies know nothing about the environment where they will run, nor about the language syntax.
+They only know which template to extract, build a unique jinja context, and pass it all to an abstract execution environment that renders the template and executes it in a specific environment (RDBMS, TRINO or SPARK).
 
 [SparkTaskProcessorDQBody.java](../../lakehouse-task-executor-spark-dq-app/src/main/java/org/lakehouse/taskexecutor/spark/dq/service/SparkTaskProcessorDQBody.java)
-совместим только с [SparkStandAloneClusterTaskProcessor.java](../src/main/java/org/lakehouse/taskexecutor/processor/spark/SparkStandAloneClusterTaskProcessor.java).
+is compatible only with [SparkStandAloneClusterTaskProcessor.java](../src/main/java/org/lakehouse/taskexecutor/processor/spark/SparkStandAloneClusterTaskProcessor.java).

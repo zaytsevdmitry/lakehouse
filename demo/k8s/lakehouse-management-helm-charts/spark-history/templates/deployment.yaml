@@ -43,4 +43,4 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            name: spark-history-conf
+            name: spark-defaults-conf

@@ -22,3 +22,5 @@ lakehouse-task-executor-spark-dq-app/dependency-reduced-pom.xml
 /demo/compose/storages/minio_storage/.minio.sys/
 /demo/compose/storages/minio_storage/data/
 /demo/compose/storages/minio_storage/sparklogs/
+/lakehouse-config-svc/tmp/
+/prompt.md

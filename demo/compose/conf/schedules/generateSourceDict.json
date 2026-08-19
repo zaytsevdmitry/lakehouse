@@ -8,7 +8,7 @@
   "scenarioActs": [
     {
       "name": "client_processing",
-      "dataSet": "client_processing",
+      "dataSetKeyName": "client_processing",
       "scenarioActTemplate": "database",
       "intervalStart": "{{ adddays(targetDateTime, -1) }}",
       "intervalEnd": "{{ targetDateTime }}"

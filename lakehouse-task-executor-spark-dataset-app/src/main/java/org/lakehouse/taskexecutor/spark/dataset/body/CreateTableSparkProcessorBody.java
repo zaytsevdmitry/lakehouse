@@ -26,6 +26,7 @@ import org.lakehouse.task.executor.spark.api.configuration.SparkSessionConfigura
 import org.lakehouse.taskexecutor.api.datasource.DataSourceManipulator;
 import org.lakehouse.taskexecutor.api.datasource.DataSourceManipulatorFactory;
 import org.lakehouse.taskexecutor.api.datasource.exception.CreateException;
+import org.lakehouse.taskexecutor.api.factory.SQLTemplateFactory;
 import org.lakehouse.taskexecutor.spark.dataset.datasourcemanipulator.body.SparkProcessorBodyAbstract;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,8 +41,9 @@ public class CreateTableSparkProcessorBody extends SparkProcessorBodyAbstract {
     public CreateTableSparkProcessorBody(
             ConfigRestClientApi configRestClientApi,
             SparkSession sparkSession,
-            DataSourceManipulatorFactory dataSourceManipulatorFactory) {
-        super(configRestClientApi,sparkSession,dataSourceManipulatorFactory);
+            DataSourceManipulatorFactory dataSourceManipulatorFactory,
+            SQLTemplateFactory sqlTemplateFactory) {
+        super(configRestClientApi,sparkSession,dataSourceManipulatorFactory,sqlTemplateFactory);
     }
 
 

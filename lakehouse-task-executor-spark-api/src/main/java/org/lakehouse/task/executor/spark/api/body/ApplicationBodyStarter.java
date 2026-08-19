@@ -41,7 +41,7 @@ public class ApplicationBodyStarter {
         ConfigurableApplicationContext context = null;
         int exitcode = ExitCode.success.getValue();
         try {
-            logger.info("Create context");
+            logger.info("Creating context");
             Arrays.asList(args).forEach(logger::info);
             context = run(args,aClass);
 
@@ -69,7 +69,7 @@ public class ApplicationBodyStarter {
                 logger.info("Stopping Spring context");
                 context.stop();
             }
-            logger.info("Exit application with code {}",exitcode);
+            logger.info("Exiting application with code {}",exitcode);
             System.exit(exitcode);
         }
 
@@ -81,7 +81,7 @@ public class ApplicationBodyStarter {
             ConfigurableApplicationContext applicationContext = SpringApplication.run(aClass, args);
             ScheduledTaskDTO scheduledTaskDTO = getAndValidateScheduledTaskDTO(applicationContext);
 
-            logger.info("Try to start body");
+            logger.info("Trying to start body");
             ProcessorBody body = (ProcessorBody) applicationContext.getBean(scheduledTaskDTO.getTaskProcessorBody());
             body.run(scheduledTaskDTO);
             return applicationContext;
@@ -96,7 +96,7 @@ public class ApplicationBodyStarter {
         logger.info("Received scheduledTaskId = {}. Requesting full body" , scheduledTaskId);
         SchedulerRestClientApi schedulerRestClientApi = applicationContext.getBean(SchedulerRestClientApi.class);
         ScheduledTaskDTO result = schedulerRestClientApi.getScheduledTaskDTO(scheduledTaskId);
-        logger.info("Validate task configuration");
+        logger.info("Validating task configuration");
         ValidationResult validationResult = ScheduledTaskDTOValidator.validate(result);
         if (!validationResult.isValid())
             throw new TaskConfigurationException(validationResult.getDescriptions().stream().collect(Collectors.joining("\n")));

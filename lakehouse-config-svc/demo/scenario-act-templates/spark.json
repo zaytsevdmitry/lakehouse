@@ -18,6 +18,7 @@
     },
     {
       "name": "prepare",
+      "driverKeyName": "spark_iceberg",
       "taskExecutionServiceGroupName": "default",
       "taskProcessor": "k8sSparkNativeTaskProcessor",
       "taskProcessorBody": "createTableSQLProcessorBody",
@@ -35,6 +36,7 @@
     },
     {
       "name": "load",
+      "driverKeyName": "spark_iceberg",
       "taskExecutionServiceGroupName": "default",
       "taskProcessor": "k8sSparkNativeTaskProcessor",
       "taskProcessorBody": "mergeSQLProcessorBody",
@@ -52,6 +54,7 @@
     },
     {
       "name": "compact",
+      "driverKeyName": "spark_iceberg",
       "taskExecutionServiceGroupName": "default",
       "taskProcessor": "k8sSparkNativeTaskProcessor",
       "taskProcessorBody": "compactTableSQLProcessorBody",

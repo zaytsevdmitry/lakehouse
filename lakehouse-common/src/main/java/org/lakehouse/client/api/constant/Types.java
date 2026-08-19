@@ -49,6 +49,7 @@ public class Types {
             return label;
         }
     }
+
     public enum Constraint {
         primary("primary"),
         foreign("foreign"),
