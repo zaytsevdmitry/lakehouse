@@ -31,7 +31,7 @@ minikube start --cpus 4 --memory 8192 --registry-mirror=https://dh-mirror.gitver
 sh install.bash
 ```
 В результате выполнения команды: 
-- образы lakehouse* перегрузятся из локального репозитория в minikube
+- образы lakehouse* перегрузятся из локального репозитория в minikube  ~ 3-5 минут в зависимости от локальной системы
 - соберется helm chart
 - создано пространство имен lakehouse-management
 - учетные записи 

@@ -1,11 +1,11 @@
-# Параметры приложения
+# Application parameters
 
 ```yaml
 server:
-  port: 8081 # порт сервиса
+  port: 8081 # service port
 
 spring:
-  datasource: # datasource где будут размещены данные сервиса
+  datasource: # datasource where the service data is stored
     url: jdbc:postgresql://localhost:5432/postgresDB?ApplicationName=SchedulerSVC
     username: postgresUser
     password: postgresPW
@@ -29,44 +29,44 @@ spring:
 lakehouse:
   client:
     rest:
-      config: # клиент REST для обращения к сервису конфигурации
+      config: # REST client for accessing the configuration service
         server:
           url: http://localhost:8080
   scheduler:
     schedule:
       task:
-        kafka: # producer для отправки задач исполнителям
+        kafka: # producer for sending tasks to executors
           producer:
-            topic: scheduled_task_msg # имя топика для отправки задач исполнителям
+            topic: scheduled_task_msg # topic name for sending tasks to executors
             properties: # https://kafka.apache.org/41/configuration/producer-configs/
               bootstrap.servers: localhost:9092
     config:
       schedule:
-        kafka: # consumer для получения изменений расписаний от сервиса конфигурации
+        kafka: # consumer for receiving schedule changes from the configuration service
           consumer:
             properties: # https://kafka.apache.org/41/configuration/consumer-configs/
               bootstrap.servers: localhost:9092
               group.id: scheduler
               auto.offset.reset: earliest
-            topics: schedule_effective_changes # топик с изменениями расписаний
-            concurrency: 1 # число потоков потребления
-    registration: # Периодичность регистрации (формирования) новых расписаний
+            topics: schedule_effective_changes # topic with schedule changes
+            concurrency: 1 # number of consumption threads
+    registration: # Periodicity of registration (building) of new schedules
       delay-ms: 6000
       initial-delay-ms: 5000
-    run: # Периодичность запуска и обработки расписаний
+    run: # Periodicity of schedule run and processing
       delay-ms: 1200
       initial-delay-ms: 3000
-    resolvedeps: # Периодичность разрешения зависимостей (перевод в SUCCESS)
+    resolvedeps: # Periodicity of dependency resolution (moving to SUCCESS)
       delay-ms: 1500
       initial-delay-ms: 10000
     task:
-      retry: # Повторный запуск неуспешных задач
+      retry: # Re-run of unsuccessful tasks
         delay-ms: 14000
         initial-delay-ms: 10000
-        lag-when-failed: 1000 # задержка повторного запуска для FAILED задач
-        lag-when-config-failed: 120000 # задержка повторного запуска для CONF_ERROR задач
+        lag-when-failed: 10000 # delay of re-run for FAILED tasks
+        lag-when-config-failed: 240000 # delay of re-run for CONF_ERROR tasks
 
-  health: # Эндпоинты проверки состояния сервиса
-    liveness-path: /healthz # Liveness-проба
-    readiness-path: /readyz # Readiness-проба
+  health: # Service health check endpoints
+    liveness-path: /healthz # Liveness probe
+    readiness-path: /readyz # Readiness probe
 ```

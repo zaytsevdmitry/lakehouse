@@ -1,5 +1,5 @@
 # Entities design
 
-![localImage](./Entities.png)
+![Entities.png](Entities.png)
 
 ![logical_entities_dependency.png](logical_entities_dependency.png)

@@ -1,5 +1,70 @@
 # Changelog
 
+## [0.7.0] — 2026-08-19
+
+### Added
+
+#### New modules
+- **`lakehouse-ui-svc`** — web UI service
+  - Spring Boot backend (`/api/catalog`, `/api/schedules`, `/api/services`, `/api/spark-proxy`, `/api/states`) aggregating config-svc, scheduler-svc, state-svc and task-proxy-for-spark
+  - React frontend served from static resources (Vite build): Catalog tree, dataset lineage, model/DDL scripts, relations (ER) view, schedules + pipeline DAG, services topology, spark submissions, dataset state control
+  - Configurable service graph via `lakehouse.ui.services/edges/vertices` (`UiServiceProperties`)
+  - `HealthChecker` for services availability, `GlobalExceptionHandler`
+- **`lakehouse-common-health`** — shared liveness/readiness endpoints `/healthz` `/readyz` (paths configurable via `lakehouse.health.liveness-path` / `readiness-path`), applied to all services
+- **`lakehouse-task-proxy-for-spark-rest-client`** — REST client for the spark proxy submission query API
+
+#### lakehouse-task-proxy-for-spark — submission querying
+- **`SparkSubmissionQueryController`** `/api/v1/spark-proxy-submissions` — list submissions filtered by `status`, `dateFrom`/`dateTo`, cursor pagination via `lastId` + `limit` (max 100), plus per-submission spark-properties endpoint
+- **`SparkProxyService`** — `getSubmissions`, `getStatus`, `getSparkProperties`, `kill`, `killAll`, `clear` (locks all rows, kills running, deletes DB records)
+- **DTOs** — `SparkProxySubmissionDTO`, `SparkProxySubmissionPropertiesDTO`, `SparkProxySubmissionsRequest`, `SparkProxySubmissionsMeta`, `SparkProxySubmissionsResponse`
+- **`SparkSubmissionRepository.findSubmissions`** — native query with `TypedParameterValue` for status/date-range/cursor filters
+- `SparkSubmission` entity updates (message, submissionId handling)
+
+#### Config service
+- **Data lineage** — `DataLineageController` (`/v1_0/configs/lineage/datasets/{keyName}`), `DataSetLineageService` (BFS over dataset dependencies), `DataSetLineageDTO`
+- **Task templates** — `TaskTemplateController` CRUD (`/v1_0/configs/tasks`), `TaskTemplate` entity rework
+- **`DatabaseProtocol`** enum added to `DataSourceDTO`/datasource configuration
+- **Schedule headers** — `ScheduleHeaderDTO` support in `ScheduleService`
+- **`TaskDTOValidator`** in `lakehouse-validators`
+- Docs: `lineage.md`, `metadata_relationships.puml` diagram, updated content_configuration docs
+
+#### Scheduler service
+- **`ScheduleInstanceDAGController`** + **`ScheduleInstanceDAGService`** — DAG of a schedule instance (`/v1_0/schedule/dag/id={id}`)
+- **Max retries control** — `ScheduleTaskInstance.maxRetries` (default -1), passed from `TaskDTO` via `ScheduleTaskInstanceFactory`; `ScheduleTaskInstanceService` stops retrying when `reTryNum >= maxRetries`
+- **`SchedulerTaskRetryProperties`** — `lag-when-failed` (10s), `lag-when-config-failed` (240s) configurable retry delays
+
+#### REST clients
+- `SchedulerRestClientApi` — `getAllByInterval`, `getScheduleInstanceDAGDTOById`
+- `SparkProxyRestClientApi` — `createSubmission`, `getStatus`, `getSubmissions`, `getSparkProperties`, `killSubmission`, `killAllSubmissions`, `clearCompleted`
+- `ConfigRestClientApi`, `StateRestClientApi` — updated endpoints
+
+#### Common
+- New DTOs — `ScheduleInstanceDAGDTO`, `ScheduleScenarioActInstanceDTO`, `ScheduleTaskInstanceDTO`, `DataSetLineageDTO`
+- **`DtoMergeUtils`** — field-level merge for config DTOs
+- `DriverDTO` moved to `configs.schedule` package
+- `DataSetStateResponseDTO` renamed to `DataSetWrongStateResponseDTO`
+- `SQLTemplateFactory` moved from `lakehouse-common` to `lakehouse-task-executor-api`
+- `Endpoint` constants for lineage, task templates, schedule DAG
+
+#### Demo & infrastructure
+- New Helm chart `lakehouse-management-ui-svc`
+- Demo task templates: `begin.json` (`lockedStateTaskProcessor`), `check.json` (`dependencyCheckStateTaskProcessor`), `prepare-jdbc.json` (`jdbcTaskProcessor` + `createTableSQLProcessorBody`)
+- Demo configs updated (datasources with `databaseProtocol`, schedules, scenario-act-templates) for compose and k8s
+- Docker: images bumped to 0.7.0, `build.bash` version checks, updated spark-aws image
+- `doc/nexttimedev/openmetadata` — OpenMetadata integration diagrams (classCurrent, omdClass, sendtoomd)
+
+### Changed
+- `lakehouse-config-svc` — task storage refactored: `TaskAbstract`/`ScenarioActTask` replaced by `Task` + `TaskProcessorArg` entities (`TaskRepository`, `TaskService`, `TaskProcessorArgRepository`, `TaskNotFoundException`); `Driver` entity removed in favor of DTO/driver service
+- `lakehouse-scheduler-svc` — `ScheduleTaskInstanceService` retry semantics driven by `maxRetries`; `ScheduleInstanceController` interval queries
+- All services — health check configuration (`lakehouse.health.*`)
+
+### Fixed
+- Proxy `getStatus` returns `NOT_FOUND` for missing submissions
+- Proxy kill/clear of queued (submissionId == null) tasks — removed from DB instead of failing on cluster
+- `SparkSubmission` status/message deserialization in query DTOs
+
+---
+
 ## [0.6.0] 2026-07-30
 
 ### lakehouse-task-proxy-for-spark — major refactoring & new schedulers

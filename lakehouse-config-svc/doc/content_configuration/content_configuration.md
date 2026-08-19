@@ -1,46 +1,42 @@
-# Общая структура эндпоинта
-| Структура эндпоинта                       | Назначение                               | GET                               | POST                                   | DELETE                           |
-|:------------------------------------------|:-----------------------------------------|:----------------------------------|:---------------------------------------|:---------------------------------|
-| /v1_0                                     | версия API                               | -                                 | -                                      | -                                |
-| /v1_0/configs                             | подмножество конфигураций                | -                                 | -                                      | -                                |
-| /v1_0/configs/[object]                    | обслуживание направления                 | Вернет все объекты данного типа   | Добавит или обновит перезаписью объект | -                                |
-| /v1_0/configs/[object]/[keyName]          | Доступ к конкретному объекту             | Вернет по ключу требуемый объект  | -                                      | Удалит объект по заданному ключу |
-| /v1_0/configs/compound/[object]/[keyName] | Доступ к составным, производным объектам | Соберет и вернет составной объект | -                                      | -                                |
+# Common endpoint structure
+| Endpoint structure                         | Purpose                                  | GET                              | POST                                  | DELETE                          |
+|:-------------------------------------------|:-----------------------------------------|:---------------------------------|:--------------------------------------|:--------------------------------|
+| /v1_0                                      | API version                              | -                                | -                                     | -                               |
+| /v1_0/configs                              | subset of configurations                 | -                                | -                                     | -                               |
+| /v1_0/configs/[object]                     | manages an entity type                   | Returns all objects of the type  | Adds or updates the object by rewrite | -                               |
+| /v1_0/configs/[object]/[keyName]           | access to a specific object              | Returns the object by key        | -                                     | Deletes the object by key       |
+| /v1_0/configs/compound/[object]/[keyName]  | access to compound, derived objects      | Builds and returns compound object | -                                   | -                               |
+
+
+# Configuration description
+[Namespaces](namespaces.md)
+
+[Drivers](drivers.md)
+
+[Data sources](datasources.md)
+
+[Datasets](datasets.md) 
+
+[Schedules](schedules.md) 
+
+[Data quality metrics](qualityMetric.md)
+
+[Scripts](scripts.md)
+
+[Data lineage](lineage.md)
 
 
 
+## Configuration dependency scheme
+![Metadata dependency illustration](../../../doc/entities_design/logical_entities_dependency.png)
 
+Upper elements must be loaded before lower ones.
+Deleting upper elements is impossible without deleting lower ones, except in cascade cases. 
+Cascade-dependent metadata is deleted together with upper elements.
+Updating cascade elements is performed by reducing to the new state shape.
 
-# Описание конфигурации
-[Пространства имен](namespaces.md)
+The metadata object relationship scheme is also provided as a diagram source:
 
-[Драйверы](drivers.md)
-
-[Источники данных](datasources.md)
-
-[Датасеты](datasets.md) 
-
-[Расписания](schedules.md) 
-
-[Метрики качества данных](qualityMetric.md)
-
-[Скрипты](scripts.md)
-
-[Линковка данных](lineage.md)
-
-
-
-## Схема зависимости конфигураций
-![Иллюстрация зависимости метаданных](../../../doc/entities_design/logical_entities_dependency.png)
-Верхние элементы должны быть загружены раньше чем нижние.
-Удаление верхних невозможно без удаления нижних, кроме каскадных случаев. 
-Каскадно-зависимые метаданные удаляются вместе с верхними элементами
-Обновление каскадных элементов производится путем приведения к виду нового состояния
-
-Схема взаимоотношений объектов метаданных также представлена в виде исходника диаграммы:
 [metadata_relationships.puml](../diagrams/metadata_relationships.puml)
 
 ![metadata_relationships-____metadata_configuration_.png](../diagrams/metadata_relationships-____metadata_configuration_.png)
-
-
-

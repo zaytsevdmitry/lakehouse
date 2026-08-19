@@ -2,41 +2,41 @@
 server:
   port: 8089
 lakehouse:
-  client: # Настройки внешнего взаимодействия
+  client: # External interaction settings
     rest:
       state:
         server:
-          url: http://127.0.0.1:8082 # Сервис состояний
+          url: http://127.0.0.1:8082 # State service
       config:
         server:
-          url: http://127.0.0.1:8080 # Сервис конфигураций
+          url: http://127.0.0.1:8080 # Configuration service
       scheduler:
         server:
-          url: http://127.0.0.1:8081 # Сервис расписаний
+          url: http://127.0.0.1:8081 # Scheduler service
   task-executor:
     service:
-      # Интервалы отправки herdbeat по взятой задаче сервису расписаний. 
-      # Если вовремя не отправить , сервис расписаний решит что с задачей что-то не так 
-      # и переведет ее в failed
-      heart-beat-initial-delaY-ms: 5000 # задержка при старте  
-      heart-beat-interval-ms: 5000 # интервал между отправками. Должен быть чаще чем  lakehouse.scheduler.task.retry.delay-ms в сервисе расписаний
-      max-lock-retries: 5 # попытки взять блокировку. Сервис расписаний может быть временно недоступен.  
-      max-lock-retries-duration-ms: 5 # задержка между попытками
-      # Несколько исполнителей могут находиться в одной группе. 
-      # Этот идентификатор отправится сервису расписаний при блокировке задачи,
-      # чтобы можно было узнать какой конкретный экземпляр взял блокировку задачи.
-      # Можно указать имя пода или хоста 
+      # Intervals for sending heartbeat on the taken task to the scheduler service.
+      # If not sent in time, the scheduler service will decide that something is wrong with the task
+      # and move it to failed
+      heart-beat-initial-delaY-ms: 5000 # delay at startup
+      heart-beat-interval-ms: 5000 # interval between sends. Must be more frequent than  lakehouse.scheduler.task.retry.delay-ms in the scheduler service
+      max-lock-retries: 5 # attempts to take a lock. The scheduler service may be temporarily unavailable.
+      max-lock-retries-duration-ms: 5 # delay between attempts
+      # Multiple executors can be in the same group.
+      # This identifier will be sent to the scheduler service when locking a task,
+      # so that it is possible to find out which specific instance took the task lock.
+      # You can specify a pod or host name
       id: first1
-    scheduled: # Параметры для получения задач
+    scheduled: # Parameters for receiving tasks
       task:
         kafka:
           consumer:
-            concurrency: 1 # количество потоков потребления задач 1 значит процесс будет последовательно обрабатывать 1 задачу за раз. Функциональность предоставлена Spring, это детально не тестировалось.
+            concurrency: 1 # number of task consumption threads. 1 means the process will process 1 task at a time sequentially. The functionality is provided by Spring, it has not been tested in detail.
             properties:
               bootstrap.servers: 192.1.193.20:9092
-              group.id: default  # Соответствует параметру taskExecutionServiceGroupName из конфигурации задач. если этот параметр и taskExecutionServiceGroupName у задачи не совпадают, задача игнорируется тк ее должна взять другая группа исполнителей
+              group.id: default  # Corresponds to the taskExecutionServiceGroupName parameter from the task configuration. if this parameter and the task's taskExecutionServiceGroupName do not match, the task is ignored because another executor group should take it
               auto.offset.reset: earliest
-            # Имя топика куда сервис расписаний поставляет задачи переданные на выполнение.
-            # Имя должно совпадать с именем у сервиса расписаний  
-            topics: scheduled_task_msg 
+            # The name of the topic where the scheduler service puts tasks passed for execution.
+            # The name must match the one in the scheduler service
+            topics: scheduled_task_msg
 ```

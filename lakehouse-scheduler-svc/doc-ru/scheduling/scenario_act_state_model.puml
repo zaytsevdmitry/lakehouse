@@ -1,0 +1,6 @@
+@startuml 
+[*] --> NEW: Created
+NEW --> RUNNING: tasks can be QUEUED
+RUNNING --> SUCCESS: All scenario tasks in SUCCESS state
+SUCCESS --> [*]
+@enduml

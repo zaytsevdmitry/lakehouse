@@ -1,0 +1,21 @@
+@startuml
+
+class ScheduleEffectiveDTO.java
+
+ScheduleConfigConsumerService.listen -->   BuildService.registration : put ScheduleEffectiveDTO
+
+InternalScheduler.build --> BuildService.buildAll : call
+
+InternalScheduler.resolveDependency -->ManageStateService.setScenariosActsStatusToSuccess
+InternalScheduler.resolveDependency --->ScheduleTaskInstanceService.successResolvedDependency
+
+InternalScheduler.run -->		ManageStateService.runAll
+InternalScheduler.run -->		ManageStateService.runNewScenariosActs
+InternalScheduler.run --->	ScheduleTaskInstanceService.addTaskToQueue
+InternalScheduler.run ---> ScheduleTaskInstanceService.produceScheduledTasks
+InternalScheduler.run -->		ManageStateService.successSchedules
+
+InternalScheduler.reTryFailedTasked ---> ScheduleTaskInstanceService.heartBeatLimitExceeded
+InternalScheduler.reTryFailedTasked ---> ScheduleTaskInstanceService.reTryFailedTasks
+
+@enduml

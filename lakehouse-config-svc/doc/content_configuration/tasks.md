@@ -1,24 +1,24 @@
-# Задачи (tasks)
-Задача это одно атомарное действие в составе множества, направленных на изменение состояния датасета, или сопутствующие действия.
-Описание задачи применяется в шаблонизации сценариев либо непосредственно в сценарии.
-Также может сохраняться как самостоятельная конфигурация - шаблон задачи, используемый повторно.
+# Tasks
+A task is one atomic action within a set aimed at changing the dataset state, or a related action.
+The task description is used in scenario templating or directly in a scenario.
+It can also be saved as a standalone configuration - a task template used repeatedly.
 
-## Поля объекта
-|  Поле                         | Назначение                                                                                                                                              | 
-|:------------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------|
-| name                          | Уникальное имя внутри конфигурации                                                                                                                      |
-| template                      | Ссылка на [шаблон действия сценария](scenarioActTemplate.md), при наличии которого одноименные задачи переопределяются, остальные добавляются             |
-| taskExecutionServiceGroupName | Ссылка на целевой исполняющий механизм                                                                                                                  |
-| taskProcessor                 | Имя класса в исполняющем механизме                                                                                                                      |
-| taskProcessorArgs             | Набор аргументов которые будут переданы в исполняющий механизм                                                                                          |
-| taskProcessorBody             | Имя класса в исполняющем механизме, в случае если он имеет модульную структуру. Например если логика может быть повторно использована разными системами |
-| importance                    | Критичность задачи. `critical` - abort when error, `warn` - pass when error                                                                              |
-| maxRetries                    | Максимальное число повторов неуспешной задачи. Положительное значение ограничивает повторы (сравнивается с числом попыток). `null`, `0` и отрицательные значения - бесконечные повторы |
-| driverKeyName                 | Указывает на конфигурацию-драйвер, чей экземпляр используется для выполнения задачи                                                                     |
-| [sqlTemplate](sqlTemplate.md) | Реализует адаптацию диалекта. Переопределяет элементы указанные в [драйвере](drivers.md)                                                                 |
-| description                   | Описание для документирования                                                                                                                           | 
+## Object fields
+| Field                        | Purpose                                                                                                                                              | 
+|:-----------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| name                         | Unique name within the configuration                                                                                                                 |
+| template                     | Reference to the [scenario act template](scenarioActTemplate.md); when present, same-named tasks are overridden, the rest are added                  |
+| taskExecutionServiceGroupName| Reference to the target executing engine                                                                                                             |
+| taskProcessor                | Class name in the executing engine                                                                                                                   |
+| taskProcessorArgs            | Set of arguments that will be passed to the executing engine                                                                                         |
+| taskProcessorBody            | Class name in the executing engine, in case it has a modular structure. E.g. when the logic can be reused by different systems                         |
+| importance                   | Task criticality. `critical` - abort when error, `warn` - pass when error                                                                             |
+| maxRetries                   | Maximum number of retries of a failed task. A positive value limits the retries (compared with the attempt number). `null`, `0` and negative values - unlimited retries |
+| driverKeyName                | Points to the driver configuration whose instance is used to execute the task                                                                        |
+| [sqlTemplate](sqlTemplate.md)| Implements dialect adaptation. Overrides elements specified in the [driver](drivers.md)                                                               |
+| description                  | Description for documentation                                                                                                                         | 
 
-**Фрагмент с описанием задачи**
+**Fragment with a task description**
 ```json
 
 {
@@ -42,7 +42,6 @@
 ```
 
 ##  /v1_0/configs/tasks
-Список задач (шаблонов)
+List of tasks (templates)
 ##  /v1_0/configs/tasks/{name}
-Манипуляция конкретной задачей по имени
-     
+Manipulates a specific task by name

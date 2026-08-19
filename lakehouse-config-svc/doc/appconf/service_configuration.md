@@ -1,6 +1,6 @@
 ```yaml
 spring:
-  datasource: # datasource где будут размещены данные сервиса. Все пользовательские конфигурации метаданных
+  datasource: # datasource where the service data will be stored. All user metadata configurations
     url: jdbc:postgresql://localhost:5432/postgresDB?ApplicationName=ConfigSVC
     username: postgresUser
     password: postgresPW
@@ -24,17 +24,17 @@ spring:
 lakehouse:
   config:
     schedule:
-      send: # Настройка отправки уведомлений об изменении расписаний
-        delay-ms: 10000 # Задержка между отправками
-        initial-delay-ms: 20000 # Задержка первой отправки при старте сервиса
-        limit: 100 # предел количества изменений за один интервал
-        topic: schedule_effective_changes # имя топика для отправки изменений в расписании
+      send: # Schedule change notification sending settings
+        delay-ms: 10000 # Delay between sends
+        initial-delay-ms: 20000 # Delay of the first send on service startup
+        limit: 100 # Limit of changes per one interval
+        topic: schedule_effective_changes # Topic name for sending schedule changes
         kafka:
           producer:
             properties: # https://kafka.apache.org/41/configuration/producer-configs/
               bootstrap.servers: localhost:9092
 
-  health: # Эндпоинты проверки состояния сервиса
-    liveness-path: /healthz # Liveness-проба
-    readiness-path: /readyz # Readiness-проба
+  health: # Service health check endpoints
+    liveness-path: /healthz # Liveness probe
+    readiness-path: /readyz # Readiness probe
 ```

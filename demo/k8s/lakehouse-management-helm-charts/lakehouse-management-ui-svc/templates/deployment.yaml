@@ -87,6 +87,7 @@ spec:
             -Dlakehouse.ui.edges.lakehouse-task-executor-svc[2]=processingdb
             -Dlakehouse.ui.edges.lakehouse-task-executor-svc[3]=lakehouse-scheduler-svc
             -Dlakehouse.ui.edges.lakehouse-task-proxy-for-spark[0]=sparkproxydb
+            -Dlakehouse.ui.edges.lakehouse-task-proxy-for-spark[1]=lakehouse-minio
             -Dlakehouse.ui.edges.lakehouse-minio[0]=lakehouse-trino
             -Dlakehouse.ui.edges.lakehouse-minio[1]=lakehouse-spark-history
             -jar /opt/lakehouse-ui-svc-0.7.0-jar-with-dependencies.jar"

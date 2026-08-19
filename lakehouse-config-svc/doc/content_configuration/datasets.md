@@ -1,45 +1,45 @@
-# Датасет (dataset)
-Абстракция для определения объекта данных. 
+# Dataset
+Abstraction for defining a data object. 
 
-## Поля объекта
-| Поле                                              | Назначение                                                                                                                   |
-|:--------------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------|
-| keyName                                           | Уникальный идентификатов                                                                                                     | 
-| nameSpaceKeyName                                  | Принадлежность к [пространству имен](namespaces.md)                                                                          |
-| dataSourceKeyName                                 | Указывает на [источник данных](datasources.md) в котором находится датасет                                                   |
-| databaseSchemaName                                | Название схемы в которой расположена таблица                                                                                 |
-| tableName                                         | Название таблицы                                                                                                             |
-| description                                       | Описание для документирования                                                                                                | 
-| [scripts](scriptsReference.md#коллекция-скриптов) | Список ссылок на скрипты, которые используются как фрагменты для построения модели датасета                                  | 
-| [sources](#sources)                               | Карта - ссылка на другой датасет.В качестве ключа имя датасета от которого зависит                                           |
-| [columnSchema](#columnSchema)                     | Вложенный список описаний колонок                                                                                            |
-| [constraints](#constraints)                       | Вложенный список/карта конструктивов таблиц, где ключ имя конструктива, значение описание настроек                           |
-| properties                                        | Вложенный карта ключ-значение дополнительных параметров                                                                      |
-| partitionStmt                                     | Выражение определяющее партиционирование таблицы                                                                             |
+## Object fields
+| Field                                              | Purpose                                                                                                                   |
+|:---------------------------------------------------|:--------------------------------------------------------------------------------------------------------------------------|
+| keyName                                            | Unique identifier                                                                                                         | 
+| nameSpaceKeyName                                   | Belonging to a [namespace](namespaces.md)                                                                                 |
+| dataSourceKeyName                                  | Points to the [data source](datasources.md) where the dataset is located                                                  |
+| databaseSchemaName                                 | Name of the schema where the table is located                                                                             |
+| tableName                                          | Table name                                                                                                                |
+| description                                        | Description for documentation                                                                                             | 
+| [scripts](scriptsReference.md#script-collection)   | List of script references used as fragments for building the dataset model                                                 | 
+| [sources](#sources)                                | Map - a reference to another dataset. The key is the name of the dataset it depends on                                     |
+| [columnSchema](#columnschema)                      | Nested list of column descriptions                                                                                        |
+| [constraints](#constraints)                        | Nested list/map of table constructs, where the key is the construct name and the value is the settings description         |
+| properties                                         | Nested key-value map of additional parameters                                                                             |
+| partitionStmt                                      | Expression that defines table partitioning                                                                                |
 
 ## sources
-Вложенный список зависимых датасетов
+Nested list of dependent datasets
 
-| Поле       | Назначение                                                                   |
-|:-----------|:-----------------------------------------------------------------------------|
-| properties | Набор свойств датасета - зависимости, которые переопределяют его собственные | 
+| Field       | Purpose                                                                   |
+|:------------|:--------------------------------------------------------------------------|
+| properties  | Set of properties of the dependency dataset that override its own         | 
 
 ## columnSchema
-Вложенный список описаний колонок
+Nested list of column descriptions
 
-| Поле        | Назначение                                                                                                                          |
-|:------------|:------------------------------------------------------------------------------------------------------------------------------------|
-| name        | Имя колонки в таблице хранилища                                                                                                     | 
-| description | Описание для документирования                                                                                                       |
-| dataType    | Тип данных                                                                                                                          |
-| nullable    | Допускается пустое значение. true/false                                                                                             |
-| order       | Порядковый номер расположения колонки. Необязательное. Применимость поля зависит от исполняющего механизма и возможностей хранилища |
+| Field        | Purpose                                                                                                                          |
+|:-------------|:---------------------------------------------------------------------------------------------------------------------------------|
+| name         | Column name in the storage table                                                                                                 | 
+| description  | Description for documentation                                                                                                    |
+| dataType     | Data type                                                                                                                        |
+| nullable     | Whether empty value is allowed. true/false                                                                                       |
+| order        | Ordinal number of the column position. Optional. Applicability depends on the executing engine and storage capabilities          |
 
 ## constraints
 
-Вложенный список конструктивов таблицы
+Nested list of table constructs
 
-**Пример**
+**Example**
 
 ```json
 {
@@ -126,18 +126,16 @@
 ```
 
 ##  /v1_0/configs/datasets
-GET - Выводит полный список конфигураций датасетов
-POST - Примет датасет в body для сохранения
+GET - Returns the full list of dataset configurations
+POST - Accepts a dataset in the body for saving
 ```shell
 curl -X GET http://localhost:8080/v1_0/configs/datasets  |jq
 ```
-GET - Вернет датасет в body
-DELETE - удалит указанный датасет (при отсутствии зависимостей)
+GET - Returns the dataset in the body
+DELETE - Deletes the specified dataset (when there are no dependencies)
 ##  /v1_0/configs/datasets/{keyName}
-
 ```shell
 curl -X GET http://localhost:8080/v1_0/configs/datasets/transaction_dds  |jq
 ```
-
 ##  /v1_0/configs/lineage/datasets/{keyName}
-Вернет [линковку](lineage.md) датасета: граф его зависимостей от других датасетов и обратных ссылок
+Returns the dataset [lineage](lineage.md): the graph of its dependencies on other datasets and back references

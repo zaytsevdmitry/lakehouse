@@ -1,15 +1,15 @@
-# Группа исполнителей задач
-Это специальный маркер для конфигурации задач. По этому маркеру исполнитель может понять, что задача предназначена для него (группы в которую он входит).
-Используется как механизм маршрутизации задач. К примеру сами исполнители могут быть оснащены разным функционалом или даже написаны на разных языках.
-Помечая изадачу и исполнителя одним и тем же маркером, можно получить эффект маршрутизации или управления очередями.
+# Task executor service group
+This is a special marker for task configuration. Using this marker, an executor can understand that a task is intended for it (the group it belongs to).
+It is used as a task routing mechanism. For example, executors can be equipped with different functionality or even written in different languages.
+By marking a task and an executor with the same marker, the effect of routing or queue management can be achieved.
 
-## Поля объекта
- Поле | Назначение                    |
-| :--- |:------------------------------|
-| keyName | Уникальный идентификатов      | 
-| description | Описание для документирования | 
+## Object fields
+| Field | Purpose                       |
+|:------|:------------------------------|
+| keyName | Unique identifier            | 
+| description | Description for documentation| 
 
-**Пример**
+**Example**
 ```json
 {
   "name": "default",
@@ -19,6 +19,6 @@
 ```
 
 ##  /v1_0/configs/taskexecutionservicegroups
-Список объектов
+List of objects
 ##  /v1_0/configs/taskexecutionservicegroups/{keyName}    
-Манипуляция конкретным объектом по ключу
+Manipulates a specific object by key

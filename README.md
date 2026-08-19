@@ -42,7 +42,7 @@ United namespace
 | [lakehouse-state-svc](lakehouse-state-svc)                                             | Candidate    |                                                                                                          |
 | [lakehouse-task-executor-api](lakehouse-task-executor-api)                             | Candidate    |                                                                                                          |
 | [lakehouse-task-executor-rest-client](lakehouse-task-executor-rest-client)             | Candidate    |                                                                                                          |
-| [lakehouse-task-executor-svc](lakehouse-task-executor-svc)                             | Candidate    | [doc](lakehouse-task-executor-svc/readme.md)                                                             |
+| [lakehouse-task-executor-svc](lakehouse-task-executor-svc)                             | Candidate    | [doc en](lakehouse-task-executor-svc/README.md) [doc ru](lakehouse-task-executor-svc/README_ru.md)       |
 | [lakehouse-task-executor-spark-api](lakehouse-task-executor-spark-api)                 | Candidate    | [doc](lakehouse-task-executor-spark-api/doc/readme.md)                                                   |
 | [lakehouse-task-executor-spark-dataset-app](lakehouse-task-executor-spark-dataset-app) | Candidate    |                                                                                                          |
 | [lakehouse-task-executor-spark-dq-app](lakehouse-task-executor-spark-dq-app)           | Prototype    |                                                                                                          |

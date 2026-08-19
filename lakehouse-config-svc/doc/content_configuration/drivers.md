@@ -1,17 +1,17 @@
-# Драйвер (driver)
-Конфигурация позволяющая адаптировать разные реализации хранилищ с подобным по отношению к друг другу функционалом.
-Таким как вставка строк, создание и удаление таблиц, слияние данных и тд. Адоптация достигается путем шаблонизации диалекта SQL(или иного командного языка). 
-## Поля объекта
- Поле                          | Назначение                                                                                                                               |
-|:------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------|
-| keyName                       | Уникальный идентификатов                                                                                                                 | 
-| [sqlTemplate](sqlTemplate.md) | Реализует адаптацию диалекта.                                                                                                            |
-| description                   | Описание для документирования                                                                                                            | 
+# Driver
+Configuration that adapts different storage implementations with similar functionality relative to each other.
+Such as inserting rows, creating and dropping tables, merging data, etc. Adaptation is achieved by templating the SQL dialect (or another command language). 
+## Object fields
+| Field                             | Purpose                                                                                                                               |
+|:----------------------------------|:--------------------------------------------------------------------------------------------------------------------------------------|
+| keyName                           | Unique identifier                                                                                                                     | 
+| [sqlTemplate](sqlTemplate.md)     | Implements dialect adaptation.                                                                                                        |
+| description                       | Description for documentation                                                                                                         | 
 
-Драйвер задает базовый шаблон диалекта, который переопределяется на более частных уровнях ([источник данных](datasources.md), [задача](tasks.md)).
-Ссылка на драйвер производится в [задаче](tasks.md) через поле driverKeyName.
+The driver defines the base dialect template, which is overridden at more specific levels ([data source](datasources.md), [task](tasks.md)).
+A reference to the driver is made in a [task](tasks.md) via the driverKeyName field.
 
-**Пример**
+**Example**
 ```json
 {
   "keyName" : "postgres",
@@ -55,6 +55,6 @@
 
 
 ##  /v1_0/configs/drivers
-Выводит список объектов
+Returns a list of objects
 ##  /v1_0/configs/drivers/{keyName}
-Манипуляция конкретным объектом по ключу
+Manipulates a specific object by key

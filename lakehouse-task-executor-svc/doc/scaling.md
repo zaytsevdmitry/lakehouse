@@ -1,10 +1,10 @@
-# Масштабирование task-executor-service
-Как правило, все задачи выполняемые task-executor-service должны быть легковесными.
-Основная задача сервиса - это разгрузка ответственности сервиса расписаний scheduler-service. task-executor-service является точкой распараллеливания выполнения задач. 
-Он получает задание, адаптирует его для среды выполнения и передает ей, ожидая результата. Это не нагруженная, но блокирующая операция. 
+# Scaling the task-executor-service
+As a rule, all tasks executed by the task-executor-service must be lightweight.
+The main task of the service is to offload responsibility from the scheduler-service. The task-executor-service is the point of parallelization of task execution.
+It receives a job, adapts it for the execution environment and passes it to that environment, waiting for the result. This is not a heavy operation, but a blocking one.
 
-## Важные параметры для управления масштабированием
-в настройке экземпляра сервиса
+## Important parameters for managing scaling
+in the service instance configuration
 - lakehouse.task-executor.scheduled.task.kafka.consumer.concurrency
 - lakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id
 
@@ -29,20 +29,19 @@ lakehouse:
       heart-beat-interval-ms: 5000 
       max-lock-retries: 5
       max-lock-retries-duration-ms: 5
-      id: first1  #<--- Имя , идентифицирующее экземпляр в составе группы. Каждому экземпляру нужно назначить свое мия
+      id: first1  #<--- Name identifying the instance within the group. Each instance needs its own name
     scheduled:
       task:
         kafka:
           consumer:
-            concurrency: 1 #<--- Количество потоков потребления
+            concurrency: 1 #<--- Number of consumption threads
             properties:
-              bootstrap.servers: 192.1.193.20:9092 #<--- брокер из которого получаем задания
-              group.id: default #<--- Обычно используется для фиксации полученных offset. Сервис еще и фильтрует по этому значению, сообщения которые нужно выполнять
+              bootstrap.servers: 192.1.193.20:9092 #<--- broker from which we receive jobs
+              group.id: default #<--- Usually used to fix received offsets. The service also filters by this value which messages to execute
               auto.offset.reset: earliest 
-            topics: scheduled_task_msg #<--- топик из которого получаем задания
-
+            topics: scheduled_task_msg #<--- topic from which we receive jobs
 ```
-в настройке задач
+in the task configuration
 - taskExecutionServiceGroupName: default 
 
 ```json
@@ -66,36 +65,36 @@ lakehouse:
       }
     }
 ```
-> чтобы экземпляр сервиса взял задачу должны совпасть значения параметров 
+> for the service instance to take a task, the parameter values must match 
  lakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id
- и
+ and
  taskExecutionServiceGroupName
-иначе задача будет проигнорирована, ожидается что она адресована другому task-executor-service
+otherwise the task will be ignored, it is expected to be addressed to another task-executor-service
 
-На пример
+For example
 
-Берется для выполнения:
- - lakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id = default и taskExecutionServiceGroupName = default
+Taken for execution:
+ - lakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id = default and taskExecutionServiceGroupName = default
 
-Не берется для выполнения:
- - lakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id = black и taskExecutionServiceGroupName = white
+Not taken for execution:
+ - lakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id = black and taskExecutionServiceGroupName = white
 
-## Вертикальное масштабирование (Scale Up)
-Учитывая легковесную природу задач, первое, что можно сделать для повышения пропускной способности это увеличить количество потребителей задач
+## Vertical scaling (Scale Up)
+Given the lightweight nature of tasks, the first thing that can be done to increase throughput is to increase the number of task consumers
 >lakehouse.task-executor.scheduled.task.kafka.consumer.properties=1
 
-где 1 - значение заданное по умолчанию, означает работу в 1 потока потребления заданий. Увеличивая это число можно получить требуемую пропускную способность
+where 1 is the default value, meaning work in 1 task consumption thread. Increasing this number can achieve the required throughput
 
-> Несмотря на ожидаемую легковесность нужно понимать, что основными потребителями памяти являются *TaskProcessor, код реализованный в них, не должен раздувать память и допускать утечек. Нужно следить за расходом выделенной памяти, увеличивать его
+> Despite the expected lightness, you need to understand that the main memory consumers are *TaskProcessor; the code implemented in them must not inflate memory or allow leaks. You need to monitor the consumption of allocated memory and increase it
 
-## Горизонтальное масштабирование (Scale Out)
-Достигается путем запуска дополнительных экземпляров сервиса. Это могут быть параллельно запущенные jvm на одмо или нескольких хостов. 
-в случае k8s это могут быть реплики.
+## Horizontal scaling (Scale Out)
+Achieved by launching additional instances of the service. These can be JVMs running in parallel on one or multiple hosts.
+in the case of k8s these can be replicas.
 
-## Сегментирование (Segment-based Scaling).
-Задачи разной природы могут занимать стабильно разное время блокировки. На пример:
+## Segment-based scaling.
+Tasks of different natures can have stably different blocking times. For example:
 
-|Группа процессоров | время работы  | Настройка                                                                                                                                                                                                             | Описание|                                                                                                                          | 
+|Processor group | work time | Configuration | Description|
 |-|---------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----|----------------------------------------------------------------------------------------------------|
-|группа процессоров поддержки статусной модели датасетов| мили секунды | <br>lakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1</br><br>lakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id = state</br><br>taskExecutionServiceGroupName = state</br>  | по своей сути мини rest клиент, который за мгновение получает или сообщает статус в сервис статусов и возвращается с результатом. 
-| Spark - процессоры| десятки минут | <br>lakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=20</br><br>lakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id = spark</br><br>taskExecutionServiceGroupName = spark</br> |Создается задача в кластере, что то читает и соединяет, потом записывает                                                                                                                         |
+|dataset state model support processor group| milliseconds | <br>lakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1</br><br>lakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id = state</br><br>taskExecutionServiceGroupName = state</br>  | in essence a mini rest client that in an instant gets or reports a status to the state service and returns with the result. 
+| Spark processors| tens of minutes | <br>lakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=20</br><br>lakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id = spark</br><br>taskExecutionServiceGroupName = spark</br> |A task is created in the cluster, something is read and joined, then written                                                                                                                        |

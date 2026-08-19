@@ -1,68 +1,65 @@
-# Работа с расписаниями
+# Working with schedules
 
-## Структура расписания
+## Schedule structure
 
-Конфигурация расписания содержит как простые атрибуты, так и коллекции вложенных конфигураций
+A schedule configuration contains both simple attributes and collections of nested configurations:
 
-- **keyName** - уникальное ключевое имя расписания
-- **description** текстовое описание расписания для документирования
-- **intervalExpression** - кодированное выражение описывающее интервальность на пример "@daily"
-- **startDateTime** дата, которая служит отправной точкой для расчета первого интервала. Необязательно, что она будет
-  равна дате первого расписания тк она рассчитывается с использованием интервального выражения
-- **stopDateTime** дата прекращения расчета новых интервалов, может быть пустой , что будет означать бесконечность
-- **enabled** включает/выключает процесс расчета новых расписание. Выключение так же приводит к прекращению обработки
-  статусов уже работающих расписаний.
-- **scenarioActEdges** - указывает порядок исполнения актов в сценарии
-    - from с какого
-    - to какой
-- **scenarioActs** - это список вложенных частей сценария(Акты). Части сценария могут быть добавлены без учета порядка
-  их выполнения
-  состав полей
-    - **name** ключевое имя акта. Должно быть уникально.
-    - **dataSetKeyName** ссылка на уникальное имя датасета
-    - **scenarioActTemplate** внутреннее устройство задач в акте может быть шаблонизировано, шаблоны используются
-      повторно. Ссылка на шаблон действия сценария (см. конфигурацию [шаблона действия сценария](../../../lakehouse-config-svc/doc/content_configuration/scenarioActTemplate.md)).
-    - **intervalStart** строковое выражение метки времени отражающего нижнюю границу окна времени в данных, которое
-      будет изменено в датасете. Чаще всего отстает от целевого времени запуска пример "{{ adddays(targetDateTimeTZ,
+- **keyName** - unique key name of the schedule
+- **description** text description of the schedule for documentation
+- **intervalExpression** - encoded expression describing the interval, e.g. "@daily"
+- **startDateTime** date that serves as the starting point for calculating the first interval. It is not necessarily
+  equal to the date of the first schedule, as it is calculated using the interval expression
+- **stopDateTime** date when the calculation of new intervals stops; may be empty, meaning infinity
+- **enabled** enables/disables the calculation of new schedules. Disabling also stops the processing
+  of the statuses of already running schedules.
+- **scenarioActEdges** - specifies the execution order of acts within the scenario
+    - from from which
+    - to to which
+- **scenarioActs** - a list of nested scenario parts (Acts). Scenario parts can be added regardless of the order
+  of their execution
+  field composition
+    - **name** key name of the act. Must be unique.
+    - **dataSetKeyName** reference to the unique name of the dataset
+    - **scenarioActTemplate** the internal structure of tasks in the act can be templated; templates are used
+      repeatedly. Reference to the scenario act template (see the [scenario act template](../../../lakehouse-config-svc/doc/content_configuration/scenarioActTemplate.md) configuration).
+    - **intervalStart** string expression of a timestamp reflecting the lower bound of the time window in the data that
+      will be changed in the dataset. Most often lags behind the target start time, e.g. "{{ adddays(targetDateTimeTZ,
       -1) }}".
-    - **intervalEnd** строковое выражение метки времени отражающего верхнюю границу окна времени в данных, которое будет
-      изменено в датасете". Чаще всего может быть равно целевой метке времени "{{ targetDateTimeTZ }}"
-    - **tasks** Список вложенных объектов - описаний задач. Может быть пустым, но тогда должен быть задан шаблон. Этот
-      список сливается со списком из шаблона. При наличии задачи с одинаковым ключем берутся обе и сливаются в одну. Их
-      также будут слиты, значения атрибутов из текущего списка заменят значения из шаблона
-        - name ключевое имя задачи
-        - taskExecutionServiceGroupName тип исполнителя, которому можно брать эту задачу
-        - taskProcessor имя класса в исполняющем механизме
-        - taskProcessorBody имя класса в исполняющем механизме, в случае если он имеет модульную структуру
-        - taskProcessorArgs набор аргументов которые будут переданы в исполняющий механизм
-        - driverKeyName указывает на конфигурацию-драйвер, чей экземпляр используется для выполнения задачи
-        - importance при не успешности выполнения задачи не кричные не станут препятствием выполнения следующих задач.
-        - description текстовое описание для документирования
-    - dagEdges - указывается порядок исполнения задач
-        - from с какой
-        - to какую
+    - **intervalEnd** string expression of a timestamp reflecting the upper bound of the time window in the data that will
+      be changed in the dataset. Most often can be equal to the target timestamp "{{ targetDateTimeTZ }}"
+    - **tasks** a list of nested objects - task descriptions. It may be empty, but then a template must be provided. This
+      list is merged with the list from the template. If tasks with the same key exist, both are taken and merged into one.
+      Their attribute values from the current list replace the values from the template
+        - name key name of the task
+        - taskExecutionServiceGroupName the type of executor that can take this task
+        - taskProcessor the class name in the execution engine
+        - taskProcessorBody the class name in the execution engine, in case it has a modular structure
+        - taskProcessorArgs the set of arguments passed to the execution engine
+        - driverKeyName points to the driver configuration whose instance is used to execute the task
+        - importance if a task is unsuccessful, non-critical failures do not become an obstacle for the execution of the
+          next tasks.
+        - description text description for documentation
+    - dagEdges - specifies the execution order of tasks
+        - from from which
+        - to to which
 
-## Порядок получения и обработки расписания
+## How a schedule is obtained and processed
 
 ![ConfigQueueScheduleQueueTask.png](ConfigQueueScheduleQueueTask.png)
 
-При получении и обновлении расписания в сервисе конфигурации формируется сообщение в очередь kafka.
-Сервис расписаний подхватывает сообщение и обновляет расписание в оперативном кеше.
+When a schedule is created or updated in the configuration service, a message is produced to a kafka queue.
+The schedule service picks up the message and updates the schedule in its operational cache.
 
-### Внутренний планировщик
+### Internal scheduler
 
 ![SchedulerClasses.png](SchedulerClasses.png)
-С момента появления в кеше расписания и его регистрации, жизненным циклом расписаний управляет внутренний шедулер.
-Шедулер отвечает за формирование расписаний, запуск, и обслуживание
+Once a schedule appears in the cache and is registered, its lifecycle is managed by the internal scheduler.
+The scheduler is responsible for building schedules, running them, and maintaining them.
 
-## Работа расписания
+## Schedule run
 
 ![SchedulingOrder.png](SchedulingOrder.png)
 
-Каждый переход фиксируется изменением статусной модели.
+Each transition is recorded by a change in the status model.
 
 ![ScheduleStatuses.png](ScheduleStatuses.png)
-
-
-
-

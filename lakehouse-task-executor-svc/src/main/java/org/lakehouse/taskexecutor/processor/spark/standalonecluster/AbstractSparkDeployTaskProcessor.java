@@ -113,7 +113,7 @@ public abstract class AbstractSparkDeployTaskProcessor extends AbstractTaskProce
             status =
                     buildSparkRestClientApi(severUrl)
                             .getStatus(createResponse.getSubmissionId());
-            logger.info("Spark job status {}", status.getDriverState());
+            logger.info("Spark job {} status {}", status.getSubmissionId(), status.getDriverState());
 
             if (!isRunning && "RUNNING".equals(status.getDriverState())) {
                 isRunning = true;

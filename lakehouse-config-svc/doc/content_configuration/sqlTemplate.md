@@ -1,53 +1,53 @@
-# Шаблон SQL
-Шаблон диалекта SQL(или иного командного языка).
-Состоит из ключей каждый из которых является определенной способностью базы данных или движка SQL. 
-Каждое значение является ссылкой на скрипт содержащий шаблон соответствующей команды.  
-Не является самостоятельной конфигурацией. Входит в состав конфигураций [драйвер](drivers.md) и [задача](tasks.md) 
-При использовании обеих сущностей производится слияние шаблонов с перекрытием. 
-Если искомый ключ есть в задаче, то будет взят он. Если отсутствует, то будет взят в драйвере.
-Такой подход позволяет указать шаблоны в один раз в драйвере, а в более частных случаях перегружать значение в конкретной задаче.
+# SQL template
+SQL dialect template (or another command language).
+Consists of keys each of which is a certain capability of the database or SQL engine. 
+Each value is a reference to a script containing the template of the corresponding command.  
+It is not a standalone configuration. It is part of the [driver](drivers.md) and [task](tasks.md) configurations.
+When both entities are used, the templates are merged with overlap. 
+If the searched key exists in the task, it is taken. If absent, it is taken from the driver.
+This approach allows specifying templates once in the driver, and overriding the value in a specific task for more specific cases.
 
-## Поля объекта
-В качестве значения используются ключи скриптов, содержащих шаблоны для адоптации предопределенных действий в целевой системе
+## Object fields
+As values, script keys are used that contain templates for adapting predefined actions in the target system
 
- Поле                                                        | Назначение шаблона                                       |
-|:------------------------------------------------------------|:---------------------------------------------------------|
-|databaseSchemaName| Код извлечения имени схемы бд из targetDataSet           |
-|databaseSchemaDDLCreate| Создание схемы в бд                                      |
-|databaseSchemaExistsSQL| Проверка существования схемы в бд                        |
-|tableFullName| определение имени таблицы в формате "схема.таблица       |
-|tableDDLCreate| Создание таблицы                                         |
-|tableSQLExists| Проверка существования таблицы                           |
-|tableDDLDrop| Удаление таблицы                                         |
-|tableDDLTruncate| Сброс данных таблицы                                     |
-|tableDDLCompact| Упаковка таблицы на физическом уровне                    |
-|columnNonNullCheckIntegrity| Проверка соответствия конструктиву Nullable              |
-|columnCheckIntegrity| Проверка соответствия конструктиву                       |
-|partitionDDLExchange| Обмен партициями между таблицами (целевой и буферной)    |
-|partitionDDLDrop| Удаление партиции                                        |
-|partitionDDLTruncate| Сброс данных партиции                                    |
-|partitionDDLAdd| Добавление партиции                                      |
-|partitionDDLCompact| Упаковка партиции на физическом уровне                   |
-|constraintDDLDrop| Удаление конструктива                                    |
-|primaryKeyDDL| Первичный ключ для составления выражения create table    |
-|primaryKeyDDLAdd| Добавление первичного ключа в существующую таблицу       |
-|primaryKeyCheckIntegrity| Проверка соответствия конструктиву PK                    |
-|foreignKeyDDL| Внешний  ключ для составления выражения create table     |
-|foreignKeyDDLAdd| Добавление внешнего ключа в существующую таблицу         |
-|foreignKeyCheckIntegrity| Проверка соответствия конструктиву FK                    |
-|uniqueKeyDDL| Уникальный  ключ для составления выражения create table  |
-|uniqueKeyDDLAdd| Добавление уникального ключа в существующую таблицу      |
-|uniqueKeyCheckIntegrity| Проверка соответствия конструктиву UK                    |
-|columnsCastDML| Приведение типа колонки                                  |
-|mergeDML| Слияние модели в таблицу                                 |
-|insertDML| Вставка модели в таблицу                                 |
-|checkConstraintDDL| Проверочный  ключ для составления выражения create table |
-|checkConstraintDDLAdd| Добавление проверочного ключа в существующую таблицу     |
-|checkConstraintCheckIntegrity| Проверка соответствия конструктиву Check                 |
+| Field                                                        | Template purpose                                     |
+|:-------------------------------------------------------------|:-----------------------------------------------------|
+|databaseSchemaName                                            | Code for extracting the database schema name from targetDataSet           |
+|databaseSchemaDDLCreate                                       | Creating a schema in the database                                       |
+|databaseSchemaExistsSQL                                       | Checking whether a schema exists in the database                        |
+|tableFullName                                                 | Defining the table name in the "schema.table" format                   |
+|tableDDLCreate                                                | Creating a table                                                        |
+|tableSQLExists                                                | Checking whether a table exists                                          |
+|tableDDLDrop                                                   | Dropping a table                                                        |
+|tableDDLTruncate                                              | Clearing table data                                                      |
+|tableDDLCompact                                               | Compacting a table at the physical level                                 |
+|columnNonNullCheckIntegrity                                   | Checking compliance with the Nullable construct                          |
+|columnCheckIntegrity                                          | Checking compliance with the construct                                   |
+|partitionDDLExchange                                          | Exchanging partitions between tables (target and buffer)                 |
+|partitionDDLDrop                                               | Dropping a partition                                                     |
+|partitionDDLTruncate                                          | Clearing partition data                                                  |
+|partitionDDLAdd                                               | Adding a partition                                                       |
+|partitionDDLCompact                                           | Compacting a partition at the physical level                             |
+|constraintDDLDrop                                              | Dropping a construct                                                     |
+|primaryKeyDDL                                                  | Primary key for composing the create table expression                    |
+|primaryKeyDDLAdd                                               | Adding a primary key to an existing table                                |
+|primaryKeyCheckIntegrity                                       | Checking compliance with the PK construct                                 |
+|foreignKeyDDL                                                  | Foreign key for composing the create table expression                    |
+|foreignKeyDDLAdd                                               | Adding a foreign key to an existing table                                |
+|foreignKeyCheckIntegrity                                       | Checking compliance with the FK construct                                 |
+|uniqueKeyDDL                                                   | Unique key for composing the create table expression                     |
+|uniqueKeyDDLAdd                                                | Adding a unique key to an existing table                                 |
+|uniqueKeyCheckIntegrity                                        | Checking compliance with the UK construct                                 |
+|columnsCastDML                                                 | Column type casting                                                     |
+|mergeDML                                                       | Merging the model into the table                                        |
+|insertDML                                                      | Inserting the model into the table                                      |
+|checkConstraintDDL                                             | Check key for composing the create table expression                      |
+|checkConstraintDDLAdd                                          | Adding a check key to an existing table                                  |
+|checkConstraintCheckIntegrity                                  | Checking compliance with the Check construct                             |
 
-[код](../../../lakehouse-common/src/main/java/org/lakehouse/client/api/factory/SQLTemplateFactory.java)
+[code](../../../lakehouse-task-executor-api/src/main/java/org/lakehouse/taskexecutor/api/factory/SQLTemplateFactory.java)
 
-Пример
+Example
 ````json
 {
     "databaseSchemaName" : "sql-template-postgres.databaseSchemaName.sql",
@@ -84,10 +84,10 @@
     "checkConstraintCheckIntegrity" : "sql-template-postgres.checkConstraintCheckIntegrity.sql"
   }
 ````
-Здесь **databaseSchemaDDLCreate** функциональность позволяющая создавать схемы в базах данных. Под схемой здесь понимается имя которое, объединяет множество таблиц в базе данных.
-**"sql-template-postgres.databaseSchemaDDLCreate.sql"** это ссылка на скрипт содержащий шаблон команды создания схемы
+Here **databaseSchemaDDLCreate** is the functionality allowing creation of schemas in databases. A schema here means a name that groups a set of tables in a database.
+**"sql-template-postgres.databaseSchemaDDLCreate.sql"** is a reference to a script containing the schema creation command template
 
-**Пример содержимого скрипта sql-template-postgres.databaseSchemaDDLCreate.sql**
+**Example content of the script sql-template-postgres.databaseSchemaDDLCreate.sql**
 ```
 {%set targetDataSet=dataSets[targetDataSetKeyName]%}
 create schema {{ targetDataSet.databaseSchemaName }}

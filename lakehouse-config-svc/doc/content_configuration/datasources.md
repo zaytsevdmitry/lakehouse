@@ -1,26 +1,25 @@
-# Источники данных (datasources)
-Служит для определения источников данных.
-## Поля объекта
-| Поле                                | Назначение                                                                                                                                                         |
-|:------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| keyName                             | Уникальный идентификатов                                                                                                                                           | 
-| [service](#Вложенный-объект-сервис) | Описывает параметры подключения, для создания сессии или передачи комманд                                                                                          |
-| description                         | Описание для документирования                                                                                                                                      | 
-| databaseProtocol                    | Протокол подключения к источнику                                                                                                                                   |
-| dataSourceType                      | Тип источника. <br/>**database** - для баз данных,<br/> **[iceberg](https://iceberg.apache.org/)** - для таблиц в формате файлов iceberg | 
+# Data sources
+Used to define data sources.
+## Object fields
+| Field                                | Purpose                                                                                                                                                        |
+|:-------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| keyName                              | Unique identifier                                                                                                                                              | 
+| [service](#nested-service-object)    | Describes connection parameters for creating a session or sending commands                                                                                     |
+| description                          | Description for documentation                                                                                                                                  | 
+| databaseProtocol                     | Connection protocol to the source                                                                                                                              |
+| dataSourceType                       | Source type. <br/>**database** - for databases,<br/> **[iceberg](https://iceberg.apache.org/)** - for tables in iceberg file format                             | 
 
-## Вложенный объект сервис
-| Поле       | Назначение                                              |
-|:-----------|:--------------------------------------------------------|
-| host       | Сетевой адрес узла источника                            | 
-| port       | Сетевой адрес порта источника                           | 
-| urn        | Точка подключения. Возможное имя базы данных, или иное  |
-| properties | Прочие параметры подключения в виде карты ключ-значение |
-
-
+## Nested service object
+| Field       | Purpose                                                 |
+|:------------|:--------------------------------------------------------|
+| host        | Network address of the source node                      | 
+| port        | Network port of the source                              | 
+| urn         | Connection point. A possible database name, or other    |
+| properties  | Other connection parameters as a key-value map          |
 
 
-**Пример**
+
+**Example**
 ```json
 {
   "keyName": "processingdb",
@@ -41,12 +40,11 @@
 }
 
 
-
 ```
 
 ##  /v1_0/configs/datasources
-GET - Выводит список источников
+GET - Returns a list of sources
 
 ##  /v1_0/configs/datasources/{keyName}                                                            
 
-Манипуляция конкретным объектом по ключу
+Manipulates a specific object by key

@@ -1,0 +1,7 @@
+@startuml 
+[*] -> LOCKED: TaskExecutor executed "begin" task
+LOCKED --> SUCCESS: TaskExecutor\n executed\n "finally" task after lock
+[*] --> null: when state unknown
+null -> SUCCESS: TaskExecutor executed "finally"\n task without lock
+SUCCESS -> LOCKED: TaskExecutor \n executed "begin" task\n again
+@enduml

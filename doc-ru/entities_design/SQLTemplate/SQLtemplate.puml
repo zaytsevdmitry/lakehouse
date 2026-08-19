@@ -1,0 +1,89 @@
+@startuml
+
+class DataSet [[java:org.lakehouse.config.entities.dataset.DataSet]] {
+	-nameSpace: NameSpace
+	-dataSource: DataSource
+	-databaseSchemaName: String
+	-tableName: String
+	+DataSet()
+	+getNameSpace(): NameSpace
+	+setNameSpace(nameSpace: NameSpace): void
+	+getDataSource(): DataSource
+	+setDataSource(dataSource: DataSource): void
+	+getDatabaseSchemaName(): String
+	+setDatabaseSchemaName(databaseSchemaName: String): void
+	+getTableName(): String
+	+setTableName(tableName: String): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+
+
+class SQLTemplate [[java:org.lakehouse.config.entities.SQLTemplate]] {
+	-dataSource: DataSource
+	-dataSet: DataSet
+	-driver: Driver
+	+SQLTemplate()
+	+getDataSource(): DataSource
+	+setDataSource(dataSource: DataSource): void
+	+getDataSet(): DataSet
+	+setDataSet(dataSet: DataSet): void
+	+getDriver(): Driver
+	+setDriver(driver: Driver): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+
+
+SQLTemplate --> "1" DataSource : dataSource
+class DataSet {
+}
+SQLTemplate --> "1" DataSet : dataSet
+class Driver {
+}
+SQLTemplate --> "1" Driver : driver
+class DataSource {
+}
+SQLTemplate --> "1" DataSource : getDataSource()
+class DataSet {
+}
+SQLTemplate --> "1" DataSet : getDataSet()
+class Driver {
+}
+SQLTemplate --> "1" Driver : getDriver()
+class KeyValueAbstract {
+}
+
+
+class ScriptReference [[java:org.lakehouse.config.entities.script.ScriptReference]] {
+	-id: Long
+	-scriptOrder: Integer
+	+ScriptReference()
+	+setScript(script: Script): void
+	+getId(): Long
+	+setId(id: Long): void
+	+setDataSet(dataSet: DataSet): void
+	+getScriptOrder(): Integer
+	+setScriptOrder(scriptOrder: Integer): void
+	+setQualityMetricsConfTestSet(qualityMetricsConfTestSet: QualityMetricsConfTestSet): void
+	+equals(o: Object): boolean
+	+hashCode(): int
+}
+class Script {
+}
+ScriptReference --> "1" Script : script
+class DataSet {
+}
+ScriptReference --> "1" DataSet : dataSet
+class QualityMetricsConfTestSet {
+}
+ScriptReference --> "1" QualityMetricsConfTestSet : qualityMetricsConfTestSet
+class Script {
+}
+ScriptReference --> "1" Script : getScript()
+class DataSet {
+}
+ScriptReference --> "1" DataSet : getDataSet()
+class QualityMetricsConfTestSet {
+}
+@enduml
