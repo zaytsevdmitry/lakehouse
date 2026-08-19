@@ -30,29 +30,29 @@ United namespace
 
 # Статус проекта
 
-| Компонент                                                                                | Статус      | Документация                                                                                           |
-|------------------------------------------------------------------------------------------|-------------|--------------------------------------------------------------------------------------------------------|
-| [lakehouse-cli](lakehouse-cli)                                                           | Прототип    | [doc](lakehouse-cli/doc-ru/commandline.MD)                                                             |
-| [lakehouse-common-rest-client](lakehouse-common-rest-client)                             | Кандидат    |                                                                                                        |
-| [lakehouse-common-test](lakehouse-common-test)                                           | Кандидат    |                                                                                                        |
-| [lakehouse-config-rest-client](lakehouse-config-rest-client)                             | Кандидат    |                                                                                                        |
-| [lakehouse-config-svc](lakehouse-config-svc)                                             | Кандидат    | [doc](lakehouse-config-svc/doc-ru/readme.md)                                                           |
-| [lakehouse-scheduler-rest-client](lakehouse-scheduler-rest-client)                       | Кандидат    |                                                                                                        |
-| [lakehouse-scheduler-svc](lakehouse-scheduler-svc)                                       | Кандидат    | [doc](lakehouse-scheduler-svc/doc-ru/readme.md)                                                        |
-| [lakehouse-state-rest-client](lakehouse-state-rest-client)                               | Кандидат    |                                                                                                        |
-| [lakehouse-state-svc](lakehouse-state-svc)                                               | Кандидат    |                                                                                                        |
-| [lakehouse-task-executor-api](lakehouse-task-executor-api)                               | Кандидат    |                                                                                                        |
-| [lakehouse-task-executor-rest-client](lakehouse-task-executor-rest-client)               | Кандидат    |                                                                                                        |
-| [lakehouse-task-executor-svc](lakehouse-task-executor-svc)                               | Кандидат    |  [doc](lakehouse-task-executor-svc/README_ru.md)         |
-| [lakehouse-task-executor-spark-api](lakehouse-task-executor-spark-api)                   | Кандидат    | [doc](lakehouse-task-executor-spark-api/doc/readme.md)                                                 |
-| [lakehouse-task-executor-spark-dataset-app](lakehouse-task-executor-spark-dataset-app)   | Кандидат    |                                                                                                        |
-| [lakehouse-task-executor-spark-dq-app](lakehouse-task-executor-spark-dq-app)             | Прототип    |                                                                                                        |
-| [lakehouse-validators](lakehouse-validators)                                             | Прототип    |                                                                                                        |
-| [lakehouse-ui-svc](lakehouse-ui-svc)                                                     | Прототип |                                                                                                   |
-| [lakehouse-task-proxy-for-spark](lakehouse-task-proxy-for-spark)                         | Кандидат    | [doc en](lakehouse-task-proxy-for-spark/README.md) [doc ru](lakehouse-task-proxy-for-spark/README_ru.md) |
-| [lakehouse-task-proxy-for-spark-api](lakehouse-task-proxy-for-spark-api)                 | Кандидат    |                                                                                                        |
-| Авторизация и безопасность                                                               | Не спроектирован |                                                                                                   |
-| [Docker](docker)                                                                         | Кандидат    | [doc](docker/readme.md)                                                                                |
+| Компонент                                                                                | Статус      | Документация                                           |
+|------------------------------------------------------------------------------------------|-------------|--------------------------------------------------------|
+| [lakehouse-cli](lakehouse-cli)                                                           | Прототип    | [doc](lakehouse-cli/doc-ru/commandline.MD)             |
+| [lakehouse-common-rest-client](lakehouse-common-rest-client)                             | Кандидат    |                                                        |
+| [lakehouse-common-test](lakehouse-common-test)                                           | Кандидат    |                                                        |
+| [lakehouse-config-rest-client](lakehouse-config-rest-client)                             | Кандидат    |                                                        |
+| [lakehouse-config-svc](lakehouse-config-svc)                                             | Кандидат    | [doc](lakehouse-config-svc/doc-ru/readme.md)           |
+| [lakehouse-scheduler-rest-client](lakehouse-scheduler-rest-client)                       | Кандидат    |                                                        |
+| [lakehouse-scheduler-svc](lakehouse-scheduler-svc)                                       | Кандидат    | [doc](lakehouse-scheduler-svc/doc-ru/readme.md)        |
+| [lakehouse-state-rest-client](lakehouse-state-rest-client)                               | Кандидат    |                                                        |
+| [lakehouse-state-svc](lakehouse-state-svc)                                               | Кандидат    |                                                        |
+| [lakehouse-task-executor-api](lakehouse-task-executor-api)                               | Кандидат    |                                                        |
+| [lakehouse-task-executor-rest-client](lakehouse-task-executor-rest-client)               | Кандидат    |                                                        |
+| [lakehouse-task-executor-svc](lakehouse-task-executor-svc)                               | Кандидат    | [doc](lakehouse-task-executor-svc/README_ru.md)        |
+| [lakehouse-task-executor-spark-api](lakehouse-task-executor-spark-api)                   | Кандидат    | [doc](lakehouse-task-executor-spark-api/doc/readme.md) |
+| [lakehouse-task-executor-spark-dataset-app](lakehouse-task-executor-spark-dataset-app)   | Кандидат    |                                                        |
+| [lakehouse-task-executor-spark-dq-app](lakehouse-task-executor-spark-dq-app)             | Прототип    |                                                        |
+| [lakehouse-validators](lakehouse-validators)                                             | Прототип    |                                                        |
+| [lakehouse-ui-svc](lakehouse-ui-svc)                                                     | Прототип | [doc](lakehouse-ui-svc/doc-ru/readme.md)               |
+| [lakehouse-task-proxy-for-spark](lakehouse-task-proxy-for-spark)                         | Кандидат    | [doc](lakehouse-task-proxy-for-spark/README_ru.md)     |
+| [lakehouse-task-proxy-for-spark-api](lakehouse-task-proxy-for-spark-api)                 | Кандидат    |                                                        |
+| Авторизация и безопасность                                                               | Не спроектирован |                                                        |
+| [Docker](docker)                                                                         | Кандидат    | [doc](docker/readme.md)                                |
 
 
 
