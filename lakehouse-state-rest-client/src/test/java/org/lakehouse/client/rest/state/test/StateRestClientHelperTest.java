@@ -80,7 +80,7 @@ public class StateRestClientHelperTest {
 
         DataSetStateDTO dataSetStateDTOExpect = getDataSetStateDTOExpect();
 
-        server.expect(requestTo(Endpoint.STATE_DATASET_WRONG))
+        server.expect(requestTo(Endpoint.STATE_DATASET))
                 .andExpect(method(HttpMethod.PUT))
                 .andExpect(content().json(objectMapper.writeValueAsString(dataSetStateDTOExpect)))
                 .andRespond(withSuccess());

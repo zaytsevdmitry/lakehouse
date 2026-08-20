@@ -100,5 +100,5 @@ docker compose down
 
 Очистить данные хранилища minio. Потребуются root привилегии тк сервис работает в контейнере под root  
 ```shell
-su_cleanup.bash
+bash su_cleanup.bash
 ```

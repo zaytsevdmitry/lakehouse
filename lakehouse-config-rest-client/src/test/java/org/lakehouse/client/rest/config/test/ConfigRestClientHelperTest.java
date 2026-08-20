@@ -119,7 +119,8 @@ public class ConfigRestClientHelperTest {
     public void MakesCorrectCallScheduleEffectiveDTO() throws Exception {
         ScheduleEffectiveDTO sef = fileLoader.loadScheduleEffectiveDTO();
         server.expect(ExpectedCount.manyTimes(),
-                        requestTo(String.format("%s/name/%s", Endpoint.EFFECTIVE_SCHEDULES_ROOT, sef.getKeyName())))
+                        requestTo(Endpoint.EFFECTIVE_SCHEDULES_NAME
+                                .replaceAll("\\{keyName}", sef.getKeyName())))
                 .andRespond(withSuccess(objectMapper.writeValueAsString(sef), MediaType.APPLICATION_JSON));
         System.out.println("Schedule effective is loaded");
 
