@@ -27,7 +27,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @ComponentScan(
         basePackages = {
                 "org.lakehouse.config",
-                "org.lakehouse.health"
+                "org.lakehouse.health",
+                "org.lakehouse.security"
         })
 public class LakehouseConfigApplication {
     public static void main(String[] args) {

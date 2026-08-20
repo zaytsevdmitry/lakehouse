@@ -30,6 +30,14 @@
             <version>0.7.0</version>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-client</artifactId>
+        </dependency>
+        <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-task-proxy-for-spark-api</artifactId>
             <version>0.7.0</version>

@@ -35,7 +35,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
         basePackages = {
                 "org.lakehouse.taskexecutor",
                 "org.lakehouse.client.rest.state",
-                "org.lakehouse.health"
+                "org.lakehouse.health",
+                "org.lakehouse.security"
         },
         basePackageClasses = {
                 ConfigRestClientConfiguration.class,

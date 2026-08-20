@@ -1,0 +1,47 @@
+{
+  "id": "lakehouse",
+  "realm": "lakehouse",
+  "enabled": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "USER",
+        "description": "Обычный пользователь экосистемы"
+      },
+      {
+        "name": "ADMIN",
+        "description": "Администратор с полным доступом к Spark и конфигурациям"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "lakehouse-ui-client",
+      "name": "UI BFF Client",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "super-secret-bff-key-1234567890",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": [
+        "http://localhost:8080/*",
+        "http://localhost:8080/login/oauth2/code/keycloak"
+      ],
+      "webOrigins": [
+        "http://localhost:8080"
+      ]
+    },
+    {
+      "clientId": "lakehouse-internal-client",
+      "name": "Service-to-Service Internal Client",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "super-secret-internal-key-987654321",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true
+    }
+  ]
+}

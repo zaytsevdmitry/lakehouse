@@ -39,6 +39,35 @@ services:
     networks:
       lakehouse_net:
         ipv4_address: 172.20.193.10
+    volumes:
+      - ./conf_infra/security/init_keycloak_schema.sql:/docker-entrypoint-initdb.d/init_keycloak_schema.sql
+
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: keycloak
+    command: start-dev --import-realm
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://db-dev:5432/postgresDB?currentSchema=keycloak&ApplicationName=Keycloak
+      KC_DB_USERNAME: postgresUser
+      KC_DB_PASSWORD: postgresPW
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin_local_password
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+    ports:
+      - "8085:8080" # Панель управления Keycloak доступна на хосте
+    networks:
+      lakehouse_net:
+        ipv4_address: 172.20.193.180 # Свободный IP в вашей подсети 172.20.193.0/24
+    depends_on:
+      db-dev:
+        condition: service_healthy
+    volumes:
+      - ./conf_infra/security/realms/lakehouse-realm.json:/opt/keycloak/data/import/lakehouse-realm.json
+
+
 
   broker:
     image: apache/kafka:latest

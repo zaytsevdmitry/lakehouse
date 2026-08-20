@@ -24,3 +24,8 @@ lakehouse-task-executor-spark-dq-app/dependency-reduced-pom.xml
 /demo/compose/storages/minio_storage/sparklogs/
 /lakehouse-config-svc/tmp/
 /prompt.md
+/lakehouse-config-svc/logs/audit.log
+/lakehouse-scheduler-svc/logs/audit.log
+/lakehouse-state-svc/logs/audit.log
+/lakehouse-task-executor-svc/logs/audit.log
+/lakehouse-task-proxy-for-spark/logs/audit.log

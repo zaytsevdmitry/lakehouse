@@ -82,7 +82,8 @@ import java.io.IOException;
 import java.util.*;
 
 @AutoConfigureMockMvc
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = {"lakehouse.security.enabled=false"})
 @ComponentScan(
         basePackages = {
                 "org.lakehouse.config", "org.lakehouse.test"

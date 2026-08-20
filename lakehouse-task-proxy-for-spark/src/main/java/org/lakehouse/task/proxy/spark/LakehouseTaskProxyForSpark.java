@@ -22,7 +22,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(scanBasePackages = {
         "org.lakehouse.task.proxy.spark",
-        "org.lakehouse.health"})
+        "org.lakehouse.health",
+        "org.lakehouse.security"})
 @EnableScheduling
 public class LakehouseTaskProxyForSpark {
     public static void main(String[] args) {
