@@ -17,8 +17,8 @@
 
 package org.lakehouse.state;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.*;
 import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.dto.state.DataSetStateDTO;
@@ -38,7 +38,6 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
@@ -68,32 +67,23 @@ public class DataSetStateTest {
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine").withDatabaseName("test")
             .withUsername("name").withPassword("password");
-    @Container
-    static final KafkaContainer kafka = new KafkaContainer(
-            DockerImageName.parse("confluentinc/cp-kafka:7.6.1")
-    );
-
 
     @LocalServerPort
     private Integer port;
 
     @BeforeAll
     static void beforeAll() {
-        kafka.start();
         postgres.start();
 
     }
 
     @AfterAll
     static void afterAll() {
-        kafka.stop();
         postgres.stop();
     }
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.kafka.bootstrap-servers", kafka::getBootstrapServers);
-        registry.add("lakehouse.config.schedule.kafka.producer.bootstrap-servers", kafka::getBootstrapServers);
         registry.add("spring.datasource.url", postgres::getJdbcUrl);
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
@@ -108,7 +98,7 @@ public class DataSetStateTest {
                         .readValue(
                                 getClass()
                                         .getClassLoader()
-                                        .getResource("states.json"),
+                                        .getResourceAsStream("states.json"),
                                 new TypeReference<List<DataSetStateDTO>>() {
                                 })
                         .stream()

@@ -14,6 +14,42 @@
       }
     ]
   },
+  "users": [
+    {
+      "username": "de_view",
+      "firstName": "Data",
+      "lastName": "Viewer",
+      "email": "de_view@lakehouse.local",
+      "enabled": true,
+      "emailVerified": true,
+      "requiredActions": [],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "de_view",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["USER"]
+    },
+    {
+      "username": "de_editor",
+      "firstName": "Data",
+      "lastName": "Editor",
+      "email": "de_editor@lakehouse.local",
+      "enabled": true,
+      "emailVerified": true,
+      "requiredActions": [],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "de_editor",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["ADMIN"]
+    }
+  ],
   "clients": [
     {
       "clientId": "lakehouse-ui-client",

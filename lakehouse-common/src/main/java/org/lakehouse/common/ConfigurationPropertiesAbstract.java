@@ -16,10 +16,11 @@
  */
 
 package org.lakehouse.common;
+import java.util.HashMap;
 import java.util.Map;
 public abstract class ConfigurationPropertiesAbstract implements ConfigurationProperties{
 
-    private Map<String, String> properties;
+    private Map<String, String> properties = new HashMap<>();
 
     public Map<String, String> getProperties() {
         return properties;

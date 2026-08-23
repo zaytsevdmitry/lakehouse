@@ -24,14 +24,14 @@
 - двух мест хранения данных бд Postgres и файловая система [datasources](compose/conf/datasources).
 - пяти датасетов [datasets](compose/conf/datasets) и скриптов описывающих трансформацию
   данных [dataset-sql-model](compose/conf/sql-scripts/dataset-sql-model)
-- трех шаблонов сценариев [scenario-act-templates](compose/conf/scenario-act-templates):
-    - [spark](compose/conf/scenario-act-templates/spark.json) применяется в
+- трех шаблонов сценариев [scenario-act-templates](compose/conf/scenarios):
+    - [spark](compose/conf/scenarios/spark.json) применяется в
       расписаниях [regular](compose/conf/schedules/regular.json) и [initial](compose/conf/schedules/initial.json). Обслуживает логику
       Spark задач
-    - [spark-dq](compose/conf/scenario-act-templates/spark-dq.json) применяется в
+    - [spark-dq](compose/conf/scenarios/spark-dq.json) применяется в
       расписаниях [regular](compose/conf/schedules/regular.json) и [initial](compose/conf/schedules/initial.json). Обслуживает логику
       Spark задач c оснащенных шагом DataQuality
-    - [database](compose/conf/scenario-act-templates/database.json) применяется в
+    - [database](compose/conf/scenarios/database.json) применяется в
       расписаниях [generateSource](compose/conf/schedules/generateSource.json)
       и [generateSourceDict](compose/conf/schedules/generateSourceDict.json). Обслуживает логику jdbc задач
 - расписаний, сценарий которого применяет шаблоны последовательностей задач. :

@@ -3,22 +3,14 @@
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
     <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
 
-    <property name="AUDIT_LOG_FILE" value="logs/audit.log"/>
-
-    <appender name="AUDIT_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${AUDIT_LOG_FILE}</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>logs/audit.%d{yyyy-MM-dd}.log</fileNamePattern>
-            <maxHistory>30</maxHistory>
-        </rollingPolicy>
-        <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} - %msg%n</pattern>
-            <charset>UTF-8</charset>
+    <appender name="AUDIT_CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"log_type":"audit", "service":"lakehouse-config-svc"}</customFields>
         </encoder>
     </appender>
 
     <logger name="AUDIT_LOG" level="INFO" additivity="false">
-        <appender-ref ref="AUDIT_FILE"/>
+        <appender-ref ref="AUDIT_CONSOLE_JSON"/>
     </logger>
 
     <root level="INFO">

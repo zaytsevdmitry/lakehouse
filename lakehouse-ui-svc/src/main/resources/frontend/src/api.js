@@ -1,5 +1,23 @@
+function getCsrfToken() {
+  const match = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+export async function apiFetch(url, options = {}) {
+  const method = (options.method || 'GET').toUpperCase();
+  if (!['GET', 'HEAD', 'OPTIONS', 'TRACE'].includes(method)) {
+    const token = getCsrfToken();
+    if (token !== null) {
+      const headers = new Headers(options.headers || {});
+      headers.set('X-XSRF-TOKEN', token);
+      options = { ...options, headers };
+    }
+  }
+  return fetch(url, options);
+}
+
 export async function fetchCatalogTree() {
-  const response = await fetch('/api/catalog/tree');
+  const response = await apiFetch('/api/catalog/tree');
   if (!response.ok) {
     throw new Error(`Failed to load catalog: ${response.status} ${await response.text()}`);
   }
@@ -7,7 +25,7 @@ export async function fetchCatalogTree() {
 }
 
 export async function fetchDataSet(keyName) {
-  const response = await fetch(`/api/catalog/dataset/${encodeURIComponent(keyName)}`);
+  const response = await apiFetch(`/api/catalog/dataset/${encodeURIComponent(keyName)}`);
   if (!response.ok) {
     throw new Error(`Failed to load data set: ${response.status} ${await response.text()}`);
   }
@@ -15,7 +33,7 @@ export async function fetchDataSet(keyName) {
 }
 
 export async function fetchDataSource(keyName) {
-  const response = await fetch(`/api/catalog/datasource/${encodeURIComponent(keyName)}`);
+  const response = await apiFetch(`/api/catalog/datasource/${encodeURIComponent(keyName)}`);
   if (!response.ok) {
     throw new Error(`Failed to load data source: ${response.status} ${await response.text()}`);
   }
@@ -23,7 +41,7 @@ export async function fetchDataSource(keyName) {
 }
 
 export async function fetchLineage(keyName) {
-  const response = await fetch(`/api/catalog/dataset/${encodeURIComponent(keyName)}/lineage`);
+  const response = await apiFetch(`/api/catalog/dataset/${encodeURIComponent(keyName)}/lineage`);
   if (!response.ok) {
     throw new Error(`Failed to load lineage: ${response.status} ${await response.text()}`);
   }
@@ -31,7 +49,7 @@ export async function fetchLineage(keyName) {
 }
 
 export async function fetchConstraints(keyName) {
-  const response = await fetch(`/api/catalog/dataset/${encodeURIComponent(keyName)}/constraints`);
+  const response = await apiFetch(`/api/catalog/dataset/${encodeURIComponent(keyName)}/constraints`);
   if (!response.ok) {
     throw new Error(`Failed to load constraints: ${response.status} ${await response.text()}`);
   }
@@ -39,7 +57,7 @@ export async function fetchConstraints(keyName) {
 }
 
 export async function fetchScript(key) {
-  const response = await fetch(`/api/catalog/script/${encodeURIComponent(key)}`);
+  const response = await apiFetch(`/api/catalog/script/${encodeURIComponent(key)}`);
   if (!response.ok) {
     throw new Error(`Failed to load script: ${response.status} ${await response.text()}`);
   }
@@ -47,7 +65,7 @@ export async function fetchScript(key) {
 }
 
 export async function fetchDataSetModelScript(keyName) {
-  const response = await fetch(`/api/catalog/dataset/${encodeURIComponent(keyName)}/model-script`);
+  const response = await apiFetch(`/api/catalog/dataset/${encodeURIComponent(keyName)}/model-script`);
   if (!response.ok) {
     throw new Error(`Failed to load model script: ${response.status} ${await response.text()}`);
   }
@@ -55,7 +73,7 @@ export async function fetchDataSetModelScript(keyName) {
 }
 
 export async function fetchStates(dataSetKeyName, fromDate, toDate) {
-  const response = await fetch('/api/states', {
+  const response = await apiFetch('/api/states', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ dataSetKeyName, fromDate, toDate }),
@@ -67,7 +85,7 @@ export async function fetchStates(dataSetKeyName, fromDate, toDate) {
 }
 
 export async function fetchSchedules(fromDate, toDate, names = []) {
-  const response = await fetch('/api/schedules', {
+  const response = await apiFetch('/api/schedules', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ fromDate, toDate, names }),
@@ -79,7 +97,7 @@ export async function fetchSchedules(fromDate, toDate, names = []) {
 }
 
 export async function fetchScheduleHeaders() {
-  const response = await fetch('/api/schedules/headers');
+  const response = await apiFetch('/api/schedules/headers');
   if (!response.ok) {
     throw new Error(`Failed to load schedule headers: ${response.status} ${await response.text()}`);
   }
@@ -87,7 +105,7 @@ export async function fetchScheduleHeaders() {
 }
 
 export async function fetchScheduleInstanceDAG(id) {
-  const response = await fetch(`/api/schedules/dag/${id}`);
+  const response = await apiFetch(`/api/schedules/dag/${id}`);
   if (!response.ok) {
     throw new Error(`Failed to load schedule instance DAG: ${response.status} ${await response.text()}`);
   }
@@ -95,7 +113,7 @@ export async function fetchScheduleInstanceDAG(id) {
 }
 
 export async function fetchServices() {
-  const response = await fetch('/api/services');
+  const response = await apiFetch('/api/services');
   if (!response.ok) {
     throw new Error(`Failed to load services: ${response.status} ${await response.text()}`);
   }
@@ -103,7 +121,7 @@ export async function fetchServices() {
 }
 
 export async function fetchServiceEdges() {
-  const response = await fetch('/api/services/edges');
+  const response = await apiFetch('/api/services/edges');
   if (!response.ok) {
     throw new Error(`Failed to load service edges: ${response.status} ${await response.text()}`);
   }
@@ -111,7 +129,7 @@ export async function fetchServiceEdges() {
 }
 
 export async function fetchServiceVertices() {
-  const response = await fetch('/api/services/vertices');
+  const response = await apiFetch('/api/services/vertices');
   if (!response.ok) {
     throw new Error(`Failed to load service vertices: ${response.status} ${await response.text()}`);
   }
@@ -130,7 +148,7 @@ function buildQuery(params) {
 }
 
 export async function fetchSparkSubmissions({ limit, lastId, id, status, dateFrom, dateTo }) {
-  const response = await fetch(
+  const response = await apiFetch(
     `/api/spark-proxy/submissions${buildQuery({ limit, last_id: lastId, id, status, date_from: dateFrom, date_to: dateTo })}`
   );
   if (!response.ok) {
@@ -140,7 +158,7 @@ export async function fetchSparkSubmissions({ limit, lastId, id, status, dateFro
 }
 
 export async function fetchSparkProperties(id) {
-  const response = await fetch(`/api/spark-proxy/submissions/${id}/spark-properties`);
+  const response = await apiFetch(`/api/spark-proxy/submissions/${id}/spark-properties`);
   if (!response.ok) {
     throw new Error(`Failed to load spark properties: ${response.status} ${await response.text()}`);
   }
@@ -148,7 +166,7 @@ export async function fetchSparkProperties(id) {
 }
 
 export async function createSparkSubmission(request) {
-  const response = await fetch('/api/spark-proxy/submissions', {
+  const response = await apiFetch('/api/spark-proxy/submissions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(request),
@@ -160,7 +178,7 @@ export async function createSparkSubmission(request) {
 }
 
 export async function fetchSparkStatus(submissionId) {
-  const response = await fetch(`/api/spark-proxy/submissions/status/${submissionId}`);
+  const response = await apiFetch(`/api/spark-proxy/submissions/status/${submissionId}`);
   if (!response.ok) {
     throw new Error(`Failed to load submission status: ${response.status} ${await response.text()}`);
   }
@@ -168,7 +186,7 @@ export async function fetchSparkStatus(submissionId) {
 }
 
 export async function killSparkSubmission(submissionId) {
-  const response = await fetch(`/api/spark-proxy/submissions/kill/${submissionId}`, { method: 'POST' });
+  const response = await apiFetch(`/api/spark-proxy/submissions/kill/${submissionId}`, { method: 'POST' });
   if (!response.ok) {
     throw new Error(`Failed to kill submission: ${response.status} ${await response.text()}`);
   }
@@ -176,7 +194,7 @@ export async function killSparkSubmission(submissionId) {
 }
 
 export async function killAllSparkSubmissions() {
-  const response = await fetch('/api/spark-proxy/submissions/killall', { method: 'POST' });
+  const response = await apiFetch('/api/spark-proxy/submissions/killall', { method: 'POST' });
   if (!response.ok) {
     throw new Error(`Failed to kill all submissions: ${response.status} ${await response.text()}`);
   }
@@ -184,9 +202,23 @@ export async function killAllSparkSubmissions() {
 }
 
 export async function clearSparkCompleted() {
-  const response = await fetch('/api/spark-proxy/submissions/clear', { method: 'POST' });
+  const response = await apiFetch('/api/spark-proxy/submissions/clear', { method: 'POST' });
   if (!response.ok) {
     throw new Error(`Failed to clear submissions: ${response.status} ${await response.text()}`);
   }
   return response.json();
 }
+
+export async function fetchCurrentUser() {
+  const response = await apiFetch('/api/user');
+  if (!response.ok) {
+    throw new Error(`Failed to load current user: ${response.status} ${await response.text()}`);
+  }
+  return response.json();
+}
+
+export async function logout() {
+  await apiFetch('/logout', { method: 'POST' });
+  window.location.href = '/';
+}
+

@@ -17,7 +17,7 @@
 
 package org.lakehouse.taskexecutor.test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import com.hubspot.jinjava.interpret.FatalTemplateErrorsException;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -53,7 +53,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest(properties = {"spring.main.allow-bean-definition-overriding=true"})
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -185,7 +185,7 @@ public class JinjavaTest {
 
     @Test
     @Order(5)
-    public void testJinjavaRef() throws JsonProcessingException {
+    public void testJinjavaRef() throws JacksonException {
         SourceConfDTO conf = getStubSourceConfDTO();
         String template = "{{ ref('" + conf.getTargetDataSet().getKeyName() + "') }}";
 
@@ -215,7 +215,7 @@ public class JinjavaTest {
     }
     @Test
     @Order(7)
-    public void testJinjavaRefCat() throws JsonProcessingException {
+    public void testJinjavaRefCat() throws JacksonException {
         SourceConfDTO conf = getStubSourceConfDTO();
 
         String template = "{{ refCat('" + conf.getTargetDataSetKeyName() + "') }}";
@@ -423,7 +423,7 @@ public class JinjavaTest {
 
 
     @Test
-    void catalogDataBaseSchema() throws JsonProcessingException {
+    void catalogDataBaseSchema() throws JacksonException {
 
         String dataSetKeyName = "transaction_dds";
         SourceConfDTO sourceConfDTO = configRestClientApi.getSourceConfDTO(dataSetKeyName);
@@ -437,7 +437,7 @@ public class JinjavaTest {
         assert(expected.equals(result));
     }
     @Test
-    void getTaskFullName() throws JsonProcessingException {
+    void getTaskFullName() throws JacksonException {
         // Arrange
         ScheduledTaskDTO dto = new ScheduledTaskDTO();
         dto.setScheduleKeyName("TestSchedule");

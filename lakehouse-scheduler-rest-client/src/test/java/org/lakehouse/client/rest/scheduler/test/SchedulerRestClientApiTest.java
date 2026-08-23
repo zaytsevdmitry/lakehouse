@@ -17,7 +17,7 @@
 
 package org.lakehouse.client.rest.scheduler.test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.api.constant.Status;
@@ -29,7 +29,7 @@ import org.lakehouse.client.api.dto.scheduler.ScheduleTaskInstanceDTO;
 import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
 import org.lakehouse.client.rest.scheduler.configuration.SchedulerRestClientConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
+import org.springframework.boot.restclient.test.autoconfigure.RestClientTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.client.MockRestServiceServer;

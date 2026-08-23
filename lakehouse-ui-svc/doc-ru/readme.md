@@ -140,3 +140,37 @@ lakehouse:
 | `lakehouse.ui.services[].check-type` | Тип проверки: `http` (по умолчанию) или `tcp` |
 | `lakehouse.ui.vertices` | Вершины графа: ключ → имя сервиса |
 | `lakehouse.ui.edges` | Рёбра графа: ключ вершины → список вершин-приёмников |
+
+## Безопасность
+
+UI BFF аутентифицирует пользователей через Keycloak (realm `lakehouse`) по OAuth 2.0 **authorization code flow** (`oauth2Login()`). После успешного входа Spring Security выдает фронтенду защищенную сессионную cookie `JSESSIONID` (`HttpOnly`; в профиле `prod` также `Secure`). Запросы, изменяющие состояние, защищены от CSRF: токен передается фронтенду через cookie `XSRF-TOKEN` (доступную JS) и должен возвращаться в заголовке `X-XSRF-TOKEN`.
+
+Пути из белого списка (вход не требуется): `/healthz`, `/readyz`, `/actuator/**`, `/favicon.ico`. Все остальные запросы требуют аутентифицированной сессии; неаутентифицированные запросы браузера перенаправляются на страницу входа Keycloak, после входа пользователь возвращается на `/` (`defaultSuccessUrl`).
+
+### Необходимые настройки
+
+| Свойство / env | По умолчанию | Описание |
+|---|---|---|
+| `KEYCLOAK_ISSUER_URI` | `http://lakehouse-auth-svc:8080/realms/lakehouse` | URL realm'а; из него строятся эндпоинты auth/token/userinfo/certs |
+| `KEYCLOAK_UI_CLIENT_SECRET` | `super-secret-bff-key-1234567890` | Секрет клиента `lakehouse-ui-client` |
+| `LAKEHOUSE_UI_REDIRECT_URI` | `{baseUrl}/login/oauth2/code/{registrationId}` | OAuth2 redirect URI BFF |
+| `server.servlet.session.cookie.name` / `.http-only` | `JSESSIONID` / `true` | Имя сессионной cookie и флаг HttpOnly |
+| `server.servlet.session.cookie.secure` | `false` (`true` в профиле `prod`) | Установите `true`, если UI работает по HTTPS |
+
+### Настройка учетных записей и ролей в Keycloak
+
+1. **Разверните Keycloak.** В demo-окружении compose поднимает Keycloak 26.0 с админ-консолью на `http://localhost:8085` (учетные данные из `KEYCLOAK_ADMIN`/`KEYCLOAK_ADMIN_PASSWORD`, по умолчанию `admin`/`admin_local_password`) и импортирует эталонный realm из `demo/compose/conf_infra/security/realms/lakehouse-realm.json`. В production используйте постоянную БД и смените все пароли/секреты по умолчанию.
+2. **Роли realm'а.** В realm `lakehouse` определены две роли realm'а:
+   - `USER` - обычный пользователь экосистемы;
+   - `ADMIN` - администратор с полным доступом.
+
+   Роли попадают к сервисам в claim JWT `realm_access.roles` и преобразуются там в authorities `ROLE_USER`/`ROLE_ADMIN` (`KeycloakRoleConverter`).
+3. **Клиент `lakehouse-ui-client`.** Confidential-клиент (*Standard Flow Enabled*, *Direct Access Grants* выключен), используемый данным BFF. Проверьте, что:
+   - *Valid redirect URIs* содержат внешне видимый адрес UI: по умолчанию `http://localhost:8080/*` и `http://localhost:8080/login/oauth2/code/keycloak`;
+   - *Web Origins* содержит origin UI (`http://localhost:8080`);
+   - при развертывании на другом хосте/порту добавьте соответствующие redirect URI и web origin и задайте `LAKEHOUSE_UI_REDIRECT_URI`.
+4. **Создание пользователей.** Админ-консоль → realm `lakehouse` → *Users* → *Add user*: заполните username/email/имя, затем *Credentials* → задайте пароль (выключите *Temporary*, чтобы пароль был постоянным).
+5. **Назначение ролей.** *Users* → выберите пользователя → *Role mapping* → фильтр *Filter by realm roles* → назначьте `USER` и/или `ADMIN` кнопкой *Assign*.
+6. **Service account.** Confidential-клиент `lakehouse-internal-client` (*Service Accounts Enabled*) используется backend-сервисами для межсервисных вызовов; его секрет должен совпадать со значением `KEYCLOAK_INTERNAL_CLIENT_SECRET` на каждом сервисе.
+
+После настройки откройте UI - первый запрос перенаправит на страницу входа Keycloak; войти смогут только пользователи с учетной записью в realm `lakehouse`.

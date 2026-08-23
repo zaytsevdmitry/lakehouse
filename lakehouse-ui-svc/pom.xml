@@ -6,7 +6,7 @@
     <parent>
         <groupId>lakehouse</groupId>
         <artifactId>lakehouse-parent</artifactId>
-        <version>0.7.0</version>
+        <version>0.8.0</version>
     </parent>
 
     <artifactId>lakehouse-ui-svc</artifactId>
@@ -26,6 +26,10 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-restclient</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
         <dependency>
@@ -34,26 +38,31 @@
         </dependency>
         <dependency>
             <groupId>lakehouse</groupId>
+            <artifactId>lakehouse-common-health</artifactId>
+            <version>0.8.0</version>
+        </dependency>
+        <dependency>
+            <groupId>lakehouse</groupId>
             <artifactId>lakehouse-config-rest-client</artifactId>
-            <version>0.7.0</version>
+            <version>0.8.0</version>
         </dependency>
 
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-state-rest-client</artifactId>
-            <version>0.7.0</version>
+            <version>0.8.0</version>
         </dependency>
 
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-scheduler-rest-client</artifactId>
-            <version>0.7.0</version>
+            <version>0.8.0</version>
         </dependency>
 
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-task-proxy-for-spark-rest-client</artifactId>
-            <version>0.7.0</version>
+            <version>0.8.0</version>
         </dependency>
 
         <dependency>

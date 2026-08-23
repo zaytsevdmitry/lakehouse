@@ -17,7 +17,7 @@
 
 package org.lakehouse.taskexecutor.spark.dq.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import org.apache.spark.sql.*;
 import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.constant.Types;
@@ -133,7 +133,7 @@ public class QualityMetricRunner {
         Dataset<Row> testSetDataSet = null;
         try {
             testSetDataSet = testSetRunner.run(testSet, sourceConfDTO, scheduledTaskDTO, jinJavaUtils);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new TaskConfigurationException(e);
         }
         //todo remove/ it's debug

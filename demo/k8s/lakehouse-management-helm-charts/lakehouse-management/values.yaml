@@ -232,7 +232,7 @@ lakehouse-management-task-executor-service:
 lakehouse-task-proxy4spark:
   image:
     repository: lakehouse-task-proxy4spark
-    tag: "0.7.0"
+    tag: "0.8.0"
     pullPolicy: IfNotPresent
   service:
     type: NodePort
@@ -253,7 +253,7 @@ lakehouse-management-ui-svc:
   ui-svc:
     image:
       repository: lakehouse
-      tag: "0.7.0"
+      tag: "0.8.0"
       pullPolicy: IfNotPresent
     replicaCount: 1
     service:

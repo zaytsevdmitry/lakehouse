@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { fetchCatalogTree, fetchServices } from './api.js';
+import { fetchCatalogTree, fetchServices, fetchCurrentUser, logout } from './api.js';
 import CatalogsSection from './components/CatalogsSection.jsx';
 import SchedulesSection from './components/SchedulesSection.jsx';
 import ServicesSection from './components/ServicesSection.jsx';
@@ -21,6 +21,7 @@ export default function App() {
   const [catalogError, setCatalogError] = useState('');
   const [servicesError, setServicesError] = useState('');
   const [theme, setTheme] = useState(getInitialTheme);
+  const [username, setUsername] = useState('');
   const [activeSection, setActiveSection] = useState('services');
   const [createdSections, setCreatedSections] = useState(() => new Set(['services']));
 
@@ -42,6 +43,9 @@ export default function App() {
       .then(setCatalogTree)
       .catch((e) => setCatalogError(e.message));
     reloadServices();
+    fetchCurrentUser()
+      .then((user) => setUsername(user.username))
+      .catch(() => setUsername(''));
   }, [reloadServices]);
 
   useEffect(() => {
@@ -62,6 +66,10 @@ export default function App() {
       <header className="app-header">
         <h1>Lakehouse</h1>
         <div className="header-actions">
+          {username && <span className="user-label">{username}</span>}
+          <button className="theme-toggle" onClick={() => logout()}>
+            Switch user
+          </button>
           <button className="theme-toggle" onClick={toggleTheme}>
             {theme === 'dark' ? 'Day mode' : 'Night mode'}
           </button>

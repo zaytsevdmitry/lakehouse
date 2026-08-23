@@ -18,7 +18,7 @@
 package org.lakehouse.taskexecutor.spark.dq.service;
 
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import org.apache.commons.codec.digest.MurmurHash3;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -120,7 +120,7 @@ public class SparkTaskProcessorDQBody  implements ProcessorBody {
             context.putAll(ObjectMapping.asMap(sourceConfDTO));
             context.putAll(ObjectMapping.asMap(scheduledTaskDTO));
 
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new TaskConfigurationException(e);
         }
         jinJavaUtils.injectGlobalContext(context);

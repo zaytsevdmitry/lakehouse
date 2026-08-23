@@ -23,6 +23,7 @@ import org.lakehouse.ui.config.UiServiceProperties;
 
 @SpringBootApplication(scanBasePackages = {
         "org.lakehouse.ui",
+        "org.lakehouse.security",
         "org.lakehouse.client.rest.config",
         "org.lakehouse.client.rest.state",
         "org.lakehouse.client.rest.scheduler",

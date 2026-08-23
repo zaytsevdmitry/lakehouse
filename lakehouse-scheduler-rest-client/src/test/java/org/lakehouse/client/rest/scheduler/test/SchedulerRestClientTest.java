@@ -17,18 +17,16 @@
 
 package org.lakehouse.client.rest.scheduler.test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import tools.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Test;
 import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
 import org.lakehouse.client.rest.scheduler.configuration.SchedulerRestClientConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
+import org.springframework.boot.restclient.test.autoconfigure.RestClientTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 
@@ -38,7 +36,6 @@ import java.util.List;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
-@RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {SchedulerRestClientConfiguration.class})
 @RestClientTest(properties = {
         "lakehouse.client.rest.scheduler.server.url=",

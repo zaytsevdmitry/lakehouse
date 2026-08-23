@@ -17,9 +17,8 @@
 
 package org.lakehouse.client.rest.config.test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import tools.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Test;
 import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
 import org.lakehouse.client.api.dto.configs.schedule.DriverDTO;
@@ -31,10 +30,9 @@ import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.client.rest.config.configuration.ConfigRestClientConfiguration;
 import org.lakehouse.test.config.util.FileLoader;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
+import org.springframework.boot.restclient.test.autoconfigure.RestClientTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 
@@ -44,7 +42,6 @@ import java.util.Map;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
-@RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {ConfigRestClientConfiguration.class})
 @RestClientTest(properties = {
         "lakehouse.client.rest.config.server.url=",

@@ -17,10 +17,9 @@
 
 package org.lakehouse.client.api.utils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,10 +29,6 @@ import java.util.Map;
 
 public class ObjectMapping {
     private static final ObjectMapper objectMapper = new ObjectMapperTS();
-
-    static {
-        objectMapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-    }
 
     public static <T> T stringToObject(String string, Class<T> clazz) throws IOException {
         return objectMapper.readValue(
@@ -66,22 +61,22 @@ public class ObjectMapping {
                 .writeValue(new File(filePath), o);
     }
 
-    public static String asJsonString(final Object obj) throws JsonProcessingException {
+    public static String asJsonString(final Object obj) throws JacksonException {
         return objectMapper
                 .writeValueAsString(obj);
     }
-    public static String asJsonStringPretty(final Object obj) throws JsonProcessingException {
+    public static String asJsonStringPretty(final Object obj) throws JacksonException {
         return objectMapper
                 .writerWithDefaultPrettyPrinter()
                 .writeValueAsString(obj);
     }
-    public static Map<String,Object> asMap(final Object obj) throws JsonProcessingException {
+    public static Map<String,Object> asMap(final Object obj) throws JacksonException {
         String str = asJsonStringPretty(obj);
         return objectMapper
                 .readValue(asJsonStringPretty(obj), new TypeReference<>() {
                 });
     }
-    public static Map<String,String> asMapOfStrings(final Object obj) throws JsonProcessingException {
+    public static Map<String,String> asMapOfStrings(final Object obj) throws JacksonException {
         String str = asJsonStringPretty(obj);
         return objectMapper
                 .readValue(asJsonStringPretty(obj), new TypeReference<>() {

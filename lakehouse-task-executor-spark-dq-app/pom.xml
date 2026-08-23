@@ -6,7 +6,7 @@
     <parent>
         <groupId>lakehouse</groupId>
         <artifactId>lakehouse-parent</artifactId>
-        <version>0.7.0</version>
+        <version>0.8.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -57,9 +57,19 @@
             </exclusions>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-kafka</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-scheduler-rest-client</artifactId>
-            <version>0.7.0</version>
+            <version>0.8.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.springframework.boot</groupId>
@@ -70,7 +80,7 @@
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-jinjava</artifactId>
-            <version>0.7.0</version>
+            <version>0.8.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.springframework.boot</groupId>
@@ -81,7 +91,7 @@
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-task-executor-spark-api</artifactId>
-            <version>0.7.0</version>
+            <version>0.8.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.springframework.boot</groupId>
@@ -144,7 +154,7 @@
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-task-executor-spark-dataset-app</artifactId>
-            <version>0.7.0</version>
+            <version>0.8.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -161,7 +171,7 @@
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-common-test</artifactId>
-            <version>0.7.0</version>
+            <version>0.8.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -206,7 +216,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.5.3</version>
+                <version>3.6.2</version>
                 <executions>
                     <execution>
                         <id>shade-jar-with-dependencies</id>

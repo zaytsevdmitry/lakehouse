@@ -17,7 +17,7 @@
 
 package org.lakehouse.taskexecutor.api.processor.body.sql;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import org.lakehouse.client.api.dto.common.SQLTemplateDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;
@@ -55,7 +55,7 @@ public abstract class SQLProcessorBodyAbstract implements ProcessorBody{
             jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(sourceConfDTO));
             jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(scheduledTaskDTO));
 
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new TaskConfigurationException(e);
         }
         return dataSourceManipulatorFactory
