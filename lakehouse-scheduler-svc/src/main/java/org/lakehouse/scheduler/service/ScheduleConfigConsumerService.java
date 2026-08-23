@@ -31,12 +31,11 @@ public class ScheduleConfigConsumerService {
 
     private final BuildService buildService;
 
-    private final ConfigRestClientApi configRestClientApi;
+
 
     public ScheduleConfigConsumerService(
             BuildService buildService, ConfigRestClientApi configRestClientApi) {
         this.buildService = buildService;
-        this.configRestClientApi = configRestClientApi;
     }
 
 
