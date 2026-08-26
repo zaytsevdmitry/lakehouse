@@ -8,3 +8,8 @@ ui-svc:
     type: NodePort
     port: 8084
     targetPort: 8084
+
+keycloak:
+  issuerUri: "http://keycloak:8085/realms/lakehouse"
+  uiClientSecret: "super-secret-bff-key-1234567890"
+  internalClientSecret: "super-secret-internal-key-987654321"

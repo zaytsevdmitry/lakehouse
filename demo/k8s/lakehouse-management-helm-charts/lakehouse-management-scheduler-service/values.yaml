@@ -4,4 +4,6 @@ conf-svc:
     tag: "0.8.0"
     pullPolicy: IfNotPresent
 
-
+keycloak:
+  issuerUri: "http://keycloak:8085/realms/lakehouse"
+  internalClientSecret: "super-secret-internal-key-987654321"

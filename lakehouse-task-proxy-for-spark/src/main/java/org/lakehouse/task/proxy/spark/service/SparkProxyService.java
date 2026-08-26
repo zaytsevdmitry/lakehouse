@@ -193,9 +193,12 @@ public class SparkProxyService {
 
         return new SubmissionStatusResponse(
                 "StatusResponse",
-                submission.getMessage() != null ? submission.getMessage() : externalStatus,
+                String.format(
+                        "Original submissionId: %s, submission message: %s",
+                        submission.getSubmissionId(),
+                        submission.getMessage() != null ? submission.getMessage() : externalStatus),
                 null,
-                submission.getSubmissionId(),
+                submission.getId().toString(),
                 true,
                 externalStatus,
                 null, null

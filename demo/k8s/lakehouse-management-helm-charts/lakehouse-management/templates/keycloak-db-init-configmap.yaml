@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-db-init
+  namespace: {{ .Release.Namespace }}
+data:
+  init_keycloak_schema.sql: |
+    -- Keycloak requires its own schema inside the shared postgres database.
+    CREATE SCHEMA IF NOT EXISTS keycloak;

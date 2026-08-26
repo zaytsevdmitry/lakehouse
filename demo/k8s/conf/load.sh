@@ -15,15 +15,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-export url=$1
+set -e
 pwd
 ls ./
-echo "server is 127.0.0.1:8080/v1_0/configs"
-echo "pwd is $PWD"
+
+CONFIG_URN="localhost:18081"
+KEYCLOAK_URN="localhost:8085"
+
 check_config_svc_ready() {
-  if curl -sf -X GET "http://localhost:8080/v1_0/configs/quality/metrics"; then
-      echo "s3 ready!"
+  healthz="http://${CONFIG_URN}/healthz"
+  echo "Checking endpoint: $healthz"
+
+  response=$(curl -sf -X GET "$healthz" || true)
+
+  if [ -n "$response" ]; then
+      echo "Config-SVC response: $response"
   else
       echo "Waiting Config-SVC: The request failed. Sleeping...zzZ"
       sleep 10
@@ -32,93 +38,93 @@ check_config_svc_ready() {
   fi
 }
 
+
+get_access_token() {
+  token_url="http://${KEYCLOAK_URN}/realms/lakehouse/protocol/openid-connect/token"
+  echo "Fetching access token from: $token_url"
+
+  response=$(curl -s -X POST "$token_url" \
+    -H "Content-Type: application/x-www-form-urlencoded" \
+    -d "grant_type=client_credentials" \
+    -d "client_id=lakehouse-internal-client" \
+    -d "client_secret=super-secret-internal-key-987654321")
+
+
+  ACCESS_TOKEN=$(echo "$response" | sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p')
+
+  if [ -z "$ACCESS_TOKEN" ] || [ "$ACCESS_TOKEN" = "$response" ]; then
+      echo "Error: Failed to obtain access token from Keycloak!"
+      echo "Keycloak response: $response"
+      echo "Sleeping 10s and retrying..."
+      sleep 10
+      get_access_token
+  else
+      echo "Token obtained successfully! (Length: ${#ACCESS_TOKEN} chars)"
+  fi
+}
+
 function curlPost() {
-    URL=$1
+    PATH_URL=$1
     JSON_FILE=$2
-    echo "Post to ${URL} file ${JSON_FILE}"
-    curl -f -i -X POST $URL -H "Content-Type: application/json" --show-error  --data-binary "@./$JSON_FILE"
-    if [ $? -ne 0 ]; then
-      echo "cURL error: $output"
-      echo "Curl failed with an HTTP error. URL=$URL JSON_FILE=$JSON_FILE"
-      exit 1
+    FULL_URL="http://${CONFIG_URN}${PATH_URL}"
+
+    echo "Post to ${FULL_URL} file ${JSON_FILE}"
+
+    response_code=$(curl -w "%{http_code}" -s -X POST "$FULL_URL" \
+         -H "Authorization: Bearer $ACCESS_TOKEN" \
+         -H "Content-Type: application/json" \
+         --data-binary "@$JSON_FILE" -o /tmp/curl_json_resp.txt)
+
+    if [ "$response_code" -ne 201 ] && [ "$response_code" -ne 200 ]; then
+        echo -e "\n❌ Server returned error $response_code for URL: $FULL_URL"
+        echo "Error message from server:"
+        cat /tmp/curl_json_resp.txt
+        echo -e "\n"
+        exit 1
     fi
 }
-function curlGet() {
-    URL=$1
-    curl -f -i -X GET $URL --show-error
-    if [ $? -ne 0 ]; then
-      echo "Curl failed with an HTTP error. URL=$URL JSON_FILE=$JSON_FILE"
-      exit 1
-    fi
-}
+
 
 check_config_svc_ready
+get_access_token
 
-find ./sql-scripts/ -type f | while read -r f; do
-    clean_name="${f#./sql-scripts/}" && clean_name="${clean_name//\//.}"
-    curl -i -X POST 127.0.0.1:8080/v1_0/configs/scripts/"$clean_name" \
+echo ">>> Uploading SQL scripts..."
+find ./sql-scripts/ -type f -name "*.sql" | while read -r f; do
+    clean_name="${f#./sql-scripts/}"
+    scriptName="${clean_name//\//.}"
+
+    echo "Uploading script: $scriptName"
+    curl -f -i -X POST "http://${CONFIG_URN}/v1_0/configs/scripts/$scriptName" \
+         -H "Authorization: Bearer $ACCESS_TOKEN" \
          -H "Content-Type: text/plain" \
          --data-binary "@$f"
 done
 
-curlPost 127.0.0.1:8080/v1_0/configs/nameSpaces "name-spaces/demo.json"
 
-for s in "postgres" "spark_iceberg"
-do
-   curlPost 127.0.0.1:8080/v1_0/configs/drivers "drivers/$s.json"
+CATEGORIES=(
+    "nameSpaces"
+    "drivers"
+    "datasources"
+    "taskexecutionservicegroups"
+    "tasks"
+    "datasets"
+    "scenarios"
+    "schedules"
+    "quality/metrics"
+)
+
+for category in "${CATEGORIES[@]}"; do
+    echo ">>> Processing category: $category"
+
+    find "./$category" -maxdepth 2 -type f -name "*.json" 2>/dev/null | sort | while read -r json_file; do
+        curlPost "/v1_0/configs/$category" "$json_file"
+    done
 done
 
-for s in "default"
-do
-   curlPost 127.0.0.1:8080/v1_0/configs/taskexecutionservicegroups "taskexecutionservicegroups/$s.json"
-done
+# test
+echo ">>> Checking effective initial schedule..."
+curl -f -i -X GET "http://${CONFIG_URN}/v1_0/configs/effective/schedules/schedule/initial" \
+     -H "Authorization: Bearer $ACCESS_TOKEN" \
+     --show-error
 
-for s in "begin" "check" "prepare-jdbc" "spark" "spark-dq-template-task"
-do
-   curlPost 127.0.0.1:8080/v1_0/configs/tasks "task-templates/$s.json"
-done
-
-for s in "processingdb" "lakehousestorage"
-do
-   curlPost 127.0.0.1:8080/v1_0/configs/datasources "datasources/$s.json"
-done
-
-
-for s in "client_processing" "transaction_processing" "transaction_dds" "aggregation_pay_per_client_daily_mart" "aggregation_pay_per_client_total_mart"
-do
-   file="dataset-sql-model/$s.sql"
-   scriptName=`echo $file |sed 's/\//./g'`
-   curlPost 127.0.0.1:8080/v1_0/configs/scripts/$scriptName "sql-scripts/$file"
-done
-
-for s in "non_zero_count" "non_zero_count_th"
-do
-   file="dq/$s.sql"
-   scriptName=`echo $file |sed 's/\//./g'`
-   curlPost 127.0.0.1:8080/v1_0/configs/scripts/$scriptName "sql-scripts/$file"
-done
-
-for s in "client_processing" "transaction_processing" "transaction_dds" "aggregation_pay_per_client_daily_mart" "aggregation_pay_per_client_total_mart"
-do
-   curlPost 127.0.0.1:8080/v1_0/configs/datasets "datasets/$s.json"
-done
-
-for s in "database" "spark" "spark-dq"
-do
-   curlPost 127.0.0.1:8080/v1_0/configs/scenarios "scenario-act-templates/$s.json"
-done
-
-
-for s in "regular" "initial" "generateSourceDict" "generateSource"
-do
-   curlPost 127.0.0.1:8080/v1_0/configs/schedules "schedules/$s.json"
-done
-
-curlGet 127.0.0.1:8080/v1_0/configs/effective/schedules/schedule/initial
-echo Quality metrics config
-for s in "transaction_dds_qm" "transaction_dds_qm_const"
-do
-   curlPost 127.0.0.1:8080/v1_0/configs/quality/metrics "quality-metrics/$s.json"
-done
-
-echo -e "\e[37;42m All configurations loaded \e[0m"
+echo -e "\e[37;42m All configurations loaded successfully! \e[0m"
