@@ -60,6 +60,12 @@ The following components are licensed under the Apache License, Version 2.0:
 * JavaTuples (org.javatuples:javatuples)
   Copyright (c) 2010, The JAVATUPLES team (http://javatuples.org)
 
+* Logstash Logback Encoder (net.logstash.logback:logstash-logback-encoder)
+  Copyright 2012-2024 the authors.
+
+* SpringDoc OpenAPI (org.springdoc:springdoc-openapi-starter-webmvc-ui)
+  Copyright 2019-2024 the authors.
+
 ---
 [License text Apache 2.0]
 

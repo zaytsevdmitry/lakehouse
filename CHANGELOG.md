@@ -1,5 +1,82 @@
 # Changelog
 
+## [0.8.0] — 2026-08-26
+
+### Changed
+
+#### Framework upgrade
+- **Spring Boot 3.4.2 → 4.1.1** — major version bump across all modules
+- **JUnit 4.13.2 → JUnit Jupiter 6.1.3** — migrated from `junit:junit` to `org.junit.jupiter:junit-jupiter-api`; commented-out vintage engine for backward compatibility
+- **SLF4J** — version now managed by Spring Boot parent (removed explicit `2.0.16`)
+
+#### New dependencies
+- `org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0` — OpenAPI / Swagger UI (config-svc, scheduler-svc)
+- `net.logstash.logback:logstash-logback-encoder:8.1` — structured JSON logging (config-svc, scheduler-svc, state-svc, task-executor-svc, task-proxy-for-spark)
+- `org.testcontainers:testcontainers-bom:1.20.4` — BOM import for integration tests
+- `org.apache.kafka:kafka-testcontainers:1.19.3` — Kafka testcontainers version property
+
+#### Removed
+- `junit:junit:4.13.2` — replaced by JUnit Jupiter
+- `log4j.properties` files (config-svc, scheduler-svc, task-executor-svc) — replaced by `logback-spring.xml`
+- `AbstractSparkDeployTaskProcessor` — logic inlined into `SparkStandAloneClusterTaskProcessor`
+
+### Added
+
+#### Keycloak security — OAuth2 Resource Server / Client
+All backend services now authenticate via Keycloak (OAuth2 Bearer token validation):
+
+- **`lakehouse-common-health`** — shared security infrastructure:
+  - `AuditLoggingFilter` — logs incoming request details
+  - `BearerTokenClientHttpRequestInterceptor` — attaches OAuth2 access token to outbound REST calls
+  - `KeycloakRoleConverter` — maps Keycloak realm roles to Spring Security authorities
+  - `RestClientSecurityConfiguration` — configures `RestClient` with token relay
+  - `TestSecurityConfiguration` — test-only security config for health controller tests
+  - `KeycloakRoleConverterTest`
+- **`SecurityConfig`** added to: `lakehouse-config-svc`, `lakehouse-scheduler-svc`, `lakehouse-state-svc`, `lakehouse-task-executor-svc`, `lakehouse-task-proxy-for-spark`, `lakehouse-ui-svc`
+- **`SecurityConfigTest`** added to: `lakehouse-config-svc`, `lakehouse-scheduler-svc`
+
+#### OpenAPI
+- **`OpenApiConfig`** — Swagger UI endpoints added to `lakehouse-config-svc`, `lakehouse-scheduler-svc`
+
+#### lakehouse-ui-svc
+- **`UserController`** — `/api/user` endpoint returning authenticated user info (name, email, roles)
+
+#### lakehouse-config-svc
+- **`SparkRestClientConfiguration`** — REST client config for Spark Proxy communication
+
+#### Logging
+- **`logback-spring.xml`** added to all services (config-svc, scheduler-svc, state-svc, task-executor-svc, task-proxy-for-spark), replacing `log4j.properties`
+
+#### Security documentation
+- `doc/security/security.md` — interservice security architecture (EN)
+- `doc-ru/security/security.md` — русская версия
+- PlantUML diagrams: `interservice-security.puml`, `ui-security.puml`, `spark-apps-security.puml`
+
+#### Demo & infrastructure
+- **Docker Compose** — Keycloak service added (image `quay.io/keycloak/keycloak:26.0`, import realm, healthcheck)
+- **Keycloak realm** — `demo/compose/conf_infra/security/realms/lakehouse-realm.json` (clients: `lakehouse-ui-client`, `lakehouse-internal-client`; roles: `USER`, `ADMIN`; demo users: `de_view`, `de_editor`)
+- **Keycloak schema init** — `demo/compose/conf_infra/security/init_keycloak_schema.sql`
+- **K8s Helm charts** for Keycloak:
+  - `keycloak-deployment` — Keycloak pod with `start-dev --import-realm`
+  - `keycloak-service` — ClusterIP:8085
+  - `keycloak-db-init-configmap` — `CREATE SCHEMA IF NOT EXISTS keycloak`
+  - `keycloak-realm-configmap` — realm import via `.Files.Get`
+- **K8s services** — wait-for-keycloak initContainer + `KEYCLOAK_ISSUER_URI` / `KEYCLOAK_INTERNAL_CLIENT_SECRET` env vars on all backend deployments
+- **Spark driver env** — `spark.kubernetes.driverEnv.KEYCLOAK_ISSUER_URI` + `KEYCLOAK_INTERNAL_CLIENT_SECRET` in `spark-defaults-configmap`
+- **`tunnels.bash`** — added `keycloak 8085:8085` port-forward
+- **`README-INSTALL.md`** (k8s) — Keycloak setup instructions (`/etc/hosts`, admin console, demo users)
+- **Demo screenshots** — `demo/img/*.png` (lineage, relations, schedules, pipeline DAG, spark jobs, states, topology-state)
+- **`README-SCENARIO.md`** — updated with screenshot references
+- **`.utils/kafka/topic-get-messages.bash`** — utility for reading Kafka topic messages
+
+#### lakehouse-task-executor-svc
+- **`SparkStandAloneClusterTaskProcessor`** rewritten — expanded submission handling with improved error recovery and status synchronization
+
+### Fixed
+- **Health controller tests** — added `TestSecurityConfiguration` to `HealthControllerTest` and `HealthControllerCustomPathTest` to resolve missing security context in tests
+
+---
+
 ## [0.7.0] — 2026-08-19
 
 ### Added
