@@ -133,5 +133,19 @@ regular тоже начнет работать в феврале, но он су
 - [trino_kafka_metric_status.sql](../Scripts/trino_kafka_metric_status.sql) - trino подключен к kafka и позволяет собрать статус обработки DQ
 
 - [UI](http://localhost:8084/)
+Приветственная страница, мониторит статусы доступности сервисов и отображает топологию. Топология задается в конфиге UI
+![topology-state.png](img/topology-state.png)
+Статусы инкрементов данных можно смотреть на вкладке датасета
+![states.png](img/states.png)
+Расписания. Список на левой панели формируется из настроек расписаний, которые передал в систему разработчик(сервис конфигураций)
+На правой панели данные из сервиса расписаний
+![schedules.png](img/schedules.png)
+Пайплайн расписания 
+![schedule-pipeline.png](img/schedule-pipeline.png)
 
-
+Состояние Spark задач. Предоставляется spark-proxy который контролирует и отслеживает запуски
+![sparkjobs.png](img/sparkjobs.png)
+Происхождение данных
+![linage.png](img/linage.png)
+Реляционная модель. Особенность в том что на изображении показан внешний ключ из спарк таблицы в таблицу базы данных (FK)
+![relations.png](img/relations.png)
