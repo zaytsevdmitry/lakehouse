@@ -17,7 +17,7 @@
 
 package org.lakehouse.config;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import org.junit.jupiter.api.*;
 import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.api.dto.configs.DagEdgeDTO;
@@ -62,12 +62,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -82,7 +81,8 @@ import java.io.IOException;
 import java.util.*;
 
 @AutoConfigureMockMvc
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = {"lakehouse.security.enabled=false"})
 @ComponentScan(
         basePackages = {
                 "org.lakehouse.config", "org.lakehouse.test"
@@ -90,7 +90,6 @@ import java.util.*;
         basePackageClasses = {JinJavaConfiguration.class})
 @Import({FileLoader.class, RestManipulator.class})
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-@EnableJpaRepositories
 public class TestWithPostgres {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     @Autowired
@@ -966,7 +965,7 @@ public class TestWithPostgres {
     }
 
     @Test
-    void printEndpoints() throws JsonProcessingException {
+    void printEndpoints() throws JacksonException {
 
     Arrays.asList(
         Endpoint.ROOT_API_V1_0,

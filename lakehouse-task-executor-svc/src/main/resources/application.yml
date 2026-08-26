@@ -1,5 +1,24 @@
 server:
   port: 8089
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://lakehouse-auth-svc:8080/realms/lakehouse}
+      client:
+        registration:
+          keycloak-internal:
+            provider: keycloak
+            client-id: lakehouse-internal-client
+            client-secret: ${KEYCLOAK_INTERNAL_CLIENT_SECRET:super-secret-internal-key-987654321}
+            authorization-grant-type: client_credentials
+            scope: openid
+        provider:
+          keycloak:
+            authorization-uri: ${KEYCLOAK_ISSUER_URI:http://lakehouse-auth-svc:8080/realms/lakehouse}/protocol/openid-connect/auth
+            token-uri: ${KEYCLOAK_ISSUER_URI:http://lakehouse-auth-svc:8080/realms/lakehouse}/protocol/openid-connect/token
+
 lakehouse:
   client:
     rest:
@@ -13,6 +32,10 @@ lakehouse:
         server:
           url: http://127.0.0.1:8081
   task-executor:
+    processor:
+      sparkStandAloneClusterTaskProcessor:
+        maxWaitToRunningStateTimeoutMs: 120000
+        sparkJobStatusCheckIntervalMs: 3000
     service:
       heart-beat-initial-delaY-ms: 5000
       heart-beat-interval-ms: 5000 # must be lower than lakehouse.scheduler.task.retry.delay-ms
@@ -28,6 +51,7 @@ lakehouse:
               bootstrap.servers: 192.1.193.20:9092
               group.id: default
               auto.offset.reset: earliest
+              max.poll.interval.ms: 3600000
             topics: scheduled_task_msg
 
   health:

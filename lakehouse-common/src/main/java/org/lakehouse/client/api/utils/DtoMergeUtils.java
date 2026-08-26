@@ -16,12 +16,11 @@
  */
 package org.lakehouse.client.api.utils;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
-import java.util.Iterator;
 import java.util.Map;
 
 public class DtoMergeUtils {
@@ -71,15 +70,13 @@ public class DtoMergeUtils {
             ObjectNode targetObj = (ObjectNode) target;
             ObjectNode patchObj = (ObjectNode) patch;
 
-            Iterator<Map.Entry<String, JsonNode>> fields = patchObj.fields();
-            while (fields.hasNext()) {
-                Map.Entry<String, JsonNode> field = fields.next();
+            for (Map.Entry<String, JsonNode> field : patchObj.properties()) {
                 String fieldName = field.getKey();
                 JsonNode patchValue = field.getValue();
 
                 // If the field value in the patch is null, ignore it
                 if (patchValue.isNull()) {
-                    continue; 
+                    continue;
                 }
 
                 if (targetObj.has(fieldName)) {

@@ -17,7 +17,7 @@
 
 package org.lakehouse.taskexecutor.test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -86,7 +86,7 @@ public class StateAdapterTest {
 
     private void runTaskProcessor(
             ScheduledTaskDTO scheduledTaskDTO)
-            throws TaskConfigurationException, TaskFailedException, JsonProcessingException {
+            throws TaskConfigurationException, TaskFailedException, JacksonException {
 
         SourceConfDTO sourceConfDTO = configRestClientApi.getSourceConfDTO(scheduledTaskDTO.getDataSetKeyName());
         JinJavaUtils jinJavaUtils = JinJavaFactory.getJinJavaUtils();

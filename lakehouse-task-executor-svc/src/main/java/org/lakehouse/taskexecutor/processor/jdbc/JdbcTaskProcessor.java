@@ -17,7 +17,7 @@
 
 package org.lakehouse.taskexecutor.processor.jdbc;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.task.SourceConfDTO;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
@@ -65,7 +65,7 @@ public  class JdbcTaskProcessor implements TaskProcessor {
                                     scheduledTaskDTO.getName()
                                     ));
                 }
-            }catch (JsonProcessingException e){
+            }catch (JacksonException e){
                 throw new TaskConfigurationException(e);
             }
         }

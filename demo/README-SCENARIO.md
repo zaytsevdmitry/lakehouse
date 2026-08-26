@@ -13,7 +13,7 @@
 
 Наполнение данными источников и трансформаций производится разными расписаниями по какой-то, нужной кому-то логике. При
 подготовке трансформаций отдельным расписанием будет сделана помесячная загрузка двух первых месяцев 2025 года. Далее
-планируется доставлять трансформации инкрементально, по суточно. Тоесть будет два конкурирующих за датасет расписания.
+планируется доставлять трансформации инкрементально, по суточно. То есть будет два конкурирующих за датасет расписания.
 При этом в целях демонстрации допущено пересечение расписаний трансформации. Это приведет к тому что будет не только
 конкуренция за датасет, но и за одни и те же интервалы датасетов.
 
@@ -24,14 +24,14 @@
 - двух мест хранения данных бд Postgres и файловая система [datasources](compose/conf/datasources).
 - пяти датасетов [datasets](compose/conf/datasets) и скриптов описывающих трансформацию
   данных [dataset-sql-model](compose/conf/sql-scripts/dataset-sql-model)
-- трех шаблонов сценариев [scenario-act-templates](compose/conf/scenario-act-templates):
-    - [spark](compose/conf/scenario-act-templates/spark.json) применяется в
+- трех шаблонов сценариев [scenario-act-templates](compose/conf/scenarios):
+    - [spark](compose/conf/scenarios/spark.json) применяется в
       расписаниях [regular](compose/conf/schedules/regular.json) и [initial](compose/conf/schedules/initial.json). Обслуживает логику
       Spark задач
-    - [spark-dq](compose/conf/scenario-act-templates/spark-dq.json) применяется в
+    - [spark-dq](compose/conf/scenarios/spark-dq.json) применяется в
       расписаниях [regular](compose/conf/schedules/regular.json) и [initial](compose/conf/schedules/initial.json). Обслуживает логику
       Spark задач c оснащенных шагом DataQuality
-    - [database](compose/conf/scenario-act-templates/database.json) применяется в
+    - [database](compose/conf/scenarios/database.json) применяется в
       расписаниях [generateSource](compose/conf/schedules/generateSource.json)
       и [generateSourceDict](compose/conf/schedules/generateSourceDict.json). Обслуживает логику jdbc задач
 - расписаний, сценарий которого применяет шаблоны последовательностей задач. :
@@ -64,7 +64,7 @@
     - [spark-exec[1|2]](compose/conf/taskexecutionservicegroups/spark-cluster.json) обрабатывает spark задачи  2 экземпляра
 
 > Датасеты transaction_processing и client_processing имеют отличительную особенность - тк они являются источником, в их
-> сценариях расписаний [source.json](conf/scenario-act-templates/source.json)  нет шага проверки зависимостей
+> сценариях расписаний [source.json](conf/scenarios/database.json)  нет шага проверки зависимостей
 
 ### Источники собираются каждый день, трансформации тоже каждый день
 
@@ -133,5 +133,19 @@ regular тоже начнет работать в феврале, но он су
 - [trino_kafka_metric_status.sql](../Scripts/trino_kafka_metric_status.sql) - trino подключен к kafka и позволяет собрать статус обработки DQ
 
 - [UI](http://localhost:8084/)
+Приветственная страница, мониторит статусы доступности сервисов и отображает топологию. Топология задается в конфиге UI
+![topology-state.png](img/topology-state.png)
+Статусы инкрементов данных можно смотреть на вкладке датасета
+![states.png](img/states.png)
+Расписания. Список на левой панели формируется из настроек расписаний, которые передал в систему разработчик(сервис конфигураций)
+На правой панели данные из сервиса расписаний
+![schedules.png](img/schedules.png)
+Пайплайн расписания 
+![schedule-pipeline.png](img/schedule-pipeline.png)
 
-
+Состояние Spark задач. Предоставляется spark-proxy который контролирует и отслеживает запуски
+![sparkjobs.png](img/sparkjobs.png)
+Происхождение данных
+![linage.png](img/linage.png)
+Реляционная модель. Особенность в том что на изображении показан внешний ключ из спарк таблицы в таблицу базы данных (FK)
+![relations.png](img/relations.png)

@@ -22,11 +22,12 @@ for svc in \
   "lakehouse-release-trino 9090:8080" \
   "minio 9001:9001" \
   "minio 9000:9000" \
-  "lakehouse-management-config-service 8080:8080" \
+  "lakehouse-management-config-service 18081:8080" \
   "lakehouse-management-state-service 8082:8082" \
   "db-dev 5432:5432" \
   "broker 9092:9092" \
-  "lakehouse-management-ui-svc 8084:8084"
+  "lakehouse-management-ui-svc 8084:8084" \
+  "keycloak 8085:8085"
 do
   set -- $svc
   kubectl port-forward svc/$1 $2 -n lakehouse-management &

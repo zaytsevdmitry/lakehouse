@@ -17,7 +17,7 @@
 
 package org.lakehouse.taskexecutor.spark.dq.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -57,7 +57,7 @@ public class ConstraintTestSetRunner implements TestSetRunner {
             SourceConfDTO sourceConfDTO,
             ScheduledTaskDTO scheduledTaskDTO,
             JinJavaUtils jinJavaUtils
-            ) throws TaskConfigurationException, JsonProcessingException {
+            ) throws TaskConfigurationException, JacksonException {
 
         Check check = prepareCheck(scheduledTaskDTO, jinJavaUtils);
 

@@ -17,7 +17,7 @@
 
 package org.lakehouse.taskexecutor.spark.dq.runner.integrity;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -53,29 +53,29 @@ public class CheckImpl implements Check{
         return execute(sqlTemplateDTO.getColumnNonNullCheckIntegrity(), Map.of(SystemVarKeys.COLUMN, columnDTO));
     }
 
-    private Map<String,Object> getConstraintLocalContext(Map.Entry<String, DataSetConstraintDTO> constraint) throws JsonProcessingException {
+    private Map<String,Object> getConstraintLocalContext(Map.Entry<String, DataSetConstraintDTO> constraint) throws JacksonException {
         Map<String,Object> result = new HashMap<>();
         result.put(SystemVarKeys.CONSTRAINT_NAME, constraint.getKey());
         result.put(SystemVarKeys.CONSTRAINT, ObjectMapping.asMap(constraint.getValue()));
         return result;
     }
     @Override
-    public Dataset<Row> getPrimary(Map.Entry<String, DataSetConstraintDTO> constraint) throws JsonProcessingException {
+    public Dataset<Row> getPrimary(Map.Entry<String, DataSetConstraintDTO> constraint) throws JacksonException {
         return execute(sqlTemplateDTO.getPrimaryKeyCheckIntegrity(), getConstraintLocalContext(constraint));
     }
 
     @Override
-    public Dataset<Row> getForeign(Map.Entry<String, DataSetConstraintDTO> constraint) throws JsonProcessingException {
+    public Dataset<Row> getForeign(Map.Entry<String, DataSetConstraintDTO> constraint) throws JacksonException {
         return execute(sqlTemplateDTO.getForeignKeyCheckIntegrity(), getConstraintLocalContext(constraint));
     }
 
     @Override
-    public Dataset<Row> getUnique(Map.Entry<String, DataSetConstraintDTO> constraint) throws JsonProcessingException {
+    public Dataset<Row> getUnique(Map.Entry<String, DataSetConstraintDTO> constraint) throws JacksonException {
         return execute(sqlTemplateDTO.getUniqueKeyCheckIntegrity(), getConstraintLocalContext(constraint));
     }
 
     @Override
-    public Dataset<Row> getCheck(Map.Entry<String, DataSetConstraintDTO> constraint) throws JsonProcessingException {
+    public Dataset<Row> getCheck(Map.Entry<String, DataSetConstraintDTO> constraint) throws JacksonException {
         return execute(sqlTemplateDTO.getCheckConstraintCheckIntegrity(), getConstraintLocalContext(constraint));
     }
 }

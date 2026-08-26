@@ -22,7 +22,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication(scanBasePackages = {
         "org.lakehouse.state",
-        "org.lakehouse.health"})
+        "org.lakehouse.health",
+        "org.lakehouse.security"})
 public class LakehouseStateApplication {
     public static void main(String[] args) {
 

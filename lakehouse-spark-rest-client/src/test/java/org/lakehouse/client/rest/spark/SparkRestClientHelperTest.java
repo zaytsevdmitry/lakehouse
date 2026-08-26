@@ -17,24 +17,24 @@
 
 package org.lakehouse.client.rest.spark;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import tools.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Test;
+import org.lakehouse.client.rest.spark.configuration.SparkRestClientConfiguration;
 import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.client.rest.spark.standalone.CreateRequest;
 import org.lakehouse.client.rest.spark.standalone.CreateResponse;
 import org.lakehouse.test.config.util.FileLoader;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
+import org.springframework.boot.restclient.test.autoconfigure.RestClientTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
-@RunWith(SpringRunner.class)
+@ContextConfiguration(classes = {SparkRestClientConfiguration.class})
 @RestClientTest(properties = {
         "lakehouse.client.rest.spark.server.url=",
 })
@@ -80,7 +80,7 @@ public class SparkRestClientHelperTest {
 
 
         server.expect(ExpectedCount.manyTimes(),
-                        requestTo("create"))
+                        requestTo("/create"))
                 .andRespond(withSuccess(
                         objectMapper
                                 .writeValueAsString(responseExpect),

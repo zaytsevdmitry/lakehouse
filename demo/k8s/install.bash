@@ -36,11 +36,11 @@ load_image_if_missing() {
 }
 
 # Load only missing images
-load_image_if_missing "lakehouse:0.7.0"
-load_image_if_missing "lakehouse-s3-check:0.7.0"
-load_image_if_missing "lakehouse-hms:0.7.0"
-load_image_if_missing "lakehouse-spark-aws:0.7.0"
-load_image_if_missing "lakehouse-task-proxy4spark:0.7.0"
+load_image_if_missing "lakehouse:0.8.0"
+load_image_if_missing "lakehouse-s3-check:0.8.0"
+load_image_if_missing "lakehouse-hms:0.8.0"
+load_image_if_missing "lakehouse-spark-aws:0.8.0"
+load_image_if_missing "lakehouse-task-proxy4spark:0.8.0"
 
 echo -e "\e[34mAll lakehouse images processed\e[0m"
 

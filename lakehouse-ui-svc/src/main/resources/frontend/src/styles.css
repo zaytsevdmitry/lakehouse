@@ -81,6 +81,12 @@ body {
   color: var(--accent);
 }
 
+.user-label {
+  font-size: 14px;
+  color: var(--text);
+  padding: 8px 6px;
+}
+
 .app-main {
   display: grid;
   grid-template-columns: 1fr;

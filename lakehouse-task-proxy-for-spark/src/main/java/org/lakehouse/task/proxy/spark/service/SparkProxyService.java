@@ -16,7 +16,7 @@
  */
 package org.lakehouse.task.proxy.spark.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.hibernate.query.TypedParameterValue;
 import org.hibernate.type.StandardBasicTypes;
 import org.lakehouse.task.proxy.spark.adapter.SparkAdapter;
@@ -193,9 +193,12 @@ public class SparkProxyService {
 
         return new SubmissionStatusResponse(
                 "StatusResponse",
-                submission.getMessage() != null ? submission.getMessage() : externalStatus,
+                String.format(
+                        "Original submissionId: %s, submission message: %s",
+                        submission.getSubmissionId(),
+                        submission.getMessage() != null ? submission.getMessage() : externalStatus),
                 null,
-                submission.getSubmissionId(),
+                submission.getId().toString(),
                 true,
                 externalStatus,
                 null, null

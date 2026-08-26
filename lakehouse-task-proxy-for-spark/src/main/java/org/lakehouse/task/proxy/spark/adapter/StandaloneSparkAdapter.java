@@ -23,21 +23,33 @@ import org.lakehouse.task.proxy.spark.dto.SubmissionStatusResponse;
 import org.lakehouse.task.proxy.spark.exception.CreateErrorException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class StandaloneSparkAdapter extends SparkAdapterBase {
+    private static final int CONNECT_TIMEOUT_MS = 5000;
+    private static final int READ_TIMEOUT_MS = 15000;
+
     private  final Logger log = LoggerFactory.getLogger(this.getClass());
     private final Pattern submissionIdPattern;
 
     private final String restUrl;
+    private final RestClient restClient;
 
     public StandaloneSparkAdapter(String masterUrl, String restUrl, long submissionTimeoutSeconds, String submissionIdPattern) {
         super(masterUrl, submissionTimeoutSeconds);
         this.restUrl = restUrl;
         this.submissionIdPattern = Pattern.compile(submissionIdPattern);
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(CONNECT_TIMEOUT_MS);
+        requestFactory.setReadTimeout(READ_TIMEOUT_MS);
+        this.restClient = RestClient.builder()
+                .requestFactory(requestFactory)
+                .baseUrl(restUrl)
+                .build();
         log.info("Initialised SparkAdapter {} with masterUrl: {}, control restUrl {}",
                 StandaloneSparkAdapter.class.getSimpleName(),
                 masterUrl,
@@ -60,7 +72,6 @@ public class StandaloneSparkAdapter extends SparkAdapterBase {
 
     @Override
     public SubmissionResponse killSubmission(String submissionId) {
-        RestClient restClient = RestClient.builder().baseUrl(restUrl).build();
         try {
             return restClient.post()
                     .uri("/v1/submissions/kill/" + submissionId)
@@ -74,7 +85,6 @@ public class StandaloneSparkAdapter extends SparkAdapterBase {
 
     @Override
     public SubmissionResponse killAllSubmissions() {
-        RestClient restClient = RestClient.builder().baseUrl(restUrl).build();
         try {
             return restClient.post()
                     .uri("/v1/submissions/killall")
@@ -88,7 +98,6 @@ public class StandaloneSparkAdapter extends SparkAdapterBase {
 
     @Override
     public SubmissionStatusResponse getSubmissionStatus(String submissionId) {
-        RestClient restClient = RestClient.builder().baseUrl(restUrl).build();
         try {
             SubmissionStatusResponse raw = restClient.get()
                     .uri("/v1/submissions/status/" + submissionId)
@@ -123,7 +132,6 @@ public class StandaloneSparkAdapter extends SparkAdapterBase {
 
     @Override
     public void postClear() {
-        RestClient restClient = RestClient.builder().baseUrl(restUrl).build();
         try {
             restClient.post()
                     .uri("/v1/submissions/clear")

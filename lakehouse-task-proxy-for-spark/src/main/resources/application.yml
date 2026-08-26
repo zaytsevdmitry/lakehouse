@@ -5,6 +5,23 @@ spring:
   threads:
     virtual:
       enabled: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://lakehouse-auth-svc:8080/realms/lakehouse}
+      client:
+        registration:
+          keycloak-internal:
+            provider: keycloak
+            client-id: lakehouse-internal-client
+            client-secret: ${KEYCLOAK_INTERNAL_CLIENT_SECRET:super-secret-internal-key-987654321}
+            authorization-grant-type: client_credentials
+            scope: openid
+        provider:
+          keycloak:
+            authorization-uri: ${KEYCLOAK_ISSUER_URI:http://lakehouse-auth-svc:8080/realms/lakehouse}/protocol/openid-connect/auth
+            token-uri: ${KEYCLOAK_ISSUER_URI:http://lakehouse-auth-svc:8080/realms/lakehouse}/protocol/openid-connect/token
   datasource:
     url: jdbc:postgresql://localhost:5432/postgresDB?ApplicationName=TaskProxy4Spark
     username: postgresUser

@@ -16,8 +16,8 @@
  */
 package org.lakehouse.task.proxy.spark.scheduler;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.Timer;
 import jakarta.annotation.PreDestroy;
 import org.lakehouse.task.proxy.spark.adapter.SparkAdapter;

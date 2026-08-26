@@ -17,7 +17,7 @@
 
 package org.lakehouse.taskexecutor.test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -179,7 +179,7 @@ public class TaskExecutorTest {
 
     private void runTaskProcessor(
             ScheduledTaskDTO scheduledTaskDTO)
-            throws TaskConfigurationException, TaskFailedException, JsonProcessingException {
+            throws TaskConfigurationException, TaskFailedException, JacksonException {
         SourceConfDTO sourceConfDTO = configRestClientApi.getSourceConfDTO(scheduledTaskDTO.getDataSetKeyName());
         JinJavaUtils jinJavaUtils = JinJavaFactory.getJinJavaUtils();
         jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(sourceConfDTO));
@@ -190,7 +190,7 @@ public class TaskExecutorTest {
     private ScheduledTaskDTO getTaskByDatasetName(
             ScheduleEffectiveDTO scheduleEffectiveDTO,
             String dataSetKeyName,
-            String taskName) throws JsonProcessingException {
+            String taskName) throws JacksonException {
         TaskDTO taskDTO = scheduleEffectiveDTO
                 .getScenarioActs()
                 .stream()
@@ -226,7 +226,7 @@ public class TaskExecutorTest {
     @Test
     @Order(1)
     void  testExecutionModules()
-            throws TaskConfigurationException, TaskFailedException, JsonProcessingException {
+            throws TaskConfigurationException, TaskFailedException, JacksonException {
         ScheduleEffectiveDTO scheduleEffectiveDTO = configRestClientApi.getScheduleEffectiveDTO(null);
         DataSetDTO ds = configRestClientApi.getDataSetDTO("client_processing");
         DataSourceDTO pgDs = configRestClientApi.getDataSourceDTO(ds.getDataSourceKeyName());
@@ -252,7 +252,7 @@ public class TaskExecutorTest {
 
     @Test
     @Order(2)
-    void shouldBuildStateTaskProcessor() throws TaskConfigurationException, TaskFailedException, JsonProcessingException {
+    void shouldBuildStateTaskProcessor() throws TaskConfigurationException, TaskFailedException, JacksonException {
         ScheduleEffectiveDTO scheduleEffectiveDTO = configRestClientApi.getScheduleEffectiveDTO(null);
         DataSetDTO ds = configRestClientApi.getDataSetDTO("transaction_dds");
         DataSourceDTO pgDs = configRestClientApi.getDataSourceDTO(ds.getDataSourceKeyName());
@@ -269,7 +269,7 @@ public class TaskExecutorTest {
     }
 
     @Test
-    void testPk() throws TaskConfigurationException, TaskFailedException, JsonProcessingException {
+    void testPk() throws TaskConfigurationException, TaskFailedException, JacksonException {
         ScheduleEffectiveDTO scheduleEffectiveDTO = configRestClientApi.getScheduleEffectiveDTO(null);
         //create
         runTaskProcessor(

@@ -28,12 +28,13 @@ spec:
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata
           volumeMounts:
-            # Монтируем диск для данных
             - mountPath: /var/lib/postgresql/data
               name: db-data
-            # Оставляем shared memory из прошлого шага
             - mountPath: /dev/shm
               name: dshm
+            - name: keycloak-db-init
+              mountPath: /docker-entrypoint-initdb.d/
+              readOnly: true
       volumes:
         - name: db-data
           persistentVolumeClaim:
@@ -42,3 +43,6 @@ spec:
           emptyDir:
             medium: Memory
             sizeLimit: 128Mi
+        - name: keycloak-db-init
+          configMap:
+            name: keycloak-db-init

@@ -130,7 +130,7 @@ class SparkProxyServiceTest {
 
         SubmissionStatusResponse response = service.getStatus(1L);
         assertEquals(ExternalStatus.SUBMITTED.name(), response.driverState());
-        assertEquals("driver-abc-123", response.submissionId());
+        assertEquals("1", response.submissionId());
         assertTrue(response.success());
         verifyNoInteractions(adapter);
     }

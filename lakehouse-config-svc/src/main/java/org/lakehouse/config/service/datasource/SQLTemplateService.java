@@ -17,7 +17,7 @@
 
 package org.lakehouse.config.service.datasource;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import org.lakehouse.client.api.dto.common.SQLTemplateDTO;
 import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.config.entities.KeyValueAbstract;
@@ -84,7 +84,7 @@ public class SQLTemplateService {
                                         .filter(s -> s.getValue() != null)
                                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
                         );
-            } catch (JsonProcessingException e) {
+            } catch (JacksonException e) {
                 throw new ConfigCorruptException(e);
             }
         }

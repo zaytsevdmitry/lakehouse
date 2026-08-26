@@ -25,8 +25,27 @@ spring:
           create-database-schemas: true
       hibernate:
         default_schema: lakehouse_config
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://lakehouse-auth-svc:8080/realms/lakehouse}
+      client:
+        registration:
+          keycloak-internal:
+            provider: keycloak
+            client-id: lakehouse-internal-client
+            client-secret: ${KEYCLOAK_INTERNAL_CLIENT_SECRET:super-secret-internal-key-987654321}
+            authorization-grant-type: client_credentials
+            scope: openid
+        provider:
+          keycloak:
+            authorization-uri: ${KEYCLOAK_ISSUER_URI:http://lakehouse-auth-svc:8080/realms/lakehouse}/protocol/openid-connect/auth
+            token-uri: ${KEYCLOAK_ISSUER_URI:http://lakehouse-auth-svc:8080/realms/lakehouse}/protocol/openid-connect/token
 
 lakehouse:
+  security:
+    enabled: true
   config:
     schedule:
       send:
@@ -42,5 +61,17 @@ lakehouse:
   health:
     liveness-path: /healthz
     readiness-path: /readyz
+
+---
+# Production profile: completely disable Swagger (api-docs + UI)
+spring:
+  config:
+    activate:
+      on-profile: prod
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
 
 

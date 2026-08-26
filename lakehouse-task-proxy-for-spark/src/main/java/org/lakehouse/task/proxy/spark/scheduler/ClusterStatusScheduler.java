@@ -71,7 +71,17 @@ public class ClusterStatusScheduler {
     private void startPolling() {
         for (int i = 0; i < poolSize; i++) {
             futures.add(schedulerExecutor.scheduleWithFixedDelay(
-                    this::processBatch, 0, pollIntervalMs, TimeUnit.MILLISECONDS));
+                    this::runSafely, 0, pollIntervalMs, TimeUnit.MILLISECONDS));
+        }
+    }
+
+    // scheduleWithFixedDelay cancels the whole periodic task if it throws;
+    // guard it so inspection never silently stops
+    private void runSafely() {
+        try {
+            processBatch();
+        } catch (Throwable t) {
+            log.error("Cluster status inspection failed unexpectedly", t);
         }
     }
 
@@ -90,7 +100,7 @@ public class ClusterStatusScheduler {
                     return;
                 }
 
-                log.debug("Claimed {} incomplete tasks for inspection", rows.size());
+                log.info("Claimed {} incomplete tasks for inspection", rows.size());
 
                 for (Object[] row : rows) {
                     Long id = ((Number) row[0]).longValue();

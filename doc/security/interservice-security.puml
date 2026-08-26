@@ -1,0 +1,56 @@
+@startuml interservice-security
+title Lakehouse - service-to-service security
+
+skinparam sequence {
+    ArrowColor #444444
+    ActorBorderColor #2C5D8A
+    LifeCycleBorderColor #2C5D8A
+    ParticipantBorderColor #2C5D8A
+    ParticipantBackgroundColor #E8F0F8
+}
+
+participant "Caller service\n(config-svc / state-svc /\ntask-executor-svc /\nscheduler-svc / task-proxy)" as Caller
+participant "Keycloak\n(realm: lakehouse)" as KC
+participant "Resource service\n(backend REST API)" as RS
+
+== Background processing (Kafka consumer, scheduler, task processor) ==
+
+note over Caller
+    No user JWT in SecurityContextHolder
+    -> fallback to client_credentials
+end note
+
+Caller -> KC : POST /protocol/openid-connect/token\ngrant_type=client_credentials\nclient_id=lakehouse-internal-client
+KC --> Caller : access_token (JWT, cached by\nOAuth2AuthorizedClientManager)
+
+Caller -> RS : REST request\nAuthorization: Bearer <service-account JWT>
+
+== Request handled by the resource server ==
+
+note over RS #FFF3D6
+    Whitelist (no auth): /healthz, /readyz,
+    /actuator/**, /v3/api-docs/**, /swagger-ui/**
+end note
+
+RS -> RS : Validate JWT signature (issuer-uri / JWKS)
+RS -> RS : KeycloakRoleConverter:\nrealm_access.roles -> ROLE_<NAME>
+RS -> RS : AuditLoggingFilter -> AUDIT_LOG (JSON):\nUser ID, Username ("system" for service accounts),\nMethod, URI, HTTP status
+RS --> Caller : 200 OK
+
+== User-initiated processing (token relay) ==
+
+note over Caller
+    JwtAuthenticationToken present in
+    SecurityContextHolder (user request)
+end note
+
+Caller -> RS : REST request\nAuthorization: Bearer <user JWT>\n(token relayed as-is)
+RS -> RS : Same validation + audit\n(user ID / username from JWT claims)
+RS --> Caller : 200 OK
+
+legend right
+    lakehouse.security.enabled = true/false : master switch
+    CSRF disabled (stateless services)
+    Secrets via env vars only
+end legend
+@enduml

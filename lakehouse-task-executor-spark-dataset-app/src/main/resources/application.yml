@@ -4,6 +4,19 @@ server:
 spring:
   main:
     web-application-type: none
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak-internal:
+            provider: keycloak
+            client-id: lakehouse-internal-client
+            client-secret: ${KEYCLOAK_INTERNAL_CLIENT_SECRET:super-secret-internal-key-987654321}
+            authorization-grant-type: client_credentials
+            scope: openid
+        provider:
+          keycloak:
+            token-uri: ${KEYCLOAK_ISSUER_URI:http://keycloak.lakehouse:8085/realms/lakehouse}/protocol/openid-connect/token
 logging:
   structured:
     format: none

@@ -17,8 +17,8 @@
 
 package org.lakehouse.client.api.utils.conf;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.lakehouse.client.api.exception.TaskConfigurationException;
 
 import java.util.HashMap;
@@ -37,9 +37,9 @@ public class ConfUtilTest {
         map.put("key.false", "false");
         map.put("key.upper", "TRUE");
 
-        Assert.assertTrue(ConfUtil.getBooleanByKey(map, "key.true", false));
-        Assert.assertFalse(ConfUtil.getBooleanByKey(map, "key.false", true));
-        Assert.assertTrue(ConfUtil.getBooleanByKey(map, "key.upper", false));
+        Assertions.assertTrue(ConfUtil.getBooleanByKey(map, "key.true", false));
+        Assertions.assertFalse(ConfUtil.getBooleanByKey(map, "key.false", true));
+        Assertions.assertTrue(ConfUtil.getBooleanByKey(map, "key.upper", false));
     }
 
     @Test
@@ -49,12 +49,12 @@ public class ConfUtilTest {
         map.put("key.null", null);
 
         // Key is completely missing
-        Assert.assertTrue(ConfUtil.getBooleanByKey(map, "missing.key", true));
-        Assert.assertFalse(ConfUtil.getBooleanByKey(map, "missing.key", false));
+        Assertions.assertTrue(ConfUtil.getBooleanByKey(map, "missing.key", true));
+        Assertions.assertFalse(ConfUtil.getBooleanByKey(map, "missing.key", false));
 
         // Key contains only whitespaces or is null
-        Assert.assertTrue(ConfUtil.getBooleanByKey(map, "key.blank", true));
-        Assert.assertFalse(ConfUtil.getBooleanByKey(map, "key.null", false));
+        Assertions.assertTrue(ConfUtil.getBooleanByKey(map, "key.blank", true));
+        Assertions.assertFalse(ConfUtil.getBooleanByKey(map, "key.null", false));
     }
 
     @Test
@@ -62,11 +62,11 @@ public class ConfUtilTest {
         Map<String, String> map = new HashMap<>();
         map.put("key.invalid", "not-a-boolean");
 
-        TaskConfigurationException exception = Assert.assertThrows(
+        TaskConfigurationException exception = Assertions.assertThrows(
                 TaskConfigurationException.class,
                 () -> ConfUtil.getBooleanByKey(map, "key.invalid", true)
         );
-        Assert.assertTrue(exception.getMessage().contains("key.invalid"));
+        Assertions.assertTrue(exception.getMessage().contains("key.invalid"));
     }
 
     // ==========================================
@@ -78,7 +78,7 @@ public class ConfUtilTest {
         Map<String, String> map = new HashMap<>();
         map.put("timeout", "5000");
 
-        Assert.assertEquals(Long.valueOf(5000L), ConfUtil.getLongByKey(map, "timeout", 1000L));
+        Assertions.assertEquals(Long.valueOf(5000L), ConfUtil.getLongByKey(map, "timeout", 1000L));
     }
 
     @Test
@@ -87,9 +87,9 @@ public class ConfUtilTest {
         map.put("empty.key", "");
         map.put("null.value", null);
 
-        Assert.assertEquals(Long.valueOf(100L), ConfUtil.getLongByKey(map, "missing.key", 100L));
-        Assert.assertEquals(Long.valueOf(200L), ConfUtil.getLongByKey(map, "empty.key", 200L));
-        Assert.assertEquals(Long.valueOf(300L), ConfUtil.getLongByKey(map, "null.value", 300L));
+        Assertions.assertEquals(Long.valueOf(100L), ConfUtil.getLongByKey(map, "missing.key", 100L));
+        Assertions.assertEquals(Long.valueOf(200L), ConfUtil.getLongByKey(map, "empty.key", 200L));
+        Assertions.assertEquals(Long.valueOf(300L), ConfUtil.getLongByKey(map, "null.value", 300L));
     }
 
     @Test
@@ -97,8 +97,8 @@ public class ConfUtilTest {
         Map<String, String> map = new HashMap<>();
         map.put("empty.key", "");
 
-        Assert.assertThrows(TaskConfigurationException.class, () -> ConfUtil.getLongByKey(map, "missing.key", null));
-        Assert.assertThrows(TaskConfigurationException.class, () -> ConfUtil.getLongByKey(map, "empty.key", null));
+        Assertions.assertThrows(TaskConfigurationException.class, () -> ConfUtil.getLongByKey(map, "missing.key", null));
+        Assertions.assertThrows(TaskConfigurationException.class, () -> ConfUtil.getLongByKey(map, "empty.key", null));
     }
 
     @Test
@@ -106,7 +106,7 @@ public class ConfUtilTest {
         Map<String, String> map = new HashMap<>();
         map.put("timeout", "abc");
 
-        Assert.assertThrows(TaskConfigurationException.class, () -> ConfUtil.getLongByKey(map, "timeout", 1000L));
+        Assertions.assertThrows(TaskConfigurationException.class, () -> ConfUtil.getLongByKey(map, "timeout", 1000L));
     }
 
     // ==========================================
@@ -122,19 +122,19 @@ public class ConfUtilTest {
 
         Map<String, String> result = ConfUtil.extractConf(map, "spark.");
 
-        Assert.assertEquals(2, result.size());
-        Assert.assertEquals("4g", result.get("driver.memory"));
-        Assert.assertEquals("2g", result.get("executor.memory"));
-        Assert.assertFalse(result.containsKey("hadoop.fs.defaultFS"));
+        Assertions.assertEquals(2, result.size());
+        Assertions.assertEquals("4g", result.get("driver.memory"));
+        Assertions.assertEquals("2g", result.get("executor.memory"));
+        Assertions.assertFalse(result.containsKey("hadoop.fs.defaultFS"));
     }
 
     @Test
     public void shouldHandleNullInputSafely() {
-        Assert.assertTrue(ConfUtil.extractConf(null, "prefix.").isEmpty());
+        Assertions.assertTrue(ConfUtil.extractConf(null, "prefix.").isEmpty());
 
         Map<String, String> map = new HashMap<>();
         map.put("key", "value");
-        Assert.assertTrue(ConfUtil.extractConf(map, null).isEmpty());
+        Assertions.assertTrue(ConfUtil.extractConf(map, null).isEmpty());
     }
 
     // ==========================================
@@ -151,9 +151,9 @@ public class ConfUtilTest {
 
         Map<String, String> stringMap = ConfUtil.castToStringMap(complexMap);
 
-        Assert.assertEquals("456", stringMap.get("123"));
-        Assert.assertEquals("true", stringMap.get("status"));
-        Assert.assertEquals("value", stringMap.get("null")); // Key null becomes string "null"
-        Assert.assertEquals("", stringMap.get("empty"));     // Value null becomes empty string
+        Assertions.assertEquals("456", stringMap.get("123"));
+        Assertions.assertEquals("true", stringMap.get("status"));
+        Assertions.assertEquals("value", stringMap.get("null")); // Key null becomes string "null"
+        Assertions.assertEquals("", stringMap.get("empty"));     // Value null becomes empty string
     }
 }

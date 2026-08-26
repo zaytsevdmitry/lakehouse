@@ -1,5 +1,10 @@
 server:
   port: 8084
+  servlet:
+    session:
+      cookie:
+        name: JSESSIONID
+        http-only: true
 
 spring:
   threads:
@@ -11,6 +16,30 @@ spring:
         cachecontrol:
           no-cache: true
           max-age: 0s
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            provider: keycloak
+            client-id: lakehouse-ui-client
+            client-secret: ${KEYCLOAK_UI_CLIENT_SECRET:super-secret-bff-key-1234567890}
+            authorization-grant-type: authorization_code
+            redirect-uri: ${LAKEHOUSE_UI_REDIRECT_URI:{baseUrl}/login/oauth2/code/{registrationId}}
+            scope: openid, profile, email
+          keycloak-internal:
+            provider: keycloak
+            client-id: lakehouse-internal-client
+            client-secret: ${KEYCLOAK_INTERNAL_CLIENT_SECRET:super-secret-internal-key-987654321}
+            authorization-grant-type: client_credentials
+            scope: openid
+        provider:
+          keycloak:
+            authorization-uri: ${KEYCLOAK_ISSUER_URI:http://lakehouse-auth-svc:8080/realms/lakehouse}/protocol/openid-connect/auth
+            token-uri: ${KEYCLOAK_ISSUER_URI:http://lakehouse-auth-svc:8080/realms/lakehouse}/protocol/openid-connect/token
+            user-info-uri: ${KEYCLOAK_ISSUER_URI:http://lakehouse-auth-svc:8080/realms/lakehouse}/protocol/openid-connect/userinfo
+            jwk-set-uri: ${KEYCLOAK_ISSUER_URI:http://lakehouse-auth-svc:8080/realms/lakehouse}/protocol/openid-connect/certs
+            user-name-attribute: preferred_username
 
 management:
   endpoints:
@@ -86,3 +115,15 @@ lakehouse:
           - task-executor-1
         task-executor-1:
           - spark-proxy
+
+---
+# Production profile: enforce HTTPS-only session cookie for the BFF
+spring:
+  config:
+    activate:
+      on-profile: prod
+server:
+  servlet:
+    session:
+      cookie:
+        secure: true

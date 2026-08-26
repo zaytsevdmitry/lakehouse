@@ -1,5 +1,12 @@
 lakehouse-management-task-executor-service:
   image:
     repository: lakehouse
-    tag: "0.7.0"
+    tag: "0.8.0"
     pullPolicy: IfNotPresent
+  serviceAccount:
+    create: false
+    name: "lakehouse-app-sa"
+
+keycloak:
+  issuerUri: "http://keycloak:8085/realms/lakehouse"
+  internalClientSecret: "super-secret-internal-key-987654321"

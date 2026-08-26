@@ -17,7 +17,7 @@
 
 package org.lakehouse.taskexecutor.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import org.lakehouse.client.api.constant.Status;
 import org.lakehouse.client.api.constant.SystemVarKeys;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
@@ -140,7 +140,7 @@ public class ExecuteService {
                 d.setProperties(jinJavaUtils.renderMap(d.getProperties()));
             }
             scheduledTaskDTO.setTaskProcessorArgs(jinJavaUtils.renderMap(scheduledTaskDTO.getTaskProcessorArgs()));
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new TaskConfigurationException(e);
         }
         return jinJavaUtils;

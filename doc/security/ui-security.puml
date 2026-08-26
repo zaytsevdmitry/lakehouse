@@ -1,0 +1,51 @@
+@startuml ui-security
+title Lakehouse UI (BFF) - user authentication and backend calls
+
+skinparam sequence {
+    ArrowColor #444444
+    ActorBorderColor #2C5D8A
+    LifeCycleBorderColor #2C5D8A
+    ParticipantBorderColor #2C5D8A
+    ParticipantBackgroundColor #E8F0F8
+}
+
+actor "User\n(browser)" as U
+participant "lakehouse-ui-svc\n(BFF)" as BFF
+participant "Keycloak\n(realm: lakehouse,\nclient: lakehouse-ui-client)" as KC
+participant "Backend services\n(config / state / scheduler /\ntask-proxy)" as BE
+
+== Login: OAuth2 authorization code flow ==
+
+U -> BFF : GET / (protected page)
+BFF --> U : 302 redirect to Keycloak
+U -> KC : Authenticate (login form)
+KC --> U : Redirect to /login/oauth2/code/keycloak\n(authorization code)
+U -> BFF : GET callback with code
+BFF -> KC : Exchange code for tokens\n(client secret, server-to-server)
+KC --> BFF : ID / access / refresh tokens
+note over BFF : OAuth2AuthenticationToken created;\nroles from Keycloak claims
+BFF --> U : 200 OK\nSet-Cookie: JSESSIONID (HttpOnly),\nXSRF-TOKEN cookie (readable by JS)
+
+== Authenticated usage ==
+
+U -> BFF : API call with session cookie\n+ X-XSRF-TOKEN header
+note over BFF : CSRF validated (CookieCsrfTokenRepository);\nwhitelist without auth:\n/actuator/**, /healthz, /readyz, /favicon.ico
+
+BFF -> KC : POST /token\ngrant_type=client_credentials\nclient_id=lakehouse-internal-client
+KC --> BFF : access_token (service account)
+
+note over BFF #FFF3D6
+    Session holds OAuth2AuthenticationToken
+    (not JwtAuthenticationToken) ->
+    user JWT is NOT relayed;
+    backend calls always use the
+    service-account token
+end note
+
+BFF -> BE : REST request\nAuthorization: Bearer <service-account JWT>
+BE -> BE : JWT validation + role conversion
+BE -> BE : AuditLoggingFilter -> AUDIT_LOG (JSON)\nusername = "system" (service account)
+BE --> BFF : JSON response
+BFF --> U : JSON response
+
+@enduml

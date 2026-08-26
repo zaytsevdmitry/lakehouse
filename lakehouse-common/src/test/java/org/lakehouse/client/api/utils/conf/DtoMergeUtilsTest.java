@@ -16,10 +16,10 @@
  */
 package org.lakehouse.client.api.utils.conf;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import tools.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.lakehouse.client.api.dto.common.SQLTemplateDTO;
 import org.lakehouse.client.api.dto.configs.schedule.TaskDTO;
 import org.lakehouse.client.api.utils.DtoMergeUtils;
@@ -31,7 +31,7 @@ public class DtoMergeUtilsTest {
 
     private DtoMergeUtils mergeUtils;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         ObjectMapper mapper = new ObjectMapper();
         mergeUtils = new DtoMergeUtils(mapper);
@@ -73,7 +73,7 @@ public class DtoMergeUtilsTest {
         TaskDTO patchWithMaxRetries = new TaskDTO();
         patchWithMaxRetries.setMaxRetries(10);
         TaskDTO resultOverride = mergeUtils.merge(template, patchWithMaxRetries, TaskDTO.class);
-        Assert.assertEquals("Non-null patch maxRetries should overwrite template value", Integer.valueOf(10), resultOverride.getMaxRetries());
+        Assertions.assertEquals(Integer.valueOf(10), resultOverride.getMaxRetries(), "Non-null patch maxRetries should overwrite template value");
 
         SQLTemplateDTO patchSql = new SQLTemplateDTO();
         patchSql.setDatabaseSchemaName(null); // Nested null should keep template value
@@ -85,30 +85,30 @@ public class DtoMergeUtilsTest {
         TaskDTO result = mergeUtils.merge(template, patch, TaskDTO.class);
 
         // 4. Assert: Verify the merge result matches expectations
-        Assert.assertNotNull("Merged result should not be null", result);
+        Assertions.assertNotNull(result, "Merged result should not be null");
 
         // Verify top-level simple fields
-        Assert.assertEquals("Null patch value should not overwrite template name", "base-template-task", result.getName());
-        Assert.assertEquals("Non-null patch value should overwrite template importance", "HIGH", result.getImportance());
-        Assert.assertEquals("Implicitly null patch field should retain template value", "SparkProcessor", result.getTaskProcessor());
-        Assert.assertEquals("Empty string in patch should overwrite template description", "", result.getDescription());
-        Assert.assertEquals("Null patch maxRetries should retain template value", Integer.valueOf(5), result.getMaxRetries());
+        Assertions.assertEquals("base-template-task", result.getName(), "Null patch value should not overwrite template name");
+        Assertions.assertEquals("HIGH", result.getImportance(), "Non-null patch value should overwrite template importance");
+        Assertions.assertEquals("SparkProcessor", result.getTaskProcessor(), "Implicitly null patch field should retain template value");
+        Assertions.assertEquals("", result.getDescription(), "Empty string in patch should overwrite template description");
+        Assertions.assertEquals(Integer.valueOf(5), result.getMaxRetries(), "Null patch maxRetries should retain template value");
 
         // Verify Map merging logic
         Map<String, String> mergedArgs = result.getTaskProcessorArgs();
-        Assert.assertNotNull("Merged Map should not be null", mergedArgs);
-        Assert.assertEquals("Template key should be preserved if absent in patch", "local[*]", mergedArgs.get("spark.master"));
-        Assert.assertEquals("Patch key should overwrite template key value", "4g", mergedArgs.get("spark.executor.memory"));
-        Assert.assertEquals("New patch key should be added to the map", "1g", mergedArgs.get("spark.driver.memory"));
-        Assert.assertEquals("Map should contain exactly 3 aggregated entries", 3, mergedArgs.size());
+        Assertions.assertNotNull(mergedArgs, "Merged Map should not be null");
+        Assertions.assertEquals("local[*]", mergedArgs.get("spark.master"), "Template key should be preserved if absent in patch");
+        Assertions.assertEquals("4g", mergedArgs.get("spark.executor.memory"), "Patch key should overwrite template key value");
+        Assertions.assertEquals("1g", mergedArgs.get("spark.driver.memory"), "New patch key should be added to the map");
+        Assertions.assertEquals(3, mergedArgs.size(), "Map should contain exactly 3 aggregated entries");
 
         // Verify deeply nested object (SQLTemplateDTO) merging logic
         SQLTemplateDTO mergedSql = result.getSqlTemplate();
-        Assert.assertNotNull("Merged nested SQLTemplateDTO should not be null", mergedSql);
-        Assert.assertEquals("Nested null in patch should preserve template schema name", "raw_zone", mergedSql.getDatabaseSchemaName());
-        Assert.assertEquals("Nested non-null in patch should overwrite template table name", "analytics_zone.events", mergedSql.getTableFullName());
-        Assert.assertEquals("Nested null should preserve template DDL", "CREATE TABLE raw_zone.events (id INT)", mergedSql.getTableDDLCreate());
-        Assert.assertEquals("Omitted nested field in patch should retain template DDL", "DROP TABLE raw_zone.events", mergedSql.getTableDDLDrop());
+        Assertions.assertNotNull(mergedSql, "Merged nested SQLTemplateDTO should not be null");
+        Assertions.assertEquals("raw_zone", mergedSql.getDatabaseSchemaName(), "Nested null in patch should preserve template schema name");
+        Assertions.assertEquals("analytics_zone.events", mergedSql.getTableFullName(), "Nested non-null in patch should overwrite template table name");
+        Assertions.assertEquals("CREATE TABLE raw_zone.events (id INT)", mergedSql.getTableDDLCreate(), "Nested null should preserve template DDL");
+        Assertions.assertEquals("DROP TABLE raw_zone.events", mergedSql.getTableDDLDrop(), "Omitted nested field in patch should retain template DDL");
     }
 
     @Test
@@ -118,14 +118,14 @@ public class DtoMergeUtilsTest {
 
         // Test case when patch is null -> should return target
         TaskDTO result1 = mergeUtils.merge(mockDto, null, TaskDTO.class);
-        Assert.assertSame("Should return template directly if patch is null", mockDto, result1);
+        Assertions.assertSame(mockDto, result1, "Should return template directly if patch is null");
 
         // Test case when target is null -> should return patch
         TaskDTO result2 = mergeUtils.merge(null, mockDto, TaskDTO.class);
-        Assert.assertSame("Should return patch directly if template is null", mockDto, result2);
+        Assertions.assertSame(mockDto, result2, "Should return patch directly if template is null");
 
         // Test case when both are null -> should return null
         TaskDTO result3 = mergeUtils.merge(null, null, TaskDTO.class);
-        Assert.assertNull("Should return null if both arguments are null", result3);
+        Assertions.assertNull(result3, "Should return null if both arguments are null");
     }
 }

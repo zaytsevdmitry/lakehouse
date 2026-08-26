@@ -17,7 +17,7 @@
 
 package org.lakehouse.taskexecutor.spark.dq.runner.integrity;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.lakehouse.client.api.dto.configs.dataset.ColumnDTO;
@@ -27,8 +27,8 @@ import java.util.Map;
 
 public interface Check {
     Dataset<Row> nullableColumn(ColumnDTO columnDTO);
-    Dataset<Row> getPrimary(Map.Entry<String, DataSetConstraintDTO> constraint) throws JsonProcessingException;
-    Dataset<Row> getForeign(Map.Entry<String, DataSetConstraintDTO> constraint) throws JsonProcessingException;
-    Dataset<Row> getUnique(Map.Entry<String, DataSetConstraintDTO> constraint) throws JsonProcessingException;
-    Dataset<Row> getCheck(Map.Entry<String, DataSetConstraintDTO> constraint) throws JsonProcessingException;
+    Dataset<Row> getPrimary(Map.Entry<String, DataSetConstraintDTO> constraint) throws JacksonException;
+    Dataset<Row> getForeign(Map.Entry<String, DataSetConstraintDTO> constraint) throws JacksonException;
+    Dataset<Row> getUnique(Map.Entry<String, DataSetConstraintDTO> constraint) throws JacksonException;
+    Dataset<Row> getCheck(Map.Entry<String, DataSetConstraintDTO> constraint) throws JacksonException;
 }

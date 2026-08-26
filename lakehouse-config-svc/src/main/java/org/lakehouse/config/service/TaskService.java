@@ -36,6 +36,7 @@ import org.lakehouse.validator.exception.DTOValidationException;
 import org.lakehouse.validator.task.TaskDTOValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -57,7 +58,8 @@ public class TaskService {
             TaskProcessorArgRepository taskProcessorArgRepository,
             TaskExecutionServiceGroupRepository taskExecutionServiceGroupRepository,
             DriverService driverService,
-            SQLTemplateService sqlTemplateService, DtoMergeUtils dtoMergeUtils) {
+            SQLTemplateService sqlTemplateService,
+            @Lazy DtoMergeUtils dtoMergeUtils) {
         this.taskRepository = taskRepository;
         this.taskProcessorArgRepository = taskProcessorArgRepository;
         this.taskExecutionServiceGroupRepository = taskExecutionServiceGroupRepository;

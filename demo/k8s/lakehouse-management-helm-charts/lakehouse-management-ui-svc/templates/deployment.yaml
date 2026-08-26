@@ -14,13 +14,24 @@ spec:
         app.kubernetes.io/name: lakehouse-management-ui-svc
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
+      initContainers:
+        - name: wait-for-keycloak
+          image: busybox:1.37
+          command: ['sh', '-c', 'until wget -q -O /dev/null http://keycloak:8085/realms/lakehouse; do echo waiting for keycloak; sleep 3; done']
       containers:
         - name: ui-svc
-          image: "lakehouse:0.7.0"
+          image: "lakehouse:0.8.0"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8084
               protocol: TCP
+          env:
+            - name: KEYCLOAK_ISSUER_URI
+              value: {{ .Values.keycloak.issuerUri | quote }}
+            - name: KEYCLOAK_UI_CLIENT_SECRET
+              value: {{ .Values.keycloak.uiClientSecret | quote }}
+            - name: KEYCLOAK_INTERNAL_CLIENT_SECRET
+              value: {{ .Values.keycloak.internalClientSecret | quote }}
           command: ["bash", "-c"]
           args:
             - "java
@@ -90,4 +101,4 @@ spec:
             -Dlakehouse.ui.edges.lakehouse-task-proxy-for-spark[1]=lakehouse-minio
             -Dlakehouse.ui.edges.lakehouse-minio[0]=lakehouse-trino
             -Dlakehouse.ui.edges.lakehouse-minio[1]=lakehouse-spark-history
-            -jar /opt/lakehouse-ui-svc-0.7.0-jar-with-dependencies.jar"
+            -jar /opt/lakehouse-ui-svc-0.8.0-jar-with-dependencies.jar"

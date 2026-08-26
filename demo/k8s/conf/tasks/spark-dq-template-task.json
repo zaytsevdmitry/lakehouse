@@ -1,0 +1,14 @@
+{
+  "name": "spark-dq-template-task",
+  "template": "spark",
+  "taskProcessorBody": "sparkTaskProcessorDQBody",
+  "description": "Quality check",
+  "taskProcessorArgs": {
+    "deploy.appResource": "local:///opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dq-app-0.8.0-jar-with-dependencies.jar",
+    "deploy.mainClass": "org.lakehouse.taskexecutor.spark.dq.SparkProcessorApplicationDQ",
+    "lakehouse.taskexecutor.body.config.dq.kafka.producer.metric.status.topic": "metric_status",
+    "lakehouse.taskexecutor.body.config.dq.kafka.producer.metric.value.topic": "metric_value",
+    "lakehouse.taskexecutor.body.config.dq.kafka.producer.properties.bootstrap.servers" : "broker:9092",
+    "lakehouse.taskexecutor.body.config.dq.kafka.producer.testSet.status.topic": "metric_test_set_status"
+  }
+}

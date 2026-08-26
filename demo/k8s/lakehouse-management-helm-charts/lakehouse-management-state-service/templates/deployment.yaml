@@ -14,15 +14,24 @@ spec:
         app.kubernetes.io/name: lakehouse-management-state-service
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
+      initContainers:
+        - name: wait-for-keycloak
+          image: busybox:1.37
+          command: ['sh', '-c', 'until wget -q -O /dev/null http://keycloak:8085/realms/lakehouse; do echo waiting for keycloak; sleep 3; done']
       containers:
         - name: state-svc
-          image: "lakehouse:0.7.0"
+          image: "lakehouse:0.8.0"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8082
               protocol: TCP
+          env:
+            - name: KEYCLOAK_ISSUER_URI
+              value: {{ .Values.keycloak.issuerUri | quote }}
+            - name: KEYCLOAK_INTERNAL_CLIENT_SECRET
+              value: {{ .Values.keycloak.internalClientSecret | quote }}
           command: ["bash", "-c"]
           args:
             - "java
             -Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=StateSVC
-            -jar /opt/lakehouse-state-svc-0.7.0-jar-with-dependencies.jar"
+            -jar /opt/lakehouse-state-svc-0.8.0-jar-with-dependencies.jar"

@@ -17,7 +17,7 @@
 
 package org.lakehouse.client.commandline.component.objectactionfacade;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import org.lakehouse.client.api.utils.ObjectMapping;
 import org.lakehouse.client.commandline.model.CommandResult;
 
@@ -34,7 +34,7 @@ public class ObjectActionsHelper {
         try {
             result.getResultSrtingList().add(ObjectMapping
                     .asJsonStringPretty(o));
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             result.getResultSrtingList().add(e.getMessage());
         }
         return result;
@@ -118,7 +118,7 @@ public class ObjectActionsHelper {
 
         try {
             ObjectMapping.objectToFile(filePath, o);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             result.getResultSrtingList().add(e.getMessage());
         } catch (IOException e) {
             result.getResultSrtingList().add(e.getMessage());

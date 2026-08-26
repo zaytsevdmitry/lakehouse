@@ -36,6 +36,7 @@ import org.lakehouse.validator.config.ValidationResult;
 import org.lakehouse.validator.exception.DTOValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
@@ -67,7 +68,7 @@ public class ScheduleService {
             ScenarioActTaskEdgeRepository scenarioActTaskEdgeRepository,
             ScenarioActTemplateService scenarioActTemplateService,
             ScheduleConfigProducerService scheduleConfigProducerService,
-            DtoMergeUtils dtoMergeUtils,
+            @Lazy DtoMergeUtils dtoMergeUtils,
             TaskService taskService) {
         this.scheduleRepository = scheduleRepository;
         this.dataSetRepository = dataSetRepository;

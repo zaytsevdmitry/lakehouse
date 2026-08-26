@@ -30,6 +30,8 @@ spring:
         default_schema: lakehouse_scheduler
 
 lakehouse:
+  security:
+    enabled: false
   scheduler:
     config:
       client:

@@ -1,3 +1,12 @@
+# Требования к хост-машине:
+#   1. В /etc/hosts должна быть строка: 127.0.0.1 keycloak.lakehouse
+#      (issuer Keycloak = http://keycloak.lakehouse:8085/realms/lakehouse и должен
+#      разрешаться одинаково из контейнеров и из браузера хоста).
+#   2. Админ-консоль Keycloak: http://keycloak.lakehouse:8085 (admin / admin_local_password);
+#      при KC_HOSTNAME_STRICT=true доступ по localhost:8085 не работает.
+#   3. lakehouse-config-svc (Swagger) опубликован на http://localhost:18081,
+#      хост-порт 8080 занят lakehouse-ui-svc (redirect_uri в realm = localhost:8080),
+#      18080 занят spark-history.
 version: '3.9'
 services:
   minio-dev:
@@ -39,6 +48,47 @@ services:
     networks:
       lakehouse_net:
         ipv4_address: 172.20.193.10
+    volumes:
+      - ./conf_infra/security/init_keycloak_schema.sql:/docker-entrypoint-initdb.d/init_keycloak_schema.sql
+
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: keycloak
+    command: start-dev --import-realm
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://db-dev:5432/postgresDB?currentSchema=keycloak&ApplicationName=Keycloak
+      KC_DB_USERNAME: postgresUser
+      KC_DB_PASSWORD: postgresPW
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin_local_password
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+      KC_HOSTNAME: keycloak.lakehouse
+      KC_HOSTNAME_PORT: 8085
+      KC_HOSTNAME_STRICT: "true"
+      KC_HTTP_PORT: 8085
+    ports:
+      - "8085:8085"
+    networks:
+      lakehouse_net:
+        ipv4_address: 172.20.193.180
+        aliases:
+          - keycloak.lakehouse
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/8085' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 90s
+    depends_on:
+      db-dev:
+        condition: service_healthy
+    volumes:
+      - ./conf_infra/security/realms/lakehouse-realm.json:/opt/keycloak/data/import/lakehouse-realm.json
+
+
 
   broker:
     image: apache/kafka:latest
@@ -63,7 +113,7 @@ services:
       KAFKA_NUM_PARTITIONS: 4
 
   hive-metastore:
-    image: lakehouse-hms:0.7.0
+    image: lakehouse-hms:0.8.0
     entrypoint: ["/bin/sh", "-c", "/service.sh"]
     container_name: hive-metastore
     restart: on-failure
@@ -85,7 +135,7 @@ services:
         ipv4_address: 172.20.193.60
 
   spark-master:
-    image: lakehouse-spark-aws:0.7.0
+    image: lakehouse-spark-aws:0.8.0
     entrypoint: ["/bin/sh", "-c", "/service.sh"]
     container_name: spark-master
     hostname: spark-master
@@ -101,6 +151,8 @@ services:
       AWS_SECRET_ACCESS_KEY: spark_pwd
       S3_ENDPOINT: http://172.20.193.30:9000
       S3_TEST_URL: http://172.20.193.30:9001
+      KEYCLOAK_ISSUER_URI: http://keycloak.lakehouse:8085/realms/lakehouse
+      KEYCLOAK_INTERNAL_CLIENT_SECRET: super-secret-internal-key-987654321
     ports:
       - "6066:6066"
       - "7077:7077"
@@ -122,7 +174,7 @@ services:
         condition: service_healthy
 
   spark-worker-1:
-    image: lakehouse-spark-aws:0.7.0
+    image: lakehouse-spark-aws:0.8.0
     entrypoint: ["/bin/sh", "-c", "/service.sh"]
     container_name: spark-worker-1
     environment:
@@ -138,6 +190,8 @@ services:
       AWS_SECRET_ACCESS_KEY: spark_pwd
       S3_ENDPOINT: http://172.20.193.30:9000
       S3_TEST_URL: http://172.20.193.30:9001
+      KEYCLOAK_ISSUER_URI: http://keycloak.lakehouse:8085/realms/lakehouse
+      KEYCLOAK_INTERNAL_CLIENT_SECRET: super-secret-internal-key-987654321
     ports:
       - "8401:8401"
       - "4040:4040"
@@ -159,7 +213,7 @@ services:
         condition: service_started
 
   spark-history:
-    image: lakehouse-spark-aws:0.7.0
+    image: lakehouse-spark-aws:0.8.0
     entrypoint: ["/bin/sh", "-c", "/service.sh"]
     container_name: spark-history
     environment:
@@ -182,68 +236,92 @@ services:
           memory: 4g
 
   lakehouse-config-svc:
-    image: lakehouse:0.7.0
+    image: lakehouse:0.8.0
     container_name: lakehouse-config-svc
     ports:
-      - "8080:8080"
+      - "18081:8080"
     networks:
       lakehouse_net:
         ipv4_address: 172.20.193.80
-    command: >
-      bash -c "java
-      -Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=ConfigSVC
-      -Dlakehouse.config.schedule.send.kafka.producer.properties.bootstrap.servers=broker:9092
-      -jar /opt/lakehouse-config-svc-0.7.0-jar-with-dependencies.jar"
+#    environment:
+#      KEYCLOAK_ISSUER_URI: http://keycloak.lakehouse:8085/realms/lakehouse
+#      KEYCLOAK_INTERNAL_CLIENT_SECRET: super-secret-internal-key-987654321
+    environment:
+      LAKEHOUSE_CONFIG_SCHEDULE_SEND_KAFKA_PRODUCER_PROPERTIES_BOOTSTRAP_SERVERS: "broker:9092"
+      LAKEHOUSE_CONFIG_SCHEDULE_SEND_KAFKA_PRODUCER_PROPERTIES_CLIENT_ID: "lakehouse-config-service-client"
+      KEYCLOAK_ISSUER_URI: "http://keycloak.lakehouse:8085/realms/lakehouse"
+      KEYCLOAK_INTERNAL_CLIENT_SECRET: "super-secret-internal-key-987654321"
+    command: [
+      "java",
+      "-Dlogging.level.org.springframework.web.client.RestClient=DEBUG",
+      "-Dlogging.level.org.apache.hc.client5.http=DEBUG",
+      "-Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=ConfigSVC",
+      "-Dlogging.level.org.springframework.boot.context.properties=DEBUG",
+      "-jar", "/opt/lakehouse-config-svc-0.8.0-jar-with-dependencies.jar"
+    ]
     depends_on:
       db-dev:
         condition: service_healthy
       broker:
         condition: service_started
+      keycloak:
+        condition: service_healthy
 
   lakehouse-scheduler-svc:
-    image: lakehouse:0.7.0
+    image: lakehouse:0.8.0
     container_name: lakehouse-scheduler-svc
     ports:
       - "8081:8081"
     networks:
       lakehouse_net:
         ipv4_address: 172.20.193.90
-    command: >
-      bash -c "java
-      -Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=SchedulerSVC 
-      -Dlakehouse.scheduler.schedule.task.kafka.producer.properties.bootstrap.servers=broker:9092 
-      -Dlakehouse.scheduler.config.schedule.kafka.consumer.properties.bootstrap.servers=broker:9092 
-      -Dlakehouse.scheduler.registration.delay-ms=5000 
-      -Dlakehouse.scheduler.run.delay-ms=5000 
-      -Dlakehouse.scheduler.resolvedeps.delay-ms=5000 
-      -Dlakehouse.client.rest.config.server.url=http://lakehouse-config-svc:8080 
-      -jar /opt/lakehouse-scheduler-svc-0.7.0-jar-with-dependencies.jar"
+    environment:
+      KEYCLOAK_ISSUER_URI: http://keycloak.lakehouse:8085/realms/lakehouse
+      KEYCLOAK_INTERNAL_CLIENT_SECRET: super-secret-internal-key-987654321
+    command: [
+      "java",
+      "-Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=SchedulerSVC",
+      "-Dlakehouse.scheduler.schedule.task.kafka.producer.properties.bootstrap.servers=broker:9092",
+      "-Dlakehouse.scheduler.config.schedule.kafka.consumer.properties.bootstrap.servers=broker:9092",
+      "-Dlakehouse.scheduler.registration.delay-ms=5000",
+      "-Dlakehouse.scheduler.run.delay-ms=5000",
+      "-Dlakehouse.scheduler.resolvedeps.delay-ms=5000",
+      "-Dlakehouse.client.rest.config.server.url=http://lakehouse-config-svc:8080",
+      "-jar", "/opt/lakehouse-scheduler-svc-0.8.0-jar-with-dependencies.jar"
+      ]
     depends_on:
       db-dev:
         condition: service_healthy
       broker:
         condition: service_started
+      keycloak:
+        condition: service_healthy
       lakehouse-config-svc:
         condition: service_started
 
   lakehouse-state-svc:
-    image: lakehouse:0.7.0
+    image: lakehouse:0.8.0
     container_name: lakehouse-state-svc
     ports:
       - "8082:8082"
     networks:
       lakehouse_net:
         ipv4_address: 172.20.193.100
+    environment:
+      KEYCLOAK_ISSUER_URI: http://keycloak.lakehouse:8085/realms/lakehouse
+      KEYCLOAK_INTERNAL_CLIENT_SECRET: super-secret-internal-key-987654321
     command: >
       bash -c "java
       -Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=StateSVC
-      -jar /opt/lakehouse-state-svc-0.7.0-jar-with-dependencies.jar"
+      -jar /opt/lakehouse-state-svc-0.8.0-jar-with-dependencies.jar"
     depends_on:
       db-dev:
         condition: service_healthy
+      keycloak:
+        condition: service_healthy
 
   lakehouse-task-executor-svc-database:
-    image: lakehouse:0.7.0
+    image: lakehouse:0.8.0
     container_name: task-executor-svc-database
     hostname: task-executor-svc-1
     ports:
@@ -251,6 +329,9 @@ services:
     networks:
       lakehouse_net:
         ipv4_address: 172.20.193.110
+    environment:
+      KEYCLOAK_ISSUER_URI: http://keycloak.lakehouse:8085/realms/lakehouse
+      KEYCLOAK_INTERNAL_CLIENT_SECRET: super-secret-internal-key-987654321
     command: [
       "java",
       "-Dserver.port=8091",
@@ -261,11 +342,13 @@ services:
       "-Dlakehouse.task-executor.service.id=database",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=broker:9092",
-      "-jar", "/opt/lakehouse-task-executor-svc-0.7.0-jar-with-dependencies.jar"
+      "-jar", "/opt/lakehouse-task-executor-svc-0.8.0-jar-with-dependencies.jar"
     ]
     depends_on:
       broker:
         condition: service_started
+      keycloak:
+        condition: service_healthy
       lakehouse-config-svc:
         condition: service_started
       lakehouse-scheduler-svc:
@@ -274,7 +357,7 @@ services:
         condition: service_started
 
   lakehouse-task-executor-svc-spark:
-    image: lakehouse:0.7.0
+    image: lakehouse:0.8.0
     container_name: task-executor-svc-spark
     hostname: task-executor-svc-spark
     networks:
@@ -282,6 +365,9 @@ services:
         ipv4_address: 172.20.193.130
     ports:
       - "8092:8092"
+    environment:
+      KEYCLOAK_ISSUER_URI: http://keycloak.lakehouse:8085/realms/lakehouse
+      KEYCLOAK_INTERNAL_CLIENT_SECRET: super-secret-internal-key-987654321
     command: [
       "java",
       "-Dserver.port=8092",
@@ -292,11 +378,13 @@ services:
       "-Dlakehouse.task-executor.service.id=spark-exec-1",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=broker:9092",
-      "-jar", "/opt/lakehouse-task-executor-svc-0.7.0-jar-with-dependencies.jar"
+      "-jar", "/opt/lakehouse-task-executor-svc-0.8.0-jar-with-dependencies.jar"
     ]
     depends_on:
       broker:
         condition: service_started
+      keycloak:
+        condition: service_healthy
       lakehouse-config-svc:
         condition: service_started
       lakehouse-scheduler-svc:
@@ -305,7 +393,7 @@ services:
         condition: service_started
 
   lakehouse-task-executor-svc-state:
-    image: lakehouse:0.7.0
+    image: lakehouse:0.8.0
     container_name: lakehouse-task-executor-svc-state
     hostname: lakehouse-task-executor-svc-state
     networks:
@@ -313,6 +401,9 @@ services:
         ipv4_address: 172.20.193.140
     ports:
       - "8093:8093"
+    environment:
+      KEYCLOAK_ISSUER_URI: http://keycloak.lakehouse:8085/realms/lakehouse
+      KEYCLOAK_INTERNAL_CLIENT_SECRET: super-secret-internal-key-987654321
     command: [
       "java",
       "-Dserver.port=8093",
@@ -323,11 +414,13 @@ services:
       "-Dlakehouse.task-executor.service.id=state-service",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=broker:9092",
-      "-jar", "/opt/lakehouse-task-executor-svc-0.7.0-jar-with-dependencies.jar"
+      "-jar", "/opt/lakehouse-task-executor-svc-0.8.0-jar-with-dependencies.jar"
     ]
     depends_on:
       broker:
         condition: service_started
+      keycloak:
+        condition: service_healthy
       lakehouse-config-svc:
         condition: service_started
       lakehouse-scheduler-svc:
@@ -355,7 +448,7 @@ services:
 
 
   lakehouse-task-proxy4spark:
-    image: lakehouse-task-proxy4spark:0.7.0
+    image: lakehouse-task-proxy4spark:0.8.0
     container_name: lakehouse-task-proxy4spark
     hostname: lakehouse-task-task-proxy4spark
     networks:
@@ -363,20 +456,27 @@ services:
         ipv4_address: 172.20.193.160
     ports:
       - "8099:8099"
+    environment:
+      KEYCLOAK_ISSUER_URI: http://keycloak.lakehouse:8085/realms/lakehouse
+      KEYCLOAK_INTERNAL_CLIENT_SECRET: super-secret-internal-key-987654321
     command: [
       "/opt/java/jdk-23.0.2/bin/java",
+      "-Dlogging.level.org.springframework.web.client.RestClient=DEBUG",
+      "-Dlogging.level.org.apache.hc.client5.http=DEBUG",
       "-Dserver.port=8099",
       "-Dlakehouse.task.proxy4spark.adapter=standalone",
       "-Dlakehouse.task.proxy4spark.spark-master=spark://spark-master:7077",
       "-Dlakehouse.task.proxy4spark.standalone.rest-url=http://spark-master:6066",
       "-Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=TaskProxy4Spark",
-      "-jar", "/opt/lakehouse-task-spark-apps/lakehouse-task-proxy-for-spark-0.7.0-jar-with-dependencies.jar"
+      "-jar", "/opt/lakehouse-task-spark-apps/lakehouse-task-proxy-for-spark-0.8.0-jar-with-dependencies.jar"
     ]
     volumes:
       - ./conf_infra/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
     depends_on:
       broker:
         condition: service_started
+      keycloak:
+        condition: service_healthy
       lakehouse-config-svc:
         condition: service_started
       lakehouse-scheduler-svc:
@@ -385,16 +485,32 @@ services:
         condition: service_started
 
   lakehouse-ui-svc:
-    image: lakehouse:0.7.0
+    image: lakehouse:0.8.0
     container_name: lakehouse-ui-svc
     hostname: lakehouse-ui-svc
     networks:
       lakehouse_net:
         ipv4_address: 172.20.193.170
     ports:
-      - "8084:8084"
+      - "8080:8084" # хост-порт 8080: redirect_uri клиента lakehouse-ui-client в realm = localhost:8080
+    environment:
+      KEYCLOAK_ISSUER_URI: http://keycloak.lakehouse:8085/realms/lakehouse
+      KEYCLOAK_UI_CLIENT_SECRET: super-secret-bff-key-1234567890
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      lakehouse-config-svc:
+        condition: service_started
+      lakehouse-scheduler-svc:
+        condition: service_started
+      lakehouse-state-svc:
+        condition: service_started
+      lakehouse-task-proxy4spark:
+        condition: service_started
     command: [
       "java",
+      "-Dlogging.level.org.springframework.web.client.RestClient=DEBUG",
+      "-Dlogging.level.org.apache.hc.client5.http=DEBUG",
       "-Dlakehouse.ui.health-check-timeout-ms=3000",
       "-Dlakehouse.ui.services[0].name=lakehouse-config-svc",
       "-Dlakehouse.ui.services[0].url=http://172.20.193.80:8080",
@@ -483,7 +599,7 @@ services:
       "-Dlakehouse.ui.edges.lakehouse-spark-worker[0]=lakehouse-minio",
       "-Dlakehouse.ui.edges.lakehouse-minio[0]=lakehouse-trino",
       "-Dlakehouse.ui.edges.lakehouse-minio[1]=lakehouse-spark-history",
-      "-jar", "/opt/lakehouse-ui-svc-0.7.0-jar-with-dependencies.jar"
+      "-jar", "/opt/lakehouse-ui-svc-0.8.0-jar-with-dependencies.jar"
     ]
 
 

@@ -32,6 +32,7 @@ ENV SCALA_VERSION=2.12 \
     AWS_SDK_VERSION=1.12.262 \
     PSQL_CONN_VERSION=42.7.8 \
     LOG_APPENDER_S3_VERSION=5.6.0 \
+    JACKSON_ANNOTATIONS_VERSION=2.21 \
     APP_HOME=/opt/lakehouse-task-spark-apps \
     JAVA_OPTS="--add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/java.sql=ALL-UNNAMED --add-opens=java.sql/java.sql=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/jdk.internal.ref=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/sun.security.action=ALL-UNNAMED --add-opens=java.base/sun.util.calendar=ALL-UNNAMED"
 
@@ -39,7 +40,7 @@ ENV SCALA_VERSION=2.12 \
 WORKDIR /opt/spark/jars
 
 # remove libs
-RUN rm -f guava-*.jar
+RUN rm -f guava-*.jar jackson-annotations-*.jar
 
 # add libs
 RUN curl -Z -sSLfO https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/${HADOOP_VERSION}/hadoop-aws-${HADOOP_VERSION}.jar \
@@ -48,21 +49,22 @@ RUN curl -Z -sSLfO https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/$
          -O https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-${SPARK_MAJOR_VERSION}_${SCALA_VERSION}/${ICEBERG_VERSION}/iceberg-spark-runtime-${SPARK_MAJOR_VERSION}_${SCALA_VERSION}-${ICEBERG_VERSION}.jar \
          -O https://repo1.maven.org/maven2/com/therealvan/appender-log4j2/${LOG_APPENDER_S3_VERSION}/appender-log4j2-${LOG_APPENDER_S3_VERSION}.jar \
          -O https://repo1.maven.org/maven2/com/therealvan/appender-core/${LOG_APPENDER_S3_VERSION}/appender-core-${LOG_APPENDER_S3_VERSION}.jar \
-         -O https://repo1.maven.org/maven2/com/google/guava/guava/${GUAVA_VERSION}/guava-${GUAVA_VERSION}.jar
+         -O https://repo1.maven.org/maven2/com/google/guava/guava/${GUAVA_VERSION}/guava-${GUAVA_VERSION}.jar \
+         -O https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-annotations/${JACKSON_ANNOTATIONS_VERSION}/jackson-annotations-${JACKSON_ANNOTATIONS_VERSION}.jar
 
 WORKDIR /tmp
 
 ADD log4j2.properties /opt/spark/conf/
 
 LABEL type="lakehouse=spark" \
-      version="lakehouse-0.7.0_spark-3.5.8" \
+      version="lakehouse-0.8.0_spark-3.5.8" \
       features="spark, aws-s3a, postgres-jdbc, aws-cli"
 
 
 # Add application
-ADD lakehouse-task-executor-spark-dataset-app-0.7.0-jar-with-dependencies.jar ${APP_HOME}/
-ADD lakehouse-task-executor-spark-dq-app-0.7.0-jar-with-dependencies.jar ${APP_HOME}/
-ADD lakehouse-task-proxy-for-spark-0.7.0-jar-with-dependencies.jar ${APP_HOME}/
+ADD lakehouse-task-executor-spark-dataset-app-0.8.0-jar-with-dependencies.jar ${APP_HOME}/
+ADD lakehouse-task-executor-spark-dq-app-0.8.0-jar-with-dependencies.jar ${APP_HOME}/
+ADD lakehouse-task-proxy-for-spark-0.8.0-jar-with-dependencies.jar ${APP_HOME}/
 
 EXPOSE 4040 9083
 

@@ -1,0 +1,57 @@
+@startuml spark-apps-security
+title Spark applications (dq-app / dataset-app) - authorization
+
+skinparam sequence {
+    ArrowColor #444444
+    ActorBorderColor #2C5D8A
+    LifeCycleBorderColor #2C5D8A
+    ParticipantBorderColor #2C5D8A
+    ParticipantBackgroundColor #E8F0F8
+}
+
+participant "task-executor-svc" as TE
+participant "task-proxy-for-spark" as PX
+participant "Spark cluster\n(Standalone/K8s/YARN)" as SC
+participant "Spark driver\n(dq-app / dataset-app)\nSpring Boot app" as DR
+participant "Keycloak\n(realm: lakehouse,\nclient: lakehouse-internal-client)" as KC
+participant "Backend services\n(scheduler-svc / config-svc)" as BE
+
+== Job submission ==
+
+TE -> TE : Consume task from Kafka
+TE -> KC : client_credentials\n(lakehouse-internal-client)
+KC --> TE : access_token
+TE -> PX : POST /v1/submissions\nAuthorization: Bearer <token>
+note over PX : OAuth2 resource server:\nvalidates JWT like any backend service
+PX -> SC : spark-submit (queue adapter)
+
+== Driver execution inside the cluster ==
+
+SC -> DR : Start driver JVM\n(Spring Boot, @ComponentScan includes\norg.lakehouse.security)
+note over DR #FFF3D6
+    No user security context inside the driver ->
+    all callbacks use their own
+    client_credentials tokens
+end note
+
+DR -> KC : POST /token\ngrant_type=client_credentials
+KC --> DR : access_token
+DR -> BE : getScheduledTaskDTO / getEffectiveTaskDTO\nget source & task configurations\nAuthorization: Bearer <driver JWT>
+BE -> BE : JWT validation + AuditLoggingFilter\n(username = "system")
+BE --> DR : Task payload / configurations
+
+DR -> BE : Report results / statuses\n(Bearer token, same flow)
+
+note over SC
+    Secret redaction (SparkSessionConfiguration):
+    spark.redaction.regex =
+    (?i)secret|password|token|access[.]key|credentials|private
+end note
+
+legend right
+    No tokens/secrets are passed as job arguments
+    Driver authenticates itself directly against Keycloak
+    Direct submission to a vanilla Spark master
+    bypasses OAuth validation (operator's responsibility)
+end legend
+@enduml

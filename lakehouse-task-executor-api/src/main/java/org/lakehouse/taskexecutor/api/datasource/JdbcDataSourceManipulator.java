@@ -17,7 +17,7 @@
 
 package org.lakehouse.taskexecutor.api.datasource;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import org.lakehouse.client.api.constant.SystemVarKeys;
 import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetConstraintDTO;
@@ -130,7 +130,7 @@ public class JdbcDataSourceManipulator implements DataSourceManipulator {
 
     private void executeConstraint(
             String constraintName,
-            String template) throws JsonProcessingException,ExecuteException {
+            String template) throws JacksonException,ExecuteException {
         executeUtils().execute(template,Map.of(SystemVarKeys.CONSTRAINT_NAME, constraintName));
     }
     @Override
@@ -143,7 +143,7 @@ public class JdbcDataSourceManipulator implements DataSourceManipulator {
                 .toList()){
             try {
                 executeConstraint(constraintName, sqlTemplateResolver().getConstraintDDLDrop());
-            } catch (JsonProcessingException | ExecuteException e) {
+            } catch (JacksonException | ExecuteException e) {
                 throw new ConstraintException(e);
             }
         }
@@ -153,7 +153,7 @@ public class JdbcDataSourceManipulator implements DataSourceManipulator {
     public void removeConstraintByName( String constraintName) throws ConstraintException {
         try {
             executeConstraint(constraintName, sqlTemplateResolver().getConstraintDDLDrop());
-        } catch (JsonProcessingException | ExecuteException e) {
+        } catch (JacksonException | ExecuteException e) {
             throw new ConstraintException(e);
         }
     }
@@ -190,7 +190,7 @@ public class JdbcDataSourceManipulator implements DataSourceManipulator {
             try {
                 String template = getConstraintTemplate(constraint);
                 executeConstraint(constraint.getKey(),template);
-            } catch (JsonProcessingException | ExecuteException e) {
+            } catch (JacksonException | ExecuteException e) {
                 throw new ConstraintException(e);
             }
         }

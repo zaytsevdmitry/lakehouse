@@ -1,10 +1,15 @@
 ui-svc:
   image:
     repository: lakehouse
-    tag: "0.7.0"
+    tag: "0.8.0"
     pullPolicy: IfNotPresent
   replicaCount: 1
   service:
     type: NodePort
     port: 8084
     targetPort: 8084
+
+keycloak:
+  issuerUri: "http://keycloak:8085/realms/lakehouse"
+  uiClientSecret: "super-secret-bff-key-1234567890"
+  internalClientSecret: "super-secret-internal-key-987654321"

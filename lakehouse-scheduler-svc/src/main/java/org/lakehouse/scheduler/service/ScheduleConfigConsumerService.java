@@ -22,6 +22,7 @@ import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -30,12 +31,11 @@ public class ScheduleConfigConsumerService {
 
     private final BuildService buildService;
 
-    private final ConfigRestClientApi configRestClientApi;
+
 
     public ScheduleConfigConsumerService(
             BuildService buildService, ConfigRestClientApi configRestClientApi) {
         this.buildService = buildService;
-        this.configRestClientApi = configRestClientApi;
     }
 
 
@@ -43,9 +43,10 @@ public class ScheduleConfigConsumerService {
             topics = "#{'${lakehouse.scheduler.config.schedule.kafka.consumer.topics}'.split(',')}",
             concurrency = "#{'${lakehouse.scheduler.config.schedule.kafka.consumer.concurrency}'}",
             containerFactory = "containerFactory")
-    public void listen(ScheduleEffectiveDTO scheduleEffectiveDTO) {
+    public void listen(ScheduleEffectiveDTO scheduleEffectiveDTO, Acknowledgment acknowledgment) {
         logger.info("New schedule config change: {}", scheduleEffectiveDTO.getKeyName());
         buildService.registration(scheduleEffectiveDTO);
         logger.info("findAndRegisterNewSchedules");
+        acknowledgment.acknowledge();
     }
 }

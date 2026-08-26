@@ -1,7 +1,7 @@
 proxy4spark:
   image:
     repository: lakehouse-task-proxy4spark
-    tag: "0.7.0"
+    tag: "0.8.0"
     pullPolicy: IfNotPresent
 
   service:
@@ -42,3 +42,7 @@ proxy4spark:
   # Metrics / submission timeout
   metrics:
     submissionTimeoutSeconds: 30
+
+keycloak:
+  issuerUri: "http://keycloak:8085/realms/lakehouse"
+  internalClientSecret: "super-secret-internal-key-987654321"

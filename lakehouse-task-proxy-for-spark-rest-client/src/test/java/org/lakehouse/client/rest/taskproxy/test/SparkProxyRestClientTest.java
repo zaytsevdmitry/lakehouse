@@ -17,7 +17,7 @@
 
 package org.lakehouse.client.rest.taskproxy.test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.rest.taskproxy.SparkProxyRestClientApi;
@@ -31,7 +31,7 @@ import org.lakehouse.task.proxy.spark.dto.SparkProxySubmissionsResponse;
 import org.lakehouse.task.proxy.spark.dto.SubmissionResponse;
 import org.lakehouse.task.proxy.spark.dto.SubmissionStatusResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
+import org.springframework.boot.restclient.test.autoconfigure.RestClientTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.client.MockRestServiceServer;

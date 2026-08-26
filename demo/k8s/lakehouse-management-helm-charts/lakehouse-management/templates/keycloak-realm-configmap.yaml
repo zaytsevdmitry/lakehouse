@@ -1,0 +1,98 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-realm-import
+  namespace: {{ .Release.Namespace }}
+data:
+  lakehouse-realm.json: |
+    {
+      "id": "lakehouse",
+      "realm": "lakehouse",
+      "enabled": true,
+      "roles": {
+        "realm": [
+          {
+            "name": "USER",
+            "description": "Обычный пользователь экосистемы"
+          },
+          {
+            "name": "ADMIN",
+            "description": "Администратор с полным доступом к Spark и конфигурациям"
+          }
+        ]
+      },
+      "users": [
+        {
+          "username": "de_view",
+          "firstName": "Data",
+          "lastName": "Viewer",
+          "email": "de_view@lakehouse.local",
+          "enabled": true,
+          "emailVerified": true,
+          "requiredActions": [],
+          "credentials": [
+            {
+              "type": "password",
+              "value": "de_view",
+              "temporary": false
+            }
+          ],
+          "realmRoles": [
+            "USER"
+          ]
+        },
+        {
+          "username": "de_editor",
+          "firstName": "Data",
+          "lastName": "Editor",
+          "email": "de_editor@lakehouse.local",
+          "enabled": true,
+          "emailVerified": true,
+          "requiredActions": [],
+          "credentials": [
+            {
+              "type": "password",
+              "value": "de_editor",
+              "temporary": false
+            }
+          ],
+          "realmRoles": [
+            "ADMIN"
+          ]
+        }
+      ],
+      "clients": [
+        {
+          "clientId": "lakehouse-ui-client",
+          "name": "UI BFF Client",
+          "enabled": true,
+          "protocol": "openid-connect",
+          "publicClient": false,
+          "secret": "super-secret-bff-key-1234567890",
+          "standardFlowEnabled": true,
+          "directAccessGrantsEnabled": false,
+          "redirectUris": [
+            "http://localhost:8080/*",
+            "http://localhost:8084/*",
+            "http://localhost:8080/login/oauth2/code/keycloak",
+            "http://localhost:8084/login/oauth2/code/keycloak"
+          ],
+          "webOrigins": [
+            "http://localhost:8080",
+            "http://localhost:8084"
+          ]
+        },
+        {
+          "clientId": "lakehouse-internal-client",
+          "name": "Service-to-Service Internal Client",
+          "enabled": true,
+          "protocol": "openid-connect",
+          "publicClient": false,
+          "secret": "super-secret-internal-key-987654321",
+          "standardFlowEnabled": false,
+          "directAccessGrantsEnabled": false,
+          "serviceAccountsEnabled": true
+        }
+      ]
+    }
+    

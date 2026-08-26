@@ -55,24 +55,58 @@ public class ApplicationBodyStarter {
         } catch(Exception e) {
             logger.error("Task failed by unexpected cause", e);
             exitcode = ExitCode.other.getValue();
+        } catch(Throwable t) {
+            // Errors must never be reported as a successful run
+            logger.error("Task failed by fatal error", t);
+            exitcode = ExitCode.other.getValue();
         } finally {
-            if (context!=null) {
-                SparkSession sparkSession = context.getBean(SparkSession.class);
-                logger.info("Stopping Spark session");
-                sparkSession.stop();
-                int maxAttempts = 10;
-                while (!sparkSession.sparkContext().isStopped() && maxAttempts > 0) {
-                    logger.info("Awaiting spark session.");
-                    Thread.sleep(3000L); //todo made app parameter
-                    maxAttempts--;
-                }
-                logger.info("Stopping Spring context");
-                context.stop();
-            }
+            stop(context);
             logger.info("Exiting application with code {}",exitcode);
+            // shutdown hooks (spark/s3a event log writers) may hang forever;
+            // force the JVM down so the cluster never sees a zombie driver
+            final int exitCodeFinal = exitcode;
+            Thread haltGuard = new Thread(() -> {
+                try {
+                    Thread.sleep(30_000L);
+                    logger.error("Shutdown hooks did not finish in time, forcing JVM halt with code {}", exitCodeFinal);
+                } catch (InterruptedException ignored) {
+                    // halt requested by the main thread
+                }
+                Runtime.getRuntime().halt(exitCodeFinal);
+            }, "exit-halt-guard");
+            haltGuard.setDaemon(true);
+            haltGuard.start();
             System.exit(exitcode);
+            Runtime.getRuntime().halt(exitcode);
         }
 
+    }
+
+    private void stop(ConfigurableApplicationContext context) {
+        if (context == null)
+            return;
+        try {
+            SparkSession sparkSession = context.getBean(SparkSession.class);
+            logger.info("Stopping Spark session");
+            sparkSession.stop();
+            int maxAttempts = 10;
+            while (!sparkSession.sparkContext().isStopped() && maxAttempts > 0) {
+                logger.info("Awaiting spark session.");
+                Thread.sleep(3000L); //todo made app parameter
+                maxAttempts--;
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.warn("Interrupted while awaiting Spark session shutdown", e);
+        } catch (Throwable t) {
+            logger.warn("Failed to stop Spark session cleanly", t);
+        }
+        try {
+            logger.info("Stopping Spring context");
+            context.close();
+        } catch (Throwable t) {
+            logger.warn("Failed to close Spring context cleanly", t);
+        }
     }
     public ConfigurableApplicationContext run(String[] args, Class<?> aClass) throws TaskConfigurationException, TaskFailedException {
 

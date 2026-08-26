@@ -17,7 +17,7 @@
 
 package org.lakehouse.jinja.java;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import com.hubspot.jinjava.Jinjava;
 import com.hubspot.jinjava.lib.fn.ELFunctionDefinition;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
@@ -112,7 +112,7 @@ public class JinJavaFactory {
 
         return new JinJavaUtils(jinjava);
     }
-    public static JinJavaUtils getJinJavaUtils(SourceConfDTO sourceConfDTO, ScheduledTaskDTO scheduledTaskDTO) throws JsonProcessingException {
+    public static JinJavaUtils getJinJavaUtils(SourceConfDTO sourceConfDTO, ScheduledTaskDTO scheduledTaskDTO) throws JacksonException {
        return getJinJavaUtils()
                .injectGlobalContext(ObjectMapping.asMap(sourceConfDTO))
                .injectGlobalContext(ObjectMapping.asMap(scheduledTaskDTO));

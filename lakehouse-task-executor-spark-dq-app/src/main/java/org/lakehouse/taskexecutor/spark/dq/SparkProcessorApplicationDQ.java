@@ -32,7 +32,8 @@ import org.springframework.context.annotation.ComponentScan;
 @ComponentScan(
         basePackages = {
                 "org.lakehouse.taskexecutor.api",
-                "org.lakehouse.taskexecutor.spark.dq"
+                "org.lakehouse.taskexecutor.spark.dq",
+                "org.lakehouse.security"
         },
         basePackageClasses = {
                 ConfigRestClientConfiguration.class,

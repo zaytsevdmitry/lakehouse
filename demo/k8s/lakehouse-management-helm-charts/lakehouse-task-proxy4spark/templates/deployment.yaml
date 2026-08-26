@@ -14,7 +14,11 @@ spec:
         app.kubernetes.io/name: lakehouse-task-proxy4spark
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
-      serviceAccountName: lakehouse-app-sa  # name from lakehouse-management chart values.yaml
+      serviceAccountName: lakehouse-app-sa
+      initContainers:
+        - name: wait-for-keycloak
+          image: busybox:1.37
+          command: ['sh', '-c', 'until wget -q -O /dev/null http://keycloak:8085/realms/lakehouse; do echo waiting for keycloak; sleep 3; done']
       containers:
         - name: proxy4spark
           image: "{{ .Values.proxy4spark.image.repository }}:{{ .Values.proxy4spark.image.tag }}"
@@ -65,11 +69,15 @@ spec:
               value: "1m"
             - name: MANAGEMENT_METRICS_TAGS_APPLICATION
               value: "lakehouse-task-proxy4spark"
+            - name: KEYCLOAK_ISSUER_URI
+              value: {{ .Values.keycloak.issuerUri | quote }}
+            - name: KEYCLOAK_INTERNAL_CLIENT_SECRET
+              value: {{ .Values.keycloak.internalClientSecret | quote }}
           volumeMounts:
             - name: spark-defaults
               mountPath: /opt/spark/conf/spark-defaults.conf
               subPath: spark-defaults.conf
-          command: [ "/opt/java/jdk-23.0.2/bin/java", "-jar", "/opt/lakehouse-task-spark-apps/lakehouse-task-proxy-for-spark-0.7.0-jar-with-dependencies.jar"]
+          command: [ "/opt/java/jdk-23.0.2/bin/java", "-jar", "/opt/lakehouse-task-spark-apps/lakehouse-task-proxy-for-spark-0.8.0-jar-with-dependencies.jar"]
       volumes:
         - name: spark-defaults
           configMap:

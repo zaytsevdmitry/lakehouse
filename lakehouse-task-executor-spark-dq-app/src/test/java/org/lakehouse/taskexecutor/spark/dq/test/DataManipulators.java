@@ -17,7 +17,7 @@
 
 package org.lakehouse.taskexecutor.spark.dq.test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import org.apache.spark.sql.SparkSession;
 import org.lakehouse.client.api.dto.common.SQLTemplateDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
@@ -39,7 +39,7 @@ public class DataManipulators {
             ScheduledTaskDTO scheduledTaskDTO,
             SparkSession sparkSession,
             String dataSetKeyName,
-            ConfigRestClientApi configRestClientApi) throws TaskConfigurationException, JsonProcessingException {
+            ConfigRestClientApi configRestClientApi) throws TaskConfigurationException, JacksonException {
 
         SourceConfDTO sourceConfDTO = configRestClientApi.getSourceConfDTO(dataSetKeyName);
         JinJavaUtils jinJavaUtils = JinJavaFactory.getJinJavaUtils(sourceConfDTO,scheduledTaskDTO);
