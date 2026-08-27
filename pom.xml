@@ -45,6 +45,7 @@
         <module>lakehouse-task-proxy-for-spark</module>
         <module>lakehouse-task-proxy-for-spark-api</module>
         <module>lakehouse-task-proxy-for-spark-rest-client</module>
+        <module>lakehouse-spark-credential-providers</module>
     </modules>
     <dependencyManagement>
         <dependencies>

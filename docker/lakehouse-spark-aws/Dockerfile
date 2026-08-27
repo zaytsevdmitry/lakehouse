@@ -52,6 +52,8 @@ RUN curl -Z -sSLfO https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/$
          -O https://repo1.maven.org/maven2/com/google/guava/guava/${GUAVA_VERSION}/guava-${GUAVA_VERSION}.jar \
          -O https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-annotations/${JACKSON_ANNOTATIONS_VERSION}/jackson-annotations-${JACKSON_ANNOTATIONS_VERSION}.jar
 
+ADD lakehouse-spark-credential-providers-0.8.0.jar ./
+
 WORKDIR /tmp
 
 ADD log4j2.properties /opt/spark/conf/

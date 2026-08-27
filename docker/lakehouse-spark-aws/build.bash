@@ -21,7 +21,7 @@ export LH_VERSION=0.8.0
 cp -f ../../lakehouse-task-executor-spark-dataset-app/target/lakehouse-task-executor-spark-dataset-app-0.8.0-jar-with-dependencies.jar ./
 cp -f ../../lakehouse-task-executor-spark-dq-app/target/lakehouse-task-executor-spark-dq-app-0.8.0-jar-with-dependencies.jar ./
 cp -f ../../lakehouse-task-proxy-for-spark/target/lakehouse-task-proxy-for-spark-0.8.0-jar-with-dependencies.jar ./
-
+cp -f ../../lakehouse-spark-credential-providers/target/lakehouse-spark-credential-providers-0.8.0.jar ./
 docker build  -t lakehouse-spark-aws:$LH_VERSION ./
 rm ./lakehouse*.jar
 docker images | grep lakehouse
