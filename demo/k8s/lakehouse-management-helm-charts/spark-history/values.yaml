@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   repository: lakehouse-spark-aws
-  tag: 0.8.0
+  tag: 0.9.0
   pullPolicy: IfNotPresent
 
 # Секреты и окружение выносим в values для гибкости
@@ -12,6 +12,9 @@ env:
   s3Endpoint: "http://minio:9000"
   s3TestUrl: "http://minio:9001"
   sparkMode: "history"
+  # Scoped OpenBao token for the S3 credentials provider (BaoS3CredentialsProvider):
+  # spark-history reads event logs from s3a://sparklogs backed by kv/infrastructure/minio
+  vaultToken: "lakehouse-spark-token"
 
 resources:
   limits:

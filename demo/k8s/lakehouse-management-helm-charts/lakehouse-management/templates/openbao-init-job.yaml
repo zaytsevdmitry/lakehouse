@@ -1,0 +1,52 @@
+{{- if .Values.openbao.seed.enabled }}
+# OpenBao seeding is a one-shot Job (not a container lifecycle script): the
+# server binary stays PID 1 of the openbao Deployment. The Job talks to the
+# cluster Service (http://openbao:8200) and retries until the server is up.
+# Seed data comes from openbao.seed.env (valueFrom a pre-provisioned Secret in
+# production) or from the demo defaults inside the `openbao` ConfigMap.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: openbao-seed
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "lakehouse-management.labels" . | nindent 4 }}
+    app.kubernetes.io/component: openbao
+spec:
+  backoffLimit: 6
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: openbao-seed
+          image: "{{ .Values.openbao.image.repository }}:{{ .Values.openbao.image.tag }}"
+          imagePullPolicy: {{ .Values.openbao.image.pullPolicy }}
+          command: ["/bin/sh", "/opt/bao/seed.sh"]
+          env:
+            - name: BAO_ADDR
+              value: 'http://openbao:8200'
+            - name: BAO_TOKEN
+              value: 'lakehouse-root-token'
+            {{- range .Values.openbao.seed.env }}
+            - name: {{ .name }}
+{{- if .valueFrom }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .valueFrom.secretKeyRef.name }}
+                  key: {{ .valueFrom.secretKeyRef.key }}
+{{- else }}
+              value: {{ .value | quote }}
+{{- end }}
+            {{- end }}
+          volumeMounts:
+            - name: seed
+              mountPath: /opt/bao/seed.sh
+              subPath: seed.sh
+              readOnly: true
+      volumes:
+        - name: seed
+          configMap:
+            name: openbao
+            defaultMode: 0755
+{{- end }}

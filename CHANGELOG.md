@@ -1,5 +1,64 @@
 # Changelog
 
+## [0.9.0] — 2026-08-28
+
+### Added
+
+#### New modules — credential providers
+
+- **`lakehouse-credential-providers-jdbc`** — shared, Spark-independent secret resolution library (no Spring dependency; Spring Boot artifacts are declared `provided`):
+  - `SecretProvider` SPI and the `SecretResolver` helper (`hasProvider`, `resolvePassword`, `sanitize`, `resolveAndSanitize`)
+  - HTTP clients `VaultHttp` (OpenBao/Vault; token via `VAULT_TOKEN` env or Kubernetes Service Account auth) and `LockboxHttp` (Yandex Cloud Lockbox; IAM token via Instance Metadata or authorized key file `YC_AUTH_KEY_PATH`)
+  - `SecretCache` — in-memory cache, 5-minute TTL per JVM
+  - JDBC providers `BaoJdbcSecretProvider` (KV v2) and `YcLockboxJdbcSecretProvider`
+  - `LakehouseSecurityContext` for resolving secrets inside Spark closures on Executors
+- **`lakehouse-credential-providers-spark`** — Spark-specific credentials, resolved on Driver and Executors:
+  - `LakehouseSecureJDBCTableCatalog` — secure replacement for Spark's `JDBCTableCatalog`: resolves the DB password via `SecretResolver` at Driver + Executors and masks the original exception
+  - S3 providers `BaoS3CredentialsProvider` / `YcLockboxS3CredentialsProvider` for Spark S3A
+- **`lakehouse-spark-credential-providers`** split into the two modules above; the resulting jars (`lakehouse-credential-providers-jdbc-0.9.0.jar`, `lakehouse-credential-providers-spark-0.9.0.jar`) are copied into the Spark image
+
+#### Runtime secret resolution
+
+- **`JdbcConnectionFactory`** (`lakehouse-task-executor-api`) — resolves the DB password through `SecretResolver` when the datasource `service.properties` contains `secretProvider`; the security options are stripped before the map reaches the JDBC driver; unchanged when no provider is configured (backward compatible)
+- **`lakehouse-task-executor-api`** now depends on `lakehouse-credential-providers-jdbc`
+
+#### OpenBao / Vault integration in the demo
+
+- **Docker Compose**: `openbao` service (`quay.io/openbao/openbao:2.0`) with the init script `demo/compose/conf_infra/openbao/init.sh`:
+  - dev server, KV v2 secrets engine, seeding `kv/lakehouse/database` and `kv/infrastructure/minio`
+  - read-only policy `lakehouse-spark-readonly`, scoped token `lakehouse-spark-token`
+  - `VAULT_TOKEN` env added to `spark-master`, `spark-worker-1`, `spark-history`, `task-executor-svc-database`; healthcheck + `depends_on` wiring
+- **`demo/compose/conf_infra/spark-defaults.conf`**:
+  - `processingdb` catalog switched to `LakehouseSecureJDBCTableCatalog` + `BaoJdbcSecretProvider` (`secret-key: kv/data/lakehouse/database:password`) — plaintext PostgreSQL password removed
+  - S3 credentials moved from hardcoded `spark_user`/`spark_pwd` to `BaoS3CredentialsProvider` reading `kv/data/infrastructure/minio` from OpenBao
+- **Datasource configs** (`demo/compose/conf/datasources/processingdb.json`, `demo/k8s/conf/datasources/processingdb.json`) — `password` replaced by provider options (`secretProvider`, `secret-key`, `vault-url`)
+- **Kubernetes umbrella chart** `lakehouse-management`:
+  - `openbao:` section in `values.yaml` (image, env with `LAKEHOUSE_DB_PASSWORD`, `MINIO_ROOT_PASSWORD`, `BAO_DEV_ROOT_TOKEN_ID`, `BAO_TOKEN`; optional `valueFrom.secretKeyRef` support)
+  - new templates: `openbao-configmap` (init script placeholder for `init.sh`), `openbao-deployment` (`BAO_ADDR` → `http://<release>-openbao:8200`, exec `bao status` probes), `openbao-service` (ClusterIP:8200)
+- **Spark image** `docker/lakehouse-spark-aws` — provider jars added to `/opt/spark/jars`, version 0.9.0
+- **lakehouse-ui-svc** — OpenBao added to the services topology (health-check `/v1/sys/health`, vertex, edge)
+
+#### Documentation
+
+- `doc/security/security.md` + `doc-ru/security/security.md` — new section "Secrets for data connections (credential providers)": option contract (`secretProvider`, `secret-key`, `vault-url`, `vault-role`, `vault-k8s-auth-path`, `secret-id`, `secret-version`), where to configure (`spark-defaults.conf` / datasource `service.properties`), OpenBao/Vault and Yandex Cloud Lockbox setup, security guarantees (secrets are never logged, masked errors, 5-minute cache); overview and configuration reference updated
+- `lakehouse-credential-providers-spark` README (EN/RU) — configuration, deploying to Spark (`--jars`), caching / timeouts / troubleshooting
+- `lakehouse-task-executor-svc` docs (EN/RU):
+  - `processors.md` — Spark processor architecture updated to the actual code (deploy logic inlined, `deploy.clusterUrl` / `deploy.mainClass` / `deploy.appResource`), new "Secrets in Spark tasks" section
+  - `properties.md` — spark processor properties (`maxWaitToRunningStateTimeoutMs`, `sparkJobStatusCheckIntervalMs`) and datasource provider options
+  - `readme.md` — processor parameters, JDBC secret resolution, `VAULT_TOKEN` / `YC_AUTH_KEY_PATH` required settings
+  - `TaskProcessors` UML diagram regenerated
+- `demo/compose/README-INSTALL.md`, `demo/k8s/README-INSTALL.md` — micro-fixes (load.sh command, Keycloak section relocation)
+
+### Changed
+
+- **Version 0.8.0 → 0.9.0** for all modules, Docker images and Helm chart image tags
+
+### Fixed
+
+- **Stale documentation** referencing the removed `AbstractSparkDeployTaskProcessor` / `SparkRestDeployFactory` — processors.md (EN/RU) and the `TaskProcessors` UML diagram corrected to the current architecture
+
+---
+
 ## [0.8.0] — 2026-08-26
 
 ### Changed

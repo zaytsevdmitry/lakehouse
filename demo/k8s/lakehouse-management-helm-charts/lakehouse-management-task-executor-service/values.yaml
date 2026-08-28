@@ -1,7 +1,7 @@
 lakehouse-management-task-executor-service:
   image:
     repository: lakehouse
-    tag: "0.8.0"
+    tag: "0.9.0"
     pullPolicy: IfNotPresent
   serviceAccount:
     create: false
@@ -10,3 +10,10 @@ lakehouse-management-task-executor-service:
 keycloak:
   issuerUri: "http://keycloak:8085/realms/lakehouse"
   internalClientSecret: "super-secret-internal-key-987654321"
+
+# Scoped OpenBao token (read-only policy lakehouse-spark-readonly) used by the
+# JdbcSecretResolver when reading datasource credentials from OpenBao
+# (see processingdb.json: BaoJdbcSecretProvider). Demo default only — in
+# production the token is provisioned by the information security administrator.
+vault:
+  token: "lakehouse-spark-token"

@@ -17,8 +17,8 @@
 
 
 set -e
-export LH_VERSION=0.8.0
-cp -f ../../lakehouse-task-proxy-for-spark/target/lakehouse-task-proxy-for-spark-0.8.0-jar-with-dependencies.jar ./
+export LH_VERSION=0.9.0
+cp -f ../../lakehouse-task-proxy-for-spark/target/lakehouse-task-proxy-for-spark-0.9.0-jar-with-dependencies.jar ./
 
 docker build  -t lakehouse-task-proxy4spark:$LH_VERSION ./
 rm ./lakehouse*.jar

@@ -52,21 +52,22 @@ RUN curl -Z -sSLfO https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/$
          -O https://repo1.maven.org/maven2/com/google/guava/guava/${GUAVA_VERSION}/guava-${GUAVA_VERSION}.jar \
          -O https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-annotations/${JACKSON_ANNOTATIONS_VERSION}/jackson-annotations-${JACKSON_ANNOTATIONS_VERSION}.jar
 
-ADD lakehouse-spark-credential-providers-0.8.0.jar ./
+ADD lakehouse-credential-providers-jdbc-0.9.0.jar ./
+ADD lakehouse-credential-providers-spark-0.9.0.jar ./
 
 WORKDIR /tmp
 
 ADD log4j2.properties /opt/spark/conf/
 
 LABEL type="lakehouse=spark" \
-      version="lakehouse-0.8.0_spark-3.5.8" \
+      version="lakehouse-0.9.0_spark-3.5.8" \
       features="spark, aws-s3a, postgres-jdbc, aws-cli"
 
 
 # Add application
-ADD lakehouse-task-executor-spark-dataset-app-0.8.0-jar-with-dependencies.jar ${APP_HOME}/
-ADD lakehouse-task-executor-spark-dq-app-0.8.0-jar-with-dependencies.jar ${APP_HOME}/
-ADD lakehouse-task-proxy-for-spark-0.8.0-jar-with-dependencies.jar ${APP_HOME}/
+ADD lakehouse-task-executor-spark-dataset-app-0.9.0-jar-with-dependencies.jar ${APP_HOME}/
+ADD lakehouse-task-executor-spark-dq-app-0.9.0-jar-with-dependencies.jar ${APP_HOME}/
+ADD lakehouse-task-proxy-for-spark-0.9.0-jar-with-dependencies.jar ${APP_HOME}/
 
 EXPOSE 4040 9083
 

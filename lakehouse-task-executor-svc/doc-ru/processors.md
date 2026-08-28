@@ -40,15 +40,25 @@ scheduler-svc должен будет повторить задачу, это с
 
 ```
 SparkStandAloneClusterTaskProcessor
-  └─ extends AbstractSparkDeployTaskProcessor  (логика деплоя через Spark REST API)
-       └─ extends AbstractTaskProcessor
-  └─ использует SparkRestDeployFactory  (формирование URL сервера)
+  └─ extends AbstractTaskProcessor
+       └─ deploy(mainClass, appResource, serverUrl, sparkProperties, appArgs) — приватный метод процессора, логика деплоя через Spark REST API
 ```
 
-- `AbstractSparkDeployTaskProcessor` — абстрактный базовый класс, реализует:
-  - `deploy(mainClass, appResource, serverUrl, sparkProperties, appArgs)` — отправляет POST `/v1/submissions/create`, ожидает переход в `RUNNING` (таймаут 2 мин), затем ожидает финального статуса (`FINISHED`/`KILLED`/`FAILED`/`ERROR`)
-  - Строит `SparkRestClientApi` через `buildSparkRestClientApi(baseURI)` на `RestClient`
-- `SparkRestDeployFactory.getServerUrl()` — извлекает шаблон connection типа `spark` из драйвера целевого datasource, рендерит через Jinja, добавляет `/v1/submissions`
+- в ранних версиях логика деплоя жила в отдельном `AbstractSparkDeployTaskProcessor`
+  (с `SparkRestDeployFactory` для формирования URL); позже она была инлайнирована в
+  [SparkStandAloneClusterTaskProcessor.java](../src/main/java/org/lakehouse/taskexecutor/processor/spark/SparkStandAloneClusterTaskProcessor.java)
+- адрес кластера берётся из аргумента `deploy.clusterUrl` в `taskProcessorArgs`
+  (`getMasterUrl()`); он уже содержит полный путь REST, например `http://host:port/v1/submissions`,
+  и используется как базовый URI для `SparkRestClientApi` (`buildSparkRestClientApi(baseURI)` на `RestClient`)
+- приложение-драйвер параметризуется ключами `deploy.mainClass` и `deploy.appResource`
+  (разрешаются в приоритете: taskProcessorArgs → datasource service.properties, через `Coalesce.apply`)
+- `deploy(...)` отправляет POST `/v1/submissions/create`, ожидает перехода в `RUNNING`
+  (таймаут `maxWaitToRunningStateTimeoutMs`, по умолчанию 120000 мс), опрашивает статус каждые
+  `sparkJobStatusCheckIntervalMs` (по умолчанию 3000 мс) до финального статуса
+  (`FINISHED`/`KILLED`/`FAILED`/`ERROR`) и падает на негативных статусах
+  (`KILLED`, `FAILED`, `ERROR`)
+- превышение лимита `DRIVER_STATE_NULL_LIMIT` (30) опросов с `driverState` null/`UNKNOWN` после `RUNNING`
+  прерывает задачу, если запись о драйвере исчезла у мастера
 
 Ничего не знают о логике задачи. Ответственность — разбор конфигурации, чтобы параметризовать spark-driver в конкретном кластере.
 Не работают с локальным запуском драйвера, т.к. это сильно утяжелит сам сервис и размоет границы его ответственности.
@@ -80,6 +90,38 @@ SparkStandAloneClusterTaskProcessor
 5. Вызов `deploy(mainClass, appResource, serverUrl, sparkProperties, appArgs)`
 
 
+### Секреты в Spark-задачах (lakehouse-credential-providers-jdbc / -spark)
+
+`SparkStandAloneClusterTaskProcessor` никогда не резолвит и не передаёт пароли БД в открытом виде:
+
+- все ключи `spark.*`, собранные из `service.properties` datasource и `taskProcessorArgs`
+  (включая `spark.sql.catalog.*`), передаются драйверу в составе `sparkProperties`
+  (извлечение sparkConf, шаги выше);
+- если у datasource нет явного `spark.sql.catalog.<key>.url`, процессор строит его из
+  `host`/`port`/`urn` — **без учётных данных**;
+- драйвер параметризуется безопасным каталогом `LakehouseSecureJDBCTableCatalog`
+  (модуль `lakehouse-credential-providers-spark`), который на Driver/Executors резолвит пароль
+  через `SecretResolver` (модуль `lakehouse-credential-providers-jdbc`) по опциям
+  `secretProvider`, `secret-key`, `vault-url` (+ опциональные `vault-role`, `vault-k8s-auth-path` для OpenBao,
+  или `secret-id` / `secret-version` для Lockbox);
+- все опции безопасности вычищаются из опций каталога до передачи базовому JDBC-каталогу.
+
+Как включить (в `service.properties` datasource, ключи с префиксом):
+
+```
+spark.sql.catalog.processingdb                     org.lakehouse.security.catalog.LakehouseSecureJDBCTableCatalog
+spark.sql.catalog.processingdb.url                 jdbc:postgresql://db-host:5432/db
+spark.sql.catalog.processingdb.user                app_user
+spark.sql.catalog.processingdb.secretProvider      org.lakehouse.security.jdbc.BaoJdbcSecretProvider
+spark.sql.catalog.processingdb.vault-url           http://openbao:8200
+spark.sql.catalog.processingdb.secret-key          kv/data/lakehouse/database:password
+```
+
+Требуется: jar-файлы `lakehouse-credential-providers-jdbc` и `lakehouse-credential-providers-spark` в classpath
+драйвера, сетевой доступ к хранилищу секретов и `VAULT_TOKEN` (или Kubernetes Service Account). Подробнее в
+[руководстве по безопасности](../../doc-ru/security/security.md).
+
+
 ### Работа со статусной моделью датасета
 Требует доступности state-svc. Временное отсутствие приведет к аварии задачи.
 scheduler-svc должен будет повторить задачу, это сглаживает проблему перезапуска экземпляров.
@@ -93,6 +135,11 @@ scheduler-svc должен будет повторить задачу, это с
 - всегда работает через jdbc драйвер, который должен быть помещен в classpath
 - ничего не знает про синтаксис БД, с которой работает, потому что это ответственность соответствующего [sqlTemplate.md](../../lakehouse-config-svc/doc-ru/content_configuration/sqlTemplate.md)
 - отвечает только за определение из параметра задачи `taskProcessorBody` и его запуск
+- открывает подключение через `JdbcConnectionFactory` (`lakehouse-task-executor-api`): при наличии
+  `lakehouse-credential-providers-jdbc` в classpath, если `service.properties` целевого datasource
+  содержит `secretProvider`, пароль резолвится из OpenBao/Lockbox (`secret-key`, `vault-url` и т.д.),
+  опции безопасности вычищаются, а разрешённое значение инжектируется как `password`; без
+  `secretProvider` поведение не меняется
 
 ## TaskProcessorBody
 Код, который выносится из TaskProcessor для пере-использования другими TaskProcessor или исполнения вне приложения.

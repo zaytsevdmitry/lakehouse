@@ -17,7 +17,7 @@
 
 
 set -e
-export LH_VERSION=0.8.0
+export LH_VERSION=0.9.0
 
 docker build -t lakehouse-hms:$LH_VERSION ./
 docker images

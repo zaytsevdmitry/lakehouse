@@ -6,7 +6,9 @@
       "port": "5432",
       "urn": "postgresDB",
       "properties": {
-        "password": "postgresPW",
+        "secretProvider": "org.lakehouse.security.jdbc.BaoJdbcSecretProvider",
+        "secret-key": "kv/data/lakehouse/database:password",
+        "vault-url": "http://openbao:8200",
         "user": "postgresUser",
         "fetchSize": "10000"
       }

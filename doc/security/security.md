@@ -4,15 +4,19 @@ How security is organized in the lakehouse ecosystem. All services use [Keycloak
 
 ## Overview
 
-Three security models are used:
+The security model is divided into four areas:
 
 | Model | Components | Mechanism |
 |:------|:-----------|:----------|
 | Service-to-service | lakehouse-config-svc, lakehouse-state-svc, lakehouse-task-executor-svc, lakehouse-task-proxy-for-spark, lakehouse-scheduler-svc | OAuth2 Resource Server (JWT validation) + `client_credentials` / token relay for outgoing calls |
 | User-facing | lakehouse-ui-svc (BFF) | OAuth2 Login (authorization code flow) + HTTP session + CSRF |
 | Spark applications | lakehouse-task-executor-spark-dq-app, lakehouse-task-executor-spark-dataset-app | OAuth2 Client (`client_credentials`) for callbacks to backend services |
+| Data source credentials | lakehouse-task-executor-svc (JDBC path), Spark drivers/executors | Runtime secret resolution from OpenBao/Vault or Yandex Cloud Lockbox (credential providers) - no plaintext passwords in configuration |
 
 Keycloak realm: **`lakehouse`** (realm import file: `demo/compose/conf_infra/security/realms/lakehouse-realm.json`).
+
+Secret material (database passwords, S3 keys) is not stored in configuration files at all - it is resolved at runtime
+from secret stores (OpenBao/Vault or Yandex Cloud Lockbox), see [section 4](#4-secrets-for-data-connections-credential-providers).
 
 ---
 
@@ -239,6 +243,97 @@ and the Spark UI.
 
 ---
 
+## 4. Secrets for data connections (credential providers)
+
+Database passwords and S3 access keys are **not stored** in configuration files. They are resolved at runtime
+by two optional modules:
+
+| Module | Contents |
+|:-------|:---------|
+| `lakehouse-credential-providers-jdbc` | Spark-independent library: `SecretProvider` SPI, `SecretResolver` helper, HTTP clients `VaultHttp` / `LockboxHttp`, in-memory `SecretCache` (5-minute TTL per JVM), JDBC providers `BaoJdbcSecretProvider` (OpenBao/Vault KV v2) and `YcLockboxJdbcSecretProvider` (Yandex Cloud Lockbox) |
+| `lakehouse-credential-providers-spark` | Spark-specific: `LakehouseSecureJDBCTableCatalog` - a secure replacement for Spark's `JDBCTableCatalog` (password resolution on Driver and Executors) and S3 credential providers for Spark S3A |
+
+Both entry points that open a JDBC connection now go through `SecretResolver`:
+
+- lakehouse services - `JdbcConnectionFactory.getConnection(...)` (`lakehouse-task-executor-api`);
+- Spark drivers - `LakehouseSecureJDBCTableCatalog.initialize(...)`.
+
+### Provider option contract
+
+| Option | Provider | Required | Description |
+|:-------|:---------|:---------|:------------|
+| `secretProvider` | both | yes | Fully qualified class name of the `SecretProvider` implementation |
+| `secret-key` | both | yes | Combined `path:key` coordinate: OpenBao - `secretPath:key` (e.g. `kv/data/lakehouse/database:password`); Lockbox - `secretId:key` (e.g. `e4ta...:password`) |
+| `vault-url` | OpenBao/Vault | yes | Vault HTTP API base URL, e.g. `http://openbao:8200` |
+| `vault-role` | OpenBao/Vault | no | Kubernetes auth role (default `lakehouse`) |
+| `vault-k8s-auth-path` | OpenBao/Vault | no | Kubernetes auth mount path (default `kubernetes`) |
+| `secret-id` | Lockbox | yes | Yandex Cloud Lockbox secret id |
+| `secret-version` | Lockbox | no | Specific secret version (default `latest`) |
+
+The resolved value is injected into the connection options as the `password` key, and all listed security
+options are **removed** before the map reaches a JDBC driver or Spark catalog. If `secretProvider` is absent,
+the options are passed through unchanged (backward compatibility).
+
+### Where to configure
+
+- **Spark (global defaults, `spark-defaults.conf`)** - prefixed catalog options; the password is fetched on the driver:
+
+  ```
+  spark.sql.catalog.processingdb                org.lakehouse.security.catalog.LakehouseSecureJDBCTableCatalog
+  spark.sql.catalog.processingdb.url            jdbc:postgresql://db-host:5432/db
+  spark.sql.catalog.processingdb.user           app_user
+  spark.sql.catalog.processingdb.secretProvider org.lakehouse.security.jdbc.BaoJdbcSecretProvider
+  spark.sql.catalog.processingdb.vault-url      http://openbao:8200
+  spark.sql.catalog.processingdb.secret-key     kv/data/lakehouse/database:password
+  ```
+
+  Real example: `demo/compose/conf_infra/spark-defaults.conf`.
+
+- **Spark (per-datasource)** - the same keys with the full `spark.sql.catalog.<name>.` prefix placed in the
+  datasource `service.properties`. `SparkStandAloneClusterTaskProcessor` forwards all `spark.*` keys to the
+  driver; if `spark.sql.catalog.<name>.url` is missing, it is built from the datasource `host`/`port`/`urn`.
+
+- **lakehouse services (JDBC tasks)** - the datasource `service.properties` (`ServiceDTO.properties`); the URL
+  is built from `host`/`port`/`urn` unless an explicit `url` is given:
+
+  ```json
+  "properties": {
+    "user": "app_user",
+    "secretProvider": "org.lakehouse.security.jdbc.BaoJdbcSecretProvider",
+    "secret-key": "kv/data/lakehouse/database:password",
+    "vault-url": "http://openbao:8200"
+  }
+  ```
+
+  Real example: `demo/compose/conf/datasources/processingdb.json`.
+
+### OpenBao / Vault setup
+
+1. Enable a KV v2 secrets engine and write the secret, e.g. `bao kv put kv/lakehouse/database password=<value>`.
+2. Create a read-only policy for the paths the services read (`kv/data/lakehouse/database`, `kv/data/infrastructure/minio`)
+   and issue a scoped token for the consuming components. Reference script: `demo/compose/conf_infra/openbao/init.sh`.
+3. The token is supplied to the process via the `VAULT_TOKEN` environment variable or - inside Kubernetes - via
+   the Service Account (options `vault-role` / `vault-k8s-auth-path`). Demo docker-compose variables:
+   `BAO_DEV_ROOT_TOKEN_ID`, `BAO_TOKEN`, `LAKEHOUSE_DB_PASSWORD` (seeding) and `VAULT_TOKEN` (consumers).
+4. In Kubernetes the OpenBao service is reachable as `http://<release>-openbao:8200` (umbrella chart `lakehouse-management`).
+
+### Yandex Cloud Lockbox setup
+
+1. A Lockbox secret containing the required keys (e.g. `password`, `access_key`, `secret_key`).
+2. Every VM/worker that opens connections must have a Service Account with the `lockbox.payloadViewer` role.
+   The IAM token is fetched from the Instance Metadata Service, or from an authorized key file configured via
+   `YC_AUTH_KEY_PATH`.
+
+### Security guarantees
+
+- Plaintext passwords are never present in YAML/JSON configuration, task arguments or Spark job arguments.
+- Secrets are never logged: on errors only HTTP status codes are logged, error messages are masked
+  (`SecurityException`, `RuntimeException("Catalog access blocked...")`).
+- Spark log redaction (`spark.redaction.regex`, section 3) additionally protects driver/executor logs.
+- Resolved secrets are cached in memory per JVM with a 5-minute TTL.
+
+---
+
 ## Configuration reference
 
 Environment variables (with defaults from `demo/compose`, override in real deployments):
@@ -249,6 +344,8 @@ Environment variables (with defaults from `demo/compose`, override in real deplo
 | `KEYCLOAK_UI_CLIENT_SECRET` | lakehouse-ui-svc | Secret of `lakehouse-ui-client` |
 | `KEYCLOAK_INTERNAL_CLIENT_SECRET` | all backend services, Spark apps | Secret of `lakehouse-internal-client` |
 | `LAKEHOUSE_UI_REDIRECT_URI` | lakehouse-ui-svc | Redirect URI template for the authorization code callback |
+| `VAULT_TOKEN` | lakehouse-task-executor-svc, Spark drivers/executors | OpenBao/Vault token used by `BaoJdbcSecretProvider` and the S3 providers (section 4) |
+| `YC_AUTH_KEY_PATH` | lakehouse-task-executor-svc, Spark drivers/executors | Path to the authorized key file for the Lockbox IAM token (alternative to Instance Metadata, section 4) |
 
 Application properties:
 

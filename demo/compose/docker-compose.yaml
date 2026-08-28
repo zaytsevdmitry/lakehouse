@@ -103,9 +103,6 @@ services:
       BAO_DEV_ROOT_TOKEN_ID: "lakehouse-root-token"
       BAO_ADDR: "http://127.0.0.1:8200"
       BAO_TOKEN: "lakehouse-root-token"
-      LAKEHOUSE_DB_PASSWORD: "postgresPW"
-      MINIO_ROOT_USER: "spark_user"
-      MINIO_ROOT_PASSWORD: "spark_pwd"
     entrypoint: ["/bin/sh", "/opt/bao/init.sh"]
     volumes:
       - ./conf_infra/openbao/init.sh:/opt/bao/init.sh:ro
@@ -139,7 +136,7 @@ services:
       KAFKA_NUM_PARTITIONS: 4
 
   hive-metastore:
-    image: lakehouse-hms:0.8.0
+    image: lakehouse-hms:0.9.0
     entrypoint: ["/bin/sh", "-c", "/service.sh"]
     container_name: hive-metastore
     restart: on-failure
@@ -161,7 +158,7 @@ services:
         ipv4_address: 172.20.193.60
 
   spark-master:
-    image: lakehouse-spark-aws:0.8.0
+    image: lakehouse-spark-aws:0.9.0
     entrypoint: ["/bin/sh", "-c", "/service.sh"]
     container_name: spark-master
     hostname: spark-master
@@ -203,7 +200,7 @@ services:
         condition: service_healthy
 
   spark-worker-1:
-    image: lakehouse-spark-aws:0.8.0
+    image: lakehouse-spark-aws:0.9.0
     entrypoint: ["/bin/sh", "-c", "/service.sh"]
     container_name: spark-worker-1
     environment:
@@ -243,7 +240,7 @@ services:
         condition: service_started
 
   spark-history:
-    image: lakehouse-spark-aws:0.8.0
+    image: lakehouse-spark-aws:0.9.0
     entrypoint: ["/bin/sh", "-c", "/service.sh"]
     container_name: spark-history
     environment:
@@ -267,7 +264,7 @@ services:
           memory: 4g
 
   lakehouse-config-svc:
-    image: lakehouse:0.8.0
+    image: lakehouse:0.9.0
     container_name: lakehouse-config-svc
     ports:
       - "18081:8080"
@@ -288,7 +285,7 @@ services:
       "-Dlogging.level.org.apache.hc.client5.http=DEBUG",
       "-Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=ConfigSVC",
       "-Dlogging.level.org.springframework.boot.context.properties=DEBUG",
-      "-jar", "/opt/lakehouse-config-svc-0.8.0-jar-with-dependencies.jar"
+      "-jar", "/opt/lakehouse-config-svc-0.9.0-jar-with-dependencies.jar"
     ]
     depends_on:
       db-dev:
@@ -299,7 +296,7 @@ services:
         condition: service_healthy
 
   lakehouse-scheduler-svc:
-    image: lakehouse:0.8.0
+    image: lakehouse:0.9.0
     container_name: lakehouse-scheduler-svc
     ports:
       - "8081:8081"
@@ -318,7 +315,7 @@ services:
       "-Dlakehouse.scheduler.run.delay-ms=5000",
       "-Dlakehouse.scheduler.resolvedeps.delay-ms=5000",
       "-Dlakehouse.client.rest.config.server.url=http://lakehouse-config-svc:8080",
-      "-jar", "/opt/lakehouse-scheduler-svc-0.8.0-jar-with-dependencies.jar"
+      "-jar", "/opt/lakehouse-scheduler-svc-0.9.0-jar-with-dependencies.jar"
       ]
     depends_on:
       db-dev:
@@ -331,7 +328,7 @@ services:
         condition: service_started
 
   lakehouse-state-svc:
-    image: lakehouse:0.8.0
+    image: lakehouse:0.9.0
     container_name: lakehouse-state-svc
     ports:
       - "8082:8082"
@@ -344,7 +341,7 @@ services:
     command: >
       bash -c "java
       -Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=StateSVC
-      -jar /opt/lakehouse-state-svc-0.8.0-jar-with-dependencies.jar"
+      -jar /opt/lakehouse-state-svc-0.9.0-jar-with-dependencies.jar"
     depends_on:
       db-dev:
         condition: service_healthy
@@ -352,7 +349,7 @@ services:
         condition: service_healthy
 
   lakehouse-task-executor-svc-database:
-    image: lakehouse:0.8.0
+    image: lakehouse:0.9.0
     container_name: task-executor-svc-database
     hostname: task-executor-svc-1
     ports:
@@ -363,6 +360,7 @@ services:
     environment:
       KEYCLOAK_ISSUER_URI: http://keycloak.lakehouse:8085/realms/lakehouse
       KEYCLOAK_INTERNAL_CLIENT_SECRET: super-secret-internal-key-987654321
+      VAULT_TOKEN: lakehouse-spark-token
     command: [
       "java",
       "-Dserver.port=8091",
@@ -373,7 +371,7 @@ services:
       "-Dlakehouse.task-executor.service.id=database",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=broker:9092",
-      "-jar", "/opt/lakehouse-task-executor-svc-0.8.0-jar-with-dependencies.jar"
+      "-jar", "/opt/lakehouse-task-executor-svc-0.9.0-jar-with-dependencies.jar"
     ]
     depends_on:
       broker:
@@ -388,7 +386,7 @@ services:
         condition: service_started
 
   lakehouse-task-executor-svc-spark:
-    image: lakehouse:0.8.0
+    image: lakehouse:0.9.0
     container_name: task-executor-svc-spark
     hostname: task-executor-svc-spark
     networks:
@@ -409,7 +407,7 @@ services:
       "-Dlakehouse.task-executor.service.id=spark-exec-1",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=broker:9092",
-      "-jar", "/opt/lakehouse-task-executor-svc-0.8.0-jar-with-dependencies.jar"
+      "-jar", "/opt/lakehouse-task-executor-svc-0.9.0-jar-with-dependencies.jar"
     ]
     depends_on:
       broker:
@@ -424,7 +422,7 @@ services:
         condition: service_started
 
   lakehouse-task-executor-svc-state:
-    image: lakehouse:0.8.0
+    image: lakehouse:0.9.0
     container_name: lakehouse-task-executor-svc-state
     hostname: lakehouse-task-executor-svc-state
     networks:
@@ -445,7 +443,7 @@ services:
       "-Dlakehouse.task-executor.service.id=state-service",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=broker:9092",
-      "-jar", "/opt/lakehouse-task-executor-svc-0.8.0-jar-with-dependencies.jar"
+      "-jar", "/opt/lakehouse-task-executor-svc-0.9.0-jar-with-dependencies.jar"
     ]
     depends_on:
       broker:
@@ -479,7 +477,7 @@ services:
 
 
   lakehouse-task-proxy4spark:
-    image: lakehouse-task-proxy4spark:0.8.0
+    image: lakehouse-task-proxy4spark:0.9.0
     container_name: lakehouse-task-proxy4spark
     hostname: lakehouse-task-task-proxy4spark
     networks:
@@ -499,7 +497,7 @@ services:
       "-Dlakehouse.task.proxy4spark.spark-master=spark://spark-master:7077",
       "-Dlakehouse.task.proxy4spark.standalone.rest-url=http://spark-master:6066",
       "-Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=TaskProxy4Spark",
-      "-jar", "/opt/lakehouse-task-spark-apps/lakehouse-task-proxy-for-spark-0.8.0-jar-with-dependencies.jar"
+      "-jar", "/opt/lakehouse-task-spark-apps/lakehouse-task-proxy-for-spark-0.9.0-jar-with-dependencies.jar"
     ]
     volumes:
       - ./conf_infra/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
@@ -518,7 +516,7 @@ services:
         condition: service_healthy
 
   lakehouse-ui-svc:
-    image: lakehouse:0.8.0
+    image: lakehouse:0.9.0
     container_name: lakehouse-ui-svc
     hostname: lakehouse-ui-svc
     networks:
@@ -636,7 +634,7 @@ services:
       "-Dlakehouse.ui.edges.lakehouse-spark-worker[0]=lakehouse-minio",
       "-Dlakehouse.ui.edges.lakehouse-minio[0]=lakehouse-trino",
       "-Dlakehouse.ui.edges.lakehouse-minio[1]=lakehouse-spark-history",
-      "-jar", "/opt/lakehouse-ui-svc-0.8.0-jar-with-dependencies.jar"
+      "-jar", "/opt/lakehouse-ui-svc-0.9.0-jar-with-dependencies.jar"
     ]
 
 

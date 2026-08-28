@@ -27,6 +27,10 @@ lakehouse:
       # чтобы можно было узнать какой конкретный экземпляр взял блокировку задачи.
       # Можно указать имя пода или хоста 
       id: first1
+    processor: # Параметры процессоров задач
+      sparkStandAloneClusterTaskProcessor:
+        maxWaitToRunningStateTimeoutMs: 120000 # максимальное время ожидания перехода Spark-задачи в состояние RUNNING, мс
+        sparkJobStatusCheckIntervalMs: 3000 # интервал опроса статуса Spark-задачи, мс
     scheduled: # Параметры для получения задач
       task:
         kafka:
@@ -40,3 +44,29 @@ lakehouse:
             # Имя должно совпадать с именем у сервиса расписаний  
             topics: scheduled_task_msg 
 ```
+
+### Параметры процессоров задач
+
+| Параметр | По умолчанию | Описание |
+|---|---|---|
+| `lakehouse.task-executor.processor.sparkStandAloneClusterTaskProcessor.maxWaitToRunningStateTimeoutMs` | `120000` | Максимальное время ожидания перехода Spark-задачи в состояние `RUNNING`, мс |
+| `lakehouse.task-executor.processor.sparkStandAloneClusterTaskProcessor.sparkJobStatusCheckIntervalMs` | `3000` | Интервал опроса статуса Spark-задачи, мс |
+
+### Опции разрешения секретов для datasource (lakehouse-credential-providers-jdbc)
+
+Если jar `lakehouse-credential-providers-jdbc` находится в classpath, в `service.properties` JDBC-источника
+(`ServiceDTO.properties`) могут присутствовать опции провайдера секретов. `JdbcConnectionFactory` резолвит пароль
+в рантайме и вычищает опции безопасности до открытия подключения:
+
+| Опция | Описание |
+|---|---|
+| `secretProvider` | Полное имя класса реализации `SecretProvider`. Его наличие включает разрешение |
+| `secret-key` | Комбинированная координата `path:key`, например `kv/data/lakehouse/database:password` |
+| `vault-url` | Базовый URL HTTP API OpenBao/Vault |
+| `vault-role`, `vault-k8s-auth-path` | Опциональные настройки Kubernetes auth для OpenBao/Vault |
+| `secret-id`, `secret-version` | Идентификатор секрета Yandex Cloud Lockbox и опциональная версия (по умолчанию `latest`) |
+| `url` | Опциональный явный JDBC URL; иначе строится из `host`/`port`/`urn` |
+| `user` | Имя пользователя; сам пароль приходит из провайдера |
+
+Требуется переменная окружения `VAULT_TOKEN` (OpenBao) или `YC_AUTH_KEY_PATH` (Lockbox). Реальный пример:
+`demo/compose/conf/datasources/processingdb.json`. Подробнее: [руководство по безопасности](../../doc-ru/security/security.md).

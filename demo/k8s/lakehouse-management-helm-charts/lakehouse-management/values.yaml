@@ -243,6 +243,54 @@ keycloak:
     KC_HEALTH_ENABLED: "true"
     KC_METRICS_ENABLED: "true"
 
+# ============================================================================
+# OpenBao — development/demo secrets engine (KV v2).
+#
+# The official `bao server -dev` binary is the container PID 1; seeding is done
+# once by the `openbao-seed` Job (backoffLimit keeps retrying, the seed script
+# is idempotent). Demo default credentials (postgresPW / spark_user /
+# spark_pwd) come from the `openbao` ConfigMap seed script and match the demo
+# `dbDev` and `minio` sections, so nothing is stored in this file.
+#
+# Production: there is no seed script — the information security administrator
+# provisions the credentials in a Kubernetes Secret, e.g.:
+#   kubectl -n lakehouse-management create secret generic openbao \
+#     --from-literal=LAKEHOUSE_DB_PASSWORD=... \
+#     --from-literal=MINIO_ROOT_USER=... \
+#     --from-literal=MINIO_ROOT_PASSWORD=...
+# and references it via valueFrom (nothing is stored in this file):
+#   seed:
+#     enabled: false      # or keep it, if seeding is still required
+#     env:
+#       - name: LAKEHOUSE_DB_PASSWORD
+#         valueFrom:
+#           secretKeyRef:
+#             name: openbao
+#             key: LAKEHOUSE_DB_PASSWORD
+#       - name: MINIO_ROOT_USER
+#         valueFrom:
+#           secretKeyRef:
+#             name: openbao
+#             key: MINIO_ROOT_USER
+#       - name: MINIO_ROOT_PASSWORD
+#         valueFrom:
+#           secretKeyRef:
+#             name: openbao
+#             key: MINIO_ROOT_PASSWORD
+openbao:
+  image:
+    repository: quay.io/openbao/openbao
+    tag: "2.0"
+    pullPolicy: IfNotPresent
+  # Optional env passed to the dev-server Deployment (rarely needed; the dev
+  # root token id is fixed by the server command line).
+  serverEnv: []
+  # One-shot seeding Job (KV v2 engine, demo secrets, read-only policy,
+  # scoped token). Disable it and rely on external provisioning in production.
+  seed:
+    enabled: true
+    env: []   # optional overrides (see the valueFrom example above)
+
 lakehouse-management-task-executor-service:
   serviceAccount:
     create: false
@@ -251,7 +299,7 @@ lakehouse-management-task-executor-service:
 lakehouse-task-proxy4spark:
   image:
     repository: lakehouse-task-proxy4spark
-    tag: "0.8.0"
+    tag: "0.9.0"
     pullPolicy: IfNotPresent
   service:
     type: NodePort
@@ -272,7 +320,7 @@ lakehouse-management-ui-svc:
   ui-svc:
     image:
       repository: lakehouse
-      tag: "0.8.0"
+      tag: "0.9.0"
       pullPolicy: IfNotPresent
     replicaCount: 1
     service:

@@ -18,6 +18,7 @@
 package org.lakehouse.taskexecutor.api.datasource.execute.jdbc;
 
 import org.lakehouse.client.api.utils.CollectionFactory;
+import org.lakehouse.security.SecretResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,10 +34,13 @@ public class JdbcConnectionFactory {
     private final static String URL_KEY = "url";
 
     public static Connection getConnection(Map<String, String> options) throws SQLException {
-        String url = options.get(URL_KEY);
+        // Resolve the password via the configured SecretProvider (if any) and strip
+        // the security subsystem keys before passing options down to the JDBC driver
+        Map<String, String> resolved = SecretResolver.resolveAndSanitize(options);
+        String url = resolved.get(URL_KEY);
         Properties info = CollectionFactory
                 .mapToProperties(
-                        options
+                        resolved
                                 .entrySet()
                                 .stream()
                                 .filter(se -> !se.getKey().equals(URL_KEY))
