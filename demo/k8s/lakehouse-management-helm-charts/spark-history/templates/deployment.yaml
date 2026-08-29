@@ -32,6 +32,8 @@ spec:
               value: {{ .Values.env.sparkMode | quote }}
             - name: SPARK_LOCAL_IP
               value: "0.0.0.0"
+            - name: VAULT_TOKEN
+              value: {{ .Values.env.vaultToken | quote }}
           command: [ "/bin/sh", "-c" ]
           args: [ "/service.sh" ]
           resources:

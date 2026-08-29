@@ -40,15 +40,25 @@ What executes the task.
 
 ```
 SparkStandAloneClusterTaskProcessor
-  └─ extends AbstractSparkDeployTaskProcessor  (deploy logic via Spark REST API)
-       └─ extends AbstractTaskProcessor
-  └─ uses SparkRestDeployFactory  (server URL building)
+  └─ extends AbstractTaskProcessor
+       └─ deploy(mainClass, appResource, serverUrl, sparkProperties, appArgs) — private method of the processor, deploy logic via the Spark REST API
 ```
 
-- `AbstractSparkDeployTaskProcessor` — abstract base class, implements:
-  - `deploy(mainClass, appResource, serverUrl, sparkProperties, appArgs)` — sends POST `/v1/submissions/create`, waits for the transition to `RUNNING` (2 min timeout), then waits for the final status (`FINISHED`/`KILLED`/`FAILED`/`ERROR`)
-  - Builds `SparkRestClientApi` via `buildSparkRestClientApi(baseURI)` on `RestClient`
-- `SparkRestDeployFactory.getServerUrl()` — extracts the connection template of the `spark` type from the driver of the target datasource, renders it through Jinja, appends `/v1/submissions`
+- in earlier versions the deployment logic lived in the separate `AbstractSparkDeployTaskProcessor`
+  (with `SparkRestDeployFactory` for URL building); it was later inlined into
+  [SparkStandAloneClusterTaskProcessor.java](../src/main/java/org/lakehouse/taskexecutor/processor/spark/SparkStandAloneClusterTaskProcessor.java)
+- the cluster endpoint is taken from the `deploy.clusterUrl` argument of `taskProcessorArgs`
+  (`getMasterUrl()`); it already contains the full REST path, e.g. `http://host:port/v1/submissions`,
+  and is used as the base URI for `SparkRestClientApi` (`buildSparkRestClientApi(baseURI)` on `RestClient`)
+- the driver app is parameterized by the keys `deploy.mainClass` and `deploy.appResource`
+  (resolved in priority: taskProcessorArgs → datasource service.properties, via `Coalesce.apply`)
+- `deploy(...)` sends POST `/v1/submissions/create`, waits for the transition to `RUNNING`
+  (timeout `maxWaitToRunningStateTimeoutMs`, default 120000 ms), polls the status every
+  `sparkJobStatusCheckIntervalMs` (default 3000 ms) until a final status
+  (`FINISHED`/`KILLED`/`FAILED`/`ERROR`) is reached, and fails on negative statuses
+  (`KILLED`, `FAILED`, `ERROR`)
+- exhaustion of the `DRIVER_STATE_NULL_LIMIT` (30) polls with `driverState` null/`UNKNOWN` after `RUNNING`
+  aborts the task if the driver record disappeared from the master
 
 They know nothing about the task logic. Responsibility — parsing the configuration to parameterize the spark-driver in a specific cluster.
 They do not work with local driver launch, since this would heavily burden the service itself and blur the boundaries of its responsibility.
@@ -80,6 +90,38 @@ The configuration is divided into three different types:
 5. Calling `deploy(mainClass, appResource, serverUrl, sparkProperties, appArgs)`
 
 
+### Secrets in Spark tasks (lakehouse-credential-providers-jdbc / -spark)
+
+`SparkStandAloneClusterTaskProcessor` never resolves or transmits database passwords in plaintext:
+
+- all `spark.*` keys gathered from the datasources `service.properties` and `taskProcessorArgs`
+  (including `spark.sql.catalog.*`) are forwarded to the driver as part of `sparkProperties`
+  (sparkConf extraction, steps above);
+- if the datasource has no explicit `spark.sql.catalog.<key>.url`, the processor builds it from
+  `host`/`port`/`urn` - **without credentials**;
+- the driver is parameterized to use the secure catalog `LakehouseSecureJDBCTableCatalog`
+  (module `lakehouse-credential-providers-spark`), which on the Driver/Executors resolves the password
+  via `SecretResolver` (module `lakehouse-credential-providers-jdbc`) using the options
+  `secretProvider`, `secret-key`, `vault-url` (+ optional `vault-role`, `vault-k8s-auth-path` for OpenBao,
+  or `secret-id` / `secret-version` for Lockbox);
+- all security options are stripped from the catalog options before they reach the base JDBC catalog.
+
+How to enable (in the datasource `service.properties`, prefixed keys):
+
+```
+spark.sql.catalog.processingdb                     org.lakehouse.security.catalog.LakehouseSecureJDBCTableCatalog
+spark.sql.catalog.processingdb.url                 jdbc:postgresql://db-host:5432/db
+spark.sql.catalog.processingdb.user                app_user
+spark.sql.catalog.processingdb.secretProvider      org.lakehouse.security.jdbc.BaoJdbcSecretProvider
+spark.sql.catalog.processingdb.vault-url           http://openbao:8200
+spark.sql.catalog.processingdb.secret-key          kv/data/lakehouse/database:password
+```
+
+Requires: the jars `lakehouse-credential-providers-jdbc` and `lakehouse-credential-providers-spark` on the driver
+classpath, network access to the secret store, and `VAULT_TOKEN` (or Kubernetes Service Account auth). More details
+in the [security guide](../../doc/security/security.md).
+
+
 ### Working with the dataset state model
 Requires state-svc availability. A temporary absence will lead to a task failure.
 scheduler-svc will have to retry the task, which smooths over the problem of instance restarts.
@@ -93,6 +135,11 @@ scheduler-svc will have to retry the task, which smooths over the problem of ins
 - always works through a jdbc driver that must be placed on the classpath
 - knows nothing about the syntax of the database it works with, because this is the responsibility of the corresponding [sqlTemplate.md](../../lakehouse-config-svc/doc/content_configuration/sqlTemplate.md)
 - is responsible only for determining the `taskProcessorBody` from the task parameter and running it
+- opens the connection through `JdbcConnectionFactory` (`lakehouse-task-executor-api`): with
+  `lakehouse-credential-providers-jdbc` on the classpath, if the target datasource `service.properties`
+  contains `secretProvider`, the password is resolved from OpenBao/Lockbox (`secret-key`, `vault-url`,
+  etc.), the security options are stripped and the resolved value is injected as `password`; without
+  `secretProvider` the behavior is unchanged
 
 ## TaskProcessorBody
 Code that is extracted from the TaskProcessor for reuse by other TaskProcessors or execution outside the application.

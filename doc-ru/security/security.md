@@ -4,15 +4,19 @@
 
 ## Обзор
 
-Используются три модели безопасности:
+Модель безопасности состоит из четырёх областей:
 
 | Модель | Компоненты | Механизм |
 |:-------|:-----------|:---------|
 | Между сервисами | lakehouse-config-svc, lakehouse-state-svc, lakehouse-task-executor-svc, lakehouse-task-proxy-for-spark, lakehouse-scheduler-svc | OAuth2 Resource Server (проверка JWT) + `client_credentials` / ретрансляция токена для исходящих вызовов |
 | Для пользователей | lakehouse-ui-svc (BFF) | OAuth2 Login (authorization code flow) + HTTP-сессия + CSRF |
 | Spark-приложения | lakehouse-task-executor-spark-dq-app, lakehouse-task-executor-spark-dataset-app | OAuth2 Client (`client_credentials`) для обратных вызовов в бэкенд-сервисы |
+| Учётные данные источников данных | lakehouse-task-executor-svc (JDBC-путь), Spark-драйверы/исполнители | Динамическое разрешение секретов из OpenBao/Vault или Yandex Cloud Lockbox (credential providers) — нет паролей в открытом виде в конфигурации |
 
 Realm Keycloak: **`lakehouse`** (файл импорта realm: `demo/compose/conf_infra/security/realms/lakehouse-realm.json`).
+
+Секретный материал (пароли БД, ключи S3) вообще не хранится в конфигурационных файлах — он резолвится в рантайме
+из хранилищ секретов (OpenBao/Vault или Yandex Cloud Lockbox), см. [раздел 4](#4-секреты-подключения-к-источникам-данных-credential-providers).
 
 ---
 
@@ -239,6 +243,97 @@ BFF сам не пишет аудит-записи. Все операции по
 
 ---
 
+## 4. Секреты подключения к источникам данных (credential providers)
+
+Пароли БД и ключи доступа к S3 **не хранятся** в конфигурационных файлах. Они резолвятся в рантайме
+двумя опциональными модулями:
+
+| Модуль | Содержимое |
+|:-------|:-----------|
+| `lakehouse-credential-providers-jdbc` | Независимая от Spark библиотека: SPI `SecretProvider`, хелпер `SecretResolver`, HTTP-клиенты `VaultHttp` / `LockboxHttp`, in-memory кэш `SecretCache` (TTL 5 минут на JVM), JDBC-провайдеры `BaoJdbcSecretProvider` (OpenBao/Vault KV v2) и `YcLockboxJdbcSecretProvider` (Yandex Cloud Lockbox) |
+| `lakehouse-credential-providers-spark` | Специфичное для Spark: `LakehouseSecureJDBCTableCatalog` — безопасная замена Spark `JDBCTableCatalog` (разрешение пароля на Driver и Executors) и S3-провайдеры для Spark S3A |
+
+Обе точки, открывающие JDBC-подключение, теперь проходят через `SecretResolver`:
+
+- сервисы lakehouse — `JdbcConnectionFactory.getConnection(...)` (`lakehouse-task-executor-api`);
+- Spark-драйверы — `LakehouseSecureJDBCTableCatalog.initialize(...)`.
+
+### Контракт опций провайдера
+
+| Опция | Провайдер | Обязательно | Описание |
+|:------|:----------|:------------|:---------|
+| `secretProvider` | оба | да | Полное имя класса реализации `SecretProvider` |
+| `secret-key` | оба | да | Комбинированная координата `path:key`: OpenBao — `secretPath:key` (например `kv/data/lakehouse/database:password`); Lockbox — `secretId:key` (например `e4ta...:password`) |
+| `vault-url` | OpenBao/Vault | да | Базовый URL HTTP API Vault, например `http://openbao:8200` |
+| `vault-role` | OpenBao/Vault | нет | Kubernetes auth role (по умолчанию `lakehouse`) |
+| `vault-k8s-auth-path` | OpenBao/Vault | нет | Путь точки монтирования Kubernetes auth (по умолчанию `kubernetes`) |
+| `secret-id` | Lockbox | да | Идентификатор секрета Yandex Cloud Lockbox |
+| `secret-version` | Lockbox | нет | Конкретная версия секрета (по умолчанию `latest`) |
+
+Разрешённое значение инжектируется в опции подключения под ключом `password`, а все перечисленные опции
+безопасности **удаляются** до передачи карты JDBC-драйверу или Spark-каталогу. Если `secretProvider` отсутствует,
+опции передаются без изменений (обратная совместимость).
+
+### Где настраивается
+
+- **Spark (глобальные значения по умолчанию, `spark-defaults.conf`)** — опции каталога с префиксом; пароль запрашивается на драйвере:
+
+  ```
+  spark.sql.catalog.processingdb                org.lakehouse.security.catalog.LakehouseSecureJDBCTableCatalog
+  spark.sql.catalog.processingdb.url            jdbc:postgresql://db-host:5432/db
+  spark.sql.catalog.processingdb.user           app_user
+  spark.sql.catalog.processingdb.secretProvider org.lakehouse.security.jdbc.BaoJdbcSecretProvider
+  spark.sql.catalog.processingdb.vault-url      http://openbao:8200
+  spark.sql.catalog.processingdb.secret-key     kv/data/lakehouse/database:password
+  ```
+
+  Реальный пример: `demo/compose/conf_infra/spark-defaults.conf`.
+
+- **Spark (для конкретного datasource)** — те же ключи с полным префиксом `spark.sql.catalog.<name>.` в
+  `service.properties` datasource. `SparkStandAloneClusterTaskProcessor` передаёт все ключи `spark.*` драйверу;
+  если `spark.sql.catalog.<name>.url` отсутствует, он строится из `host`/`port`/`urn` datasource.
+
+- **Сервисы lakehouse (JDBC-задачи)** — `service.properties` datasource (`ServiceDTO.properties`); URL строится
+  из `host`/`port`/`urn`, если явный `url` не задан:
+
+  ```json
+  "properties": {
+    "user": "app_user",
+    "secretProvider": "org.lakehouse.security.jdbc.BaoJdbcSecretProvider",
+    "secret-key": "kv/data/lakehouse/database:password",
+    "vault-url": "http://openbao:8200"
+  }
+  ```
+
+  Реальный пример: `demo/compose/conf/datasources/processingdb.json`.
+
+### Настройка OpenBao / Vault
+
+1. Включите движок секретов KV v2 и запишите секрет, например `bao kv put kv/lakehouse/database password=<value>`.
+2. Создайте read-only политику для путей, которые читают сервисы (`kv/data/lakehouse/database`, `kv/data/infrastructure/minio`),
+   и выпустите scoped-токен для потребляющих компонентов. Эталонный скрипт: `demo/compose/conf_infra/openbao/init.sh`.
+3. Токен передаётся процессу переменной окружения `VAULT_TOKEN` или — внутри Kubernetes — через Service Account
+   (опции `vault-role` / `vault-k8s-auth-path`). Переменные docker-compose демо-стенда:
+   `BAO_DEV_ROOT_TOKEN_ID`, `BAO_TOKEN`, `LAKEHOUSE_DB_PASSWORD` (сидирование) и `VAULT_TOKEN` (потребители).
+4. В Kubernetes сервис OpenBao доступен как `http://<release>-openbao:8200` (зонтичный чарт `lakehouse-management`).
+
+### Настройка Yandex Cloud Lockbox
+
+1. Секрет Lockbox, содержащий нужные ключи (например `password`, `access_key`, `secret_key`).
+2. Каждая VM/воркер, открывающая подключения, должна иметь Service Account с ролью `lockbox.payloadViewer`.
+   IAM-токен берётся из Instance Metadata Service либо из файла авторизованного ключа, заданного переменной
+   `YC_AUTH_KEY_PATH`.
+
+### Гарантии безопасности
+
+- Паролей в открытом виде нет ни в YAML/JSON-конфигурации, ни в аргументах задач, ни в аргументах Spark-задач.
+- Секреты никогда не логируются: при ошибках логируются только HTTP-статусы, сообщения об ошибках маскируются
+  (`SecurityException`, `RuntimeException("Catalog access blocked...")`).
+- Маскирование логов Spark (`spark.redaction.regex`, раздел 3) дополнительно защищает логи драйверов/исполнителей.
+- Разрешённые секреты кэшируются в памяти на каждую JVM с TTL 5 минут.
+
+---
+
 ## Справочник настроек
 
 Переменные окружения (со значениями по умолчанию из `demo/compose`, переопределяйте в реальных развёртываниях):
@@ -249,6 +344,8 @@ BFF сам не пишет аудит-записи. Все операции по
 | `KEYCLOAK_UI_CLIENT_SECRET` | lakehouse-ui-svc | Секрет клиента `lakehouse-ui-client` |
 | `KEYCLOAK_INTERNAL_CLIENT_SECRET` | все бэкенд-сервисы, Spark-приложения | Секрет клиента `lakehouse-internal-client` |
 | `LAKEHOUSE_UI_REDIRECT_URI` | lakehouse-ui-svc | Шаблон redirect URI для колбэка authorization code |
+| `VAULT_TOKEN` | lakehouse-task-executor-svc, Spark-драйверы/исполнители | Токен OpenBao/Vault для `BaoJdbcSecretProvider` и S3-провайдеров (раздел 4) |
+| `YC_AUTH_KEY_PATH` | lakehouse-task-executor-svc, Spark-драйверы/исполнители | Путь к файлу авторизованного ключа для IAM-токена Lockbox (альтернатива Instance Metadata, раздел 4) |
 
 Свойства приложения:
 

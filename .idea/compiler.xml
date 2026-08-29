@@ -22,8 +22,8 @@
         <module name="lakehouse-ui-svc" />
         <module name="lakehouse-scheduler-svc" />
         <module name="lakehouse-task-proxy-for-spark" />
-        <module name="lakehouse-config-rest-client" />
         <module name="lakehouse-task-proxy-for-spark-api" />
+        <module name="lakehouse-config-rest-client" />
         <module name="lakehouse-cli" />
         <module name="lakehouse-task-executor-spark-dq-app" />
         <module name="lakehouse-task-executor-api" />
@@ -33,9 +33,11 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="lakehouse-credential-providers-jdbc" target="17" />
       <module name="lakehouse-job-launcher-for-spark" target="17" />
       <module name="lakehouse-rest-client-for-kyuubi" target="17" />
       <module name="lakehouse-rest-client-for-spark" target="17" />
+      <module name="lakehouse-credential-providers-spark" target="17" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
@@ -47,6 +49,8 @@
       <module name="lakehouse-common-test" options="-parameters" />
       <module name="lakehouse-config-rest-client" options="-parameters" />
       <module name="lakehouse-config-svc" options="-parameters" />
+      <module name="lakehouse-credential-providers-jdbc" options="-parameters" />
+      <module name="lakehouse-credential-providers-spark" options="-parameters" />
       <module name="lakehouse-jinjava" options="-parameters" />
       <module name="lakehouse-job-launcher-for-spark" options="-parameters" />
       <module name="lakehouse-scheduler-rest-client" options="-parameters" />

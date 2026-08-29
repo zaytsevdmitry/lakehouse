@@ -1,0 +1,64 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openbao
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "lakehouse-management.labels" . | nindent 4 }}
+    app.kubernetes.io/component: openbao
+data:
+  seed.sh: |
+    #!/bin/sh
+    set -e
+
+    # Seed-only script: run against an already running OpenBao dev server
+    # (the server binary is PID 1 of the openbao Deployment; seeding is done
+    # once by the openbao-seed Job, which retries until this exits cleanly).
+
+    echo "=== OpenBao: waiting for API readiness ==="
+    until bao status >/dev/null 2>&1; do
+      sleep 1
+    done
+
+    echo "=== OpenBao: enabling KV v2 engine ==="
+    bao secrets enable -version=2 kv || echo "KV v2 engine already enabled"
+
+    # Demo-only default values: the information security administrator of a
+    # production deployment must not rely on them. Override via env
+    # (see openbao.seed.env / valueFrom example in values.yaml); in production
+    # there is no seed script at all.
+    echo "=== OpenBao: writing lakehouse/database secret ==="
+    bao kv put kv/lakehouse/database password="${LAKEHOUSE_DB_PASSWORD:-postgresPW}"
+
+    echo "=== OpenBao: writing infrastructure/minio secret ==="
+    bao kv put kv/infrastructure/minio \
+      access_key="${MINIO_ROOT_USER:-spark_user}" \
+      secret_key="${MINIO_ROOT_PASSWORD:-spark_pwd}"
+
+    echo "=== OpenBao: creating read-only policy for Spark services ==="
+    bao policy write lakehouse-spark-readonly - <<'EOF'
+    path "kv/data/lakehouse/database" {
+      capabilities = ["read"]
+    }
+    path "kv/data/infrastructure/minio" {
+      capabilities = ["read"]
+    }
+    EOF
+
+    echo "=== OpenBao: creating scoped token for Spark services ==="
+    LAKEHOUSE_SPARK_TOKEN="${LAKEHOUSE_SPARK_TOKEN:-lakehouse-spark-token}"
+    if ! bao token lookup "${LAKEHOUSE_SPARK_TOKEN}" >/dev/null 2>&1; then
+      bao token create \
+        -policy=lakehouse-spark-readonly \
+        -ttl=8760h \
+        -id="${LAKEHOUSE_SPARK_TOKEN}" \
+        -field=token
+    else
+      echo "Scoped token ${LAKEHOUSE_SPARK_TOKEN} already exists, reusing it"
+    fi
+
+    echo "=== OpenBao: verifying scoped token permissions ==="
+    bao token capabilities "${LAKEHOUSE_SPARK_TOKEN}" kv/data/lakehouse/database
+    bao token capabilities "${LAKEHOUSE_SPARK_TOKEN}" kv/data/infrastructure/minio
+
+    echo "=== OpenBao: seeding complete ==="

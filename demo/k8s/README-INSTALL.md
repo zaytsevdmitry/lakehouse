@@ -26,14 +26,6 @@ minikube start --cpus 4 --memory 8192 --registry-mirror=https://dh-mirror.gitver
 
 >Сборка тестировалась с применением ближайшего registry-mirror. Можно указать любой либо убрать и использовать настройку по умолчанию.
 
-## Keycloak
-Сборка использует Keycloak для аутентификации. Необходимо добавить запись в `/etc/hosts` (или `%SystemRoot%\System32\drivers\etc\hosts` в Windows):
-
-```
-127.0.0.1 keycloak
-```
-
-> Без этой записи браузер не сможет перейти на страницу входа Keycloak (issuer URI = `http://keycloak:8085/realms/lakehouse`).
 
 # Установка
 ```shell
@@ -60,29 +52,17 @@ sh tunnels.bash
 
 lakehouse-management-config-service 8080 нужен для загрузки конфигурации метаданных.
 
-### Keycloak
-После проброса портов Keycloak доступен по адресам:
-- Админ-консоль: http://keycloak:8085 (учетные данные: `admin` / `admin_local_password`)
-- OIDC endpoint: http://keycloak:8085/realms/lakehouse
-
-Вход в Lakehouse UI: http://localhost:8084 — перенаправит на Keycloak.
-
-Демонстрационные пользователи (realm `lakehouse`):
-
-| Логин | Пароль | Роль |
-|:------|:-------|:-----|
-| `de_view` | `de_view` | USER |
-| `de_editor` | `de_editor` | ADMIN |
-
-> Секреты клиентов по умолчанию в файлах values.yaml предназначены только для демонстрации.
-> В production используйте переменные окружения `KEYCLOAK_INTERNAL_CLIENT_SECRET` и `KEYCLOAK_UI_CLIENT_SECRET`.
-
 ## Загрузка демонстрационной конфигурации метаданных
 
 Перейти в терминале в корне проекта в каталог demo/k8s/conf.
 Выполнить файл load.bash
 Он загрузит демонстрационные данные в сервис конфигурации. Через несколько секунд после этого сервис исполнитель начнет
 выполнять демонстрационные задачи
+
+```shell
+cd ./conf
+sh load.sh
+```
 
 Если сервис конфигураций еще не доступен, скрипт "подождет" готовности сервиса
 ```
@@ -122,6 +102,31 @@ kubectl -n lakehouse-management get pods|grep task| grep Error|awk '{print $1}'|
 ```shell
 kubectl -n lakehouse-management scale deployment lakehouse-management-task-executor-service --replicas=4
 ````
+## Keycloak
+Сборка использует Keycloak для аутентификации. Необходимо добавить запись в `/etc/hosts` (или `%SystemRoot%\System32\drivers\etc\hosts` в Windows):
+
+```
+127.0.0.1 keycloak
+```
+
+> Без этой записи браузер не сможет перейти на страницу входа Keycloak (issuer URI = `http://keycloak:8085/realms/lakehouse`).
+
+После проброса портов Keycloak доступен по адресам:
+- Админ-консоль: http://keycloak:8085 (учетные данные: `admin` / `admin_local_password`)
+- OIDC endpoint: http://keycloak:8085/realms/lakehouse
+
+Вход в Lakehouse UI: http://localhost:8084 — перенаправит на Keycloak.
+
+Демонстрационные пользователи (realm `lakehouse`):
+
+| Логин | Пароль | Роль |
+|:------|:-------|:-----|
+| `de_view` | `de_view` | USER |
+| `de_editor` | `de_editor` | ADMIN |
+
+> Секреты клиентов по умолчанию в файлах values.yaml предназначены только для демонстрации.
+> В production используйте переменные окружения `KEYCLOAK_INTERNAL_CLIENT_SECRET` и `KEYCLOAK_UI_CLIENT_SECRET`.
+
 # Де-инсталляция
 ## Удаление сервисов
 ```shell 

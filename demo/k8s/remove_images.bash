@@ -16,8 +16,8 @@
 # limitations under the License.
 
 
-minikube image rm lakehouse:0.8.0
-minikube image rm lakehouse-s3-check:0.8.0
-minikube image rm lakehouse-hms:0.8.0
-minikube image rm lakehouse-spark-aws:0.8.0
-minikube image rm lakehouse-task-proxy4spark:0.8.0
+minikube image rm lakehouse:0.9.0
+minikube image rm lakehouse-s3-check:0.9.0
+minikube image rm lakehouse-hms:0.9.0
+minikube image rm lakehouse-spark-aws:0.9.0
+minikube image rm lakehouse-task-proxy4spark:0.9.0

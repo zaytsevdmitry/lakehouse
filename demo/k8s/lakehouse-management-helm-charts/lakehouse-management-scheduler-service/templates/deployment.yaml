@@ -34,7 +34,7 @@ spec:
           command: ['sh', '-c', 'until wget -q -O /dev/null http://keycloak:8085/realms/lakehouse; do echo waiting for keycloak; sleep 3; done']
       containers:
         - name: scheduler-svc
-          image: "lakehouse:0.8.0"
+          image: "lakehouse:0.9.0"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8081
@@ -54,4 +54,4 @@ spec:
             -Dlakehouse.scheduler.run.delay-ms=5000
             -Dlakehouse.scheduler.resolvedeps.delay-ms=5000
             -Dlakehouse.client.rest.config.server.url=http://lakehouse-management-config-service:8080
-            -jar /opt/lakehouse-scheduler-svc-0.8.0-jar-with-dependencies.jar"
+            -jar /opt/lakehouse-scheduler-svc-0.9.0-jar-with-dependencies.jar"

@@ -118,6 +118,10 @@ lakehouse:
       max-lock-retries: 5
       max-lock-retries-duration-ms: 5
       id: first1
+    processor:
+      sparkStandAloneClusterTaskProcessor:
+        maxWaitToRunningStateTimeoutMs: 120000
+        sparkJobStatusCheckIntervalMs: 3000
     scheduled:
       task:
         kafka:
@@ -146,6 +150,17 @@ lakehouse:
 | `...consumer.properties.group.id` | Группа исполнителя. Должна совпадать с `taskExecutionServiceGroupName` задачи, иначе задача игнорируется |
 | `...consumer.properties.auto.offset.reset` | Стратегия смещения при отсутствии offset |
 | `...consumer.topics` | Топик получения задач (по умолчанию `scheduled_task_msg`) |
+| `lakehouse.task-executor.processor.sparkStandAloneClusterTaskProcessor.maxWaitToRunningStateTimeoutMs` | Максимальное время ожидания перехода Spark-задачи в состояние `RUNNING` (по умолчанию `120000` мс) |
+| `lakehouse.task-executor.processor.sparkStandAloneClusterTaskProcessor.sparkJobStatusCheckIntervalMs` | Интервал опроса статуса Spark-задачи (по умолчанию `3000` мс) |
+
+### Разрешение секретов в JDBC-пути
+
+Сервис открывает JDBC-подключения через `JdbcConnectionFactory` из модуля `lakehouse-task-executor-api`.
+При наличии jar `lakehouse-credential-providers-jdbc` в classpath в `service.properties` JDBC-источника
+(`ServiceDTO.properties`) может присутствовать опция `secretProvider` — тогда пароль резолвится в рантайме
+из OpenBao/Vault или Yandex Cloud Lockbox и нигде не хранится в конфигурации. Опции безопасности вычищаются
+до открытия подключения. Опции и примеры: [properties.md](properties.md), подробнее:
+[руководство по безопасности](../../doc-ru/security/security.md).
 
 Полное описание параметров с комментариями: [properties.md](properties.md).
 
@@ -177,6 +192,8 @@ User ID: <subject>, Username: <preferred_username>, Method: <method>, URI: <uri>
 |---|---|---|
 | `KEYCLOAK_ISSUER_URI` | `http://lakehouse-auth-svc:8080/realms/lakehouse` | URL realm'а Keycloak |
 | `KEYCLOAK_INTERNAL_CLIENT_SECRET` | `super-secret-internal-key-987654321` | Секрет клиента `lakehouse-internal-client` |
+| `VAULT_TOKEN` | — | Токен OpenBao/Vault, используемый когда JDBC-источники настроены с `BaoJdbcSecretProvider` (разрешение секретов, см. выше) |
+| `YC_AUTH_KEY_PATH` | — | Путь к файлу авторизованного ключа для IAM-токена Yandex Cloud Lockbox (альтернатива Instance Metadata) |
 | `lakehouse.security.enabled` | `true` | `false` полностью отключает безопасность |
 | `lakehouse.security.audit.service-account-name` | `system` | Имя пользователя в аудите для service account токенов |
 | `lakehouse.security.oauth2.internal-client-id` | `lakehouse-internal-client` | Клиент, идентифицирующий service account токены (claim `azp`) |

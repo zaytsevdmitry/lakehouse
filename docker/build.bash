@@ -32,4 +32,4 @@ bash ./build.bash
 cd ../lakehouse-task-proxy4spark
 bash ./build.bash
 
-docker images | grep lakehouse | grep '0.8.0'
+docker images | grep lakehouse | grep '0.9.0'

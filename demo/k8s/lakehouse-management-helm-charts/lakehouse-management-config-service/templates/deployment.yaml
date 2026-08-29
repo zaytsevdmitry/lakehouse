@@ -20,7 +20,7 @@ spec:
           command: ['sh', '-c', 'until wget -q -O /dev/null http://keycloak:8085/realms/lakehouse; do echo waiting for keycloak; sleep 3; done']
       containers:
         - name: conf-svc
-          image: "lakehouse:0.8.0"
+          image: "lakehouse:0.9.0"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
@@ -32,4 +32,4 @@ spec:
               value: {{ .Values.keycloak.internalClientSecret | quote }}
           command: ["bash", "-c"]
           args:
-            - "java -Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=ConfigSVC -Dlakehouse.config.schedule.send.kafka.producer.properties.bootstrap.servers=broker:9092 -jar /opt/lakehouse-config-svc-0.8.0-jar-with-dependencies.jar"
+            - "java -Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=ConfigSVC -Dlakehouse.config.schedule.send.kafka.producer.properties.bootstrap.servers=broker:9092 -jar /opt/lakehouse-config-svc-0.9.0-jar-with-dependencies.jar"

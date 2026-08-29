@@ -10,7 +10,7 @@
     </parent>
     <groupId>lakehouse</groupId>
     <artifactId>lakehouse-parent</artifactId>
-    <version>0.8.0</version>
+    <version>0.9.0</version>
     <packaging>pom</packaging>
     <licenses>
         <license>
@@ -45,6 +45,8 @@
         <module>lakehouse-task-proxy-for-spark</module>
         <module>lakehouse-task-proxy-for-spark-api</module>
         <module>lakehouse-task-proxy-for-spark-rest-client</module>
+        <module>lakehouse-credential-providers-jdbc</module>
+        <module>lakehouse-credential-providers-spark</module>
     </modules>
     <dependencyManagement>
         <dependencies>
@@ -88,15 +90,6 @@
             <version>${junit-jupiter.version}</version>
             <scope>test</scope>
         </dependency>
-
-<!--
-        <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <version>${junit-jupiter.version}</version>
-            <scope>test</scope>
-        </dependency>
--->
 
     </dependencies>
 </project>

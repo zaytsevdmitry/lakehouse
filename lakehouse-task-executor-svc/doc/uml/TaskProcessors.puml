@@ -17,38 +17,30 @@ abstract class AbstractTaskProcessor [[java:org.lakehouse.taskexecutor.processor
 }
 
 TaskProcessor <|.. JdbcTaskProcessor
-abstract class AbstractSparkDeployTaskProcessor [[java:org.lakehouse.taskexecutor.processor.spark.AbstractSparkDeployTaskProcessor]] {
+class SparkStandAloneClusterTaskProcessor [[java:org.lakehouse.taskexecutor.processor.spark.SparkStandAloneClusterTaskProcessor]] {
 	-logger: Logger
-	#MAIN_CLASS_KEY: String
-	#APP_RESOURCE_KEY: String
+	-restConfUrl: String
+	-restSchedulerUrl: String
+	-MAIN_CLASS_KEY: String = "deploy.mainClass"
+	-APP_RESOURCE_KEY: String = "deploy.appResource"
+	-CLUSTER_URL_KEY: String = "deploy.clusterUrl"
+	-restClientBuilder: RestClient.Builder
+	-sparkJobStatusCheckIntervalMs: Integer
+	-maxWaitToRunningStateTimeoutMs: long
+	-DRIVER_STATE_NULL_LIMIT: int = 30
 	-finalStatusNames: List<String>
 	-negativeStatusNames: List<String>
-	+AbstractSparkDeployTaskProcessor()
+	+SparkStandAloneClusterTaskProcessor(restClientBuilder: RestClient.Builder, restConfUrl: String, restSchedulerUrl: String, sparkJobStatusCheckIntervalMs: Integer, maxWaitToRunningStateTimeoutMs: long)
+	+runTask(sourceConfDTO: SourceConfDTO, scheduledTaskDTO: ScheduledTaskDTO, jinJavaUtils: JinJavaUtils): void
+	+getMasterUrl(scheduledTaskDTO: ScheduledTaskDTO): String
 	+isStatusFinal(statusName: String): boolean
 	+isStatusNegative(statusName: String): boolean
 	+buildSparkRestClientApi(baseURI: String): SparkRestClientApi
-	+deploy(taskFullName: String, mainClass: String, appResource: String, severUrl: String, sparkProperties: Map<String,String>, sparkArgs: List<String>): void
+	-deploy(mainClass: String, appResource: String, severUrl: String, sparkProperties: Map<String,String>, sparkArgs: List<String>): void
 }
 class AbstractTaskProcessor {
 }
-AbstractTaskProcessor <|-- AbstractSparkDeployTaskProcessor
-class SparkRestDeployFactory [[java:org.lakehouse.taskexecutor.processor.spark.SparkRestDeployFactory]] {
-	-urnV1: String
-	+SparkRestDeployFactory()
-	+getServerUrl(sourceConfDTO: SourceConfDTO, scheduledTaskDTO: ScheduledTaskDTO, jinJavaUtils: JinJavaUtils): String
-}
-class SparkStandAloneClusterTaskProcessor [[java:org.lakehouse.taskexecutor.processor.spark.SparkStandAloneClusterTaskProcessor]] {
-	-logger: Logger
-	-configApiUrl: String
-	+SparkStandAloneClusterTaskProcessor(sparkRestDeployFactory: SparkRestDeployFactory, configApiUrl: String)
-	+runTask(sourceConfDTO: SourceConfDTO, scheduledTaskDTO: ScheduledTaskDTO, jinJavaUtils: JinJavaUtils): void
-}
-class SparkRestDeployFactory {
-}
-SparkStandAloneClusterTaskProcessor --> "1" SparkRestDeployFactory : sparkRestDeployFactory
-class AbstractSparkDeployTaskProcessor {
-}
-AbstractSparkDeployTaskProcessor <|-- SparkStandAloneClusterTaskProcessor
+AbstractTaskProcessor <|-- SparkStandAloneClusterTaskProcessor
 class LockedStateTaskProcessor [[java:org.lakehouse.taskexecutor.processor.state.LockedStateTaskProcessor]] {
 	-logger: Logger
 	+LockedStateTaskProcessor(stateRestClientApi: StateRestClientApi)

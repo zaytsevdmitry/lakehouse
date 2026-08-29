@@ -19,8 +19,13 @@ data:
     spark.hadoop.fs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem
     spark.hadoop.fs.s3a.endpoint=http://minio:9000
     spark.hadoop.fs.s3a.path.style.access=true
-    spark.hadoop.fs.s3a.access.key=spark_user
-    spark.hadoop.fs.s3a.secret.key=spark_pwd
+    spark.hadoop.fs.s3a.impl.disable.cache=true
+    # S3 credentials are fetched from OpenBao (kv/infrastructure/minio)
+    spark.hadoop.fs.s3a.aws.credentials.provider=org.lakehouse.security.s3.BaoS3CredentialsProvider
+    spark.hadoop.fs.s3a.bao.vault-url=http://openbao:8200
+    spark.hadoop.fs.s3a.bao.secret-path=kv/data/infrastructure/minio
+    spark.hadoop.fs.s3a.bao.access-key-secret=access_key
+    spark.hadoop.fs.s3a.bao.secret-key-secret=secret_key
     spark.hive.s3.endpoint=http://minio:9000
 
     # ==========================================
@@ -49,10 +54,15 @@ data:
     # ==========================================
     # 6. Catalogs: RDBMS (PostgreSQL JDBC)
     # ==========================================
-    spark.sql.catalog.processingdb=org.apache.spark.sql.execution.datasources.v2.jdbc.JDBCTableCatalog
+    spark.sql.catalog.processingdb=org.lakehouse.security.catalog.LakehouseSecureJDBCTableCatalog
+    # Stub database URL
     spark.sql.catalog.processingdb.url=jdbc:postgresql://<HOST>:<PORT>/<DATABASE_NAME>
     spark.sql.catalog.processingdb.user=postgresUser
-    spark.sql.catalog.processingdb.password=postgresPW
+    # DB password is fetched from OpenBao (kv/lakehouse/database)
+    # secret-key must be in 'secretPath:secretKey' format consumed by BaoJdbcSecretProvider
+    spark.sql.catalog.processingdb.secretProvider=org.lakehouse.security.jdbc.BaoJdbcSecretProvider
+    spark.sql.catalog.processingdb.vault-url=http://openbao:8200
+    spark.sql.catalog.processingdb.secret-key=kv/data/lakehouse/database:password
 
     # ==========================================
     # 7. Keycloak (driver pods need these env vars to reach the server)
@@ -61,11 +71,17 @@ data:
     spark.kubernetes.driverEnv.KEYCLOAK_INTERNAL_CLIENT_SECRET=super-secret-internal-key-987654321
 
     # ==========================================
+    # 7a. OpenBao (driver/executor pods resolve S3 + DB secrets via VAULT_TOKEN)
+    # ==========================================
+    spark.kubernetes.driverEnv.VAULT_TOKEN=lakehouse-spark-token
+    spark.kubernetes.executorEnv.VAULT_TOKEN=lakehouse-spark-token
+
+    # ==========================================
     # 8. Kubernetes Submission Settings (from lakehousestorage.json)
     # ==========================================
     spark.driver.host=$(POD_IP)
     spark.kubernetes.authenticate.driver.serviceAccountName=spark-driver-sa
     spark.kubernetes.authenticate.executor.serviceAccountName=spark-driver-sa
-    spark.kubernetes.container.image=lakehouse-spark-aws:0.8.0
+    spark.kubernetes.container.image=lakehouse-spark-aws:0.9.0
     spark.kubernetes.executor.deleteOnTermination=true
     spark.kubernetes.namespace=lakehouse-management

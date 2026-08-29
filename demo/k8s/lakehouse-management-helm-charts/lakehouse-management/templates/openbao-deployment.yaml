@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openbao
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "lakehouse-management.labels" . | nindent 4 }}
+    app.kubernetes.io/component: openbao
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "lakehouse-management.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: openbao
+  template:
+    metadata:
+      labels:
+        {{- include "lakehouse-management.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: openbao
+    spec:
+      containers:
+        - name: openbao
+          image: "{{ .Values.openbao.image.repository }}:{{ .Values.openbao.image.tag }}"
+          imagePullPolicy: {{ .Values.openbao.image.pullPolicy }}
+          # The official bao binary is the container PID 1 process. Use a
+          # loopback BAO_ADDR so probes/CLI never depend on the cluster Service
+          # endpoint (which would deadlock pod readiness).
+          command:
+            - "bao"
+            - "server"
+            - "-dev"
+            - "-dev-listen-address=0.0.0.0:8200"
+            - "-dev-root-token-id=lakehouse-root-token"
+          ports:
+            - name: http
+              containerPort: 8200
+              protocol: TCP
+          env:
+            - name: BAO_ADDR
+              value: 'http://127.0.0.1:8200'
+            {{- range .Values.openbao.serverEnv }}
+            - name: {{ .name }}
+{{- if .valueFrom }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .valueFrom.secretKeyRef.name }}
+                  key: {{ .valueFrom.secretKeyRef.key }}
+{{- else }}
+              value: {{ .value | quote }}
+{{- end }}
+            {{- end }}
+          readinessProbe:
+            exec:
+              command: ["bao", "status"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+          livenessProbe:
+            exec:
+              command: ["bao", "status"]
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3

@@ -27,6 +27,10 @@ lakehouse:
       # so that it is possible to find out which specific instance took the task lock.
       # You can specify a pod or host name
       id: first1
+    processor: # Task processor parameters
+      sparkStandAloneClusterTaskProcessor:
+        maxWaitToRunningStateTimeoutMs: 120000 # max time to wait for the Spark job transition to RUNNING, ms
+        sparkJobStatusCheckIntervalMs: 3000 # Spark job status polling interval, ms
     scheduled: # Parameters for receiving tasks
       task:
         kafka:
@@ -40,3 +44,29 @@ lakehouse:
             # The name must match the one in the scheduler service
             topics: scheduled_task_msg
 ```
+
+### Task processor parameters
+
+| Parameter | Default | Description |
+|---|---|---|
+| `lakehouse.task-executor.processor.sparkStandAloneClusterTaskProcessor.maxWaitToRunningStateTimeoutMs` | `120000` | Max time to wait for the Spark job transition to `RUNNING`, ms |
+| `lakehouse.task-executor.processor.sparkStandAloneClusterTaskProcessor.sparkJobStatusCheckIntervalMs` | `3000` | Spark job status polling interval, ms |
+
+### Secret resolution options for datasources (lakehouse-credential-providers-jdbc)
+
+If the `lakehouse-credential-providers-jdbc` jar is on the classpath, the `service.properties` of a JDBC
+datasource (`ServiceDTO.properties`) may contain secret provider options. `JdbcConnectionFactory` then resolves
+the password at runtime and strips the security options before opening the connection:
+
+| Option | Description |
+|---|---|
+| `secretProvider` | Fully qualified class name of the `SecretProvider` implementation. Its presence enables resolution |
+| `secret-key` | Combined `path:key` coordinate, e.g. `kv/data/lakehouse/database:password` |
+| `vault-url` | OpenBao/Vault HTTP API base URL |
+| `vault-role`, `vault-k8s-auth-path` | Optional Kubernetes auth settings for OpenBao/Vault |
+| `secret-id`, `secret-version` | Yandex Cloud Lockbox secret id and optional version (default `latest`) |
+| `url` | Optional explicit JDBC URL; otherwise built from `host`/`port`/`urn` |
+| `user` | User name; the password itself comes from the provider |
+
+Requires the `VAULT_TOKEN` environment variable (OpenBao) or `YC_AUTH_KEY_PATH` (Lockbox). Real example:
+`demo/compose/conf/datasources/processingdb.json`. Full details: [security guide](../../doc/security/security.md).
