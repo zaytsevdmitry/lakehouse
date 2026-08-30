@@ -44,12 +44,23 @@ public class SQLTemplate extends KeyValueAbstract {
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Driver driver;
 
+    @Column(nullable = false)
+    private boolean isCvsManaged;
+
     @Column(nullable = false, length = 4000)
     @ManyToOne(targetEntity = Script.class, optional = false)
     @JoinColumn(foreignKey = @ForeignKey(name = "sql_template__script_fk"))
     private String value;
 
     public SQLTemplate() {
+    }
+
+    public boolean isCvsManaged() {
+        return isCvsManaged;
+    }
+
+    public void setCvsManaged(boolean cvsManaged) {
+        this.isCvsManaged = cvsManaged;
     }
 
     public Task getTask() {

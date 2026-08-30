@@ -1,0 +1,10 @@
+kind: DataSource
+keyName: lakehousestorage
+service:
+  host: hive-metastore
+  port: "9083"
+  urn: lakehousestorage
+  properties: {}
+description: Local datastore
+dataSourceType: iceberg
+databaseProtocol: s3

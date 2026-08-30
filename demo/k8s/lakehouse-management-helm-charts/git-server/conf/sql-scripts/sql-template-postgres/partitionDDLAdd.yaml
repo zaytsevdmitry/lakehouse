@@ -1,0 +1,4 @@
+kind: Script
+key: sql-template-postgres.partitionDDLAdd.sql
+value: |
+  fix me

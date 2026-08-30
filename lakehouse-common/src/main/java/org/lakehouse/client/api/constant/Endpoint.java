@@ -64,6 +64,9 @@ public class Endpoint {
 
     public final static String SCENARIOS = CONFIGS + "/scenarios";
     public final static String SCENARIOS_NAME = SCENARIOS + "/{keyName}";
+//cvs
+    public final static String CVS_SYNC_LOGS = CONFIGS + "/cvs/logs";
+    public final static String CVS_OBJECT_LOGS = CONFIGS + "/cvs/objectlogs";
 // scheduler-svc
     public final static String SCHEDULE = ROOT_API_V1_0 + "/schedule";
     public final static String SCHEDULE_NAME = ROOT_API_V1_0 + "/schedule/name={name}/limit={limit}";

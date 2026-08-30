@@ -1,0 +1,4 @@
+kind: Script
+key: sql-template-postgres.foreignKeyCheckIntegrity.sql
+value: |
+  fix me

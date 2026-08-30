@@ -42,7 +42,18 @@ public class DataSet extends KeyEntityAbstract {
     @Column(nullable = false)
     private String tableName;
 
+    @Column(nullable = false)
+    private boolean isCvsManaged;
+
     public DataSet() {
+    }
+
+    public boolean isCvsManaged() {
+        return isCvsManaged;
+    }
+
+    public void setCvsManaged(boolean cvsManaged) {
+        this.isCvsManaged = cvsManaged;
     }
 
     public NameSpace getNameSpace() {

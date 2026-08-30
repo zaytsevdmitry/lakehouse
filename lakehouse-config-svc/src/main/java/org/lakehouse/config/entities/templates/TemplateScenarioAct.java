@@ -17,13 +17,25 @@
 
 package org.lakehouse.config.entities.templates;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import org.lakehouse.config.entities.KeyEntityAbstract;
 
 @Entity
 public class TemplateScenarioAct extends KeyEntityAbstract {
 
+    @Column(nullable = false)
+    private boolean isCvsManaged;
+
     public TemplateScenarioAct() {
+    }
+
+    public boolean isCvsManaged() {
+        return isCvsManaged;
+    }
+
+    public void setCvsManaged(boolean cvsManaged) {
+        this.isCvsManaged = cvsManaged;
     }
 
 }

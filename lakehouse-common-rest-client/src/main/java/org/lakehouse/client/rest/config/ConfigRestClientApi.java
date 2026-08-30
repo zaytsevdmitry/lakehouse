@@ -19,6 +19,8 @@ package org.lakehouse.client.rest.config;
 
 import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
 import org.lakehouse.client.api.dto.configs.ScriptReferenceDTO;
+import org.lakehouse.client.api.dto.configs.CvsObjectLogDTO;
+import org.lakehouse.client.api.dto.configs.CvsSyncLogDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetLineageDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
@@ -86,6 +88,13 @@ public interface ConfigRestClientApi {
     List<QualityMetricsConfDTO> getQualityMetricsConfList();
 
     List<QualityMetricsConfDTO> getQualityMetricsConfListByDataSetKeyName(String dataSetKeyName);
+
+    List<CvsSyncLogDTO> getCvsSyncLogDTOList(
+            OffsetDateTime from, OffsetDateTime to, String status, String commitId);
+
+    List<CvsObjectLogDTO> getCvsObjectLogDTOList(
+            String commitId, String kind, OffsetDateTime from, OffsetDateTime to,
+            String filePath, String objectName);
 
     int deleteDriverDTO(String name);
 

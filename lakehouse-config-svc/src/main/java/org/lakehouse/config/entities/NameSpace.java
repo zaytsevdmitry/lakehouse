@@ -17,13 +17,25 @@
 
 package org.lakehouse.config.entities;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 
 @Entity
 
 public class NameSpace extends KeyEntityAbstract {
 
+    @Column(nullable = false)
+    private boolean isCvsManaged;
+
     public NameSpace() {
+    }
+
+    public boolean isCvsManaged() {
+        return isCvsManaged;
+    }
+
+    public void setCvsManaged(boolean cvsManaged) {
+        this.isCvsManaged = cvsManaged;
     }
 
 }

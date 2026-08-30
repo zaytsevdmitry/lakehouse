@@ -38,6 +38,9 @@ public class Schedule extends KeyEntityAbstract {
     private boolean enabled;
 
     @Column(nullable = false)
+    private boolean isCvsManaged;
+
+    @Column(nullable = false)
     private OffsetDateTime lastChangedDateTime;
 
     @Column(nullable = false)
@@ -76,6 +79,14 @@ public class Schedule extends KeyEntityAbstract {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public boolean isCvsManaged() {
+        return isCvsManaged;
+    }
+
+    public void setCvsManaged(boolean cvsManaged) {
+        this.isCvsManaged = cvsManaged;
     }
 
     public OffsetDateTime getLastChangedDateTime() {

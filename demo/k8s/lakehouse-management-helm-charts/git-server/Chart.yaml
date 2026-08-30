@@ -1,0 +1,6 @@
+apiVersion: v2
+name: git-server
+description: Lightweight git server (git daemon) hosting the declarative configuration repository used by lakehouse-config-svc (CVS/GitOps demo).
+type: application
+version: 0.1.0
+appVersion: "latest"

@@ -1,0 +1,6 @@
+kind: Script
+key: sql-template-spark_iceberg.tableDDLCreate.sql
+value: |
+  {%set currentDataSet=dataSets[currentDataSetKeyName]%}CREATE TABLE IF NOT EXISTS {{ refCat(currentDataSetKeyName) }} (
+   {{ extractColumnsDDL(currentDataSet.columnSchema) }} 
+  ) USING iceberg  {{targetDataSet.partitionStmt}}

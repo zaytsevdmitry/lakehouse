@@ -101,7 +101,18 @@ public class Task  {
     @Column(name = "template_name")
     private String template;
 
+    @Column(nullable = false)
+    private boolean isCvsManaged;
+
     public Task() {
+    }
+
+    public boolean isCvsManaged() {
+        return isCvsManaged;
+    }
+
+    public void setCvsManaged(boolean cvsManaged) {
+        this.isCvsManaged = cvsManaged;
     }
 
     public Long getId() {

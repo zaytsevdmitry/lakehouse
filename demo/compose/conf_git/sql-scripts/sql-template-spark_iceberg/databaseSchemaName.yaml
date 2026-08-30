@@ -1,0 +1,4 @@
+kind: Script
+key: sql-template-spark_iceberg.databaseSchemaName.sql
+value: |
+  {%set schema=dataSets[currentDataSetKeyName].dataSourceKeyName~'.'~dataSets[currentDataSetKeyName].databaseSchemaName%}{{schema}}

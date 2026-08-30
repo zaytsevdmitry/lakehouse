@@ -1,0 +1,4 @@
+kind: Script
+key: sql-template-spark_iceberg.primaryKeyDDL.sql
+value: |
+  {%set targetDataSet=dataSets[targetDataSetKeyName]%}CONSTRAINT {{ constraintName }} PRIMARY KEY ({{ targetDataSet.constraints[constraintName].columns }})

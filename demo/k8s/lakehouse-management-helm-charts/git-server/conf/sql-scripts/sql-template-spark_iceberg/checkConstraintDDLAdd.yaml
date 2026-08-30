@@ -1,0 +1,4 @@
+kind: Script
+key: sql-template-spark_iceberg.checkConstraintDDLAdd.sql
+value: |
+  ALTER TABLE  {{ refCat(targetDataSetKeyName) }} ADD CONSTRAINT {{ constraint.name }} CHECK ({{ constraint.checkExpr }})

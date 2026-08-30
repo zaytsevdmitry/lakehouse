@@ -1,0 +1,4 @@
+kind: Script
+key: sql-template-spark_iceberg.tableDDLDrop.sql
+value: |
+  DROP TABLE {{ refCat(currentDataSetKeyName) }}

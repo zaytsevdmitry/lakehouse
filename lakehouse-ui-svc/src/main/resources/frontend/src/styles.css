@@ -1193,3 +1193,46 @@ a {
   background: var(--accent);
   border: none;
 }
+
+.cvs-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.cvs-panel-title {
+  margin: 0;
+  font-size: 15px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+
+.cvs-log-layout {
+  display: flex;
+  align-items: stretch;
+  height: 420px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.cvs-log-layout .catalog-pane {
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.cvs-log-layout .catalog-pane:first-child {
+  flex-shrink: 0;
+}
+
+.cvs-log-layout .catalog-pane:last-child {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.cvs-log-layout .states-table {
+  align-self: flex-start;
+}

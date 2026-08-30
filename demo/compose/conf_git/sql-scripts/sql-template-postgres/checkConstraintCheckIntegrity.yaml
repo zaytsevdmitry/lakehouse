@@ -1,0 +1,4 @@
+kind: Script
+key: sql-template-postgres.checkConstraintCheckIntegrity.sql
+value: |
+  fix me

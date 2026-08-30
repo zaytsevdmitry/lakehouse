@@ -21,6 +21,7 @@ import jakarta.transaction.Transactional;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.config.entities.KeyValueAbstract;
 import org.lakehouse.config.entities.dataset.DataSet;
+import org.lakehouse.config.exception.CvsManagedException;
 import org.lakehouse.config.exception.DataSetNotFoundException;
 import org.lakehouse.config.mapper.keyvalue.KeyValueEntityMerger;
 import org.lakehouse.config.repository.NameSpaceRepository;
@@ -142,12 +143,14 @@ public class DataSetService {
                         properties);
     }
     @Transactional
-    private DataSetDTO saveDataSet(DataSetDTO dataSetDTO) {
+    private DataSetDTO saveDataSet(DataSetDTO dataSetDTO, boolean cvsManaged) {
 
         logger.info("Saving dataSetDTO={}: cleanUp", dataSetDTO.getKeyName());
 
         logger.info("Saving dataSetDTO={}", dataSetDTO.getKeyName());
         DataSet dataSet = dataSetRepository.save(mapDataSetToEntity(dataSetDTO));
+        dataSet.setCvsManaged(cvsManaged);
+        dataSetRepository.save(dataSet);
 
         logger.info("Saving dataSetDTO={} columns", dataSetDTO.getKeyName());
         dataSetColumnService.applyColumns(dataSet,dataSetDTO.getColumnSchema());
@@ -168,6 +171,7 @@ public class DataSetService {
     }
 
     public DataSetDTO save(DataSetDTO dataSetDTO) {
+        rejectIfCvsManaged(dataSetDTO.getKeyName(), "created or updated");
         Optional<DataSet> oldDataSet = dataSetRepository.findById(dataSetDTO.getKeyName());
         if (oldDataSet.isPresent()){
             DataSetDTO old = mapDataSetToDTO(oldDataSet.get());
@@ -176,7 +180,23 @@ public class DataSetService {
                 return dataSetDTO;
             }
         }
-        return saveDataSet(dataSetDTO);
+        return saveDataSet(dataSetDTO, false);
+    }
+
+    public DataSetDTO saveCvs(DataSetDTO dataSetDTO) {
+        Optional<DataSet> oldDataSet = dataSetRepository.findById(dataSetDTO.getKeyName());
+        if (oldDataSet.isPresent()){
+            DataSetDTO old = mapDataSetToDTO(oldDataSet.get());
+            if (dataSetDTO.equals(old))
+            {
+                // the construct is unchanged; keep the CVS-managed marker in sync anyway
+                DataSet existing = oldDataSet.get();
+                existing.setCvsManaged(true);
+                dataSetRepository.save(existing);
+                return dataSetDTO;
+            }
+        }
+        return saveDataSet(dataSetDTO, true);
     }
 
     public DataSetDTO findById(String name) {
@@ -185,6 +205,23 @@ public class DataSetService {
 
     @Transactional
     public void deleteById(String name) {
+        rejectIfCvsManaged(name, "deleted");
         dataSetRepository.deleteById(name);
+    }
+
+    @Transactional
+    public void unmanage(String name) {
+        dataSetRepository.findById(name).ifPresent(dataSet -> {
+            dataSet.setCvsManaged(false);
+            dataSetRepository.save(dataSet);
+        });
+    }
+
+    private void rejectIfCvsManaged(String name, String operation) {
+        dataSetRepository.findById(name)
+                .filter(DataSet::isCvsManaged)
+                .ifPresent(dataSet -> {
+                    throw new CvsManagedException(name, operation);
+                });
     }
 }

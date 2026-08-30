@@ -1,0 +1,4 @@
+kind: Script
+key: sql-template-postgres.foreignKeyDDLAdd.sql
+value: |
+  ALTER TABLE  {{ ref(targetDataSetKeyName) }} ADD CONSTRAINT %s PRIMARY KEY (%s)

@@ -33,4 +33,7 @@ dependencies:
   - name: lakehouse-management-ui-svc
     version: 0.1.0
     repository: "file://../lakehouse-management-ui-svc"
+  - name: git-server
+    version: 0.1.0
+    repository: "file://../git-server"
 

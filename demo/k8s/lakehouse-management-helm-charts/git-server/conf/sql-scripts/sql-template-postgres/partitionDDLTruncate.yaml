@@ -1,0 +1,4 @@
+kind: Script
+key: sql-template-postgres.partitionDDLTruncate.sql
+value: |
+  fix me

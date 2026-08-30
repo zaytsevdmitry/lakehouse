@@ -18,6 +18,7 @@
 package org.lakehouse.config.service;
 
 import org.lakehouse.config.entities.script.Script;
+import org.lakehouse.config.exception.CvsManagedException;
 import org.lakehouse.config.exception.ScriptNotFoundException;
 import org.lakehouse.config.repository.ScriptRepository;
 import org.slf4j.Logger;
@@ -54,13 +55,39 @@ public class ScriptService {
     }
 
     public String save(String key, String value) {
+        rejectIfCvsManaged(key, "created or updated");
+        return saveInternal(key, value, false);
+    }
+
+    public String saveCvs(String key, String value) {
+        return saveInternal(key, value, true);
+    }
+
+    private String saveInternal(String key, String value, boolean cvsManaged) {
         Script script = new Script();
         script.setKey(key);
         script.setValue(value);
+        script.setCvsManaged(cvsManaged);
         return scriptRepository.save(script).getValue();
     }
 
     public void deleteById(String key) {
+        rejectIfCvsManaged(key, "deleted");
         scriptRepository.deleteById(key);
+    }
+
+    public void unmanage(String key) {
+        scriptRepository.findById(key).ifPresent(script -> {
+            script.setCvsManaged(false);
+            scriptRepository.save(script);
+        });
+    }
+
+    private void rejectIfCvsManaged(String key, String operation) {
+        scriptRepository.findById(key)
+                .filter(Script::isCvsManaged)
+                .ifPresent(script -> {
+                    throw new CvsManagedException(key, operation);
+                });
     }
 }

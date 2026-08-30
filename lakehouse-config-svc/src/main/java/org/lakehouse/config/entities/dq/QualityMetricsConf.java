@@ -36,7 +36,17 @@ public class QualityMetricsConf extends KeyEntityAbstract {
     @Column(nullable = false) private Types.DQThresholdViolationLevel dqThresholdViolationLevel;
     @Column(nullable = false) private boolean enabled;
     @Column(nullable = false) private boolean save;
+    @Column(nullable = false) private boolean isCvsManaged;
+
     public QualityMetricsConf() {
+    }
+
+    public boolean isCvsManaged() {
+        return isCvsManaged;
+    }
+
+    public void setCvsManaged(boolean cvsManaged) {
+        this.isCvsManaged = cvsManaged;
     }
 
     public DataSet getDataSet() {

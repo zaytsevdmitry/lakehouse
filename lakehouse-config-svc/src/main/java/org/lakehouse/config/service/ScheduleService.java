@@ -26,6 +26,7 @@ import org.lakehouse.config.entities.Schedule;
 import org.lakehouse.config.entities.scenario.ScenarioAct;
 import org.lakehouse.config.entities.scenario.ScenarioActEdge;
 import org.lakehouse.config.entities.scenario.ScenarioActTaskEdge;
+import org.lakehouse.config.exception.CvsManagedException;
 import org.lakehouse.config.exception.DataSetNotFoundException;
 import org.lakehouse.config.exception.ScenarioActNotFoundException;
 import org.lakehouse.config.exception.ScheduleNotFoundException;
@@ -220,6 +221,16 @@ public class ScheduleService {
 
     @Transactional
     public ScheduleDTO save(ScheduleDTO scheduleDTO) {
+        rejectIfCvsManaged(scheduleDTO.getKeyName(), "created or updated");
+        return doSave(scheduleDTO, false);
+    }
+
+    @Transactional
+    public ScheduleDTO saveCvs(ScheduleDTO scheduleDTO) {
+        return doSave(scheduleDTO, true);
+    }
+
+    private ScheduleDTO doSave(ScheduleDTO scheduleDTO, boolean cvsManaged) {
 
         ValidationResult vr = ScheduleConfValidator.validate(scheduleDTO);
         if (!vr.isValid())
@@ -232,6 +243,9 @@ public class ScheduleService {
 
         if (scheduleDTO.equals(mapScheduleToDTO(currentScheduleVersion))) {
             logger.info("Schedule configs are equal");
+            // the construct is unchanged; keep the CVS-managed marker in sync anyway
+            currentScheduleVersion.setCvsManaged(cvsManaged);
+            scheduleRepository.save(currentScheduleVersion);
             return scheduleDTO;
         }
 
@@ -240,6 +254,8 @@ public class ScheduleService {
                         mapScheduleToEntity(
                                 currentScheduleVersion,
                                 scheduleDTO));
+        schedule.setCvsManaged(cvsManaged);
+        scheduleRepository.save(schedule);
 
         scenarioActRepository.deleteByScheduleName(schedule.getKeyName());
 
@@ -263,7 +279,7 @@ public class ScheduleService {
 
             Map<String, TaskService.SaveTaskResult> savedTasks = new HashMap<>();
             for (TaskDTO taskDTO: saDto.getTasks()) {
-                savedTasks.put(taskDTO.getName(), taskService.save(taskDTO,null,scenarioAct));
+                savedTasks.put(taskDTO.getName(), taskService.saveCvs(taskDTO,null,scenarioAct));
             }
 
             saDto.getDagEdges().forEach(dagEdgeDTO -> {
@@ -293,7 +309,24 @@ public class ScheduleService {
 
     @Transactional
     public void deleteById(String name) {
+        rejectIfCvsManaged(name, "deleted");
         scheduleRepository.deleteById(name);
+    }
+
+    @Transactional
+    public void unmanage(String name) {
+        scheduleRepository.findById(name).ifPresent(schedule -> {
+            schedule.setCvsManaged(false);
+            scheduleRepository.save(schedule);
+        });
+    }
+
+    private void rejectIfCvsManaged(String name, String operation) {
+        scheduleRepository.findById(name)
+                .filter(Schedule::isCvsManaged)
+                .ifPresent(schedule -> {
+                    throw new CvsManagedException(name, operation);
+                });
     }
 
     public ScheduleEffectiveDTO mapScheduleDTOAndResolveTemplateV2(String scheduleKeyName){

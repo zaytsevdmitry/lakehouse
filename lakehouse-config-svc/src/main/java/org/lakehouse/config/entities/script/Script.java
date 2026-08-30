@@ -32,7 +32,18 @@ public class Script {
     @Column(nullable = false)
     private String value;
 
+    @Column(nullable = false)
+    private boolean isCvsManaged;
+
     public Script() {
+    }
+
+    public boolean isCvsManaged() {
+        return isCvsManaged;
+    }
+
+    public void setCvsManaged(boolean cvsManaged) {
+        this.isCvsManaged = cvsManaged;
     }
 
     public String getKey() {

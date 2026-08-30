@@ -20,6 +20,7 @@ package org.lakehouse.config.service;
 import jakarta.transaction.Transactional;
 import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
 import org.lakehouse.config.entities.NameSpace;
+import org.lakehouse.config.exception.CvsManagedException;
 import org.lakehouse.config.exception.NameSpaceNotFoundException;
 import org.lakehouse.config.repository.NameSpaceRepository;
 import org.slf4j.Logger;
@@ -57,7 +58,15 @@ public class NameSpaceService {
 
     @Transactional
     public NameSpaceDTO save(NameSpaceDTO nameSpaceDTO) {
+        rejectIfCvsManaged(nameSpaceDTO.getKeyName(), "created or updated");
         return mapToDTO(nameSpaceRepository.save(mapToEntity(nameSpaceDTO)));
+    }
+
+    @Transactional
+    public NameSpaceDTO saveCvs(NameSpaceDTO nameSpaceDTO) {
+        NameSpace nameSpace = mapToEntity(nameSpaceDTO);
+        nameSpace.setCvsManaged(true);
+        return mapToDTO(nameSpaceRepository.save(nameSpace));
     }
 
     public NameSpaceDTO findByName(String name) {
@@ -69,6 +78,23 @@ public class NameSpaceService {
 
     @Transactional
     public void deleteById(String name) {
+        rejectIfCvsManaged(name, "deleted");
         nameSpaceRepository.deleteById(name);
+    }
+
+    @Transactional
+    public void unmanage(String name) {
+        nameSpaceRepository.findById(name).ifPresent(nameSpace -> {
+            nameSpace.setCvsManaged(false);
+            nameSpaceRepository.save(nameSpace);
+        });
+    }
+
+    private void rejectIfCvsManaged(String name, String operation) {
+        nameSpaceRepository.findById(name)
+                .filter(NameSpace::isCvsManaged)
+                .ifPresent(nameSpace -> {
+                    throw new CvsManagedException(name, operation);
+                });
     }
 }

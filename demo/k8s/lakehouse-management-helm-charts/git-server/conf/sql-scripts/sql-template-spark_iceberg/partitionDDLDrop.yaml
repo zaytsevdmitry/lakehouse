@@ -1,0 +1,4 @@
+kind: Script
+key: sql-template-spark_iceberg.partitionDDLDrop.sql
+value: |
+  fix me

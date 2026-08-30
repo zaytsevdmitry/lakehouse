@@ -1,0 +1,4 @@
+kind: Script
+key: sql-template-postgres.primaryKeyDDL.sql
+value: |
+  {%set targetDataSet=dataSets[targetDataSetKeyName]%}CONSTRAINT {{ constraintName }} PRIMARY KEY ({{ targetDataSet.constraints[constraintName].columns }})

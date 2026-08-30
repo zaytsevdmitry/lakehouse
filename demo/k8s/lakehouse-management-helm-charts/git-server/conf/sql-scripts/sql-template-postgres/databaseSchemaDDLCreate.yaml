@@ -1,0 +1,5 @@
+kind: Script
+key: sql-template-postgres.databaseSchemaDDLCreate.sql
+value: |
+  {%set targetDataSet=dataSets[targetDataSetKeyName]%}
+  create schema {{ targetDataSet.databaseSchemaName }}

@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: git-server-init
+  labels:
+    {{- include "git-server.labels" . | nindent 4 }}
+data:
+  git-server-init.sh: |
+    #!/bin/sh
+    # Bootstrap of the demo configuration repository server (K8s variant of
+    # docker-compose conf_infra/git/git-server-init.sh). Creates a bare
+    # repository on first start, imports the declarative configuration mounted
+    # from the git-server-config ConfigMap at /conf and serves it over the
+    # git:// protocol on :9418 via the built-in `git daemon`.
+    set -e
+
+    REPO_DIR="/srv/git/config-repo.git"
+    CONF_SRC="/conf"
+    BRANCH="{{  (index .Values "git-server").config.branch | default "main" }}"
+
+    import_config() {
+      local work
+      echo "[git-server] Importing declarative configuration from $CONF_SRC"
+      work="/tmp/config-import"
+      rm -rf "$work"
+      git clone -q "$REPO_DIR" "$work" 2>/dev/null || true
+      if git -C "$work" rev-parse --verify -q "refs/heads/$BRANCH" >/dev/null; then
+        git -C "$work" reset -q --hard "origin/$BRANCH"
+      fi
+      # Strip any ConfigMap-internal artifacts (..data, ..<timestamp>/) that could
+      # have been committed earlier, so they never end up in the repository.
+      find "$work" -maxdepth 1 -name '..*' -exec rm -rf {} + 2>/dev/null || true
+      # Dereference the ConfigMap volume symlinks (each *.yaml key is a link to
+      # ..data/...) so real file contents are committed, not the internal links.
+      cp -fL "$CONF_SRC"/*.yaml "$work"/ 2>/dev/null || true
+      chown -R root:root "$work"
+      git -C "$work" config user.name "lakehouse"
+      git -C "$work" config user.email "lakehouse@local"
+      git -C "$work" add -A
+      if git -C "$work" diff --cached --quiet; then
+        echo "[git-server] No configuration changes, nothing to commit"
+      else
+        if git -C "$work" rev-parse --verify -q "refs/heads/$BRANCH" >/dev/null; then
+          git -C "$work" commit -m "Update of lakehouse declarative configuration"
+        else
+          git -C "$work" commit -m "Initial import of lakehouse declarative configuration"
+        fi
+      fi
+      git -C "$work" push -q origin "HEAD:refs/heads/$BRANCH" 2>/dev/null || true
+      rm -rf "$work"
+    }
+
+    if [ ! -d "$REPO_DIR" ]; then
+      echo "[git-server] Creating bare repository $REPO_DIR (branch $BRANCH)"
+      git init --bare --initial-branch="$BRANCH" "$REPO_DIR"
+    else
+      echo "[git-server] Repository $REPO_DIR already initialized on branch $BRANCH"
+    fi
+
+    import_config
+
+    echo "[git-server] Starting git daemon on :9418"
+    exec git daemon --reuseaddr --verbose --base-path=/srv/git --export-all --enable=receive-pack /srv/git

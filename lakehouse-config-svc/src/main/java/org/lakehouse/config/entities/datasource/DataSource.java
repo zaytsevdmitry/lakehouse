@@ -38,7 +38,18 @@ public class DataSource extends KeyEntityAbstract {
     @Column
     private DatabaseProtocol databaseProtocol;
 
+    @Column(nullable = false)
+    private boolean isCvsManaged;
+
     public DataSource() {
+    }
+
+    public boolean isCvsManaged() {
+        return isCvsManaged;
+    }
+
+    public void setCvsManaged(boolean cvsManaged) {
+        this.isCvsManaged = cvsManaged;
     }
 
     public Types.DataSourceType getDataSourceType() {

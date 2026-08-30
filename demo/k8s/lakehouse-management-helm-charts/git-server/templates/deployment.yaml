@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: git-server
+  labels:
+    {{- include "git-server.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "git-server.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "git-server.selectorLabels" . | nindent 8 }}
+    spec:
+      securityContext:
+        runAsUser: 0
+      containers:
+        - name: git-server
+          image: "{{  (index .Values "git-server").image.repository }}:{{  (index .Values "git-server").image.tag }}"
+          imagePullPolicy: {{  (index .Values "git-server").image.pullPolicy }}
+          command: ["/bin/sh", "-c"]
+          args:
+            - "apk add --no-cache git-daemon && sh /srv/git-init/git-server-init.sh"
+          ports:
+            - containerPort: {{  (index .Values "git-server").service.targetPort }}
+              protocol: TCP
+          volumeMounts:
+            - name: git-storage
+              mountPath: /srv/git
+            - name: git-config
+              mountPath: /conf
+              readOnly: true
+            - name: git-init
+              mountPath: /srv/git-init
+              readOnly: true
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - "ls /srv/git/config-repo.git >/dev/null 2>&1 || exit 1"
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 12
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - "command -v git-daemon >/dev/null 2>&1 || exit 1"
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+      volumes:
+        - name: git-storage
+          persistentVolumeClaim:
+            claimName: git-server-storage
+        - name: git-config
+          configMap:
+            name: git-server-config
+        - name: git-init
+          configMap:
+            name: git-server-init

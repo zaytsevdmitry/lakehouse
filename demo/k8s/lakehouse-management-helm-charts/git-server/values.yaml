@@ -1,0 +1,16 @@
+git-server:
+  image:
+    repository: alpine/git
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 9418
+    targetPort: 9418
+  persistence:
+    enabled: true
+    size: 1Gi
+    accessMode: ReadWriteOnce
+  config:
+    repoName: config-repo.git
+    branch: main

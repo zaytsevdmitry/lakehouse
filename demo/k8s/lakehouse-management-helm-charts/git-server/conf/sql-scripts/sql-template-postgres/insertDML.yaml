@@ -1,0 +1,7 @@
+kind: Script
+key: sql-template-postgres.insertDML.sql
+value: |
+  {%set targetDataSet=dataSets[targetDataSetKeyName]%}
+  INSERT INTO  {{ ref(targetDataSetKeyName) }} ({{ extractColumnsCS(targetDataSet) }})
+  SELECT {{ extractColumnsCS(targetDataSet)}}
+  FROM ({{ script }})

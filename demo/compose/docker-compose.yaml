@@ -135,6 +135,32 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_NUM_PARTITIONS: 4
 
+  # Lightweight git server hosting the declarative configuration repository
+  # used by lakehouse-config-svc (CVS subsystem, git:// protocol).
+  # On first start it imports ./conf_git (YAML mirror of ./conf) into branch main.
+  git-server:
+    image: alpine/git:latest
+    build:
+      context: ./conf_infra/git
+      dockerfile: Dockerfile
+    container_name: git-server
+    user: root
+    entrypoint: ["/bin/sh"]
+    command: ["/srv/git-init.sh"]
+    networks:
+      lakehouse_net:
+        ipv4_address: 172.20.193.200
+    volumes:
+      - ./conf_git:/conf:ro
+      - git_server_storage:/srv/git
+      - ./conf_infra/git/git-server-init.sh:/srv/git-init.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "git ls-remote git://127.0.0.1:9418/config-repo.git >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 6
+      start_period: 20s
+
   hive-metastore:
     image: lakehouse-hms:0.9.0
     entrypoint: ["/bin/sh", "-c", "/service.sh"]
@@ -277,6 +303,12 @@ services:
     environment:
       LAKEHOUSE_CONFIG_SCHEDULE_SEND_KAFKA_PRODUCER_PROPERTIES_BOOTSTRAP_SERVERS: "broker:9092"
       LAKEHOUSE_CONFIG_SCHEDULE_SEND_KAFKA_PRODUCER_PROPERTIES_CLIENT_ID: "lakehouse-config-service-client"
+      LAKEHOUSE_CONFIG_GIT_REPOSITORY_URL: "git://git-server:9418/config-repo.git"
+      LAKEHOUSE_CONFIG_GIT_BRANCH: "main"
+      LAKEHOUSE_CONFIG_GIT_LOCAL_CLONE_PATH: "/tmp/config-repo"
+      LAKEHOUSE_CONFIG_GIT_SYNC_ENABLED: "true"
+      LAKEHOUSE_CONFIG_GIT_SYNC_INTERVAL_MS: "30000"
+      LAKEHOUSE_CONFIG_GIT_SYNC_INITIAL_DELAY_MS: "10000"
       KEYCLOAK_ISSUER_URI: "http://keycloak.lakehouse:8085/realms/lakehouse"
       KEYCLOAK_INTERNAL_CLIENT_SECRET: "super-secret-internal-key-987654321"
     command: [
@@ -293,6 +325,8 @@ services:
       broker:
         condition: service_started
       keycloak:
+        condition: service_healthy
+      git-server:
         condition: service_healthy
 
   lakehouse-scheduler-svc:
@@ -645,6 +679,7 @@ volumes:
       type: none
       o: bind
       device: "./storages/minio_storage"
+  git_server_storage:
 
 networks:
   lakehouse_net:
