@@ -24,7 +24,7 @@ import org.lakehouse.config.entities.scenario.ScenarioAct;
 import org.lakehouse.config.entities.task.Task;
 import org.lakehouse.config.entities.task.TaskProcessorArg;
 import org.lakehouse.config.entities.templates.TemplateScenarioAct;
-import org.lakehouse.config.exception.CvsManagedException;
+import org.lakehouse.config.exception.VcsManagedException;
 import org.lakehouse.config.exception.TaskEffectiveNotFoundException;
 import org.lakehouse.config.exception.TaskNotFoundException;
 import org.lakehouse.config.repository.TaskExecutionServiceGroupRepository;
@@ -97,11 +97,11 @@ public class TaskService {
     public record SaveTaskResult(Task task, TaskDTO taskDTO) {}
 
     public SaveTaskResult save(TaskDTO taskDTO, TemplateScenarioAct templateScenarioAct, ScenarioAct scenarioAct) {
-        rejectIfCvsManaged(taskDTO.getName(), templateScenarioAct, scenarioAct, "created or updated");
+        rejectIfVcsManaged(taskDTO.getName(), templateScenarioAct, scenarioAct, "created or updated");
         return doSave(taskDTO, templateScenarioAct, scenarioAct, false);
     }
 
-    public SaveTaskResult saveCvs(TaskDTO taskDTO, TemplateScenarioAct templateScenarioAct, ScenarioAct scenarioAct) {
+    public SaveTaskResult saveVcs(TaskDTO taskDTO, TemplateScenarioAct templateScenarioAct, ScenarioAct scenarioAct) {
         return doSave(taskDTO, templateScenarioAct, scenarioAct, true);
     }
 
@@ -109,7 +109,7 @@ public class TaskService {
             TaskDTO taskDTO,
             TemplateScenarioAct templateScenarioAct,
             ScenarioAct scenarioAct,
-            boolean cvsManaged) {
+            boolean vcsManaged) {
         logger.info("Saving task.name={}", taskDTO.getName());
         logger.info("Validating task.name={}", taskDTO.getName());
         ValidationResult vr = TaskDTOValidator.validate(taskDTO);
@@ -121,12 +121,12 @@ public class TaskService {
         task.setName(taskDTO.getName());
         task.setTemplateScenarioAct(templateScenarioAct);
         task.setScenarioAct(scenarioAct);
-        task.setCvsManaged(cvsManaged);
+        task.setVcsManaged(vcsManaged);
         taskRepository.save(task);
 
         logger.info("Saving sqlTemplate of task.name={}", taskDTO.getName());
         sqlTemplateService.save(task, taskDTO.getSqlTemplate());
-        sqlTemplateService.markTaskManaged(task, cvsManaged);
+        sqlTemplateService.markTaskManaged(task, vcsManaged);
 
         logger.info("Saving taskProcessorArgs of task.name={}", taskDTO.getName());
         saveArgs(task, taskDTO);
@@ -185,7 +185,7 @@ public class TaskService {
 
     @Transactional
     public void deleteByName(String name, TemplateScenarioAct templateScenarioAct, ScenarioAct scenarioAct) {
-        rejectIfCvsManaged(name, templateScenarioAct, scenarioAct, "deleted");
+        rejectIfVcsManaged(name, templateScenarioAct, scenarioAct, "deleted");
         findTaskEntityByName(name,templateScenarioAct,scenarioAct)
                 .ifPresentOrElse(
                         taskRepository::delete,
@@ -198,21 +198,21 @@ public class TaskService {
     @Transactional
     public void unmanageByName(String name, TemplateScenarioAct templateScenarioAct, ScenarioAct scenarioAct) {
         findTaskEntityByName(name, templateScenarioAct, scenarioAct).ifPresent(task -> {
-            task.setCvsManaged(false);
+            task.setVcsManaged(false);
             taskRepository.save(task);
             sqlTemplateService.markTaskManaged(task, false);
         });
     }
 
-    private void rejectIfCvsManaged(
+    private void rejectIfVcsManaged(
             String name,
             TemplateScenarioAct templateScenarioAct,
             ScenarioAct scenarioAct,
             String operation) {
         findTaskEntityByName(name, templateScenarioAct, scenarioAct)
-                .filter(Task::isCvsManaged)
+                .filter(Task::isVcsManaged)
                 .ifPresent(task -> {
-                    throw new CvsManagedException(name, operation);
+                    throw new VcsManagedException(name, operation);
                 });
     }
 

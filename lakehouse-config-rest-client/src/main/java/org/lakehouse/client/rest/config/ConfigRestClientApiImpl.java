@@ -19,8 +19,8 @@ package org.lakehouse.client.rest.config;
 
 import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
-import org.lakehouse.client.api.dto.configs.CvsObjectLogDTO;
-import org.lakehouse.client.api.dto.configs.CvsSyncLogDTO;
+import org.lakehouse.client.api.dto.configs.VcsObjectLogDTO;
+import org.lakehouse.client.api.dto.configs.VcsSyncLogDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetLineageDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
@@ -214,12 +214,12 @@ public class ConfigRestClientApiImpl extends ConfigRestClientApiAbstract {
     }
 
     @Override
-    public List<CvsSyncLogDTO> getCvsSyncLogDTOList(
+    public List<VcsSyncLogDTO> getVcsSyncLogDTOList(
             OffsetDateTime from, OffsetDateTime to, String status, String commitId) {
         return Arrays.asList(restClientHelper.getRestClient()
                 .get()
                 .uri(uriBuilder -> {
-                    var builder = uriBuilder.path(Endpoint.CVS_SYNC_LOGS)
+                    var builder = uriBuilder.path(Endpoint.VCS_SYNC_LOGS)
                             .queryParam("from", DateTimeUtils.formatDateTimeFormatWithTZ(from))
                             .queryParam("to", DateTimeUtils.formatDateTimeFormatWithTZ(to));
                     if (status != null && !status.isBlank())
@@ -229,17 +229,17 @@ public class ConfigRestClientApiImpl extends ConfigRestClientApiAbstract {
                     return builder.build();
                 })
                 .retrieve()
-                .body(CvsSyncLogDTO[].class));
+                .body(VcsSyncLogDTO[].class));
     }
 
     @Override
-    public List<CvsObjectLogDTO> getCvsObjectLogDTOList(
+    public List<VcsObjectLogDTO> getVcsObjectLogDTOList(
             String commitId, String kind, OffsetDateTime from, OffsetDateTime to,
             String filePath, String objectName) {
         return Arrays.asList(restClientHelper.getRestClient()
                 .get()
                 .uri(uriBuilder -> {
-                    var builder = uriBuilder.path(Endpoint.CVS_OBJECT_LOGS);
+                    var builder = uriBuilder.path(Endpoint.VCS_OBJECT_LOGS);
                     if (commitId != null && !commitId.isBlank())
                         builder.queryParam("commitId", commitId);
                     if (kind != null && !kind.isBlank())
@@ -255,7 +255,7 @@ public class ConfigRestClientApiImpl extends ConfigRestClientApiAbstract {
                     return builder.build();
                 })
                 .retrieve()
-                .body(CvsObjectLogDTO[].class));
+                .body(VcsObjectLogDTO[].class));
     }
 
     @Override

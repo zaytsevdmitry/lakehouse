@@ -34,7 +34,7 @@ lakehouse:
             properties: # https://kafka.apache.org/41/configuration/producer-configs/
               bootstrap.servers: localhost:9092
 
-    cvs: # GitOps (CVS) subsystem: declarative configuration from a Git repository
+    vcs: # GitOps (VCS) subsystem: declarative configuration from a Git repository
       git:
         repository-url: ${LAKEHOUSE_CONFIG_GIT_REPOSITORY_URL:} # e.g. git://git-server:9418/config-repo.git
         branch: ${LAKEHOUSE_CONFIG_GIT_BRANCH:main} # branch to synchronize

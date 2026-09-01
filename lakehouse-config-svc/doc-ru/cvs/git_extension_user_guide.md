@@ -1,12 +1,12 @@
 # Руководство пользователя git-расширения
 
 Это руководство для пользователей, которые управляют конфигурацией
-`lakehouse-config-svc` декларативно — через встроенное Git-расширение (подсистема CVS).
-В нём описан формат репозитория (YAML), флаг `isCvsManaged`, настройка синхронизации и
+`lakehouse-config-svc` декларативно — через встроенное Git-расширение (подсистема VCS).
+В нём описан формат репозитория (YAML), флаг `isVcsManaged`, настройка синхронизации и
 сообщения об ошибках.
 
 Для описания уровня разработчика см.
-[Подсистема CVS для разработчиков платформы](cvs_for_developers.md).
+[Подсистема VCS для разработчиков платформы](vcs_for_developers.md).
 
 ## 1. Что делает Git-расширение
 
@@ -23,13 +23,13 @@ Git-репозиторий — **источник истины**: любое в�
 
 ## 2. Как включить и настроить
 
-Все настройки находятся под префиксом `lakehouse.config.cvs.*`. Задайте их в
+Все настройки находятся под префиксом `lakehouse.config.vcs.*`. Задайте их в
 `application.yml` или через переменные окружения.
 
 ```yaml
 lakehouse:
   config:
-    cvs:
+    vcs:
       git:
         repository-url: ${LAKEHOUSE_CONFIG_GIT_REPOSITORY_URL:}
         branch: ${LAKEHOUSE_CONFIG_GIT_BRANCH:main}
@@ -45,13 +45,13 @@ lakehouse:
 
 | Свойство | Переменная окружения | По умолчанию | Описание |
 |---|---|---|---|
-| `lakehouse.config.cvs.git.repository-url` | `LAKEHOUSE_CONFIG_GIT_REPOSITORY_URL` | *(пусто)* | URL репозитория конфигурации (`git://`, `ssh://`, `http(s)://` или локальный путь). **Обязателен** для включения синхронизации. |
-| `lakehouse.config.cvs.git.branch` | `LAKEHOUSE_CONFIG_GIT_BRANCH` | `main` | Ветка для синхронизации. |
-| `lakehouse.config.cvs.git.local-clone-path` | `LAKEHOUSE_CONFIG_GIT_LOCAL_CLONE_PATH` | *(пусто)* | Локальная директория, где сервис хранит свой клон. **Обязательна** для включения синхронизации. |
-| `lakehouse.config.cvs.git.private-key-path` | `LAKEHOUSE_CONFIG_GIT_PRIVATE_KEY_PATH` | *(пусто)* | Путь к SSH-приватному ключу; нужен только для URL вида `ssh://`. Оставьте пустым для анонимного доступа. |
-| `lakehouse.config.cvs.git.sync.enabled` | `LAKEHOUSE_CONFIG_GIT_SYNC_ENABLED` | `false` | Установите `true`, чтобы включить Git-расширение. |
-| `lakehouse.config.cvs.git.sync.interval-ms` | `LAKEHOUSE_CONFIG_GIT_SYNC_INTERVAL_MS` | `30000` | Период цикла синхронизации (мс). |
-| `lakehouse.config.cvs.git.sync.initial-delay-ms` | `LAKEHOUSE_CONFIG_GIT_SYNC_INITIAL_DELAY_MS` | `10000` | Задержка первого цикла после старта (мс). |
+| `lakehouse.config.vcs.git.repository-url` | `LAKEHOUSE_CONFIG_GIT_REPOSITORY_URL` | *(пусто)* | URL репозитория конфигурации (`git://`, `ssh://`, `http(s)://` или локальный путь). **Обязателен** для включения синхронизации. |
+| `lakehouse.config.vcs.git.branch` | `LAKEHOUSE_CONFIG_GIT_BRANCH` | `main` | Ветка для синхронизации. |
+| `lakehouse.config.vcs.git.local-clone-path` | `LAKEHOUSE_CONFIG_GIT_LOCAL_CLONE_PATH` | *(пусто)* | Локальная директория, где сервис хранит свой клон. **Обязательна** для включения синхронизации. |
+| `lakehouse.config.vcs.git.private-key-path` | `LAKEHOUSE_CONFIG_GIT_PRIVATE_KEY_PATH` | *(пусто)* | Путь к SSH-приватному ключу; нужен только для URL вида `ssh://`. Оставьте пустым для анонимного доступа. |
+| `lakehouse.config.vcs.git.sync.enabled` | `LAKEHOUSE_CONFIG_GIT_SYNC_ENABLED` | `false` | Установите `true`, чтобы включить Git-расширение. |
+| `lakehouse.config.vcs.git.sync.interval-ms` | `LAKEHOUSE_CONFIG_GIT_SYNC_INTERVAL_MS` | `30000` | Период цикла синхронизации (мс). |
+| `lakehouse.config.vcs.git.sync.initial-delay-ms` | `LAKEHOUSE_CONFIG_GIT_SYNC_INITIAL_DELAY_MS` | `10000` | Задержка первого цикла после старта (мс). |
 
 ### Пример (переменные окружения)
 
@@ -191,21 +191,21 @@ constraints:
     constraintLevelCheck: dataQuality
 ```
 
-## 5. Флаг `isCvsManaged`
+## 5. Флаг `isVcsManaged`
 
 Каждый объект, применённый из Git-репозитория, сохраняется с флагом
-`isCvsManaged = true`. Этот флаг отличает источник создания объекта:
+`isVcsManaged = true`. Этот флаг отличает источник создания объекта:
 
-- объекты, созданные через REST API, имеют `isCvsManaged = false`;
-- объекты, применённые из Git, имеют `isCvsManaged = true`.
+- объекты, созданные через REST API, имеют `isVcsManaged = false`;
+- объекты, применённые из Git, имеют `isVcsManaged = true`.
 
 ### Следствия
 
 - **Защита через REST API.** Любая попытка создать, изменить или удалить
-  CVS-управляемый объект через REST API завершится ошибкой HTTP `409 Conflict`. Сначала
+  VCS-управляемый объект через REST API завершится ошибкой HTTP `409 Conflict`. Сначала
   нужно изменить объект в репозитории и дождаться синхронизации.
 - **Удаление в два шага.** Удаление YAML-файла из репозитория **не удаляет** объект из
-  базы данных. Синхронизация лишь снимает `isCvsManaged` с соответствующей сущности.
+  базы данных. Синхронизация лишь снимает `isVcsManaged` с соответствующей сущности.
   Затем пользователь должен удалить объект через REST API.
 - **Возврат владения.** После снятия флага объект снова полностью управляется через
   REST API.
@@ -218,7 +218,7 @@ constraints:
 - **Атомарность.** Коммит применяется внутри одной транзакции: все созданные/изменённые
   объекты, все удаления, записи object log и маркер `SUCCESS`. При любой ошибке весь
   коммит откатывается.
-- **Идемпотентность.** Коммиты, чей id уже есть в `cvs_sync_log`, пропускаются. Если
+- **Идемпотентность.** Коммиты, чей id уже есть в `vcs_sync_log`, пропускаются. Если
   последний `SUCCESS` уже указывает на HEAD, ничего не делается.
 - **Первая синхронизация.** Когда в базе ещё нет успешного коммита, весь HEAD
   репозитория рассматривается как набор созданных файлов.
@@ -229,7 +229,7 @@ constraints:
   Следующий исправляющий коммит включит исправленное содержимое в новый diff.
 - **Инфраструктурные ошибки** (репозиторий недоступен, нет клона, сбой SSH) только
   логируются и повторяются в следующем цикле.
-- **Прогресс виден** в UI панели «CVS → CVSLog»: строки `SUCCESS` хранят применённый
+- **Прогресс виден** в UI панели «VCS → VCSLog»: строки `SUCCESS` хранят применённый
   commit id, строки `FAILED` — сообщение об ошибке; object log перечисляет каждый
   затронутый объект по коммиту.
 
@@ -237,17 +237,17 @@ constraints:
 
 Read-only REST-эндпоинты (также отображаются в UI):
 
-- `GET /v1_0/configs/cvs/logs?from=...&to=...&status=...&commitId=...`
+- `GET /v1_0/configs/vcs/logs?from=...&to=...&status=...&commitId=...`
   Возвращает историю журнала синхронизации (`id`, `commitId`, `syncDateTime`, `status`,
   `errorMessage`). `from` и `to` обязательны; `status` (`SUCCESS`/`FAILED`) и `commitId`
   опциональны.
-- `GET /v1_0/configs/cvs/objectlogs?commitId=...&kind=...&from=...&to=...&filePath=...&objectName=...`
+- `GET /v1_0/configs/vcs/objectlogs?commitId=...&kind=...&from=...&to=...&filePath=...&objectName=...`
   Возвращает пообъектный журнал (`id`, `dateTimeRec`, `objectName`, `kind`, `filePath`,
   `commitId`). Нужно указать либо `commitId`, либо обе даты `from` и `to`.
 
 ## 8. Сообщения об ошибках
 
-### Ошибки конфигурации (записываются как `FAILED` с текстом в `cvs_sync_log`)
+### Ошибки конфигурации (записываются как `FAILED` с текстом в `vcs_sync_log`)
 
 | Сообщение | Значение |
 |---|---|
@@ -268,13 +268,13 @@ Read-only REST-эндпоинты (также отображаются в UI):
 |---|---|
 | `Git repository URL must be configured` | `repository-url` пуст при включённой синхронизации. |
 | `Git local clone path must be configured` | `local-clone-path` пуст при включённой синхронизации. |
-| `Cannot init CVS client for repository <url>` | Не удалось клонировать/открыть репозиторий или настроить SSH. |
+| `Cannot init VCS client for repository <url>` | Не удалось клонировать/открыть репозиторий или настроить SSH. |
 | `Cannot pull repository <url>` | Не удалось выполнить fetch или reset. |
 | `No reachable commit on branch <branch>` | На ветке нет коммитов. |
 | `Cannot resolve current commit on branch <branch>` | Не удалось прочитать ref ветки. |
 | `Cannot compute diff against <baseCommitId>` | Не удалось вычислить diff. |
 | `Cannot read file <path> at commit <commitId>` | Не удалось прочитать blob файла конфигурации. |
-| `CVS client is not initialized; call init() first` | Метод вызван до `init()`. |
+| `VCS client is not initialized; call init() first` | Метод вызван до `init()`. |
 | `SSH private key is not readable: <key>` | Настроенный приватный ключ отсутствует или не читается. |
 | `Cannot create SSH session factory for key <key>` | Не удалось настроить SSH для ключа. |
 
@@ -282,5 +282,5 @@ Read-only REST-эндпоинты (также отображаются в UI):
 
 | HTTP-статус | Шаблон сообщения | Значение |
 |---|---|---|
-| `409 Conflict` | `Configuration construct '<keyName>' is managed via CVS (git) and cannot be <created or updated|deleted> through the REST API. Remove it from the configuration repository (git) first.` | Пользователь пытается изменить или удалить CVS-управляемый объект через REST. |
+| `409 Conflict` | `Configuration construct '<keyName>' is managed via VCS (git) and cannot be <created or updated|deleted> through the REST API. Remove it from the configuration repository (git) first.` | Пользователь пытается изменить или удалить VCS-управляемый объект через REST. |
 | `400 Bad Request` | `Either commitId or both from and to must be provided` | Запрос object log не содержит ни `commitId`, ни пары `from`+`to`. |

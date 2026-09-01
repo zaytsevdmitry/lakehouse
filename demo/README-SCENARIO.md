@@ -152,4 +152,4 @@ regular тоже начнет работать в феврале, но он су
 
 Синхронизация через Git
 
-![cvs.png](img/cvs.png)
+![vcs.png](img/vcs.png)

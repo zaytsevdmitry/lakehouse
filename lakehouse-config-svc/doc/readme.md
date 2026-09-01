@@ -15,7 +15,7 @@ Metadata management service - a single storage for all lakehouse configurations.
 - **Scripts and SQL templates** - query templates with Jinjava substitutions
 - **Data lineage** - data provenance relationships
 - **TaskExecutionServiceGroups** - task executor groups
-- **Declarative configuration from Git (GitOps/CVS)** - the same configuration DTOs can be defined as YAML files in a Git repository and synchronized into the database automatically by the CVS subsystem (see [GitOps: declarative configuration from a Git repository](#gitops-declarative-configuration-from-a-git-repository-cvs))
+- **Declarative configuration from Git (GitOps/VCS)** - the same configuration DTOs can be defined as YAML files in a Git repository and synchronized into the database automatically by the VCS subsystem (see [GitOps: declarative configuration from a Git repository](#gitops-declarative-configuration-from-a-git-repository-vcs))
 
 Configurations are defined as DTOs, stored in PostgreSQL and exposed via REST API. Schedule changes are published to Kafka (topic `schedule_effective_changes`) so that scheduler-svc builds actual schedule instances.
 
@@ -51,11 +51,11 @@ Configurations are defined as DTOs, stored in PostgreSQL and exposed via REST AP
 - **InternalScheduler** - periodic publishing of schedule changes to Kafka.
 - Metadata is organized hierarchically (namespace → datasource → dataset → ...); the dependency scheme is described in [content_configuration](content_configuration/content_configuration.md).
 
-## GitOps: declarative configuration from a Git repository (CVS)
+## GitOps: declarative configuration from a Git repository (VCS)
 
-In addition to the REST API, `lakehouse-config-svc` can manage configuration declaratively: the same metadata DTOs are written as YAML files into a Git repository and the CVS (Configuration Versioning System) subsystem synchronizes them into the database on a schedule. This makes the repository the source of truth and gives a full history of every configuration change (GitOps style).
+In addition to the REST API, `lakehouse-config-svc` can manage configuration declaratively: the same metadata DTOs are written as YAML files into a Git repository and the VCS (Configuration Versioning System) subsystem synchronizes them into the database on a schedule. This makes the repository the source of truth and gives a full history of every configuration change (GitOps style).
 
-Detailed documentation: [CVS subsystem for platform developers](cvs/cvs_for_developers.md) (internals, the `CvsClient` abstraction, extension points, developer parameters) and [Git extension user guide](cvs/git_extension_user_guide.md) (YAML format, `isCvsManaged`, configuration and error messages).
+Detailed documentation: [VCS subsystem for platform developers](vcs/vcs_for_developers.md) (internals, the `VcsClient` abstraction, extension points, developer parameters) and [Git extension user guide](vcs/git_extension_user_guide.md) (YAML format, `isVcsManaged`, configuration and error messages).
 
 ```
 ┌──────────────────┐   fetch + diff   ┌───────────────────────────────┐
@@ -72,8 +72,8 @@ Detailed documentation: [CVS subsystem for platform developers](cvs/cvs_for_deve
                                                       ▼
                                       ┌───────────────────────────────┐
                                       │  PostgreSQL                   │
-                                      │  + cvs_sync_log (SUCCESS/FAILED)│
-                                      │  + cvs_object_log (per object) │
+                                      │  + vcs_sync_log (SUCCESS/FAILED)│
+                                      │  + vcs_object_log (per object) │
                                       └───────────────────────────────┘
 ```
 
@@ -125,33 +125,33 @@ Applied in dependency order (delete happens in the reverse order):
 
 ### Sync semantics
 
-- Each cycle pulls the configured branch and diffs its head against the last **successfully** applied commit (`cvs_sync_log` with status `SUCCESS`); on an empty database the whole head is treated as a set of created files.
+- Each cycle pulls the configured branch and diffs its head against the last **successfully** applied commit (`vcs_sync_log` with status `SUCCESS`); on an empty database the whole head is treated as a set of created files.
 - The first run of a commit is applied inside a **single transaction**: created and updated constructs are applied in the `kind` order above (datasets additionally in their `sources` dependency order), deleted constructs in the reverse order, and only then the `SUCCESS` marker is written. Any failure rolls the whole commit back.
-- Every construct touched by a commit is recorded in `cvs_object_log` (`date_time_rec`, `object_name` from `keyName`, `kind`, `file_path` relative to the repository root, `commit_id`), for both applied and un-managed files.
+- Every construct touched by a commit is recorded in `vcs_object_log` (`date_time_rec`, `object_name` from `keyName`, `kind`, `file_path` relative to the repository root, `commit_id`), for both applied and un-managed files.
 - A commit that fails YAML parsing, validation or a database constraint is recorded as `FAILED` together with the error message and is **not retried**; a later fixing commit simply rolls the failed content in as part of a new diff.
 - Infrastructure failures (unreachable repository, missing local clone) are only logged and retried on the next cycle.
-- Commits whose id already has a `cvs_sync_log` row are skipped. Renames are treated as delete + create. Only `*.yaml`, `*.yml` and `*.json` files are configuration files; everything else (e.g. `load.sh`) is ignored.
+- Commits whose id already has a `vcs_sync_log` row are skipped. Renames are treated as delete + create. Only `*.yaml`, `*.yml` and `*.json` files are configuration files; everything else (e.g. `load.sh`) is ignored.
 
-### CVS management flag
+### VCS management flag
 
-Every construct loaded from the repository gets `isCvsManaged=true`; it stays false for constructs created through the REST API.
+Every construct loaded from the repository gets `isVcsManaged=true`; it stays false for constructs created through the REST API.
 
-- Deleting a YAML file from the repository **does not delete the construct** - the service only clears `isCvsManaged` on the corresponding entity. The actual deletion has to be done by the user through the REST API afterwards.
-- Any REST `POST`/`PUT`/`DELETE` on a CVS-managed construct is rejected with `409 Conflict` (`CvsManagedException`): to change or delete a managed construct via the REST API, first remove it from the repository.
+- Deleting a YAML file from the repository **does not delete the construct** - the service only clears `isVcsManaged` on the corresponding entity. The actual deletion has to be done by the user through the REST API afterwards.
+- Any REST `POST`/`PUT`/`DELETE` on a VCS-managed construct is rejected with `409 Conflict` (`VcsManagedException`): to change or delete a managed construct via the REST API, first remove it from the repository.
 
 ### Configuration
 
-All settings live under the `lakehouse.config.cvs.*` prefix (see also [appconf/service_configuration.md](appconf/service_configuration.md)):
+All settings live under the `lakehouse.config.vcs.*` prefix (see also [appconf/service_configuration.md](appconf/service_configuration.md)):
 
 | Property | Environment variable | Default | Description |
 |---|---|---|---|
-| `lakehouse.config.cvs.git.repository-url` | `LAKEHOUSE_CONFIG_GIT_REPOSITORY_URL` | - | URL of the configuration repository (supports `git://`, `ssh://` and `http(s)://`) |
-| `lakehouse.config.cvs.git.branch` | `LAKEHOUSE_CONFIG_GIT_BRANCH` | `main` | Branch to synchronize |
-| `lakehouse.config.cvs.git.local-clone-path` | `LAKEHOUSE_CONFIG_GIT_LOCAL_CLONE_PATH` | - | Local path where the service keeps its clone |
-| `lakehouse.config.cvs.git.private-key-path` | `LAKEHOUSE_CONFIG_GIT_PRIVATE_KEY_PATH` | - | Path to an SSH private key (only for `ssh://` URLs) |
-| `lakehouse.config.cvs.git.sync.enabled` | `LAKEHOUSE_CONFIG_GIT_SYNC_ENABLED` | `false` | Enables the CVS scheduler bean |
-| `lakehouse.config.cvs.git.sync.interval-ms` | `LAKEHOUSE_CONFIG_GIT_SYNC_INTERVAL_MS` | `30000` | Cycle period |
-| `lakehouse.config.cvs.git.sync.initial-delay-ms` | `LAKEHOUSE_CONFIG_GIT_SYNC_INITIAL_DELAY_MS` | `10000` | Delay of the first cycle after startup |
+| `lakehouse.config.vcs.git.repository-url` | `LAKEHOUSE_CONFIG_GIT_REPOSITORY_URL` | - | URL of the configuration repository (supports `git://`, `ssh://` and `http(s)://`) |
+| `lakehouse.config.vcs.git.branch` | `LAKEHOUSE_CONFIG_GIT_BRANCH` | `main` | Branch to synchronize |
+| `lakehouse.config.vcs.git.local-clone-path` | `LAKEHOUSE_CONFIG_GIT_LOCAL_CLONE_PATH` | - | Local path where the service keeps its clone |
+| `lakehouse.config.vcs.git.private-key-path` | `LAKEHOUSE_CONFIG_GIT_PRIVATE_KEY_PATH` | - | Path to an SSH private key (only for `ssh://` URLs) |
+| `lakehouse.config.vcs.git.sync.enabled` | `LAKEHOUSE_CONFIG_GIT_SYNC_ENABLED` | `false` | Enables the VCS scheduler bean |
+| `lakehouse.config.vcs.git.sync.interval-ms` | `LAKEHOUSE_CONFIG_GIT_SYNC_INTERVAL_MS` | `30000` | Cycle period |
+| `lakehouse.config.vcs.git.sync.initial-delay-ms` | `LAKEHOUSE_CONFIG_GIT_SYNC_INITIAL_DELAY_MS` | `10000` | Delay of the first cycle after startup |
 
 ### Demo
 

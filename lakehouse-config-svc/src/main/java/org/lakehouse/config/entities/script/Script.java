@@ -33,17 +33,17 @@ public class Script {
     private String value;
 
     @Column(nullable = false)
-    private boolean isCvsManaged;
+    private boolean isVcsManaged;
 
     public Script() {
     }
 
-    public boolean isCvsManaged() {
-        return isCvsManaged;
+    public boolean isVcsManaged() {
+        return isVcsManaged;
     }
 
-    public void setCvsManaged(boolean cvsManaged) {
-        this.isCvsManaged = cvsManaged;
+    public void setVcsManaged(boolean vcsManaged) {
+        this.isVcsManaged = vcsManaged;
     }
 
     public String getKey() {

@@ -12,7 +12,7 @@ The overall system design of lakehouse: a set of services managing data changes 
 | lakehouse-task-executor-svc | 8089 | Task executor: consumes tasks from Kafka, locks them in scheduler-svc, runs TaskProcessors (JDBC, state, spark), sends heartbeats and releases the lock with the result | [doc](../../lakehouse-task-executor-svc/readme.md) |
 | lakehouse-task-proxy-for-spark | 8090 | Spark proxy: accepts spark-submit over REST `/v1/submissions`, keeps a queue in PostgreSQL, submits tasks to clusters (Standalone/K8s/YARN) via adapters | [doc](../../lakehouse-task-proxy-for-spark/README.md) |
 
-> The **cvs-svc** service does not exist in the current version. It is mentioned in the diagrams as a planned service: it will be responsible for importing configurations into config-svc. Its development is planned for the future.
+> The **vcs-svc** service does not exist in the current version. It is mentioned in the diagrams as a planned service: it will be responsible for importing configurations into config-svc. Its development is planned for the future.
 
 ## Inter-services communication
 

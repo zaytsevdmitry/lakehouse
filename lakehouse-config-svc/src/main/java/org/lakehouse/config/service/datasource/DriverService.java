@@ -20,7 +20,7 @@ package org.lakehouse.config.service.datasource;
 import jakarta.transaction.Transactional;
 import org.lakehouse.client.api.dto.configs.schedule.DriverDTO;
 import org.lakehouse.config.entities.datasource.Driver;
-import org.lakehouse.config.exception.CvsManagedException;
+import org.lakehouse.config.exception.VcsManagedException;
 import org.lakehouse.config.exception.DriverNotFoundException;
 import org.lakehouse.config.repository.datasource.DriverRepository;
 import org.springframework.stereotype.Service;
@@ -53,21 +53,21 @@ public class DriverService {
     }
     @Transactional
     public DriverDTO save(DriverDTO driverDTO){
-        rejectIfCvsManaged(driverDTO.getKeyName(), "created or updated");
+        rejectIfVcsManaged(driverDTO.getKeyName(), "created or updated");
         return saveInternal(driverDTO, false);
     }
 
     @Transactional
-    public DriverDTO saveCvs(DriverDTO driverDTO){
+    public DriverDTO saveVcs(DriverDTO driverDTO){
         return saveInternal(driverDTO, true);
     }
 
-    private DriverDTO saveInternal(DriverDTO driverDTO, boolean cvsManaged){
+    private DriverDTO saveInternal(DriverDTO driverDTO, boolean vcsManaged){
         Driver driver = driverRepository.save(mapToEntity(driverDTO));
-        driver.setCvsManaged(cvsManaged);
+        driver.setVcsManaged(vcsManaged);
         driverRepository.save(driver);
         sqlTemplateService.save(driver,driverDTO.getSqlTemplate());
-        sqlTemplateService.markDriverManaged(driver, cvsManaged);
+        sqlTemplateService.markDriverManaged(driver, vcsManaged);
         return mapToDTO(driver);
     }
 
@@ -87,23 +87,23 @@ public class DriverService {
     }
 
     public void deleteById(String name) {
-        rejectIfCvsManaged(name, "deleted");
+        rejectIfVcsManaged(name, "deleted");
         driverRepository.deleteById(name);
     }
 
     public void unmanage(String name) {
         driverRepository.findById(name).ifPresent(driver -> {
-            driver.setCvsManaged(false);
+            driver.setVcsManaged(false);
             driverRepository.save(driver);
             sqlTemplateService.markDriverManaged(driver, false);
         });
     }
 
-    private void rejectIfCvsManaged(String name, String operation) {
+    private void rejectIfVcsManaged(String name, String operation) {
         driverRepository.findById(name)
-                .filter(Driver::isCvsManaged)
+                .filter(Driver::isVcsManaged)
                 .ifPresent(driver -> {
-                    throw new CvsManagedException(name, operation);
+                    throw new VcsManagedException(name, operation);
                 });
     }
 }

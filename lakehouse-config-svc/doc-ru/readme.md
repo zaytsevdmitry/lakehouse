@@ -15,7 +15,7 @@
 - **Скрипты и SQL-шаблоны** - шаблоны запросов с Jinjava-подстановками
 - **Линковка данных** - связи происхождения данных (lineage)
 - **TaskExecutionServiceGroups** - группы исполнителей задач
-- **Декларативная конфигурация из Git (GitOps/CVS)** - те же конфигурационные DTO могут быть заданы YAML-файлами в Git-репозитории и автоматически синхронизированы в БД подсистемой CVS (см. [GitOps: декларативная конфигурация из Git-репозитория (CVS)](#gitops-декларативная-конфигурация-из-git-репозитория-cvs))
+- **Декларативная конфигурация из Git (GitOps/VCS)** - те же конфигурационные DTO могут быть заданы YAML-файлами в Git-репозитории и автоматически синхронизированы в БД подсистемой VCS (см. [GitOps: декларативная конфигурация из Git-репозитория (VCS)](#gitops-декларативная-конфигурация-из-git-репозитория-vcs))
 
 Конфигурации задаются в виде DTO, хранятся в PostgreSQL и отдаются через REST API. Изменения расписаний транслируются в Kafka (topic `schedule_effective_changes`), чтобы scheduler-svc строил актуальные инстансы расписаний.
 
@@ -51,11 +51,11 @@
 - **InternalScheduler** - периодическая отправка изменений расписаний в Kafka.
 - Метаданные связаны иерархически (namespace → datasource → dataset → ...), схема зависимостей описана в [content_configuration](content_configuration/content_configuration.md).
 
-## GitOps: декларативная конфигурация из Git-репозитория (CVS)
+## GitOps: декларативная конфигурация из Git-репозитория (VCS)
 
-Помимо REST API `lakehouse-config-svc` умеет управлять конфигурацией декларативно: те же DTO метаданных записываются YAML-файлами в Git-репозиторий, а подсистема CVS (Configuration Versioning System) по расписанию синхронизирует их в базу данных. Репозиторий становится источником истины (source of truth) и хранит полную историю изменений каждой конфигурации (подход GitOps).
+Помимо REST API `lakehouse-config-svc` умеет управлять конфигурацией декларативно: те же DTO метаданных записываются YAML-файлами в Git-репозиторий, а подсистема VCS (Configuration Versioning System) по расписанию синхронизирует их в базу данных. Репозиторий становится источником истины (source of truth) и хранит полную историю изменений каждой конфигурации (подход GitOps).
 
-Подробная документация: [Подсистема CVS для разработчиков платформы](cvs/cvs_for_developers.md) (внутреннее устройство, абстракция `CvsClient`, точки расширения, параметры разработчика) и [Руководство пользователя git-расширения](cvs/git_extension_user_guide.md) (формат YAML, `isCvsManaged`, настройка и сообщения об ошибках).
+Подробная документация: [Подсистема VCS для разработчиков платформы](vcs/vcs_for_developers.md) (внутреннее устройство, абстракция `VcsClient`, точки расширения, параметры разработчика) и [Руководство пользователя git-расширения](vcs/git_extension_user_guide.md) (формат YAML, `isVcsManaged`, настройка и сообщения об ошибках).
 
 ```
 ┌──────────────────┐   fetch + diff   ┌───────────────────────────────┐
@@ -73,8 +73,8 @@
                                                       ▼
                                       ┌───────────────────────────────┐
                                       │  PostgreSQL                   │
-                                      │  + cvs_sync_log (SUCCESS/FAILED)│
-                                      │  + cvs_object_log (по объектам)│
+                                      │  + vcs_sync_log (SUCCESS/FAILED)│
+                                      │  + vcs_object_log (по объектам)│
                                       └───────────────────────────────┘
 ```
 
@@ -126,33 +126,33 @@ value: |
 
 ### Семантика синхронизации
 
-- Каждый цикл подтягивает настроенную ветку и сравнивает её head с последним **успешно** применённым коммитом (`cvs_sync_log` со статусом `SUCCESS`); на пустой базе весь head трактуется как набор созданных файлов.
+- Каждый цикл подтягивает настроенную ветку и сравнивает её head с последним **успешно** применённым коммитом (`vcs_sync_log` со статусом `SUCCESS`); на пустой базе весь head трактуется как набор созданных файлов.
 - Первое применение коммита выполняется в **одной транзакции**: созданные и изменённые конструкты применяются в порядке `kind` выше (датасеты дополнительно - в порядке зависимостей по `sources`), удаляемые - в обратном порядке, и только затем пишется маркер `SUCCESS`. Любая ошибка откатывает весь коммит.
-- Каждый затронутый коммитом конструкт записывается в `cvs_object_log` (`date_time_rec`, `object_name` из `keyName`, `kind`, `file_path` - путь относительно корня репозитория, `commit_id`) - как для применённых, так и для снятых с управления файлов.
+- Каждый затронутый коммитом конструкт записывается в `vcs_object_log` (`date_time_rec`, `object_name` из `keyName`, `kind`, `file_path` - путь относительно корня репозитория, `commit_id`) - как для применённых, так и для снятых с управления файлов.
 - Коммит, не прошедший разбор YAML, валидацию или ограничение БД, фиксируется как `FAILED` вместе с текстом ошибки и **больше не повторяется**; последующий исправляющий коммит просто включает исправленное содержимое в новый diff.
 - Инфраструктурные ошибки (недоступен репозиторий, отсутствует локальный клон) только логируются и повторяются на следующем цикле.
-- Коммиты, чей id уже есть в `cvs_sync_log`, пропускаются. Переименование файла трактуется как удаление + создание. Файлами конфигурации считаются только `*.yaml`, `*.yml` и `*.json`; всё остальное (например `load.sh`) игнорируется.
+- Коммиты, чей id уже есть в `vcs_sync_log`, пропускаются. Переименование файла трактуется как удаление + создание. Файлами конфигурации считаются только `*.yaml`, `*.yml` и `*.json`; всё остальное (например `load.sh`) игнорируется.
 
-### Флаг управления CVS
+### Флаг управления VCS
 
-Каждый конструкт, загруженный из репозитория, получает `isCvsManaged=true`; для конструктов, созданных через REST API, он остаётся `false`.
+Каждый конструкт, загруженный из репозитория, получает `isVcsManaged=true`; для конструктов, созданных через REST API, он остаётся `false`.
 
-- Удаление YAML-файла из репозитория **не удаляет конструкт** - сервис лишь сбрасывает `isCvsManaged` на соответствующей сущности. Само удаление пользователь затем выполняет через REST API.
-- Любое действие `POST`/`PUT`/`DELETE` через REST API над конструктом с `isCvsManaged=true` отклоняется ответом `409 Conflict` (`CvsManagedException`): чтобы изменить или удалить управляемый конструкт через REST API, сначала удалите его из репозитория.
+- Удаление YAML-файла из репозитория **не удаляет конструкт** - сервис лишь сбрасывает `isVcsManaged` на соответствующей сущности. Само удаление пользователь затем выполняет через REST API.
+- Любое действие `POST`/`PUT`/`DELETE` через REST API над конструктом с `isVcsManaged=true` отклоняется ответом `409 Conflict` (`VcsManagedException`): чтобы изменить или удалить управляемый конструкт через REST API, сначала удалите его из репозитория.
 
 ### Конфигурация
 
-Все параметры живут под префиксом `lakehouse.config.cvs.*` (см. также [appconf/service_configuration.md](appconf/service_configuration.md)):
+Все параметры живут под префиксом `lakehouse.config.vcs.*` (см. также [appconf/service_configuration.md](appconf/service_configuration.md)):
 
 | Свойство | Переменная окружения | По умолчанию | Описание |
 |---|---|---|---|
-| `lakehouse.config.cvs.git.repository-url` | `LAKEHOUSE_CONFIG_GIT_REPOSITORY_URL` | - | URL репозитория конфигурации (поддерживаются `git://`, `ssh://` и `http(s)://`) |
-| `lakehouse.config.cvs.git.branch` | `LAKEHOUSE_CONFIG_GIT_BRANCH` | `main` | Синхронизируемая ветка |
-| `lakehouse.config.cvs.git.local-clone-path` | `LAKEHOUSE_CONFIG_GIT_LOCAL_CLONE_PATH` | - | Локальный путь, где сервис хранит свой клон |
-| `lakehouse.config.cvs.git.private-key-path` | `LAKEHOUSE_CONFIG_GIT_PRIVATE_KEY_PATH` | - | Путь к SSH-ключу (только для URL вида `ssh://`) |
-| `lakehouse.config.cvs.git.sync.enabled` | `LAKEHOUSE_CONFIG_GIT_SYNC_ENABLED` | `false` | Включает бин планировщика CVS |
-| `lakehouse.config.cvs.git.sync.interval-ms` | `LAKEHOUSE_CONFIG_GIT_SYNC_INTERVAL_MS` | `30000` | Период цикла |
-| `lakehouse.config.cvs.git.sync.initial-delay-ms` | `LAKEHOUSE_CONFIG_GIT_SYNC_INITIAL_DELAY_MS` | `10000` | Задержка первого цикла после старта |
+| `lakehouse.config.vcs.git.repository-url` | `LAKEHOUSE_CONFIG_GIT_REPOSITORY_URL` | - | URL репозитория конфигурации (поддерживаются `git://`, `ssh://` и `http(s)://`) |
+| `lakehouse.config.vcs.git.branch` | `LAKEHOUSE_CONFIG_GIT_BRANCH` | `main` | Синхронизируемая ветка |
+| `lakehouse.config.vcs.git.local-clone-path` | `LAKEHOUSE_CONFIG_GIT_LOCAL_CLONE_PATH` | - | Локальный путь, где сервис хранит свой клон |
+| `lakehouse.config.vcs.git.private-key-path` | `LAKEHOUSE_CONFIG_GIT_PRIVATE_KEY_PATH` | - | Путь к SSH-ключу (только для URL вида `ssh://`) |
+| `lakehouse.config.vcs.git.sync.enabled` | `LAKEHOUSE_CONFIG_GIT_SYNC_ENABLED` | `false` | Включает бин планировщика VCS |
+| `lakehouse.config.vcs.git.sync.interval-ms` | `LAKEHOUSE_CONFIG_GIT_SYNC_INTERVAL_MS` | `30000` | Период цикла |
+| `lakehouse.config.vcs.git.sync.initial-delay-ms` | `LAKEHOUSE_CONFIG_GIT_SYNC_INITIAL_DELAY_MS` | `10000` | Задержка первого цикла после старта |
 
 ### Демо
 

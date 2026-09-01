@@ -23,7 +23,7 @@ import org.lakehouse.client.api.dto.configs.dq.QualityMetricsConfTestSetDTO;
 import org.lakehouse.config.entities.dq.ElementType;
 import org.lakehouse.config.entities.dq.QualityMetricsConf;
 import org.lakehouse.config.entities.dq.QualityMetricsConfTestSet;
-import org.lakehouse.config.exception.CvsManagedException;
+import org.lakehouse.config.exception.VcsManagedException;
 import org.lakehouse.config.exception.QualityMetricsConfNotFoundException;
 import org.lakehouse.config.exception.QualityMetricsConfTestSetNotFoundException;
 import org.lakehouse.config.repository.dataset.DataSetRepository;
@@ -130,20 +130,20 @@ public class QualityMetricsConfService {
 
     @Transactional
     public QualityMetricsConfDTO save(QualityMetricsConfDTO qualityMetricsConfDTO) {
-        rejectIfCvsManaged(qualityMetricsConfDTO.getKeyName(), "created or updated");
+        rejectIfVcsManaged(qualityMetricsConfDTO.getKeyName(), "created or updated");
         return saveInternal(qualityMetricsConfDTO, false);
     }
 
     @Transactional
-    public QualityMetricsConfDTO saveCvs(QualityMetricsConfDTO qualityMetricsConfDTO) {
+    public QualityMetricsConfDTO saveVcs(QualityMetricsConfDTO qualityMetricsConfDTO) {
         return saveInternal(qualityMetricsConfDTO, true);
     }
 
     private QualityMetricsConfDTO saveInternal(
-            QualityMetricsConfDTO qualityMetricsConfDTO, boolean cvsManaged) {
+            QualityMetricsConfDTO qualityMetricsConfDTO, boolean vcsManaged) {
         QualityMetricsConf qualityMetricsConf = qualityMetricsConfRepository.save(
                 mapQualityMetricsConf(qualityMetricsConfDTO));
-        qualityMetricsConf.setCvsManaged(cvsManaged);
+        qualityMetricsConf.setVcsManaged(vcsManaged);
         qualityMetricsConfRepository.save(qualityMetricsConf);
 
         qualityMetricsConfTestSetService.save(qualityMetricsConf,qualityMetricsConfDTO.getTestSets(), ElementType.TEST_SET);
@@ -169,22 +169,22 @@ public class QualityMetricsConfService {
     }
 
     public void deleteById(String name) {
-        rejectIfCvsManaged(name, "deleted");
+        rejectIfVcsManaged(name, "deleted");
         qualityMetricsConfRepository.deleteById(name);
     }
 
     public void unmanage(String name) {
         qualityMetricsConfRepository.findByKeyName(name).ifPresent(qualityMetricsConf -> {
-            qualityMetricsConf.setCvsManaged(false);
+            qualityMetricsConf.setVcsManaged(false);
             qualityMetricsConfRepository.save(qualityMetricsConf);
         });
     }
 
-    private void rejectIfCvsManaged(String name, String operation) {
+    private void rejectIfVcsManaged(String name, String operation) {
         qualityMetricsConfRepository.findByKeyName(name)
-                .filter(QualityMetricsConf::isCvsManaged)
+                .filter(QualityMetricsConf::isVcsManaged)
                 .ifPresent(qualityMetricsConf -> {
-                    throw new CvsManagedException(name, operation);
+                    throw new VcsManagedException(name, operation);
                 });
     }
 

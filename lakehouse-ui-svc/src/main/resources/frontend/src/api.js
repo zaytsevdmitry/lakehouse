@@ -217,22 +217,22 @@ export async function fetchCurrentUser() {
   return response.json();
 }
 
-export async function fetchCvsSyncLogs({ from, to, status, commitId }) {
+export async function fetchVcsSyncLogs({ from, to, status, commitId }) {
   const response = await apiFetch(
-    `/api/cvs/logs${buildQuery({ from, to, status, commitId })}`
+    `/api/vcs/logs${buildQuery({ from, to, status, commitId })}`
   );
   if (!response.ok) {
-    throw new Error(`Failed to load CVS sync log: ${response.status} ${await response.text()}`);
+    throw new Error(`Failed to load VCS sync log: ${response.status} ${await response.text()}`);
   }
   return response.json();
 }
 
-export async function fetchCvsObjectLogs({ commitId, kind, from, to, filePath, objectName }) {
+export async function fetchVcsObjectLogs({ commitId, kind, from, to, filePath, objectName }) {
   const response = await apiFetch(
-    `/api/cvs/objects${buildQuery({ commitId, kind, from, to, filePath, objectName })}`
+    `/api/vcs/objects${buildQuery({ commitId, kind, from, to, filePath, objectName })}`
   );
   if (!response.ok) {
-    throw new Error(`Failed to load CVS object log: ${response.status} ${await response.text()}`);
+    throw new Error(`Failed to load VCS object log: ${response.status} ${await response.text()}`);
   }
   return response.json();
 }

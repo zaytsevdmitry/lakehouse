@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { fetchCvsSyncLogs, fetchCvsObjectLogs } from '../api.js';
+import { fetchVcsSyncLogs, fetchVcsObjectLogs } from '../api.js';
 
 function toDateTimeLocalValue(date) {
   const offsetMs = date.getTimezoneOffset() * 60000;
@@ -17,37 +17,37 @@ const LOG_TOP_MIN_PERCENT = 10;
 const LOG_TOP_MAX_PERCENT = 90;
 const LOG_TOP_DEFAULT_PERCENT = 75;
 
-export default function CvsSection() {
+export default function VcsSection() {
   const [activeTab, setActiveTab] = useState('log');
 
   return (
     <section className="section">
-      <h2>CVS</h2>
-      <div className="tabs cvs-tabs">
+      <h2>VCS</h2>
+      <div className="tabs vcs-tabs">
         <div className="tab-list">
           <button
             className={`tab ${activeTab === 'log' ? 'tab--active' : ''}`}
             onClick={() => setActiveTab('log')}
           >
-            CVSLog
+            VCSLog
           </button>
           <button
             className={`tab ${activeTab === 'objects' ? 'tab--active' : ''}`}
             onClick={() => setActiveTab('objects')}
           >
-            CVSObjectsSearch
+            VCSObjectsSearch
           </button>
         </div>
         <div className="tab-content">
-          {activeTab === 'log' && <CvsLogPanel />}
-          {activeTab === 'objects' && <CvsObjectsSearchPanel />}
+          {activeTab === 'log' && <VcsLogPanel />}
+          {activeTab === 'objects' && <VcsObjectsSearchPanel />}
         </div>
       </div>
     </section>
   );
 }
 
-function CvsLogPanel() {
+function VcsLogPanel() {
   const containerRef = useRef(null);
   const initialDates = getInitialDates();
   const [fromDate, setFromDate] = useState(initialDates.fromDate);
@@ -85,7 +85,7 @@ function CvsLogPanel() {
   const load = () => {
     setLoading(true);
     setError('');
-    fetchCvsSyncLogs({
+    fetchVcsSyncLogs({
       from: new Date(fromDate).toISOString(),
       to: new Date(toDate).toISOString(),
       status: status || null,
@@ -99,13 +99,13 @@ function CvsLogPanel() {
   const selectRow = (row) => {
     setSelectedCommitId(row.commitId);
     setObjectsError('');
-    fetchCvsObjectLogs({ commitId: row.commitId })
+    fetchVcsObjectLogs({ commitId: row.commitId })
       .then(setObjectLogs)
       .catch((e) => setObjectsError(e.message));
   };
 
   return (
-    <div className="cvs-panel">
+    <div className="vcs-panel">
       <div className="states-filter">
         <div className="states-filter-field">
           <label>From</label>
@@ -144,12 +144,12 @@ function CvsLogPanel() {
           Refresh
         </button>
       </div>
-      <div className="cvs-log-layout" ref={containerRef}>
+      <div className="vcs-log-layout" ref={containerRef}>
         <div className="catalog-pane" style={{ height: `${topPercent}%` }}>
           {error && <div className="error-box">Error: {error}</div>}
           {loading && <div className="empty-box">Loading...</div>}
           {!error && !loading && syncLogs.length === 0 && (
-            <div className="empty-box">No CVS sync log entries found.</div>
+            <div className="empty-box">No VCS sync log entries found.</div>
           )}
           {!error && !loading && syncLogs.length > 0 && (
             <table className="states-table">
@@ -186,7 +186,7 @@ function CvsLogPanel() {
         }} />
         <div className="catalog-pane">
           {objectsError && <div className="error-box">Error: {objectsError}</div>}
-          {!selectedCommitId && <div className="empty-box">Select a CVS log row to see its objects.</div>}
+          {!selectedCommitId && <div className="empty-box">Select a VCS log row to see its objects.</div>}
           {selectedCommitId && !objectsError && objectLogs.length === 0 && (
             <div className="empty-box">No objects found for commit {selectedCommitId}.</div>
           )}
@@ -220,7 +220,7 @@ function CvsLogPanel() {
   );
 }
 
-function CvsObjectsSearchPanel() {
+function VcsObjectsSearchPanel() {
   const initialDates = getInitialDates();
   const [kind, setKind] = useState('');
   const [fromDate, setFromDate] = useState(initialDates.fromDate);
@@ -234,7 +234,7 @@ function CvsObjectsSearchPanel() {
   const load = () => {
     setLoading(true);
     setError('');
-    fetchCvsObjectLogs({
+    fetchVcsObjectLogs({
       commitId: null,
       kind: kind || null,
       from: new Date(fromDate).toISOString(),
@@ -248,7 +248,7 @@ function CvsObjectsSearchPanel() {
   };
 
   return (
-    <div className="cvs-panel">
+    <div className="vcs-panel">
       <div className="states-filter">
         <div className="states-filter-field">
           <label>Kind</label>
@@ -300,7 +300,7 @@ function CvsObjectsSearchPanel() {
       {error && <div className="error-box">Error: {error}</div>}
       {loading && <div className="empty-box">Loading...</div>}
       {!error && !loading && objects.length === 0 && (
-        <div className="empty-box">No CVS objects found.</div>
+        <div className="empty-box">No VCS objects found.</div>
       )}
       {!error && !loading && objects.length > 0 && (
         <table className="states-table">

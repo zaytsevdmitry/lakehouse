@@ -45,7 +45,7 @@ public class SQLTemplate extends KeyValueAbstract {
     private Driver driver;
 
     @Column(nullable = false)
-    private boolean isCvsManaged;
+    private boolean isVcsManaged;
 
     @Column(nullable = false, length = 4000)
     @ManyToOne(targetEntity = Script.class, optional = false)
@@ -55,12 +55,12 @@ public class SQLTemplate extends KeyValueAbstract {
     public SQLTemplate() {
     }
 
-    public boolean isCvsManaged() {
-        return isCvsManaged;
+    public boolean isVcsManaged() {
+        return isVcsManaged;
     }
 
-    public void setCvsManaged(boolean cvsManaged) {
-        this.isCvsManaged = cvsManaged;
+    public void setVcsManaged(boolean vcsManaged) {
+        this.isVcsManaged = vcsManaged;
     }
 
     public Task getTask() {

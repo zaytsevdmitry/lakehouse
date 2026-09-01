@@ -4,7 +4,7 @@ import CatalogsSection from './components/CatalogsSection.jsx';
 import SchedulesSection from './components/SchedulesSection.jsx';
 import ServicesSection from './components/ServicesSection.jsx';
 import SparkJobsSection from './components/SparkJobsSection.jsx';
-import CvsSection from './components/CvsSection.jsx';
+import VcsSection from './components/VcsSection.jsx';
 
 const THEME_KEY = 'lakehouse-theme';
 
@@ -102,10 +102,10 @@ export default function App() {
           SparkJobs
         </button>
         <button
-          className={`section-switcher-button ${activeSection === 'cvs' ? 'section-switcher-button--active' : ''}`}
-          onClick={() => activateSection('cvs')}
+          className={`section-switcher-button ${activeSection === 'vcs' ? 'section-switcher-button--active' : ''}`}
+          onClick={() => activateSection('vcs')}
         >
-          CVS
+          VCS
         </button>
       </nav>
       <main className="app-main">
@@ -129,9 +129,9 @@ export default function App() {
             <ServicesSection services={services} error={servicesError} />
           </div>
         )}
-        {createdSections.has('cvs') && (
-          <div className="section-pane" hidden={activeSection !== 'cvs'}>
-            <CvsSection />
+        {createdSections.has('vcs') && (
+          <div className="section-pane" hidden={activeSection !== 'vcs'}>
+            <VcsSection />
           </div>
         )}
       </main>

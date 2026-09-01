@@ -24,7 +24,7 @@ import org.lakehouse.config.entities.KeyValueAbstract;
 import org.lakehouse.config.entities.datasource.DataSource;
 import org.lakehouse.config.entities.datasource.DataSourceSvcItem;
 import org.lakehouse.config.entities.datasource.DataSourceSvcItemProperty;
-import org.lakehouse.config.exception.CvsManagedException;
+import org.lakehouse.config.exception.VcsManagedException;
 import org.lakehouse.config.exception.DataSourceNotFoundException;
 import org.lakehouse.config.exception.DataSourceServiceNotFoundException;
 import org.lakehouse.config.mapper.keyvalue.KeyValueEntityMerger;
@@ -153,18 +153,18 @@ public class DataSourceService {
     }
     @Transactional
     public DataSourceDTO save(DataSourceDTO dataSourceDTO) {
-        rejectIfCvsManaged(dataSourceDTO.getKeyName(), "created or updated");
+        rejectIfVcsManaged(dataSourceDTO.getKeyName(), "created or updated");
         return saveInternal(dataSourceDTO, false);
     }
 
     @Transactional
-    public DataSourceDTO saveCvs(DataSourceDTO dataSourceDTO) {
+    public DataSourceDTO saveVcs(DataSourceDTO dataSourceDTO) {
         return saveInternal(dataSourceDTO, true);
     }
 
-    private DataSourceDTO saveInternal(DataSourceDTO dataSourceDTO, boolean cvsManaged) {
+    private DataSourceDTO saveInternal(DataSourceDTO dataSourceDTO, boolean vcsManaged) {
         DataSource dataSource = dataSourceRepository.save(mapDataSourceToEntity(dataSourceDTO));
-        dataSource.setCvsManaged(cvsManaged);
+        dataSource.setVcsManaged(vcsManaged);
         dataSourceRepository.save(dataSource);
 
         // services
@@ -187,23 +187,23 @@ public class DataSourceService {
 
     @Transactional
     public void deleteById(String name) {
-        rejectIfCvsManaged(name, "deleted");
+        rejectIfVcsManaged(name, "deleted");
         dataSourceRepository.deleteById(name);
     }
 
     @Transactional
     public void unmanage(String name) {
         dataSourceRepository.findById(name).ifPresent(dataSource -> {
-            dataSource.setCvsManaged(false);
+            dataSource.setVcsManaged(false);
             dataSourceRepository.save(dataSource);
         });
     }
 
-    private void rejectIfCvsManaged(String name, String operation) {
+    private void rejectIfVcsManaged(String name, String operation) {
         dataSourceRepository.findById(name)
-                .filter(DataSource::isCvsManaged)
+                .filter(DataSource::isVcsManaged)
                 .ifPresent(dataSource -> {
-                    throw new CvsManagedException(name, operation);
+                    throw new VcsManagedException(name, operation);
                 });
     }
 }

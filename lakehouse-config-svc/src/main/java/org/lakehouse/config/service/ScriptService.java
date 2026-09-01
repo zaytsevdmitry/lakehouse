@@ -18,7 +18,7 @@
 package org.lakehouse.config.service;
 
 import org.lakehouse.config.entities.script.Script;
-import org.lakehouse.config.exception.CvsManagedException;
+import org.lakehouse.config.exception.VcsManagedException;
 import org.lakehouse.config.exception.ScriptNotFoundException;
 import org.lakehouse.config.repository.ScriptRepository;
 import org.slf4j.Logger;
@@ -55,39 +55,39 @@ public class ScriptService {
     }
 
     public String save(String key, String value) {
-        rejectIfCvsManaged(key, "created or updated");
+        rejectIfVcsManaged(key, "created or updated");
         return saveInternal(key, value, false);
     }
 
-    public String saveCvs(String key, String value) {
+    public String saveVcs(String key, String value) {
         return saveInternal(key, value, true);
     }
 
-    private String saveInternal(String key, String value, boolean cvsManaged) {
+    private String saveInternal(String key, String value, boolean vcsManaged) {
         Script script = new Script();
         script.setKey(key);
         script.setValue(value);
-        script.setCvsManaged(cvsManaged);
+        script.setVcsManaged(vcsManaged);
         return scriptRepository.save(script).getValue();
     }
 
     public void deleteById(String key) {
-        rejectIfCvsManaged(key, "deleted");
+        rejectIfVcsManaged(key, "deleted");
         scriptRepository.deleteById(key);
     }
 
     public void unmanage(String key) {
         scriptRepository.findById(key).ifPresent(script -> {
-            script.setCvsManaged(false);
+            script.setVcsManaged(false);
             scriptRepository.save(script);
         });
     }
 
-    private void rejectIfCvsManaged(String key, String operation) {
+    private void rejectIfVcsManaged(String key, String operation) {
         scriptRepository.findById(key)
-                .filter(Script::isCvsManaged)
+                .filter(Script::isVcsManaged)
                 .ifPresent(script -> {
-                    throw new CvsManagedException(key, operation);
+                    throw new VcsManagedException(key, operation);
                 });
     }
 }

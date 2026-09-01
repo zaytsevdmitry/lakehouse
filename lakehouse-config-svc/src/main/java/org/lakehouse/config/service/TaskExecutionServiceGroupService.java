@@ -20,7 +20,7 @@ package org.lakehouse.config.service;
 import jakarta.transaction.Transactional;
 import org.lakehouse.client.api.dto.configs.schedule.TaskExecutionServiceGroupDTO;
 import org.lakehouse.config.entities.TaskExecutionServiceGroup;
-import org.lakehouse.config.exception.CvsManagedException;
+import org.lakehouse.config.exception.VcsManagedException;
 import org.lakehouse.config.exception.TaskExecutionServiceGroupNotFoundException;
 import org.lakehouse.config.repository.TaskExecutionServiceGroupRepository;
 import org.springframework.stereotype.Service;
@@ -59,19 +59,19 @@ public class TaskExecutionServiceGroupService {
 
     @Transactional
     public TaskExecutionServiceGroupDTO save(TaskExecutionServiceGroupDTO taskExecutionServiceGroupDTO) {
-        rejectIfCvsManaged(taskExecutionServiceGroupDTO.getName(), "created or updated");
+        rejectIfVcsManaged(taskExecutionServiceGroupDTO.getName(), "created or updated");
         return saveInternal(taskExecutionServiceGroupDTO, false);
     }
 
     @Transactional
-    public TaskExecutionServiceGroupDTO saveCvs(TaskExecutionServiceGroupDTO taskExecutionServiceGroupDTO) {
+    public TaskExecutionServiceGroupDTO saveVcs(TaskExecutionServiceGroupDTO taskExecutionServiceGroupDTO) {
         return saveInternal(taskExecutionServiceGroupDTO, true);
     }
 
     private TaskExecutionServiceGroupDTO saveInternal(
-            TaskExecutionServiceGroupDTO taskExecutionServiceGroupDTO, boolean cvsManaged) {
+            TaskExecutionServiceGroupDTO taskExecutionServiceGroupDTO, boolean vcsManaged) {
         TaskExecutionServiceGroup group = mapTaskExecutionServiceGroupToEntity(taskExecutionServiceGroupDTO);
-        group.setCvsManaged(cvsManaged);
+        group.setVcsManaged(vcsManaged);
         return mapTaskExecutionServiceGroupToDTO(taskExecutionServiceGroupRepository.save(group));
     }
 
@@ -82,23 +82,23 @@ public class TaskExecutionServiceGroupService {
 
     @Transactional
     public void deleteById(String name) {
-        rejectIfCvsManaged(name, "deleted");
+        rejectIfVcsManaged(name, "deleted");
         taskExecutionServiceGroupRepository.deleteById(name);
     }
 
     @Transactional
     public void unmanage(String name) {
         taskExecutionServiceGroupRepository.findById(name).ifPresent(group -> {
-            group.setCvsManaged(false);
+            group.setVcsManaged(false);
             taskExecutionServiceGroupRepository.save(group);
         });
     }
 
-    private void rejectIfCvsManaged(String name, String operation) {
+    private void rejectIfVcsManaged(String name, String operation) {
         taskExecutionServiceGroupRepository.findById(name)
-                .filter(TaskExecutionServiceGroup::isCvsManaged)
+                .filter(TaskExecutionServiceGroup::isVcsManaged)
                 .ifPresent(group -> {
-                    throw new CvsManagedException(name, operation);
+                    throw new VcsManagedException(name, operation);
                 });
     }
 }

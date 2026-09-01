@@ -34,7 +34,7 @@ lakehouse:
             properties: # https://kafka.apache.org/41/configuration/producer-configs/
               bootstrap.servers: localhost:9092
 
-    cvs: # Подсистема GitOps (CVS): декларативная конфигурация из Git-репозитория
+    vcs: # Подсистема GitOps (VCS): декларативная конфигурация из Git-репозитория
       git:
         repository-url: ${LAKEHOUSE_CONFIG_GIT_REPOSITORY_URL:} # например git://git-server:9418/config-repo.git
         branch: ${LAKEHOUSE_CONFIG_GIT_BRANCH:main} # синхронизируемая ветка

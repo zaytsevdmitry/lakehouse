@@ -25,17 +25,17 @@ import jakarta.persistence.Entity;
 public class NameSpace extends KeyEntityAbstract {
 
     @Column(nullable = false)
-    private boolean isCvsManaged;
+    private boolean isVcsManaged;
 
     public NameSpace() {
     }
 
-    public boolean isCvsManaged() {
-        return isCvsManaged;
+    public boolean isVcsManaged() {
+        return isVcsManaged;
     }
 
-    public void setCvsManaged(boolean cvsManaged) {
-        this.isCvsManaged = cvsManaged;
+    public void setVcsManaged(boolean vcsManaged) {
+        this.isVcsManaged = vcsManaged;
     }
 
 }
