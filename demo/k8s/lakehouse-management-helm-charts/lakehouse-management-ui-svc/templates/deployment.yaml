@@ -20,7 +20,7 @@ spec:
           command: ['sh', '-c', 'until wget -q -O /dev/null http://keycloak:8085/realms/lakehouse; do echo waiting for keycloak; sleep 3; done']
       containers:
         - name: ui-svc
-          image: "lakehouse:0.9.0"
+          image: "lakehouse:0.10.0"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8084
@@ -101,4 +101,4 @@ spec:
             -Dlakehouse.ui.edges.lakehouse-task-proxy-for-spark[1]=lakehouse-minio
             -Dlakehouse.ui.edges.lakehouse-minio[0]=lakehouse-trino
             -Dlakehouse.ui.edges.lakehouse-minio[1]=lakehouse-spark-history
-            -jar /opt/lakehouse-ui-svc-0.9.0-jar-with-dependencies.jar"
+            -jar /opt/lakehouse-ui-svc-0.10.0-jar-with-dependencies.jar"

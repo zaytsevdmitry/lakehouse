@@ -27,7 +27,7 @@
 - **Исполнение задач**: task-executor-svc берёт задачи из Kafka, блокирует их, исполняет (процессоры JDBC/state/spark), уведомляет heartbeat и освобождает блокировку с результатом.
 - **Проксирование Spark-задач**: task-proxy-for-spark принимает spark-submit по REST, ведёт очередь в PostgreSQL, отправляет в кластеры (Standalone/K8s/YARN) и отслеживает статусы.
 - **Полный цикл «конфигурация → задача»**: публикация изменений → построение задачи → очередь → блокировка → LOCKED → выполнение → SUCCESS → heartbeat/release.
-- **Планируемый сервис (не реализован)**: cvs-svc — импорт конфигураций в config-svc. Открытый вопрос: осиротевший lock при удалении расписания (`./doc-ru/questions.md`).
+- **Открытый вопрос**: осиротевший lock при удалении расписания (`./doc-ru/questions.md`).
 
 ---
 
@@ -71,7 +71,25 @@
 - **Task executor service group**: маркер маршрутизации задач к группам исполнителей.
 - **Task**: атомарное действие (процессор + аргументы, критичность critical/warn, maxRetries, driverKeyName, sqlTemplate, модульное тело процессора), переиспользуемый шаблон задачи.
 - **Java REST-клиент** `ConfigRestClientApi` для доступа из других сервисов.
+- **CVS (Configuration Versioning System / GitOps)**: Git как source of truth, периодическая синхронизация конфигураций и `isCvsManaged` (см. модуль CVS ниже).
 - **Безопасность и аудит**: Keycloak OAuth2/JWT (resource server), роли → `ROLE_<NAME>` для `@PreAuthorize`, сервис-сервисные вызовы по `client_credentials`, `AuditLoggingFilter` (JSON в `AUDIT_LOG`), health `/healthz`/`/readyz`.
+
+---
+
+## Модуль: lakehouse-config-svc — CVS (Configuration Versioning System / GitOps)
+*Путь к исходному файлу: `./lakehouse-config-svc/doc/cvs/cvs_for_developers.md`, `./lakehouse-config-svc/doc/cvs/git_extension_user_guide.md`*
+
+### Реализованные фичи:
+- **Git как source of truth**: тот же набор DTO, что и REST API, записывается Kubernetes-style YAML/JSON файлами; подсистема периодически синхронизирует их в БД конфигураций (конфигурация-как-код, GitOps).
+- **Полная история изменений** каждой конфигурации (git-коммиты), декларативная проверяемая конфигурация, атомарное применение целого коммита.
+- **GitOpsScheduler**: периодический цикл pull → diff против последнего успешного коммита → sync в одной транзакции; метод `sync()` synchronized и идемпотентен.
+- **Атомарность и журнал**: применение валидация→apply→unmanage → запись `cvs_object_log`; только при полном успехе коммита пишется `SUCCESS` в `cvs_sync_log`; ошибки — `FAILED` (отдельная `REQUIRES_NEW`-транзакция), инфраструктурные сбои — повтор на следующем цикле.
+- **Абстракция `CvsClient`**: `init/pull/getCurrentCommitId/getDiff/readFileContent`; реализация `GitCvsClient` на JGit (SSH publickey, rename = delete+create, пустой diff трактует всю ветку как созданную); смена транспорта без правок остального конвейера.
+- **`GitOpsYamlParser`/`ConfigKind`**: обязательный `kind` (регистр/разделители нечувствительны), регистро-независимые enum, неизвестные свойства — жёсткая ошибка; 10 видов конфигураций с порядком применения.
+- **`isCvsManaged`**: метка владения конструктива CVS; REST создание/изменение/удаление управляемого — HTTP `409 Conflict`; удаление файла из репозитория лишь снимает метку (двухшаговое удаление); трёхсторонний контракт `save/saveCvs/unmanage` в сервисах.
+- **Параметры**: `lakehouse.config.cvs.*` (repository-url, branch, local-clone-path, private-key-path, sync.enabled/interval/initial-delay).
+- **Read-only REST**: `GET /v1_0/configs/cvs/logs` (история синхронизации) и `GET /v1_0/configs/cvs/objectlogs` (журнал затронутых объектов), потребляются UI.
+- **Тесты**: `GitOpsIntegrationTest`, `GitCvsClientTest`, `GitOpsChangeSetBuilderTest`, `GitOpsSchedulerUnitTest`, `GitOpsYamlParserTest`, `TestGitRepository`.
 
 ---
 
@@ -179,6 +197,7 @@
 - **SparkJobs**: управление сабмитами через task-proxy-for-spark (create/status/kill/killall/clear, просмотр spark-свойств).
 - **Состояния интервалов датасетов**: просмотр через state-svc.
 - **Аутентификация**: Keycloak OAuth2 authorization code flow, роли USER/ADMIN, CSRF-защита, сервисная страница логина.
+- **CVSLog**: панель «CVS» — история синхронизации конфигураций (SUCCESS/FAILED с ошибками) и журнал затронутых объектов из config-svc.
 - **SPA-фронтенд**: React/Vite, собранный в ресурсы сервиса.
 
 ---
@@ -196,4 +215,4 @@
 
 ---
 
-*Составлено на основе 86 Markdown-файлов проекта (EN-версии; `doc-ru/` — зеркала, `node_modules/`, `target/` исключены).*
+*Составлено на основе Markdown-документов проекта (EN-версии; `doc-ru/` — зеркала, `node_modules/`, `target/` исключены, всего EN-файлов: 55, включая зеркала: 93).*

@@ -30,7 +30,7 @@
         "spark.driver.memory": "1g",
         "deploy.clusterUrl": "http://172.20.193.160:8099/v1/submissions",
         "deploy.mainClass": "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
-        "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.9.0-jar-with-dependencies.jar"
+        "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.10.0-jar-with-dependencies.jar"
       }
     },
     {
@@ -50,7 +50,7 @@
         "spark.driver.memory": "1g",
         "deploy.clusterUrl": "http://172.20.193.160:8099/v1/submissions",
         "deploy.mainClass": "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
-        "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.9.0-jar-with-dependencies.jar"
+        "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.10.0-jar-with-dependencies.jar"
       }
     },
     {
@@ -70,7 +70,7 @@
         "spark.driver.memory": "1g",
         "deploy.clusterUrl": "http://172.20.193.160:8099/v1/submissions",
         "deploy.mainClass": "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
-        "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.9.0-jar-with-dependencies.jar"
+        "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.10.0-jar-with-dependencies.jar"
       }
     },
     {

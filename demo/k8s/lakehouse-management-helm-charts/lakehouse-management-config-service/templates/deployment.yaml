@@ -23,7 +23,7 @@ spec:
           command: ['sh', '-c', 'until git ls-remote git://git-server:9418/config-repo.git >/dev/null 2>&1; do echo "waiting for git-server"; sleep 3; done']
       containers:
         - name: conf-svc
-          image: "lakehouse:0.9.0"
+          image: "lakehouse:0.10.0"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
@@ -47,4 +47,4 @@ spec:
               value: {{ .Values.git.sync.initialDelayMs | quote }}
           command: ["bash", "-c"]
           args:
-            - "java -Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=ConfigSVC -Dlakehouse.config.schedule.send.kafka.producer.properties.bootstrap.servers=broker:9092 -jar /opt/lakehouse-config-svc-0.9.0-jar-with-dependencies.jar"
+            - "java -Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=ConfigSVC -Dlakehouse.config.schedule.send.kafka.producer.properties.bootstrap.servers=broker:9092 -jar /opt/lakehouse-config-svc-0.10.0-jar-with-dependencies.jar"

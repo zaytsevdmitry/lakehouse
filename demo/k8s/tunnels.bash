@@ -20,6 +20,7 @@ kubectl -n lakehouse-management wait --for=condition=Ready pod --all --timeout=6
 
 
 for svc in \
+  "git-server 9418:9418" \
   "spark-history 18080:18080" \
   "lakehouse-task-proxy4spark 8090:8090" \
   "lakehouse-release-trino 9090:8080" \

@@ -3,12 +3,13 @@ kind: Service
 metadata:
   name: git-server
   labels:
-    {{- include "git-server.labels" . | nindent 4 }}
+    app: git-server
 spec:
-  type: {{  (index .Values "git-server").service.type | default "ClusterIP" }}
+  type: {{ .Values.service.type }}
   ports:
-    - port: {{  (index .Values "git-server").service.port | default 9418 }}
-      targetPort: {{  (index .Values "git-server").service.targetPort | default 9418 }}
+    - port: {{ .Values.service.port }}
+      targetPort: 9418
       protocol: TCP
+      name: git-port
   selector:
-    {{- include "git-server.selectorLabels" . | nindent 4 }}
+    app: git-server

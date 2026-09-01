@@ -17,7 +17,7 @@
 
 
 set -e
-export LH_VERSION=0.9.0
+export LH_VERSION=0.10.0
 
 docker build -t lakehouse-s3-check:$LH_VERSION ./
 docker images

@@ -1,17 +1,17 @@
-{
+
   "name": "spark",
   "taskExecutionServiceGroupName": "default",
   "taskProcessor": "sparkStandAloneClusterTaskProcessor",
   "importance": "critical",
   "description": "load from remote datastore",
   "driverKeyName": "spark_iceberg",
-  "taskProcessorArgs": {
+  "taskProcessorArgs":
     "spark.kubernetes.driver.pod.name":"task-{{ id }}-{{tryNum}}-{{name}}-driver",
     "spark.app.name": "{{ id }}-{{tryNum}}-{{name}}",
     "spark.kubernetes.submission.waitAppCompletion": "false",
     "spark.kubernetes.executor.deleteOnTermination": "true",
     "spark.kubernetes.driver.annotation.lakehouse-management-task": "{{ getTaskFullName() }}",
-    "deploy.appResource": "local:///opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.9.0-jar-with-dependencies.jar",
+    "deploy.appResource": "local:///opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.10.0-jar-with-dependencies.jar",
     "deploy.clusterUrl": "http://lakehouse-task-proxy4spark:8090/v1/submissions",
     "deploy.mainClass": "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
     "spark.driver.cores": "1",
@@ -19,5 +19,3 @@
     "spark.executor.cores": "1",
     "spark.executor.memory": "1g",
     "spark.ui.enabled": "true"
-  }
-}

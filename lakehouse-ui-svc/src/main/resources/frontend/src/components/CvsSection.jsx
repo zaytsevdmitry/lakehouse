@@ -13,16 +13,36 @@ function getInitialDates() {
   return { fromDate: toDateTimeLocalValue(from), toDate: toDateTimeLocalValue(now) };
 }
 
-const LOG_LEFT_MIN_PERCENT = 15;
-const LOG_LEFT_MAX_PERCENT = 50;
-const LOG_LEFT_DEFAULT_PERCENT = 25;
+const LOG_TOP_MIN_PERCENT = 10;
+const LOG_TOP_MAX_PERCENT = 90;
+const LOG_TOP_DEFAULT_PERCENT = 75;
 
 export default function CvsSection() {
+  const [activeTab, setActiveTab] = useState('log');
+
   return (
     <section className="section">
       <h2>CVS</h2>
-      <CvsLogPanel />
-      <CvsObjectsSearchPanel />
+      <div className="tabs cvs-tabs">
+        <div className="tab-list">
+          <button
+            className={`tab ${activeTab === 'log' ? 'tab--active' : ''}`}
+            onClick={() => setActiveTab('log')}
+          >
+            CVSLog
+          </button>
+          <button
+            className={`tab ${activeTab === 'objects' ? 'tab--active' : ''}`}
+            onClick={() => setActiveTab('objects')}
+          >
+            CVSObjectsSearch
+          </button>
+        </div>
+        <div className="tab-content">
+          {activeTab === 'log' && <CvsLogPanel />}
+          {activeTab === 'objects' && <CvsObjectsSearchPanel />}
+        </div>
+      </div>
     </section>
   );
 }
@@ -41,17 +61,17 @@ function CvsLogPanel() {
   const [selectedCommitId, setSelectedCommitId] = useState(null);
   const [objectsError, setObjectsError] = useState('');
 
-  const [leftPercent, setLeftPercent] = useState(LOG_LEFT_DEFAULT_PERCENT);
+  const [topPercent, setTopPercent] = useState(LOG_TOP_DEFAULT_PERCENT);
   const [dragging, setDragging] = useState(false);
 
   useEffect(() => {
     if (!dragging) return;
     const handleMove = (e) => {
       const rect = containerRef.current.getBoundingClientRect();
-      if (rect.width === 0) return;
-      let percent = ((e.clientX - rect.left) / rect.width) * 100;
-      percent = Math.min(LOG_LEFT_MAX_PERCENT, Math.max(LOG_LEFT_MIN_PERCENT, percent));
-      setLeftPercent(percent);
+      if (rect.height === 0) return;
+      let percent = ((e.clientY - rect.top) / rect.height) * 100;
+      percent = Math.min(LOG_TOP_MAX_PERCENT, Math.max(LOG_TOP_MIN_PERCENT, percent));
+      setTopPercent(percent);
     };
     const handleUp = () => setDragging(false);
     window.addEventListener('mousemove', handleMove);
@@ -86,7 +106,6 @@ function CvsLogPanel() {
 
   return (
     <div className="cvs-panel">
-      <h3 className="cvs-panel-title">CVSLog</h3>
       <div className="states-filter">
         <div className="states-filter-field">
           <label>From</label>
@@ -126,7 +145,7 @@ function CvsLogPanel() {
         </button>
       </div>
       <div className="cvs-log-layout" ref={containerRef}>
-        <div className="catalog-pane" style={{ width: `${leftPercent}%` }}>
+        <div className="catalog-pane" style={{ height: `${topPercent}%` }}>
           {error && <div className="error-box">Error: {error}</div>}
           {loading && <div className="empty-box">Loading...</div>}
           {!error && !loading && syncLogs.length === 0 && (
@@ -140,6 +159,7 @@ function CvsLogPanel() {
                   <th>CommitId</th>
                   <th>Sync date time</th>
                   <th>Status</th>
+                  <th>ErrorMessage</th>
                 </tr>
               </thead>
               <tbody>
@@ -153,6 +173,7 @@ function CvsLogPanel() {
                     <td title={log.commitId}>{log.commitId}</td>
                     <td>{log.syncDateTime}</td>
                     <td>{log.status}</td>
+                    <td title={log.errorMessage}>{log.errorMessage}</td>
                   </tr>
                 ))}
               </tbody>
@@ -228,7 +249,6 @@ function CvsObjectsSearchPanel() {
 
   return (
     <div className="cvs-panel">
-      <h3 className="cvs-panel-title">CVSObjectsSearch</h3>
       <div className="states-filter">
         <div className="states-filter-field">
           <label>Kind</label>

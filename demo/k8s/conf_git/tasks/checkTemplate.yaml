@@ -1,6 +1,6 @@
 kind: Task
 name: checkTemplate
-taskExecutionServiceGroupName: state-service
+taskExecutionServiceGroupName: default
 taskProcessor: dependencyCheckStateTaskProcessor
 importance: critical
 description: Dependency check

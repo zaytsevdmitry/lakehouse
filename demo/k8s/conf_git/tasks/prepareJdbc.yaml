@@ -1,6 +1,6 @@
 kind: Task
 name: prepareJdbc
-taskExecutionServiceGroupName: database
+taskExecutionServiceGroupName: default
 taskProcessor: jdbcTaskProcessor
 taskProcessorBody: createTableSQLProcessorBody
 importance: critical

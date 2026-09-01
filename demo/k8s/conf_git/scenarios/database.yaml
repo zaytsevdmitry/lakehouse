@@ -7,14 +7,14 @@ tasks:
   - name: prepare
     template: prepareJdbc
   - name: load
-    taskExecutionServiceGroupName: database
+    taskExecutionServiceGroupName: default
     taskProcessor: jdbcTaskProcessor
     taskProcessorBody: mergeSQLProcessorBody
     importance: critical
     description: load data
     driverKeyName: postgres
   - name: finally
-    taskExecutionServiceGroupName: state-service
+    taskExecutionServiceGroupName: default
     taskProcessor: successStateTaskProcessor
     importance: critical
     description: Made dataset interval status SUCCESS

@@ -55,6 +55,8 @@ Configurations are defined as DTOs, stored in PostgreSQL and exposed via REST AP
 
 In addition to the REST API, `lakehouse-config-svc` can manage configuration declaratively: the same metadata DTOs are written as YAML files into a Git repository and the CVS (Configuration Versioning System) subsystem synchronizes them into the database on a schedule. This makes the repository the source of truth and gives a full history of every configuration change (GitOps style).
 
+Detailed documentation: [CVS subsystem for platform developers](cvs/cvs_for_developers.md) (internals, the `CvsClient` abstraction, extension points, developer parameters) and [Git extension user guide](cvs/git_extension_user_guide.md) (YAML format, `isCvsManaged`, configuration and error messages).
+
 ```
 ┌──────────────────┐   fetch + diff   ┌───────────────────────────────┐
 │  Git repo        │ ───────────────▶ │  GitOpsScheduler             │

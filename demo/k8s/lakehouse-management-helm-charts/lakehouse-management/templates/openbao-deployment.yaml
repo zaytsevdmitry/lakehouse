@@ -18,6 +18,7 @@ spec:
         {{- include "lakehouse-management.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: openbao
     spec:
+      serviceAccountName: openbao-seed-sa
       containers:
         - name: openbao
           image: "{{ .Values.openbao.image.repository }}:{{ .Values.openbao.image.tag }}"

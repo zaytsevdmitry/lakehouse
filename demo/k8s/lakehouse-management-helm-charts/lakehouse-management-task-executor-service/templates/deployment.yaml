@@ -21,7 +21,7 @@ spec:
           command: ['sh', '-c', 'until wget -q -O /dev/null http://keycloak:8085/realms/lakehouse; do echo waiting for keycloak; sleep 3; done']
       containers:
         - name: task-executor-svc
-          image: "lakehouse:0.9.0"
+          image: "lakehouse:0.10.0"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8091
@@ -44,4 +44,4 @@ spec:
             -Dlakehouse.task-executor.service.id=default
             -Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=5
             -Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=broker:9092
-            -jar /opt/lakehouse-task-executor-svc-0.9.0-jar-with-dependencies.jar"
+            -jar /opt/lakehouse-task-executor-svc-0.10.0-jar-with-dependencies.jar"

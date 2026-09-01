@@ -19,6 +19,8 @@ package org.lakehouse.test.config.api;
 
 import org.apache.hc.core5.http.HttpStatus;
 import org.lakehouse.client.api.constant.SystemVarKeys;
+import org.lakehouse.client.api.dto.configs.CvsObjectLogDTO;
+import org.lakehouse.client.api.dto.configs.CvsSyncLogDTO;
 import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
 import org.lakehouse.client.api.dto.configs.ScriptReferenceDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
@@ -236,6 +238,16 @@ public class ConfigRestClientApiTest extends ConfigRestClientApiAbstract {
                 .stream()
                 .filter(v->v.getDataSetKeyName().equals(dataSetKeyName))
                 .toList();
+    }
+
+    @Override
+    public List<CvsSyncLogDTO> getCvsSyncLogDTOList(OffsetDateTime from, OffsetDateTime to, String status, String commitId) {
+        return List.of();
+    }
+
+    @Override
+    public List<CvsObjectLogDTO> getCvsObjectLogDTOList(String commitId, String kind, OffsetDateTime from, OffsetDateTime to, String filePath, String objectName) {
+        return List.of();
     }
 
     @Override

@@ -1,0 +1,42 @@
+kind: ScenarioActTemplate
+keyName: spark-dq
+description: Spark job scenario
+tasks:
+  - name: check
+    template: checkTemplate
+  - name: begin
+    template: beginTemplate
+  - name: prepare
+    template: sparkTemplate
+    taskProcessorBody: createTableSQLProcessorBody
+    description: Create Spark table
+  - name: load
+    template: sparkTemplate
+    taskProcessorBody: mergeSQLProcessorBody
+    description: load from remote datastore
+  - name: compact
+    template: sparkTemplate
+    taskProcessorBody: compactTableSQLProcessorBody
+    description: Compact table
+  - name: quality
+    template: sparkDQTemplate
+  - name: finally
+    taskExecutionServiceGroupName: default
+    taskProcessor: successStateTaskProcessor
+    importance: critical
+    description: DataSet success
+dagEdges:
+  - from: check
+    to: begin
+  - from: begin
+    to: prepare
+  - from: prepare
+    to: load
+  - from: load
+    to: compact
+  - from: compact
+    to: finally
+  - from: load
+    to: quality
+  - from: quality
+    to: finally

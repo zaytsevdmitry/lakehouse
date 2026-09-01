@@ -1,7 +1,7 @@
 kind: DataSource
 keyName: processingdb
 service:
-  host: "172.20.193.10"
+  host: "db-dev"
   port: "5432"
   urn: postgresDB
   properties:

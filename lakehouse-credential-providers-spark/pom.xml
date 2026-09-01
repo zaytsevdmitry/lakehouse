@@ -6,7 +6,7 @@
     <parent>
         <groupId>lakehouse</groupId>
         <artifactId>lakehouse-parent</artifactId>
-        <version>0.9.0</version>
+        <version>0.10.0</version>
     </parent>
 
     <artifactId>lakehouse-credential-providers-spark</artifactId>
@@ -81,7 +81,7 @@
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-credential-providers-jdbc</artifactId>
-            <version>0.9.0</version>
+            <version>0.10.0</version>
         </dependency>
 
         <!-- ===== Hadoop S3A (provided — bundled in the cluster) ===== -->
