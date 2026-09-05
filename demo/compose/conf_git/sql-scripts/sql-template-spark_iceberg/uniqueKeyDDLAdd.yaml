@@ -1,0 +1,4 @@
+kind: Script
+key: sql-template-spark_iceberg.uniqueKeyDDLAdd.sql
+value: |
+  ALTER TABLE  {{ refCat(targetDataSetKeyName) }} ADD CONSTRAINT {{ constraint.name }} UNIQUE({{ constraint.columns }})

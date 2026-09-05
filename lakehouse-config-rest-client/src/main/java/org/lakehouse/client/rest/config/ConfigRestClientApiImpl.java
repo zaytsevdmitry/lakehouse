@@ -19,6 +19,8 @@ package org.lakehouse.client.rest.config;
 
 import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
+import org.lakehouse.client.api.dto.configs.VcsObjectLogDTO;
+import org.lakehouse.client.api.dto.configs.VcsSyncLogDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetLineageDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
@@ -209,6 +211,51 @@ public class ConfigRestClientApiImpl extends ConfigRestClientApiAbstract {
                 .uri(Endpoint.QUALITY_METRICS_BY_DATASET, dataSetKeyName)
                 .retrieve()
                 .body(QualityMetricsConfDTO[].class));
+    }
+
+    @Override
+    public List<VcsSyncLogDTO> getVcsSyncLogDTOList(
+            OffsetDateTime from, OffsetDateTime to, String status, String commitId) {
+        return Arrays.asList(restClientHelper.getRestClient()
+                .get()
+                .uri(uriBuilder -> {
+                    var builder = uriBuilder.path(Endpoint.VCS_SYNC_LOGS)
+                            .queryParam("from", DateTimeUtils.formatDateTimeFormatWithTZ(from))
+                            .queryParam("to", DateTimeUtils.formatDateTimeFormatWithTZ(to));
+                    if (status != null && !status.isBlank())
+                        builder.queryParam("status", status);
+                    if (commitId != null && !commitId.isBlank())
+                        builder.queryParam("commitId", commitId);
+                    return builder.build();
+                })
+                .retrieve()
+                .body(VcsSyncLogDTO[].class));
+    }
+
+    @Override
+    public List<VcsObjectLogDTO> getVcsObjectLogDTOList(
+            String commitId, String kind, OffsetDateTime from, OffsetDateTime to,
+            String filePath, String objectName) {
+        return Arrays.asList(restClientHelper.getRestClient()
+                .get()
+                .uri(uriBuilder -> {
+                    var builder = uriBuilder.path(Endpoint.VCS_OBJECT_LOGS);
+                    if (commitId != null && !commitId.isBlank())
+                        builder.queryParam("commitId", commitId);
+                    if (kind != null && !kind.isBlank())
+                        builder.queryParam("kind", kind);
+                    if (from != null)
+                        builder.queryParam("from", DateTimeUtils.formatDateTimeFormatWithTZ(from));
+                    if (to != null)
+                        builder.queryParam("to", DateTimeUtils.formatDateTimeFormatWithTZ(to));
+                    if (filePath != null && !filePath.isBlank())
+                        builder.queryParam("filePath", filePath);
+                    if (objectName != null && !objectName.isBlank())
+                        builder.queryParam("objectName", objectName);
+                    return builder.build();
+                })
+                .retrieve()
+                .body(VcsObjectLogDTO[].class));
     }
 
     @Override

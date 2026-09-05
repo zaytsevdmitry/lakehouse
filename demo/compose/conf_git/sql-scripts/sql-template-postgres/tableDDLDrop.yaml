@@ -1,0 +1,4 @@
+kind: Script
+key: sql-template-postgres.tableDDLDrop.sql
+value: |
+  DROP TABLE {{ ref(targetDataSetKeyName) }}

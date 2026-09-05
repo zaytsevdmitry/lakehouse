@@ -1,0 +1,7 @@
+kind: Script
+key: sql-template-postgres.tableDDLCreate.sql
+value: |
+  {%set targetDataSet=dataSets[targetDataSetKeyName]%}CREATE TABLE {{ ref(targetDataSetKeyName) }} (
+   {{ extractColumnsDDL(targetDataSet.columnSchema) }} 
+  ) {{targetDataSet.partitionStmt}}
+

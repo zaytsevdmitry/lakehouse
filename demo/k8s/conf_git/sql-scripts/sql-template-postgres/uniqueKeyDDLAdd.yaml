@@ -1,0 +1,4 @@
+kind: Script
+key: sql-template-postgres.uniqueKeyDDLAdd.sql
+value: |
+  ALTER TABLE  {{ ref(targetDataSetKeyName) }} ADD CONSTRAINT {{ constraint.name }} UNIQUE({{ constraint.columns }})

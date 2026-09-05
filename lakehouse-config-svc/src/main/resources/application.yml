@@ -58,6 +58,17 @@ lakehouse:
             properties:
               bootstrap.servers: localhost:9092
 
+    vcs:
+      git:
+        repository-url: ${LAKEHOUSE_CONFIG_GIT_REPOSITORY_URL:}
+        branch: ${LAKEHOUSE_CONFIG_GIT_BRANCH:main}
+        local-clone-path: ${LAKEHOUSE_CONFIG_GIT_LOCAL_CLONE_PATH:}
+        private-key-path: ${LAKEHOUSE_CONFIG_GIT_PRIVATE_KEY_PATH:}
+        sync:
+          enabled: ${LAKEHOUSE_CONFIG_GIT_SYNC_ENABLED:false}
+          interval-ms: ${LAKEHOUSE_CONFIG_GIT_SYNC_INTERVAL_MS:30000}
+          initial-delay-ms: ${LAKEHOUSE_CONFIG_GIT_SYNC_INITIAL_DELAY_MS:10000}
+
   health:
     liveness-path: /healthz
     readiness-path: /readyz

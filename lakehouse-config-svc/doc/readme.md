@@ -15,6 +15,7 @@ Metadata management service - a single storage for all lakehouse configurations.
 - **Scripts and SQL templates** - query templates with Jinjava substitutions
 - **Data lineage** - data provenance relationships
 - **TaskExecutionServiceGroups** - task executor groups
+- **Declarative configuration from Git (GitOps/VCS)** - the same configuration DTOs can be defined as YAML files in a Git repository and synchronized into the database automatically by the VCS subsystem (see [GitOps: declarative configuration from a Git repository](#gitops-declarative-configuration-from-a-git-repository-vcs))
 
 Configurations are defined as DTOs, stored in PostgreSQL and exposed via REST API. Schedule changes are published to Kafka (topic `schedule_effective_changes`) so that scheduler-svc builds actual schedule instances.
 
@@ -49,6 +50,112 @@ Configurations are defined as DTOs, stored in PostgreSQL and exposed via REST AP
 - **Repository (JPA/Hibernate)** - persistence in PostgreSQL.
 - **InternalScheduler** - periodic publishing of schedule changes to Kafka.
 - Metadata is organized hierarchically (namespace → datasource → dataset → ...); the dependency scheme is described in [content_configuration](content_configuration/content_configuration.md).
+
+## GitOps: declarative configuration from a Git repository (VCS)
+
+In addition to the REST API, `lakehouse-config-svc` can manage configuration declaratively: the same metadata DTOs are written as YAML files into a Git repository and the VCS (Configuration Versioning System) subsystem synchronizes them into the database on a schedule. This makes the repository the source of truth and gives a full history of every configuration change (GitOps style).
+
+Detailed documentation: [VCS subsystem for platform developers](vcs/vcs_for_developers.md) (internals, the `VcsClient` abstraction, extension points, developer parameters) and [Git extension user guide](vcs/git_extension_user_guide.md) (YAML format, `isVcsManaged`, configuration and error messages).
+
+```
+┌──────────────────┐   fetch + diff   ┌───────────────────────────────┐
+│  Git repo        │ ───────────────▶ │  GitOpsScheduler             │
+│  (branch main)   │                  │  pull → build change set     │
+└──────────────────┘                  │  → apply in one transaction  │
+                                      └───────────────┬───────────────┘
+                                                      │
+                                                      ▼
+                                      ┌───────────────────────────────┐
+                                      │  ConfigService layer          │
+                                      │  (apply/delete DTOs)          │
+                                      └───────────────┬───────────────┘
+                                                      ▼
+                                      ┌───────────────────────────────┐
+                                      │  PostgreSQL                   │
+                                      │  + vcs_sync_log (SUCCESS/FAILED)│
+                                      │  + vcs_object_log (per object) │
+                                      └───────────────────────────────┘
+```
+
+### Repository layout
+
+A configuration repository is a flat set of YAML files, one configuration construct per file. Each file starts with a Kubernetes-style `kind` field that selects the target DTO; the rest of the file is bound to that DTO (unknown properties are an error, enum values are case-insensitive).
+
+```yaml
+kind: DataSource
+keyName: processingdb
+description: Remote datastore processingdb
+dataSourceType: database
+databaseProtocol: postgresql
+service:
+  host: "172.20.193.10"
+  port: "5432"
+  urn: postgresDB
+  properties:
+    user: postgresUser
+    fetchSize: "10000"
+```
+
+SQL scripts are stored the same way with `kind: Script` and two fields - the global script `key` (dots replace the directory path) and the script body as a literal `value`:
+
+```yaml
+kind: Script
+key: dq.non_zero_count.sql
+value: |
+  select count(1) value
+  from {{ refCat(targetDataSetKeyName) }}
+```
+
+### Supported kinds
+
+Applied in dependency order (delete happens in the reverse order):
+
+| kind | File example | Primary key |
+|---|---|---|
+| `NameSpace` | `nameSpaces/demo.yaml` | `keyName` |
+| `Driver` | `drivers/postgres.yaml` | `keyName` |
+| `DataSource` | `datasources/processingdb.yaml` | `keyName` |
+| `Script` | `sql-scripts/dq/non_zero_count.yaml` | `key` |
+| `TaskExecutionServiceGroup` | `taskexecutionservicegroups/database.yaml` | `name` |
+| `Task` | `tasks/prepare-jdbc.yaml` | `name` |
+| `DataSet` | `datasets/1_transaction_dds.yaml` | `keyName` |
+| `ScenarioActTemplate` | `scenarios/spark-dq.yaml` | `keyName` |
+| `QualityMetricsConf` | `quality/metrics/transaction_dds_qm.yaml` | `keyName` |
+| `Schedule` | `schedules/regular.yaml` | `keyName` |
+
+### Sync semantics
+
+- Each cycle pulls the configured branch and diffs its head against the last **successfully** applied commit (`vcs_sync_log` with status `SUCCESS`); on an empty database the whole head is treated as a set of created files.
+- The first run of a commit is applied inside a **single transaction**: created and updated constructs are applied in the `kind` order above (datasets additionally in their `sources` dependency order), deleted constructs in the reverse order, and only then the `SUCCESS` marker is written. Any failure rolls the whole commit back.
+- Every construct touched by a commit is recorded in `vcs_object_log` (`date_time_rec`, `object_name` from `keyName`, `kind`, `file_path` relative to the repository root, `commit_id`), for both applied and un-managed files.
+- A commit that fails YAML parsing, validation or a database constraint is recorded as `FAILED` together with the error message and is **not retried**; a later fixing commit simply rolls the failed content in as part of a new diff.
+- Infrastructure failures (unreachable repository, missing local clone) are only logged and retried on the next cycle.
+- Commits whose id already has a `vcs_sync_log` row are skipped. Renames are treated as delete + create. Only `*.yaml`, `*.yml` and `*.json` files are configuration files; everything else (e.g. `load.sh`) is ignored.
+
+### VCS management flag
+
+Every construct loaded from the repository gets `isVcsManaged=true`; it stays false for constructs created through the REST API.
+
+- Deleting a YAML file from the repository **does not delete the construct** - the service only clears `isVcsManaged` on the corresponding entity. The actual deletion has to be done by the user through the REST API afterwards.
+- Any REST `POST`/`PUT`/`DELETE` on a VCS-managed construct is rejected with `409 Conflict` (`VcsManagedException`): to change or delete a managed construct via the REST API, first remove it from the repository.
+
+### Configuration
+
+All settings live under the `lakehouse.config.vcs.*` prefix (see also [appconf/service_configuration.md](appconf/service_configuration.md)):
+
+| Property | Environment variable | Default | Description |
+|---|---|---|---|
+| `lakehouse.config.vcs.git.repository-url` | `LAKEHOUSE_CONFIG_GIT_REPOSITORY_URL` | - | URL of the configuration repository (supports `git://`, `ssh://` and `http(s)://`) |
+| `lakehouse.config.vcs.git.branch` | `LAKEHOUSE_CONFIG_GIT_BRANCH` | `main` | Branch to synchronize |
+| `lakehouse.config.vcs.git.local-clone-path` | `LAKEHOUSE_CONFIG_GIT_LOCAL_CLONE_PATH` | - | Local path where the service keeps its clone |
+| `lakehouse.config.vcs.git.private-key-path` | `LAKEHOUSE_CONFIG_GIT_PRIVATE_KEY_PATH` | - | Path to an SSH private key (only for `ssh://` URLs) |
+| `lakehouse.config.vcs.git.sync.enabled` | `LAKEHOUSE_CONFIG_GIT_SYNC_ENABLED` | `false` | Enables the VCS scheduler bean |
+| `lakehouse.config.vcs.git.sync.interval-ms` | `LAKEHOUSE_CONFIG_GIT_SYNC_INTERVAL_MS` | `30000` | Cycle period |
+| `lakehouse.config.vcs.git.sync.initial-delay-ms` | `LAKEHOUSE_CONFIG_GIT_SYNC_INITIAL_DELAY_MS` | `10000` | Delay of the first cycle after startup |
+
+### Demo
+
+The `demo/compose` stack runs a lightweight git server (`git-server`, image `alpine/git` with the `git-daemon` package) that hosts a bare repository under a persistent volume, imports `demo/compose/conf_git` (a YAML mirror of `demo/compose/conf`) into the `main` branch — a root commit on first start, only the differences on later starts — and exposes it over `git://`. `lakehouse-config-svc` is configured with `git://git-server:9418/config-repo.git`, branch `main` and `sync.enabled=true`, so on startup it applies the whole demo configuration from git instead of the REST `load.sh` bootstrap.
 
 ## Modules
 

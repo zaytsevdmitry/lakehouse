@@ -1,0 +1,4 @@
+kind: Script
+key: sql-template-postgres.tableDDLCompact.sql
+value: |
+  {%set targetDataSet=dataSets[targetDataSetKeyName]%}VACUUM {{ targetDataSet.databaseSchemaName~'.'~targetDataSet.tableName }}

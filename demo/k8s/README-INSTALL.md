@@ -53,7 +53,7 @@ sh tunnels.bash
 lakehouse-management-config-service 8080 нужен для загрузки конфигурации метаданных.
 
 ## Загрузка демонстрационной конфигурации метаданных
-
+### Rest-api вариант
 Перейти в терминале в корне проекта в каталог demo/k8s/conf.
 Выполнить файл load.bash
 Он загрузит демонстрационные данные в сервис конфигурации. Через несколько секунд после этого сервис исполнитель начнет
@@ -77,6 +77,13 @@ Waiting Config-SVC: The request failed. Sleeping...zzZ
 ```
 All configurations loaded
 ```
+### CVS-git вариант 
+Выполните файл  bootstrap-configs.bash. Он сам прокинет порт к pod на localhost. Создаст папку в /tmp и запишет в мейнветку git-server  файлы  из каталога ./conf_git
+> После наполнения через git каждый загруженный объект будет помечен как git-managed и его нельзя будет переписать через rest-api
+
+```shell
+bash ./bootstrap-configs.bash
+```
 
 # Наблюдение
 Просмотр списка подов
@@ -98,7 +105,14 @@ kubectl -n lakehouse-management logs deployment/lakehouse-task-proxy4spark
 ```shell
 kubectl -n lakehouse-management get pods|grep task| grep Error|awk '{print $1}'|xargs -r kubectl -n lakehouse-management logs
 ```
-Ускоряем работу
+
+Удалить контейнеры с ошибкой.
+```shell
+kubectl -n lakehouse-management get pods | grep task | grep Error | awk '{print $1}' | xargs kubectl -n lakehouse-management delete pod
+
+```
+Ускоряем работу. 
+>Следите за ресурсами выполняя следующую команду.
 ```shell
 kubectl -n lakehouse-management scale deployment lakehouse-management-task-executor-service --replicas=4
 ````

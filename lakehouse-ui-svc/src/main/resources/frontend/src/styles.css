@@ -1193,3 +1193,56 @@ a {
   background: var(--accent);
   border: none;
 }
+
+.vcs-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.vcs-panel-title {
+  margin: 0;
+  font-size: 15px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+
+.vcs-tabs .tab-content .vcs-panel {
+  margin-bottom: 0;
+}
+
+.vcs-log-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  height: 420px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.vcs-log-layout .catalog-pane {
+  box-sizing: border-box;
+}
+
+.vcs-log-layout .catalog-splitter {
+  width: 100%;
+  height: 6px;
+  cursor: row-resize;
+}
+
+.vcs-log-layout .catalog-pane:first-child {
+  flex-shrink: 0;
+}
+
+.vcs-log-layout .catalog-pane:last-child {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.vcs-log-layout .states-table {
+  align-self: flex-start;
+}

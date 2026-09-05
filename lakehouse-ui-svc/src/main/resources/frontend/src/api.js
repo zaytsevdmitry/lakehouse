@@ -217,6 +217,27 @@ export async function fetchCurrentUser() {
   return response.json();
 }
 
+export async function fetchVcsSyncLogs({ from, to, status, commitId }) {
+  const response = await apiFetch(
+    `/api/vcs/logs${buildQuery({ from, to, status, commitId })}`
+  );
+  if (!response.ok) {
+    throw new Error(`Failed to load VCS sync log: ${response.status} ${await response.text()}`);
+  }
+  return response.json();
+}
+
+export async function fetchVcsObjectLogs({ commitId, kind, from, to, filePath, objectName }) {
+  const response = await apiFetch(
+    `/api/vcs/objects${buildQuery({ commitId, kind, from, to, filePath, objectName })}`
+  );
+  if (!response.ok) {
+    throw new Error(`Failed to load VCS object log: ${response.status} ${await response.text()}`);
+  }
+  return response.json();
+}
+
+
 export async function logout() {
   await apiFetch('/logout', { method: 'POST' });
   window.location.href = '/';

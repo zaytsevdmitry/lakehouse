@@ -17,13 +17,25 @@
 
 package org.lakehouse.config.entities;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 
 @Entity
 
 public class NameSpace extends KeyEntityAbstract {
 
+    @Column(nullable = false)
+    private boolean isVcsManaged;
+
     public NameSpace() {
+    }
+
+    public boolean isVcsManaged() {
+        return isVcsManaged;
+    }
+
+    public void setVcsManaged(boolean vcsManaged) {
+        this.isVcsManaged = vcsManaged;
     }
 
 }

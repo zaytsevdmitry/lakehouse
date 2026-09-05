@@ -101,7 +101,18 @@ public class Task  {
     @Column(name = "template_name")
     private String template;
 
+    @Column(nullable = false)
+    private boolean isVcsManaged;
+
     public Task() {
+    }
+
+    public boolean isVcsManaged() {
+        return isVcsManaged;
+    }
+
+    public void setVcsManaged(boolean vcsManaged) {
+        this.isVcsManaged = vcsManaged;
     }
 
     public Long getId() {

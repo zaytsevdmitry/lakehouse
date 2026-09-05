@@ -1,0 +1,4 @@
+kind: Script
+key: sql-template-postgres.tableDDLTruncate.sql
+value: |
+  {%set targetDataSet=dataSets[targetDataSetKeyName]%}TRUNCATE TABLE {{ targetDataSet.databaseSchemaName~'.'~targetDataSet.tableName }}

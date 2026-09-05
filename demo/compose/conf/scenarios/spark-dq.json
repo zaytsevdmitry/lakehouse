@@ -25,7 +25,7 @@
       "description": "load from remote datastore",
       "driverKeyName": "spark_iceberg",
       "taskProcessorArgs": {
-        "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.9.0-jar-with-dependencies.jar",
+        "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.10.0-jar-with-dependencies.jar",
         "deploy.clusterUrl": "http://172.20.193.160:8099/v1/submissions",
         "deploy.mainClass": "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
         "spark.app.name": "{{ getTaskFullName() }}",
@@ -46,7 +46,7 @@
       "driverKeyName": "spark_iceberg",
       "taskProcessorArgs": {
         "deploy.clusterUrl": "http://172.20.193.160:8099/v1/submissions",
-        "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.9.0-jar-with-dependencies.jar",
+        "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.10.0-jar-with-dependencies.jar",
         "deploy.mainClass": "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
         "spark.app.name": "{{ getTaskFullName() }}",
         "spark.driver.cores": "1",
@@ -66,7 +66,7 @@
       "driverKeyName": "spark_iceberg",
       "taskProcessorArgs": {
         "deploy.clusterUrl": "http://172.20.193.160:8099/v1/submissions",
-        "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dq-app-0.9.0-jar-with-dependencies.jar",
+        "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dq-app-0.10.0-jar-with-dependencies.jar",
         "deploy.mainClass": "org.lakehouse.taskexecutor.spark.dq.SparkProcessorApplicationDQ",
         "lakehouse.taskexecutor.body.config.dq.kafka.producer.metric.status.topic": "metric_status",
         "lakehouse.taskexecutor.body.config.dq.kafka.producer.metric.value.topic": "metric_value",
@@ -97,7 +97,7 @@
         "spark.driver.memory": "1g",
         "deploy.clusterUrl": "http://172.20.193.160:8099/v1/submissions",
         "deploy.mainClass": "org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication",
-        "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.9.0-jar-with-dependencies.jar"
+        "deploy.appResource": "/opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.10.0-jar-with-dependencies.jar"
       }
     },
     {

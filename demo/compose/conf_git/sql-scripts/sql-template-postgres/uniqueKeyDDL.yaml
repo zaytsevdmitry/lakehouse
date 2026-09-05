@@ -1,0 +1,4 @@
+kind: Script
+key: sql-template-postgres.uniqueKeyDDL.sql
+value: |
+  CONSTRAINT {{ constraint.name }} UNIQUE({{ constraint.columns }})

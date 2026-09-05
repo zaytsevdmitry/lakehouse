@@ -27,6 +27,7 @@ import org.lakehouse.config.entities.task.Task;
 import org.lakehouse.config.entities.task.TaskProcessorArg;
 import org.lakehouse.config.entities.templates.TemplateScenarioAct;
 import org.lakehouse.config.entities.templates.TemplateTaskEdge;
+import org.lakehouse.config.exception.VcsManagedException;
 import org.lakehouse.config.repository.*;
 import org.lakehouse.validator.config.ScenarioActTemplateConfValidator;
 import org.lakehouse.validator.config.ValidationResult;
@@ -145,9 +146,20 @@ public class ScenarioActTemplateService {
     }
     @Transactional
     public ScenarioActTemplateDTO save(ScenarioActTemplateDTO scenarioActTemplateDTO) {
+        rejectIfVcsManaged(scenarioActTemplateDTO.getKeyName(), "created or updated");
+        return doSave(scenarioActTemplateDTO, false);
+    }
+
+    @Transactional
+    public ScenarioActTemplateDTO saveVcs(ScenarioActTemplateDTO scenarioActTemplateDTO) {
+        return doSave(scenarioActTemplateDTO, true);
+    }
+
+    private ScenarioActTemplateDTO doSave(ScenarioActTemplateDTO scenarioActTemplateDTO, boolean vcsManaged) {
         validate(scenarioActTemplateDTO);
 
         TemplateScenarioAct templateScenarioAct = mapScenarioToEntity(scenarioActTemplateDTO);
+        templateScenarioAct.setVcsManaged(vcsManaged);
         templateTaskEdgeRepository.findByTemplateScenarioActKeyName(templateScenarioAct.getKeyName()).forEach(templateTaskEdgeRepository::delete);
 
         taskRepository.findByTemplateScenarioActKeyName(templateScenarioAct.getKeyName()).forEach(
@@ -165,7 +177,7 @@ public class ScenarioActTemplateService {
         logger.info("Saving ScenarioActTemplate.name={} tasks", scenarioActTemplateDTO.getKeyName());
         Map<String, TaskService.SaveTaskResult> savedTasks = new HashMap<>();
         for (TaskDTO taskDTO: scenarioActTemplateDTO.getTasks()) {
-            savedTasks.put(taskDTO.getName(), taskService.save(taskDTO,templateScenarioAct,null));
+            savedTasks.put(taskDTO.getName(), taskService.saveVcs(taskDTO, templateScenarioAct, null));
         }
 
         scenarioActTemplateDTO.getDagEdges().forEach(dagEdgeDTO -> {
@@ -198,7 +210,24 @@ public class ScenarioActTemplateService {
 
     @Transactional
     public void deleteById(String name) {
+        rejectIfVcsManaged(name, "deleted");
         scenarioActTemplateRepository.deleteById(name);
+    }
+
+    @Transactional
+    public void unmanage(String name) {
+        scenarioActTemplateRepository.findById(name).ifPresent(templateScenarioAct -> {
+            templateScenarioAct.setVcsManaged(false);
+            scenarioActTemplateRepository.save(templateScenarioAct);
+        });
+    }
+
+    private void rejectIfVcsManaged(String name, String operation) {
+        scenarioActTemplateRepository.findById(name)
+                .filter(TemplateScenarioAct::isVcsManaged)
+                .ifPresent(templateScenarioAct -> {
+                    throw new VcsManagedException(name, operation);
+                });
     }
 
     public Optional<Task> findTaskTemplateByScenarioAndName(String scenarioActTemplateName, String taskTemplateName) {

@@ -1,0 +1,4 @@
+kind: Script
+key: sql-template-postgres.checkConstraintDDL.sql
+value: |
+  CONSTRAINT {{ constraint.name }} CHECK ({{ constraint.checkExpr }})

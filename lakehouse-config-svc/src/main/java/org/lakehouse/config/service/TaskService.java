@@ -24,6 +24,7 @@ import org.lakehouse.config.entities.scenario.ScenarioAct;
 import org.lakehouse.config.entities.task.Task;
 import org.lakehouse.config.entities.task.TaskProcessorArg;
 import org.lakehouse.config.entities.templates.TemplateScenarioAct;
+import org.lakehouse.config.exception.VcsManagedException;
 import org.lakehouse.config.exception.TaskEffectiveNotFoundException;
 import org.lakehouse.config.exception.TaskNotFoundException;
 import org.lakehouse.config.repository.TaskExecutionServiceGroupRepository;
@@ -96,6 +97,19 @@ public class TaskService {
     public record SaveTaskResult(Task task, TaskDTO taskDTO) {}
 
     public SaveTaskResult save(TaskDTO taskDTO, TemplateScenarioAct templateScenarioAct, ScenarioAct scenarioAct) {
+        rejectIfVcsManaged(taskDTO.getName(), templateScenarioAct, scenarioAct, "created or updated");
+        return doSave(taskDTO, templateScenarioAct, scenarioAct, false);
+    }
+
+    public SaveTaskResult saveVcs(TaskDTO taskDTO, TemplateScenarioAct templateScenarioAct, ScenarioAct scenarioAct) {
+        return doSave(taskDTO, templateScenarioAct, scenarioAct, true);
+    }
+
+    private SaveTaskResult doSave(
+            TaskDTO taskDTO,
+            TemplateScenarioAct templateScenarioAct,
+            ScenarioAct scenarioAct,
+            boolean vcsManaged) {
         logger.info("Saving task.name={}", taskDTO.getName());
         logger.info("Validating task.name={}", taskDTO.getName());
         ValidationResult vr = TaskDTOValidator.validate(taskDTO);
@@ -107,9 +121,12 @@ public class TaskService {
         task.setName(taskDTO.getName());
         task.setTemplateScenarioAct(templateScenarioAct);
         task.setScenarioAct(scenarioAct);
+        task.setVcsManaged(vcsManaged);
+        taskRepository.save(task);
 
         logger.info("Saving sqlTemplate of task.name={}", taskDTO.getName());
         sqlTemplateService.save(task, taskDTO.getSqlTemplate());
+        sqlTemplateService.markTaskManaged(task, vcsManaged);
 
         logger.info("Saving taskProcessorArgs of task.name={}", taskDTO.getName());
         saveArgs(task, taskDTO);
@@ -168,6 +185,7 @@ public class TaskService {
 
     @Transactional
     public void deleteByName(String name, TemplateScenarioAct templateScenarioAct, ScenarioAct scenarioAct) {
+        rejectIfVcsManaged(name, templateScenarioAct, scenarioAct, "deleted");
         findTaskEntityByName(name,templateScenarioAct,scenarioAct)
                 .ifPresentOrElse(
                         taskRepository::delete,
@@ -175,6 +193,27 @@ public class TaskService {
                             throw new TaskNotFoundException(
                                     String.format("Task with name %s not found", name));
                         });
+    }
+
+    @Transactional
+    public void unmanageByName(String name, TemplateScenarioAct templateScenarioAct, ScenarioAct scenarioAct) {
+        findTaskEntityByName(name, templateScenarioAct, scenarioAct).ifPresent(task -> {
+            task.setVcsManaged(false);
+            taskRepository.save(task);
+            sqlTemplateService.markTaskManaged(task, false);
+        });
+    }
+
+    private void rejectIfVcsManaged(
+            String name,
+            TemplateScenarioAct templateScenarioAct,
+            ScenarioAct scenarioAct,
+            String operation) {
+        findTaskEntityByName(name, templateScenarioAct, scenarioAct)
+                .filter(Task::isVcsManaged)
+                .ifPresent(task -> {
+                    throw new VcsManagedException(name, operation);
+                });
     }
 
     public TaskDTO mapTaskToDTO(Task task) {

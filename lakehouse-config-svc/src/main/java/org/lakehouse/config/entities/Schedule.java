@@ -38,6 +38,9 @@ public class Schedule extends KeyEntityAbstract {
     private boolean enabled;
 
     @Column(nullable = false)
+    private boolean isVcsManaged;
+
+    @Column(nullable = false)
     private OffsetDateTime lastChangedDateTime;
 
     @Column(nullable = false)
@@ -76,6 +79,14 @@ public class Schedule extends KeyEntityAbstract {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public boolean isVcsManaged() {
+        return isVcsManaged;
+    }
+
+    public void setVcsManaged(boolean vcsManaged) {
+        this.isVcsManaged = vcsManaged;
     }
 
     public OffsetDateTime getLastChangedDateTime() {

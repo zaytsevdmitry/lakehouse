@@ -1,0 +1,4 @@
+kind: Script
+key: sql-template-postgres.partitionDDLExchange.sql
+value: |
+  fix me

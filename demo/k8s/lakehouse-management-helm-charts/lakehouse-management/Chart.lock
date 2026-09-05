@@ -26,5 +26,8 @@ dependencies:
 - name: lakehouse-management-ui-svc
   repository: file://../lakehouse-management-ui-svc
   version: 0.1.0
-digest: sha256:427514feba0368c57b21b6a5f63a64268ce16ebc562f65270bace6c56a965c69
-generated: "2026-08-15T20:25:16.000259639+03:00"
+- name: git-server
+  repository: file://../git-server
+  version: 0.1.0
+digest: sha256:4f8b6adb1a20b1939c5a12dc0f9dbadf4f6cabff379ae601a879ed7b5bdfd41d
+generated: "2026-08-30T19:20:19.322126118+03:00"

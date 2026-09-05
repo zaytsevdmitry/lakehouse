@@ -1,0 +1,8 @@
+kind: Task
+name: prepareJdbc
+taskExecutionServiceGroupName: default
+taskProcessor: jdbcTaskProcessor
+taskProcessorBody: createTableSQLProcessorBody
+importance: critical
+description: Create table if not exists
+driverKeyName: postgres

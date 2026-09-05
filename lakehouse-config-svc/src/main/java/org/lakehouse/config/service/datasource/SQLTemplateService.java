@@ -112,4 +112,19 @@ public class SQLTemplateService {
         return mapSQSqlTemplateToDTO(sqlTemplateRepository.findByTaskId(task.getId()));
     }
 
+    public void markTaskManaged(Task task, boolean vcsManaged) {
+        markManaged(sqlTemplateRepository.findByTaskId(task.getId()), vcsManaged);
+    }
+
+    public void markDriverManaged(Driver driver, boolean vcsManaged) {
+        markManaged(sqlTemplateRepository.findByDriverKeyName(driver.getKeyName()), vcsManaged);
+    }
+
+    private void markManaged(List<SQLTemplate> templates, boolean vcsManaged) {
+        templates.forEach(sqlTemplate -> {
+            sqlTemplate.setVcsManaged(vcsManaged);
+            sqlTemplateRepository.save(sqlTemplate);
+        });
+    }
+
 }

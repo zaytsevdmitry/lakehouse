@@ -69,6 +69,14 @@ The following components are licensed under the Apache License, Version 2.0:
 * SpringDoc OpenAPI (org.springdoc:springdoc-openapi-starter-webmvc-ui)
   Copyright 2019-2024 the authors.
 
+* Eclipse JGit (org.eclipse.jgit:org.eclipse.jgit, org.eclipse.jgit.ssh.apache)
+  Copyright (c) 2004-2023 Eclipse Foundation and others.
+  (Distributed under the Eclipse Distribution License, a BSD-style license;
+  see https://www.eclipse.org/org/documents/edl-v10.php)
+
+* FasterXML Jackson YAML (tools.jackson.dataformat:jackson-dataformat-yaml)
+  Copyright (c) 2007-2024 Tatu Saloranta (tatu.saloranta@iki.fi) and others.
+
 ---
 [License text Apache 2.0]
 

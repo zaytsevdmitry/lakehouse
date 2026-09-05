@@ -32,7 +32,18 @@ public class Script {
     @Column(nullable = false)
     private String value;
 
+    @Column(nullable = false)
+    private boolean isVcsManaged;
+
     public Script() {
+    }
+
+    public boolean isVcsManaged() {
+        return isVcsManaged;
+    }
+
+    public void setVcsManaged(boolean vcsManaged) {
+        this.isVcsManaged = vcsManaged;
     }
 
     public String getKey() {

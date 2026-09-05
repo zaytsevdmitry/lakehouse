@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: git-server
+  labels:
+    app: git-server
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: 9418
+      protocol: TCP
+      name: git-port
+  selector:
+    app: git-server

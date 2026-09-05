@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: git-server
+  labels:
+    app: git-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: git-server
+  template:
+    metadata:
+      labels:
+        app: git-server
+    spec:
+      containers:
+        - name: git-server
+          image: alpine/git:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "--> Installing git-daemon package..."
+              apk add --no-cache git-daemon
+
+              REPO_DIR="/srv/git/config-repo.git"
+              if [ ! -d "$REPO_DIR" ] || [ ! -f "$REPO_DIR/HEAD" ]; then
+                echo "--> Initializing bare repository..."
+                mkdir -p "$REPO_DIR"
+                git init --bare --shared "$REPO_DIR"
+                touch "$REPO_DIR/git-daemon-export-ok"
+                echo "Success: Bare repository initialized at $REPO_DIR"
+              fi
+              
+              # Allow force pushing (overwriting history) on repetitive runs
+              echo "--> Configuring repository to allow non-fast-forward pushes..."
+              git -C "$REPO_DIR" config receive.denyNonFastForwards false
+              
+              echo "--> Starting Git Daemon..."
+              exec git daemon --reuseaddr --verbose --base-path=/srv/git --export-all --enable=receive-pack /srv/git
+          ports:
+            - containerPort: 9418
+              name: git-port
+              protocol: TCP
+          volumeMounts:
+            - name: git-storage
+              mountPath: /srv/git
+      volumes:
+        - name: git-storage
+          emptyDir: {}

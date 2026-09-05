@@ -44,12 +44,23 @@ public class SQLTemplate extends KeyValueAbstract {
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Driver driver;
 
+    @Column(nullable = false)
+    private boolean isVcsManaged;
+
     @Column(nullable = false, length = 4000)
     @ManyToOne(targetEntity = Script.class, optional = false)
     @JoinColumn(foreignKey = @ForeignKey(name = "sql_template__script_fk"))
     private String value;
 
     public SQLTemplate() {
+    }
+
+    public boolean isVcsManaged() {
+        return isVcsManaged;
+    }
+
+    public void setVcsManaged(boolean vcsManaged) {
+        this.isVcsManaged = vcsManaged;
     }
 
     public Task getTask() {

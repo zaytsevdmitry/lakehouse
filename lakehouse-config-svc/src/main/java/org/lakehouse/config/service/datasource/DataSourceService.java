@@ -24,6 +24,7 @@ import org.lakehouse.config.entities.KeyValueAbstract;
 import org.lakehouse.config.entities.datasource.DataSource;
 import org.lakehouse.config.entities.datasource.DataSourceSvcItem;
 import org.lakehouse.config.entities.datasource.DataSourceSvcItemProperty;
+import org.lakehouse.config.exception.VcsManagedException;
 import org.lakehouse.config.exception.DataSourceNotFoundException;
 import org.lakehouse.config.exception.DataSourceServiceNotFoundException;
 import org.lakehouse.config.mapper.keyvalue.KeyValueEntityMerger;
@@ -152,7 +153,19 @@ public class DataSourceService {
     }
     @Transactional
     public DataSourceDTO save(DataSourceDTO dataSourceDTO) {
+        rejectIfVcsManaged(dataSourceDTO.getKeyName(), "created or updated");
+        return saveInternal(dataSourceDTO, false);
+    }
+
+    @Transactional
+    public DataSourceDTO saveVcs(DataSourceDTO dataSourceDTO) {
+        return saveInternal(dataSourceDTO, true);
+    }
+
+    private DataSourceDTO saveInternal(DataSourceDTO dataSourceDTO, boolean vcsManaged) {
         DataSource dataSource = dataSourceRepository.save(mapDataSourceToEntity(dataSourceDTO));
+        dataSource.setVcsManaged(vcsManaged);
+        dataSourceRepository.save(dataSource);
 
         // services
         //todo rewrite to merge
@@ -174,6 +187,23 @@ public class DataSourceService {
 
     @Transactional
     public void deleteById(String name) {
+        rejectIfVcsManaged(name, "deleted");
         dataSourceRepository.deleteById(name);
+    }
+
+    @Transactional
+    public void unmanage(String name) {
+        dataSourceRepository.findById(name).ifPresent(dataSource -> {
+            dataSource.setVcsManaged(false);
+            dataSourceRepository.save(dataSource);
+        });
+    }
+
+    private void rejectIfVcsManaged(String name, String operation) {
+        dataSourceRepository.findById(name)
+                .filter(DataSource::isVcsManaged)
+                .ifPresent(dataSource -> {
+                    throw new VcsManagedException(name, operation);
+                });
     }
 }

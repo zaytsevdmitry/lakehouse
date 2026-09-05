@@ -1,0 +1,9 @@
+kind: Script
+key: dataset-sql-model.aggregation_pay_per_client_total_mart.sql
+value: |
+  select client_name
+       , sum(amount)     as sum_amount
+       , sum(commission) as sum_commission
+  from  {{refCat('transaction_dds')}}
+  group by client_name
+

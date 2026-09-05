@@ -1,0 +1,4 @@
+kind: Script
+key: sql-template-spark_iceberg.databaseSchemaExistsSQL.sql
+value: |
+  fix me

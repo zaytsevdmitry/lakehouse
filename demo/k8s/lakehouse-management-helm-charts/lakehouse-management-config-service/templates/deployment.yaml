@@ -18,9 +18,12 @@ spec:
         - name: wait-for-keycloak
           image: busybox:1.37
           command: ['sh', '-c', 'until wget -q -O /dev/null http://keycloak:8085/realms/lakehouse; do echo waiting for keycloak; sleep 3; done']
+        - name: wait-for-git-server
+          image: alpine/git:latest
+          command: ['sh', '-c', 'until git ls-remote git://git-server:9418/config-repo.git >/dev/null 2>&1; do echo "waiting for git-server"; sleep 3; done']
       containers:
         - name: conf-svc
-          image: "lakehouse:0.9.0"
+          image: "lakehouse:0.10.0"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
@@ -30,6 +33,18 @@ spec:
               value: {{ .Values.keycloak.issuerUri | quote }}
             - name: KEYCLOAK_INTERNAL_CLIENT_SECRET
               value: {{ .Values.keycloak.internalClientSecret | quote }}
+            - name: LAKEHOUSE_CONFIG_GIT_REPOSITORY_URL
+              value: {{ .Values.git.repositoryUrl | quote }}
+            - name: LAKEHOUSE_CONFIG_GIT_BRANCH
+              value: {{ .Values.git.branch | quote }}
+            - name: LAKEHOUSE_CONFIG_GIT_LOCAL_CLONE_PATH
+              value: {{ .Values.git.localClonePath | quote }}
+            - name: LAKEHOUSE_CONFIG_GIT_SYNC_ENABLED
+              value: {{ .Values.git.sync.enabled | quote }}
+            - name: LAKEHOUSE_CONFIG_GIT_SYNC_INTERVAL_MS
+              value: {{ .Values.git.sync.intervalMs | quote }}
+            - name: LAKEHOUSE_CONFIG_GIT_SYNC_INITIAL_DELAY_MS
+              value: {{ .Values.git.sync.initialDelayMs | quote }}
           command: ["bash", "-c"]
           args:
-            - "java -Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=ConfigSVC -Dlakehouse.config.schedule.send.kafka.producer.properties.bootstrap.servers=broker:9092 -jar /opt/lakehouse-config-svc-0.9.0-jar-with-dependencies.jar"
+            - "java -Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=ConfigSVC -Dlakehouse.config.schedule.send.kafka.producer.properties.bootstrap.servers=broker:9092 -jar /opt/lakehouse-config-svc-0.10.0-jar-with-dependencies.jar"

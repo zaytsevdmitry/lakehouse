@@ -12,7 +12,7 @@
 | lakehouse-task-executor-svc | 8089 | Исполнитель задач: получает задачи из Kafka, блокирует их в scheduler-svc, выполняет TaskProcessor'ы (JDBC, state, spark), уведомляет о heartbeat и освобождает блокировку с результатом | [doc](../../lakehouse-task-executor-svc/readme.md) |
 | lakehouse-task-proxy-for-spark | 8090 | Прокси для Spark: принимает spark-submit по REST `/v1/submissions`, ведет очередь в PostgreSQL, отправляет задачи в кластеры (Standalone/K8s/YARN) через адаптеры | [doc](../../lakehouse-task-proxy-for-spark/README_ru.md) |
 
-> Сервис **cvs-svc** в текущей версии не существует. Он упомянут в схемах как планируемый: будет отвечать за импорт конфигураций в config-svc. Разработка запланирована на будущее.
+> Сервис **vcs-svc** в текущей версии не существует. Он упомянут в схемах как планируемый: будет отвечать за импорт конфигураций в config-svc. Разработка запланирована на будущее.
 
 ## Взаимодействие сервисов
 

@@ -6,7 +6,7 @@
     <parent>
         <groupId>lakehouse</groupId>
         <artifactId>lakehouse-parent</artifactId>
-        <version>0.9.0</version>
+        <version>0.10.0</version>
     </parent>
 
     <artifactId>lakehouse-config-svc</artifactId>
@@ -15,27 +15,28 @@
         <start-class>org.lakehouse.config.LakehouseConfigApplication</start-class>
         <maven.compiler.source>23</maven.compiler.source>
         <maven.compiler.target>23</maven.compiler.target>
+        <jgit.version>6.7.0.202309050840-r</jgit.version>
     </properties>
     <dependencies>
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-common</artifactId>
-            <version>0.9.0</version>
+            <version>0.10.0</version>
         </dependency>
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-common-health</artifactId>
-            <version>0.9.0</version>
+            <version>0.10.0</version>
         </dependency>
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-validators</artifactId>
-            <version>0.9.0</version>
+            <version>0.10.0</version>
         </dependency>
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-spark-rest-client</artifactId>
-            <version>0.9.0</version>
+            <version>0.10.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -79,6 +80,20 @@
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>${springdoc.version}</version>
         </dependency>
+        <dependency>
+            <groupId>tools.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jgit</groupId>
+            <artifactId>org.eclipse.jgit</artifactId>
+            <version>${jgit.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jgit</groupId>
+            <artifactId>org.eclipse.jgit.ssh.apache</artifactId>
+            <version>${jgit.version}</version>
+        </dependency>
         <!--Test-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -115,7 +130,7 @@
         <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-common-test</artifactId>
-            <version>0.9.0</version>
+            <version>0.10.0</version>
             <scope>test</scope>
         </dependency>
         <!--Experimental-->

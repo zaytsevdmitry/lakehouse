@@ -45,7 +45,7 @@ data:
     }
     EOF
 
-    echo "=== OpenBao: creating scoped token for Spark services ==="
+    echo "=== OpenBao: creating scoped static token for Spark (Legacy/Driver fallback) ==="
     LAKEHOUSE_SPARK_TOKEN="${LAKEHOUSE_SPARK_TOKEN:-lakehouse-spark-token}"
     if ! bao token lookup "${LAKEHOUSE_SPARK_TOKEN}" >/dev/null 2>&1; then
       bao token create \
@@ -60,5 +60,27 @@ data:
     echo "=== OpenBao: verifying scoped token permissions ==="
     bao token capabilities "${LAKEHOUSE_SPARK_TOKEN}" kv/data/lakehouse/database
     bao token capabilities "${LAKEHOUSE_SPARK_TOKEN}" kv/data/infrastructure/minio
+
+    # =========================================================================
+    # Spark to openbao Kubernetes auth
+    # =========================================================================
+    echo "=== OpenBao: enabling Kubernetes auth method ==="
+    if ! bao auth list | grep -q "kubernetes/"; then
+      bao auth enable kubernetes
+    else
+      echo "Kubernetes auth method already enabled"
+    fi
+    
+    echo "=== OpenBao: configuring Kubernetes cluster connection ==="
+    bao write auth/kubernetes/config \
+      kubernetes_host="https://kubernetes.default.svc:443"
+    
+    echo "=== OpenBao: creating role bound to spark-driver-sa ==="
+    # Связываем сервисный аккаунт экзекуторов с политикой чтения секретов
+    bao write auth/kubernetes/role/lakehouse \
+      bound_service_account_names="spark-driver-sa" \
+      bound_service_account_namespaces="{{ .Release.Namespace }}" \
+      policies="lakehouse-spark-readonly" \
+      ttl="1h"
 
     echo "=== OpenBao: seeding complete ==="

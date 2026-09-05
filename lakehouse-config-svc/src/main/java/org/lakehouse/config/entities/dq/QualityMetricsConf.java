@@ -36,7 +36,17 @@ public class QualityMetricsConf extends KeyEntityAbstract {
     @Column(nullable = false) private Types.DQThresholdViolationLevel dqThresholdViolationLevel;
     @Column(nullable = false) private boolean enabled;
     @Column(nullable = false) private boolean save;
+    @Column(nullable = false) private boolean isVcsManaged;
+
     public QualityMetricsConf() {
+    }
+
+    public boolean isVcsManaged() {
+        return isVcsManaged;
+    }
+
+    public void setVcsManaged(boolean vcsManaged) {
+        this.isVcsManaged = vcsManaged;
     }
 
     public DataSet getDataSet() {

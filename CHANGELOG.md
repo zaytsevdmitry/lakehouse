@@ -1,5 +1,91 @@
 # Changelog
 
+## [0.10.0] — 2026-09-01
+
+### Added
+
+#### VCS — Configuration Versioning System (GitOps) in `lakehouse-config-svc`
+
+Git repository as the **source of truth** for configuration metadata — the same
+configuration DTOs as the REST API can be written as Kubernetes-style YAML/JSON files and
+are periodically synchronized into the configuration database.
+
+- **`VcsClient` abstraction** (`org.lakehouse.config.vcs`): `init` / `pull` /
+  `getCurrentCommitId` / `getDiff` / `readFileContent`; supporting value types
+  `VcsDiffEntry`, `VcsChangeType`, `VcsClientException` (infrastructure failures are
+  retried, not marked FAILED).
+- **`GitVcsClient`** (JGit): clone/open, `+refs/heads/*:refs/remotes/origin/*` fetch +
+  hard reset, `DiffFormatter` with rename detection (rename reported as delete+create),
+  SSH `publickey` auth via `org.eclipse.jgit.ssh.apache`.
+- **`GitOpsScheduler`** — `@Scheduled` orchestrator (guarded by
+  `lakehouse.config.vcs.git.sync.enabled=true`); `sync()` is `synchronized` and
+  idempotent; skips already-applied commits, records config errors as `FAILED`, retries
+  infrastructure errors.
+- **`GitOpsChangeSetBuilder` + `GitOpsYamlParser` + `ConfigKind`**: only config files
+  (`.yaml`/`.yml`/`.json`, no dotfiles) are considered; mandatory `kind` field;
+  case-/separator-insensitive kind matching; case-insensitive enums; unknown properties
+  are a hard error. 10 recognized kinds with dependency `order`.
+- **`GitOpsSynchronizer`** — single-transaction atomic apply (`applyAll` in kind order,
+  datasets ordered by `sources` dependencies) / `unmanageAll` in reverse order; records
+  every touched construct in `vcs_object_log`; a whole commit succeeds only when the
+  `SUCCESS` row is written to `vcs_sync_log`.
+- **`isVcsManaged` contract** on all configuration entities: REST create/update/delete of
+  a VCS-managed construct fails with HTTP `409 Conflict` (`VcsManagedException`); a
+  deleted YAML file only clears the flag (two-step delete); three-way service contract
+  `save(...)` / `saveVcs(...)` / `unmanage(...)`.
+- **Read-only REST endpoints for the UI**: `GET /v1_0/configs/vcs/logs` (sync history
+  with status/error/commitId) and `GET /v1_0/configs/vcs/objectlogs` (per-object log).
+- **Configuration properties** `lakehouse.config.vcs.git.*`: `repository-url`, `branch`,
+  `local-clone-path`, `private-key-path`, `sync.enabled` / `sync.interval-ms` /
+  `sync.initial-delay-ms` (mapped to `LAKEHOUSE_CONFIG_GIT_*` env vars).
+- **Tests**: `GitOpsIntegrationTest`, `GitVcsClientTest`, `GitOpsChangeSetBuilderTest`,
+  `GitOpsSchedulerUnitTest`, `GitOpsYamlParserTest`, `TestGitRepository` helper.
+
+#### UI — VCSLog panel
+
+- **`lakehouse-ui-svc`**: new "VCS" panel (`VCSLog` / objects search as tabs) showing the
+  sync history (`SUCCESS` rows with applied commit id, `FAILED` rows with error message)
+  and the per-object log; backed by `VcsLogService` / `VcsLogController`, VCS added to the
+  frontend routing and API client.
+- SPA assets rebuilt (`index.html`, hashed `assets/index-*`).
+
+#### Demo — Git-sourced configs (`conf_git`) and bootstrap
+
+- **`demo/k8s`**: configuration moved out of the `git-server` Helm chart into a dedicated
+  `demo/k8s/conf_git/` tree (one config construct per YAML file, K8s-style `kind`), with
+  new `bootstrap-configs.bash` to seed the `git-server` config repo that `config-svc`
+  VCS syncs from.
+- New/renamed task templates (`beginTemplate`, `checkTemplate`, `prepareJdbc`,
+  `sparkTemplate`, `sparkDQTemplate`), a default `taskexecutionservicegroups/default.yaml`,
+  and VCS wiring (repo `git://git-server:9418/config-repo.git`, branch `main`,
+  `sync.enabled=true`) in `demo/k8s`/`demo/compose`.
+
+#### Documentation
+
+- `lakehouse-config-svc/doc/vcs/vcs_for_developers.md` + `doc-ru/vcs/vcs_for_developers.md`
+  — VCS architecture, sync pipeline, `VcsClient` abstraction, YAML parsing, `isVcsManaged`
+  contract, developer parameters, extension guide.
+- `lakehouse-config-svc/doc/vcs/git_extension_user_guide.md` + `doc-ru/vcs/git_extension_user_guide.md`
+  — repository layout, YAML format, enablement, sync semantics, error messages.
+- `lakehouse-config-svc/doc/readme.md`, `doc-ru/readme.md`, `service_configuration.md`
+  (EN/RU) — VCS section and links to the new docs.
+- `demo/compose/git-server-config-repo.md` — demo VCS config repo layout.
+
+#### New dependencies
+
+- `org.eclipse.jgit:org.eclipse.jgit` and `org.eclipse.jgit.ssh.apache` (JGit 6.7.0) —
+  Git transport for `GitVcsClient`.
+- `tools.jackson.dataformat:jackson-dataformat-yaml` — YAML parsing for VCS config files.
+- `THIRD-PARTY-NOTICES` updated accordingly.
+
+### Changed
+
+- **Version 0.9.0 → 0.10.0** for all modules, Docker images and Helm chart image tags.
+- **`lakehouse-ui-svc`** `VcsSection.jsx` — redesigned to tabbed layout (VCSLog / object
+  logs), vertical splitter and error column.
+
+---
+
 ## [0.9.0] — 2026-08-28
 
 ### Added

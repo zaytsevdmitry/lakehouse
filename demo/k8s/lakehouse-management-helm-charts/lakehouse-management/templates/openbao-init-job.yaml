@@ -1,9 +1,4 @@
 {{- if .Values.openbao.seed.enabled }}
-# OpenBao seeding is a one-shot Job (not a container lifecycle script): the
-# server binary stays PID 1 of the openbao Deployment. The Job talks to the
-# cluster Service (http://openbao:8200) and retries until the server is up.
-# Seed data comes from openbao.seed.env (valueFrom a pre-provisioned Secret in
-# production) or from the demo defaults inside the `openbao` ConfigMap.
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -17,6 +12,7 @@ spec:
   ttlSecondsAfterFinished: 300
   template:
     spec:
+      serviceAccountName: openbao-seed-sa
       restartPolicy: OnFailure
       containers:
         - name: openbao-seed

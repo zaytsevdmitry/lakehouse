@@ -26,7 +26,9 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @SpringBootApplication
 @EnableTransactionManagement
-@EnableJpaRepositories(basePackages = "org.lakehouse.config.repository",
+@EnableJpaRepositories(basePackages = {
+        "org.lakehouse.config.repository",
+        "org.lakehouse.config.vcs.repository"},
         bootstrapMode = org.springframework.data.repository.config.BootstrapMode.LAZY)
 @EntityScan(basePackages = "org.lakehouse.config")
 @ComponentScan(

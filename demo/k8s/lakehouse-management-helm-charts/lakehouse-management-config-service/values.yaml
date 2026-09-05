@@ -1,9 +1,18 @@
 conf-svc:
   image:
     repository: lakehouse
-    tag: "0.9.0"
+    tag: "0.10.0"
     pullPolicy: IfNotPresent
 
 keycloak:
   issuerUri: "http://keycloak:8085/realms/lakehouse"
   internalClientSecret: "super-secret-internal-key-987654321"
+
+git:
+  repositoryUrl: "git://git-server:9418/config-repo.git"
+  branch: "main"
+  localClonePath: "/tmp/config-repo"
+  sync:
+    enabled: "true"
+    intervalMs: "30000"
+    initialDelayMs: "10000"

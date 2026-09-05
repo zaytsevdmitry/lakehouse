@@ -39,9 +39,6 @@ public enum DatabaseProtocol {
     // --- CIS & RU Specific Databases & Forks ---
     YDB("ydb", true, 2135),                // Yandex Database (gRPC/s protocol, but has official JDBC driver `jdbc:ydb:`)
     TARANTOOL("tarantool", false, 3301),   // VK Tarantool In-Memory (typically `tarantool://`, `jdbc:tarantool:` or via CRUD)
-    ARENADATA_CH("clickhouse", true, 8123),// ADCH based on ClickHouse. Uses HTTP (8123) or Native (9000)
-    ARENADATA_HD("hive2", true, 10000),    // ADHD based on Hadoop Ecosystem (Hive/Spark)
-    PROSTRE_PRO("postgresql", true, 5432), // Postgres Pro (fully compatible with postgresql prefix)
     ASTRO_DB("astrodb", false, 0),         // Distributed cloud ecosystems
 
     // --- Classical Relational Databases (RDBMS) ---

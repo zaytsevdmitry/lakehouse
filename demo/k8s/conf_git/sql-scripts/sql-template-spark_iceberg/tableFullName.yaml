@@ -1,0 +1,4 @@
+kind: Script
+key: sql-template-spark_iceberg.tableFullName.sql
+value: |
+  {{ refCat(currentDataSetKeyName) }}

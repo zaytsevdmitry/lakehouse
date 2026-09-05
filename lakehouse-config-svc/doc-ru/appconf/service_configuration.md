@@ -34,6 +34,17 @@ lakehouse:
             properties: # https://kafka.apache.org/41/configuration/producer-configs/
               bootstrap.servers: localhost:9092
 
+    vcs: # Подсистема GitOps (VCS): декларативная конфигурация из Git-репозитория
+      git:
+        repository-url: ${LAKEHOUSE_CONFIG_GIT_REPOSITORY_URL:} # например git://git-server:9418/config-repo.git
+        branch: ${LAKEHOUSE_CONFIG_GIT_BRANCH:main} # синхронизируемая ветка
+        local-clone-path: ${LAKEHOUSE_CONFIG_GIT_LOCAL_CLONE_PATH:} # где сервис хранит свой клон
+        private-key-path: ${LAKEHOUSE_CONFIG_GIT_PRIVATE_KEY_PATH:} # SSH-ключ, только для URL вида ssh://
+        sync:
+          enabled: ${LAKEHOUSE_CONFIG_GIT_SYNC_ENABLED:false} # включает бин планировщика
+          interval-ms: ${LAKEHOUSE_CONFIG_GIT_SYNC_INTERVAL_MS:30000} # период цикла
+          initial-delay-ms: ${LAKEHOUSE_CONFIG_GIT_SYNC_INITIAL_DELAY_MS:10000} # задержка первого цикла
+
   health: # Эндпоинты проверки состояния сервиса
     liveness-path: /healthz # Liveness-проба
     readiness-path: /readyz # Readiness-проба

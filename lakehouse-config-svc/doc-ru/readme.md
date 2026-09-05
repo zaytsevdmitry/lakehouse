@@ -15,6 +15,7 @@
 - **Скрипты и SQL-шаблоны** - шаблоны запросов с Jinjava-подстановками
 - **Линковка данных** - связи происхождения данных (lineage)
 - **TaskExecutionServiceGroups** - группы исполнителей задач
+- **Декларативная конфигурация из Git (GitOps/VCS)** - те же конфигурационные DTO могут быть заданы YAML-файлами в Git-репозитории и автоматически синхронизированы в БД подсистемой VCS (см. [GitOps: декларативная конфигурация из Git-репозитория (VCS)](#gitops-декларативная-конфигурация-из-git-репозитория-vcs))
 
 Конфигурации задаются в виде DTO, хранятся в PostgreSQL и отдаются через REST API. Изменения расписаний транслируются в Kafka (topic `schedule_effective_changes`), чтобы scheduler-svc строил актуальные инстансы расписаний.
 
@@ -49,6 +50,113 @@
 - **Repository (JPA/Hibernate)** - персистентность в PostgreSQL.
 - **InternalScheduler** - периодическая отправка изменений расписаний в Kafka.
 - Метаданные связаны иерархически (namespace → datasource → dataset → ...), схема зависимостей описана в [content_configuration](content_configuration/content_configuration.md).
+
+## GitOps: декларативная конфигурация из Git-репозитория (VCS)
+
+Помимо REST API `lakehouse-config-svc` умеет управлять конфигурацией декларативно: те же DTO метаданных записываются YAML-файлами в Git-репозиторий, а подсистема VCS (Configuration Versioning System) по расписанию синхронизирует их в базу данных. Репозиторий становится источником истины (source of truth) и хранит полную историю изменений каждой конфигурации (подход GitOps).
+
+Подробная документация: [Подсистема VCS для разработчиков платформы](vcs/vcs_for_developers.md) (внутреннее устройство, абстракция `VcsClient`, точки расширения, параметры разработчика) и [Руководство пользователя git-расширения](vcs/git_extension_user_guide.md) (формат YAML, `isVcsManaged`, настройка и сообщения об ошибках).
+
+```
+┌──────────────────┐   fetch + diff   ┌───────────────────────────────┐
+│  Git-репозиторий │ ───────────────▶ │  GitOpsScheduler              │
+│  (ветка main)    │                  │  pull → построение набора     │
+└──────────────────┘                  │  изменений → применение       │
+                                      │  в одной транзакции           │
+                                      └───────────────┬───────────────┘
+                                                      │
+                                                      ▼
+                                      ┌───────────────────────────────┐
+                                      │  Слой ConfigService           │
+                                      │  (apply/delete DTO)           │
+                                      └───────────────┬───────────────┘
+                                                      ▼
+                                      ┌───────────────────────────────┐
+                                      │  PostgreSQL                   │
+                                      │  + vcs_sync_log (SUCCESS/FAILED)│
+                                      │  + vcs_object_log (по объектам)│
+                                      └───────────────────────────────┘
+```
+
+### Структура репозитория
+
+Репозиторий конфигурации - это набор YAML-файлов, один конструкт в файле. Каждый файл начинается с поля `kind` (в стиле Kubernetes), которое выбирает целевой DTO; остальная часть файла связывается с этим DTO (неизвестные свойства - ошибка, значения перечислений регистронезависимы).
+
+```yaml
+kind: DataSource
+keyName: processingdb
+description: Remote datastore processingdb
+dataSourceType: database
+databaseProtocol: postgresql
+service:
+  host: "172.20.193.10"
+  port: "5432"
+  urn: postgresDB
+  properties:
+    user: postgresUser
+    fetchSize: "10000"
+```
+
+SQL-скрипты хранятся так же через `kind: Script` и два поля - глобальный ключ скрипта `key` (слеши пути заменяются точками) и тело скрипта в литеральном `value`:
+
+```yaml
+kind: Script
+key: dq.non_zero_count.sql
+value: |
+  select count(1) value
+  from {{ refCat(targetDataSetKeyName) }}
+```
+
+### Поддерживаемые kind
+
+Применяются в порядке зависимостей (удаление происходит в обратном порядке):
+
+| kind | Пример файла | Первичный ключ |
+|---|---|---|
+| `NameSpace` | `nameSpaces/demo.yaml` | `keyName` |
+| `Driver` | `drivers/postgres.yaml` | `keyName` |
+| `DataSource` | `datasources/processingdb.yaml` | `keyName` |
+| `Script` | `sql-scripts/dq/non_zero_count.yaml` | `key` |
+| `TaskExecutionServiceGroup` | `taskexecutionservicegroups/database.yaml` | `name` |
+| `Task` | `tasks/prepare-jdbc.yaml` | `name` |
+| `DataSet` | `datasets/1_transaction_dds.yaml` | `keyName` |
+| `ScenarioActTemplate` | `scenarios/spark-dq.yaml` | `keyName` |
+| `QualityMetricsConf` | `quality/metrics/transaction_dds_qm.yaml` | `keyName` |
+| `Schedule` | `schedules/regular.yaml` | `keyName` |
+
+### Семантика синхронизации
+
+- Каждый цикл подтягивает настроенную ветку и сравнивает её head с последним **успешно** применённым коммитом (`vcs_sync_log` со статусом `SUCCESS`); на пустой базе весь head трактуется как набор созданных файлов.
+- Первое применение коммита выполняется в **одной транзакции**: созданные и изменённые конструкты применяются в порядке `kind` выше (датасеты дополнительно - в порядке зависимостей по `sources`), удаляемые - в обратном порядке, и только затем пишется маркер `SUCCESS`. Любая ошибка откатывает весь коммит.
+- Каждый затронутый коммитом конструкт записывается в `vcs_object_log` (`date_time_rec`, `object_name` из `keyName`, `kind`, `file_path` - путь относительно корня репозитория, `commit_id`) - как для применённых, так и для снятых с управления файлов.
+- Коммит, не прошедший разбор YAML, валидацию или ограничение БД, фиксируется как `FAILED` вместе с текстом ошибки и **больше не повторяется**; последующий исправляющий коммит просто включает исправленное содержимое в новый diff.
+- Инфраструктурные ошибки (недоступен репозиторий, отсутствует локальный клон) только логируются и повторяются на следующем цикле.
+- Коммиты, чей id уже есть в `vcs_sync_log`, пропускаются. Переименование файла трактуется как удаление + создание. Файлами конфигурации считаются только `*.yaml`, `*.yml` и `*.json`; всё остальное (например `load.sh`) игнорируется.
+
+### Флаг управления VCS
+
+Каждый конструкт, загруженный из репозитория, получает `isVcsManaged=true`; для конструктов, созданных через REST API, он остаётся `false`.
+
+- Удаление YAML-файла из репозитория **не удаляет конструкт** - сервис лишь сбрасывает `isVcsManaged` на соответствующей сущности. Само удаление пользователь затем выполняет через REST API.
+- Любое действие `POST`/`PUT`/`DELETE` через REST API над конструктом с `isVcsManaged=true` отклоняется ответом `409 Conflict` (`VcsManagedException`): чтобы изменить или удалить управляемый конструкт через REST API, сначала удалите его из репозитория.
+
+### Конфигурация
+
+Все параметры живут под префиксом `lakehouse.config.vcs.*` (см. также [appconf/service_configuration.md](appconf/service_configuration.md)):
+
+| Свойство | Переменная окружения | По умолчанию | Описание |
+|---|---|---|---|
+| `lakehouse.config.vcs.git.repository-url` | `LAKEHOUSE_CONFIG_GIT_REPOSITORY_URL` | - | URL репозитория конфигурации (поддерживаются `git://`, `ssh://` и `http(s)://`) |
+| `lakehouse.config.vcs.git.branch` | `LAKEHOUSE_CONFIG_GIT_BRANCH` | `main` | Синхронизируемая ветка |
+| `lakehouse.config.vcs.git.local-clone-path` | `LAKEHOUSE_CONFIG_GIT_LOCAL_CLONE_PATH` | - | Локальный путь, где сервис хранит свой клон |
+| `lakehouse.config.vcs.git.private-key-path` | `LAKEHOUSE_CONFIG_GIT_PRIVATE_KEY_PATH` | - | Путь к SSH-ключу (только для URL вида `ssh://`) |
+| `lakehouse.config.vcs.git.sync.enabled` | `LAKEHOUSE_CONFIG_GIT_SYNC_ENABLED` | `false` | Включает бин планировщика VCS |
+| `lakehouse.config.vcs.git.sync.interval-ms` | `LAKEHOUSE_CONFIG_GIT_SYNC_INTERVAL_MS` | `30000` | Период цикла |
+| `lakehouse.config.vcs.git.sync.initial-delay-ms` | `LAKEHOUSE_CONFIG_GIT_SYNC_INITIAL_DELAY_MS` | `10000` | Задержка первого цикла после старта |
+
+### Демо
+
+Стек `demo/compose` запускает лёгкий git-сервер (`git-server`, образ `alpine/git` с пакетом `git-daemon`), который держит bare-репозиторий в персистентном томе, импортирует `demo/compose/conf_git` (YAML-зеркало `demo/compose/conf`) в ветку `main` — при первом старте корневым коммитом, при последующих только изменения — и отдаёт его по `git://`. `lakehouse-config-svc` настраивается на `git://git-server:9418/config-repo.git`, ветку `main` и `sync.enabled=true`, поэтому при старте применяет всю демо-конфигурацию из git одной транзакцией вместо REST-загрузки `load.sh`.
 
 ## Модули
 

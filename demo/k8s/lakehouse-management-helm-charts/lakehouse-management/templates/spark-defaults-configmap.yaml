@@ -24,8 +24,7 @@ data:
     spark.hadoop.fs.s3a.aws.credentials.provider=org.lakehouse.security.s3.BaoS3CredentialsProvider
     spark.hadoop.fs.s3a.bao.vault-url=http://openbao:8200
     spark.hadoop.fs.s3a.bao.secret-path=kv/data/infrastructure/minio
-    spark.hadoop.fs.s3a.bao.access-key-secret=access_key
-    spark.hadoop.fs.s3a.bao.secret-key-secret=secret_key
+    spark.hadoop.fs.s3a.bao.vault-role=lakehouse
     spark.hive.s3.endpoint=http://minio:9000
 
     # ==========================================
@@ -63,6 +62,8 @@ data:
     spark.sql.catalog.processingdb.secretProvider=org.lakehouse.security.jdbc.BaoJdbcSecretProvider
     spark.sql.catalog.processingdb.vault-url=http://openbao:8200
     spark.sql.catalog.processingdb.secret-key=kv/data/lakehouse/database:password
+    spark.sql.catalog.processingdb.vault-role=lakehouse
+
 
     # ==========================================
     # 7. Keycloak (driver pods need these env vars to reach the server)
@@ -71,17 +72,11 @@ data:
     spark.kubernetes.driverEnv.KEYCLOAK_INTERNAL_CLIENT_SECRET=super-secret-internal-key-987654321
 
     # ==========================================
-    # 7a. OpenBao (driver/executor pods resolve S3 + DB secrets via VAULT_TOKEN)
-    # ==========================================
-    spark.kubernetes.driverEnv.VAULT_TOKEN=lakehouse-spark-token
-    spark.kubernetes.executorEnv.VAULT_TOKEN=lakehouse-spark-token
-
-    # ==========================================
-    # 8. Kubernetes Submission Settings (from lakehousestorage.json)
+    # 8. Kubernetes Submission Settings
     # ==========================================
     spark.driver.host=$(POD_IP)
     spark.kubernetes.authenticate.driver.serviceAccountName=spark-driver-sa
     spark.kubernetes.authenticate.executor.serviceAccountName=spark-driver-sa
-    spark.kubernetes.container.image=lakehouse-spark-aws:0.9.0
+    spark.kubernetes.container.image=lakehouse-spark-aws:0.10.0
     spark.kubernetes.executor.deleteOnTermination=true
     spark.kubernetes.namespace=lakehouse-management

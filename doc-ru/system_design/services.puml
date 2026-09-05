@@ -20,7 +20,7 @@ taskexecutorsvc --> statesvc : setDataSetStateDTO / getWrongStateByInterval
 taskexecutorsvc --> sparkproxy : spark submit REST /v1/submissions
 sparkproxy ---> (sparkclusters) : spark-submit (standalone/k8s/yarn)
 note bottom of confsvc
-  cvs-svc is planned but not implemented yet.
+  vcs-svc is planned but not implemented yet.
   It will be responsible for importing configurations into config-svc.
 end note
 @enduml

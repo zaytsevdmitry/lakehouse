@@ -1,0 +1,4 @@
+kind: Script
+key: sql-template-spark_iceberg.foreignKeyDDLAdd.sql
+value: |
+  ALTER TABLE  {{ refCat(targetDataSetKeyName) }} ADD CONSTRAINT %s PRIMARY KEY (%s)

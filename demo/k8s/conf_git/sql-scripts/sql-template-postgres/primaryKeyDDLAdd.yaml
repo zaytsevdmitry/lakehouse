@@ -1,0 +1,4 @@
+kind: Script
+key: sql-template-postgres.primaryKeyDDLAdd.sql
+value: |
+  ALTER TABLE  {{ ref(targetDataSetKeyName) }} ADD CONSTRAINT {{ constraintName }} PRIMARY KEY ({{ targetDataSet.constraints[constraintName].columns }}

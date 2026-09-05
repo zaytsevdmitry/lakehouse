@@ -17,9 +17,21 @@
 
 package org.lakehouse.config.entities.datasource;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import org.lakehouse.config.entities.KeyEntityAbstract;
 
 @Entity
 public class Driver extends KeyEntityAbstract {
+
+    @Column(nullable = false)
+    private boolean isVcsManaged;
+
+    public boolean isVcsManaged() {
+        return isVcsManaged;
+    }
+
+    public void setVcsManaged(boolean vcsManaged) {
+        this.isVcsManaged = vcsManaged;
+    }
 }

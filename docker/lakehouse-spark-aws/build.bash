@@ -17,12 +17,12 @@
 
 
 set -e
-export LH_VERSION=0.9.0
-cp -f ../../lakehouse-task-executor-spark-dataset-app/target/lakehouse-task-executor-spark-dataset-app-0.9.0-jar-with-dependencies.jar ./
-cp -f ../../lakehouse-task-executor-spark-dq-app/target/lakehouse-task-executor-spark-dq-app-0.9.0-jar-with-dependencies.jar ./
-cp -f ../../lakehouse-task-proxy-for-spark/target/lakehouse-task-proxy-for-spark-0.9.0-jar-with-dependencies.jar ./
-cp -f ../../lakehouse-credential-providers-jdbc/target/lakehouse-credential-providers-jdbc-0.9.0.jar ./
-cp -f ../../lakehouse-credential-providers-spark/target/lakehouse-credential-providers-spark-0.9.0.jar ./
+export LH_VERSION=0.10.0
+cp -f ../../lakehouse-task-executor-spark-dataset-app/target/lakehouse-task-executor-spark-dataset-app-0.10.0-jar-with-dependencies.jar ./
+cp -f ../../lakehouse-task-executor-spark-dq-app/target/lakehouse-task-executor-spark-dq-app-0.10.0-jar-with-dependencies.jar ./
+cp -f ../../lakehouse-task-proxy-for-spark/target/lakehouse-task-proxy-for-spark-0.10.0-jar-with-dependencies.jar ./
+cp -f ../../lakehouse-credential-providers-jdbc/target/lakehouse-credential-providers-jdbc-0.10.0.jar ./
+cp -f ../../lakehouse-credential-providers-spark/target/lakehouse-credential-providers-spark-0.10.0.jar ./
 docker build  -t lakehouse-spark-aws:$LH_VERSION ./
 rm ./lakehouse*.jar
 docker images | grep lakehouse
