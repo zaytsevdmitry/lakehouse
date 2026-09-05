@@ -1,0 +1,92 @@
+@startuml
+skinparam actorStyle awesome
+left to right direction
+
+title Security Model
+
+' --- ACTORS ---
+actor "Human User\n(USER / ADMIN)" as Act_User
+
+rectangle "Core Systems" #line:gray;line.dashed {
+    actor "lakehouse-ui-svc (BFF)" as Act_BFF << System >>
+    actor "Backend Services\n(config, state, scheduler,\ntask-executor, spark-proxy)" as Act_Backends << System >>
+    actor "Spark Applications\n(dq-app, dataset-app)" as Act_SparkApps << System >>
+}
+
+rectangle "Security Infrastructure" #line:gray;line.dashed {
+    actor "Keycloak IAM" as Act_Keycloak << IAM >>
+    actor "Secret Provider\n(OpenBao / YC Lockbox)" as Act_Vault << Vault >>
+}
+
+' --- SYSTEM BOUNDARY ---
+rectangle "Security Subsystems" {
+
+    ' 1. USER-FACING SECURITY
+    rectangle "1. User-Facing Security Model" #LightBlue {
+        usecase "Authenticate via Keycloak\n(Authorization Code Flow)" as UC_AuthCode
+        usecase "Maintain Secure State\n(HTTP Session / JSESSIONID)" as UC_Session
+        usecase "Validate State-Changing Requests\n(CSRF / X-XSRF-TOKEN)" as UC_Csrf
+    }
+
+    ' 2. SERVICE-TO-SERVICE SECURITY
+    rectangle "2. Service-to-Service Security Model" #LightYellow {
+        usecase "Act as OAuth2 Resource Server\n(JWT Signature & JWKS Validation)" as UC_ResourceServer
+        usecase "Propagate User Context\n(Token Relay for Outgoing Calls)" as UC_TokenRelay
+        usecase "Authenticate Background Tasks\n(Client Credentials Grant)" as UC_ClientCred
+        usecase "Bypass Auth for Whitelisted Paths\n(Probes / Actuator / Swagger)" as UC_Whitelist
+        usecase "Write Structured Audit Record\n(AuditLoggingFilter to JSON Console)" as UC_Audit
+    }
+
+    ' 3. SPARK APPLICATIONS SECURITY
+    rectangle "3. Spark Applications Security Model" #LightGreen {
+        usecase "Submit Secure Spark Jobs\n(Via task-proxy-for-spark with JWT)" as UC_SubmitSpark
+        usecase "Execute Driver Callbacks\n(Fetch Configs & Report Statuses)" as UC_SparkCallback
+        usecase "Authenticate Callback Requests\n(Act as OAuth2 Client via Client Credentials)" as UC_SparkAuth
+        usecase "Prevent Credential Leakage in Logs\n(Spark Redaction Regexes)" as UC_Redact
+    }
+
+    ' 4. DATA SOURCE CREDENTIALS SECURITY
+    rectangle "4. Data Source Credentials Model" #LightPink {
+        usecase "Establish JDBC / S3 Connection" as UC_ConnectData
+        usecase "Resolve Secrets at Runtime\n(SecretResolver SPI / No Plaintext Passwords)" as UC_ResolveSecrets
+        usecase "Cache Resolved Credentials\n(In-Memory Cache with 5-Min TTL)" as UC_CacheSecrets
+    }
+}
+
+' --- RELATIONSHIPS & INTERACTIONS ---
+
+' Section 1: User-Facing Actions
+Act_User --> UC_AuthCode
+Act_User --> UC_Session
+Act_User --> UC_Csrf
+UC_AuthCode .> Act_Keycloak : <<redirect>>
+
+' Section 2: Service-to-Service Inter-connections
+Act_BFF --> UC_TokenRelay : "Forwards human requests"
+Act_Backends --> UC_ResourceServer
+Act_Backends --> UC_Whitelist
+Act_Backends --> UC_Audit
+Act_Backends --> UC_ClientCred : "For background consumers"
+
+UC_ResourceServer .> Act_Keycloak : "Validates JWKS / Issuer"
+UC_ClientCred .> Act_Keycloak : "Requests token for lakehouse-internal-client"
+UC_TokenRelay ..> UC_ResourceServer : <<dependency>>
+
+' Section 3: Spark Apps Connections
+Act_Backends --> UC_SubmitSpark
+Act_SparkApps --> UC_SparkCallback
+Act_SparkApps --> UC_Redact
+
+UC_SparkCallback ..> UC_SparkAuth : <<include>>
+UC_SparkAuth .> Act_Keycloak : "Authenticates driver via client_credentials"
+UC_SparkAuth --> Act_Backends : "Calls scheduler / config APIs"
+
+' Section 4: Data Source Credentials Connections
+Act_Backends --> UC_ConnectData : "Task execution (JDBC path)"
+Act_SparkApps --> UC_ConnectData : "Driver & Executors catalogs"
+
+UC_ConnectData ..> UC_ResolveSecrets : <<include>>
+UC_ResolveSecrets ..> UC_CacheSecrets : <<include>>
+UC_ResolveSecrets --> Act_Vault : "Runtime fetch (secret-key coordinate)"
+
+@enduml

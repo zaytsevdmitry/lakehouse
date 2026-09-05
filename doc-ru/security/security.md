@@ -18,6 +18,8 @@ Realm Keycloak: **`lakehouse`** (файл импорта realm: `demo/compose/co
 Секретный материал (пароли БД, ключи S3) вообще не хранится в конфигурационных файлах — он резолвится в рантайме
 из хранилищ секретов (OpenBao/Vault или Yandex Cloud Lockbox), см. [раздел 4](#4-секреты-подключения-к-источникам-данных-credential-providers).
 
+![security_usecases.png](../../doc/security/security_usecases.png)
+
 ---
 
 ## 1. Безопасность между сервисами

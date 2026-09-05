@@ -18,6 +18,8 @@ Keycloak realm: **`lakehouse`** (realm import file: `demo/compose/conf_infra/sec
 Secret material (database passwords, S3 keys) is not stored in configuration files at all - it is resolved at runtime
 from secret stores (OpenBao/Vault or Yandex Cloud Lockbox), see [section 4](#4-secrets-for-data-connections-credential-providers).
 
+
+![security_usecases.png](security_usecases.png)
 ---
 
 ## 1. Service-to-service security
