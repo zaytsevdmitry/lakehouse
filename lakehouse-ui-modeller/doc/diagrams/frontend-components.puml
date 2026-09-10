@@ -1,0 +1,52 @@
+@startuml
+title Frontend — component decomposition
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName "Helvetica"
+skinparam dpi 150
+
+package "frontend root" {
+  [index.html\n(SPA entry point)] as html
+  [vite.config.js\n(dev proxy /v1_0 -> :8094)] as vite
+  [package.json\n(React 18.3.1, @xyflow/react,\nVite 6)] as pkg
+}
+
+package "src" {
+  [main.jsx\n(entry, createRoot)] as main
+  [App.jsx\n(shell: session, profile,\nview switching, notices)] as app
+  [api.js\n(fetch wrapper, Bearer token,\n401 -> session-expired)] as api
+  [auth.js\n(PKCE code flow utils)] as auth
+  [yaml.js\n(lightweight YAML subset\nparser / serializer)] as yaml
+  [index.css\n(design tokens, layout)] as css
+
+  package "components" {
+    [LoginView\n(Keycloak login launch)] as login
+    [WorkspacePicker\n(branches + my workspaces)] as picker
+    [EditorView\n(tree sidebar, form/YAML,\nnew/save/delete/review)] as editor
+    [FormEditor\n(renders /v1_0/schema forms)] as form
+    [DagEditor\n(@xyflow/react node graph)] as dag
+    [Modal.jsx\n(shared overlay)] as modal
+    [AdminView\n(workspaces, TTL, sync logs)] as admin
+  }
+}
+
+main --> app : renders <App/>
+app --> login : no profile
+app --> picker : my workspaces
+app --> editor : open workspace
+app --> admin : ADMIN view
+
+editor --> form : form mode
+editor --> api
+editor --> yaml
+form --> api
+picker --> api
+admin --> api
+
+login --> auth
+auth --> api : /v1_0/auth/config
+app --> auth : exchange code
+
+form ..> dag : dag-kind fields
+api ..> css : styling
+@enduml

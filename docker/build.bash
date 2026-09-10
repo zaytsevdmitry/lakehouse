@@ -20,7 +20,7 @@ set -e
 set -v
 cd  ../
 pwd
-mvn clean package
+mvn clean package install
 cd ./docker/lakehouse
 bash ./build.bash
 cd ../lakehouse-spark-aws
@@ -32,4 +32,4 @@ bash ./build.bash
 cd ../lakehouse-task-proxy4spark
 bash ./build.bash
 
-docker images | grep lakehouse | grep '0.10.0'
+docker images | grep lakehouse | grep '0.11.0'

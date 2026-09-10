@@ -17,7 +17,7 @@
 
 package org.lakehouse.config.vcs.service;
 
-import org.lakehouse.client.api.dto.configs.VcsObjectLogDTO;
+import org.lakehouse.client.api.dto.vcs.VcsObjectLogDTO;
 import org.lakehouse.config.vcs.entity.VcsObjectLog;
 import org.lakehouse.config.vcs.repository.VcsObjectLogRepository;
 import org.springframework.data.jpa.domain.Specification;

@@ -1,0 +1,63 @@
+@startuml
+title State management & ownership
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName "Helvetica"
+skinparam dpi 150
+
+package "App-level state (useState in App.jsx)" {
+  component "services\n(fetched once, prop)" as srv
+  component "catalogTree\n(fetched once, prop)" as cat
+  component "catalogError / servicesError" as err
+  component "username\n(/api/user)" as usr
+  component "theme\n(light|dark)" as thm
+  component "activeSection\n(which section is visible)" as active
+  component "createdSections\n(lazy-mount Set)" as created
+}
+
+package "Section-level state (inside each section)" {
+  component "CatalogsSection\nselectedNode, dataSet,\nactiveTab, treePercent, splitter" as cands
+  component "SchedulesSection\nschedules, headers, selected,\nselectedRunId, from/to, filter" as scheds
+  component "SparkJobsSection\nitems, meta, cursor history,\nselectedId, create form, actions" as sparks
+  component "VcsSection\nsyncLogs, objectLogs,\nactiveTab, filter" as vcsl
+  component "ServicesSection\nedgesConfig, verticesConfig,\nnodes, edges, manualPos" as servs
+}
+
+package "Tab / sub-view state (useState)" {
+  component "PipelineSection\ninstanceId (prop), dag, selectedNode" as pipes
+  component "LineageTab\nnodes, edges, loading" as lines
+  component "RelationsTab\nnodes, edges, constraints" as rels
+  component "ModelTab\nlanguage, activeTab, scripts" as models
+}
+
+package "External / tool-managed state" {
+  component "localStorage\nkey: lakehouse-theme" as ls
+  component "@xyflow/react internal store\n(viewport, selection, drag)" as rf
+}
+
+active --> srv : switch
+active --> cands : switch
+active --> scheds : switch
+active --> sparks : switch
+active --> vcsl : switch
+active --> servs : switch
+created --> active : controls mount
+
+thm ..> ls : persisted
+rf ..> servs : nodes/edges in
+rf ..> pipes : nodes/edges in
+rf ..> lines : nodes/edges in
+rf ..> rels : nodes/edges in
+
+scheds --> pipes : selectedRunId
+cands --> lines : dataSetKeyName
+cands --> rels : dataSet
+cands --> models : dataSet
+
+note bottom
+  No Redux / Zustand / MobX / Context:
+  every store is a local useState inside
+  the owning component. Cross-section data
+  flows top-down through props only.
+end note
+@enduml

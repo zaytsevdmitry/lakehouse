@@ -46,7 +46,7 @@ public class ConstructFactory {
     }
 
 
-    public static Map<String, DataSetConstraintDTO> constraintsEnabledByType(DataSetDTO dataSetDTO, Types.Constraint type) {
+    public static Map<String, DataSetConstraintDTO> constraintsEnabledByType(DataSetDTO dataSetDTO, Types.ConstraintType type) {
         return constraintsEnabledStream(dataSetDTO)
                 .filter(c -> c.getValue().getType().equals(type))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));

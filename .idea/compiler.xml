@@ -27,6 +27,7 @@
         <module name="lakehouse-task-executor-svc" />
         <module name="lakehouse-jinjava" />
         <module name="lakehouse-task-executor-spark-dataset-app" />
+        <module name="lakehouse-ui-modeller" />
         <module name="lakehouse-config-rest-client" />
         <module name="lakehouse-cli" />
         <module name="lakehouse-task-executor-spark-dq-app" />
@@ -67,6 +68,7 @@
       <module name="lakehouse-task-proxy-for-spark" options="-parameters" />
       <module name="lakehouse-task-proxy-for-spark-api" options="-parameters" />
       <module name="lakehouse-task-proxy-for-spark-rest-client" options="-parameters" />
+      <module name="lakehouse-ui-modeller" options="-parameters" />
       <module name="lakehouse-ui-svc" options="-parameters" />
       <module name="lakehouse-validators" options="-parameters" />
     </option>

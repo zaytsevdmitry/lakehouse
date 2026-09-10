@@ -34,7 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class DataSetConstraintServiceTest {
+class DataSetConstraintTypeServiceTest {
 
     private final DataSetConstraintRepository dataSetConstraintRepository =
             mock(DataSetConstraintRepository.class);
@@ -49,7 +49,7 @@ class DataSetConstraintServiceTest {
         return dataSet;
     }
 
-    private DataSetConstraint constraint(Long id, DataSet dataSet, String name, Types.Constraint type) {
+    private DataSetConstraint constraint(Long id, DataSet dataSet, String name, Types.ConstraintType type) {
         DataSetConstraint constraint = new DataSetConstraint();
         constraint.setId(id);
         constraint.setDataSet(dataSet);
@@ -57,7 +57,7 @@ class DataSetConstraintServiceTest {
         constraint.setType(type);
         constraint.setColumns("client_id");
         constraint.setEnabled(true);
-        constraint.setConstraintLevelCheck(Types.ConstraintLevelCheck.construct);
+        constraint.setConstraintLevelCheck(Types.ConstraintLevelCheck.CONSTRUCT);
         return constraint;
     }
 
@@ -65,8 +65,8 @@ class DataSetConstraintServiceTest {
     void mapsForeignKeyReferenceToReferencedDataSetNotCurrent() {
         DataSet dds = dataSet("transaction_dds");
         DataSet client = dataSet("client_processing");
-        DataSetConstraint fk = constraint(8L, dds, "transaction_processing_client_fk", Types.Constraint.foreign);
-        DataSetConstraint refPk = constraint(1L, client, "client_processing_pk", Types.Constraint.primary);
+        DataSetConstraint fk = constraint(8L, dds, "transaction_processing_client_fk", Types.ConstraintType.FOREIGN);
+        DataSetConstraint refPk = constraint(1L, client, "client_processing_pk", Types.ConstraintType.PRIMARY);
 
         ForeignKeyReference reference = new ForeignKeyReference();
         reference.setId(1L);

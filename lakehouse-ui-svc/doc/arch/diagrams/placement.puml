@@ -1,0 +1,70 @@
+@startuml
+title Lakehouse UI — component placement & composition
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName "Helvetica"
+skinparam dpi 150
+
+[App.jsx\n.container .app] as app
+[header .app-header\n(h1 + header-actions:\nuser label, switch user, theme)] as hdr
+[nav .section-switcher\n(Services | Catalog | Schedules |\nSparkJobs | VCS)] as nav
+[main .app-main\n(renders section-panes)] as main
+
+app ..> hdr
+app ..> nav
+app ..> main : owns\nglobal state:\nactiveSection,\ncreatedSections,\nservices, catalogTree
+
+package "Sections (section-pane)" {
+  [ServicesSection] as s1
+  [CatalogsSection] as s2
+  [SchedulesSection] as s3
+  [SparkJobsSection] as s4
+  [VcsSection] as s5
+}
+
+main --> s1 : hidden if inactive
+main --> s2 : hidden if inactive
+main --> s3 : hidden if inactive
+main --> s4 : hidden if inactive
+main --> s5 : hidden if inactive
+
+package "CatalogsSection layout\n(.catalogs-layout: flex)" {
+  [pane .tree\n(recursive TreeNode)] as ctrl
+  [splitter .catalog-splitter\n(drag to resize)] as csplit
+  [pane .tabs\n(dataset/states/columns/\nconstraints/lineage/model/relations)] as ctabs
+}
+s2 --> ctrl
+s2 --> csplit
+s2 --> ctabs
+
+package "SchedulesSection layout\n(.catalogs-layout: flex)" {
+  [pane .schedule-names-pane] as n1
+  [splitter] as ssplit
+  [pane .schedule-runs-pane] as n2
+  [.pipeline-section\nPipelineSection (below)] as n3
+}
+s3 --> n1
+s3 --> ssplit
+s3 --> n2
+s3 --> n3
+
+package "SparkJobsSection layout\n(.catalogs-layout: flex)" {
+  [pane .spark-table-pane\n(table + pagination + create form)] as j1
+  [splitter] as jsplit
+  [pane .spark-details-pane] as j2
+}
+s4 --> j1
+s4 --> jsplit
+s4 --> j2
+
+package "VcsSection layout" {
+  [tabs: VCSLog | VCSObjectsSearch] as vt
+  [.vcs-log-layout: vertical split\n(log rows / objects)] as vp
+}
+s5 --> vt
+s5 --> vp
+
+note bottom of nav
+  Switching = setState(activeSection)\n+ lazy-mount marker (createdSections)
+end note
+@enduml

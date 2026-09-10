@@ -1,0 +1,73 @@
+@startuml
+title Frontend — state ownership
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName "Helvetica"
+skinparam dpi 150
+
+package "App.jsx — global (session-scoped) state" {
+  map "config" as cfg {
+    issuerUri => + /v1_0/auth/config
+  }
+  map "session" as ses {
+    accessToken => localStorage (loadSession/saveSession)
+    refreshToken => ""
+    expiresAt => "Date.now() + expires_in"
+    username => "JWT preferred_username"
+  }
+  map "profile" as prof {
+    username => + /v1_0/auth/me
+    roles => + realm/client roles
+    effectiveRole => viewer | editor | admin
+  }
+  map "openWorkspace" as ow {
+    id => + /v1_0/vcs/workspace
+    branch => ""
+  }
+}
+ses --> cfg : buildAuthorizeUrl / exchangeCode
+prof --> ses : refreshProfile(session.accessToken)
+
+package "EditorView — per-file local state" {
+  map "tree" as tree {
+    entries => /workspaces/{id}/tree
+  }
+  map "selected" as sel {
+    entry => {path, kind, keyName, isKeyNameEditable}
+  }
+  map "doc / yaml" as doc {
+    parse => parseYaml
+    serialize => stringifyYaml
+  }
+  map "mode" as mode {
+    form => "FormEditor"
+    raw => "textarea"
+  }
+  map "dirty / busy / modals" as dbm {
+    flags => new/save/delete/review modals
+  }
+}
+tree --> api : /workspaces/{id}/tree
+sel --> doc : openFile (GET /files/{path})
+mode --> doc : form <-> raw switch
+dbm --> api : save / delete / review
+
+package "DagEditor — module-level" {
+  map "nodePositions" as npos {
+    scope => "per session, in-memory Map"
+  }
+}
+
+package "AdminView — local state" {
+  map "workspaces / logs" as aws {
+    lists => admin workspaces, sync logs
+  }
+}
+aws --> api : /v1_0/admin/*
+
+note bottom
+  No global store: state is passed top-down as props.
+  Session persistence = localStorage; expiry via the
+  "lakehouse:session-expired" window event.
+end note
+@enduml

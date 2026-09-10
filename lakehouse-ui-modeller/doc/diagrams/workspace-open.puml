@@ -1,0 +1,48 @@
+@startuml
+title Workspace open / create (server-side working copy)
+skinparam sequenceMessageAlign center
+skinparam shadowing false
+skinparam defaultFontName "Helvetica"
+skinparam dpi 150
+
+actor SPA
+participant "VcsController" as V
+participant "VcsService" as S
+participant "WorkspaceManager" as M
+participant "WorkspaceStorage" as ST
+participant "VcsProvider" as P
+participant "Git hosting" as G
+
+SPA -> V: POST /v1_0/vcs/workspace {branch}
+activate V
+V -> S: openWorkspace(request, auth)
+activate S
+S -> S: requireRole(auth)
+S -> M: openWorkspace(username, branch)
+activate M
+M -> M: id = md5(username | branch)
+M -> M: synchronizedOn(id) — per-workspace lock
+
+alt workspace does not exist
+  M -> ST: create(id)
+  activate ST
+  ST --> M: ok
+  deactivate ST
+  M -> P: readBranchFiles(branch)   (seeds the workspace)
+  activate P
+  P -> G: read branch YAML files
+  G --> P: {path -> yaml}
+  P --> M: snapshot
+  deactivate P
+  M -> ST: writeAll(id, snapshot)
+end
+
+M -> ST: _workspace.json metadata (createdAt, lastAccessedAt)
+ST --> M: ok
+M --> S: Workspace(id, branch, owner, ...)
+deactivate M
+S --> V: WorkspaceResponse(id, branch, owner, ...)
+deactivate S
+V --> SPA: 201 WorkspaceResponse
+deactivate V
+@enduml

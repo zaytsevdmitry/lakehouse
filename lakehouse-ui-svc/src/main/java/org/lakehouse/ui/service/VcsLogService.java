@@ -16,8 +16,8 @@
  */
 package org.lakehouse.ui.service;
 
-import org.lakehouse.client.api.dto.configs.VcsObjectLogDTO;
-import org.lakehouse.client.api.dto.configs.VcsSyncLogDTO;
+import org.lakehouse.client.api.dto.vcs.VcsObjectLogDTO;
+import org.lakehouse.client.api.dto.vcs.VcsSyncLogDTO;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.springframework.stereotype.Service;
 

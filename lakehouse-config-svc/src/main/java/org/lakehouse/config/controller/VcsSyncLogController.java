@@ -19,7 +19,7 @@ package org.lakehouse.config.controller;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.lakehouse.client.api.constant.Endpoint;
-import org.lakehouse.client.api.dto.configs.VcsSyncLogDTO;
+import org.lakehouse.client.api.dto.vcs.VcsSyncLogDTO;
 import org.lakehouse.config.vcs.service.VcsSyncLogService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;

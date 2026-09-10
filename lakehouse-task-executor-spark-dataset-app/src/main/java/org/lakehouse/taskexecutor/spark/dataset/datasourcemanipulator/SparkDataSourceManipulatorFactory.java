@@ -49,7 +49,7 @@ public class SparkDataSourceManipulatorFactory implements DataSourceManipulatorF
             JinJavaUtils jinJavaUtils,
             ConfigRestClientApi configRestClientApi) throws TaskConfigurationException {
         DataSourceManipulator result = null;
-        if (targetDataSource.getDataSourceType().equals(Types.DataSourceType.database)){
+        if (targetDataSource.getDataSourceType().equals(Types.DataSourceType.DATABASE)){
             result = new DataSourceManipulatorFactoryImpl().buildDataSourceManipulator(
                     targetDataSource,targetDataSet,sqlTemplateDTO,
                     jinJavaUtils,configRestClientApi
@@ -64,9 +64,9 @@ public class SparkDataSourceManipulatorFactory implements DataSourceManipulatorF
                     targetDataSet);
 
 
-            if (targetDataSource.getDataSourceType().equals(Types.DataSourceType.iceberg)) {
+            if (targetDataSource.getDataSourceType().equals(Types.DataSourceType.ICEBERG)) {
                 result = new IcebergSparkSQLDataSourceManipulator(parameter);
-            } else if (targetDataSource.getDataSourceType().equals(Types.DataSourceType.file)) {
+            } else if (targetDataSource.getDataSourceType().equals(Types.DataSourceType.FILE)) {
                 result = new FileSparkSQLDataSourceManipulator(parameter);
             } else {
                 throw new UnsuportedDataSourceException(

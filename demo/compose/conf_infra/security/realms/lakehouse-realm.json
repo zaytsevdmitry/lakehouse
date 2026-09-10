@@ -4,14 +4,11 @@
   "enabled": true,
   "roles": {
     "realm": [
-      {
-        "name": "USER",
-        "description": "Обычный пользователь экосистемы"
-      },
-      {
-        "name": "ADMIN",
-        "description": "Администратор с полным доступом к Spark и конфигурациям"
-      }
+      { "name": "USER", "description": "Обычный пользователь экосистемы" },
+      { "name": "ADMIN", "description": "Администратор с полным доступом к Spark и конфигурациям" },
+      { "name": "LAKEHOUSE_MODELLER_VIEWER", "description": "Просмотр воркспейсов и конфигураций в lakehouse-ui-modeller" },
+      { "name": "LAKEHOUSE_MODELLER_EDITOR", "description": "Редактирование конфигураций и отправка на review в lakehouse-ui-modeller" },
+      { "name": "LAKEHOUSE_MODELLER_ADMIN", "description": "Администрирование lakehouse-ui-modeller (воркспейсы, TTL, журнал)" }
     ]
   },
   "users": [
@@ -23,14 +20,8 @@
       "enabled": true,
       "emailVerified": true,
       "requiredActions": [],
-      "credentials": [
-        {
-          "type": "password",
-          "value": "de_view",
-          "temporary": false
-        }
-      ],
-      "realmRoles": ["USER"]
+      "credentials": [{ "type": "password", "value": "de_view", "temporary": false }],
+      "realmRoles": ["USER", "LAKEHOUSE_MODELLER_VIEWER"]
     },
     {
       "username": "de_editor",
@@ -40,14 +31,19 @@
       "enabled": true,
       "emailVerified": true,
       "requiredActions": [],
-      "credentials": [
-        {
-          "type": "password",
-          "value": "de_editor",
-          "temporary": false
-        }
-      ],
-      "realmRoles": ["ADMIN"]
+      "credentials": [{ "type": "password", "value": "de_editor", "temporary": false }],
+      "realmRoles": ["ADMIN", "LAKEHOUSE_MODELLER_EDITOR"]
+    },
+    {
+      "username": "de_admin",
+      "firstName": "Data",
+      "lastName": "Administrator",
+      "email": "de_admin@lakehouse.local",
+      "enabled": true,
+      "emailVerified": true,
+      "requiredActions": [],
+      "credentials": [{ "type": "password", "value": "de_admin", "temporary": false }],
+      "realmRoles": ["ADMIN", "LAKEHOUSE_MODELLER_ADMIN"]
     }
   ],
   "clients": [
@@ -62,10 +58,13 @@
       "directAccessGrantsEnabled": false,
       "redirectUris": [
         "http://localhost:8080/*",
-        "http://localhost:8080/login/oauth2/code/keycloak"
+        "http://localhost:8080/login/oauth2/code/keycloak",
+        "http://172.20.193.170:8084/*",
+        "http://172.20.193.170:8084/login/oauth2/code/keycloak"
       ],
       "webOrigins": [
-        "http://localhost:8080"
+        "http://localhost:8080",
+        "http://172.20.193.170:8084"
       ]
     },
     {
@@ -78,6 +77,25 @@
       "standardFlowEnabled": false,
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": true
+    },
+    {
+      "clientId": "lakehouse-ui-modeller",
+      "name": "UI Modeller SPA Client",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": [
+        "http://localhost:18095/*"
+      ],
+      "webOrigins": [
+        "http://localhost:18095"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:18095/*"
+      }
     }
   ]
 }

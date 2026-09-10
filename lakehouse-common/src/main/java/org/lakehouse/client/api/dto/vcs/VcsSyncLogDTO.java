@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.lakehouse.client.api.dto.configs;
+package org.lakehouse.client.api.dto.vcs;
 
 import java.io.Serializable;
 import java.time.OffsetDateTime;

@@ -16,8 +16,8 @@
  */
 package org.lakehouse.ui.controller;
 
-import org.lakehouse.client.api.dto.configs.VcsObjectLogDTO;
-import org.lakehouse.client.api.dto.configs.VcsSyncLogDTO;
+import org.lakehouse.client.api.dto.vcs.VcsObjectLogDTO;
+import org.lakehouse.client.api.dto.vcs.VcsSyncLogDTO;
 import org.lakehouse.ui.service.VcsLogService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;

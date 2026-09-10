@@ -1,0 +1,56 @@
+@startuml
+title Data flow: component → api.js → BFF → downstream service
+skinparam shadowing false
+skinparam defaultFontName "Helvetica"
+skinparam dpi 150
+autonumber
+
+actor "Browser user" as user
+participant "React component" as comp
+participant "api.js\n(apiFetch wrapper)" as api
+participant "Vite dev server\n(dev only)" as vite
+participant "Spring Boot BFF\n(controller)" as bff
+participant "Keycloak\n(OAuth2 / OpenID)" as kc
+participant "Downstream service\n(config / scheduler /\nstate / task-proxy)" as ds
+
+group Read request (e.g. GET /api/services)
+  comp -> api : fetchServices()\nmerely apiFetch('/api/services')
+  api -> vite : fetch (same-origin cookie)
+  vite -> bff : GET /api/services\n(session cookie JSESSIONID)
+  bff -> ds : REST client call
+  ds --> bff : JSON reply
+  bff --> vite : 200 JSON\n(+ XSRF-TOKEN cookie)
+  vite --> api : response
+  api --> comp : response.json()
+  comp -> comp : setState(...) → re-render
+end
+
+group State-changing request (e.g. POST /api/schedules)
+  comp -> api : fetchSchedules(...)  (POST)
+  user -> user : chooses date range\nand clicks Refresh
+  api -> api : read XSRF-TOKEN cookie\nset header X-XSRF-TOKEN
+  api -> vite : fetch POST\n(bearer-free, session cookie)
+  vite -> bff : POST /api/schedules\n+ X-XSRF-TOKEN
+  bff -> bff : validate CSRF token,\nauthenticate session
+  bff -> ds : REST client call
+  ds --> bff : JSON reply
+  bff --> api : 200 JSON
+  api --> comp : response.json()
+  comp -> comp : setState(...) → re-render
+end
+
+group First access / expired session
+  user -> bff : GET /
+  bff --> user : 302 → Keycloak login
+  user -> kc : authenticate
+  kc --> user : redirect back\n(code → session)
+end
+
+note over api
+  Native fetch API only.
+  Safe methods (GET/HEAD/OPTIONS/TRACE)
+  are sent without a CSRF header;
+  all others get X-XSRF-TOKEN from the
+  XSRF-TOKEN cookie (Spring CSRF).
+end note
+@enduml

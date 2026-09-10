@@ -121,7 +121,7 @@ public class QualityMetricRunner {
         else {
             logger.info("{}.metric thresholds violated ", qualityMetricsConfDTO.getKeyName());
             saveMetric(Status.DQMetric.FAILED);
-            if (qualityMetricsConfDTO.getDqThresholdViolationLevel().equals(Types.DQThresholdViolationLevel.error))
+            if (qualityMetricsConfDTO.getDqThresholdViolationLevel().equals(Types.DQThresholdViolationLevel.ERROR))
                 throw new TaskFailedException("");
         }
     }
@@ -147,8 +147,8 @@ public class QualityMetricRunner {
     }
     private TestSetRunner getTestSetRunner(Types.DQMetricTestSetType type) throws TaskFailedException {
         return switch (type) {
-            case integrity -> applicationContext.getBean(ConstraintTestSetRunner.class);
-            case sparkSQL   -> applicationContext.getBean(SparkSQLTestSetRunner.class);
+            case INTEGRITY ->  applicationContext.getBean(ConstraintTestSetRunner.class);
+            case SPARK_SQL ->  applicationContext.getBean(SparkSQLTestSetRunner.class);
             default         -> throw new TaskFailedException("Unknown DQMetricsType");
         };
     }

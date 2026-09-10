@@ -18,8 +18,8 @@
 package org.lakehouse.config.controller;
 
 import org.junit.jupiter.api.Test;
-import org.lakehouse.client.api.dto.configs.VcsObjectLogDTO;
-import org.lakehouse.client.api.dto.configs.VcsSyncLogDTO;
+import org.lakehouse.client.api.dto.vcs.VcsObjectLogDTO;
+import org.lakehouse.client.api.dto.vcs.VcsSyncLogDTO;
 import org.lakehouse.config.vcs.service.VcsObjectLogService;
 import org.lakehouse.config.vcs.service.VcsSyncLogService;
 

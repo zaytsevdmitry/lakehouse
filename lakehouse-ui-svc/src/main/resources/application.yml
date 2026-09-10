@@ -97,6 +97,13 @@ lakehouse:
           url: http://localhost:9092
           health-check-url: localhost:9092
           check-type: tcp
+        - name: lakehouse-ui-modeller
+          url: http://localhost:8093
+          health-check-url: http://localhost:8093/healthz
+        - name: git-server
+          url: http://localhost:9418
+          health-check-url: localhost:9418
+          check-type: tcp
       vertices:
         config-svc: lakehouse-config-svc
         scheduler-svc: lakehouse-scheduler-svc
@@ -105,6 +112,8 @@ lakehouse:
         spark-proxy: lakehouse-task-proxy-for-spark
         postgres: postgres-db
         kafka: kafka-broker
+        lakehouse-ui-modeller: lakehouse-ui-modeller
+        git-server: git-server
       edges:
         config-svc:
           - state-svc
@@ -115,6 +124,8 @@ lakehouse:
           - task-executor-1
         task-executor-1:
           - spark-proxy
+        lakehouse-ui-modeller:
+          - git-server
 
 ---
 # Production profile: enforce HTTPS-only session cookie for the BFF

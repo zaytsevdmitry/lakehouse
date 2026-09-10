@@ -284,7 +284,14 @@ public class JinjavaTest {
         conf.setTargetDataSetKeyName(dataSetDTO.getKeyName());
         Map<String,Object> context = ObjectMapping.asMap(conf);
 
-        String constraintName = dataSetDTO.getConstraints().entrySet().stream().filter(e -> e.getValue().getType().equals(Types.Constraint.primary)).map(Map.Entry::getKey).findFirst().get();
+        String constraintName = dataSetDTO
+                .getConstraints()
+                .entrySet()
+                .stream()
+                .filter(e -> e.getValue().getType().equals(Types.ConstraintType.PRIMARY))
+                .map(Map.Entry::getKey)
+                .findFirst()
+                .get();
         context.put(SystemVarKeys.CONSTRAINT_NAME, constraintName);
 
         String template = configRestClientApi.getScript(driverDTO.getSqlTemplate().getPrimaryKeyDDL());
@@ -310,7 +317,13 @@ public class JinjavaTest {
         conf.setTargetDataSetKeyName(targetDataSet.getKeyName());
         Map<String,Object> context = ObjectMapping.asMap(conf);
 
-        Map.Entry<String, DataSetConstraintDTO> fkDTO = targetDataSet.getConstraints().entrySet().stream().filter(e -> e.getValue().getType().equals(Types.Constraint.foreign)).findFirst().orElseThrow();
+        Map.Entry<String, DataSetConstraintDTO> fkDTO = targetDataSet
+                .getConstraints()
+                .entrySet()
+                .stream()
+                .filter(e -> e.getValue().getType().equals(Types.ConstraintType.FOREIGN))
+                .findFirst()
+                .orElseThrow();
 
         context.put("constraintName", fkDTO.getKey());
 

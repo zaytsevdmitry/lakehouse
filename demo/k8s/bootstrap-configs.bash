@@ -2,7 +2,7 @@
 set -e
 
 # Configuration
-VERSION="0.10.0"
+VERSION="0.11.0"
 TMP_DIR="/tmp/lakehouse_k8s_conf_${VERSION}"
 LOCAL_CONF_SRC="./conf_git"
 NAMESPACE="lakehouse-management"

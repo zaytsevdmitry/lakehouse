@@ -77,7 +77,7 @@ class GitOpsYamlParserTest {
         assertThat(parsed.kind()).isEqualTo(ConfigKind.DATA_SOURCE);
         assertThat(parsed.dto()).isInstanceOf(DataSourceDTO.class);
         DataSourceDTO dto = (DataSourceDTO) parsed.dto();
-        assertThat(dto.getDataSourceType()).isEqualTo(Types.DataSourceType.database);
+        assertThat(dto.getDataSourceType()).isEqualTo(Types.DataSourceType.DATABASE);
         assertThat(dto.getDatabaseProtocol()).isEqualTo(DatabaseProtocol.MYSQL);
         assertThat(parser.resolveKey(parsed)).isEqualTo("mysql");
     }

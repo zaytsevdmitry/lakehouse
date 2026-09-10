@@ -24,7 +24,6 @@ import org.lakehouse.client.api.dto.configs.NameDescriptionAbstract;
 import org.lakehouse.client.api.dto.configs.dataset.ColumnDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetConstraintDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
-import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.utils.ObjectMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -106,7 +105,7 @@ public class TaskProcessConfigExtractor {
 
     private static Optional<Map.Entry<String,DataSetConstraintDTO>> findByType(
             DataSetDTO dataSetDTO,
-            Types.Constraint constraintType){
+            Types.ConstraintType constraintType){
         Optional<Map.Entry<String,DataSetConstraintDTO>> result = dataSetDTO
                 .getConstraints()
                 .entrySet()
@@ -118,9 +117,9 @@ public class TaskProcessConfigExtractor {
     private static List<String> getKeyColumnNames(
         DataSetDTO dataSetDTO){
     return Arrays.stream(
-            findByType(dataSetDTO,Types.Constraint.primary)
+            findByType(dataSetDTO, Types.ConstraintType.PRIMARY)
             .orElseGet(() ->
-                    findByType(dataSetDTO,Types.Constraint.unique)
+                    findByType(dataSetDTO, Types.ConstraintType.UNIQUE)
                             .orElseThrow(() ->
                                     new IllegalArgumentException(
                                             String.format("Attribute 'dataSetDTO'='%s' must contain primary or unique constraint",dataSetDTO.getKeyName()))))

@@ -19,8 +19,8 @@ package org.lakehouse.test.config.api;
 
 import org.apache.hc.core5.http.HttpStatus;
 import org.lakehouse.client.api.constant.SystemVarKeys;
-import org.lakehouse.client.api.dto.configs.VcsObjectLogDTO;
-import org.lakehouse.client.api.dto.configs.VcsSyncLogDTO;
+import org.lakehouse.client.api.dto.vcs.VcsObjectLogDTO;
+import org.lakehouse.client.api.dto.vcs.VcsSyncLogDTO;
 import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
 import org.lakehouse.client.api.dto.configs.ScriptReferenceDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;

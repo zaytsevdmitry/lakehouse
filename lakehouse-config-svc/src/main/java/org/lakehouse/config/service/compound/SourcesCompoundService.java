@@ -77,7 +77,7 @@ public class SourcesCompoundService {
                 dataSetDTO.getConstraints()
                         .values()
                         .stream()
-                        .filter(c-> c.getType().equals(Types.Constraint.foreign))
+                        .filter(c-> c.getType().equals(Types.ConstraintType.FOREIGN))
                         .map(c -> c.getReference().getDataSetKeyName())
                         .toList());
 

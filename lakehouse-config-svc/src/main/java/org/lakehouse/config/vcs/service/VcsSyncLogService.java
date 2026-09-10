@@ -17,7 +17,7 @@
 
 package org.lakehouse.config.vcs.service;
 
-import org.lakehouse.client.api.dto.configs.VcsSyncLogDTO;
+import org.lakehouse.client.api.dto.vcs.VcsSyncLogDTO;
 import org.lakehouse.config.vcs.entity.VcsSyncLog;
 import org.lakehouse.config.vcs.entity.VcsSyncStatus;
 import org.lakehouse.config.vcs.repository.VcsSyncLogRepository;

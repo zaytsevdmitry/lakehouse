@@ -1,0 +1,34 @@
+@startuml
+title Frontend — authentication and data flow
+skinparam sequenceMessageAlign center
+skinparam shadowing false
+skinparam defaultFontName "Helvetica"
+skinparam dpi 150
+
+actor User
+participant "SPA (auth.js)" as SPA
+participant "Keycloak" as KC
+participant "Modeller API (/v1_0)" as API
+
+User -> SPA : opens application
+SPA -> API : GET /v1_0/auth/config (public)
+API --> SPA : {issuerUri, auth/token endpoints,\n clientId, scope, authStrategy}
+SPA -> KC : authorization-code + PKCE\n(authorize URL with code_challenge=S256)
+User -> KC : login + consent
+KC --> SPA : redirect ?code&state
+SPA -> KC : POST token (code + code_verifier)
+KC --> SPA : {access_token, refresh_token, expires_in}
+SPA -> SPA : saveSession (localStorage)
+
+group every authenticated request
+  SPA -> API : fetch('/v1_0/...', {Authorization: Bearer <access_token>})
+  API -> API : JWT validation (issuer/JWK), role extraction
+  alt invalid / expired token (401)
+    API --> SPA : 401 {"error": ...}
+    SPA -> SPA : clearSession + dispatch lakehouse:session-expired
+    SPA --> User : back to LoginView
+  else valid
+    API --> SPA : JSON payload
+  end
+end
+@enduml

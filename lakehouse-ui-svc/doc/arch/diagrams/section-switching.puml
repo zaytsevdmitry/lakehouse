@@ -1,0 +1,50 @@
+@startuml
+title Section switching logic (App.jsx)
+skinparam shadowing false
+skinparam defaultFontName "Helvetica"
+skinparam dpi 150
+
+scale 1.4
+
+state "initial: activeSection = services\ncreatedSections = {services}" as init
+
+state "section = services\n[SERVICES]\nServicesSection mounted" as services
+state "section = catalog\n[CATALOG]\nCatalogsSection mounted\n(created on first switch)" as catalog
+state "section = schedules\n[SCHEDULES]\nSchedulesSection mounted\n(created on first switch)" as schedules
+state "section = sparkjobs\n[SPARKJOBS]\nSparkJobsSection mounted\n(created on first switch)" as sparkjobs
+state "section = vcs\n[VCS]\nVcsSection mounted\n(created on first switch)" as vcs
+
+init --> services
+
+services --> catalog : activateSection('catalog')  → catalog added to createdSections
+catalog --> services : activateSection('services')
+catalog --> schedules : activateSection('schedules')  → schedules added
+catalog --> sparkjobs : activateSection('sparkjobs')  → sparkjobs added
+catalog --> vcs : activateSection('vcs')  → vcs added
+
+schedules --> services : activateSection('services')
+schedules --> catalog : activateSection('catalog')
+schedules --> sparkjobs : activateSection('sparkjobs')
+schedules --> vcs : activateSection('vcs')
+
+sparkjobs --> services : activateSection('services')
+sparkjobs --> catalog : activateSection('catalog')
+sparkjobs --> schedules : activateSection('schedules')
+sparkjobs --> vcs : activateSection('vcs')
+
+vcs --> services : activateSection('services')
+vcs --> catalog : activateSection('catalog')
+vcs --> schedules : activateSection('schedules')
+vcs --> sparkjobs : activateSection('sparkjobs')
+
+note bottom
+  Render rule (App.jsx):
+
+  createdSections.has(key)  → mount section-pane div
+  hidden = (activeSection !== key)
+
+  ⇒ once visited, a section stays mounted
+    and is only hidden (state preserved);
+    a not-yet-visited section is not mounted.
+end note
+@enduml

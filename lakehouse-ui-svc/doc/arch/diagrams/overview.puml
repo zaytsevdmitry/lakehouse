@@ -1,0 +1,66 @@
+@startuml
+title Lakehouse UI — component decomposition
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName "Helvetica"
+skinparam dpi 150
+
+package "frontend root" {
+  [index.html] as html
+  [vite.config.js\n(dev proxy /api -> :8091)] as vite
+  [package.json\n(React 18, @xyflow/react,\nreact-syntax-highlighter)] as pkg
+}
+
+package "src" {
+  [main.jsx\n(entry, createRoot)] as main
+  [App.jsx\n(layout, section switcher,\ntheme, global state)] as app
+  [api.js\n(fetch wrapper,\nCSRF header)] as api
+  [styles.css\n(CSS custom properties)] as css
+
+  package "components" {
+
+    package "Sections" {
+      [ServicesSection\n(service graph + cards)] as serv
+      [CatalogsSection\n(catalog tree + tabs)] as cat
+      [SchedulesSection\n(schedules + runs)] as sched
+      [SparkJobsSection\n(submissions)] as spark
+      [VcsSection\n(file: CvsSection.jsx)] as vcs
+    }
+
+    package "Graph / DAG views" {
+      [PipelineSection\n(schedule DAG)] as pipe
+      [LineageTab\n(dataset lineage)] as lin
+      [RelationsTab\n(ER diagram)] as rel
+    }
+
+    package "Tabs / details" {
+      [ModelTab\n(scripts, syntax highlight)] as model
+    }
+  }
+}
+
+html --> main : module script
+main --> app : renders <App/>
+app --> serv : section
+app --> cat : section
+app --> sched : section
+app --> spark : section
+app --> vcs : section
+
+sched --> pipe : selected run id
+cat --> lin : tab
+cat --> rel : tab
+cat --> model : tab
+
+serv --> api
+cat --> api
+sched --> api
+spark --> api
+vcs --> api
+pipe --> api
+lin --> api
+rel --> api
+model --> api
+
+app ..> css : uses
+@enduml

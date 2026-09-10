@@ -81,14 +81,14 @@ class CatalogServiceTest {
 
         DataSetDTO order = dataSet("order_processing", "demo", "public", "order_t");
         DataSetConstraintDTO pk = new DataSetConstraintDTO();
-        pk.setType(Types.Constraint.primary);
+        pk.setType(Types.ConstraintType.PRIMARY);
         pk.setColumns("order_id");
-        pk.setConstraintLevelCheck(Types.ConstraintLevelCheck.construct);
+        pk.setConstraintLevelCheck(Types.ConstraintLevelCheck.CONSTRUCT);
 
         DataSetConstraintDTO fk = new DataSetConstraintDTO();
-        fk.setType(Types.Constraint.foreign);
+        fk.setType(Types.ConstraintType.FOREIGN);
         fk.setColumns("customer_id");
-        fk.setConstraintLevelCheck(Types.ConstraintLevelCheck.none);
+        fk.setConstraintLevelCheck(Types.ConstraintLevelCheck.NONE);
         ForeignKeyReferenceDTO reference = new ForeignKeyReferenceDTO();
         reference.setDataSetKeyName("customer_processing");
         reference.setConstraintName("pk_customer");
@@ -110,20 +110,20 @@ class CatalogServiceTest {
         assertThat(rows).hasSize(2);
         ConstraintDTO pkRow = rows.get(0);
         assertThat(pkRow.getName()).isEqualTo("pk_order");
-        assertThat(pkRow.getType()).isEqualTo("primary");
+        assertThat(pkRow.getType().label).isEqualTo("primary");
         assertThat(pkRow.getColumns()).isEqualTo("order_id");
         assertThat(pkRow.isEnabled()).isTrue();
-        assertThat(pkRow.getConstraintLevelCheck()).isEqualTo("construct");
+        assertThat(pkRow.getConstraintLevelCheck().label).isEqualTo("construct");
         assertThat(pkRow.getReferencedTable()).isNull();
 
         ConstraintDTO fkRow = rows.get(1);
         assertThat(fkRow.getName()).isEqualTo("fk_order_customer");
-        assertThat(fkRow.getType()).isEqualTo("foreign");
-        assertThat(fkRow.getConstraintLevelCheck()).isEqualTo("none");
+        assertThat(fkRow.getType().label).isEqualTo("foreign");
+        assertThat(fkRow.getConstraintLevelCheck().label).isEqualTo("none");
         assertThat(fkRow.getReferencedTable()).isEqualTo("demo.public.customer_t");
         assertThat(fkRow.getReferenceConstraintName()).isEqualTo("pk_customer");
-        assertThat(fkRow.getOnDelete()).isEqualTo("CASCADE");
-        assertThat(fkRow.getOnUpdate()).isEqualTo("NO ACTION");
+        assertThat(fkRow.getOnDelete().label).isEqualTo("CASCADE");
+        assertThat(fkRow.getOnUpdate().label).isEqualTo("NO ACTION");
     }
 
     @Test
