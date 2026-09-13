@@ -95,6 +95,16 @@ public class VcsService {
                 .toList();
     }
 
+    /**
+     * Deletes the caller's own workspace (or any workspace for admins).
+     */
+    public void deleteWorkspace(String workspaceId, Authentication authentication) {
+        UserContext user = users.requireRole(authentication);
+        Workspace workspace = requireOwnWorkspace(workspaceId, user);
+        manager.deleteWorkspace(workspaceId);
+        logs.log("INFO", user.username(), "DELETE_WORKSPACE", workspace.branch(), workspace.id());
+    }
+
     public List<String> branches() {
         return vcs.listBranches();
     }

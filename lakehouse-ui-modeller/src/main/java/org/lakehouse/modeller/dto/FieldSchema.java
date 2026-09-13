@@ -14,7 +14,9 @@ import java.util.List;
  *   <li>{@code enumValues}/{@code enumDefault} render the property as a dropdown
  *       (values use the camelCase/lowercase convention stored in the YAML);</li>
  *   <li>{@code picker} turns a read-only property into a picker-backed input
- *       ({@code "datasetConstraint"}, {@code "columns"} or {@code "scriptKey"});</li>
+ *       ({@code "datasetConstraint"}, {@code "columns"}, {@code "scriptKey"},
+ *       {@code "nameSpace"}, {@code "dataSource"}, {@code "task"}, {@code
+ *       "taskExecutionServiceGroup"} or {@code "driver"});</li>
  *   <li>{@code clearable} adds a "×" button next to a picker field that clears
  *       the value after a confirmation;</li>
  *   <li>{@code visibleField}/{@code visibleValue} hide the property unless a

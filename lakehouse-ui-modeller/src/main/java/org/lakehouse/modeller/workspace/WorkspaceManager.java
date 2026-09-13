@@ -2,6 +2,7 @@ package org.lakehouse.modeller.workspace;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.lakehouse.modeller.auth.NotFoundException;
 import org.lakehouse.modeller.storage.WorkspaceStorage;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
@@ -101,7 +102,7 @@ public class WorkspaceManager {
     public Workspace workspace(String workspaceId) {
         return readMetadata(workspaceId)
                 .map(m -> new Workspace(m.workspace(), m.branch(), m.owner(), m.createdAt(), m.lastAccessedAt()))
-                .orElseThrow(() -> new IllegalArgumentException("Workspace " + workspaceId + " does not exist"));
+                .orElseThrow(() -> new NotFoundException("Workspace " + workspaceId + " does not exist"));
     }
 
     public boolean exists(String workspaceId) {
@@ -135,7 +136,7 @@ public class WorkspaceManager {
     public void deleteWorkspace(String workspaceId) {
         synchronizedOn(workspaceId, () -> {
             if (!storage.exists(workspaceId))
-                throw new IllegalArgumentException("Workspace " + workspaceId + " does not exist");
+                throw new NotFoundException("Workspace " + workspaceId + " does not exist");
             storage.deleteWorkspace(workspaceId);
             logger.info("Deleted workspace {}", workspaceId);
             return null;

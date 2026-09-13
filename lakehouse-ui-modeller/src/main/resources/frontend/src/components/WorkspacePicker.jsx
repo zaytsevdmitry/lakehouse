@@ -64,6 +64,20 @@ export default function WorkspacePicker({ session, profile, onOpen, onNotice, de
     }
   };
 
+  const deleteWorkspace = async (ws) => {
+    if (!window.confirm(`Delete workspace for branch "${ws.branch}"?`)) return;
+    setWorking(true);
+    try {
+      await api(`/v1_0/vcs/workspace/${encodeURIComponent(ws.id)}`, { method: 'DELETE', token });
+      onNotice('success', `Deleted workspace "${ws.branch}".`);
+      await load();
+    } catch (e) {
+      onNotice('error', e.message);
+    } finally {
+      setWorking(false);
+    }
+  };
+
   if (loading) {
     return <div className="stage"><span className="spinner" /><span className="muted">Loading workspaces…</span></div>;
   }
@@ -109,7 +123,10 @@ export default function WorkspacePicker({ session, profile, onOpen, onNotice, de
                   {new Date(ws.lastAccessedAt).toLocaleString()}
                 </span>
               </div>
-              <button onClick={() => onOpen(ws)}>Open</button>
+              <div className="workspace-row-actions">
+                <button onClick={() => onOpen(ws)}>Open</button>
+                <button className="danger" disabled={working} onClick={() => deleteWorkspace(ws)}>Delete</button>
+              </div>
             </div>
           ))}
         </div>

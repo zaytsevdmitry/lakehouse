@@ -1,10 +1,13 @@
 package org.lakehouse.modeller.service;
 
 import org.lakehouse.modeller.auth.ForbiddenException;
+import org.lakehouse.modeller.auth.NotFoundException;
 import org.lakehouse.modeller.auth.UserContext;
 import org.lakehouse.modeller.auth.UserContextService;
 import org.lakehouse.modeller.dto.CreateFileRequest;
+import org.lakehouse.modeller.dto.DirectoryRequest;
 import org.lakehouse.modeller.dto.FileContentResponse;
+import org.lakehouse.modeller.dto.MoveFileRequest;
 import org.lakehouse.modeller.dto.RenameFileRequest;
 import org.lakehouse.modeller.dto.SaveFileRequest;
 import org.lakehouse.modeller.dto.TreeResponse;
@@ -73,7 +76,8 @@ public class EditorService {
             throw new IllegalArgumentException("kind and keyName are required to create a file");
         ConfigKind kind = ConfigKind.fromYamlValue(request.kind());
         String fileName = safeFileName(request.keyName());
-        String path = kind.directory() + "/" + fileName + ".yaml";
+        String dir = safeDirectory(request.directory());
+        String path = (dir.isEmpty() ? kind.directory() : dir) + "/" + fileName + ".yaml";
         String content = yaml.defaultYaml(kind, request.keyName());
         storage.writeFile(workspaceId, path, content);
         logs.log("INFO", user.username(), "CREATE_FILE", path + " (" + kind.yamlValue() + ")", workspaceId);
@@ -84,16 +88,18 @@ public class EditorService {
         UserContext user = users.requireRole(authentication);
         requireOwnWorkspace(workspaceId, user);
         String safePath = safeFilePath(path);
-        return storage.readFile(workspaceId, safePath)
-                .map(content -> {
-                    ObjectNode node = yaml.parse(content);
-                    ConfigKind kind = yaml.knownKindOf(node).orElse(null);
-                    String kindValue = kind == null ? "unknown" : kind.yamlValue();
-                    String identifierField = kind == null ? "keyName" : kind.identifierField();
-                    return new FileContentResponse(safePath, content, kindValue,
-                            yaml.identifierOf(node, identifierField), keyEditable(kind));
-                })
+        String content = storage.readFile(workspaceId, safePath)
                 .orElseThrow(() -> new IllegalArgumentException("File not found: " + path));
+        try {
+            ObjectNode node = yaml.parse(content);
+            ConfigKind kind = yaml.knownKindOf(node).orElse(null);
+            String kindValue = kind == null ? "unknown" : kind.yamlValue();
+            String identifierField = kind == null ? "keyName" : kind.identifierField();
+            return new FileContentResponse(safePath, content, kindValue,
+                    yaml.identifierOf(node, identifierField), keyEditable(kind));
+        } catch (VcsConfigParseException e) {
+            return new FileContentResponse(safePath, content, "unknown", null, false);
+        }
     }
 
     public FileContentResponse saveFile(String workspaceId, String path, SaveFileRequest request,
@@ -151,6 +157,56 @@ public class EditorService {
         logs.log("INFO", user.username(), "DELETE_FILE", safePath, workspaceId);
     }
 
+    public FileContentResponse moveFile(String workspaceId, MoveFileRequest request,
+                                        Authentication authentication) {
+        UserContext user = users.requireEditor(authentication);
+        requireOwnWorkspace(workspaceId, user);
+        String source = safeFilePath(request.source());
+        String targetDir = safeDirectory(request.targetDirectory());
+        String fileName = source.substring(source.lastIndexOf('/') + 1);
+        String newPath = targetDir.isEmpty() ? fileName : targetDir + "/" + fileName;
+        if (newPath.equals(source))
+            throw new IllegalArgumentException("File is already in the target directory");
+        if (storage.readFile(workspaceId, newPath).isPresent())
+            throw new IllegalArgumentException("File already exists in the target directory: " + newPath);
+        String content = storage.readFile(workspaceId, source)
+                .orElseThrow(() -> new NotFoundException("File not found: " + source));
+        storage.writeFile(workspaceId, newPath, content);
+        storage.deleteFile(workspaceId, source);
+        logs.log("INFO", user.username(), "MOVE_FILE", source + " -> " + newPath, workspaceId);
+        ObjectNode node = yaml.parse(content);
+        ConfigKind kind = yaml.knownKindOf(node).orElse(null);
+        String kindValue = kind == null ? "unknown" : kind.yamlValue();
+        String identifierField = kind == null ? "keyName" : kind.identifierField();
+        return new FileContentResponse(newPath, content, kindValue, yaml.identifierOf(node, identifierField), keyEditable(kind));
+    }
+
+    public List<String> listDirectories(String workspaceId, Authentication authentication) {
+        UserContext user = users.requireRole(authentication);
+        requireOwnWorkspace(workspaceId, user);
+        return storage.listDirectories(workspaceId);
+    }
+
+    public void createDirectory(String workspaceId, DirectoryRequest request, Authentication authentication) {
+        UserContext user = users.requireEditor(authentication);
+        requireOwnWorkspace(workspaceId, user);
+        String dir = safeDirectory(request.path());
+        if (dir.isEmpty())
+            throw new IllegalArgumentException("Directory path must not be empty");
+        storage.createDirectory(workspaceId, dir);
+        logs.log("INFO", user.username(), "CREATE_DIR", dir, workspaceId);
+    }
+
+    public void deleteDirectory(String workspaceId, String path, Authentication authentication) {
+        UserContext user = users.requireEditor(authentication);
+        requireOwnWorkspace(workspaceId, user);
+        String dir = safeDirectory(path);
+        if (dir.isEmpty())
+            throw new IllegalArgumentException("Cannot delete the workspace root");
+        storage.deleteDirectory(workspaceId, dir);
+        logs.log("INFO", user.username(), "DELETE_DIR", dir, workspaceId);
+    }
+
     // ------------------------------------------------------------------
     // path / ownership guards
     // ------------------------------------------------------------------
@@ -184,6 +240,25 @@ public class EditorService {
         if (!keyName.matches("[A-Za-z0-9._-]+"))
             throw new IllegalArgumentException("Invalid key name: " + keyName);
         return keyName.toLowerCase(Locale.ROOT);
+    }
+
+    /**
+     * Validates a relative directory path (possibly empty, meaning the workspace root).
+     * Rejects traversal and illegal segments; returns the path without slashes on the edges.
+     */
+    private static String safeDirectory(String path) {
+        if (path == null || path.isBlank())
+            return "";
+        String normalized = path.startsWith("/") ? path.substring(1) : path;
+        if (normalized.endsWith("/"))
+            normalized = normalized.substring(0, normalized.length() - 1);
+        if (normalized.contains("..") || normalized.contains("\\"))
+            throw new IllegalArgumentException("Illegal directory path: " + path);
+        for (String segment : normalized.split("/")) {
+            if (!segment.matches("[A-Za-z0-9._-]+"))
+                throw new IllegalArgumentException("Illegal directory name: " + path);
+        }
+        return normalized;
     }
 
     private static ObjectNode ensureIdentifier(ObjectNode node, String field, String value) {

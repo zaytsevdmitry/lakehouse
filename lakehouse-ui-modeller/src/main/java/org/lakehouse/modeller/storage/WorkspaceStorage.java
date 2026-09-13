@@ -21,6 +21,46 @@ public interface WorkspaceStorage {
 
     List<String> listFiles(String workspaceId);
 
+    /**
+     * All directory paths of the workspace (including empty user-created folders),
+     * each without a leading or trailing slash, sorted lexicographically.
+     * Backends without a notion of empty directories (e.g. S3) return the
+     * directories implied by the stored file paths.
+     */
+    default List<String> listDirectories(String workspaceId) {
+        List<String> dirs = new java.util.ArrayList<>();
+        for (String path : listFiles(workspaceId)) {
+            int slash = path.lastIndexOf('/');
+            while (slash > 0) {
+                String dir = path.substring(0, slash);
+                if (!dirs.contains(dir))
+                    dirs.add(dir);
+                slash = path.lastIndexOf('/', slash - 1);
+            }
+        }
+        return dirs.stream().sorted().toList();
+    }
+
+    /**
+     * Creates a directory. No-op for backends that cannot persist empty
+     * directories (S3-style object storage); the folder then only appears
+     * once a file is placed into it.
+     */
+    default void createDirectory(String workspaceId, String path) {
+        // nothing to do by default
+    }
+
+    /**
+     * Removes a directory and every file stored under it.
+     */
+    default void deleteDirectory(String workspaceId, String path) {
+        String prefix = path.isEmpty() ? "" : path + "/";
+        for (String filePath : listFiles(workspaceId)) {
+            if (filePath.startsWith(prefix))
+                deleteFile(workspaceId, filePath);
+        }
+    }
+
     Optional<String> readFile(String workspaceId, String path);
 
     void writeFile(String workspaceId, String path, String content);

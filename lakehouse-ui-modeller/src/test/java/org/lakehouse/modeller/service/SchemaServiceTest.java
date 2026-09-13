@@ -53,6 +53,43 @@ class SchemaServiceTest {
     }
 
     @Test
+    void dataSetNameSpaceKeyNameIsReadOnlyBackedByNameSpacePicker() {
+        KindSchema schema = service.schema("DataSet");
+        FieldSchema nameSpace = field(schema.fields(), "nameSpaceKeyName");
+        assertThat(nameSpace.readOnly()).isTrue();
+        assertThat(nameSpace.picker()).isEqualTo("nameSpace");
+        assertThat(nameSpace.clearable()).isTrue();
+    }
+
+    @Test
+    void dataSetDataSourceKeyNameIsReadOnlyBackedByDataSourcePicker() {
+        KindSchema schema = service.schema("DataSet");
+        FieldSchema dataSource = field(schema.fields(), "dataSourceKeyName");
+        assertThat(dataSource.readOnly()).isTrue();
+        assertThat(dataSource.picker()).isEqualTo("dataSource");
+        assertThat(dataSource.clearable()).isFalse();
+    }
+
+    @Test
+    void taskGeneralPickFieldsAreReadOnlyBackedByCatalogPickers() {
+        KindSchema schema = service.schema("Task");
+        FieldSchema template = field(schema.fields(), "template");
+        assertThat(template.readOnly()).isTrue();
+        assertThat(template.picker()).isEqualTo("task");
+        assertThat(template.clearable()).isFalse();
+
+        FieldSchema group = field(schema.fields(), "taskExecutionServiceGroupName");
+        assertThat(group.readOnly()).isTrue();
+        assertThat(group.picker()).isEqualTo("taskExecutionServiceGroup");
+        assertThat(group.clearable()).isFalse();
+
+        FieldSchema driver = field(schema.fields(), "driverKeyName");
+        assertThat(driver.readOnly()).isTrue();
+        assertThat(driver.picker()).isEqualTo("driver");
+        assertThat(driver.clearable()).isTrue();
+    }
+
+    @Test
     void scheduleModelsTheVisualDagAndScenarioActs() {
         KindSchema schema = service.schema("Schedule");
         assertThat(schema.dtoClass()).contains("ScheduleDTO");

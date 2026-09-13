@@ -1,6 +1,7 @@
 package org.lakehouse.modeller.controller;
 
 import org.lakehouse.modeller.auth.ForbiddenException;
+import org.lakehouse.modeller.auth.NotFoundException;
 import org.lakehouse.modeller.storage.WorkspaceStorageException;
 import org.lakehouse.modeller.vcs.VcsProviderException;
 import org.lakehouse.modeller.workspace.WorkspaceLockedException;
@@ -21,6 +22,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<Map<String, String>> forbidden(ForbiddenException e) {
         return error(HttpStatus.FORBIDDEN, e.getMessage());
+    }
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<Map<String, String>> notFound(NotFoundException e) {
+        return error(HttpStatus.NOT_FOUND, e.getMessage());
     }
 
     @ExceptionHandler(WorkspaceLockedException.class)

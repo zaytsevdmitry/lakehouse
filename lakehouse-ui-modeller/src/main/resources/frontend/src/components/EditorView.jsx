@@ -5,6 +5,11 @@ import FormEditor from './FormEditor';
 import Modal from './Modal';
 
 const basename = (path) => (path || '').split('/').pop();
+const parentDir = (path) => {
+  const i = (path || '').lastIndexOf('/');
+  return i > 0 ? path.substring(0, i) : '';
+};
+const DND_MIME = 'application/x-lakehouse-file';
 
 export default function EditorView({ session, profile, workspace, onBack, onNotice }) {
   const token = session?.accessToken;
@@ -14,6 +19,7 @@ export default function EditorView({ session, profile, workspace, onBack, onNoti
 
   const [schemas, setSchemas] = useState([]);
   const [tree, setTree] = useState([]);
+  const [dirs, setDirs] = useState([]);
   const [selected, setSelected] = useState(null);
   const [selectedFolder, setSelectedFolder] = useState(null);
   const [filter, setFilter] = useState('');
@@ -27,6 +33,9 @@ export default function EditorView({ session, profile, workspace, onBack, onNoti
   const [reviewModal, setReviewModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
   const [renameModal, setRenameModal] = useState(false);
+  const [createDirModal, setCreateDirModal] = useState(false);
+  const [deleteDirTarget, setDeleteDirTarget] = useState(null);
+  const [dragOverRoot, setDragOverRoot] = useState(false);
   const [confirmSave, setConfirmSave] = useState(false);
   const [pendingOpen, setPendingOpen] = useState(null);
 
@@ -37,16 +46,43 @@ export default function EditorView({ session, profile, workspace, onBack, onNoti
     setTree(Array.isArray(data) ? data : []);
   }, [wsId, token]);
 
+  const loadDirs = useCallback(async () => {
+    const data = await api(`/v1_0/workspaces/${encodePath(wsId)}/dirs`, { token });
+    setDirs(Array.isArray(data) ? data : []);
+  }, [wsId, token]);
+
+  const refreshTree = useCallback(async () => {
+    await Promise.all([loadTree(), loadDirs()]);
+  }, [loadTree, loadDirs]);
+
+  const workspaceGone = (message) => /does not exist|was deleted|not found/i.test(message || '');
+
+  const notifyError = (e) => {
+    if (workspaceGone(e.message)) {
+      setSelected(null);
+      setReviewModal(false);
+      onNotice('error', 'This workspace no longer exists (it was submitted for review or deleted). Open another one from My workspaces.');
+      onBack();
+    } else {
+      onNotice('error', e.message);
+    }
+  };
+
   useEffect(() => {
     (async () => {
       try {
-        const [schemaData] = await Promise.all([api('/v1_0/schema', { token }), loadTree()]);
+        const [schemaData] = await Promise.all([api('/v1_0/schema', { token }), loadTree(), loadDirs()]);
         setSchemas(Array.isArray(schemaData) ? schemaData : []);
       } catch (e) {
-        onNotice('error', e.message);
+        if (workspaceGone(e.message)) {
+          onNotice('error', 'This workspace no longer exists (it was submitted for review or deleted). Open another one from My workspaces.');
+          onBack();
+        } else {
+          onNotice('error', e.message);
+        }
       }
     })();
-  }, [loadTree, token, onNotice]);
+  }, [loadTree, loadDirs, token, onNotice, onBack]);
 
   const openFile = (entry) => {
     if (selected && dirty && !readOnly) {
@@ -63,12 +99,14 @@ export default function EditorView({ session, profile, workspace, onBack, onNoti
       setSelected({ path: resp.path || entry.path, kind: resp.kind, keyName: resp.keyName || basename(resp.path) });
       setSelectedFolder(null);
       setYaml(resp.yaml);
-      setDoc(parseYaml(resp.yaml));
+      let parsed = null;
+      try { parsed = parseYaml(resp.yaml); } catch (e) { parsed = null; }
+      setDoc(parsed && typeof parsed === 'object' ? parsed : {});
       setKeyNameEditable(resp.isKeyNameEditable);
       setMode(schemaMap[resp.kind] ? 'form' : 'yaml');
       setDirty(false);
     } catch (e) {
-      onNotice('error', e.message);
+      notifyError(e);
     } finally {
       setBusy(false);
     }
@@ -88,11 +126,15 @@ export default function EditorView({ session, profile, workspace, onBack, onNoti
       if (mode === 'form') setDoc(parseYaml(resp.yaml));
       setKeyNameEditable(resp.isKeyNameEditable);
       setDirty(false);
-      await loadTree();
+      await refreshTree();
       onNotice('success', `Saved ${selected.keyName}.`);
       return true;
     } catch (e) {
-      onNotice('error', e.message);
+      if (workspaceGone(e.message)) {
+        onNotice('error', 'This workspace no longer exists (it was submitted for review or deleted). Your changes were not saved.');
+      } else {
+        onNotice('error', e.message);
+      }
       return false;
     } finally {
       setBusy(false);
@@ -122,19 +164,21 @@ export default function EditorView({ session, profile, workspace, onBack, onNoti
   };
 
   const createFile = async ({ kind, keyName }) => {
+    const targetDir = selectedFolder || (selected ? parentDir(selected.path) : '');
     setBusy(true);
     try {
       const resp = await api(`/v1_0/workspaces/${encodePath(wsId)}/files`, {
         method: 'POST',
         token,
-        body: { kind, keyName },
+        body: { kind, keyName, directory: targetDir || undefined },
       });
       setNewModal(false);
-      await loadTree();
+      await refreshTree();
       onNotice('success', `Created ${kind} "${keyName}".`);
+      setSelectedFolder(targetDir || null);
       await doOpen({ path: resp.path, kind: resp.kind, keyName: resp.keyName });
     } catch (e) {
-      onNotice('error', e.message);
+      notifyError(e);
     } finally {
       setBusy(false);
     }
@@ -152,10 +196,10 @@ export default function EditorView({ session, profile, workspace, onBack, onNoti
       setSelected(null);
       setDoc(null);
       setDirty(false);
-      await loadTree();
+      await refreshTree();
       onNotice('success', `Deleted ${selected.keyName}.`);
     } catch (e) {
-      onNotice('error', e.message);
+      notifyError(e);
     } finally {
       setBusy(false);
     }
@@ -174,7 +218,7 @@ export default function EditorView({ session, profile, workspace, onBack, onNoti
       onNotice('success', `Review submitted: ${resp.status}${resp.url ? ` — ${resp.url}` : ''}`);
       window.setTimeout(onBack, 1200);
     } catch (e) {
-      const gone = /does not exist|was deleted|not found/i.test(e.message);
+      const gone = workspaceGone(e.message);
       setReviewModal(false);
       setDirty(false);
       if (gone) {
@@ -202,6 +246,14 @@ export default function EditorView({ session, profile, workspace, onBack, onNoti
       }
       node.files.push({ ...entry, label: fileName });
     }
+    for (const dir of dirs) {
+      const parts = dir.split('/');
+      let node = root;
+      for (const seg of parts) {
+        if (!node.children[seg]) node.children[seg] = { name: seg, children: {}, files: [] };
+        node = node.children[seg];
+      }
+    }
     if (!filterOn) return root;
     const prune = (node) => {
       const keptChildren = {};
@@ -215,7 +267,7 @@ export default function EditorView({ session, profile, workspace, onBack, onNoti
     };
     const pruned = prune(root);
     return pruned || { name: '', children: {}, files: [] };
-  }, [tree, filter]);
+  }, [tree, dirs, filter]);
 
   const folderNames = Object.keys(folderTree.children).sort();
   const rootFiles = folderTree.files.sort((a, b) => a.path.localeCompare(b.path));
@@ -272,6 +324,49 @@ export default function EditorView({ session, profile, workspace, onBack, onNoti
     return results;
   }, [tree, wsId, token]);
 
+  const nameSpaceSummaryProvider = useCallback(async () => {
+    const results = [];
+    for (const entry of tree) {
+      if (entry.kind !== 'NameSpace') continue;
+      try {
+        const resp = await api(`/v1_0/workspaces/${encodePath(wsId)}/files/${encodePath(entry.path)}`, { token });
+        const doc = parseYaml(resp.yaml || '');
+        if (!doc || !doc.keyName) continue;
+        results.push({ keyName: doc.keyName, description: doc.description || '' });
+      } catch (e) {
+        // unreadable name space — skip it for the picker
+      }
+    }
+    return results;
+  }, [tree, wsId, token]);
+
+  // Catalog providers for the read-only picker fields (Data Source Key Name,
+  // Task Template, Task Execution Service Group Name, Driver Key Name). Each
+  // lists the identifier+description of every workspace document of a kind.
+  const catalogProviders = useMemo(() => {
+    const build = (kind, idField) => async () => {
+      const results = [];
+      for (const entry of tree) {
+        if (entry.kind !== kind) continue;
+        try {
+          const resp = await api(`/v1_0/workspaces/${encodePath(wsId)}/files/${encodePath(entry.path)}`, { token });
+          const doc = parseYaml(resp.yaml || '');
+          if (!doc || !doc[idField]) continue;
+          results.push({ [idField]: doc[idField], description: doc.description || '' });
+        } catch (e) {
+          // unreadable document — skip it for the picker
+        }
+      }
+      return results;
+    };
+    return {
+      dataSource: build('DataSource', 'keyName'),
+      task: build('Task', 'name'),
+      taskExecutionServiceGroup: build('TaskExecutionServiceGroup', 'name'),
+      driver: build('Driver', 'keyName'),
+    };
+  }, [tree, wsId, token]);
+
   const renameFile = async (newName) => {
     if (!selected) return;
     setBusy(true);
@@ -282,9 +377,76 @@ export default function EditorView({ session, profile, workspace, onBack, onNoti
         body: { path: selected.path, newName: newName.trim() },
       });
       setRenameModal(false);
-      await loadTree();
+      await refreshTree();
       await doOpen({ path: resp.path, kind: resp.kind, keyName: resp.keyName });
       onNotice('success', `Renamed to ${basename(resp.path)}.`);
+    } catch (e) {
+      notifyError(e);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const moveFile = async (source, targetDirectory) => {
+    if (!source) return;
+    if (selected && selected.path === source && dirty && !readOnly) {
+      onNotice('error', 'Save your changes before moving this file.');
+      return;
+    }
+    setBusy(true);
+    try {
+      await api(`/v1_0/workspaces/${encodePath(wsId)}/files/move`, {
+        method: 'POST',
+        token,
+        body: { source, targetDirectory },
+      });
+      await refreshTree();
+      const newPath = targetDirectory ? `${targetDirectory}/${basename(source)}` : basename(source);
+      if (selected && selected.path === source) {
+        await doOpen({ path: newPath, kind: selected.kind, keyName: selected.keyName });
+        setSelectedFolder(targetDirectory || null);
+      }
+      onNotice('success', `Moved ${basename(source)} to ${targetDirectory || 'the workspace root'}.`);
+    } catch (e) {
+      onNotice('error', e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const createDir = async (name) => {
+    const target = selectedFolder ? `${selectedFolder}/${name}` : name;
+    setBusy(true);
+    try {
+      await api(`/v1_0/workspaces/${encodePath(wsId)}/dirs`, {
+        method: 'POST',
+        token,
+        body: { path: target },
+      });
+      setCreateDirModal(false);
+      await refreshTree();
+      setSelectedFolder(target);
+      onNotice('success', `Created folder ${target}.`);
+    } catch (e) {
+      onNotice('error', e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const deleteDir = async () => {
+    if (!deleteDirTarget) return;
+    setBusy(true);
+    try {
+      await api(`/v1_0/workspaces/${encodePath(wsId)}/dirs/${encodePath(deleteDirTarget)}`, {
+        method: 'DELETE',
+        token,
+      });
+      setDeleteDirTarget(null);
+      setSelectedFolder(null);
+      if (selected && selected.path.startsWith(`${deleteDirTarget}/`)) setSelected(null);
+      await refreshTree();
+      onNotice('success', `Deleted folder ${deleteDirTarget} and its contents.`);
     } catch (e) {
       onNotice('error', e.message);
     } finally {
@@ -302,12 +464,12 @@ export default function EditorView({ session, profile, workspace, onBack, onNoti
         token,
         body: { path: target },
       });
-      await loadTree();
+      await refreshTree();
       if (selected) await doOpen({ path: selected.path });
       setSelectedFolder(null);
       onNotice('success', resp && resp.restored != null ? `Restored ${resp.restored} file(s).` : 'Restored.');
     } catch (e) {
-      onNotice('error', e.message);
+      notifyError(e);
     } finally {
       setBusy(false);
     }
@@ -331,7 +493,29 @@ export default function EditorView({ session, profile, workspace, onBack, onNoti
             onChange={(e) => setFilter(e.target.value)}
           />
         </div>
-        <div className="tree">
+        {!readOnly && (
+          <div className="dir-toolbar">
+            <button className="btn-mini" title="New folder" onClick={() => setCreateDirModal(true)}>New folder</button>
+            <button
+              className="btn-mini danger"
+              title="Delete the selected folder"
+              disabled={!selectedFolder}
+              onClick={() => setDeleteDirTarget(selectedFolder)}
+            >Delete folder</button>
+          </div>
+        )}
+        <div
+          className={`tree${dragOverRoot ? ' drag-over' : ''}`}
+          onDragOver={(e) => { e.preventDefault(); setDragOverRoot(true); }}
+          onDragLeave={(e) => { e.stopPropagation(); if (e.target === e.currentTarget) setDragOverRoot(false); }}
+          onDragEnd={() => setDragOverRoot(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragOverRoot(false);
+            const src = e.dataTransfer.getData(DND_MIME);
+            if (src) moveFile(src, '');
+          }}
+        >
           {filter.trim().length > 0 && filter.trim().length < 3 && (
             <p className="muted empty-hint">Type at least 3 characters to filter.</p>
           )}
@@ -347,6 +531,7 @@ export default function EditorView({ session, profile, workspace, onBack, onNoti
               selectedFolder={selectedFolder}
               onOpen={openFile}
               onSelectFolder={setSelectedFolder}
+              onMove={moveFile}
             />
           ))}
           {rootFiles.map((entry) => (
@@ -354,6 +539,11 @@ export default function EditorView({ session, profile, workspace, onBack, onNoti
               key={entry.path}
               className={`tree-item${selected && selected.path === entry.path ? ' active' : ''}`}
               onClick={() => openFile(entry)}
+              draggable={!readOnly}
+              onDragStart={(e) => {
+                e.dataTransfer.setData(DND_MIME, entry.path);
+                e.dataTransfer.effectAllowed = 'move';
+              }}
             >
               <span className="file-name">{entry.label}</span>
               {entry.modified && <span className="dirty-dot" title="modified" />}
@@ -425,6 +615,8 @@ export default function EditorView({ session, profile, workspace, onBack, onNoti
                   uniqueByField={uniqueByField}
                   dataSetSummaryProvider={dataSetSummaryProvider}
                   scriptSummaryProvider={scriptSummaryProvider}
+                  nameSpaceSummaryProvider={nameSpaceSummaryProvider}
+                  catalogProviders={catalogProviders}
                 />
               ) : (
                 <p className="muted">
@@ -450,8 +642,20 @@ export default function EditorView({ session, profile, workspace, onBack, onNoti
       {newModal && (
         <NewFileModal
           schemas={schemas}
+          directory={selectedFolder || (selected ? parentDir(selected.path) : null)}
           onClose={() => setNewModal(false)}
           onSubmit={createFile}
+          busy={busy}
+        />
+      )}
+      {createDirModal && (
+        <CreateDirModal onClose={() => setCreateDirModal(false)} onSubmit={createDir} busy={busy} />
+      )}
+      {deleteDirTarget && (
+        <DeleteDirModal
+          target={deleteDirTarget}
+          onClose={() => setDeleteDirTarget(null)}
+          onSubmit={deleteDir}
           busy={busy}
         />
       )}
@@ -503,13 +707,37 @@ export default function EditorView({ session, profile, workspace, onBack, onNoti
   );
 }
 
-function Folder({ node, dirPath, selectedPath, selectedFolder, onOpen, onSelectFolder }) {
-  const [open, setOpen] = useState(true);
+function Folder({ node, dirPath, selectedPath, selectedFolder, onOpen, onSelectFolder, onMove }) {
+  const [open, setOpen] = useState(false);
+  const [overs, setOvers] = useState(0);
   const names = Object.keys(node.children).sort();
   const files = [...node.files].sort((a, b) => a.path.localeCompare(b.path));
   const active = dirPath === selectedFolder;
+  const dragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setOvers((n) => n + 1);
+  };
+  const dragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setOvers((n) => Math.max(0, n - 1));
+  };
+  const drop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setOvers(0);
+    const src = e.dataTransfer.getData(DND_MIME);
+    if (src) onMove(src, dirPath);
+  };
   return (
-    <div className="tree-folder">
+    <div
+      className={`tree-folder${overs > 0 ? ' drag-over' : ''}`}
+      onDragEnter={dragEnter}
+      onDragLeave={dragLeave}
+      onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+      onDrop={drop}
+    >
       <button
         className={`tree-folder-name${open ? ' open' : ''}${active ? ' active' : ''}`}
         onClick={() => { setOpen(!open); onSelectFolder(dirPath); }}
@@ -529,6 +757,7 @@ function Folder({ node, dirPath, selectedPath, selectedFolder, onOpen, onSelectF
               selectedFolder={selectedFolder}
               onOpen={onOpen}
               onSelectFolder={onSelectFolder}
+              onMove={onMove}
             />
           ))}
           {files.map((entry) => (
@@ -536,6 +765,12 @@ function Folder({ node, dirPath, selectedPath, selectedFolder, onOpen, onSelectF
               key={entry.path}
               className={`tree-item${selectedPath === entry.path ? ' active' : ''}`}
               onClick={() => onOpen(entry)}
+              draggable={true}
+              onDragStart={(e) => {
+                e.stopPropagation();
+                e.dataTransfer.setData(DND_MIME, entry.path);
+                e.dataTransfer.effectAllowed = 'move';
+              }}
             >
               <span className="file-name">{entry.label}</span>
               {entry.modified && <span className="dirty-dot" title="modified" />}
@@ -547,7 +782,7 @@ function Folder({ node, dirPath, selectedPath, selectedFolder, onOpen, onSelectF
   );
 }
 
-function NewFileModal({ schemas, onClose, onSubmit, busy }) {
+function NewFileModal({ schemas, directory, onClose, onSubmit, busy }) {
   const [kind, setKind] = useState(schemas.length ? schemas[0].kind : 'schedule');
   const [keyName, setKeyName] = useState('');
   const submit = (e) => {
@@ -566,6 +801,10 @@ function NewFileModal({ schemas, onClose, onSubmit, busy }) {
         <div className="field">
           <span className="label">Key name</span>
           <input value={keyName} onChange={(e) => setKeyName(e.target.value)} placeholder="e.g. my_config" autoFocus />
+        </div>
+        <div className="field">
+          <span className="label">Folder</span>
+          <div className="muted small">{directory ? `Will be created in "${directory}/"` : 'Kind default folder'}</div>
         </div>
         <div className="btn-row">
           <button type="submit" className="primary" disabled={busy || !keyName.trim()}>Create</button>
@@ -630,6 +869,42 @@ function ReviewModal({ onClose, onSubmit, busy }) {
           <button type="button" onClick={onClose}>Cancel</button>
         </div>
       </form>
+    </Modal>
+  );
+}
+
+function CreateDirModal({ onSubmit, onClose, busy }) {
+  const [name, setName] = useState('');
+  const submit = (e) => {
+    e.preventDefault();
+    if (name.trim()) onSubmit(name.trim());
+  };
+  return (
+    <Modal title="New folder" onClose={onClose}>
+      <form onSubmit={submit}>
+        <div className="field">
+          <span className="label">Folder name</span>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. archive" autoFocus />
+        </div>
+        <div className="btn-row">
+          <button type="submit" className="primary" disabled={busy || !name.trim()}>Create folder</button>
+          <button type="button" onClick={onClose}>Cancel</button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+function DeleteDirModal({ target, onClose, onSubmit, busy }) {
+  return (
+    <Modal title="Delete folder" onClose={onClose}>
+      <p className="confirm-text">
+        Delete folder <strong>{target}</strong> and everything inside it? This cannot be undone.
+      </p>
+      <div className="btn-row">
+        <button type="button" className="danger" disabled={busy} onClick={onSubmit}>Delete folder</button>
+        <button type="button" onClick={onClose}>Cancel</button>
+      </div>
     </Modal>
   );
 }

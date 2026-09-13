@@ -165,6 +165,20 @@ public class SchemaService {
      * and fields visible only when a sibling property takes a specific value.
      */
     private static FieldSchema decorate(FieldSchema field, Class<?> owner, String name) {
+        if (owner.getSimpleName().equals("DataSetDTO"))
+            return switch (name) {
+                case "nameSpaceKeyName" -> redescribe(field, true, "nameSpace", null, null, null, null, true);
+                case "dataSourceKeyName" -> redescribe(field, true, "dataSource", null, null, null, null, false);
+                default -> field;
+            };
+        if (owner.getSimpleName().equals("TaskDTO"))
+            return switch (name) {
+                case "template" -> redescribe(field, true, "task", null, null, null, null, false);
+                case "taskExecutionServiceGroupName" ->
+                        redescribe(field, true, "taskExecutionServiceGroup", null, null, null, null, false);
+                case "driverKeyName" -> redescribe(field, true, "driver", null, null, null, null, true);
+                default -> field;
+            };
         if (owner.getSimpleName().equals("DataSetConstraintDTO")) {
             return switch (name) {
                 case "type" -> redescribe(field, false, null,

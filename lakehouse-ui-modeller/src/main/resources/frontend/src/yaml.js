@@ -22,6 +22,8 @@ function stripComment(line) {
 function parseScalar(raw) {
   const value = raw.trim();
   if (value === '' || value === 'null' || value === '~') return null;
+  if (value === '[]') return [];
+  if (value === '{}') return {};
   if (value.startsWith('"') && value.endsWith('"') && value.length >= 2) {
     try { return JSON.parse(value); } catch (e) { /* keep raw */ }
   }

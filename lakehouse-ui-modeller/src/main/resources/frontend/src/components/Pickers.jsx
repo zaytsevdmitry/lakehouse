@@ -3,6 +3,261 @@ import Modal from './Modal';
 import CodeEditor from './CodeEditor';
 
 /**
+ * Picker for a DataSet `sources` Key: lists every DataSet `keyName` known in
+ * the workspace tree. Save writes the chosen key name, Cancel leaves the field
+ * as is.
+ */
+export function DataSetKeyPickerModal({ summaryProvider, onClose, onApply }) {
+  const [dataSets, setDataSets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState('');
+  const [selected, setSelected] = useState(null);
+
+  useEffect(() => {
+    let alive = true;
+    Promise.resolve(summaryProvider()).then((list) => {
+      if (!alive) return;
+      setDataSets(list || []);
+      setLoading(false);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [summaryProvider]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return dataSets;
+    return dataSets.filter((ds) => (ds.keyName || '').toLowerCase().includes(q));
+  }, [dataSets, query]);
+
+  return (
+    <Modal title="Choose data set" onClose={onClose}>
+      <input
+        className="filter-input"
+        type="text"
+        autoFocus
+        value={query}
+        placeholder="Search data set key name…"
+        onChange={(e) => setQuery(e.target.value)}
+      />
+      <div className="picker-list">
+        {loading ? (
+          <p className="muted">Loading data sets…</p>
+        ) : filtered.length === 0 ? (
+          <p className="muted">No matching data sets.</p>
+        ) : (
+          filtered.map((ds) => {
+            const key = ds.keyName || '';
+            return (
+              <button
+                key={key}
+                className={`picker-row${selected === ds ? ' selected' : ''}`}
+                onClick={() => setSelected(ds)}
+              >
+                <span>{key}</span>
+              </button>
+            );
+          })
+        )}
+      </div>
+      <div className="btn-row">
+        <button
+          className="primary"
+          disabled={!selected}
+          onClick={() => {
+            if (selected) {
+              onApply(selected.keyName);
+              onClose();
+            }
+          }}
+        >
+          Save
+        </button>
+        <button onClick={onClose}>Cancel</button>
+      </div>
+    </Modal>
+  );
+}
+
+/**
+ * Picker for the DataSet `nameSpaceKeyName` field: searchable list of every
+ * NameSpace known in the workspace tree. Save writes the chosen keyName,
+ * Cancel leaves the field as is.
+ */
+export function NameSpacePickerModal({ summaryProvider, onClose, onApply }) {
+  const [nameSpaces, setNameSpaces] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState('');
+  const [selected, setSelected] = useState(null);
+
+  useEffect(() => {
+    let alive = true;
+    Promise.resolve(summaryProvider()).then((list) => {
+      if (!alive) return;
+      setNameSpaces(list || []);
+      setLoading(false);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [summaryProvider]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return nameSpaces;
+    return nameSpaces.filter(
+      (ns) =>
+        (ns.keyName || '').toLowerCase().includes(q) ||
+        (ns.description || '').toLowerCase().includes(q)
+    );
+  }, [nameSpaces, query]);
+
+  return (
+    <Modal title="Choose name space" onClose={onClose}>
+      <input
+        className="filter-input"
+        type="text"
+        autoFocus
+        value={query}
+        placeholder="Search name space key name…"
+        onChange={(e) => setQuery(e.target.value)}
+      />
+      <div className="picker-list">
+        {loading ? (
+          <p className="muted">Loading name spaces…</p>
+        ) : filtered.length === 0 ? (
+          <p className="muted">No matching name spaces.</p>
+        ) : (
+          filtered.map((ns) => {
+            const key = ns.keyName || '';
+            const desc = ns.description || '';
+            return (
+              <button
+                key={key}
+                className={`picker-row${selected === ns ? ' selected' : ''}`}
+                onClick={() => setSelected(ns)}
+              >
+                <span>{key}</span>
+                {desc && <span className="muted small picker-row-desc">{desc}</span>}
+              </button>
+            );
+          })
+        )}
+      </div>
+      <div className="btn-row">
+        <button
+          className="primary"
+          disabled={!selected}
+          onClick={() => {
+            if (selected) {
+              onApply(selected.keyName);
+              onClose();
+            }
+          }}
+        >
+          Save
+        </button>
+        <button onClick={onClose}>Cancel</button>
+      </div>
+    </Modal>
+  );
+}
+
+/**
+ * Generic picker for read-only "catalog" fields (Data Source Key Name, Task
+ * Template, Task Execution Service Group Name, Driver Key Name): a searchable
+ * list of the workspace documents of the referenced kind. Save writes the
+ * {@code idField} of the chosen item, Cancel leaves the field as is.
+ */
+export function NamedItemPickerModal({
+  title,
+  placeholder,
+  summaryProvider,
+  idField,
+  descriptionField = 'description',
+  onClose,
+  onApply,
+}) {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState('');
+  const [selected, setSelected] = useState(null);
+
+  useEffect(() => {
+    let alive = true;
+    Promise.resolve(summaryProvider()).then((list) => {
+      if (!alive) return;
+      setItems(list || []);
+      setLoading(false);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [summaryProvider]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter(
+      (it) =>
+        String(it[idField] || '').toLowerCase().includes(q) ||
+        String(it[descriptionField] || '').toLowerCase().includes(q),
+    );
+  }, [items, query, idField, descriptionField]);
+
+  return (
+    <Modal title={title} onClose={onClose}>
+      <input
+        className="filter-input"
+        type="text"
+        autoFocus
+        value={query}
+        placeholder={placeholder}
+        onChange={(e) => setQuery(e.target.value)}
+      />
+      <div className="picker-list">
+        {loading ? (
+          <p className="muted">Loading…</p>
+        ) : filtered.length === 0 ? (
+          <p className="muted">No matching items.</p>
+        ) : (
+          filtered.map((it) => {
+            const id = String(it[idField] || '');
+            const desc = String(it[descriptionField] || '');
+            return (
+              <button
+                key={id}
+                className={`picker-row${selected === it ? ' selected' : ''}`}
+                onClick={() => setSelected(it)}
+              >
+                <span>{id}</span>
+                {desc && <span className="muted small picker-row-desc">{desc}</span>}
+              </button>
+            );
+          })
+        )}
+      </div>
+      <div className="btn-row">
+        <button
+          className="primary"
+          disabled={!selected}
+          onClick={() => {
+            if (selected) {
+              onApply(selected[idField]);
+              onClose();
+            }
+          }}
+        >
+          Save
+        </button>
+        <button onClick={onClose}>Cancel</button>
+      </div>
+    </Modal>
+  );
+}
+
+/**
  * Picker for the Script `key` field: the full script list on the left and a
  * read-only highlighted code viewer on the right. Clicking a key previews its
  * value; Save writes the chosen key and closes, Cancel leaves the field as is.

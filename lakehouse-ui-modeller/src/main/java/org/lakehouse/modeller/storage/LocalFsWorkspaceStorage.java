@@ -159,6 +159,60 @@ public class LocalFsWorkspaceStorage implements WorkspaceStorage {
     }
 
     @Override
+    public List<String> listDirectories(String workspaceId) {
+        List<Path> dirs = new ArrayList<>();
+        Path wsDir = dir(workspaceId);
+        if (Files.isDirectory(wsDir)) {
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(wsDir)) {
+                for (Path entry : stream)
+                    collectDirectories(entry, dirs);
+            } catch (IOException e) {
+                throw new WorkspaceStorageException("Cannot list directories of workspace " + workspaceId, e);
+            }
+        }
+        return dirs.stream()
+                .map(p -> wsDir.relativize(p).toString().replace(java.io.File.separatorChar, '/'))
+                .filter(p -> !p.isBlank())
+                .sorted()
+                .toList();
+    }
+
+    private static void collectDirectories(Path dir, List<Path> dirs) {
+        if (!Files.isDirectory(dir))
+            return;
+        dirs.add(dir);
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
+            for (Path entry : stream)
+                collectDirectories(entry, dirs);
+        } catch (IOException e) {
+            throw new WorkspaceStorageException("Cannot list directories: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void createDirectory(String workspaceId, String path) {
+        try {
+            Files.createDirectories(dir(workspaceId).resolve(path).normalize());
+        } catch (IOException e) {
+            throw new WorkspaceStorageException("Cannot create directory " + path + " of workspace " + workspaceId, e);
+        }
+    }
+
+    @Override
+    public void deleteDirectory(String workspaceId, String path) {
+        Path target = dir(workspaceId).resolve(path).normalize();
+        Path base = dir(workspaceId).normalize();
+        if (!target.startsWith(base) || target.equals(base))
+            throw new WorkspaceStorageException("Illegal directory path: " + path);
+        try {
+            if (Files.isDirectory(target))
+                deleteRecursively(target);
+        } catch (IOException e) {
+            throw new WorkspaceStorageException("Cannot delete directory " + path + " of workspace " + workspaceId, e);
+        }
+    }
+
+    @Override
     public List<String> listWorkspaces() {
         List<String> ids = new ArrayList<>();
         Path workspacesDir = root.resolve("workspaces");

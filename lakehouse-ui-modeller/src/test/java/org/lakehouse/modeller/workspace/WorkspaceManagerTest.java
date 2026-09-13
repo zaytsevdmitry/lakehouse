@@ -2,6 +2,7 @@ package org.lakehouse.modeller.workspace;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.lakehouse.modeller.auth.NotFoundException;
 import org.lakehouse.modeller.storage.LocalFsWorkspaceStorage;
 
 import java.nio.file.Path;
@@ -79,7 +80,7 @@ class WorkspaceManagerTest {
         manager.deleteWorkspace(w.id());
         assertThat(manager.exists(w.id())).isFalse();
         assertThatThrownBy(() -> manager.deleteWorkspace(w.id()))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(NotFoundException.class);
     }
 
     @Test
