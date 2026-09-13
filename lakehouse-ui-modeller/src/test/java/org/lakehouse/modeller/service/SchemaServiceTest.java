@@ -16,13 +16,14 @@ class SchemaServiceTest {
     @Test
     void exposesAllSupportedKindsWithDirectories() {
         List<KindSchema> all = service.all();
-        assertThat(all).hasSize(11);
+        assertThat(all).hasSize(12);
         assertThat(all).extracting(KindSchema::kind)
-                .containsExactlyInAnyOrder("NameSpace", "Driver", "DataSet", "DataSource",
+                .containsExactlyInAnyOrder("NameSpace", "Driver", "ERDiagram", "DataSet", "DataSource",
                         "QualityMetricsConf", "ScenarioActTemplate", "Schedule",
                         "TaskExecutionServiceGroup", "Task", "MetricDQ", "Script");
         assertThat(service.schema("NameSpace").directory()).isEqualTo("nameSpaces");
         assertThat(service.schema("Driver").directory()).isEqualTo("drivers");
+        assertThat(service.schema("ERDiagram").directory()).isEqualTo("erdiagrams");
         assertThat(service.schema("DataSet").directory()).isEqualTo("datasets");
         assertThat(service.schema("DataSource").directory()).isEqualTo("datasources");
         assertThat(service.schema("QualityMetricsConf").directory()).isEqualTo("quality");
@@ -39,6 +40,18 @@ class SchemaServiceTest {
         assertThat(service.schema("NameSpace")).isEqualTo(service.schema("namespace"));
         assertThat(service.schema("metric_dq")).isEqualTo(service.schema("MetricDQ"));
         assertThat(service.schema("unknown")).isNull();
+    }
+
+    @Test
+    void erDiagramExposesKeyNameFirstAndTheDataSetPlacementsList() {
+        KindSchema schema = service.schema("ERDiagram");
+        assertThat(schema.dtoClass()).contains("ERDiagramDTO");
+        List<FieldSchema> fields = schema.fields();
+        assertThat(fields.get(0).name()).isEqualTo("keyName");
+        assertThat(fields.get(0).keyName()).isTrue();
+        FieldSchema dataSets = field(fields, "dataSets");
+        assertThat(dataSets.type()).isEqualTo("list");
+        assertThat(dataSets.item().children()).extracting(FieldSchema::name).contains("keyName", "x", "y");
     }
 
     @Test

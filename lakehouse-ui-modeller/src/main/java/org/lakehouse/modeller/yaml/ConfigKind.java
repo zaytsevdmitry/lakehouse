@@ -10,6 +10,7 @@ public enum ConfigKind {
 
     NAME_SPACE("NameSpace", "org.lakehouse.client.api.dto.configs.NameSpaceDTO"),
     DRIVER("Driver", "org.lakehouse.client.api.dto.configs.schedule.DriverDTO"),
+    ER_DIAGRAM("ERDiagram", "org.lakehouse.client.api.dto.configs.erdiagram.ERDiagramDTO"),
     DATA_SET("DataSet", "org.lakehouse.client.api.dto.configs.dataset.DataSetDTO"),
     DATA_SOURCE("DataSource", "org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO"),
     QUALITY_METRICS_CONF("QualityMetricsConf", "org.lakehouse.client.api.dto.configs.dq.QualityMetricsConfDTO"),
@@ -44,6 +45,7 @@ public enum ConfigKind {
         return switch (this) {
             case NAME_SPACE -> "nameSpaces";
             case DRIVER -> "drivers";
+            case ER_DIAGRAM -> "erdiagrams";
             case DATA_SET -> "datasets";
             case DATA_SOURCE -> "datasources";
             case QUALITY_METRICS_CONF -> "quality";

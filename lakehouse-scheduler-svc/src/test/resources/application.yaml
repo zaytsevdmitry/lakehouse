@@ -1,6 +1,4 @@
 debug: enabled
-server:
-  port=8081
 logging:
   level:
     org:

@@ -79,4 +79,66 @@ class LocalFsWorkspaceStorageTest {
         assertThatThrownBy(() -> storage.readFile("w1", "../other.yaml"))
                 .isInstanceOf(WorkspaceStorageException.class);
     }
+
+    @Test
+    void moveDirectoryMovesTheWholeTreeAndKeepsContent() {
+        LocalFsWorkspaceStorage storage = storage();
+        storage.create("w1");
+        storage.writeFile("w1", "a/one.yaml", "kind: NameSpace\n");
+        storage.writeFile("w1", "a/sub/two.yaml", "kind: NameSpace\n");
+        storage.moveDirectory("w1", "a", "target/deep");
+        assertThat(storage.listFiles("w1"))
+                .containsExactly("target/deep/a/one.yaml", "target/deep/a/sub/two.yaml");
+        assertThat(storage.readFile("w1", "target/deep/a/one.yaml"))
+                .isEqualTo(Optional.of("kind: NameSpace\n"));
+        assertThat(storage.listDirectories("w1")).doesNotContain("a", "a/sub");
+    }
+
+    @Test
+    void moveDirectoryToRootMovesTheTreeUp() {
+        LocalFsWorkspaceStorage storage = storage();
+        storage.create("w1");
+        storage.writeFile("w1", "parent/a/one.yaml", "kind: NameSpace\n");
+        storage.writeFile("w1", "sibling.yaml", "kind: NameSpace\n");
+        storage.moveDirectory("w1", "parent/a", "");
+        assertThat(storage.listFiles("w1"))
+                .containsExactly("a/one.yaml", "sibling.yaml");
+        assertThat(storage.listDirectories("w1"))
+                .containsExactly("a", "parent");
+    }
+
+    @Test
+    void moveDirectoryIntoItselfIsRejected() {
+        LocalFsWorkspaceStorage storage = storage();
+        storage.create("w1");
+        storage.writeFile("w1", "a/one.yaml", "kind: NameSpace\n");
+        storage.writeFile("w1", "a/sub/two.yaml", "kind: NameSpace\n");
+        assertThatThrownBy(() -> storage.moveDirectory("w1", "a", "a/sub"))
+                .isInstanceOf(WorkspaceStorageException.class)
+                .hasMessageContaining("Cannot move a directory into itself");
+        assertThat(storage.listFiles("w1"))
+                .containsExactly("a/one.yaml", "a/sub/two.yaml");
+    }
+
+    @Test
+    void moveDirectoryOntoExistingTargetIsRejected() {
+        LocalFsWorkspaceStorage storage = storage();
+        storage.create("w1");
+        storage.writeFile("w1", "a/one.yaml", "kind: NameSpace\n");
+        storage.writeFile("w1", "b/a/two.yaml", "kind: NameSpace\n");
+        assertThatThrownBy(() -> storage.moveDirectory("w1", "a", "b"))
+                .isInstanceOf(WorkspaceStorageException.class)
+                .hasMessageContaining("Cannot move directory a of workspace w1");
+        assertThat(storage.listFiles("w1"))
+                .containsExactly("a/one.yaml", "b/a/two.yaml");
+    }
+
+    @Test
+    void moveDirectoryMissingSourceIsRejected() {
+        LocalFsWorkspaceStorage storage = storage();
+        storage.create("w1");
+        assertThatThrownBy(() -> storage.moveDirectory("w1", "missing", ""))
+                .isInstanceOf(WorkspaceStorageException.class)
+                .hasMessageContaining("Directory not found");
+    }
 }

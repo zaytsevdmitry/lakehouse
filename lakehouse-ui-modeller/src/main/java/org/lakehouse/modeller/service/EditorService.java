@@ -7,6 +7,7 @@ import org.lakehouse.modeller.auth.UserContextService;
 import org.lakehouse.modeller.dto.CreateFileRequest;
 import org.lakehouse.modeller.dto.DirectoryRequest;
 import org.lakehouse.modeller.dto.FileContentResponse;
+import org.lakehouse.modeller.dto.MoveDirectoryRequest;
 import org.lakehouse.modeller.dto.MoveFileRequest;
 import org.lakehouse.modeller.dto.RenameFileRequest;
 import org.lakehouse.modeller.dto.SaveFileRequest;
@@ -185,6 +186,27 @@ public class EditorService {
         UserContext user = users.requireRole(authentication);
         requireOwnWorkspace(workspaceId, user);
         return storage.listDirectories(workspaceId);
+    }
+
+    public void moveDirectory(String workspaceId, MoveDirectoryRequest request, Authentication authentication) {
+        UserContext user = users.requireEditor(authentication);
+        requireOwnWorkspace(workspaceId, user);
+        String source = safeDirectory(request.source());
+        if (source.isEmpty())
+            throw new IllegalArgumentException("Cannot move the workspace root");
+        String targetDir = safeDirectory(request.targetDirectory());
+        String name = source.substring(source.lastIndexOf('/') + 1);
+        String target = targetDir.isEmpty() ? name : targetDir + "/" + name;
+        if (target.equals(source))
+            throw new IllegalArgumentException("Directory is already in the target directory");
+        if (target.startsWith(source + "/"))
+            throw new IllegalArgumentException("Cannot move a directory into its own subtree");
+        if (!storage.listDirectories(workspaceId).contains(source))
+            throw new NotFoundException("Directory not found: " + source);
+        if (storage.listDirectories(workspaceId).contains(target))
+            throw new IllegalArgumentException("A folder with that name already exists in the target directory: " + target);
+        storage.moveDirectory(workspaceId, source, targetDir);
+        logs.log("INFO", user.username(), "MOVE_DIR", source + " -> " + target, workspaceId);
     }
 
     public void createDirectory(String workspaceId, DirectoryRequest request, Authentication authentication) {

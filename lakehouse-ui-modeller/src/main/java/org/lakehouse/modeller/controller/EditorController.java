@@ -3,6 +3,7 @@ package org.lakehouse.modeller.controller;
 import org.lakehouse.modeller.dto.CreateFileRequest;
 import org.lakehouse.modeller.dto.DirectoryRequest;
 import org.lakehouse.modeller.dto.FileContentResponse;
+import org.lakehouse.modeller.dto.MoveDirectoryRequest;
 import org.lakehouse.modeller.dto.MoveFileRequest;
 import org.lakehouse.modeller.dto.RenameFileRequest;
 import org.lakehouse.modeller.dto.SaveFileRequest;
@@ -88,6 +89,14 @@ public class EditorController {
                                                 Authentication authentication) {
         editor.createDirectory(workspaceId, request, authentication);
         return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @PostMapping("/dirs/move")
+    public ResponseEntity<Void> moveDirectory(@PathVariable String workspaceId,
+                                              @RequestBody MoveDirectoryRequest request,
+                                              Authentication authentication) {
+        editor.moveDirectory(workspaceId, request, authentication);
+        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/dirs/{*path}")

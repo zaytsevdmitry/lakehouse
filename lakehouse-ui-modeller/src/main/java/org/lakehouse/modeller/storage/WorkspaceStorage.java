@@ -61,6 +61,27 @@ public interface WorkspaceStorage {
         }
     }
 
+    /**
+     * Moves a directory and the whole tree under it into {@code targetDirectory}
+     * (empty means the workspace root). The source must be an existing directory
+     * and must not be moved into its own subtree. Backends that cannot move whole
+     * directories atomically copy every contained file and drop the source after
+     * the copy.
+     */
+    default void moveDirectory(String workspaceId, String source, String targetDirectory) {
+        String name = source.substring(source.lastIndexOf('/') + 1);
+        String prefix = source + "/";
+        String basePath = targetDirectory.isEmpty() ? name : targetDirectory + "/" + name;
+        for (String filePath : listFiles(workspaceId)) {
+            if (!filePath.startsWith(prefix))
+                continue;
+            String newPath = basePath + "/" + filePath.substring(prefix.length());
+            readFile(workspaceId, filePath).ifPresent(content -> writeFile(workspaceId, newPath, content));
+            deleteFile(workspaceId, filePath);
+        }
+        deleteDirectory(workspaceId, source);
+    }
+
     Optional<String> readFile(String workspaceId, String path);
 
     void writeFile(String workspaceId, String path, String content);

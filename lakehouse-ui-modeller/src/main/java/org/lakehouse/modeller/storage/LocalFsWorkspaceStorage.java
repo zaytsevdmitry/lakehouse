@@ -213,6 +213,28 @@ public class LocalFsWorkspaceStorage implements WorkspaceStorage {
     }
 
     @Override
+    public void moveDirectory(String workspaceId, String source, String targetDirectory) {
+        Path base = dir(workspaceId).normalize();
+        Path src = base.resolve(source).normalize();
+        if (!src.startsWith(base))
+            throw new WorkspaceStorageException("Illegal directory path: " + source);
+        if (!Files.isDirectory(src))
+            throw new WorkspaceStorageException("Directory not found: " + source);
+        String name = source.substring(source.lastIndexOf('/') + 1);
+        Path target = (targetDirectory.isEmpty() ? base : base.resolve(targetDirectory)).resolve(name).normalize();
+        if (!target.startsWith(base))
+            throw new WorkspaceStorageException("Illegal directory path: " + targetDirectory);
+        if (target.equals(src) || target.startsWith(src))
+            throw new WorkspaceStorageException("Cannot move a directory into itself: " + source);
+        try {
+            Files.createDirectories(target.getParent());
+            Files.move(src, target);
+        } catch (IOException e) {
+            throw new WorkspaceStorageException("Cannot move directory " + source + " of workspace " + workspaceId, e);
+        }
+    }
+
+    @Override
     public List<String> listWorkspaces() {
         List<String> ids = new ArrayList<>();
         Path workspacesDir = root.resolve("workspaces");

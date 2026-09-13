@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { api, encodePath } from '../api';
 import { parseYaml, stringifyYaml } from '../yaml';
 import FormEditor from './FormEditor';
+import ErDiagramEditor from './ErDiagramEditor';
 import Modal from './Modal';
 
 const basename = (path) => (path || '').split('/').pop();
@@ -10,6 +11,7 @@ const parentDir = (path) => {
   return i > 0 ? path.substring(0, i) : '';
 };
 const DND_MIME = 'application/x-lakehouse-file';
+const DND_DIR_MIME = 'application/x-lakehouse-dir';
 
 export default function EditorView({ session, profile, workspace, onBack, onNotice }) {
   const token = session?.accessToken;
@@ -414,6 +416,37 @@ export default function EditorView({ session, profile, workspace, onBack, onNoti
     }
   };
 
+  const moveDirectory = async (source, targetDirectory) => {
+    if (!source) return;
+    if (selected && dirty && !readOnly && (selected.path === source || selected.path.startsWith(`${source}/`))) {
+      onNotice('error', 'Save your changes before moving this folder.');
+      return;
+    }
+    setBusy(true);
+    try {
+      await api(`/v1_0/workspaces/${encodePath(wsId)}/dirs/move`, {
+        method: 'POST',
+        token,
+        body: { source, targetDirectory },
+      });
+      await refreshTree();
+      const name = source.split('/').pop();
+      const newPath = targetDirectory ? `${targetDirectory}/${name}` : name;
+      if (selected && selected.path.startsWith(`${source}/`)) {
+        const relative = selected.path.substring(source.length + 1);
+        await doOpen({ path: `${newPath}/${relative}`, kind: selected.kind, keyName: selected.keyName });
+        setSelectedFolder(targetDirectory || null);
+      } else {
+        setSelectedFolder(null);
+      }
+      onNotice('success', `Moved ${source} to ${targetDirectory || 'the workspace root'}.`);
+    } catch (e) {
+      notifyError(e);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const createDir = async (name) => {
     const target = selectedFolder ? `${selectedFolder}/${name}` : name;
     setBusy(true);
@@ -513,7 +546,9 @@ export default function EditorView({ session, profile, workspace, onBack, onNoti
             e.preventDefault();
             setDragOverRoot(false);
             const src = e.dataTransfer.getData(DND_MIME);
-            if (src) moveFile(src, '');
+            const dirSrc = e.dataTransfer.getData(DND_DIR_MIME);
+            if (dirSrc) moveDirectory(dirSrc, '');
+            else if (src) moveFile(src, '');
           }}
         >
           {filter.trim().length > 0 && filter.trim().length < 3 && (
@@ -522,6 +557,12 @@ export default function EditorView({ session, profile, workspace, onBack, onNoti
           {filter.trim().length >= 3 && tree.length > 0 && (folderNames.length === 0 && rootFiles.length === 0) && (
             <p className="muted empty-hint">No files matching "{filter.trim()}".</p>
           )}
+          <RootFolder
+            selectedFolder={selectedFolder}
+            onSelectFolder={setSelectedFolder}
+            onMove={moveFile}
+            onMoveDir={moveDirectory}
+          />
           {folderNames.map((name) => (
             <Folder
               key={name}
@@ -532,6 +573,7 @@ export default function EditorView({ session, profile, workspace, onBack, onNoti
               onOpen={openFile}
               onSelectFolder={setSelectedFolder}
               onMove={moveFile}
+              onMoveDir={moveDirectory}
             />
           ))}
           {rootFiles.map((entry) => (
@@ -606,18 +648,37 @@ export default function EditorView({ session, profile, workspace, onBack, onNoti
 
             {mode === 'form' ? (
               activeSchema ? (
-                <FormEditor
-                  schema={activeSchema}
-                  value={doc || {}}
-                  onChange={(next) => { setDoc(next); setDirty(true); }}
-                  readOnly={readOnly}
-                  keyNameEditable={keyNameEditable && !readOnly}
-                  uniqueByField={uniqueByField}
-                  dataSetSummaryProvider={dataSetSummaryProvider}
-                  scriptSummaryProvider={scriptSummaryProvider}
-                  nameSpaceSummaryProvider={nameSpaceSummaryProvider}
-                  catalogProviders={catalogProviders}
-                />
+                selected.kind === 'ERDiagram' ? (
+                  <ErDiagramEditor
+                    doc={doc || {}}
+                    onDocChange={(next) => { setDoc(next); setDirty(true); }}
+                    readOnly={readOnly}
+                    tree={tree}
+                    wsId={wsId}
+                    token={token}
+                    onNotice={onNotice}
+                    schemas={schemas}
+                    keyNameEditable={keyNameEditable && !readOnly}
+                    uniqueByField={uniqueByField}
+                    dataSetSummaryProvider={dataSetSummaryProvider}
+                    scriptSummaryProvider={scriptSummaryProvider}
+                    nameSpaceSummaryProvider={nameSpaceSummaryProvider}
+                    catalogProviders={catalogProviders}
+                  />
+                ) : (
+                  <FormEditor
+                    schema={activeSchema}
+                    value={doc || {}}
+                    onChange={(next) => { setDoc(next); setDirty(true); }}
+                    readOnly={readOnly}
+                    keyNameEditable={keyNameEditable && !readOnly}
+                    uniqueByField={uniqueByField}
+                    dataSetSummaryProvider={dataSetSummaryProvider}
+                    scriptSummaryProvider={scriptSummaryProvider}
+                    nameSpaceSummaryProvider={nameSpaceSummaryProvider}
+                    catalogProviders={catalogProviders}
+                  />
+                )
               ) : (
                 <p className="muted">
                   No schema available for kind "{selected.kind}".{' '}
@@ -707,16 +768,37 @@ export default function EditorView({ session, profile, workspace, onBack, onNoti
   );
 }
 
-function Folder({ node, dirPath, selectedPath, selectedFolder, onOpen, onSelectFolder, onMove }) {
-  const [open, setOpen] = useState(false);
+/**
+ * The visible root catalog node. The workspace root is the "highest" directory,
+ * so it is a drop target for both files and directories — dropping a nested
+ * folder here moves it up to the root (a higher-level catalog). The root itself
+ * is not a drag source (it cannot be moved), so it has no onDragStart.
+ */
+function RootFolder({ selectedFolder, onSelectFolder, onMove, onMoveDir }) {
   const [overs, setOvers] = useState(0);
-  const names = Object.keys(node.children).sort();
-  const files = [...node.files].sort((a, b) => a.path.localeCompare(b.path));
-  const active = dirPath === selectedFolder;
+  const active = selectedFolder === '';
+
+  // Files can always be moved to the root. A directory is moved to the root
+  // unless it is already a direct child (no '/' in its path) — that would be a
+  // no-op rejected by the server.
+  const dragAllows = (e) => {
+    const types = Array.from(e.dataTransfer.types || []);
+    if (types.includes(DND_DIR_MIME)) {
+      const dirSrc = e.dataTransfer.getData(DND_DIR_MIME);
+      return dirSrc.includes('/');
+    }
+    return true;
+  };
+
   const dragEnter = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setOvers((n) => n + 1);
+    if (dragAllows(e)) setOvers((n) => n + 1);
+  };
+  const dragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'move';
   };
   const dragLeave = (e) => {
     e.preventDefault();
@@ -727,6 +809,81 @@ function Folder({ node, dirPath, selectedPath, selectedFolder, onOpen, onSelectF
     e.preventDefault();
     e.stopPropagation();
     setOvers(0);
+    const dirSrc = e.dataTransfer.getData(DND_DIR_MIME);
+    if (dirSrc) {
+      if (dirSrc.includes('/')) onMoveDir(dirSrc, '');
+      return;
+    }
+    const src = e.dataTransfer.getData(DND_MIME);
+    if (src) onMove(src, '');
+  };
+
+  return (
+    <div
+      className={`tree-folder tree-root-folder${overs > 0 ? ' drag-over' : ''}${active ? ' active' : ''}`}
+      onDragEnter={dragEnter}
+      onDragOver={dragOver}
+      onDragLeave={dragLeave}
+      onDrop={drop}
+    >
+      <button
+        className={`tree-folder-name${active ? ' active' : ''}`}
+        onClick={() => onSelectFolder('')}
+      >
+        <span className="caret tree-root-caret" aria-hidden="true">◉</span>
+        <span className="tree-root-label">Root</span>
+        <span className="folder-count" />
+      </button>
+    </div>
+  );
+}
+
+function Folder({ node, dirPath, selectedPath, selectedFolder, onOpen, onSelectFolder, onMove, onMoveDir }) {
+  const [open, setOpen] = useState(false);
+  const [overs, setOvers] = useState(0);
+  const names = Object.keys(node.children).sort();
+  const files = [...node.files].sort((a, b) => a.path.localeCompare(b.path));
+  const active = dirPath === selectedFolder;
+
+  // A dragged directory cannot be dropped onto itself or into its own subtree,
+  // so those targets are not highlighted.
+  const dragAllows = (e) => {
+    const types = Array.from(e.dataTransfer.types || []);
+    if (types.includes(DND_DIR_MIME)) {
+      const dirSrc = e.dataTransfer.getData(DND_DIR_MIME);
+      // The root is the highest catalog: a nested directory (whose path contains
+      // '/') can be moved up into it, which is the "move to a higher directory"
+      // case. A directory already at the root has no '/' and is a no-op, so it
+      // is not highlighted.
+      return dirSrc.includes('/');
+    }
+    return true;
+  };
+
+  const dragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (dragAllows(e)) setOvers((n) => n + 1);
+  };
+  const dragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'move';
+  };
+  const dragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setOvers((n) => Math.max(0, n - 1));
+  };
+  const drop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setOvers(0);
+    const dirSrc = e.dataTransfer.getData(DND_DIR_MIME);
+    if (dirSrc) {
+      if (dirSrc !== dirPath && !dirPath.startsWith(`${dirSrc}/`)) onMoveDir(dirSrc, dirPath);
+      return;
+    }
     const src = e.dataTransfer.getData(DND_MIME);
     if (src) onMove(src, dirPath);
   };
@@ -734,12 +891,18 @@ function Folder({ node, dirPath, selectedPath, selectedFolder, onOpen, onSelectF
     <div
       className={`tree-folder${overs > 0 ? ' drag-over' : ''}`}
       onDragEnter={dragEnter}
+      onDragOver={dragOver}
       onDragLeave={dragLeave}
-      onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
       onDrop={drop}
     >
       <button
         className={`tree-folder-name${open ? ' open' : ''}${active ? ' active' : ''}`}
+        draggable={true}
+        onDragStart={(e) => {
+          e.stopPropagation();
+          e.dataTransfer.setData(DND_DIR_MIME, dirPath);
+          e.dataTransfer.effectAllowed = 'move';
+        }}
         onClick={() => { setOpen(!open); onSelectFolder(dirPath); }}
       >
         <span className="caret">{open ? '▾' : '▸'}</span>
@@ -758,6 +921,7 @@ function Folder({ node, dirPath, selectedPath, selectedFolder, onOpen, onSelectF
               onOpen={onOpen}
               onSelectFolder={onSelectFolder}
               onMove={onMove}
+              onMoveDir={onMoveDir}
             />
           ))}
           {files.map((entry) => (
