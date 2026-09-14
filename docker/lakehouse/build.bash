@@ -29,7 +29,7 @@ for app in \
   "lakehouse-task-executor-svc" \
   "lakehouse-state-svc" \
   "lakehouse-ui-svc" \
-  "lakehouse-ui-modeller"
+  "lakehouse-ui-modeller-svc"
 do
   echo "Coping files $CODE_ROOT/$app/target/$app-$LH_VERSION-jar-with-dependencies.jar"
   cp -f $CODE_ROOT/$app/target/$app-$LH_VERSION-jar-with-dependencies.jar ./opt/

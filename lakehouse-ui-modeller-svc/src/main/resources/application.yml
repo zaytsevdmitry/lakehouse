@@ -1,0 +1,127 @@
+# =====================================================================
+# Lakehouse UI Modeller — declaration of the white-label/on-premise
+# configuration matrix. Every runtime strategy (workspace storage, VCS
+# provider, authorization mode, system account) is switched declaratively
+# here and overridable via environment variables (LAKEHOUSE_*).
+# =====================================================================
+server:
+  servlet:
+    session:
+      cookie:
+        name: JSESSIONID
+        http-only: true
+
+spring:
+  threads:
+    virtual:
+      enabled: true
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            provider: keycloak
+            client-id: lakehouse-ui-modeller-client
+            client-secret: ${KEYCLOAK_MODELLER_CLIENT_SECRET}
+            client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
+            redirect-uri: ${LAKEHOUSE_MODELLER_REDIRECT_URI:{baseUrl}/login/oauth2/code/{registrationId}}
+            scope: openid,profile,email
+        provider:
+          keycloak:
+            authorization-uri: ${KEYCLOAK_ISSUER_URI:http://keycloak.lakehouse:8085/realms/lakehouse}/protocol/openid-connect/auth
+            token-uri: ${KEYCLOAK_ISSUER_URI:http://keycloak.lakehouse:8085/realms/lakehouse}/protocol/openid-connect/token
+            user-info-uri: ${KEYCLOAK_ISSUER_URI:http://keycloak.lakehouse:8085/realms/lakehouse}/protocol/openid-connect/userinfo
+            jwk-set-uri: ${KEYCLOAK_ISSUER_URI:http://keycloak.lakehouse:8085/realms/lakehouse}/protocol/openid-connect/certs
+            user-name-attribute: preferred_username
+      resourceserver:
+        jwt:
+          # Standard Spring Security JWT validation (replaces the removed
+          # lakehouse.modeller.security.oauth2.resourceserver.* switchboard).
+          jwk-set-uri: ${KEYCLOAK_ISSUER_URI:http://keycloak.lakehouse:8085/realms/lakehouse}/protocol/openid-connect/certs
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  level:
+    org:
+      springframework:
+        web: INFO
+
+lakehouse:
+  modeller:
+    # ------------------------------------------------------------------
+    # 1. Server-side workspace storage backend.
+    # ------------------------------------------------------------------
+    storage:
+      type: ${LAKEHOUSE_WORKSPACE_STORAGE:local}          # [local, s3]
+      root-directory: ${LAKEHOUSE_WORKSPACE_ROOT:/tmp/lakehouse-workspaces}
+      s3:                                                  # used when type == "s3"
+        endpoint: ${LAKEHOUSE_S3_ENDPOINT:}
+        bucket: ${LAKEHOUSE_S3_BUCKET:lakehouse-metadata-workspaces}
+        access-key: ${LAKEHOUSE_S3_ACCESS_KEY:}
+        secret-key: ${LAKEHOUSE_S3_SECRET_KEY:}
+        region: ${LAKEHOUSE_S3_REGION:us-east-1}
+      cleanup-ttl-hours: ${LAKEHOUSE_WORKSPACE_TTL_HOURS:4}  # lifetime of an inactive workspace
+
+    # ------------------------------------------------------------------
+    # 2. Central Git integration.
+    # ------------------------------------------------------------------
+    vcs-provider: ${LAKEHOUSE_VCS_PROVIDER:local-git}     # [local-git, gitlab-api, github-app, gerrit-ssh]
+    git:
+      remote-url: ${LAKEHOUSE_GIT_URL:}
+      branch-main: ${LAKEHOUSE_GIT_BRANCH:main}
+
+    # ------------------------------------------------------------------
+    # 3. Authorization / RBAC strategy switchboard.
+    # ------------------------------------------------------------------
+    auth-strategy: ${LAKEHOUSE_AUTH_STRATEGY:jwt-rbac}    # [jwt-rbac, token-exchange]
+
+    # Browser session longevity (see ModellerProperties.Session). The SPA
+    # signs out only after this many minutes without any interaction.
+    session:
+      inactivity-minutes: ${LAKEHOUSE_SESSION_INACTIVITY_MINUTES:30}
+
+    # ------------------------------------------------------------------
+    # 4. System (technical) account used by the Modeller to talk to
+    #    the central Git as a single identity. End users are validated by
+    #    the application code (RBAC); this identity only performs the push.
+    # ------------------------------------------------------------------
+    vcs-system-account:
+      auth-type: ${LAKEHOUSE_VCS_AUTH_TYPE:token}           # [ssh, token, basic]
+      ssh-private-key-path: ${LAKEHOUSE_VCS_SSH_KEY_PATH:}
+      username: ${LAKEHOUSE_VCS_USER:}
+      token: ${LAKEHOUSE_VCS_TOKEN:}                        # GitLab/GitHub API token (auth-type: token)
+      password: ${LAKEHOUSE_VCS_PASSWORD:}                  # HTTPS password (auth-type: basic)
+
+    # GitHub App settings (used when vcs-provider == github-app and no token is set)
+    github:
+      app-id: ${LAKEHOUSE_GITHUB_APP_ID:}
+      app-private-key-path: ${LAKEHOUSE_GITHUB_APP_KEY_PATH:}
+      installation-id: ${LAKEHOUSE_GITHUB_INSTALLATION_ID:}
+
+    logging:
+      sync-log-capacity: ${LAKEHOUSE_SYNC_LOG_CAPACITY:500}
+
+---
+# Production profile: enforce HTTPS-only session cookie for the BFF
+spring:
+  config:
+    activate:
+      on-profile: prod
+server:
+  servlet:
+    session:
+      cookie:
+        secure: true

@@ -29,7 +29,6 @@ cd ../hms
 bash ./build.bash
 cd ../checkcontainer
 bash ./build.bash
-cd ../lakehouse-task-proxy4spark
-bash ./build.bash
+
 
 docker images | grep lakehouse | grep '0.11.0'

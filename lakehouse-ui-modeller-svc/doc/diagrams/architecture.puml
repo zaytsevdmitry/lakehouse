@@ -1,0 +1,109 @@
+@startuml
+title Lakehouse UI Modeller — module architecture
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName "Helvetica"
+skinparam dpi 150
+
+package "Browser — SPA (Vite / React 18)" {
+  [auth.js\n(PKCE + session)] as spa_auth
+  [LoginView] as login
+  [WorkspacePicker] as picker
+  [EditorView\n(form / raw YAML)] as editor
+  [FormEditor\n(schema-driven)] as form
+  [DagEditor\n(@xyflow/react)] as dag
+  [AdminView] as admin
+  spa_auth --> login
+  login --> picker
+  picker --> editor
+  editor --> form
+  editor --> dag
+  picker --> admin
+}
+
+package "Spring Boot backend (:8093)" {
+  package "REST layer /v1_0" {
+    [AuthController] as auth_ctrl
+    [VcsController] as vcs_ctrl
+    [EditorController] as edit_ctrl
+    [SchemaController] as schema_ctrl
+    [AdminController] as ad_ctrl
+  }
+  package "Services" {
+    [AuthService] as auth_svc
+    [VcsService] as vcs_svc
+    [ReviewService] as rev_svc
+    [EditorService] as edit_svc
+    [SchemaService] as schema_svc
+    [AdminWorkspaceService] as ad_svc
+    [SyncLogService] as log_svc
+  }
+
+  [ModellerProperties\n(lakehouse.modeller.*)] as props
+  [SecurityConfig\n(JWT resource server)] as security
+  [WorkspaceManager\n(locks, TTL, md5 ids)] as wm
+
+  package "VCS providers" {
+    [VcsProviderFactory] as vpf
+    [LocalGitVcsProvider\n(local-git / gerrit, JGit)] as local
+    [GitLabApiVcsProvider\n(gitlab-api, REST v4)] as glab
+    [GitHubAppVcsProvider\n(github-app, App token)] as ghub
+  }
+
+  package "Workspace storage" {
+    [LocalFsWorkspaceStorage] as fs
+    [S3WorkspaceStorage] as s3
+  }
+}
+
+node "Auth server" {
+  Database "Keycloak\n(realm lakehouse)" as kc
+}
+
+node "Git hosting" {
+  [Git / Gerrit repository] as git
+  [GitLab\n(REST API)] as gl
+  [GitHub\n(App installation + REST API)] as gh
+}
+
+node "Object storage" {
+  [S3 / MinIO] as s3s
+}
+
+spa_auth --> kc : authorization-code + PKCE
+editor --> auth_ctrl : Bearer JWT
+form --> edit_ctrl
+dag --> edit_ctrl
+picker --> vcs_ctrl
+admin --> ad_ctrl
+
+auth_ctrl --> auth_svc
+vcs_ctrl --> vcs_svc
+vcs_ctrl --> rev_svc
+edit_ctrl --> edit_svc
+schema_ctrl --> schema_svc
+ad_ctrl --> ad_svc
+ad_svc --> log_svc
+rev_svc --> log_svc
+
+auth_svc --> props
+edit_svc --> wm
+vcs_svc --> wm
+rev_svc --> wm
+ad_svc --> wm
+rev_svc --> vpf
+vcs_svc --> vpf
+wm --> fs
+wm --> s3
+
+security --> props
+props --> security
+vpf --> local
+vpf --> glab
+vpf --> ghub
+
+local --> git : JGit + system account\n(ssh / token / basic)
+glab --> gl : token
+ghub --> gh : App JWT -> install token
+fs --> s3s : optional
+@enduml

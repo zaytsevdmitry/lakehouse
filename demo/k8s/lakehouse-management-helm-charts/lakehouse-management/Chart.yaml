@@ -36,4 +36,7 @@ dependencies:
   - name: git-server
     version: 0.1.0
     repository: "file://../git-server"
+  - name: lakehouse-ui-modeller
+    version: 0.1.0
+    repository: "file://../lakehouse-ui-modeller"
 

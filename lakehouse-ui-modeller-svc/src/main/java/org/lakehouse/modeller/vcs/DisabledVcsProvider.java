@@ -1,0 +1,38 @@
+package org.lakehouse.modeller.vcs;
+
+/**
+ * VCS strategy disabled by configuration: every operation fails with a clear message.
+ */
+public class DisabledVcsProvider implements VcsProvider {
+
+    @Override
+    public String name() {
+        return "none";
+    }
+
+    private VcsProviderException disabled() {
+        return new VcsProviderException(
+                "No VCS provider configured (lakehouse.modeller.vcs-provider). "
+                        + "Pick local-git, gitlab-api or github-app to enable repository operations.");
+    }
+
+    @Override
+    public java.util.Map<String, String> readBranchFiles(String branch) {
+        throw disabled();
+    }
+
+    @Override
+    public java.util.List<String> listBranches() {
+        throw disabled();
+    }
+
+    @Override
+    public void createBranch(String branch, String baseBranch) {
+        throw disabled();
+    }
+
+    @Override
+    public VcsReviewResult submitReview(VcsReviewSubmission submission, org.lakehouse.modeller.auth.UserContext user) {
+        throw disabled();
+    }
+}

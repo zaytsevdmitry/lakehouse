@@ -1,0 +1,48 @@
+replicaCount: 1
+
+image:
+  repository: lakehouse
+  tag: "0.11.0"
+  pullPolicy: IfNotPresent
+
+service:
+  type: NodePort
+  port: 8081
+  targetPort: 8081
+  nodePort: 30081
+
+keycloak:
+  issuerUri: "http://keycloak:8085/realms/lakehouse"
+  modellerClientSecret: super-secret-modeller-key-555555555
+
+vcs:
+  provider: local-git
+  gitUrl: "git://git-server:9418/config-repo.git"
+  gitBranch: main
+  authType: token
+  user: modeller-bot
+  token: dummy
+
+initContainers:
+  waitForKeycloak:
+    image: busybox:1.37
+  waitForGitServer:
+    image: busybox:1.37
+
+java:
+  springdocApiDocsEnabled: "false"
+  springdocSwaggerUiEnabled: "false"
+  serverPort: 8081
+  workspaceRoot: /opt/lakehouse-workspaces
+
+workspace:
+  mountPath: /opt/lakehouse-workspaces
+
+persistence:
+  enabled: false
+  existingClaim: ""
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 1Gi
+
+resources: {}

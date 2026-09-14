@@ -1,5 +1,4 @@
 server:
-  port: 8084
   servlet:
     session:
       cookie:
@@ -35,10 +34,10 @@ spring:
             scope: openid
         provider:
           keycloak:
-            authorization-uri: ${KEYCLOAK_ISSUER_URI:http://lakehouse-auth-svc:8080/realms/lakehouse}/protocol/openid-connect/auth
-            token-uri: ${KEYCLOAK_ISSUER_URI:http://lakehouse-auth-svc:8080/realms/lakehouse}/protocol/openid-connect/token
-            user-info-uri: ${KEYCLOAK_ISSUER_URI:http://lakehouse-auth-svc:8080/realms/lakehouse}/protocol/openid-connect/userinfo
-            jwk-set-uri: ${KEYCLOAK_ISSUER_URI:http://lakehouse-auth-svc:8080/realms/lakehouse}/protocol/openid-connect/certs
+            authorization-uri: ${KEYCLOAK_ISSUER_URI:http://keycloak.lakehouse:8085/realms/lakehouse}/protocol/openid-connect/auth
+            token-uri: ${KEYCLOAK_ISSUER_URI:http://keycloak.lakehouse:8085/realms/lakehouse}/protocol/openid-connect/token
+            user-info-uri: ${KEYCLOAK_ISSUER_URI:http://keycloak.lakehouse:8085/realms/lakehouse}/protocol/openid-connect/userinfo
+            jwk-set-uri: ${KEYCLOAK_ISSUER_URI:http://keycloak.lakehouse:8085/realms/lakehouse}/protocol/openid-connect/certs
             user-name-attribute: preferred_username
 
 management:

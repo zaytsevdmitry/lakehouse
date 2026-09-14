@@ -225,6 +225,9 @@ minio:
     periodSeconds: 5
     timeoutSeconds: 5
 keycloak:
+  issuerUri: &keycloakIssuerUri "http://keycloak:8085/realms/lakehouse"
+  uiClientSecret: "super-secret-bff-key-1234567890"
+  internalClientSecret: "super-secret-internal-key-987654321"
   image:
     repository: quay.io/keycloak/keycloak
     tag: "26.0"
@@ -327,5 +330,29 @@ lakehouse-management-ui-svc:
       type: NodePort
       port: 8084
       targetPort: 8084
+
+lakehouse-ui-modeller:
+  replicaCount: 1
+  image:
+    repository: lakehouse
+    tag: "0.11.0"
+    pullPolicy: IfNotPresent
+  service:
+    type: NodePort
+    port: 8081
+    targetPort: 8081
+    nodePort: 30081
+  keycloak:
+    issuerUri: *keycloakIssuerUri
+    modellerClientSecret: super-secret-modeller-key-555555555
+  vcs:
+    provider: local-git
+    gitUrl: "git://git-server:9418/config-repo.git"
+    gitBranch: main
+    authType: token
+    user: modeller-bot
+    token: dummy
+  persistence:
+    enabled: false
 
 

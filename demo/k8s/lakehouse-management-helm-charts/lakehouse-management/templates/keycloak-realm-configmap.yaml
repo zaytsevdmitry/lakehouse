@@ -18,6 +18,18 @@ data:
           {
             "name": "ADMIN",
             "description": "Администратор с полным доступом к Spark и конфигурациям"
+          },
+          {
+            "name": "LAKEHOUSE_MODELLER_VIEWER",
+            "description": "Просмотр воркспейсов и конфигураций в lakehouse-ui-modeller"
+          },
+          {
+            "name": "LAKEHOUSE_MODELLER_EDITOR",
+            "description": "Редактирование конфигураций и отправка на review в lakehouse-ui-modeller"
+          },
+          {
+            "name": "LAKEHOUSE_MODELLER_ADMIN",
+            "description": "Администрирование lakehouse-ui-modeller (воркспейсы, TTL, журнал)"
           }
         ]
       },
@@ -38,7 +50,8 @@ data:
             }
           ],
           "realmRoles": [
-            "USER"
+            "USER",
+            "LAKEHOUSE_MODELLER_VIEWER"
           ]
         },
         {
@@ -57,7 +70,28 @@ data:
             }
           ],
           "realmRoles": [
-            "ADMIN"
+            "ADMIN",
+            "LAKEHOUSE_MODELLER_EDITOR"
+          ]
+        },
+        {
+          "username": "de_admin",
+          "firstName": "Data",
+          "lastName": "Administrator",
+          "email": "de_admin@lakehouse.local",
+          "enabled": true,
+          "emailVerified": true,
+          "requiredActions": [],
+          "credentials": [
+            {
+              "type": "password",
+              "value": "de_admin",
+              "temporary": false
+            }
+          ],
+          "realmRoles": [
+            "ADMIN",
+            "LAKEHOUSE_MODELLER_ADMIN"
           ]
         }
       ],
@@ -92,7 +126,28 @@ data:
           "standardFlowEnabled": false,
           "directAccessGrantsEnabled": false,
           "serviceAccountsEnabled": true
+        },
+        {
+          "clientId": "lakehouse-ui-modeller",
+          "name": "UI Modeller SPA Client",
+          "enabled": true,
+          "protocol": "openid-connect",
+          "publicClient": false,
+          "secret": "super-secret-modeller-key-555555555",
+          "standardFlowEnabled": true,
+          "directAccessGrantsEnabled": false,
+          "redirectUris": [
+            "http://localhost:8081/*"
+          ],
+          "webOrigins": [
+            "http://localhost:8081"
+          ],
+          "attributes": {
+            "pkce.code.challenge.method": "S256",
+            "post.logout.redirect.uris": "http://localhost:8081/*"
+          }
         }
       ]
     }
     
+

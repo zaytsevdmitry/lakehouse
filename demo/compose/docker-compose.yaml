@@ -6,7 +6,7 @@
 #      при KC_HOSTNAME_STRICT=true доступ по localhost:8085 не работает.
 #   3. lakehouse-config-svc (Swagger) опубликован на http://localhost:18081,
 #      хост-порт 8080 занят lakehouse-ui-svc (redirect_uri в realm = localhost:8080),
-#      18080 занят spark-history.
+#      порт 8081 занят lakehouse-ui-modeller-svc, 18080 занят spark-history.
 version: '3.9'
 services:
   minio-dev:
@@ -293,7 +293,7 @@ services:
     image: lakehouse:0.11.0
     container_name: lakehouse-config-svc
     ports:
-      - "18081:8080"
+      - "18081:8082"
     networks:
       lakehouse_net:
         ipv4_address: 172.20.193.80
@@ -316,6 +316,7 @@ services:
       "-Dlogging.level.org.springframework.web.client.RestClient=DEBUG",
       "-Dlogging.level.org.apache.hc.client5.http=DEBUG",
       "-Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=ConfigSVC",
+      "-Dserver.port=8082",
       "-Dlogging.level.org.springframework.boot.context.properties=DEBUG",
       "-jar", "/opt/lakehouse-config-svc-0.11.0-jar-with-dependencies.jar"
     ]
@@ -333,7 +334,7 @@ services:
     image: lakehouse:0.11.0
     container_name: lakehouse-scheduler-svc
     ports:
-      - "8081:8081"
+      - "8083:8083"
     networks:
       lakehouse_net:
         ipv4_address: 172.20.193.90
@@ -348,7 +349,8 @@ services:
       "-Dlakehouse.scheduler.registration.delay-ms=5000",
       "-Dlakehouse.scheduler.run.delay-ms=5000",
       "-Dlakehouse.scheduler.resolvedeps.delay-ms=5000",
-      "-Dlakehouse.client.rest.config.server.url=http://lakehouse-config-svc:8080",
+      "-Dserver.port=8083",
+      "-Dlakehouse.client.rest.config.server.url=http://lakehouse-config-svc:8082",
       "-jar", "/opt/lakehouse-scheduler-svc-0.11.0-jar-with-dependencies.jar"
       ]
     depends_on:
@@ -365,7 +367,7 @@ services:
     image: lakehouse:0.11.0
     container_name: lakehouse-state-svc
     ports:
-      - "8082:8082"
+      - "8084:8084"
     networks:
       lakehouse_net:
         ipv4_address: 172.20.193.100
@@ -375,6 +377,7 @@ services:
     command: >
       bash -c "java
       -Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=StateSVC
+      -Dserver.port=8084
       -jar /opt/lakehouse-state-svc-0.11.0-jar-with-dependencies.jar"
     depends_on:
       db-dev:
@@ -387,7 +390,7 @@ services:
     container_name: task-executor-svc-database
     hostname: task-executor-svc-1
     ports:
-      - "8091:8091"
+      - "8090:8090"
     networks:
       lakehouse_net:
         ipv4_address: 172.20.193.110
@@ -397,10 +400,10 @@ services:
       VAULT_TOKEN: lakehouse-spark-token
     command: [
       "java",
-      "-Dserver.port=8091",
-      "-Dlakehouse.client.rest.config.server.url=http://lakehouse-config-svc:8080",
-      "-Dlakehouse.client.rest.scheduler.server.url=http://lakehouse-scheduler-svc:8081",
-      "-Dlakehouse.client.rest.state.server.url=http://lakehouse-state-svc:8082",
+      "-Dserver.port=8090",
+      "-Dlakehouse.client.rest.config.server.url=http://lakehouse-config-svc:8082",
+      "-Dlakehouse.client.rest.scheduler.server.url=http://lakehouse-scheduler-svc:8083",
+      "-Dlakehouse.client.rest.state.server.url=http://lakehouse-state-svc:8084",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id=database",
       "-Dlakehouse.task-executor.service.id=database",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1",
@@ -434,9 +437,9 @@ services:
     command: [
       "java",
       "-Dserver.port=8092",
-      "-Dlakehouse.client.rest.config.server.url=http://lakehouse-config-svc:8080",
-      "-Dlakehouse.client.rest.scheduler.server.url=http://lakehouse-scheduler-svc:8081",
-      "-Dlakehouse.client.rest.state.server.url=http://lakehouse-state-svc:8082",
+      "-Dlakehouse.client.rest.config.server.url=http://lakehouse-config-svc:8082",
+      "-Dlakehouse.client.rest.scheduler.server.url=http://lakehouse-scheduler-svc:8083",
+      "-Dlakehouse.client.rest.state.server.url=http://lakehouse-state-svc:8084",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id=spark-cluster",
       "-Dlakehouse.task-executor.service.id=spark-exec-1",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1",
@@ -470,9 +473,9 @@ services:
     command: [
       "java",
       "-Dserver.port=8093",
-      "-Dlakehouse.client.rest.config.server.url=http://lakehouse-config-svc:8080",
-      "-Dlakehouse.client.rest.scheduler.server.url=http://lakehouse-scheduler-svc:8081",
-      "-Dlakehouse.client.rest.state.server.url=http://lakehouse-state-svc:8082",
+      "-Dlakehouse.client.rest.config.server.url=http://lakehouse-config-svc:8082",
+      "-Dlakehouse.client.rest.scheduler.server.url=http://lakehouse-scheduler-svc:8083",
+      "-Dlakehouse.client.rest.state.server.url=http://lakehouse-state-svc:8084",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id=state-service",
       "-Dlakehouse.task-executor.service.id=state-service",
       "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1",
@@ -511,14 +514,14 @@ services:
 
 
   lakehouse-task-proxy4spark:
-    image: lakehouse-task-proxy4spark:0.11.0
+    image: lakehouse-spark-aws:0.11.0
     container_name: lakehouse-task-proxy4spark
     hostname: lakehouse-task-task-proxy4spark
     networks:
       lakehouse_net:
         ipv4_address: 172.20.193.160
     ports:
-      - "8099:8099"
+      - "8086:8086"
     environment:
       KEYCLOAK_ISSUER_URI: http://keycloak.lakehouse:8085/realms/lakehouse
       KEYCLOAK_INTERNAL_CLIENT_SECRET: super-secret-internal-key-987654321
@@ -526,7 +529,7 @@ services:
       "/opt/java/jdk-23.0.2/bin/java",
       "-Dlogging.level.org.springframework.web.client.RestClient=DEBUG",
       "-Dlogging.level.org.apache.hc.client5.http=DEBUG",
-      "-Dserver.port=8099",
+      "-Dserver.port=8086",
       "-Dlakehouse.task.proxy4spark.adapter=standalone",
       "-Dlakehouse.task.proxy4spark.spark-master=spark://spark-master:7077",
       "-Dlakehouse.task.proxy4spark.standalone.rest-url=http://spark-master:6066",
@@ -557,7 +560,7 @@ services:
       lakehouse_net:
         ipv4_address: 172.20.193.170
     ports:
-      - "8080:8084" # хост-порт 8080: redirect_uri клиента lakehouse-ui-client в realm = localhost:8080
+      - "8080:8080"
     environment:
       KEYCLOAK_ISSUER_URI: http://keycloak.lakehouse:8085/realms/lakehouse
       KEYCLOAK_UI_CLIENT_SECRET: super-secret-bff-key-1234567890
@@ -576,22 +579,23 @@ services:
       "java",
       "-Dlogging.level.org.springframework.web.client.RestClient=DEBUG",
       "-Dlogging.level.org.apache.hc.client5.http=DEBUG",
+      "-Dserver.port=8080",
       "-Dlakehouse.ui.health-check-timeout-ms=3000",
       "-Dlakehouse.ui.services[0].name=lakehouse-config-svc",
-      "-Dlakehouse.ui.services[0].url=http://172.20.193.80:8080",
-      "-Dlakehouse.ui.services[0].health-check-url=http://172.20.193.80:8080/healthz",
+      "-Dlakehouse.ui.services[0].url=http://172.20.193.80:8082",
+      "-Dlakehouse.ui.services[0].health-check-url=http://172.20.193.80:8082/healthz",
       "-Dlakehouse.ui.services[1].name=lakehouse-scheduler-svc",
-      "-Dlakehouse.ui.services[1].url=http://172.20.193.90:8081",
-      "-Dlakehouse.ui.services[1].health-check-url=http://172.20.193.90:8081/healthz",
+      "-Dlakehouse.ui.services[1].url=http://172.20.193.90:8083",
+      "-Dlakehouse.ui.services[1].health-check-url=http://172.20.193.90:8083/healthz",
       "-Dlakehouse.ui.services[2].name=lakehouse-state-svc",
-      "-Dlakehouse.ui.services[2].url=http://172.20.193.100:8082",
-      "-Dlakehouse.ui.services[2].health-check-url=http://172.20.193.100:8082/healthz",
+      "-Dlakehouse.ui.services[2].url=http://172.20.193.100:8084",
+      "-Dlakehouse.ui.services[2].health-check-url=http://172.20.193.100:8084/healthz",
       "-Dlakehouse.ui.services[3].name=lakehouse-task-proxy-for-spark",
-      "-Dlakehouse.ui.services[3].url=http://172.20.193.160:8099",
-      "-Dlakehouse.ui.services[3].health-check-url=http://172.20.193.160:8099/healthz",
+      "-Dlakehouse.ui.services[3].url=http://172.20.193.160:8086",
+      "-Dlakehouse.ui.services[3].health-check-url=http://172.20.193.160:8085/healthz",
       "-Dlakehouse.ui.services[4].name=lakehouse-task-executor-svc-database",
-      "-Dlakehouse.ui.services[4].url=http://172.20.193.110:8091",
-      "-Dlakehouse.ui.services[4].health-check-url=http://172.20.193.110:8091/healthz",
+      "-Dlakehouse.ui.services[4].url=http://172.20.193.110:8090",
+      "-Dlakehouse.ui.services[4].health-check-url=http://172.20.193.110:8090/healthz",
       "-Dlakehouse.ui.services[5].name=lakehouse-task-executor-svc-spark",
       "-Dlakehouse.ui.services[5].url=http://172.20.193.130:8092",
       "-Dlakehouse.ui.services[5].health-check-url=http://172.20.193.130:8092/healthz",
@@ -624,17 +628,17 @@ services:
       "-Dlakehouse.ui.services[14].name=openbao",
       "-Dlakehouse.ui.services[14].url=http://172.20.193.150:8200",
       "-Dlakehouse.ui.services[14].health-check-url=http://172.20.193.150:8200/v1/sys/health",
-      "-Dlakehouse.ui.services[15].name=lakehouse-ui-modeller",
-      "-Dlakehouse.ui.services[15].url=http://172.20.193.190:8093",
-      "-Dlakehouse.ui.services[15].health-check-url=http://172.20.193.190:8093/healthz",
+      "-Dlakehouse.ui.services[15].name=lakehouse-ui-modeller-svc",
+      "-Dlakehouse.ui.services[15].url=http://172.20.193.190:8081",
+      "-Dlakehouse.ui.services[15].health-check-url=http://172.20.193.190:8081/healthz",
       "-Dlakehouse.ui.services[16].name=git-server",
       "-Dlakehouse.ui.services[16].url=http://172.20.193.200:9418",
       "-Dlakehouse.ui.services[16].health-check-url=172.20.193.200:9418",
       "-Dlakehouse.ui.services[16].check-type=tcp",
-      "-Dlakehouse.client.rest.config.server.url=http://172.20.193.80:8080",
-      "-Dlakehouse.client.rest.state.server.url=http://172.20.193.100:8082",
-      "-Dlakehouse.client.rest.scheduler.server.url=http://172.20.193.90:8081",
-      "-Dlakehouse.client.rest.task-proxy-for-spark.server.url=http://172.20.193.160:8099",
+      "-Dlakehouse.client.rest.config.server.url=http://172.20.193.80:8082",
+      "-Dlakehouse.client.rest.state.server.url=http://172.20.193.100:8084",
+      "-Dlakehouse.client.rest.scheduler.server.url=http://172.20.193.90:8083",
+      "-Dlakehouse.client.rest.task-proxy-for-spark.server.url=http://172.20.193.160:8086",
       "-Dlakehouse.ui.vertices.lakehouse-config-svc=lakehouse-config-svc",
       "-Dlakehouse.ui.vertices.topic-schedule-conf=kafka-broker",
       "-Dlakehouse.ui.vertices.topic-tasks=kafka-broker",
@@ -654,7 +658,7 @@ services:
       "-Dlakehouse.ui.vertices.lakehouse-trino=lakehouse-trino",
       "-Dlakehouse.ui.vertices.lakehouse-spark-history=lakehouse-spark-history",
       "-Dlakehouse.ui.vertices.openbao=openbao",
-      "-Dlakehouse.ui.vertices.lakehouse-ui-modeller=lakehouse-ui-modeller",
+      "-Dlakehouse.ui.vertices.lakehouse-ui-modeller-svc=lakehouse-ui-modeller-svc",
       "-Dlakehouse.ui.vertices.git-server=git-server",
       "-Dlakehouse.ui.edges.lakehouse-config-svc[0]=confdb",
       "-Dlakehouse.ui.edges.lakehouse-config-svc[1]=topic-schedule-conf",
@@ -677,27 +681,29 @@ services:
       "-Dlakehouse.ui.edges.lakehouse-spark-worker[0]=lakehouse-minio",
       "-Dlakehouse.ui.edges.lakehouse-minio[0]=lakehouse-trino",
       "-Dlakehouse.ui.edges.lakehouse-minio[1]=lakehouse-spark-history",
-      "-Dlakehouse.ui.edges.lakehouse-ui-modeller[0]=git-server",
+      "-Dlakehouse.ui.edges.lakehouse-ui-modeller-svc[0]=git-server",
       "-jar", "/opt/lakehouse-ui-svc-0.11.0-jar-with-dependencies.jar"
     ]
 
-  lakehouse-ui-modeller:
+  lakehouse-ui-modeller-svc:
     image: lakehouse:0.11.0
-    container_name: lakehouse-ui-modeller
-    hostname: lakehouse-ui-modeller
+    container_name: lakehouse-ui-modeller-svc
+    hostname: lakehouse-ui-modeller-svc
     networks:
       lakehouse_net:
         ipv4_address: 172.20.193.190
     ports:
-      - "18095:8093" # host 18095: SPA + Swagger; redirect_uri клиента lakehouse-ui-modeller в realm = localhost:18095
+      - "8081:8081" # host 8081: SPA + Swagger; redirect_uri клиента lakehouse-ui-modeller-svc в realm = localhost:8081
     environment:
-      LAKEHOUSE_ISSUER_URI: http://keycloak.lakehouse:8085/realms/lakehouse
+      KEYCLOAK_ISSUER_URI: http://keycloak.lakehouse:8085/realms/lakehouse
+      LAKEHOUSE_MODELLER_REDIRECT_URI: http://localhost:8081/login/oauth2/code/keycloak
+      KEYCLOAK_MODELLER_CLIENT_SECRET: super-secret-modeller-key-555555555
+      LAKEHOUSE_MODELLER_CLIENT_ID: lakehouse-ui-modeller-client
       LAKEHOUSE_VCS_PROVIDER: local-git
       LAKEHOUSE_GIT_URL: git://git-server:9418/config-repo.git
       LAKEHOUSE_GIT_BRANCH: main
       LAKEHOUSE_VCS_AUTH_TYPE: token
       LAKEHOUSE_VCS_USER: modeller-bot
-      # git daemon анонимный (git://), токен нужен только для валидации системной учётной записи
       LAKEHOUSE_VCS_TOKEN: dummy
     depends_on:
       keycloak:
@@ -708,8 +714,9 @@ services:
       "java",
       "-Dspringdoc.api-docs.enabled=false",
       "-Dspringdoc.swagger-ui.enabled=false",
-      "-Dlakehouse.configurator.storage.root-directory=/opt/lakehouse-workspaces",
-      "-jar", "/opt/lakehouse-ui-modeller-0.11.0-jar-with-dependencies.jar"
+      "-Dserver.port=8081",
+      "-Dlakehouse.modeller.storage.root-directory=/opt/lakehouse-workspaces",
+      "-jar", "/opt/lakehouse-ui-modeller-svc-0.11.0-jar-with-dependencies.jar"
     ]
     volumes:
       - "./storages/modeller_workspaces:/opt/lakehouse-workspaces"

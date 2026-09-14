@@ -8,13 +8,18 @@ ADD service.sh /
 
 RUN chown spark:spark /service.sh && chmod +x /service.sh
 
-
 # AWS CLI
 RUN curl -Z -L -O https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip && \
     unzip awscli-exe-linux-x86_64.zip -d /opt/aws_installer && \
     /opt/aws_installer/aws/install && \
     rm awscli-exe-linux-x86_64.zip && \
     rm -rf /opt/aws_installer
+
+# Java 23 for SpringService only
+RUN curl -Z -L -O https://download.oracle.com/java/23/archive/jdk-23.0.2_linux-x64_bin.tar.gz && \
+    tar xzvf jdk-23.0.2_linux-x64_bin.tar.gz -C /opt/java/ && \
+    rm jdk-23.0.2_linux-x64_bin.tar.gz
+
 ENV APP_HOME=/opt/lakehouse-task-spark-apps
 RUN mkdir -p ${APP_HOME}
 

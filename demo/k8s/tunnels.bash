@@ -30,6 +30,7 @@ for svc in \
   "lakehouse-management-state-service 8082:8082" \
   "db-dev 5432:5432" \
   "broker 9092:9092" \
+  "lakehouse-ui-modeller 8081:8081" \
   "lakehouse-management-ui-svc 8084:8084" \
   "keycloak 8085:8085"
 do
