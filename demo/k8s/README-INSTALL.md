@@ -144,10 +144,10 @@ kubectl -n lakehouse-management scale deployment lakehouse-management-task-execu
 # Де-инсталляция
 ## Удаление сервисов
 ```shell 
-sh uninstall.bash
+bash uninstall.bash
 ```
 ## Удаление образов
 ```shell
-sh remove_images.bash
+bash remove_images.bash
 ```
 

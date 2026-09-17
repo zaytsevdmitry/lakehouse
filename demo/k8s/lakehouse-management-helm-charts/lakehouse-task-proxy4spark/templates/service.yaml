@@ -6,7 +6,7 @@ spec:
   type: {{ .Values.proxy4spark.service.type }}
   ports:
     - port: {{ .Values.proxy4spark.service.port }}
-      targetPort: 8090
+      targetPort: {{ .Values.proxy4spark.service.port }}
       protocol: TCP
   selector:
     app.kubernetes.io/name: lakehouse-task-proxy4spark

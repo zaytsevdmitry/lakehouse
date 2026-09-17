@@ -5,23 +5,25 @@ skinparam shadowing false
 skinparam defaultFontName "Helvetica"
 skinparam dpi 150
 
-package "Browser — SPA (Vite / React 18)" {
-  [auth.js\n(PKCE + session)] as spa_auth
+package "Browser — React frontend (Vite / React 18)" {
   [LoginView] as login
   [WorkspacePicker] as picker
-  [EditorView\n(form / raw YAML)] as editor
+  [EditorView\n(form / raw YAML / DAG / ER)] as editor
   [FormEditor\n(schema-driven)] as form
   [DagEditor\n(@xyflow/react)] as dag
+  [ErDiagramEditor\n(@xyflow/react)] as erd
+  [CodeEditor\n(subset syntax highlight)] as code
   [AdminView] as admin
-  spa_auth --> login
-  login --> picker
+  login --> picker : server session\n(JSESSIONID)
   picker --> editor
   editor --> form
   editor --> dag
+  editor --> erd
+  form --> code
   picker --> admin
 }
 
-package "Spring Boot backend (:8093)" {
+package "Spring Boot BFF (:8081)" {
   package "REST layer /v1_0" {
     [AuthController] as auth_ctrl
     [VcsController] as vcs_ctrl
@@ -40,7 +42,7 @@ package "Spring Boot backend (:8093)" {
   }
 
   [ModellerProperties\n(lakehouse.modeller.*)] as props
-  [SecurityConfig\n(JWT resource server)] as security
+  [SecurityConfig\n(BFF oauth2Login +\nJWT resource server)] as security
   [WorkspaceManager\n(locks, TTL, md5 ids)] as wm
 
   package "VCS providers" {
@@ -57,7 +59,7 @@ package "Spring Boot backend (:8093)" {
 }
 
 node "Auth server" {
-  Database "Keycloak\n(realm lakehouse)" as kc
+  Database "Keycloak\n(realm lakehouse, :8085)" as kc
 }
 
 node "Git hosting" {
@@ -70,10 +72,13 @@ node "Object storage" {
   [S3 / MinIO] as s3s
 }
 
-spa_auth --> kc : authorization-code + PKCE
-editor --> auth_ctrl : Bearer JWT
-form --> edit_ctrl
+login --> security : GET /oauth2/authorization/keycloak\n(302 redirect flow)
+security --> kc : authorization code +\ntoken exchange (server-side)
+kc --> security : id_token / user-info\n-> JSESSIONID session
+editor --> auth_ctrl : JSESSIONID cookie +\nX-XSRF-TOKEN header
+form --> edit_ctrl : api.js\n(/v1_0/...)
 dag --> edit_ctrl
+erd --> edit_ctrl
 picker --> vcs_ctrl
 admin --> ad_ctrl
 

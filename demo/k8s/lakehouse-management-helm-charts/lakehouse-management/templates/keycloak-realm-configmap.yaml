@@ -9,28 +9,14 @@ data:
       "id": "lakehouse",
       "realm": "lakehouse",
       "enabled": true,
+      "sslRequired": "none",
       "roles": {
         "realm": [
-          {
-            "name": "USER",
-            "description": "Обычный пользователь экосистемы"
-          },
-          {
-            "name": "ADMIN",
-            "description": "Администратор с полным доступом к Spark и конфигурациям"
-          },
-          {
-            "name": "LAKEHOUSE_MODELLER_VIEWER",
-            "description": "Просмотр воркспейсов и конфигураций в lakehouse-ui-modeller"
-          },
-          {
-            "name": "LAKEHOUSE_MODELLER_EDITOR",
-            "description": "Редактирование конфигураций и отправка на review в lakehouse-ui-modeller"
-          },
-          {
-            "name": "LAKEHOUSE_MODELLER_ADMIN",
-            "description": "Администрирование lakehouse-ui-modeller (воркспейсы, TTL, журнал)"
-          }
+          { "name": "USER", "description": "Обычный пользователь экосистемы" },
+          { "name": "ADMIN", "description": "Администратор с полным доступом к Spark и конфигурациям" },
+          { "name": "LAKEHOUSE_MODELLER_VIEWER", "description": "Просмотр воркспейсов и конфигураций в lakehouse-ui-modeller" },
+          { "name": "LAKEHOUSE_MODELLER_EDITOR", "description": "Редактирование конфигураций и отправка на review в lakehouse-ui-modeller" },
+          { "name": "LAKEHOUSE_MODELLER_ADMIN", "description": "Администрирование lakehouse-ui-modeller (воркспейсы, TTL, журнал)" }
         ]
       },
       "users": [
@@ -42,17 +28,8 @@ data:
           "enabled": true,
           "emailVerified": true,
           "requiredActions": [],
-          "credentials": [
-            {
-              "type": "password",
-              "value": "de_view",
-              "temporary": false
-            }
-          ],
-          "realmRoles": [
-            "USER",
-            "LAKEHOUSE_MODELLER_VIEWER"
-          ]
+          "credentials": [{ "type": "password", "value": "de_view", "temporary": false }],
+          "realmRoles": ["USER", "LAKEHOUSE_MODELLER_VIEWER"]
         },
         {
           "username": "de_editor",
@@ -62,17 +39,8 @@ data:
           "enabled": true,
           "emailVerified": true,
           "requiredActions": [],
-          "credentials": [
-            {
-              "type": "password",
-              "value": "de_editor",
-              "temporary": false
-            }
-          ],
-          "realmRoles": [
-            "ADMIN",
-            "LAKEHOUSE_MODELLER_EDITOR"
-          ]
+          "credentials": [{ "type": "password", "value": "de_editor", "temporary": false }],
+          "realmRoles": ["ADMIN", "LAKEHOUSE_MODELLER_EDITOR"]
         },
         {
           "username": "de_admin",
@@ -82,17 +50,8 @@ data:
           "enabled": true,
           "emailVerified": true,
           "requiredActions": [],
-          "credentials": [
-            {
-              "type": "password",
-              "value": "de_admin",
-              "temporary": false
-            }
-          ],
-          "realmRoles": [
-            "ADMIN",
-            "LAKEHOUSE_MODELLER_ADMIN"
-          ]
+          "credentials": [{ "type": "password", "value": "de_admin", "temporary": false }],
+          "realmRoles": ["ADMIN", "LAKEHOUSE_MODELLER_ADMIN"]
         }
       ],
       "clients": [
@@ -102,18 +61,26 @@ data:
           "enabled": true,
           "protocol": "openid-connect",
           "publicClient": false,
-          "secret": "super-secret-bff-key-1234567890",
+          "secret": "{{ .Values.keycloak.uiClientSecret }}",
           "standardFlowEnabled": true,
           "directAccessGrantsEnabled": false,
           "redirectUris": [
             "http://localhost:8080/*",
-            "http://localhost:8084/*",
-            "http://localhost:8080/login/oauth2/code/keycloak",
-            "http://localhost:8084/login/oauth2/code/keycloak"
+            "http://localhost:8080/login/oauth2/code/keycloak"
           ],
           "webOrigins": [
             "http://localhost:8080",
-            "http://localhost:8084"
+            "http://172.20.193.170:8080"
+          ],
+          "defaultClientScopes": [
+            "web-origins",
+            "acr",
+            "profile",
+            "roles",
+            "email"
+          ],
+          "optionalClientScopes": [
+            "offline_access"
           ]
         },
         {
@@ -122,22 +89,33 @@ data:
           "enabled": true,
           "protocol": "openid-connect",
           "publicClient": false,
-          "secret": "super-secret-internal-key-987654321",
+          "secret": "{{ .Values.keycloak.internalClientSecret }}",
           "standardFlowEnabled": false,
           "directAccessGrantsEnabled": false,
-          "serviceAccountsEnabled": true
+          "serviceAccountsEnabled": true,
+          "defaultClientScopes": [
+            "web-origins",
+            "acr",
+            "profile",
+            "roles",
+            "email"
+          ],
+          "optionalClientScopes": [
+            "offline_access"
+          ]
         },
         {
-          "clientId": "lakehouse-ui-modeller",
-          "name": "UI Modeller SPA Client",
+          "clientId": "lakehouse-ui-modeller-client",
+          "name": "UI Modeller BFF Client",
           "enabled": true,
           "protocol": "openid-connect",
           "publicClient": false,
-          "secret": "super-secret-modeller-key-555555555",
+          "secret": "{{ .Values.keycloak.modellerClientSecret }}",
           "standardFlowEnabled": true,
           "directAccessGrantsEnabled": false,
           "redirectUris": [
-            "http://localhost:8081/*"
+            "http://localhost:8081/*",
+            "http://localhost:8081/login/oauth2/code/keycloak"
           ],
           "webOrigins": [
             "http://localhost:8081"
@@ -145,9 +123,257 @@ data:
           "attributes": {
             "pkce.code.challenge.method": "S256",
             "post.logout.redirect.uris": "http://localhost:8081/*"
-          }
+          },
+          "defaultClientScopes": [
+            "web-origins",
+            "acr",
+            "profile",
+            "roles",
+            "email"
+          ],
+          "optionalClientScopes": [
+            "offline_access"
+          ],
+          "protocolMappers": [
+            {
+              "id": "modeller-realm-roles-id-token",
+              "name": "modeller realm roles (id token)",
+              "protocol": "openid-connect",
+              "protocolMapper": "oidc-usermodel-realm-role-mapper",
+              "consentRequired": false,
+              "config": {
+                "multivalued": "true",
+                "userinfo.token.claim": "true",
+                "id.token.claim": "true",
+                "access.token.claim": "false",
+                "claim.name": "realm_access.roles",
+                "jsonType.label": "String"
+              }
+            }
+          ]
+        }
+      ],
+      "clientScopes": [
+        {
+          "id": "profile",
+          "name": "profile",
+          "description": "OpenID Connect built-in scope: profile",
+          "protocol": "openid-connect",
+          "attributes": {
+            "include.in.token.scope": "true",
+            "consent.screen.text": "${profileScopeConsentText}",
+            "display.on.consent.screen": "true"
+          },
+          "protocolMappers": [
+            {
+              "name": "username",
+              "protocol": "openid-connect",
+              "protocolMapper": "oidc-usermodel-property-mapper",
+              "consentRequired": false,
+              "config": {
+                "userinfo.token.claim": "true",
+                "user.attribute": "username",
+                "id.token.claim": "true",
+                "access.token.claim": "true",
+                "claim.name": "preferred_username",
+                "jsonType.label": "String"
+              }
+            },
+            {
+              "name": "full name",
+              "protocol": "openid-connect",
+              "protocolMapper": "oidc-full-name-mapper",
+              "consentRequired": false,
+              "config": {
+                "id.token.claim": "true",
+                "access.token.claim": "true",
+                "userinfo.token.claim": "true"
+              }
+            },
+            {
+              "name": "given name",
+              "protocol": "openid-connect",
+              "protocolMapper": "oidc-usermodel-property-mapper",
+              "consentRequired": false,
+              "config": {
+                "userinfo.token.claim": "true",
+                "user.attribute": "firstName",
+                "id.token.claim": "true",
+                "access.token.claim": "true",
+                "claim.name": "given_name",
+                "jsonType.label": "String"
+              }
+            },
+            {
+              "name": "family name",
+              "protocol": "openid-connect",
+              "protocolMapper": "oidc-usermodel-property-mapper",
+              "consentRequired": false,
+              "config": {
+                "userinfo.token.claim": "true",
+                "user.attribute": "lastName",
+                "id.token.claim": "true",
+                "access.token.claim": "true",
+                "claim.name": "family_name",
+                "jsonType.label": "String"
+              }
+            },
+            {
+              "name": "profile",
+              "protocol": "openid-connect",
+              "protocolMapper": "oidc-usermodel-attribute-mapper",
+              "consentRequired": false,
+              "config": {
+                "userinfo.token.claim": "true",
+                "user.attribute": "profile",
+                "id.token.claim": "true",
+                "access.token.claim": "true",
+                "claim.name": "profile",
+                "jsonType.label": "String"
+              }
+            }
+          ]
+        },
+        {
+          "id": "email",
+          "name": "email",
+          "description": "OpenID Connect built-in scope: email",
+          "protocol": "openid-connect",
+          "attributes": {
+            "include.in.token.scope": "true",
+            "consent.screen.text": "${emailScopeConsentText}",
+            "display.on.consent.screen": "true"
+          },
+          "protocolMappers": [
+            {
+              "name": "email",
+              "protocol": "openid-connect",
+              "protocolMapper": "oidc-usermodel-property-mapper",
+              "consentRequired": false,
+              "config": {
+                "userinfo.token.claim": "true",
+                "user.attribute": "email",
+                "id.token.claim": "true",
+                "access.token.claim": "true",
+                "claim.name": "email",
+                "jsonType.label": "String"
+              }
+            },
+            {
+              "name": "email verified",
+              "protocol": "openid-connect",
+              "protocolMapper": "oidc-usermodel-property-mapper",
+              "consentRequired": false,
+              "config": {
+                "userinfo.token.claim": "true",
+                "user.attribute": "emailVerified",
+                "id.token.claim": "true",
+                "access.token.claim": "true",
+                "claim.name": "email_verified",
+                "jsonType.label": "boolean"
+              }
+            }
+          ]
+        },
+        {
+          "id": "roles",
+          "name": "roles",
+          "description": "OpenID Connect scope for add user roles to the access token",
+          "protocol": "openid-connect",
+          "attributes": {
+            "include.in.token.scope": "true",
+            "consent.screen.text": "${rolesScopeConsentText}",
+            "display.on.consent.screen": "true"
+          },
+          "protocolMappers": [
+            {
+              "name": "realm roles",
+              "protocol": "openid-connect",
+              "protocolMapper": "oidc-usermodel-realm-role-mapper",
+              "consentRequired": false,
+              "config": {
+                "multivalued": "true",
+                "claim.name": "realm_access.roles",
+                "access.token.claim": "true",
+                "jsonType.label": "String"
+              }
+            },
+            {
+              "name": "client roles",
+              "protocol": "openid-connect",
+              "protocolMapper": "oidc-usermodel-client-role-mapper",
+              "consentRequired": false,
+              "config": {
+                "multivalued": "true",
+                "claim.name": "resource_access.${client_id}.roles",
+                "access.token.claim": "true",
+                "jsonType.label": "String"
+              }
+            }
+          ]
+        },
+        {
+          "id": "web-origins",
+          "name": "web-origins",
+          "description": "OpenID Connect scope for add allowed web origins to the access token",
+          "protocol": "openid-connect",
+          "attributes": {
+            "include.in.token.scope": "false",
+            "consent.screen.text": "",
+            "display.on.consent.screen": "false"
+          },
+          "protocolMappers": [
+            {
+              "name": "allowed web origins",
+              "protocol": "openid-connect",
+              "protocolMapper": "oidc-allowed-origins-mapper",
+              "consentRequired": false,
+              "config": {
+                "multivalued": "true",
+                "claim.name": "allowed-origins",
+                "userinfo.token.claim": "false",
+                "id.token.claim": "false",
+                "access.token.claim": "true",
+                "jsonType.label": "String"
+              }
+            }
+          ]
+        },
+        {
+          "id": "offline_access",
+          "name": "offline_access",
+          "description": "OpenID Connect built-in scope: offline_access",
+          "protocol": "openid-connect",
+          "attributes": {
+            "include.in.token.scope": "true",
+            "consent.screen.text": "${offlineAccessScopeConsentText}",
+            "display.on.consent.screen": "true"
+          },
+          "protocolMappers": []
+        },
+        {
+          "id": "acr",
+          "name": "acr",
+          "description": "OpenID Connect scope for add acr (authentication context class reference) to the token",
+          "protocol": "openid-connect",
+          "attributes": {
+            "include.in.token.scope": "true",
+            "consent.screen.text": "${acrScopeConsentText}",
+            "display.on.consent.screen": "true"
+          },
+          "protocolMappers": [
+            {
+              "name": "acr loa level",
+              "protocol": "openid-connect",
+              "protocolMapper": "oidc-acr-mapper",
+              "consentRequired": false,
+              "config": {
+                "id.token.claim": "true",
+                "access.token.claim": "true",
+                "userinfo.token.claim": "true"
+              }
+            }
+          ]
         }
       ]
     }
-    
-

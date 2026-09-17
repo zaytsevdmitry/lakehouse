@@ -57,18 +57,18 @@ metadata:
 data:
   kafka.properties: |
     connector.name=kafka
-    kafka.nodes=broker:9092
+    kafka.nodes={{ .Values.kafka.broker }}
     kafka.table-names=default.metric_status
     kafka.table-description-dir=/etc/trino/kafka
 
   lakehouse.properties: |
     connector.name=iceberg
-    hive.metastore.uri=thrift://hive-metastore:9083
+    hive.metastore.uri={{ .Values.hive.metastoreUri }}
     fs.native-s3.enabled=true
-    s3.region=us-east-1
-    s3.endpoint=http://minio:9000
+    s3.region={{ .Values.s3.region }}
+    s3.endpoint={{ .Values.s3.endpoint }}
     s3.path-style-access=true
-    s3.aws-access-key=spark_user
-    s3.aws-secret-key=spark_pwd
+    s3.aws-access-key={{ .Values.s3.accessKey }}
+    s3.aws-secret-key={{ .Values.s3.secretKey }}
     hive.metastore-cache-ttl=0s
     hive.metastore-refresh-interval=5s

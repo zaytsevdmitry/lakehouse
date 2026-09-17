@@ -1,34 +1,42 @@
 @startuml
-title Frontend — authentication and data flow
+title Frontend — authentication and data flow (BFF)
 skinparam sequenceMessageAlign center
 skinparam shadowing false
 skinparam defaultFontName "Helvetica"
 skinparam dpi 150
 
 actor User
-participant "SPA (auth.js)" as SPA
+participant "React frontend\n(api.js)" as FE
+participant "Modeller BFF\n(Spring Security)" as API
 participant "Keycloak" as KC
-participant "Modeller API (/v1_0)" as API
 
-User -> SPA : opens application
-SPA -> API : GET /v1_0/auth/config (public)
-API --> SPA : {issuerUri, auth/token endpoints,\n clientId, scope, authStrategy}
-SPA -> KC : authorization-code + PKCE\n(authorize URL with code_challenge=S256)
-User -> KC : login + consent
-KC --> SPA : redirect ?code&state
-SPA -> KC : POST token (code + code_verifier)
-KC --> SPA : {access_token, refresh_token, expires_in}
-SPA -> SPA : saveSession (localStorage)
+User -> FE : opens application
+FE -> API : GET /v1_0/auth/me (no JSESSIONID)
+API --> FE : 401 (API requests)\n(HTML requests are 302-redirected)
+FE -> FE : redirectToLogin() — guard once
+FE -> API : GET /oauth2/authorization/keycloak
+API --> FE : 302 -> Keycloak authorize URL (state, nonce)
+FE -> KC : GET authorize — login form
+User -> KC : credentials
+KC --> FE : 302 ?code&state -> /login/oauth2/code/keycloak
+FE -> API : GET /login/oauth2/code/keycloak?code&state
+API -> KC : POST token (client_secret_post, code)
+KC --> API : {id_token, user-info}
+API -> API : OIDC user service + realm roles\nsession created (JSESSIONID, HttpOnly)
+API --> FE : 302 -> / + Set-Cookie: JSESSIONID
+FE -> API : GET /v1_0/auth/me (cookie attached)
+API --> FE : {username, name, roles, effectiveRole}
 
 group every authenticated request
-  SPA -> API : fetch('/v1_0/...', {Authorization: Bearer <access_token>})
-  API -> API : JWT validation (issuer/JWK), role extraction
-  alt invalid / expired token (401)
-    API --> SPA : 401 {"error": ...}
-    SPA -> SPA : clearSession + dispatch lakehouse:session-expired
-    SPA --> User : back to LoginView
-  else valid
-    API --> SPA : JSON payload
+  FE -> API : fetch('/v1_0/...') — browser attaches JSESSIONID\n(state-changing: + X-XSRF-TOKEN header,\nno Authorization header)
+  API -> API : session auth + CSRF check + role check (hasRole)
+  alt 401 (session expired / invalid)
+    API --> FE : 401 {"error"}
+    FE -> FE : redirectToLogin() -> login flow again
+  else 403 (insufficient role)
+    API --> FE : 403 {"error"}
+  else ok
+    API --> FE : JSON payload
   end
 end
 @enduml

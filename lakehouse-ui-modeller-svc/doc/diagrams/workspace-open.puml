@@ -5,7 +5,7 @@ skinparam shadowing false
 skinparam defaultFontName "Helvetica"
 skinparam dpi 150
 
-actor SPA
+actor UI
 participant "VcsController" as V
 participant "VcsService" as S
 participant "WorkspaceManager" as M
@@ -13,7 +13,7 @@ participant "WorkspaceStorage" as ST
 participant "VcsProvider" as P
 participant "Git hosting" as G
 
-SPA -> V: POST /v1_0/vcs/workspace {branch}
+UI -> V: POST /v1_0/vcs/workspace {branch}
 activate V
 V -> S: openWorkspace(request, auth)
 activate S
@@ -43,6 +43,6 @@ M --> S: Workspace(id, branch, owner, ...)
 deactivate M
 S --> V: WorkspaceResponse(id, branch, owner, ...)
 deactivate S
-V --> SPA: 201 WorkspaceResponse
+V --> UI: 201 WorkspaceResponse
 deactivate V
 @enduml

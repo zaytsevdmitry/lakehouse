@@ -1,12 +1,12 @@
 proxy4spark:
   image:
-    repository: lakehouse-task-proxy4spark
+    repository: lakehouse-spark-aws
     tag: "0.11.0"
     pullPolicy: IfNotPresent
 
   service:
     type: NodePort
-    port: 8090
+    port: 8086
 
   replicaCount: 1
 
@@ -46,3 +46,5 @@ proxy4spark:
 keycloak:
   issuerUri: "http://keycloak:8085/realms/lakehouse"
   internalClientSecret: "super-secret-internal-key-987654321"
+java:
+  serverPort: 8086

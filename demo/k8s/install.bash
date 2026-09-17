@@ -40,11 +40,22 @@ load_image_if_missing "lakehouse:0.11.0"
 load_image_if_missing "lakehouse-s3-check:0.11.0"
 load_image_if_missing "lakehouse-hms:0.11.0"
 load_image_if_missing "lakehouse-spark-aws:0.11.0"
-load_image_if_missing "lakehouse-task-proxy4spark:0.11.0"
 
 echo -e "\e[34mAll lakehouse images processed\e[0m"
 
 echo install lakehouse-release
 helm install lakehouse-release ./lakehouse-management-helm-charts/lakehouse-management --create-namespace  --namespace lakehouse-management
 
+kubectl -n lakehouse-management get pods -o custom-columns="NAME:.metadata.name,STATUS:.status.phase,TASK-NAME:.metadata.annotations.lakehouse-management-task"
+
+bash ./bootstrap-configs.bash
+
+kubectl -n lakehouse-management get pods -o custom-columns="NAME:.metadata.name,STATUS:.status.phase,TASK-NAME:.metadata.annotations.lakehouse-management-task"
+
+bash ./tunnels.bash
+
+kubectl -n lakehouse-management get pods -o custom-columns="NAME:.metadata.name,STATUS:.status.phase,TASK-NAME:.metadata.annotations.lakehouse-management-task"
+
 echo -e "\e[37;42m All services installed to namespace lakehouse-management \e[0m"
+
+

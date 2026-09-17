@@ -18,13 +18,13 @@ spec:
       initContainers:
         - name: wait-for-keycloak
           image: busybox:1.37
-          command: ['sh', '-c', 'until wget -q -O /dev/null http://keycloak:8085/realms/lakehouse; do echo waiting for keycloak; sleep 3; done']
+          command: ['sh', '-c', 'until wget -q -O /dev/null {{ .Values.keycloak.issuerUri }}; do echo waiting for keycloak; sleep 3; done']
       containers:
         - name: proxy4spark
           image: "{{ .Values.proxy4spark.image.repository }}:{{ .Values.proxy4spark.image.tag }}"
           imagePullPolicy: {{ .Values.proxy4spark.image.pullPolicy }}
           ports:
-            - containerPort: 8090
+            - containerPort: 8086
               protocol: TCP
           env:
             - name: SPRING_DATASOURCE_URL
@@ -77,7 +77,9 @@ spec:
             - name: spark-defaults
               mountPath: /opt/spark/conf/spark-defaults.conf
               subPath: spark-defaults.conf
-          command: [ "/opt/java/jdk-23.0.2/bin/java", "-jar", "/opt/lakehouse-task-spark-apps/lakehouse-task-proxy-for-spark-0.11.0-jar-with-dependencies.jar"]
+          command: [ "/opt/java/jdk-23.0.2/bin/java",
+                     "-Dserver.port={{ .Values.java.serverPort }}",
+                     "-jar", "/opt/lakehouse-task-spark-apps/lakehouse-task-proxy-for-spark-{{ .Chart.AppVersion }}-jar-with-dependencies.jar"]
       volumes:
         - name: spark-defaults
           configMap:

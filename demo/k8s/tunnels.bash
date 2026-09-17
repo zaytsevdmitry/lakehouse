@@ -15,25 +15,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-echo "Waiting for all pods..."
-kubectl -n lakehouse-management wait --for=condition=Ready pod --all --timeout=600s
+echo "Waiting for all active pods to be ready..."
+kubectl -n lakehouse-management wait --for=jsonpath='{.status.phase}'=Running pod --all --timeout=60s
 
 
 for svc in \
   "git-server 9418:9418" \
   "spark-history 18080:18080" \
-  "lakehouse-task-proxy4spark 8090:8090" \
+  "lakehouse-task-proxy4spark 8086:8086" \
   "lakehouse-release-trino 9090:8080" \
   "minio 9001:9001" \
   "minio 9000:9000" \
-  "lakehouse-management-config-service 18081:8080" \
-  "lakehouse-management-state-service 8082:8082" \
+  "lakehouse-config-service 8082:8082" \
+  "lakehouse-state-service 8084:8084" \
   "db-dev 5432:5432" \
   "broker 9092:9092" \
-  "lakehouse-ui-modeller 8081:8081" \
-  "lakehouse-management-ui-svc 8084:8084" \
+  "lakehouse-ui-modeller-svc 8081:8081" \
+  "lakehouse-ui-svc 8080:8080" \
   "keycloak 8085:8085"
 do
   set -- $svc
+  echo $1
   kubectl port-forward svc/$1 $2 -n lakehouse-management &
 done

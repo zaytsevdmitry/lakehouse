@@ -8,7 +8,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 5Gi
+      storage: {{ .Values.minio.persistence.size }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -29,8 +29,8 @@ spec:
     spec:
       containers:
         - name: minio
-          image: quay.io/minio/minio:latest
-          imagePullPolicy: IfNotPresent
+          image: "{{ .Values.minio.image.registry }}/{{ .Values.minio.image.repository }}:{{ .Values.minio.image.tag }}"
+          imagePullPolicy: {{ .Values.minio.image.pullPolicy }}
           args:
             - server
             - /data
@@ -43,9 +43,9 @@ spec:
               name: console
           env:
             - name: MINIO_ROOT_USER
-              value: "spark_user"
+              value: {{ .Values.minio.auth.rootUser | quote }}
             - name: MINIO_ROOT_PASSWORD
-              value: "spark_pwd"
+              value: {{ .Values.minio.auth.rootPassword | quote }}
           volumeMounts:
             - mountPath: /data
               name: storage
@@ -74,7 +74,7 @@ spec:
               done
               
               echo "MinIO API is up. Configuring client alias..."
-              mc alias set localminio http://localhost:9000 spark_user spark_pwd
+              mc alias set localminio http://localhost:9000 {{ .Values.minio.auth.rootUser }} {{ .Values.minio.auth.rootPassword }}
               
               echo "Executing bucket lifecycle checks..."
               

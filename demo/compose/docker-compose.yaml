@@ -293,7 +293,7 @@ services:
     image: lakehouse:0.11.0
     container_name: lakehouse-config-svc
     ports:
-      - "18081:8082"
+      - "8082:8082"
     networks:
       lakehouse_net:
         ipv4_address: 172.20.193.80

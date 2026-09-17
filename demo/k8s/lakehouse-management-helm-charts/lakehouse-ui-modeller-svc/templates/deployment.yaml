@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lakehouse-ui-modeller-svc
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: lakehouse-ui-modeller-svc
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: lakehouse-ui-modeller-svc
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      initContainers:
+        - name: wait-for-keycloak
+          image: {{ .Values.initContainers.waitForKeycloak.image }}
+          command: ['sh', '-c', 'until wget -q -O /dev/null {{ .Values.keycloak.issuerUri }}; do echo waiting for keycloak; sleep 3; done']
+        - name: wait-for-git-server
+          image: {{ .Values.initContainers.waitForGitServer.image }}
+          command: ['sh', '-c', 'until nc -z git-server 9418; do echo waiting for git-server; sleep 3; done']
+      containers:
+        - name: ui-modeller
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.targetPort }}
+              protocol: TCP
+          env:
+            - name: LAKEHOUSE_ISSUER_URI
+              value: {{ .Values.keycloak.issuerUri | quote }}
+            - name: KEYCLOAK_ISSUER_URI
+              value: {{ .Values.keycloak.issuerUri | quote }}
+            - name: LAKEHOUSE_MODELLER_REDIRECT_URI
+              value: "http://localhost:8081/login/oauth2/code/keycloak"
+            - name: KEYCLOAK_MODELLER_CLIENT_SECRET
+              value: {{ .Values.keycloak.modellerClientSecret | default "super-secret-modeller-key-555555555" | quote }}
+            - name: LAKEHOUSE_VCS_PROVIDER
+              value: {{ .Values.vcs.provider | quote }}
+            - name: LAKEHOUSE_GIT_URL
+              value: {{ .Values.vcs.gitUrl | quote }}
+            - name: LAKEHOUSE_GIT_BRANCH
+              value: {{ .Values.vcs.gitBranch | quote }}
+            - name: LAKEHOUSE_VCS_AUTH_TYPE
+              value: {{ .Values.vcs.authType | quote }}
+            - name: LAKEHOUSE_VCS_USER
+              value: {{ .Values.vcs.user | quote }}
+            - name: LAKEHOUSE_VCS_TOKEN
+              value: {{ .Values.vcs.token | quote }}
+          command: ["java"]
+          args:
+            - "-Dspringdoc.api-docs.enabled={{ .Values.java.springdocApiDocsEnabled }}"
+            - "-Dspringdoc.swagger-ui.enabled={{ .Values.java.springdocSwaggerUiEnabled }}"
+            - "-Dserver.port={{ .Values.java.serverPort }}"
+            - "-Dlakehouse.configurator.storage.root-directory={{ .Values.java.workspaceRoot }}"
+            - "-jar"
+            - "/opt/lakehouse-ui-modeller-svc-{{ .Values.image.tag }}-jar-with-dependencies.jar"
+          volumeMounts:
+            - name: workspaces-storage
+              mountPath: {{ .Values.workspace.mountPath }}
+      {{- if .Values.persistence.enabled }}
+      volumes:
+        - name: workspaces-storage
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim | default "lakehouse-ui-modeller-svc" }}
+      {{- else }}
+      volumes:
+        - name: workspaces-storage
+          emptyDir: {}
+      {{- end }}

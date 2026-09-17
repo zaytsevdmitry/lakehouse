@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: lakehouse-scheduler-svc
+spec:
+  type: NodePort # Делаем сервис доступным извне через порт
+  ports:
+    - port: 8083
+      targetPort: 8083
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: lakehouse-scheduler-svc
+    app.kubernetes.io/instance: {{ .Release.Name }}

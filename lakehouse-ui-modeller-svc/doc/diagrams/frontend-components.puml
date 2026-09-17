@@ -6,25 +6,27 @@ skinparam defaultFontName "Helvetica"
 skinparam dpi 150
 
 package "frontend root" {
-  [index.html\n(SPA entry point)] as html
-  [vite.config.js\n(dev proxy /v1_0 -> :8094)] as vite
+  [index.html\n(app entry point)] as html
+  [vite.config.js\n(dev proxy /v1_0, /oauth2,\n/logout -> :8081)] as vite
   [package.json\n(React 18.3.1, @xyflow/react,\nVite 6)] as pkg
 }
 
 package "src" {
   [main.jsx\n(entry, createRoot)] as main
-  [App.jsx\n(shell: session, profile,\nview switching, notices)] as app
-  [api.js\n(fetch wrapper, Bearer token,\n401 -> session-expired)] as api
-  [auth.js\n(PKCE code flow utils)] as auth
+  [App.jsx\n(shell: profile, theme,\nview switching, notices)] as app
+  [api.js\n(BFF fetch wrapper: JSESSIONID,\nCSRF X-XSRF-TOKEN,\n401 -> login redirect)] as api
   [yaml.js\n(lightweight YAML subset\nparser / serializer)] as yaml
   [index.css\n(design tokens, layout)] as css
 
   package "components" {
-    [LoginView\n(Keycloak login launch)] as login
+    [LoginView\n(Sign in -> BFF login entry)] as login
     [WorkspacePicker\n(branches + my workspaces)] as picker
     [EditorView\n(tree sidebar, form/YAML,\nnew/save/delete/review)] as editor
     [FormEditor\n(renders /v1_0/schema forms)] as form
     [DagEditor\n(@xyflow/react node graph)] as dag
+    [ErDiagramEditor\n(@xyflow/react ER graph)] as erd
+    [CodeEditor\n(syntax-highlighted fields)] as code
+    [Pickers\n(catalog picker modals)] as pickers
     [Modal.jsx\n(shared overlay)] as modal
     [AdminView\n(workspaces, TTL, sync logs)] as admin
   }
@@ -37,16 +39,18 @@ app --> editor : open workspace
 app --> admin : ADMIN view
 
 editor --> form : form mode
+editor --> erd : er-kind mode
 editor --> api
 editor --> yaml
 form --> api
+form --> dag : dag-kind fields
+form --> code : script/string fields
+form --> pickers : read-only refs
+erd --> api
 picker --> api
 admin --> api
 
-login --> auth
-auth --> api : /v1_0/auth/config
-app --> auth : exchange code
-
-form ..> dag : dag-kind fields
+login --> api : login() / logout()\n(/oauth2/authorization/keycloak,\nPOST /logout)
+app --> api : /v1_0/auth/me at startup
 api ..> css : styling
 @enduml

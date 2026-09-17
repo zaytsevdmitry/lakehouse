@@ -6,27 +6,29 @@ skinparam defaultFontName "Helvetica"
 skinparam dpi 150
 
 package "App.jsx — global (session-scoped) state" {
-  map "config" as cfg {
-    issuerUri => + /v1_0/auth/config
-  }
-  map "session" as ses {
-    accessToken => localStorage (loadSession/saveSession)
-    refreshToken => ""
-    expiresAt => "Date.now() + expires_in"
-    username => "JWT preferred_username"
-  }
   map "profile" as prof {
     username => + /v1_0/auth/me
-    roles => + realm/client roles
+    roles => server session (Keycloak claims)
     effectiveRole => viewer | editor | admin
   }
   map "openWorkspace" as ow {
     id => + /v1_0/vcs/workspace
     branch => ""
   }
+  map "notice" as ntf {
+    kind => success | error
+    message => transient banner
+  }
+  map "theme" as thm {
+    light | dark => localStorage "lakehouse-modeller-theme"
+  }
+  map "session" as ses {
+    owner => server (JSESSIONID cookie)
+    frontend => none (no tokens in localStorage)
+  }
 }
-ses --> cfg : buildAuthorizeUrl / exchangeCode
-prof --> ses : refreshProfile(session.accessToken)
+prof --> ses : resolved through server session
+thm --> ses : independent of auth state
 
 package "EditorView — per-file local state" {
   map "tree" as tree {
@@ -41,7 +43,7 @@ package "EditorView — per-file local state" {
   }
   map "mode" as mode {
     form => "FormEditor"
-    raw => "textarea"
+    yaml => "textarea"
   }
   map "dirty / busy / modals" as dbm {
     flags => new/save/delete/review modals
@@ -52,9 +54,10 @@ sel --> doc : openFile (GET /files/{path})
 mode --> doc : form <-> raw switch
 dbm --> api : save / delete / review
 
-package "DagEditor — module-level" {
+package "Graph editors — module-level" {
   map "nodePositions" as npos {
     scope => "per session, in-memory Map"
+    owners => DagEditor, ErDiagramEditor
   }
 }
 
@@ -67,7 +70,8 @@ aws --> api : /v1_0/admin/*
 
 note bottom
   No global store: state is passed top-down as props.
-  Session persistence = localStorage; expiry via the
-  "lakehouse:session-expired" window event.
+  Session is owned server-side (JSESSIONID cookie); the
+  frontend never stores tokens. Inactivity after 30 min
+  issues POST /logout and reloads "/".
 end note
 @enduml

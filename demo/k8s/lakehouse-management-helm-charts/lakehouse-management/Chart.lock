@@ -1,15 +1,15 @@
 dependencies:
-- name: lakehouse-management-config-service
-  repository: file://../lakehouse-management-config-service
+- name: lakehouse-config-svc
+  repository: file://../lakehouse-config-svc
   version: 0.1.0
-- name: lakehouse-management-scheduler-service
-  repository: file://../lakehouse-management-scheduler-service
+- name: lakehouse-scheduler-svc
+  repository: file://../lakehouse-scheduler-svc
   version: 0.1.0
-- name: lakehouse-management-state-service
-  repository: file://../lakehouse-management-state-service
+- name: lakehouse-state-svc
+  repository: file://../lakehouse-state-svc
   version: 0.1.0
-- name: lakehouse-management-task-executor-service
-  repository: file://../lakehouse-management-task-executor-service
+- name: lakehouse-task-executor-service
+  repository: file://../lakehouse-task-executor-svc
   version: 0.1.0
 - name: hive-metastore
   repository: file://../hive-metastore
@@ -23,14 +23,14 @@ dependencies:
 - name: lakehouse-task-proxy4spark
   repository: file://../lakehouse-task-proxy4spark
   version: 0.1.0
-- name: lakehouse-management-ui-svc
-  repository: file://../lakehouse-management-ui-svc
+- name: lakehouse-ui-svc
+  repository: file://../lakehouse-ui-svc
   version: 0.1.0
 - name: git-server
   repository: file://../git-server
   version: 0.1.0
-- name: lakehouse-ui-modeller
-  repository: file://../lakehouse-ui-modeller
+- name: lakehouse-ui-modeller-svc
+  repository: file://../lakehouse-ui-modeller-svc
   version: 0.1.0
-digest: sha256:501c58476889589d9ae361d3d851f28a57145a8d6f6dd5098f8994563a218dbc
-generated: "2026-09-14T01:49:45.403415844+03:00"
+digest: sha256:caaa98933461ec6da9293cf947f34839111cdc30e4fe63ef8b08fbba27e8fda3
+generated: "2026-09-15T20:40:10.03394011+03:00"

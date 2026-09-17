@@ -5,7 +5,7 @@ skinparam shadowing false
 skinparam defaultFontName "Helvetica"
 skinparam dpi 150
 
-actor SPA
+actor UI
 participant "VcsController" as V
 participant "ReviewService" as R
 participant "WorkspaceManager" as M
@@ -13,7 +13,7 @@ participant "WorkspaceStorage" as ST
 participant "VcsProvider" as P
 participant "Git hosting" as G
 
-SPA -> V: POST /v1_0/vcs/review/{workspaceId}
+UI -> V: POST /v1_0/vcs/review/{workspaceId}
 activate V
 V -> R: submit(workspaceId, request, auth)
 activate R
@@ -51,6 +51,6 @@ deactivate M
 R -> R: SyncLogService.log("REVIEW", ...)
 R --> V: ReviewResponse(status, url)
 deactivate R
-V --> SPA: 200 ReviewResponse
+V --> UI: 200 ReviewResponse
 deactivate V
 @enduml

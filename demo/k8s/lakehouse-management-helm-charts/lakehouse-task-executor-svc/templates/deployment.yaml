@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lakehouse-task-executor-svc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: lakehouse-task-executor-svc
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: lakehouse-task-executor-svc
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ index .Values "lakehouse-task-executor-service" "serviceAccount" "name" }}
+      initContainers:
+        - name: wait-for-keycloak
+          image: busybox:1.37
+          command: ['sh', '-c', 'until wget -q -O /dev/null {{ .Values.keycloak.issuerUri }}; do echo waiting for keycloak; sleep 3; done']
+      containers:
+        - name: task-executor-svc
+          image: "{{ index .Values "lakehouse-task-executor-service" "image" "repository" }}:{{ index .Values "lakehouse-task-executor-service" "image" "tag" }}"
+          imagePullPolicy: {{ index .Values "lakehouse-task-executor-service" "image" "pullPolicy" }}
+          ports:
+            - containerPort: 8090
+              protocol: TCP
+          env:
+            - name: KEYCLOAK_ISSUER_URI
+              value: {{ .Values.keycloak.issuerUri | quote }}
+            - name: KEYCLOAK_INTERNAL_CLIENT_SECRET
+              value: {{ .Values.keycloak.internalClientSecret | quote }}
+            - name: VAULT_TOKEN
+              value: {{ .Values.vault.token | quote }}
+          command: ["bash", "-c"]
+          args:
+            - "java
+            -Dserver.port=8090
+            -Dlakehouse.client.rest.config.server.url=http://lakehouse-config-svc:8082
+            -Dlakehouse.client.rest.scheduler.server.url=http://lakehouse-scheduler-svc:8083
+            -Dlakehouse.client.rest.state.server.url=http://lakehouse-state-svc:8084
+            -Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id=default
+            -Dlakehouse.task-executor.service.id=default
+            -Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=5
+            -Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=broker:9092
+            -jar /opt/lakehouse-task-executor-svc-{{ .Chart.AppVersion }}-jar-with-dependencies.jar"

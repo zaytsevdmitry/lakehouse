@@ -29,15 +29,15 @@ spec:
               done
               echo "PostgreSQL is up and running!"
         - name: wait-and-init-minio
-          image: lakehouse-s3-check:0.11.0
+          image: lakehouse-s3-check:{{ .Chart.AppVersion }}
           imagePullPolicy: IfNotPresent
           env:
             - name: MINIO_ENDPOINT
-              value: "http://minio:9000"
+              value: {{ .Values.config.s3.endpoint | quote }}
             - name: MINIO_ROOT_USER
-              value: "spark_user"
+              value: {{ .Values.config.s3.accessKey | quote }}
             - name: MINIO_ROOT_PASSWORD
-              value: "spark_pwd"
+              value: {{ .Values.config.s3.secretKey | quote }}
       containers:
         - name: hive-metastore
           image: "{{ .Values.config.image.repository }}:{{ .Values.config.image.tag }}"

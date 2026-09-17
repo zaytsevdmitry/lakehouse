@@ -69,7 +69,7 @@ data:
     # 7. Keycloak (driver pods need these env vars to reach the server)
     # ==========================================
     spark.kubernetes.driverEnv.KEYCLOAK_ISSUER_URI=http://keycloak:8085/realms/lakehouse
-    spark.kubernetes.driverEnv.KEYCLOAK_INTERNAL_CLIENT_SECRET=super-secret-internal-key-987654321
+    spark.kubernetes.driverEnv.KEYCLOAK_INTERNAL_CLIENT_SECRET={{ .Values.keycloak.internalClientSecret }}
 
     # ==========================================
     # 8. Kubernetes Submission Settings
@@ -79,4 +79,4 @@ data:
     spark.kubernetes.authenticate.executor.serviceAccountName=spark-driver-sa
     spark.kubernetes.container.image=lakehouse-spark-aws:0.11.0
     spark.kubernetes.executor.deleteOnTermination=true
-    spark.kubernetes.namespace=lakehouse-management
+    spark.kubernetes.namespace={{ .Release.Namespace }}
