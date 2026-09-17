@@ -16,6 +16,9 @@
 | Component decomposition | `../diagrams/frontend-components.png` |
 | Authentication & data flow | `../diagrams/data-flow.png` |
 | State ownership | `../diagrams/state-management.png` |
+| VCS integration variants | `../diagrams/vcs-variants.png` |
+| Workspace open / create | `../diagrams/workspace-open.png` |
+| Review submission | `../diagrams/review-flow.png` |
 
 ---
 
@@ -219,7 +222,85 @@ checks on every `/v1_0` endpoint.
 - The backend ships the built frontend: Maven excludes `frontend/**` from
   resources, `static/**` is packaged into the jar's `BOOT-INF/classes/static`.
 
-## 8. Architectural Recommendations (Technical Debt)
+## 8. Git / VCS Integration
+
+The central Git repository is the **single source of truth** for the metadata:
+the modeller never edits it in place. Editing happens in a server-side
+**workspace** — a per-user (per branch) working copy seeded from the branch
+snapshot; the **review** step commits the changed YAML files back to the repo
+(push, optionally as a Gerrit/GitLab/GitHub review request) and deletes the
+workspace on success.
+
+### 8.1 Provider configuration (declarative switchboard)
+
+`lakehouse.modeller.vcs-provider` selects exactly one strategy (`VcsProviderFactory`
+builds only the configured implementation; the rest are never instantiated):
+
+| Provider | `vcs-provider` | Transport / review destination |
+|---|---|---|
+| Local Git | `local-git` | JGit clone + push to `refs/heads/<branch>` |
+| Gerrit | `gerrit` | JGit clone + push to `refs/for/<branch>` |
+| GitLab | `gitlab-api` | REST API v4, opens a Merge Request |
+| GitHub App | `github-app` | App JWT → installation token, opens a Pull Request |
+| Disabled | `none` / empty | every VCS endpoint returns a clear message |
+
+Relevant `LAKEHOUSE_*` environment variables (all under `lakehouse.modeller.*`
+in `application.yml`):
+
+- `LAKEHOUSE_VCS_PROVIDER` — provider strategy name (default `local-git`);
+- `LAKEHOUSE_GIT_URL` — central repository (local path, `ssh://` or `https://`;
+  for `gitlab-api`/`github-app` a `group/repo`/`owner/repo`);
+- `LAKEHOUSE_GIT_BRANCH` — main/base branch (default `main`);
+- `LAKEHOUSE_VCS_AUTH_TYPE` — system-account auth: `ssh` \| `token` \| `basic`;
+- `LAKEHOUSE_VCS_USER` / `LAKEHOUSE_VCS_TOKEN` / `LAKEHOUSE_VCS_PASSWORD` /
+  `LAKEHOUSE_VCS_SSH_KEY_PATH` — the single technical VCS identity
+  (`vcs-system-account`) used for all git I/O; end users only get it indirectly
+  through the RBAC checks;
+- `LAKEHOUSE_GITHUB_APP_ID` / `LAKEHOUSE_GITHUB_APP_KEY_PATH` /
+  `LAKEHOUSE_GITHUB_INSTALLATION_ID` — GitHub App credentials for `github-app`.
+
+All JGit operations run against **transient clones** (`GitRepositoryOps`:
+`readBranch`, `listBranches`, `createBranch`, `commitAndPush`); nothing is kept
+in RAM or persisted locally between requests. Commit identity: author from the
+JWT user (real name/email), committer `lakehouse-modeller-svc@lakehouse.local`.
+
+![VCS integration variants](../diagrams/vcs-variants.png)
+
+### 8.2 Endpoints (`/v1_0/vcs`)
+
+| Method / path | Purpose | Access |
+|---|---|---|
+| `GET /v1_0/vcs/branches` | Branch list (via `VcsProvider.listBranches`) | authenticated |
+| `POST /v1_0/vcs/branch` | Create a branch from a base branch | editor |
+| `POST /v1_0/vcs/workspace` | Open/create the caller's workspace on a branch (seed from VCS if new) | viewer |
+| `GET /v1_0/vcs/workspaces` | The caller's (or, for ADMIN, all) workspaces | viewer |
+| `DELETE /v1_0/vcs/workspace/{id}` | Delete a workspace | viewer (own / any for ADMIN) |
+| `POST /v1_0/vcs/workspace/{id}/restore` | Overwrite a file/dir in the workspace from the branch snapshot | editor |
+| `POST /v1_0/vcs/review/{id}` | Commit + push (+ MR/PR); on success the workspace is deleted | editor |
+
+Access is enforced by `SecurityConfig.hasRole(...)` against the session/RBAC
+role hierarchy (`ADMIN > EDITOR > VIEWER`).
+
+### 8.3 Lifecycle
+
+1. **Open** — `POST /v1_0/vcs/workspace` with `{branch}`; `WorkspaceManager`
+   computes `id = md5(username | branch)`, takes a per-workspace lock, and if
+   this is the first open **seeds** the workspace with `VcsProvider.readBranchFiles`
+   (the branch's YAML files) into the configured storage backend (local FS or
+   S3/MinIO).
+2. **Edit** — file CRUD under `/v1_0/workspaces/{id}/...` (tree, read, save,
+   create, rename, move, delete) against the local workspace; nothing touches
+   git until review.
+3. **Restore** — a file (or directory subtree) can be reset from the branch
+   snapshot fetched over VCS.
+4. **Review** — `ReviewService.submit` locks the workspace, reads the reconciled
+   YAML, calls the provider (`commitAndPush` / GitLab MR / GitHub PR), logs the
+   event to `SyncLogService` and deletes the workspace on success.
+
+![Workspace open / create](../diagrams/workspace-open.png)
+![Review submission](../diagrams/review-flow.png)
+
+## 9. Architectural Recommendations (Technical Debt)
 
 1. **No TypeScript, no tests, no linting for the frontend** — the codebase is
    plain JSX; introduce `tsc`/ESLint and a small Vitest coverage around
