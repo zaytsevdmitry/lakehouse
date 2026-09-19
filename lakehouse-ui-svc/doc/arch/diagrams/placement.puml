@@ -5,14 +5,14 @@ skinparam shadowing false
 skinparam defaultFontName "Helvetica"
 skinparam dpi 150
 
-[App.jsx\n.container .app] as app
+[App.jsx\n.app (full width)] as app
 [header .app-header\n(h1 + header-actions:\nuser label, switch user, theme)] as hdr
-[nav .section-switcher\n(Services | Catalog | Schedules |\nSparkJobs | VCS)] as nav
+[nav .section-switcher\n(Services | Catalog | Schedules |\nSparkJobs | VCS | Modelling)] as nav
 [main .app-main\n(renders section-panes)] as main
 
 app ..> hdr
 app ..> nav
-app ..> main : owns\nglobal state:\nactiveSection,\ncreatedSections,\nservices, catalogTree
+app ..> main : owns\nglobal state:\nactiveSection,\ncreatedSections,\nservices, catalogTree\n+ deep-link init\n(section/workspace params)
 
 package "Sections (section-pane)" {
   [ServicesSection] as s1
@@ -20,6 +20,7 @@ package "Sections (section-pane)" {
   [SchedulesSection] as s3
   [SparkJobsSection] as s4
   [VcsSection] as s5
+  [ModellerSection] as s6
 }
 
 main --> s1 : hidden if inactive
@@ -27,6 +28,7 @@ main --> s2 : hidden if inactive
 main --> s3 : hidden if inactive
 main --> s4 : hidden if inactive
 main --> s5 : hidden if inactive
+main --> s6 : hidden if inactive
 
 package "CatalogsSection layout\n(.catalogs-layout: flex)" {
   [pane .tree\n(recursive TreeNode)] as ctrl
@@ -64,7 +66,21 @@ package "VcsSection layout" {
 s5 --> vt
 s5 --> vp
 
+package "ModellerSection layout (.modeller)" {
+  [tabbed: My workspaces | Admin\n(admins only)] as mt
+  [.picker: Open a branch column\n+ My workspaces column] as pick
+  [.editor: aside .sidebar (file tree)\n+ section .main (form / raw YAML)] as edit
+  [AdminView: workspaces / TTL / logs] as admv
+}
+s6 --> mt
+s6 --> pick : no open workspace
+s6 --> edit : openWorkspace set
+mt --> pick
+mt --> admv
+pick --> edit : onOpen(ws) or\nworkspaceUrl(ws.id) new tab
+edit ..> [useResizableSplit\n(drag to resize panes)]
+
 note bottom of nav
-  Switching = setState(activeSection)\n+ lazy-mount marker (createdSections)
+  Switching = setState(activeSection)\n+ lazy-mount marker (createdSections)\nDeep link: ?section=modeller&workspace=<id>\nauto-opens the editor.
 end note
 @enduml

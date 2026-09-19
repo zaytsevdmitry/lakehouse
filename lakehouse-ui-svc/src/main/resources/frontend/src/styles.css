@@ -2,31 +2,45 @@
 :root[data-theme='light'] {
   --bg: #ffffff;
   --panel: #ffffff;
+  --panel-2: #fafbfe;
   --border: #d9dee3;
   --text: #1f2933;
   --muted: #6b7280;
   --accent: #2563eb;
+  --accent-dark: #1d4ed8;
+  --accent-light: #e0e9ff;
+  --danger: #dc2626;
+  --ok: #16a34a;
   --up: #16a34a;
   --down: #dc2626;
   --panel-hover: #eef2f7;
   --badge-bg: #eef2f7;
   --error-bg: #fef2f2;
   --error-border: #fecaca;
+  --radius: 8px;
+  --shadow: 0 1px 3px rgba(16, 24, 40, 0.1), 0 1px 2px rgba(16, 24, 40, 0.06);
 }
 
 :root[data-theme='dark'] {
   --bg: #000000;
   --panel: #111111;
+  --panel-2: #1d2938;
   --border: #2a2a2a;
   --text: #e5e7eb;
   --muted: #9ca3af;
   --accent: #60a5fa;
+  --accent-dark: #7ba1f0;
+  --accent-light: #2b3f5e;
+  --danger: #f87171;
+  --ok: #4ade80;
   --up: #22c55e;
   --down: #f87171;
   --panel-hover: #1f2937;
   --badge-bg: #1f2937;
   --error-bg: #2a1a1a;
   --error-border: #7f1d1d;
+  --radius: 8px;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 * {
@@ -41,8 +55,8 @@ body {
 }
 
 .app {
-  width: 90%;
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
   padding: 24px;
 }
 
@@ -1245,4 +1259,1960 @@ a {
 
 .vcs-log-layout .states-table {
   align-self: flex-start;
+}
+
+
+/* ================================================================== */
+/* Modeller (modelling section) styles, scoped under .modeller wrapper   */
+/* ================================================================== */
+  .modeller * {
+  box-sizing: border-box;
+}
+
+
+
+
+
+  .modeller button {
+  font: inherit;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 6px 12px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+  .modeller button:hover:not(:disabled) {
+  background: var(--panel-hover);
+}
+
+  .modeller button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+  .modeller button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+  .modeller button.primary:hover:not(:disabled) {
+  background: var(--accent-dark);
+}
+
+  .modeller button.danger {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: transparent;
+}
+
+  .modeller button.danger:hover:not(:disabled) {
+  background: var(--danger);
+  color: #fff;
+}
+
+  .modeller a.button-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font: inherit;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 6px 12px;
+  text-decoration: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+  .modeller a.button-link:hover {
+  background: var(--panel-hover);
+}
+
+  .modeller a.button-link.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+  .modeller a.button-link.primary:hover {
+  background: var(--accent-dark);
+}
+
+  .modeller input,
+  .modeller textarea,
+  .modeller select {
+  font: inherit;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 7px 10px;
+  background: var(--panel);
+  color: var(--text);
+  outline: none;
+}
+
+  .modeller input:focus,
+  .modeller textarea:focus,
+  .modeller select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+  .modeller textarea {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+  .modeller .label {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+  .modeller .muted {
+  color: var(--muted);
+}
+
+  .modeller .link-btn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: var(--accent);
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+  .modeller .badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+  .modeller .badge.admin {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+  .modeller .badge.editor {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+  .modeller .badge.viewer {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+  .modeller .banner {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+
+  .modeller .banner.error {
+  background: #fef2f2;
+  border-color: #f3c6c6;
+  color: #991b1b;
+}
+
+  .modeller .banner.success {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #166534;
+}
+
+  .modeller .banner.info {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1e3a8a;
+}
+
+  .modeller .spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(37, 99, 235, 0.25);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+  .modeller .btn-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+  .modeller .modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 8vh;
+  z-index: 50;
+}
+
+  .modeller .modal {
+  background: var(--panel);
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(16, 24, 40, 0.3);
+  width: 520px;
+  max-width: 94vw;
+  max-height: 82vh;
+  overflow: auto;
+  padding: 20px;
+}
+
+  .modeller .modal h3 {
+  margin-top: 0;
+}
+
+  .modeller .field {
+  margin-bottom: 14px;
+}
+
+  .modeller .field input,
+  .modeller .field textarea,
+  .modeller .field select {
+  width: 100%;
+}
+
+/* ---------- app chrome ---------- */
+
+  .modeller .center-screen {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+  .modeller .fixed-notice {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  box-shadow: var(--shadow);
+  margin: 0;
+}
+
+  .modeller .app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+  .modeller .topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+
+  .modeller .brand {
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.2px;
+}
+
+  .modeller .topbar-right {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+  .modeller .theme-toggle {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+  .modeller .theme-toggle:hover:not(:disabled) {
+  background: var(--panel-hover);
+}
+
+  .modeller .content {
+  flex: 1;
+  overflow: hidden;
+  padding: 18px;
+}
+
+  .modeller .small {
+  font-size: 12px;
+}
+
+  .modeller .mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+}
+
+  .modeller .center {
+  text-align: center;
+}
+
+/* ---------- tabs ---------- */
+
+  .modeller .tabbed {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+  .modeller .tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+  .modeller .tab {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 8px 14px;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+}
+
+  .modeller .tab:hover:not(.tab-active) {
+  background: transparent;
+  color: var(--text);
+}
+
+  .modeller .tab-active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* ---------- login ---------- */
+
+  .modeller .login {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+  .modeller .login-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 32px;
+  width: 460px;
+  max-width: 92vw;
+}
+
+  .modeller .login-card h1 {
+  margin-top: 0;
+}
+
+  .modeller .login-meta {
+  display: grid;
+  gap: 6px;
+  margin: 14px 0;
+}
+
+  .modeller .login-meta div {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+}
+
+  .modeller .login-meta dt {
+  color: var(--muted);
+  width: 64px;
+}
+
+  .modeller .login-meta dd {
+  margin: 0;
+  word-break: break-all;
+}
+
+/* ---------- picker ---------- */
+
+  .modeller .picker {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  max-width: 1100px;
+  margin: 0 auto;
+  height: 100%;
+}
+
+  .modeller .picker-column {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+  .modeller .picker-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+  .modeller .picker-head h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+  .modeller .branch-list,
+  .modeller .workspace-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+  .modeller .branch-row,
+  .modeller .workspace-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+}
+
+  .modeller .branch-name {
+  font-weight: 600;
+  font-family: ui-monospace, Monaco, monospace;
+  font-size: 13px;
+}
+
+  .modeller .workspace-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+  .modeller .workspace-row-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* ---------- editor ---------- */
+
+  .modeller .editor {
+  display: flex;
+  height: 100%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+  .modeller .sidebar {
+  width: 280px;
+  min-width: 280px;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  background: var(--panel-2);
+}
+
+  .modeller .sidebar-head {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+  .modeller .back {
+  align-self: flex-start;
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: var(--accent);
+}
+
+  .modeller .sidebar-title .branch-label {
+  font-weight: 700;
+  font-family: ui-monospace, Monaco, monospace;
+}
+
+  .modeller .ws-id {
+  word-break: break-all;
+}
+
+  .modeller .tree {
+  flex: 1;
+  overflow: auto;
+  padding: 8px;
+}
+
+  .modeller .dir-toolbar {
+  display: flex;
+  gap: 6px;
+  padding: 0 8px 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+  .modeller button.btn-mini {
+  flex: 1;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+  .modeller button.btn-mini:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+  .modeller button.btn-mini.danger:hover:not(:disabled) {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+  .modeller button.btn-mini:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+  .modeller .tree.drag-over {
+  outline: 1px dashed var(--accent);
+  outline-offset: -3px;
+  border-radius: 6px;
+}
+
+  .modeller .tree-folder.drag-over .tree-folder-name {
+  outline: 1px dashed var(--accent);
+  outline-offset: -2px;
+  border-radius: 6px;
+}
+
+  .modeller .confirm-text {
+  margin: 0 0 14px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+  .modeller .tree-folder {
+  margin-bottom: 2px;
+}
+
+  .modeller .tree-folder-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  text-align: left;
+  padding: 5px 8px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: grab;
+}
+
+  .modeller .tree-folder-name:hover {
+  background: var(--panel-hover);
+}
+
+  .modeller .tree-folder-name .caret {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+  .modeller .tree-folder-name .folder-count {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+  .modeller .tree-folder-children {
+  margin-left: 14px;
+  border-left: 1px solid var(--border);
+  padding-left: 4px;
+}
+
+  .modeller .tree-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 13px;
+  cursor: grab;
+}
+
+  .modeller .tree-item:hover {
+  background: var(--panel-hover);
+}
+
+  .modeller .tree-item.active {
+  background: var(--accent-light, #e0e9ff);
+  color: var(--accent-dark);
+  font-weight: 600;
+}
+
+  .modeller .key-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+  .modeller .file-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+  .modeller .tree-item .file-name {
+  color: inherit;
+}
+
+  .modeller .dirty-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ok);
+  flex: none;
+}
+
+  .modeller .empty-hint {
+  padding: 8px;
+}
+
+  .modeller .sidebar-foot {
+  padding: 10px;
+  border-top: 1px solid var(--border);
+}
+
+  .modeller .sidebar-foot button {
+  width: 100%;
+}
+
+  .modeller .main {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+  .modeller .empty-state {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+  .modeller .main-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+  .modeller .main-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+  .modeller .head-actions {
+  justify-content: flex-end;
+}
+
+/* ---------- form editor ---------- */
+
+  .modeller .form-editor {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+  .modeller .scalar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+  .modeller .scalar-row .label {
+  width: 200px;
+  min-width: 160px;
+  margin-bottom: 0;
+  color: var(--text);
+  font-size: 13px;
+}
+
+  .modeller .scalar-row input[type='text'],
+  .modeller .scalar-row input[type='number'] {
+  width: 320px;
+  max-width: 100%;
+}
+
+  .modeller .req {
+  color: var(--danger);
+}
+
+  .modeller .field-block {
+  margin-bottom: 4px;
+}
+
+  .modeller .field-block > .label {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 600;
+  margin-bottom: 6px;
+  display: block;
+}
+
+  .modeller .box {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--panel-2);
+}
+
+  .modeller .box-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  border-bottom: 1px dashed var(--border);
+  padding-bottom: 8px;
+}
+
+  .modeller .box-row.row-stack {
+  flex-direction: column;
+}
+
+  .modeller .map-head {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+}
+
+  .modeller .map-head input {
+  flex: 1;
+}
+
+  .modeller button.small {
+  padding: 3px 8px;
+  font-size: 12px;
+}
+
+/* ---------- dag ---------- */
+
+  .modeller .dag-host {
+  height: 440px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+  position: relative;
+  overflow: hidden;
+}
+
+  .modeller .dag-toolbar {
+  position: absolute;
+  bottom: 10px;
+  left: 12px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+  .modeller .cfg-node {
+  background: var(--panel);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 10px 14px;
+  width: 190px;
+  box-shadow: var(--shadow);
+  position: relative;
+}
+
+  .modeller .cfg-node.selected {
+  border-color: var(--accent-dark);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+  .modeller .cfg-node-title {
+  font-size: 13px;
+}
+
+  .modeller .cfg-node-desc {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+  .modeller .cfg-node-remove {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  line-height: 1;
+  font-size: 14px;
+}
+
+/* ---------- yaml ---------- */
+
+  .modeller .yaml-area {
+  flex: 1;
+  border: none;
+  border-radius: 0;
+  padding: 16px;
+  background: #0d1520;
+  color: #d7e2ee;
+  outline: none;
+  min-height: 400px;
+  tab-size: 2;
+}
+
+/* ---------- admin ---------- */
+
+  .modeller .admin {
+  height: 100%;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+  .modeller .admin-table-wrap {
+  flex: 1;
+  overflow: auto;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+  .modeller .admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+  .modeller .admin-table th,
+  .modeller .admin-table td {
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+  .modeller .admin-table th {
+  color: var(--muted);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  background: var(--panel-2);
+}
+
+  .modeller .settings-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  max-width: 560px;
+}
+
+  .modeller .settings-card h3 {
+  margin-top: 0;
+}
+
+  .modeller .settings-card input[type='number'] {
+  width: 160px;
+}
+
+  .modeller .modal-wide {
+  width: 760px;
+}
+
+  .modeller .react-flow__attribution {
+  display: none;
+}
+
+/* ------------------------------------------------------------------ * * sidebar head filter + foot actions * ------------------------------------------------------------------ */
+
+  .modeller .filter-input {
+  width: 100%;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: 13px;
+  background: var(--panel);
+}
+
+  .modeller .foot-btns {
+  display: flex;
+  gap: 6px;
+}
+
+  .modeller button.square {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
+  border-radius: var(--radius);
+  flex: none;
+}
+
+  .modeller .tree-folder-name.active {
+  background: var(--accent-light);
+  color: var(--accent-dark);
+}
+
+  .modeller .tree-folder-name.active .caret {
+  color: var(--accent-dark);
+}
+
+/* ------------------------------------------------------------------ * * catalog pane + tabbed form editor + tables (ui-svc style tabs) * ------------------------------------------------------------------ */
+
+  .modeller .catalog-pane {
+  overflow: auto;
+  padding: 12px;
+}
+
+  .modeller .catalog-pane--tabs {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+}
+
+  .modeller .form-editor .tab-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+}
+
+  .modeller .form-editor .tab-list .tab {
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  background: var(--panel);
+  padding: 8px 14px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+  .modeller .form-editor .tab-list .tab:hover:not(.tab--active) {
+  background: var(--panel-hover);
+}
+
+  .modeller .form-editor .tab-list .tab.tab--active {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+  .modeller .form-editor .tab-content {
+  overflow: auto;
+  padding: 2px;
+}
+
+  .modeller .tab-general {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+  .modeller .table-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+  .modeller .table-toolbar {
+  display: flex;
+  gap: 6px;
+}
+
+  .modeller .table-filter {
+  width: 100%;
+  margin-top: 0;
+  max-width: 360px;
+}
+
+  .modeller .source-map {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+}
+
+  .modeller .source-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 50%;
+}
+
+  .modeller .source-pane--keys {
+  flex: 0 0 280px;
+}
+
+  .modeller .pane-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+  .modeller .pane-head .table-toolbar {
+  margin-left: auto;
+}
+
+  .modeller .pane-head .table-filter {
+  flex: 1 1 100%;
+  max-width: none;
+}
+
+  .modeller .source-key-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  padding: 4px;
+  overflow: auto;
+  max-height: 420px;
+}
+
+  .modeller .source-key-row {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  padding: 6px 8px;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+  .modeller .source-key-row:hover {
+  background: var(--panel-2);
+}
+
+  .modeller .source-key-row.selected {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  border-color: var(--accent);
+}
+
+  .modeller .key-picker-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+  .modeller .key-picker-field input[readonly] {
+  background: color-mix(in srgb, var(--panel-2) 70%, transparent);
+  color: var(--muted);
+}
+
+  .modeller .table-wrap {
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  max-height: 420px;
+}
+
+  .modeller .data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+  .modeller .data-table th,
+  .modeller .data-table td {
+  text-align: left;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+  .modeller .data-table th {
+  color: var(--muted);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  background: var(--panel-2);
+}
+
+  .modeller .data-table tbody tr {
+  cursor: pointer;
+}
+
+  .modeller .data-table tbody tr:hover {
+  background: var(--panel-hover);
+}
+
+  .modeller .data-table tbody tr.row-selected {
+  background: var(--accent-light);
+}
+
+  .modeller .data-table tbody tr.row-selected td {
+  color: var(--accent-dark);
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------------ * * dark theme refinements for controls that hard-code light colors * ------------------------------------------------------------------ */
+
+  :root[data-theme='dark'] .modeller .badge.admin {
+  background: rgba(250, 204, 21, 0.18);
+  color: #fde68a;
+}
+
+  :root[data-theme='dark'] .modeller .badge.editor {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+}
+
+  :root[data-theme='dark'] .modeller .badge.viewer {
+  background: rgba(148, 163, 184, 0.2);
+  color: #cbd5e1;
+}
+
+  :root[data-theme='dark'] .modeller .banner.error {
+  background: rgba(248, 113, 113, 0.12);
+  border-color: #7f1d1d;
+  color: #fca5a5;
+}
+
+  :root[data-theme='dark'] .modeller .banner.success {
+  background: rgba(74, 222, 128, 0.1);
+  border-color: #14532d;
+  color: #86efac;
+}
+
+  :root[data-theme='dark'] .modeller .banner.info {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: #1e3a5f;
+  color: #93c5fd;
+}
+
+  :root[data-theme='dark'] .modeller .theme-toggle,
+  :root[data-theme='dark'] .modeller .topbar button,
+  :root[data-theme='dark'] .modeller button {
+  color: var(--text);
+}
+
+  :root[data-theme='dark'] .modeller .react-flow__attribution {
+  background: transparent;
+}
+
+/* Diagrams (ReactFlow) in night mode: canvas, controls, background dots and edges. */
+  :root[data-theme='dark'] .modeller .react-flow__controls-button {
+  background: var(--panel-2);
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+}
+
+  :root[data-theme='dark'] .modeller .react-flow__controls-button:hover {
+  background: var(--panel-hover);
+  color: var(--text);
+}
+
+  :root[data-theme='dark'] .modeller .react-flow__background circle {
+  fill: var(--muted);
+}
+
+  :root[data-theme='dark'] .modeller .react-flow__edge-path {
+  stroke: var(--accent) !important;
+}
+
+  :root[data-theme='dark'] .modeller .react-flow__node {
+  color: var(--text);
+}
+
+  :root[data-theme='dark'] .modeller .cfg-node input {
+  background: var(--panel-2);
+  color: var(--text);
+}
+
+/* ---------- script code editor ---------- */
+
+  .modeller .scalar-row--code {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+  .modeller .scalar-row--code .label {
+  width: auto;
+}
+
+  .modeller .code-editor {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  overflow: hidden;
+}
+
+  .modeller .code-editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel-2);
+}
+
+  .modeller .code-editor-toolbar-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+  .modeller .code-editor-toolbar select {
+  font: inherit;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 8px;
+}
+
+  .modeller .code-editor-body {
+  display: flex;
+  align-items: stretch;
+  height: 320px;
+}
+
+  .modeller .code-editor-gutter {
+  flex: 0 0 44px;
+  overflow: hidden;
+  background: var(--panel-2);
+  border-right: 1px solid var(--border);
+  padding: 8px 0;
+  text-align: right;
+  color: var(--muted);
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+  .modeller .code-editor-gutter-line {
+  padding: 0 8px 0 0;
+  user-select: none;
+}
+
+  .modeller .code-editor-main {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+  .modeller .code-highlight {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 8px 10px;
+  overflow: hidden;
+  white-space: pre;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  tab-size: 2;
+  color: var(--text);
+  pointer-events: none;
+}
+
+  .modeller .code-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 8px 10px;
+  border: 0;
+  outline: 0;
+  resize: none;
+  overflow: auto;
+  background: transparent;
+  color: transparent;
+  caret-color: var(--text);
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  tab-size: 2;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+  .modeller .code-highlight .tok-kw {
+   color: #7c3aed; font-weight: 600; }
+  .modeller .code-highlight .tok-str {
+   color: #15803d; }
+  .modeller .code-highlight .tok-comment {
+   color: var(--muted); font-style: italic; }
+  .modeller .code-highlight .tok-num {
+   color: #b45309; }
+  .modeller .code-highlight .tok-jinja {
+   color: #0e7490; background: rgba(14, 116, 144, 0.08); border-radius: 3px; }
+
+  :root[data-theme='dark'] .modeller .code-highlight .tok-kw {
+   color: #c084fc; }
+  :root[data-theme='dark'] .modeller .code-highlight .tok-str {
+   color: #4ade80; }
+  :root[data-theme='dark'] .modeller .code-highlight .tok-num {
+   color: #fbbf24; }
+  :root[data-theme='dark'] .modeller .code-highlight .tok-jinja {
+   color: #67e8f9; background: rgba(103, 232, 249, 0.12); }
+
+  .modeller .code-suggest {
+  position: absolute;
+  z-index: 60;
+  min-width: 240px;
+  max-width: 400px;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  padding: 4px;
+}
+
+  .modeller .code-suggest-item {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  padding: 5px 8px;
+}
+
+  .modeller .code-suggest-item.active {
+  background: var(--accent-light);
+}
+
+  .modeller .code-suggest-label {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 13px;
+}
+
+  .modeller .code-suggest-hint {
+  color: var(--muted);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- unique-key validation ---------- */
+
+  .modeller .scalar-input-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+  .modeller .field-invalid input {
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--danger) 30%, transparent);
+}
+
+  .modeller .field-error-popup {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  z-index: 50;
+  max-width: 380px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.4;
+  border-radius: 6px;
+  padding: 7px 10px;
+  box-shadow: var(--shadow);
+}
+
+/* ---------- enum dropdowns + "…" pickers ---------- */
+
+  .modeller .scalar-row select {
+  width: 320px;
+  max-width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: 13px;
+  background: var(--panel);
+  color: var(--text);
+}
+
+  .modeller .scalar-row select:disabled {
+  opacity: 0.6;
+}
+
+  .modeller button.square.picker-btn {
+  width: 30px;
+  height: 30px;
+  margin-left: 6px;
+  font-size: 15px;
+}
+
+  .modeller button.square.picker-btn.clear-btn {
+  color: var(--danger);
+}
+
+  .modeller .scalar-row .scalar-input-wrap input[readonly] {
+  background: color-mix(in srgb, var(--panel-2) 70%, transparent);
+  color: var(--muted);
+}
+
+  .modeller .picker-grid-head {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--border);
+}
+
+  .modeller .picker-list {
+  max-height: 300px;
+  overflow: auto;
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+  .modeller .picker-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 7px 10px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  text-align: left;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+  .modeller .picker-row:last-child {
+  border-bottom: 0;
+}
+
+  .modeller .picker-row:hover {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+  .modeller .picker-row.selected {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+  .modeller .picker-check {
+  display: flex;
+  grid-template-columns: none;
+  gap: 8px;
+  align-items: center;
+}
+
+  .modeller .picker-check input[type='checkbox'] {
+  margin: 0;
+}
+
+  .modeller .field-error-popup::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 16px;
+  border: 5px solid transparent;
+  border-bottom-color: var(--danger);
+}
+
+/* ---------- script key picker ---------- */
+
+  .modeller .code-editor-body {
+  height: 500px; /* ~25 visible lines (13px * 1.5 line-height) */
+}
+
+  .modeller .modal--code {
+  width: 1060px;
+  max-width: calc(100vw - 40px);
+}
+
+  .modeller .script-key-picker {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  align-items: flex-start;
+}
+
+  .modeller .script-key-list {
+  flex: 0 0 300px;
+  max-height: 500px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+  .modeller .picker-row--script {
+  display: block;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 12px;
+}
+
+  .modeller .script-key-preview {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+  .modeller .script-key-preview .code-editor-body {
+  height: 500px;
+  min-width: 660px; /* fit an 80-column monospace line */
+}
+
+/* ---------- er diagram ---------- */
+
+  .modeller .er-canvas {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+  .modeller .er-host {
+  position: relative;
+  height: 560px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+  overflow: hidden;
+}
+
+  .modeller .er-toolbar {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+  .modeller .er-toolbar .danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+  .modeller .er-empty-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  pointer-events: none;
+  font-size: 13px;
+}
+
+  .modeller .er-node {
+  position: relative;
+  min-width: 200px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  font-size: 12px;
+  overflow: hidden;
+}
+
+  .modeller .er-node--selected {
+  border-color: var(--accent-dark);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+  .modeller .er-node--missing {
+  border-color: var(--danger);
+  border-style: dashed;
+}
+
+  .modeller .er-node-head {
+  background: var(--accent);
+  color: #fff;
+  padding: 6px 10px;
+}
+
+  .modeller .er-node-title {
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+  .modeller .er-node-sub {
+  font-size: 11px;
+  opacity: 0.85;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+  .modeller .er-node-warn {
+  display: inline-block;
+  margin-top: 4px;
+  background: var(--danger);
+  color: #fff;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 10px;
+}
+
+  .modeller .er-col-head,
+  .modeller .er-col-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 10px;
+}
+
+  .modeller .er-col-head {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  background: var(--panel-2);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  justify-content: space-between;
+}
+
+  .modeller .er-col-row {
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  justify-content: space-between;
+}
+
+  .modeller .er-col-row:last-child {
+  border-bottom: none;
+}
+
+  .modeller .er-col-head span:last-child,
+  .modeller .er-col-row span:last-child {
+  margin-left: auto;
+  text-align: right;
+}
+
+  .modeller .er-col-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+  .modeller .er-col-type {
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+  .modeller .er-handle {
+  width: 9px;
+  height: 9px;
+  min-width: 9px;
+  min-height: 9px;
+  background: var(--accent);
+  border: 1.5px solid var(--panel);
+  border-radius: 50%;
+}
+
+  .modeller .er-handle--err,
+  .modeller .er-node--missing .er-handle {
+  background: var(--danger);
+}
+
+  .modeller .er-marker-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+  .modeller .er-edit-yaml {
+  width: 100%;
+  resize: vertical;
+}
+
+  .modeller .er-edit-head {
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+  :root[data-theme='dark'] .modeller .er-node-head {
+  color: #fff;
+}
+
+/* ---------- data lineage diagram ---------- */
+
+  .modeller .lineage-canvas {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+  .modeller .lineage-host {
+  position: relative;
+  height: 560px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+  overflow: hidden;
+}
+
+  .modeller .lineage-loading,
+  .modeller .lineage-empty-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  pointer-events: none;
+  font-size: 13px;
+  text-align: center;
+  padding: 16px;
+}
+
+  .modeller .lineage-node {
+  position: relative;
+  min-width: 200px;
+  max-width: 240px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  font-size: 12px;
+  overflow: hidden;
+}
+
+  .modeller .lineage-node--selected {
+  border-color: var(--accent-dark);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+  .modeller .lineage-node--missing {
+  border-color: var(--danger);
+  border-style: dashed;
+}
+
+  .modeller .lineage-node-head {
+  background: var(--accent);
+  color: #fff;
+  padding: 6px 10px;
+}
+
+  .modeller .lineage-node-title {
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+  .modeller .lineage-node-kind {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+  margin-top: 2px;
+}
+
+  .modeller .lineage-node-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+  padding: 0 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+  .modeller .lineage-node-warn {
+  display: inline-block;
+  margin: 4px 10px 0;
+  background: var(--danger);
+  color: #fff;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 10px;
+}
+
+  .modeller .lineage-node-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-top: 1px solid var(--border);
+  padding: 4px 10px;
+  font-size: 11px;
+}
+
+  .modeller .lineage-node-foot .muted {
+  color: var(--muted);
+}
+
+  .modeller .lineage-handle {
+  width: 9px;
+  height: 9px;
+  min-width: 9px;
+  min-height: 9px;
+  background: var(--accent);
+  border: 1.5px solid var(--panel);
+  border-radius: 50%;
+}
+
+  .modeller .lineage-node--missing .lineage-handle {
+  background: var(--danger);
+}
+
+  .modeller .lineage-flow .react-flow__edge-path {
+  stroke-linecap: round;
+}
+
+  .modeller .lineage-toolbar {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modeller .lineage-toolbar .danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.modeller .diagram-expand {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 6;
+  padding: 4px 9px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.modeller .diagram-expand:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.modeller .lineage-host.diagram-fullscreen,
+.modeller .er-host.diagram-fullscreen {
+  position: fixed;
+  inset: 0;
+  width: auto;
+  height: auto;
+  z-index: 40;
+  border: none;
+  border-radius: 0;
+}
+
+/* Modeller section root: mirrors the standalone modeller app shell layout so
+   .topbar / .content (flex:1, overflow:hidden) behave as expected. */
+.modeller {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }

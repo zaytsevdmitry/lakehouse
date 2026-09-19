@@ -564,8 +564,16 @@ services:
     environment:
       KEYCLOAK_ISSUER_URI: http://keycloak.lakehouse:8085/realms/lakehouse
       KEYCLOAK_UI_CLIENT_SECRET: super-secret-bff-key-1234567890
+      LAKEHOUSE_VCS_PROVIDER: local-git
+      LAKEHOUSE_GIT_URL: git://git-server:9418/config-repo.git
+      LAKEHOUSE_GIT_BRANCH: main
+      LAKEHOUSE_VCS_AUTH_TYPE: token
+      LAKEHOUSE_VCS_USER: modeller-bot
+      LAKEHOUSE_VCS_TOKEN: dummy
     depends_on:
       keycloak:
+        condition: service_healthy
+      git-server:
         condition: service_healthy
       lakehouse-config-svc:
         condition: service_started
@@ -592,7 +600,7 @@ services:
       "-Dlakehouse.ui.services[2].health-check-url=http://172.20.193.100:8084/healthz",
       "-Dlakehouse.ui.services[3].name=lakehouse-task-proxy-for-spark",
       "-Dlakehouse.ui.services[3].url=http://172.20.193.160:8086",
-      "-Dlakehouse.ui.services[3].health-check-url=http://172.20.193.160:8085/healthz",
+      "-Dlakehouse.ui.services[3].health-check-url=http://172.20.193.160:8086/healthz",
       "-Dlakehouse.ui.services[4].name=lakehouse-task-executor-svc-database",
       "-Dlakehouse.ui.services[4].url=http://172.20.193.110:8090",
       "-Dlakehouse.ui.services[4].health-check-url=http://172.20.193.110:8090/healthz",

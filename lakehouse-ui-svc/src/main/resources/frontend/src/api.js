@@ -238,6 +238,77 @@ export async function fetchVcsObjectLogs({ commitId, kind, from, to, filePath, o
 }
 
 
+const LOGIN_URL = '/oauth2/authorization/keycloak';
+
+let loginRedirectPending = false;
+
+/** Sends the user to the Spring Security BFF login entry point. */
+export function login() {
+  window.location.href = LOGIN_URL;
+}
+
+function redirectToLogin() {
+  if (loginRedirectPending) return;
+  loginRedirectPending = true;
+  window.location.href = LOGIN_URL;
+}
+
+/**
+ * Generic API wrapper for the modelling endpoints.
+ * The browser attaches the JSESSIONID cookie automatically; no Bearer header is
+ * ever sent. State-changing requests carry the CSRF token read from the
+ * XSRF-TOKEN cookie that Spring Security sets for the SPA. A 401 response
+ * hands the user over to the login entry point.
+ */
+export async function api(path, { method = 'GET', body } = {}) {
+  const headers = {};
+  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  const verb = String(method).toUpperCase();
+  if (verb !== 'GET' && verb !== 'HEAD' && verb !== 'OPTIONS') {
+    const csrf = getCsrfToken();
+    if (csrf !== null) headers['X-XSRF-TOKEN'] = csrf;
+  }
+  const response = await fetch(path, {
+    method: verb,
+    headers,
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+
+  if (response.status === 401) {
+    redirectToLogin();
+    throw new Error('Session expired, please sign in again.');
+  }
+
+  if (response.status === 204) return null;
+
+  let payload = null;
+  const contentType = response.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    payload = await response.json().catch(() => null);
+  }
+
+  if (!response.ok) {
+    const message = payload && payload.error ? payload.error : `Request failed (${response.status})`;
+    throw new Error(message);
+  }
+  return payload;
+}
+
+/** Encodes each path segment individually so slashes inside keys stay intact. */
+export function encodePath(path) {
+  return String(path).split('/').map(encodeURIComponent).join('/');
+}
+
+/**
+ * Deep link that opens the Modelling editor for the given workspace.
+ * {@code App}/{@code ModellerSection} read these query parameters on load and
+ * auto-open the editor, so the link can be used as a new browser tab target.
+ */
+export function workspaceUrl(workspaceId) {
+  const params = new URLSearchParams({ section: 'modeller', workspace: workspaceId });
+  return `${window.location.pathname}?${params.toString()}`;
+}
+
 export async function logout() {
   await apiFetch('/logout', { method: 'POST' });
   window.location.href = '/';

@@ -18,7 +18,7 @@ UI sections:
 - **Schedules** — schedule instance runs for an interval, the schedule instance DAG.
 - **SparkJobs** — Spark submissions through `lakehouse-task-proxy-for-spark`: create, status, kill, kill all, clear.
 - **VCS** — the configuration GitOps synchronization log (commits) and object log of `lakehouse-config-svc`.
-- **Modelling** — the metadata-modelling workbench: create a workspace from a Git branch, edit configuration documents (form view driven by a per-kind schema, raw YAML, visual ER/DAG editors), create branches, submit changes for review. Workspaces open in a new browser tab via deep links (`?section=modeller&workspace=<id>`).
+- **Modelling** — the metadata-modelling workbench: create a workspace from a Git branch, create configuration documents of any supported kind (form view driven by a per-kind schema, raw YAML, or the visual editors — **ER Diagram**, **Data Lineage Diagram**, generic **DAG**), create branches, submit changes for review. Workspaces open in a new browser tab via deep links (`?section=modeller&workspace=<id>`).
 
 ## Architecture
 
@@ -80,9 +80,9 @@ The service itself. Contains:
   - DTOs (`dto`): `KindSchema`, `FieldSchema`, `TreeResponse`, `FileContentResponse`, `WorkspaceResponse`, review/restore DTOs, etc.;
 - `SecurityConfig` — BFF OAuth2 login + modeller RBAC (see Security);
 - `GlobalExceptionHandler` — unified error handling;
-- the frontend (`src/main/resources/frontend`): React + Vite.
+- the frontend (`src/main/resources/frontend`): React + Vite, including the modeller's visual editors (`ErDiagramEditor`, `DataLineageDiagramEditor`, `DagEditor` — React Flow) and a Vitest unit-test suite.
 
-Depends on: `lakehouse-common` (shared constants, e.g. the `YamlMetadataKind` enum and config DTOs used by the YAML editor), `lakehouse-config-rest-client`, `lakehouse-scheduler-rest-client`, `lakehouse-state-rest-client`, `lakehouse-task-proxy-for-spark-rest-client`, `jackson-dataformat-yaml`, `org.eclipse.jgit` (+ SSH), Spring Boot OAuth2 client and resource server.
+Depends on: `lakehouse-common` (shared constants and config DTOs used by the editors — e.g. the `YamlMetadataKind` enum covering the `ERDiagram` and `DataLineageDiagram` kinds, plus the corresponding `ERDiagramDTO` / `DataLineageDiagramDTO`), `lakehouse-config-rest-client`, `lakehouse-scheduler-rest-client`, `lakehouse-state-rest-client`, `lakehouse-task-proxy-for-spark-rest-client`, `jackson-dataformat-yaml`, `org.eclipse.jgit` (+ SSH), Spring Boot OAuth2 client and resource server.
 
 ## API Endpoints
 

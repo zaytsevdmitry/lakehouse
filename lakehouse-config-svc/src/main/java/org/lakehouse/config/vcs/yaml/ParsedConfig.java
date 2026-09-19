@@ -17,11 +17,13 @@
 
 package org.lakehouse.config.vcs.yaml;
 
+import org.lakehouse.client.api.constant.YamlMetadataKind;
+
 /**
  * A parsed declarative configuration file.
  *
  * @param kind the construct type carried by the file
- * @param dto  the parsed configuration object bound to {@link ConfigKind#dtoClass()}
+ * @param dto  the parsed configuration object bound to {@link YamlMetadataKind#dtoClass()}
  */
-public record ParsedConfig(ConfigKind kind, Object dto) {
+public record ParsedConfig(YamlMetadataKind kind, Object dto) {
 }

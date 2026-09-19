@@ -23,7 +23,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.lakehouse.config.vcs.VcsChangeType;
 import org.lakehouse.config.vcs.VcsClient;
 import org.lakehouse.config.vcs.VcsDiffEntry;
-import org.lakehouse.config.vcs.yaml.ConfigKind;
+import org.lakehouse.client.api.constant.YamlMetadataKind;
 import org.lakehouse.config.vcs.yaml.GitOpsYamlParser;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -65,7 +65,7 @@ class GitOpsChangeSetBuilderTest {
         assertThat(changeSet.toApply()).hasSize(1);
         GitSyncItem item = changeSet.toApply().get(0);
         assertThat(item.path()).isEqualTo("config/ns.yaml");
-        assertThat(item.parsedConfig().kind()).isEqualTo(ConfigKind.NAME_SPACE);
+        assertThat(item.parsedConfig().kind()).isEqualTo(YamlMetadataKind.NAME_SPACE);
     }
 
     @Test
@@ -79,7 +79,7 @@ class GitOpsChangeSetBuilderTest {
 
         assertThat(changeSet.toApply()).isEmpty();
         assertThat(changeSet.toDelete()).hasSize(1);
-        assertThat(changeSet.toDelete().get(0).parsedConfig().kind()).isEqualTo(ConfigKind.NAME_SPACE);
+        assertThat(changeSet.toDelete().get(0).parsedConfig().kind()).isEqualTo(YamlMetadataKind.NAME_SPACE);
     }
 
     @Test
@@ -98,6 +98,18 @@ class GitOpsChangeSetBuilderTest {
                 new VcsDiffEntry("data/notes.txt", VcsChangeType.CREATED),
                 new VcsDiffEntry(".hidden.yaml", VcsChangeType.CREATED),
                 new VcsDiffEntry("docs/readme.md", VcsChangeType.DELETED)));
+
+        GitSyncChangeSet changeSet = builder.build(HEAD, BASE);
+
+        assertThat(changeSet.isEmpty()).isTrue();
+    }
+
+    @Test
+    void nonConfigMetadataKindsAreIgnored() {
+        when(vcsClient.getDiff(BASE)).thenReturn(List.of(
+                new VcsDiffEntry("config/erdiagram.yaml", VcsChangeType.CREATED)));
+        when(vcsClient.readFileContent(HEAD, "config/erdiagram.yaml"))
+                .thenReturn(Optional.of("kind: ERDiagram\nkeyName: er1\nunknownField: 1\n"));
 
         GitSyncChangeSet changeSet = builder.build(HEAD, BASE);
 

@@ -5,8 +5,13 @@ import SchedulesSection from './components/SchedulesSection.jsx';
 import ServicesSection from './components/ServicesSection.jsx';
 import SparkJobsSection from './components/SparkJobsSection.jsx';
 import VcsSection from './components/VcsSection.jsx';
+import ModellerSection from './components/ModellerSection.jsx';
 
 const THEME_KEY = 'lakehouse-theme';
+
+const initialParams = new URLSearchParams(window.location.search);
+const INITIAL_SECTION = initialParams.get('section');
+const INITIAL_WORKSPACE_ID = initialParams.get('workspace');
 
 function getInitialTheme() {
   try {
@@ -23,8 +28,10 @@ export default function App() {
   const [servicesError, setServicesError] = useState('');
   const [theme, setTheme] = useState(getInitialTheme);
   const [username, setUsername] = useState('');
-  const [activeSection, setActiveSection] = useState('services');
-  const [createdSections, setCreatedSections] = useState(() => new Set(['services']));
+  const [activeSection, setActiveSection] = useState(INITIAL_SECTION || 'services');
+  const [createdSections, setCreatedSections] = useState(
+    () => new Set([INITIAL_SECTION || 'services'])
+  );
 
   const activateSection = (section) => {
     setActiveSection(section);
@@ -107,6 +114,12 @@ export default function App() {
         >
           VCS
         </button>
+        <button
+          className={`section-switcher-button ${activeSection === 'modeller' ? 'section-switcher-button--active' : ''}`}
+          onClick={() => activateSection('modeller')}
+        >
+          Modelling
+        </button>
       </nav>
       <main className="app-main">
         {createdSections.has('catalog') && (
@@ -132,6 +145,11 @@ export default function App() {
         {createdSections.has('vcs') && (
           <div className="section-pane" hidden={activeSection !== 'vcs'}>
             <VcsSection />
+          </div>
+        )}
+        {createdSections.has('modeller') && (
+          <div className="section-pane" hidden={activeSection !== 'modeller'}>
+            <ModellerSection initialWorkspaceId={INITIAL_WORKSPACE_ID} />
           </div>
         )}
       </main>

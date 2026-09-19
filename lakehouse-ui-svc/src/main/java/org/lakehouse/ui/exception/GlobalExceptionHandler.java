@@ -16,6 +16,12 @@
  */
 package org.lakehouse.ui.exception;
 
+import org.lakehouse.ui.modeller.auth.ForbiddenException;
+import org.lakehouse.ui.modeller.auth.NotFoundException;
+import org.lakehouse.ui.modeller.storage.WorkspaceStorageException;
+import org.lakehouse.ui.modeller.vcs.VcsProviderException;
+import org.lakehouse.ui.modeller.workspace.WorkspaceLockedException;
+import org.lakehouse.ui.modeller.yaml.VcsConfigParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -39,11 +45,38 @@ public class GlobalExceptionHandler {
                 .body(Map.of("message", "Resource not found: " + e.getResourcePath()));
     }
 
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<Map<String, String>> handleForbidden(ForbiddenException e) {
+        return error(HttpStatus.FORBIDDEN, e.getMessage());
+    }
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleNotFound(NotFoundException e) {
+        return error(HttpStatus.NOT_FOUND, e.getMessage());
+    }
+
+    @ExceptionHandler(WorkspaceLockedException.class)
+    public ResponseEntity<Map<String, String>> handleWorkspaceLocked(WorkspaceLockedException e) {
+        return error(HttpStatus.CONFLICT, e.getMessage());
+    }
+
+    @ExceptionHandler({VcsConfigParseException.class, IllegalArgumentException.class, IllegalStateException.class})
+    public ResponseEntity<Map<String, String>> handleBadRequest(RuntimeException e) {
+        return error(HttpStatus.BAD_REQUEST, e.getMessage());
+    }
+
+    @ExceptionHandler({VcsProviderException.class, WorkspaceStorageException.class})
+    public ResponseEntity<Map<String, String>> handleBadGateway(RuntimeException e) {
+        return error(HttpStatus.BAD_GATEWAY, e.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleException(Exception e) {
         LOGGER.error("Unhandled error in UI REST API", e);
-        return ResponseEntity
-                .status(HttpStatus.BAD_GATEWAY)
-                .body(Map.of("message", String.valueOf(e.getMessage())));
+        return error(HttpStatus.BAD_GATEWAY, String.valueOf(e.getMessage()));
+    }
+
+    private static ResponseEntity<Map<String, String>> error(HttpStatus status, String message) {
+        return ResponseEntity.status(status).body(Map.of("error", message == null ? "Unknown error" : message));
     }
 }

@@ -39,6 +39,9 @@ spring:
             user-info-uri: ${KEYCLOAK_ISSUER_URI:http://keycloak.lakehouse:8085/realms/lakehouse}/protocol/openid-connect/userinfo
             jwk-set-uri: ${KEYCLOAK_ISSUER_URI:http://keycloak.lakehouse:8085/realms/lakehouse}/protocol/openid-connect/certs
             user-name-attribute: preferred_username
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${KEYCLOAK_ISSUER_URI:http://keycloak.lakehouse:8085/realms/lakehouse}/protocol/openid-connect/certs
 
 management:
   endpoints:
@@ -125,6 +128,49 @@ lakehouse:
           - spark-proxy
         lakehouse-ui-modeller:
           - git-server
+
+  # ------------------------------------------------------------------
+  # Modelling (workspace storage, central Git integration, system account).
+  # Every runtime strategy is switched declaratively here and overridable
+  # via LAKEHOUSE_* environment variables.
+  # ------------------------------------------------------------------
+  modeller:
+    storage:
+      type: ${LAKEHOUSE_WORKSPACE_STORAGE:local}          # [local, s3]
+      root-directory: ${LAKEHOUSE_WORKSPACE_ROOT:/tmp/lakehouse-workspaces}
+      s3:                                                  # used when type == "s3"
+        endpoint: ${LAKEHOUSE_S3_ENDPOINT:}
+        bucket: ${LAKEHOUSE_S3_BUCKET:lakehouse-metadata-workspaces}
+        access-key: ${LAKEHOUSE_S3_ACCESS_KEY:}
+        secret-key: ${LAKEHOUSE_S3_SECRET_KEY:}
+        region: ${LAKEHOUSE_S3_REGION:us-east-1}
+      cleanup-ttl-hours: ${LAKEHOUSE_WORKSPACE_TTL_HOURS:4}  # lifetime of an inactive workspace
+
+    vcs-provider: ${LAKEHOUSE_VCS_PROVIDER:local-git}     # [local-git, gitlab-api, github-app, gerrit-ssh]
+    git:
+      remote-url: ${LAKEHOUSE_GIT_URL:}
+      branch-main: ${LAKEHOUSE_GIT_BRANCH:main}
+
+    auth-strategy: ${LAKEHOUSE_AUTH_STRATEGY:jwt-rbac}    # [jwt-rbac, token-exchange]
+
+    session:
+      inactivity-minutes: ${LAKEHOUSE_SESSION_INACTIVITY_MINUTES:30}
+
+    vcs-system-account:
+      auth-type: ${LAKEHOUSE_VCS_AUTH_TYPE:token}           # [ssh, token, basic]
+      ssh-private-key-path: ${LAKEHOUSE_VCS_SSH_KEY_PATH:}
+      username: ${LAKEHOUSE_VCS_USER:}
+      token: ${LAKEHOUSE_VCS_TOKEN:}                        # GitLab/GitHub API token (auth-type: token)
+      password: ${LAKEHOUSE_VCS_PASSWORD:}                  # HTTPS password (auth-type: basic)
+
+    # GitHub App settings (used when vcs-provider == github-app and no token is set)
+    github:
+      app-id: ${LAKEHOUSE_GITHUB_APP_ID:}
+      app-private-key-path: ${LAKEHOUSE_GITHUB_APP_KEY_PATH:}
+      installation-id: ${LAKEHOUSE_GITHUB_INSTALLATION_ID:}
+
+    logging:
+      sync-log-capacity: ${LAKEHOUSE_SYNC_LOG_CAPACITY:500}
 
 ---
 # Production profile: enforce HTTPS-only session cookie for the BFF

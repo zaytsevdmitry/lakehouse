@@ -10,7 +10,7 @@ package "App-level state (useState in App.jsx)" {
   component "catalogTree\n(fetched once, prop)" as cat
   component "catalogError / servicesError" as err
   component "username\n(/api/user)" as usr
-  component "theme\n(light|dark)" as thm
+  component "theme\n(light|dark)\n→ localStorage" as thm
   component "activeSection\n(which section is visible)" as active
   component "createdSections\n(lazy-mount Set)" as created
 }
@@ -19,19 +19,22 @@ package "Section-level state (inside each section)" {
   component "CatalogsSection\nselectedNode, dataSet,\nactiveTab, treePercent, splitter" as cands
   component "SchedulesSection\nschedules, headers, selected,\nselectedRunId, from/to, filter" as scheds
   component "SparkJobsSection\nitems, meta, cursor history,\nselectedId, create form, actions" as sparks
-  component "VcsSection\nsyncLogs, objectLogs,\nactiveTab, filter" as vcsl
+  component "VcsSection\nsyncLogs, objectLogs,\nactiveTab, filter, split" as vcsl
   component "ServicesSection\nedgesConfig, verticesConfig,\nnodes, edges, manualPos" as servs
+  component "ModellerSection\nprofile (/api/user),\nopenWorkspace, adminTab,\nnotice, autoOpenResolved" as mods
 }
 
-package "Tab / sub-view state (useState)" {
-  component "PipelineSection\ninstanceId (prop), dag, selectedNode" as pipes
-  component "LineageTab\nnodes, edges, loading" as lines
-  component "RelationsTab\nnodes, edges, constraints" as rels
-  component "ModelTab\nlanguage, activeTab, scripts" as models
+package "Modeller sub-state (useState)" {
+  component "WorkspacePicker\nbranches, workspaces,\nloading, working, branchModal" as pick
+  component "EditorView\nschemas, tree, dirs, selected,\nselectedFolder, filter, yaml, doc,\nkeyNameEditable, mode(form|yaml),\ndirty, busy, modals, pendingOpen" as ev
+  component "AdminView\nworkspaces, ttl, logs, tab" as adm
+  component "FormEditor / ErDiagramEditor /\nDagEditor / DataLineageDiagramEditor\n(field values / flow nodes+edges)" as forms
+  component "DataLineageDiagramEditor\n(dsByKey, loading, selectedKeyName,\nadd/remove/edit modal state, expanded)" as lad
 }
 
 package "External / tool-managed state" {
   component "localStorage\nkey: lakehouse-theme" as ls
+  component "URL query (?section / ?workspace)\nread once at module scope" as url
   component "@xyflow/react internal store\n(viewport, selection, drag)" as rf
 }
 
@@ -41,13 +44,25 @@ active --> scheds : switch
 active --> sparks : switch
 active --> vcsl : switch
 active --> servs : switch
+active --> mods : switch
 created --> active : controls mount
 
 thm ..> ls : persisted
+url ..> active : INITIAL_SECTION
+url ..> mods : INITIAL_WORKSPACE_ID (auto-open)
 rf ..> servs : nodes/edges in
 rf ..> pipes : nodes/edges in
 rf ..> lines : nodes/edges in
 rf ..> rels : nodes/edges in
+rf ..> forms : nodes/edges in
+rf ..> lad : nodes/edges in
+
+mods --> pick : openWorkspace == null
+mods --> ev : openWorkspace set (profile/workspace/onNotice)
+mods --> adm : adminTab == 'admin'
+ev --> forms : schema + doc + onDocChange
+ev --> lad : doc + onDocChange
+ev --> pick : onBack
 
 scheds --> pipes : selectedRunId
 cands --> lines : dataSetKeyName
@@ -59,5 +74,8 @@ note bottom
   every store is a local useState inside
   the owning component. Cross-section data
   flows top-down through props only.
+  In the modeller the same props-down rule
+  applies (ModellerSection → WorkspacePicker
+  / EditorView → FormEditor & graph editors).
 end note
 @enduml

@@ -7,17 +7,17 @@ autonumber
 
 actor "Browser user" as user
 participant "React component" as comp
-participant "api.js\n(apiFetch wrapper)" as api
+participant "api.js\n(apiFetch / api wrappers)" as api
 participant "Vite dev server\n(dev only)" as vite
 participant "Spring Boot BFF\n(controller)" as bff
 participant "Keycloak\n(OAuth2 / OpenID)" as kc
 participant "Downstream service\n(config / scheduler /\nstate / task-proxy)" as ds
 
 group Read request (e.g. GET /api/services)
-  comp -> api : fetchServices()\nmerely apiFetch('/api/services')
+  comp -> api : fetchServices()\nmerely apiFetch('/api/services') / api('/api/vcs/…')
   api -> vite : fetch (same-origin cookie)
   vite -> bff : GET /api/services\n(session cookie JSESSIONID)
-  bff -> ds : REST client call
+  bff -> ds : REST client call\n(or handles it directly\n(workspaces, schema, admin))
   ds --> bff : JSON reply
   bff --> vite : 200 JSON\n(+ XSRF-TOKEN cookie)
   vite --> api : response
@@ -25,18 +25,38 @@ group Read request (e.g. GET /api/services)
   comp -> comp : setState(...) → re-render
 end
 
-group State-changing request (e.g. POST /api/schedules)
-  comp -> api : fetchSchedules(...)  (POST)
-  user -> user : chooses date range\nand clicks Refresh
+group State-changing request (e.g. POST /api/schedules or PUT /api/workspaces/{id}/files/**)
+  comp -> api : fetchSchedules(...) / api(path, {method:'PUT', body})
+  user -> user : chooses date range\nand clicks Refresh / saves file
   api -> api : read XSRF-TOKEN cookie\nset header X-XSRF-TOKEN
   api -> vite : fetch POST\n(bearer-free, session cookie)
   vite -> bff : POST /api/schedules\n+ X-XSRF-TOKEN
-  bff -> bff : validate CSRF token,\nauthenticate session
+  bff -> bff : validate CSRF token,\nauthenticate session,\ncheck modeller role\n(ROLE_LAKEHOUSE_MODELLER_*)
   bff -> ds : REST client call
   ds --> bff : JSON reply
   bff --> api : 200 JSON
-  api --> comp : response.json()
+  api --> comp : 401? → redirect for login\npayload.json() / null
   comp -> comp : setState(...) → re-render
+end
+
+group Modeller session (BFF-internal)
+  bff -> bff : workspace storage\n(local fs or S3)\n+ Git integration\n(local-git / gitlab / github)
+  note right
+    The modeller endpoints
+    (/api/vcs, /api/workspaces/*
+    /api/schema, /api/admin) are
+    served by the UI service itself,
+    backed by jgit + workspace storage.
+
+    The diagram editors
+    (ErDiagramEditor,
+    DataLineageDiagramEditor)
+    additionally read / write the
+    referenced DataSet files
+    themselves via
+    GET|PUT /api/workspaces/{id}/files/…
+    to render and edit their nodes.
+  end note
 end
 
 group First access / expired session
@@ -52,5 +72,6 @@ note over api
   are sent without a CSRF header;
   all others get X-XSRF-TOKEN from the
   XSRF-TOKEN cookie (Spring CSRF).
+  api() additionally redirects on 401.
 end note
 @enduml

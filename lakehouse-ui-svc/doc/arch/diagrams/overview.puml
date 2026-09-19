@@ -9,13 +9,19 @@ package "frontend root" {
   [index.html] as html
   [vite.config.js\n(dev proxy /api -> :8091)] as vite
   [package.json\n(React 18, @xyflow/react,\nreact-syntax-highlighter)] as pkg
+  [public/\n(favicon.ico, copied to build)] as pub
 }
 
 package "src" {
   [main.jsx\n(entry, createRoot)] as main
-  [App.jsx\n(layout, section switcher,\ntheme, global state)] as app
-  [api.js\n(fetch wrapper,\nCSRF header)] as api
+  [App.jsx\n(layout, section switcher,\ntheme, global state,\ndeep-link section/workspace)] as app
+  [api.js\n(fetch wrappers,\nCSRF, 401->login,\nworkspaceUrl deep link)] as api
+  [yaml.js\n(YAML subset parser/writer)] as yaml
   [styles.css\n(CSS custom properties)] as css
+
+  package "hooks" {
+    [useResizableSplit\n(drag-to-resize panes)] as hook
+  }
 
   package "components" {
 
@@ -24,7 +30,21 @@ package "src" {
       [CatalogsSection\n(catalog tree + tabs)] as cat
       [SchedulesSection\n(schedules + runs)] as sched
       [SparkJobsSection\n(submissions)] as spark
-      [VcsSection\n(file: CvsSection.jsx)] as vcs
+      [VcsSection\n(VCS log + objects,\nuses useResizableSplit)] as vcs
+      [ModellerSection\n(Modelling: picker /\neditor / admin)] as mod
+    }
+
+    package "Modeller" {
+      [WorkspacePicker\n(branches + workspaces,\nnew-tab via workspaceUrl)] as wp
+      [EditorView\n(file tree + editor pane)] as ev
+      [AdminView\n(all workspaces, TTL, logs)] as adm
+      [FormEditor\n(schema-driven form)] as form
+      [ErDiagramEditor\n(ER diagram editing)] as erd
+      [DataLineageDiagramEditor\n(data-lineage diagram editing)] as lad
+      [DagEditor\n(generic DAG editing)] as dag
+      [Pickers\n(reference pickers)] as picks
+      [CodeEditor\n(lightweight code editor)] as code
+      [Modal\n(shared dialog shell)] as modal
     }
 
     package "Graph / DAG views" {
@@ -46,6 +66,19 @@ app --> cat : section
 app --> sched : section
 app --> spark : section
 app --> vcs : section
+app --> mod : section
+
+mod --> wp : default view
+mod --> ev : openWorkspace
+mod --> adm : admin view
+ev --> form : schema (kind)
+ev --> erd : ERDiagram doc
+ev --> lad : DataLineageDiagram doc
+ev --> dag : DAG doc
+ev --> picks : reference values
+ev --> code : raw YAML/code
+ev --> modal : dialogs
+wp --> modal : branch dialog
 
 sched --> pipe : selected run id
 cat --> lin : tab
@@ -61,6 +94,15 @@ pipe --> api
 lin --> api
 rel --> api
 model --> api
+mod --> api
+wp --> api
+ev --> api
+lad --> api : dataset files
+adm --> api
+
+ev ..> yaml : parseYaml / stringifyYaml
+vcs ..> hook
+ev ..> hook
 
 app ..> css : uses
 @enduml

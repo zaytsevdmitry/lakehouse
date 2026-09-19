@@ -3,8 +3,9 @@
 > Commit-state audit of the React frontend located at
 > `lakehouse-ui-svc/src/main/resources/frontend`.
 >
-> Scope: `index.html`, `public/`, `vite.config.js`, `package.json`, `src/` (JSX
-> source, styles, API client, YAML tooling, hooks). Purpose: high-level
+> Scope: `index.html`, `public/`, `vite.config.js`, `package.json`, `test/`
+> (Vitest setup), `src/` (JSX source, styles, API client, YAML tooling, hooks,
+> component tests). Purpose: high-level
 > understanding for the system architect and formulation of isolated feature
 > tasks.
 >
@@ -43,8 +44,8 @@ feature-oriented structure** — close in spirit to a lightweight Feature-Sliced
 - **Sub-view / editor components** — smaller components inside a feature
   section (`LineageTab`, `RelationsTab`, `ModelTab`, `PipelineSection`,
   recursive `TreeNode`); the modeller group adds `WorkspacePicker`,
-  `EditorView`, `AdminView`, `FormEditor`, `ErDiagramEditor`, `DagEditor`,
-  `Pickers`, `CodeEditor`, `Modal`.
+  `EditorView`, `AdminView`, `FormEditor`, `ErDiagramEditor`,
+  `DataLineageDiagramEditor`, `DagEditor`, `Pickers`, `CodeEditor`, `Modal`.
 
 Key code-organization rules that guided the implementation:
 
@@ -78,12 +79,20 @@ Key code-organization rules that guided the implementation:
 src/main/resources/frontend
 ├── index.html              # HTML shell, <div id="root">, loads /src/main.jsx
 ├── package.json            # deps: react, react-dom, @xyflow/react,
-│                           #       react-syntax-highlighter; dev: vite
+│                           #       react-syntax-highlighter; dev: vite,
+│                           #       vitest, jsdom, @testing-library/*;
+│                           #       scripts: dev / build / preview / test
 ├── package-lock.json
 ├── vite.config.js          # dev server :5173, /api proxy -> :8091,
-│                           # build outDir -> ../static (served by Spring Boot)
+│                           # build outDir -> ../static (served by Spring Boot),
+│                           # test block (jsdom, test/setup.js); see §7
 ├── public/                 # static assets copied verbatim to the build output
 │                           #   (favicon.ico)
+├── test
+│   └── setup.js            # Vitest setup: jsdom polyfills required by
+│                           #   React Flow (ResizeObserver, DOMMatrixReadOnly,
+│                           #   pointer capture, offsetWidth/Height,
+│                           #   getBoundingClientRect)
 └── src
     ├── main.jsx            # entry: createRoot(...).render(<App/>)
     ├── App.jsx             # shell: header, section switcher (nav), main
@@ -95,7 +104,7 @@ src/main/resources/frontend
     ├── yaml.js             # hand-rolled YAML (subset) reader/writer used by the
     │                       #       modeller editors
     ├── styles.css          # global CSS: tokens (CSS custom properties),
-    │                       #       all component styles (~3k lines)
+    │                       #       all component styles (~3.2k lines)
     ├── hooks
     │   └── useResizableSplit.js   # shared drag-to-resize splitter behaviour
     └── components
@@ -115,6 +124,9 @@ src/main/resources/frontend
         ├── AdminView.jsx          # admin-only: all workspaces, cleanup TTL, logs
         ├── FormEditor.jsx         # schema-driven form renderer for config docs
         ├── ErDiagramEditor.jsx    # ER-diagram visual editing (React Flow)
+        ├── DataLineageDiagramEditor.jsx  # data-lineage diagram editing
+        │                          #   (React Flow; on-canvas Add/Edit/Remove,
+        │                          #   picker/confirm modals, full-screen toggle)
         ├── DagEditor.jsx          # generic DAG visual editing (React Flow)
         ├── Pickers.jsx            # reference pickers (data set / script / DS…)
         ├── CodeEditor.jsx         # lightweight code editor w/ syntax highlight
@@ -122,7 +134,10 @@ src/main/resources/frontend
         ├── PipelineSection.jsx    # schedule-instance DAG (acts + nested tasks)
         ├── LineageTab.jsx         # dataset lineage graph (React Flow)
         ├── ModelTab.jsx           # model scripts w/ syntax highlighting
-        └── RelationsTab.jsx       # ER-diagram view (React Flow)
+        ├── RelationsTab.jsx       # ER-diagram view (React Flow)
+        └── __tests__/             # Vitest unit tests for the modeller
+                                   #   (DataLineageDiagramEditor.test.jsx,
+                                   #   ~23 tests) — see §7
 ```
 
 Purpose of each folder/file:
@@ -130,7 +145,8 @@ Purpose of each folder/file:
 - **`components/`** — feature sections and their sub-views; the only directory
   for UI components. The modeller group forms its own namespace
   (`ModellerSection` + `WorkspacePicker/EditorView/AdminView/FormEditor/
-  ErDiagramEditor/DagEditor/Pickers/CodeEditor/Modal`). No `context/`,
+  ErDiagramEditor/DataLineageDiagramEditor/DagEditor/Pickers/CodeEditor/Modal`)
+  plus a test folder `__tests__/` for it. No `context/`,
   `services/`, `utils/`, `types/` folders exist; equivalent logic lives inline
   in the components.
 - **`hooks/`** — extracted reusable UI behaviour; currently a single
@@ -181,9 +197,16 @@ Scopes and responsibilities:
     `dirty`, `busy`, modal flags, `pendingOpen` (unsaved-changes guard);
     `readOnly` is derived from `profile.effectiveRole` + `workspace.own`.
 - **Sub-view / tab-level** — `LineageTab`, `RelationsTab`, `ModelTab`,
-  `PipelineSection`, `FormEditor`, `ErDiagramEditor`, `DagEditor`
+  `PipelineSection`, `FormEditor`, `ErDiagramEditor`, `DataLineageDiagramEditor`,
+  `DagEditor`
   (`SchemaService`'s per-kind schemas inflate `FormEditor`'s form model; the
   graph editors derive their node/edge lists from `doc`).
+- **Diagram editors** — `ErDiagramEditor` and `DataLineageDiagramEditor`
+  additionally own the loaded referenced DataSet documents and their dialog
+  state: `dsByKey`/`dsByPath`, `loading`, `selectedKeyName`/`selectedNodeId`,
+  `addOpen`, remove-confirmation target, edit-modal state (`editTarget`,
+  `editYaml`, `editDoc`, `editMode` `form`|`yaml`, `editKeyNameEditable`,
+  `editBusy`) and the full-screen flag `expanded` (`<-->`/`>-<` toggle).
 - **Tool-managed** — `@xyflow/react` (React Flow) keeps its own internal
   store (viewport, node selection, drag state); nodes/edges themselves are
   owned by the section and synced into the flow via props.
@@ -192,7 +215,8 @@ Cross-section communication happens exclusively **top-down through props**
 and **bottom-up through the single shared shell** (`App.jsx`). Example:
 `ModellerSection` passes `profile`, `workspace` and `onNotice` down to
 `WorkspacePicker`/`EditorView`; `EditorView` passes `doc` and `onDocChange`
-into `FormEditor`/`ErDiagramEditor`.
+(`onChange` for the data-lineage editor) into
+`FormEditor`/`ErDiagramEditor`/`DataLineageDiagramEditor`.
 
 ![State ownership](diagrams/state-management.png)
 
@@ -247,12 +271,19 @@ sections render in `.error-box` blocks.
 `useEffect`/event handlers and store results with `useState`:
 - **Mount-time fetch** — `App.jsx` loads catalog/services/user; `EditorView`
   loads `/api/schema` + workspace tree/dirs; `WorkspacePicker` loads branches
-  + workspaces.
+  + workspaces; the diagram editors (`ErDiagramEditor`,
+  `DataLineageDiagramEditor`) load the referenced DataSet documents on mount
+  (`GET /api/workspaces/{id}/files/**`) to build their nodes.
 - **User-triggered fetch** — stateless *load* functions bound to buttons
   (dates, filters), e.g. states, schedules, submissions, VCS logs.
 - **Drill-down fetch** — selecting a tree node or table row triggers a fetch
   for the detail payload (`fetchDataSet`, `fetchSparkProperties`,
   `fetchScheduleInstanceDAG`, `GET /api/workspaces/{id}/files/**`).
+- **In-place DataSet editing** — both diagram editors' **Edit** action opens a
+  modal (`kind: DataSet · <key>`) that re-fetches the referenced file, edits it
+  via `FormEditor` or a raw-YAML textarea, and **PUTs** the document back
+  (`api(path, { method: 'PUT', body: { path, yaml, keyName } })`), after which
+  the node is refreshed from the server (`reloadOne`).
 
 **Dev-mode proxying.** `vite.config.js` proxies `/api` → `http://localhost:8091`
 so the dev server talks to the BFF exactly like production.
@@ -302,8 +333,15 @@ Modules. Reusability is a simple **component decomposition**:
     described by a `KindSchema` (`GET /api/schema`) and `FormEditor` renders
     scalar fields, lists/objects, code (`code` type), and named-item pickers
     from that schema, producing/updating the same `doc` object.
-  - `ErDiagramEditor` / `DagEditor` — graph editors built on React Flow that
-    translate the YAML document to/from nodes+edges.
+  - `ErDiagramEditor` / `DataLineageDiagramEditor` / `DagEditor` — graph
+    editors built on React Flow that translate the YAML document to/from
+    nodes+edges. The diagram editors share an **on-canvas toolbar**
+    (top-left `Add`/`Edit`/`Remove`), a data-set **reference picker**
+    (`DataSetKeyPickerModal`), a remove **confirmation modal**, an **in-modal
+    edit form** (form/YAML, reusing `FormEditor`) and a **full-screen expand
+    toggle** (`<-->`/`>-<`, class `.diagram-expand` + `.diagram-fullscreen`
+    overlay on the host). `DagEditor` is a generic node/edge editor driven by
+    `nodeField`/`edgeField` props.
 - **Graph/diagram views** — use **React Flow (`@xyflow/react` v12)** with
   custom node types:
   - `ServiceNode` (ServicesSection) — status-colored `UP`/`DOWN` node;
@@ -312,13 +350,18 @@ Modules. Reusability is a simple **component decomposition**:
   - `LineageNode` (LineageTab) — colored center node vs. side nodes;
   - `EntityNode` (RelationsTab) — ER entity card with columns and handles on
     all four sides;
-  - `ErDiagramEditor`/`DagEditor` reuse flow nodes with entity/edge handles
-    for visual editing of ER and DAG documents.
+  - `LineageNode` (`DataLineageDiagramEditor`) — data-lineage node whose
+    arrows are derived from each placed data set's `sources` map (missing
+    sources render as dashed "missing" nodes);
+  - `ErDiagramEditor`/`DataLineageDiagramEditor`/`DagEditor` reuse flow nodes
+    with entity/edge handles for visual editing of ER, data-lineage and DAG
+    documents.
 
-**Styling approach: global `styles.css` (~3k lines).** Layout is driven by CSS
+**Styling approach: global `styles.css` (~3.2k lines).** Layout is driven by CSS
 flex/grid utility classes and a consistent set of component classes; the
 modeller styles are namespaced by `.modeller`, `.editor`, `.picker`, `.tabs`,
-`.banner` etc. Theming is done exclusively through **CSS custom properties**
+`.banner`, `.lineage-*`, `.er-*`, `.diagram-expand` etc. Theming is done
+exclusively through **CSS custom properties**
 (tokens): `--bg`, `--panel`, `--border`, `--text`, `--muted`, `--accent`,
 `--up`, `--down`, ... Two palettes are declared under `:root[data-theme='light']`
 and `:root[data-theme='dark']`; the `data-theme` attribute is toggled by
@@ -475,10 +518,11 @@ readers/viewers get a read-only editor (`readOnly`).
 | Module format / target | ESM (`"type": "module"`), Vite default targets |
 | Language | **JavaScript (JSX)** — no TypeScript |
 | Linting / formatting | **None configured** (no ESLint, no Prettier, no `lint` script) |
-| Tests | **None** (no test framework, no test script) |
+| Tests | **Vitest 3 + React Testing Library** (jsdom): `npm test` runs `vitest run`; configured in the `test` block of `vite.config.js` (`globals`, `environment: 'jsdom'`, `setupFiles: ['./test/setup.js']`, `include: src/**/*.test.{js,jsx}`). The current suite covers `DataLineageDiagramEditor` (23 tests: graph translation, position persistence, drag, Add/Edit/Remove + modal flows, full-screen toggle). `test/setup.js` polyfills the browser APIs React Flow needs in jsdom (ResizeObserver, `DOMMatrixReadOnly`, pointer capture, `getBoundingClientRect`, `offsetWidth/Height`). |
 | Package manager | npm (`package.json` + `package-lock.json`) |
 
-Scripts: `dev` (`vite`), `build` (`vite build`), `preview` (`vite preview`).
+Scripts: `dev` (`vite`), `build` (`vite build`), `preview` (`vite preview`),
+`test` (`vitest run`).
 
 Notable runtime dependencies:
 
@@ -494,6 +538,10 @@ hand-rolled on purpose — no `js-yaml` dependency, and the code editor
 (`CodeEditor.jsx`) is a custom implementation (no `react-codemirror` /
 `monaco`).
 
+Development/test dependencies: `vitest`, `jsdom`, `@testing-library/react`,
+`@testing-library/jest-dom` (all scoped to the `test` toolchain of §7); no
+TypeScript or linting tooling is present.
+
 ---
 
 ## 8. Architectural Recommendations (Technical Debt)
@@ -505,22 +553,25 @@ Priorities for refactoring before the application scales:
    round-trip arbitrary documents. The backend re-validates everything, so the
    risk is bounded, but a real `js-yaml` (or a backend round-trip endpoint)
    would make the editor lossless and future-proof.
-2. **No automated verification.** There is no lint, no type check, no unit
-   or e2e test — the only regression net is a manual browser session. The
-   modeller logic (schema-driven forms, graph↔doc translation, review flow)
-   is exactly the code that will break silently. Minimum viable step: add
-   ESLint + a React Testing Library smoke test; later a Playwright suite for
-   the section switcher and the editor save/restore flow.
+2. **Automated verification covers one editor only.** A Vitest + React Testing
+   Library suite now guards `DataLineageDiagramEditor` (graph↔doc
+   translation, drag persistence, Add/Edit/Remove modal flows), but the rest of
+   the app — `FormEditor`, `EditorView`, `ErDiagramEditor`, the section
+   switcher, the review flow — still has no lint, no type check and no
+   tests; the regression net for those surfaces is a manual browser session.
+   Minimum viable step: add ESLint + extend the RTL suite to the remaining
+   modeller editors and save/restore flow; later a Playwright suite for the
+   section switcher and the full editor workflow.
 3. **No TypeScript.** All state flows through dynamic JS objects and props
    (`doc` from `parseYaml`, `KindSchema.fields`, `profile`, `WorkspaceResponse`)
    whose shapes are only documented implicitly. Typing `api.js` responses,
    the modeller DTOs and section props would prevent a whole class of
    "undefined is not a function" regressions.
-4. **Single monolithic `styles.css` (~3k lines).** Global className coupling
+4. **Single monolithic `styles.css` (~3.2k lines).** Global className coupling
    makes isolated feature work risky: shared tokens are good, but section
    styles should be co-located (CSS Modules or scoped files) so a change in
-   one feature cannot silently break another — with three editor surfaces in
-   the modeller this becomes concrete.
+   one feature cannot silently break another — with four canvas surfaces in
+   the modeller (form, ER, data-lineage, DAG) this becomes concrete.
 5. **No formal state, routing or data-fetching layer.** The keep-alive +
    `hidden` switcher (plus the `section`/`workspace` deep links) is simple
    today, but as sections grow: (a) introduce `@tanstack/react-query` (or
@@ -535,8 +586,8 @@ Priorities for refactoring before the application scales:
    `SchedulesSection`, `SparkJobsSection` and `PipelineSection` still
    re-implement the splitter inline. Likewise the layered-graph layout
    algorithm exists in `ServicesSection`, `PipelineSection` (`computeLayers`)
-   and the modeller `DagEditor`/`ErDiagramEditor` — unify into a single
-   graph-layout utility.
+   and the modeller `DagEditor`/`ErDiagramEditor`/`DataLineageDiagramEditor` —
+   unify into a single graph-layout utility.
 7. **Mixed imperatives inside components.** `FormEditor` (~1.3k lines) and
    `EditorView` (~1k lines) mix data fetching, complex forms, graph building
    and dialogs in one file. Splitting each into *container/hook + view +

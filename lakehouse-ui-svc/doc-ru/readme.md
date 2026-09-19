@@ -18,7 +18,7 @@
 - **Schedules** — список запусков расписаний за интервал, DAG запуска расписания.
 - **SparkJobs** — список Spark-подписок через `lakehouse-task-proxy-for-spark`: создание, статус, kill, kill all, clear.
 - **VCS** — журнал синхронизации GitOps-конфигурации (коммиты) и журнал объектов `lakehouse-config-svc`.
-- **Modelling** — рабочее место по модделированию метаданных: создать рабочее пространство из ветки Git, редактировать конфигурационные документы (форма по схеме вида, «сырой» YAML, визуальные ER/DAG-редакторы), создавать ветки, отправлять изменения на ревью. Рабочие пространства открываются в новой вкладке браузера по deep-ссылке (`?section=modeller&workspace=<id>`).
+- **Modelling** — рабочее место по модделированию метаданных: создать рабочее пространство из ветки Git, создавать конфигурационные документы любого поддерживаемого вида (форма по схеме вида, «сырой» YAML или визуальные редакторы — **ER Diagram**, **Data Lineage Diagram**, универсальный **DAG**), создавать ветки, отправлять изменения на ревью. Рабочие пространства открываются в новой вкладке браузера по deep-ссылке (`?section=modeller&workspace=<id>`).
 
 ## Архитектура
 
@@ -79,9 +79,9 @@ AdminController  /api/admin        — только для админов: вс�
   - DTO (`dto`): `KindSchema`, `FieldSchema`, `TreeResponse`, `FileContentResponse`, `WorkspaceResponse`, DTO ревью/restore и др.;
 - `SecurityConfig` — OAuth2-логин BFF + RBAC модделирования (см. Безопасность);
 - `GlobalExceptionHandler` — единая обработка ошибок;
-- фронтенд (`src/main/resources/frontend`): React + Vite.
+- фронтенд (`src/main/resources/frontend`): React + Vite, включая визуальные редакторы модделирования (`ErDiagramEditor`, `DataLineageDiagramEditor`, `DagEditor` — на React Flow) и набор unit-тестов на Vitest.
 
-Зависимости: `lakehouse-common` (общие константы, например enum `YamlMetadataKind` и DTO конфигурации для YAML-редактора), `lakehouse-config-rest-client`, `lakehouse-scheduler-rest-client`, `lakehouse-state-rest-client`, `lakehouse-task-proxy-for-spark-rest-client`, `jackson-dataformat-yaml`, `org.eclipse.jgit` (+ SSH), Spring Boot OAuth2 client и resource server.
+Зависимости: `lakehouse-common` (общие константы и DTO конфигурации, используемые редакторами — например enum `YamlMetadataKind`, покрывающий виды `ERDiagram` и `DataLineageDiagram`, а также соответствующие `ERDiagramDTO` / `DataLineageDiagramDTO`), `lakehouse-config-rest-client`, `lakehouse-scheduler-rest-client`, `lakehouse-state-rest-client`, `lakehouse-task-proxy-for-spark-rest-client`, `jackson-dataformat-yaml`, `org.eclipse.jgit` (+ SSH), Spring Boot OAuth2 client и resource server.
 
 ## API Endpoints
 

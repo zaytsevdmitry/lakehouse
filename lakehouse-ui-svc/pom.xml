@@ -53,6 +53,15 @@
             <artifactId>spring-boot-starter-oauth2-client</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>lakehouse</groupId>
+            <artifactId>lakehouse-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-common-health</artifactId>
             <version>0.11.0</version>
@@ -79,6 +88,22 @@
             <groupId>lakehouse</groupId>
             <artifactId>lakehouse-task-proxy-for-spark-rest-client</artifactId>
             <version>0.11.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>tools.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.jgit</groupId>
+            <artifactId>org.eclipse.jgit</artifactId>
+            <version>${jgit.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jgit</groupId>
+            <artifactId>org.eclipse.jgit.ssh.apache</artifactId>
+            <version>${jgit.version}</version>
         </dependency>
 
         <dependency>

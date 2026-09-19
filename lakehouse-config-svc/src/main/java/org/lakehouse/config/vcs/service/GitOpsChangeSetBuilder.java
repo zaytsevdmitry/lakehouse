@@ -21,6 +21,7 @@ import org.lakehouse.config.vcs.VcsChangeType;
 import org.lakehouse.config.vcs.VcsClient;
 import org.lakehouse.config.vcs.VcsDiffEntry;
 import org.lakehouse.config.vcs.yaml.GitOpsYamlParser;
+import org.lakehouse.config.vcs.yaml.PreliminaryConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -64,15 +65,29 @@ public class GitOpsChangeSetBuilder {
             }
             if (entry.type() == VcsChangeType.DELETED) {
                 if (StringUtils.hasText(base)) {
-                    readConfigContent(base, entry.path()).ifPresent(content ->
-                            toDelete.add(new GitSyncItem(entry.path(), yamlParser.parse(content))));
+                    readConfigContent(base, entry.path()).flatMap(content -> parseConfigItem(entry.path(), content))
+                            .ifPresent(toDelete::add);
                 }
             } else {
-                readConfigContent(head, entry.path()).ifPresent(content ->
-                        toApply.add(new GitSyncItem(entry.path(), yamlParser.parse(content))));
+                readConfigContent(head, entry.path()).flatMap(content -> parseConfigItem(entry.path(), content))
+                        .ifPresent(toApply::add);
             }
         }
         return new GitSyncChangeSet(toApply, toDelete);
+    }
+
+    /**
+     * Parses a metadata document in two stages and keeps it only when its kind is a
+     * configuration object (that is, only when {@code kind.isConfig() == true}).
+     */
+    private Optional<GitSyncItem> parseConfigItem(String path, String content) {
+        PreliminaryConfig preliminary = yamlParser.parsePreliminary(content);
+        if (!preliminary.kind().isConfig()) {
+            logger.debug("Skipping non-configuration metadata kind {} in {}",
+                    preliminary.kind().yamlValue(), path);
+            return Optional.empty();
+        }
+        return Optional.of(new GitSyncItem(path, yamlParser.parseFull(preliminary)));
     }
 
     private Optional<String> readConfigContent(String commitId, String path) {

@@ -16,12 +16,17 @@
  */
 package org.lakehouse.ui.controller;
 
+import org.lakehouse.ui.modeller.auth.ModellerRole;
+import org.lakehouse.ui.modeller.auth.UserContext;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -29,10 +34,20 @@ import java.util.Map;
 public class UserController {
 
     @GetMapping
-    public Map<String, String> getCurrentUser(Authentication authentication) {
-        if (authentication instanceof OAuth2AuthenticationToken oauth2Token) {
-            return Map.of("username", oauth2Token.getPrincipal().getName());
+    public Map<String, Object> getCurrentUser(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return Map.of("username", authentication != null ? authentication.getName() : "anonymous");
         }
-        return Map.of("username", authentication != null ? authentication.getName() : "anonymous");
+        UserContext user = UserContext.from(authentication);
+        Map<String, Object> profile = new LinkedHashMap<>();
+        profile.put("username", user.username());
+        profile.put("name", user.name());
+        profile.put("email", user.email());
+        List<String> roles = new ArrayList<>(user.roles() == null ? List.of() : user.roles());
+        roles.sort(Comparator.naturalOrder());
+        profile.put("roles", roles);
+        ModellerRole role = user.effectiveRole();
+        profile.put("effectiveRole", role == null ? null : role.name());
+        return profile;
     }
 }

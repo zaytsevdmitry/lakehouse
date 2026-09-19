@@ -17,6 +17,7 @@
 
 package org.lakehouse.config.vcs.yaml;
 
+import org.lakehouse.client.api.constant.YamlMetadataKind;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
@@ -26,6 +27,7 @@ import org.lakehouse.client.api.dto.configs.schedule.ScenarioActTemplateDTO;
 import org.lakehouse.client.api.dto.configs.schedule.ScheduleDTO;
 import org.lakehouse.client.api.dto.configs.schedule.TaskDTO;
 import org.lakehouse.client.api.dto.configs.schedule.TaskExecutionServiceGroupDTO;
+import org.lakehouse.client.api.dto.configs.script.ScriptDTO;
 import org.springframework.stereotype.Component;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.dataformat.yaml.YAMLFactory;
@@ -63,11 +65,14 @@ public class GitOpsYamlParser {
     }
 
     /**
-     * Parses the given YAML content into a configuration construct.
+     * Preliminary parsing stage: reads the document and resolves its {@code kind} without
+     * binding the body to the target DTO. Callers that only process configuration objects
+     * must skip documents whose {@link PreliminaryConfig#kind()} reports
+     * {@code isConfig() == false} before calling {@link #parseFull(PreliminaryConfig)}.
      *
      * @throws VcsConfigParseException when the content is not a valid declarative configuration
      */
-    public ParsedConfig parse(String content) {
+    public PreliminaryConfig parsePreliminary(String content) {
         Map<String, Object> root;
         try {
             root = yamlMapper.readValue(requireContent(content), new TypeReference<Map<String, Object>>() {
@@ -83,18 +88,37 @@ public class GitOpsYamlParser {
         Object kindValue = root.remove(KIND_FIELD);
         if (kindValue == null)
             throw new VcsConfigParseException("Missing required field '" + KIND_FIELD + "'");
-        ConfigKind kind;
         try {
-            kind = ConfigKind.fromYamlValue(String.valueOf(kindValue));
+            return new PreliminaryConfig(YamlMetadataKind.fromYamlValue(String.valueOf(kindValue)), root);
         } catch (IllegalArgumentException e) {
             throw new VcsConfigParseException(e.getMessage(), e);
         }
+    }
+
+    /**
+     * Full parsing stage: binds the already detected document body to the DTO of its kind.
+     * Callers are expected to invoke it only for constructs with {@code kind.isConfig() == true}.
+     *
+     * @throws VcsConfigParseException when the body does not match the target DTO
+     */
+    public ParsedConfig parseFull(PreliminaryConfig preliminary) {
+        YamlMetadataKind kind = preliminary.kind();
         try {
-            Object dto = yamlMapper.convertValue(root, kind.dtoClass());
+            Object dto = yamlMapper.convertValue(preliminary.body(), kind.dtoClass());
             return new ParsedConfig(kind, dto);
         } catch (Exception e) {
             throw new VcsConfigParseException("Cannot bind YAML document to " + kind, e);
         }
+    }
+
+    /**
+     * Convenience wrapper combining {@link #parsePreliminary(String)} and
+     * {@link #parseFull(PreliminaryConfig)}.
+     *
+     * @throws VcsConfigParseException when the content is not a valid declarative configuration
+     */
+    public ParsedConfig parse(String content) {
+        return parseFull(parsePreliminary(content));
     }
 
     private String requireContent(String content) {
@@ -111,13 +135,15 @@ public class GitOpsYamlParser {
             case NAME_SPACE -> ((NameSpaceDTO) parsed.dto()).getKeyName();
             case DRIVER -> ((DriverDTO) parsed.dto()).getKeyName();
             case DATA_SOURCE -> ((DataSourceDTO) parsed.dto()).getKeyName();
-            case SCRIPT -> ((ScriptContent) parsed.dto()).key();
+            case SCRIPT -> ((ScriptDTO) parsed.dto()).getKey();
             case TASK_EXECUTION_SERVICE_GROUP -> ((TaskExecutionServiceGroupDTO) parsed.dto()).getName();
             case TASK -> ((TaskDTO) parsed.dto()).getName();
             case DATA_SET -> ((DataSetDTO) parsed.dto()).getKeyName();
             case SCENARIO_ACT_TEMPLATE -> ((ScenarioActTemplateDTO) parsed.dto()).getKeyName();
             case QUALITY_METRICS_CONF -> ((QualityMetricsConfDTO) parsed.dto()).getKeyName();
             case SCHEDULE -> ((ScheduleDTO) parsed.dto()).getKeyName();
+            default -> throw new IllegalStateException(
+                    "Configuration kind is not managed by the config service: " + parsed.kind().yamlValue());
         };
     }
 }

@@ -6,36 +6,47 @@ skinparam dpi 150
 
 scale 1.4
 
-state "initial: activeSection = services\ncreatedSections = {services}" as init
+state "deep link: section = ?section=\nworkspace = ?workspace=\n→ INITIAL_SECTION / INITIAL_WORKSPACE_ID" as deeplink
 
 state "section = services\n[SERVICES]\nServicesSection mounted" as services
 state "section = catalog\n[CATALOG]\nCatalogsSection mounted\n(created on first switch)" as catalog
 state "section = schedules\n[SCHEDULES]\nSchedulesSection mounted\n(created on first switch)" as schedules
 state "section = sparkjobs\n[SPARKJOBS]\nSparkJobsSection mounted\n(created on first switch)" as sparkjobs
 state "section = vcs\n[VCS]\nVcsSection mounted\n(created on first switch)" as vcs
+state "section = modeller\n[MODELLER]\nModellerSection mounted\n(created on first switch)\n+ auto-open workspace if ?workspace=id" as modeller
 
-init --> services
+deeplink --> services : INITIAL_SECTION || 'services'
 
-services --> catalog : activateSection('catalog')  → catalog added to createdSections
+services --> catalog : activateSection('catalog')  → catalog added
 catalog --> services : activateSection('services')
 catalog --> schedules : activateSection('schedules')  → schedules added
 catalog --> sparkjobs : activateSection('sparkjobs')  → sparkjobs added
 catalog --> vcs : activateSection('vcs')  → vcs added
+catalog --> modeller : activateSection('modeller')  → modeller added
 
 schedules --> services : activateSection('services')
 schedules --> catalog : activateSection('catalog')
 schedules --> sparkjobs : activateSection('sparkjobs')
 schedules --> vcs : activateSection('vcs')
+schedules --> modeller : activateSection('modeller')
 
 sparkjobs --> services : activateSection('services')
 sparkjobs --> catalog : activateSection('catalog')
 sparkjobs --> schedules : activateSection('schedules')
 sparkjobs --> vcs : activateSection('vcs')
+sparkjobs --> modeller : activateSection('modeller')
 
 vcs --> services : activateSection('services')
 vcs --> catalog : activateSection('catalog')
 vcs --> schedules : activateSection('schedules')
 vcs --> sparkjobs : activateSection('sparkjobs')
+vcs --> modeller : activateSection('modeller')
+
+modeller --> services : activateSection('services')
+modeller --> catalog : activateSection('catalog')
+modeller --> schedules : activateSection('schedules')
+modeller --> sparkjobs : activateSection('sparkjobs')
+modeller --> vcs : activateSection('vcs')
 
 note bottom
   Render rule (App.jsx):
@@ -46,5 +57,10 @@ note bottom
   ⇒ once visited, a section stays mounted
     and is only hidden (state preserved);
     a not-yet-visited section is not mounted.
+
+  Deep link: a tab opened with
+  ?section=modeller&workspace=<id>
+  activates the Modelling section and
+  ModellerSection auto-opens the workspace.
 end note
 @enduml

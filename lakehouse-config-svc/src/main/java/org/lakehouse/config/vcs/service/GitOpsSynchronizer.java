@@ -17,6 +17,7 @@
 
 package org.lakehouse.config.vcs.service;
 
+import org.lakehouse.client.api.constant.YamlMetadataKind;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
@@ -26,15 +27,14 @@ import org.lakehouse.client.api.dto.configs.schedule.ScenarioActTemplateDTO;
 import org.lakehouse.client.api.dto.configs.schedule.ScheduleDTO;
 import org.lakehouse.client.api.dto.configs.schedule.TaskDTO;
 import org.lakehouse.client.api.dto.configs.schedule.TaskExecutionServiceGroupDTO;
+import org.lakehouse.client.api.dto.configs.script.ScriptDTO;
 import org.lakehouse.config.vcs.entity.VcsObjectLog;
 import org.lakehouse.config.vcs.entity.VcsSyncLog;
 import org.lakehouse.config.vcs.entity.VcsSyncStatus;
 import org.lakehouse.config.vcs.repository.VcsObjectLogRepository;
 import org.lakehouse.config.vcs.repository.VcsSyncLogRepository;
-import org.lakehouse.config.vcs.yaml.ConfigKind;
 import org.lakehouse.config.vcs.yaml.GitOpsYamlParser;
 import org.lakehouse.config.vcs.yaml.ParsedConfig;
-import org.lakehouse.config.vcs.yaml.ScriptContent;
 import org.lakehouse.config.service.NameSpaceService;
 import org.lakehouse.config.service.ScenarioActTemplateService;
 import org.lakehouse.config.service.ScriptService;
@@ -194,7 +194,7 @@ public class GitOpsSynchronizer {
         // their own position (order 7) but sorted among themselves by their sources so
         // they are created before scenarios, metrics and schedules reference them
         List<GitSyncItem> others = toApply.stream()
-                .filter(item -> item.parsedConfig().kind() != ConfigKind.DATA_SET)
+                .filter(item -> item.parsedConfig().kind() != YamlMetadataKind.DATA_SET)
                 .sorted((a, b) -> {
                     int order = Integer.compare(a.parsedConfig().kind().order(), b.parsedConfig().kind().order());
                     return order != 0 ? order : a.path().compareTo(b.path());
@@ -203,7 +203,7 @@ public class GitOpsSynchronizer {
 
         List<GitSyncItem> dataSets = new ArrayList<>();
         for (GitSyncItem item : toApply) {
-            if (item.parsedConfig().kind() == ConfigKind.DATA_SET)
+            if (item.parsedConfig().kind() == YamlMetadataKind.DATA_SET)
                 dataSets.add(item);
         }
         List<GitSyncItem> dataSetsOrdered = orderDataSetsDependencyWise(dataSets);
@@ -211,7 +211,7 @@ public class GitOpsSynchronizer {
         List<GitSyncItem> ordered = new ArrayList<>();
         boolean dataSetsInserted = false;
         for (GitSyncItem item : others) {
-            if (!dataSetsInserted && item.parsedConfig().kind().order() > ConfigKind.DATA_SET.order()) {
+            if (!dataSetsInserted && item.parsedConfig().kind().order() > YamlMetadataKind.DATA_SET.order()) {
                 ordered.addAll(dataSetsOrdered);
                 dataSetsInserted = true;
             }
@@ -289,8 +289,8 @@ public class GitOpsSynchronizer {
             case DRIVER -> driverService.saveVcs((DriverDTO) parsedConfig.dto());
             case DATA_SOURCE -> dataSourceService.saveVcs((DataSourceDTO) parsedConfig.dto());
             case SCRIPT -> {
-                ScriptContent script = (ScriptContent) parsedConfig.dto();
-                scriptService.saveVcs(script.key(), script.value());
+                ScriptDTO script = (ScriptDTO) parsedConfig.dto();
+                scriptService.saveVcs(script.getKey(), script.getValue());
             }
             case TASK_EXECUTION_SERVICE_GROUP -> taskExecutionServiceGroupService.saveVcs((TaskExecutionServiceGroupDTO) parsedConfig.dto());
             case TASK -> taskService.saveVcs((TaskDTO) parsedConfig.dto(), null, null);
@@ -298,6 +298,8 @@ public class GitOpsSynchronizer {
             case SCENARIO_ACT_TEMPLATE -> scenarioActTemplateService.saveVcs((ScenarioActTemplateDTO) parsedConfig.dto());
             case QUALITY_METRICS_CONF -> qualityMetricsConfService.saveVcs((QualityMetricsConfDTO) parsedConfig.dto());
             case SCHEDULE -> scheduleService.saveVcs((ScheduleDTO) parsedConfig.dto());
+            default -> throw new IllegalArgumentException(
+                    "Configuration kind is not managed by the config service: " + parsedConfig.kind().yamlValue());
         }
     }
 
@@ -314,6 +316,8 @@ public class GitOpsSynchronizer {
             case SCENARIO_ACT_TEMPLATE -> scenarioActTemplateService.unmanage(key);
             case QUALITY_METRICS_CONF -> qualityMetricsConfService.unmanage(key);
             case SCHEDULE -> scheduleService.unmanage(key);
+            default -> throw new IllegalArgumentException(
+                    "Configuration kind is not managed by the config service: " + parsedConfig.kind().yamlValue());
         }
     }
 }
