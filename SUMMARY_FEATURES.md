@@ -187,18 +187,36 @@
 ---
 
 ## Модуль: lakehouse-ui-svc — веб-консоль
-*Путь к исходному файлу: `./lakehouse-ui-svc/doc/readme.md`*
+*Путь к исходному файлу: `./lakehouse-ui-svc/doc/readme.md`, `./lakehouse-ui-svc/doc/arch/architecture.md`*
 
 ### Реализованные фичи:
-- **Единая веб-консоль управления**: тонкий BFF без собственного состояния (БД), агрегирует данные всех сервисов.
+- **Единая веб-консоль управления**: тонкий BFF без собственного состояния (БД), агрегирует данные всех сервисов; также хостит поверхность **Modelling** — редактор конфигурационных документов (см. модуль ниже).
 - **Services**: граф сервисов и их статусы UP/DOWN (HTTP/TCP-пробы).
 - **Catalog**: дерево каталога данных (источники → схемы → датасеты), просмотр датасета (модель/DDL, lineage, ограничения) и источника.
 - **Schedules**: инстансы запусков расписаний за интервал и DAG экземпляра расписания.
 - **SparkJobs**: управление сабмитами через task-proxy-for-spark (create/status/kill/killall/clear, просмотр spark-свойств).
 - **Состояния интервалов датасетов**: просмотр через state-svc.
-- **Аутентификация**: Keycloak OAuth2 authorization code flow, роли USER/ADMIN, CSRF-защита, сервисная страница логина.
+- **Аутентификация**: Keycloak OAuth2 authorization code flow, роли USER/ADMIN, CSRF-защита (XSRF-TOKEN → X-XSRF-TOKEN), сервисная страница логина, whitelist `/healthz`/`/readyz`/`/actuator/**`.
 - **VCSLog**: панель «VCS» — история синхронизации конфигураций (SUCCESS/FAILED с ошибками) и журнал затронутых объектов из config-svc.
-- **SPA-фронтенд**: React/Vite, собранный в ресурсы сервиса.
+- **Мониторинговые контроллеры**: `CatalogController`, `ScheduleController`, `ServicesController`, `SparkProxyController`, `StateController`, `VcsLogController`, `UserController` (`/api/…`), статусы через `HealthChecker` (HTTP/TCP-пробы, граф из `lakehouse.ui.services/vertices/edges`).
+- **SPA-фронтенд**: React/Vite, собранный в ресурсы сервиса (`src/main/resources/static`); содержит визуальные редакторы модделирования (`ErDiagramEditor`, `DataLineageDiagramEditor`, `DagEditor` — React Flow) и Vitest-набор unit-тестов (см. модуль Modelling).
+
+---
+
+## Модуль: lakehouse-ui-svc — Modelling (metadata-modelling workbench)
+*Путь к исходному файлу: `./lakehouse-ui-svc/doc/readme.md`, `./lakehouse-ui-svc/doc/arch/architecture.md`*
+
+### Реализованные фичи:
+- **Рабочее место по модделированию**: создание рабочего пространства (workspace) из ветки центрального Git-репозитория, создание и редактирование конфигурационных документов любого поддерживаемого вида (форма по схеме / «сырой» YAML / визуальные редакторы), создание веток, отправка изменений на ревью; открытие по deep-ссылке `?section=modeller&workspace=<id>`.
+- **Хранилище workspace'ов**: `WorkspaceStorage` SPI — `LocalFsWorkspaceStorage` (локальная ФС, `lakehouse.modeller.storage.root-directory`) и `S3WorkspaceStorage` (S3 + собственный минимальный AWS SigV4-подпись); `WorkspaceManager`, `WorkspaceSeeder`, фоновый `WorkspaceCleanupTask` (TTL неактивности, по умолчанию 4 ч); сессия неактивности `lakehouse.modeller.session.inactivity-minutes`.
+- **Интеграция с Git**: `VcsProvider` SPI — `LocalGitVcsProvider` (jgit), `GitLabApiVcsProvider`, `GitHubAppVcsProvider`, `DisabledVcsProvider` и фабрика; системный git-аккаунт (`lakehouse.modeller.vcs-system-account`, auth `ssh`/`token`/`basic`, опции GitHub App); центральный Git-репозиторий как источник истины, потребляемый GitOps в `lakehouse-config-svc`.
+- **Файловый CRUD в workspace**: `EditorController` — дерево/каталоги (`/api/workspaces/{id}/tree`, dirs), создание документа по `kind`+`keyName`+`directory`, чтение (YAML + kind + флаг редактируемости), сохранение через `YamlEditorService` (PUT `yaml`/`keyName`), rename/move/delete файлов и каталогов, restore из VCS-состояния (`WorkspaceSeeder`/`ReviewService`).
+- **Форма по схеме вида**: `SchemaController` отдаёт `KindSchema`/`FieldSchema` для всех видов (`/api/schema`), `EnumOptionsService`; `FormEditor` рендерит форму по схеме, переключатель форма ↔ «сырой» YAML (jackson-dataformat-yaml) с подсветкой синтаксиса (`CodeEditor`).
+- **Визуальные редакторы (React Flow)**: ER-диаграммы (`kind: ERDiagram`, каталог `erdiagrams`), диаграмма lineage (`kind: DataLineageDiagram`, каталог `datalineagediagrams` — узлы DataSet, рёбра из `sources`, отсутствующие узлы пунктиром) и универсальный DAG-редактор; на канвасе диаграмм — тулбар Add/Edit/Remove, модалка добавления узла через picker, подтверждение удаления, встроенное редактирование (форма/YAML) по кнопке Edit, переключатель fullscreen. Виды `ERDiagram`/`DataLineageDiagram` — не конфигурационные (`isConfig=false`): хранятся в репозитории, но не применяются config-svc.
+- **Ревью и восстановление**: сабмит workspace'а на ревью (коммит + комментарий, `POST /api/vcs/review/{workspaceId}`), restore файла/каталога из состояния VCS.
+- **RBAC модделирования**: роли Keycloak realm `LAKEHOUSE_MODELLER_VIEWER < EDITOR < ADMIN` с иерархией (ADMIN ⇒ EDITOR ⇒ VIEWER); владение workspace'ом (редактировать может только владелец); `readOnly` из `effectiveRole` (`GET /api/user`); стратегии `jwt-rbac` / `token-exchange`; admin-поверхность (`AdminController`) — все workspace'ы, force-delete, TTL очистки, «хвост» sync-логов.
+- **Kinds в shared enum `YamlMetadataKind`**: `ER_DIAGRAM` (order 11) и `DATA_LINEAGE_DIAGRAM` (order 13), идентификатор `keyName`, директории `erdiagrams`/`datalineagediagrams`.
+- **Тесты фронтенда**: Vitest 3 + React Testing Library (jsdom), настроены в `vite.config.js` (`test/setup.js` — полифиллы React Flow); 23 теста `DataLineageDiagramEditor` (граф↔документ, позиции узлов, drag, Add/Edit/Remove + модалки, fullscreen).
 
 ---
 
@@ -215,4 +233,4 @@
 
 ---
 
-*Составлено на основе Markdown-документов проекта (EN-версии; `doc-ru/` — зеркала, `node_modules/`, `target/` исключены, всего EN-файлов: 55, включая зеркала: 93).*
+*Составлено на основе Markdown-документов проекта (EN-версии; `doc-ru/` — зеркала, `node_modules/`, `target/` исключены, всего EN-файлов: 58, включая зеркала: 96). Реестр отражён на версию **0.11.0** (после tags **0.9.0** — credential providers, **0.10.0** — VCS/GitOps; актуальное состояние — поверхность Modelling в UI).*
