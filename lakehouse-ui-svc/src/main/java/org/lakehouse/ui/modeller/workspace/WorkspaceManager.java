@@ -14,7 +14,9 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HexFormat;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -26,9 +28,11 @@ import java.util.function.Supplier;
 
 /**
  * Central workspace lifecycle manager. Workspaces are server-side (spec section 5):
- * id = {@code md5(username + "|" + branch)}, stored via {@link WorkspaceStorage}.
- * A workspace is seeded from the requested branch on first open, tracked with
- * {@code _workspace.json} metadata, and garbage-collected after an idle TTL.
+ * id = {@code md5(username + "|" + sorted domain@branch selections)}, stored via
+ * {@link WorkspaceStorage}. A workspace is seeded on first open: every selected
+ * {@code (domain, branch)} pair is read from its repository and checked out into a
+ * parallel folder {@code <domain> (<branch>)} inside the workspace directory. Workspaces
+ * are tracked with {@code _workspace.json} metadata and garbage-collected after an idle TTL.
  * <p>
  * Mutations are guarded by per-workspace {@link ReentrantLock}s so two users (or two
  * browser tabs of the same user) can never corrupt one workspace; failed efforts throw
@@ -72,17 +76,24 @@ public class WorkspaceManager {
     }
 
     /**
-     * Opens (creating and seeding if needed) the workspace of the user on the branch.
+     * Opens (creating and seeding if needed) the workspace of the user for the selected
+     * {@code (domain, branch)} set.
      */
-    public Workspace openWorkspace(String username, String branch) {
-        String id = workspaceId(username, branch);
+    public Workspace openWorkspace(String username, List<BranchSelection> selections) {
+        String id = workspaceId(username, selections);
         return synchronizedOn(id, () -> {
             Instant now = clock.instant();
             boolean created = false;
             if (!storage.exists(id)) {
                 storage.create(id);
-                Map<String, String> snapshot = seeder.snapshot(branch);
-                storage.writeAll(id, snapshot);
+                Map<String, String> seeded = new LinkedHashMap<>();
+                for (BranchSelection selection : selections) {
+                    Map<String, String> snapshot = seeder.snapshot(selection.domain(), selection.branch());
+                    for (Map.Entry<String, String> entry : snapshot.entrySet())
+                        seeded.put(selection.folder() + "/" + entry.getKey(), entry.getValue());
+                }
+                if (!seeded.isEmpty())
+                    storage.writeAll(id, seeded);
                 created = true;
             }
             Optional<WorkspaceMetadata> meta = readMetadata(id);
@@ -90,18 +101,18 @@ public class WorkspaceManager {
             if (meta.isPresent()) {
                 fresh = meta.get().withLastAccessedAt(now);
             } else {
-                fresh = new WorkspaceMetadata(id, branch, username, now, now);
+                fresh = new WorkspaceMetadata(id, selections, username, now, now);
             }
             writeMetadata(id, fresh);
             if (created)
-                logger.info("Created workspace {} for {} on branch {}", id, username, branch);
-            return new Workspace(id, fresh.branch(), fresh.owner(), fresh.createdAt(), fresh.lastAccessedAt());
+                logger.info("Created workspace {} for {} on {}", id, username, display(selections));
+            return new Workspace(id, fresh.selections(), fresh.owner(), fresh.createdAt(), fresh.lastAccessedAt());
         });
     }
 
     public Workspace workspace(String workspaceId) {
         return readMetadata(workspaceId)
-                .map(m -> new Workspace(m.workspace(), m.branch(), m.owner(), m.createdAt(), m.lastAccessedAt()))
+                .map(m -> new Workspace(m.workspace(), m.selections(), m.owner(), m.createdAt(), m.lastAccessedAt()))
                 .orElseThrow(() -> new NotFoundException("Workspace " + workspaceId + " does not exist"));
     }
 
@@ -125,7 +136,7 @@ public class WorkspaceManager {
         List<Workspace> result = new ArrayList<>();
         for (String id : storage.listWorkspaces()) {
             readMetadata(id).ifPresent(m ->
-                    result.add(new Workspace(m.workspace(), m.branch(), m.owner(), m.createdAt(), m.lastAccessedAt())));
+                    result.add(new Workspace(m.workspace(), m.selections(), m.owner(), m.createdAt(), m.lastAccessedAt())));
         }
         return result;
     }
@@ -200,14 +211,72 @@ public class WorkspaceManager {
     // internals
     // ------------------------------------------------------------------
 
-    public static String workspaceId(String username, String branch) {
+    public static String workspaceId(String username, List<BranchSelection> selections) {
+        String payload = username + "|" + selections.stream()
+                .map(BranchSelection::key)
+                .sorted(Comparator.naturalOrder())
+                .reduce((a, b) -> a + "," + b)
+                .orElse("");
+        return md5(payload);
+    }
+
+    private static String md5(String value) {
         try {
             MessageDigest digest = MessageDigest.getInstance("MD5");
-            byte[] hash = digest.digest((username + "|" + branch).getBytes(StandardCharsets.UTF_8));
+            byte[] hash = digest.digest(value.getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(hash).toLowerCase();
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("MD5 unavailable", e);
         }
+    }
+
+    /**
+     * Scopes repository branch files to a single domain: when the repository hosts several
+     * domains under {@code domains/<domain>/,} only that subtree is kept and its prefix is
+     * stripped; flat repositories (per-domain repos, no {@code domains/} prefix) are kept whole.
+     */
+    public static Map<String, String> scopeDomain(String domain, Map<String, String> branchFiles) {
+        if (!usesDomainLayout(branchFiles))
+            return new LinkedHashMap<>(branchFiles);
+        String prefix = domainPrefix(domain);
+        Map<String, String> scoped = new LinkedHashMap<>();
+        for (Map.Entry<String, String> entry : branchFiles.entrySet())
+            if (entry.getKey().startsWith(prefix))
+                scoped.put(entry.getKey().substring(prefix.length()), entry.getValue());
+        return scoped;
+    }
+
+    public static boolean usesDomainLayout(Map<String, String> branchFiles) {
+        return branchFiles.keySet().stream().anyMatch(WorkspaceManager::isDomainLayoutPath);
+    }
+
+    public static Map<String, String> expandDomain(String domain, Map<String, String> scopedFiles,
+                                                    boolean domainLayout) {
+        Map<String, String> expanded = new LinkedHashMap<>();
+        String prefix = domainLayout ? domainPrefix(domain) : "";
+        for (Map.Entry<String, String> entry : scopedFiles.entrySet()) {
+            String path = entry.getKey().startsWith(prefix)
+                    ? entry.getKey().substring(prefix.length()) : entry.getKey();
+            expanded.put(prefix + path, entry.getValue());
+        }
+        return expanded;
+    }
+
+    private static String domainPrefix(String domain) {
+        if (domain == null || !domain.matches("[A-Za-z0-9._-]+"))
+            throw new IllegalArgumentException("Invalid domain name: " + domain);
+        return "domains/" + domain + "/";
+    }
+
+    private static boolean isDomainLayoutPath(String path) {
+        if (path == null || !path.startsWith("domains/"))
+            return false;
+        int slash = path.indexOf('/', "domains/".length());
+        return slash > "domains/".length();
+    }
+
+    private static String display(List<BranchSelection> selections) {
+        return selections.stream().map(BranchSelection::folder).reduce((a, b) -> a + ", " + b).orElse("");
     }
 
     private Optional<WorkspaceMetadata> readMetadata(String workspaceId) {
@@ -217,7 +286,7 @@ public class WorkspaceManager {
             } catch (Exception e) {
                 logger.warn("Cannot parse metadata of workspace {}, treating as unknown: {}",
                         workspaceId, e.getMessage());
-                return new WorkspaceMetadata(workspaceId, "unknown", "unknown", clock.instant(), clock.instant());
+                return new WorkspaceMetadata(workspaceId, List.of(), "unknown", clock.instant(), clock.instant());
             }
         });
     }

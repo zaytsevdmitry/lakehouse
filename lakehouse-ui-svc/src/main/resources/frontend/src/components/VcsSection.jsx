@@ -55,6 +55,7 @@ function VcsLogPanel() {
   const [toDate, setToDate] = useState(initialDates.toDate);
   const [status, setStatus] = useState('');
   const [commitId, setCommitId] = useState('');
+  const [domainKeyName, setDomainKeyName] = useState('');
   const [syncLogs, setSyncLogs] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -80,6 +81,7 @@ function VcsLogPanel() {
       to: new Date(toDate).toISOString(),
       status: status || null,
       commitId: commitId || null,
+      domainKeyName: domainKeyName || null,
     })
       .then(setSyncLogs)
       .catch((e) => setError(e.message))
@@ -130,6 +132,15 @@ function VcsLogPanel() {
             onChange={(e) => setCommitId(e.target.value)}
           />
         </div>
+        <div className="states-filter-field">
+          <label>DomainKeyName</label>
+          <input
+            type="text"
+            value={domainKeyName}
+            placeholder="Domain key name"
+            onChange={(e) => setDomainKeyName(e.target.value)}
+          />
+        </div>
         <button className="states-filter-button" onClick={load} disabled={loading}>
           Refresh
         </button>
@@ -147,6 +158,7 @@ function VcsLogPanel() {
                 <tr>
                   <th>Id</th>
                   <th>CommitId</th>
+                  <th>DomainKeyName</th>
                   <th>Sync date time</th>
                   <th>Status</th>
                   <th>ErrorMessage</th>
@@ -161,6 +173,7 @@ function VcsLogPanel() {
                   >
                     <td>{log.id}</td>
                     <td title={log.commitId}>{log.commitId}</td>
+                    <td title={log.domainKeyName}>{log.domainKeyName}</td>
                     <td>{log.syncDateTime}</td>
                     <td>{log.status}</td>
                     <td title={log.errorMessage}>{log.errorMessage}</td>
@@ -214,6 +227,7 @@ function VcsObjectsSearchPanel() {
   const [toDate, setToDate] = useState(initialDates.toDate);
   const [filePath, setFilePath] = useState('');
   const [objectName, setObjectName] = useState('');
+  const [domainKeyName, setDomainKeyName] = useState('');
   const [objects, setObjects] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -228,6 +242,7 @@ function VcsObjectsSearchPanel() {
       to: new Date(toDate).toISOString(),
       filePath: filePath || null,
       objectName: objectName || null,
+      domainKeyName: domainKeyName || null,
     })
       .then(setObjects)
       .catch((e) => setError(e.message))
@@ -280,6 +295,15 @@ function VcsObjectsSearchPanel() {
             onChange={(e) => setObjectName(e.target.value)}
           />
         </div>
+        <div className="states-filter-field">
+          <label>DomainKeyName</label>
+          <input
+            type="text"
+            value={domainKeyName}
+            placeholder="Domain key name"
+            onChange={(e) => setDomainKeyName(e.target.value)}
+          />
+        </div>
         <button className="states-filter-button" onClick={load} disabled={loading}>
           Refresh
         </button>
@@ -299,6 +323,7 @@ function VcsObjectsSearchPanel() {
               <th>Object name</th>
               <th>File path</th>
               <th>CommitId</th>
+              <th>DomainKeyName</th>
             </tr>
           </thead>
           <tbody>
@@ -310,6 +335,7 @@ function VcsObjectsSearchPanel() {
                 <td>{obj.objectName}</td>
                 <td>{obj.filePath}</td>
                 <td title={obj.commitId}>{obj.commitId}</td>
+                <td title={obj.domainKeyName}>{obj.domainKeyName}</td>
               </tr>
             ))}
           </tbody>

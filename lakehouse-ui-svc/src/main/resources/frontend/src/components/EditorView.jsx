@@ -14,6 +14,8 @@ const parentDir = (path) => {
 const DND_MIME = 'application/x-lakehouse-file';
 const DND_DIR_MIME = 'application/x-lakehouse-dir';
 
+const folderOf = (selection) => `${selection.domain} (${selection.branch})`;
+
 export default function EditorView({ profile, workspace, onBack, onNotice }) {
   const wsId = workspace.id;
   const canEdit = profile.effectiveRole === 'EDITOR' || profile.effectiveRole === 'ADMIN';
@@ -42,6 +44,25 @@ export default function EditorView({ profile, workspace, onBack, onNotice }) {
   const [pendingOpen, setPendingOpen] = useState(null);
 
   const schemaMap = useMemo(() => Object.fromEntries(schemas.map((s) => [s.kind, s])), [schemas]);
+
+  const selections = useMemo(() => workspace.branches || [], [workspace]);
+
+  // The server resolves an empty target directory to the domain root that owns the
+  // moved path (or the first selected domain for new folders), so mirror that here
+  // to report the resulting path and folder correctly.
+  const domainRootOf = useCallback((path) => {
+    const owner = selections.find((sel) => {
+      const folder = folderOf(sel);
+      return path === folder || path.startsWith(`${folder}/`);
+    });
+    return owner ? folderOf(owner) : (selections[0] ? folderOf(selections[0]) : '');
+  }, [selections]);
+
+  const resolveTarget = useCallback((source, targetDirectory) => {
+    if (targetDirectory) return targetDirectory;
+    if (source) return domainRootOf(source);
+    return selections[0] ? folderOf(selections[0]) : '';
+  }, [domainRootOf, selections]);
 
   const loadTree = useCallback(async () => {
     const data = await api(`/api/workspaces/${encodePath(wsId)}/tree`);
@@ -212,6 +233,10 @@ export default function EditorView({ profile, workspace, onBack, onNotice }) {
         body: { comment, commitMessage },
       });
       setReviewModal(false);
+      if (resp.status === 'NO_CHANGES') {
+        onNotice('success', 'No changes to submit — the workspace stays open.');
+        return;
+      }
       setDirty(false);
       onNotice('success', `Review submitted: ${resp.status}${resp.url ? ` — ${resp.url}` : ''}`);
       window.setTimeout(onBack, 1200);
@@ -322,22 +347,6 @@ export default function EditorView({ profile, workspace, onBack, onNotice }) {
     return results;
   }, [tree, wsId]);
 
-  const nameSpaceSummaryProvider = useCallback(async () => {
-    const results = [];
-    for (const entry of tree) {
-      if (entry.kind !== 'NameSpace') continue;
-      try {
-        const resp = await api(`/api/workspaces/${encodePath(wsId)}/files/${encodePath(entry.path)}`);
-        const doc = parseYaml(resp.yaml || '');
-        if (!doc || !doc.keyName) continue;
-        results.push({ keyName: doc.keyName, description: doc.description || '' });
-      } catch (e) {
-        // unreadable name space — skip it for the picker
-      }
-    }
-    return results;
-  }, [tree, wsId]);
-
   // Catalog providers for the read-only picker fields (Data Source Key Name,
   // Task Template, Task Execution Service Group Name, Driver Key Name). Each
   // lists the identifier+description of every workspace document of a kind.
@@ -390,6 +399,7 @@ export default function EditorView({ profile, workspace, onBack, onNotice }) {
       onNotice('error', 'Save your changes before moving this file.');
       return;
     }
+    const target = resolveTarget(source, targetDirectory);
     setBusy(true);
     try {
       await api(`/api/workspaces/${encodePath(wsId)}/files/move`, {
@@ -397,12 +407,12 @@ export default function EditorView({ profile, workspace, onBack, onNotice }) {
         body: { source, targetDirectory },
       });
       await refreshTree();
-      const newPath = targetDirectory ? `${targetDirectory}/${basename(source)}` : basename(source);
+      const newPath = `${target}/${basename(source)}`;
       if (selected && selected.path === source) {
         await doOpen({ path: newPath, kind: selected.kind, keyName: selected.keyName });
-        setSelectedFolder(targetDirectory || null);
+        setSelectedFolder(target || null);
       }
-      onNotice('success', `Moved ${basename(source)} to ${targetDirectory || 'the workspace root'}.`);
+      onNotice('success', `Moved ${basename(source)} to ${target}.`);
     } catch (e) {
       onNotice('error', e.message);
     } finally {
@@ -416,6 +426,7 @@ export default function EditorView({ profile, workspace, onBack, onNotice }) {
       onNotice('error', 'Save your changes before moving this folder.');
       return;
     }
+    const target = resolveTarget(source, targetDirectory);
     setBusy(true);
     try {
       await api(`/api/workspaces/${encodePath(wsId)}/dirs/move`, {
@@ -424,15 +435,15 @@ export default function EditorView({ profile, workspace, onBack, onNotice }) {
       });
       await refreshTree();
       const name = source.split('/').pop();
-      const newPath = targetDirectory ? `${targetDirectory}/${name}` : name;
+      const newPath = `${target}/${name}`;
       if (selected && selected.path.startsWith(`${source}/`)) {
         const relative = selected.path.substring(source.length + 1);
         await doOpen({ path: `${newPath}/${relative}`, kind: selected.kind, keyName: selected.keyName });
-        setSelectedFolder(targetDirectory || null);
+        setSelectedFolder(target || null);
       } else {
         setSelectedFolder(null);
       }
-      onNotice('success', `Moved ${source} to ${targetDirectory || 'the workspace root'}.`);
+      onNotice('success', `Moved ${source} to ${target}.`);
     } catch (e) {
       notifyError(e);
     } finally {
@@ -441,7 +452,9 @@ export default function EditorView({ profile, workspace, onBack, onNotice }) {
   };
 
   const createDir = async (name) => {
-    const target = selectedFolder ? `${selectedFolder}/${name}` : name;
+    const target = selectedFolder
+      ? `${selectedFolder}/${name}`
+      : `${resolveTarget('', '')}/${name}`;
     setBusy(true);
     try {
       await api(`/api/workspaces/${encodePath(wsId)}/dirs`, {
@@ -504,7 +517,9 @@ export default function EditorView({ profile, workspace, onBack, onNotice }) {
         <div className="sidebar-head">
           <button className="back" onClick={onBack}>← Workspaces</button>
           <div className="sidebar-title">
-            <div className="branch-label">{workspace.branch}</div>
+            <div className="branch-label">
+              {(workspace.branches || []).map((sel) => `${sel.domain} (${sel.branch})`).join(', ') || workspace.id}
+            </div>
             <div className="muted small ws-id">{workspace.id}</div>
           </div>
           {readOnly && <span className="badge viewer">read-only</span>}
@@ -650,7 +665,6 @@ export default function EditorView({ profile, workspace, onBack, onNotice }) {
                   uniqueByField={uniqueByField}
                   dataSetSummaryProvider={dataSetSummaryProvider}
                   scriptSummaryProvider={scriptSummaryProvider}
-                  nameSpaceSummaryProvider={nameSpaceSummaryProvider}
                   catalogProviders={catalogProviders}
                 />
               ) : (doc && doc.kind === 'DataLineageDiagram') || selected.kind === 'DataLineageDiagram' ? (
@@ -666,11 +680,11 @@ export default function EditorView({ profile, workspace, onBack, onNotice }) {
                     uniqueByField={uniqueByField}
                     dataSetSummaryProvider={dataSetSummaryProvider}
                     scriptSummaryProvider={scriptSummaryProvider}
-                    nameSpaceSummaryProvider={nameSpaceSummaryProvider}
-                    catalogProviders={catalogProviders}
+                      catalogProviders={catalogProviders}
                   />
                 ) : activeSchema ? (
                   <FormEditor
+                    key={selected.path}
                     schema={activeSchema}
                     value={doc || {}}
                     onChange={(next) => { setDoc(next); setDirty(true); }}
@@ -679,8 +693,7 @@ export default function EditorView({ profile, workspace, onBack, onNotice }) {
                     uniqueByField={uniqueByField}
                     dataSetSummaryProvider={dataSetSummaryProvider}
                     scriptSummaryProvider={scriptSummaryProvider}
-                    nameSpaceSummaryProvider={nameSpaceSummaryProvider}
-                    catalogProviders={catalogProviders}
+                      catalogProviders={catalogProviders}
                   />
                 ) : (
                 <p className="muted">

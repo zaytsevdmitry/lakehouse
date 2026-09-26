@@ -2,6 +2,7 @@ package org.lakehouse.ui.modeller.vcs;
 
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.lakehouse.ui.modeller.vcs.VcsProviderException;
+import org.lakehouse.ui.modeller.workspace.WorkspaceManager;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -45,48 +46,42 @@ public class GitLabApiClient {
         this.http = new RestSupport();
     }
 
-    public Map<String, String> readBranch(String branch, String defaultBranch) {
+    public Map<String, String> readBranch(String branch) {
         Map<String, String> files = new LinkedHashMap<>();
-        collectFiles("", branch, defaultBranch, files);
+        collectFiles("", branch, files);
         return files;
     }
 
-    private void collectFiles(String prefix, String branch, String defaultBranch, Map<String, String> out) {
+    private void collectFiles(String prefix, String branch, Map<String, String> out) {
         String path = prefix == null || prefix.isEmpty() ? "" : prefix + "/";
         java.net.http.HttpResponse<String> response = http.get(baseUrl + "/api/v4/projects/" + projectId
                 + "/repository/tree?path=" + path.replaceFirst("/$", "") + "&ref=" + RestSupport.encode(branch)
                 + "&recursive=true&per_page=100");
-        if (response.statusCode() == 404 && !branch.equals(defaultBranch))
-            response = http.get(baseUrl + "/api/v4/projects/" + projectId
-                    + "/repository/tree?path=" + path.replaceFirst("/$", "") + "&ref=" + RestSupport.encode(defaultBranch)
-                    + "&recursive=true&per_page=100");
+        if (response.statusCode() < 200 || response.statusCode() >= 300) {
+            if (prefix == null || prefix.isEmpty())
+                throw new VcsProviderException("GitLab branch read failed (" + response.statusCode() + "): " + response.body());
+            return;
+        }
         List<RestSupport.JsonObj> entries = RestSupport.parseArray(response.body());
         for (RestSupport.JsonObj entry : entries) {
             String type = entry.getString("type");
             String name = entry.getString("name");
             if ("tree".equals(type)) {
-                collectFiles(path + name, branch, defaultBranch, out);
+                collectFiles(path + name, branch, out);
             } else if ("blob".equals(type)) {
                 String filePath = path + name;
                 if (filePath.endsWith(".yaml") || filePath.endsWith(".yml"))
-                    readRaw(filePath, branch, defaultBranch).ifPresent(
-                            content -> out.put(filePath, content));
+                    readRaw(filePath, branch).ifPresent(content -> out.put(filePath, content));
             }
         }
     }
 
-    private java.util.Optional<String> readRaw(String filePath, String branch, String defaultBranch) {
+    private java.util.Optional<String> readRaw(String filePath, String branch) {
         String endpoint = baseUrl + "/api/v4/projects/" + projectId
                 + "/repository/files/" + RestSupport.encodePath(filePath) + "/raw?ref=" + RestSupport.encode(branch);
         java.net.http.HttpResponse<byte[]> response = http.getBytes(endpoint);
         if (response.statusCode() == 200)
             return java.util.Optional.of(new String(response.body(), StandardCharsets.UTF_8));
-        if (response.statusCode() == 404 && !branch.equals(defaultBranch)) {
-            java.net.http.HttpResponse<byte[]> fallback = http.getBytes(baseUrl + "/api/v4/projects/" + projectId
-                    + "/repository/files/" + RestSupport.encodePath(filePath) + "/raw?ref=" + RestSupport.encode(defaultBranch));
-            if (fallback.statusCode() == 200)
-                return java.util.Optional.of(new String(fallback.body(), StandardCharsets.UTF_8));
-        }
         return java.util.Optional.empty();
     }
 
@@ -118,16 +113,37 @@ public class GitLabApiClient {
             throw new VcsProviderException("GitLab branch create failed (" + response.statusCode() + "): " + response.body());
     }
 
-    public void commit(String branch, String message, String authorName, String authorEmail, Map<String, String> files) {
+    public boolean commit(String branch, String message, String authorName, String authorEmail,
+                          String domain, Map<String, String> files) {
+        Map<String, String> currentFiles = readBranch(branch);
+        boolean domainLayout = WorkspaceManager.usesDomainLayout(currentFiles);
+        Map<String, String> currentScoped = WorkspaceManager.scopeDomain(domain, currentFiles);
+        if (currentScoped.equals(files))
+            return false;
+
+        Map<String, String> currentRepositoryFiles = WorkspaceManager.expandDomain(domain, currentScoped, domainLayout);
+        Map<String, String> desiredRepositoryFiles = WorkspaceManager.expandDomain(domain, files, domainLayout);
         List<Map<String, Object>> actions = new ArrayList<>();
-        files.forEach((path, content) -> {
+        for (Map.Entry<String, String> entry : desiredRepositoryFiles.entrySet()) {
             Map<String, Object> action = new LinkedHashMap<>();
-            action.put("action", "update");
-            action.put("file_path", path);
+            action.put("action", currentRepositoryFiles.containsKey(entry.getKey()) ? "update" : "create");
+            action.put("file_path", entry.getKey());
             action.put("encoding", "base64");
+            String content = entry.getValue() == null ? "" : entry.getValue();
             action.put("content", Base64.getEncoder().encodeToString(content.getBytes(StandardCharsets.UTF_8)));
             actions.add(action);
-        });
+        }
+        for (String path : currentRepositoryFiles.keySet()) {
+            if (desiredRepositoryFiles.containsKey(path))
+                continue;
+            Map<String, Object> action = new LinkedHashMap<>();
+            action.put("action", "delete");
+            action.put("file_path", path);
+            actions.add(action);
+        }
+        if (actions.isEmpty())
+            return false;
+
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("branch", branch);
         body.put("commit_message", message);
@@ -138,6 +154,7 @@ public class GitLabApiClient {
                 + "/repository/commits", RestSupport.toJsonWithNested(body));
         if (response.statusCode() < 200 || response.statusCode() >= 300)
             throw new VcsProviderException("GitLab commit failed (" + response.statusCode() + "): " + response.body());
+        return true;
     }
 
     public VcsReviewResult openMergeRequest(String sourceBranch, String targetBranch, String description) {

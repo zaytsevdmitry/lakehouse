@@ -31,6 +31,20 @@ lakehouse:
       sparkStandAloneClusterTaskProcessor:
         maxWaitToRunningStateTimeoutMs: 120000 # max time to wait for the Spark job transition to RUNNING, ms
         sparkJobStatusCheckIntervalMs: 3000 # Spark job status polling interval, ms
+    # Per-domain data source settings: domains.<domainKeyName>.<dataSourceKeyName>.service-properties
+    # Bound by DomainDataSourceServiceProperties (prefix lakehouse.task-executor) and exposed via
+    # getServiceProperties(domainKey, dataSourceKey), which returns Optional.empty() for an unknown
+    # domain or data source. NOTE: not applied to the execution path yet - the executor resolves
+    # data sources through lakehouse-config-svc. See readme.md, chapter "Domains".
+    domains:
+      platform:
+        lakehousestorage:
+          service-properties: # free-form map: secret provider options, user, fetchSize, ...
+            secretProvider: org.lakehouse.security.jdbc.BaoJdbcSecretProvider
+            secret-key: "kv/data/lakehouse/database:password"
+            vault-url: "http://openbao:8200"
+            user: postgresUser
+            fetchSize: "10000"
     scheduled: # Parameters for receiving tasks
       task:
         kafka:
@@ -44,6 +58,22 @@ lakehouse:
             # The name must match the one in the scheduler service
             topics: scheduled_task_msg
 ```
+
+### Domain-scoped data source parameters
+
+| Parameter | Default | Description |
+|---|---|---|
+| `lakehouse.task-executor.domains.<domainKeyName>.<dataSourceKeyName>.service-properties` | *(empty)* | Free-form map of connection settings for one data source of one domain |
+
+The keys inside `service-properties` are not validated by the binding and are expected to be
+the same secret provider options that `lakehouse-credential-providers-jdbc` understands in
+the `service.properties` of a JDBC data source (`secretProvider`, `secret-key`, `vault-url`,
+`vault-role`, `vault-k8s-auth-path`, `secret-id`, `secret-version`, `url`, `user`).
+
+These values are currently **not used during execution**: the data sources a task opens are
+always the ones returned by `lakehouse-config-svc`. The block is kept here because it is
+bound and exposed by `DomainDataSourceServiceProperties`, and because the per-domain
+deployment story depends on it. See readme.md, chapter "Domains".
 
 ### Task processor parameters
 

@@ -28,10 +28,19 @@ import java.util.Set;
 public class ScenarioActTemplateDTO extends KeyNameDescriptionAbstract {
     @Serial
     private static final long serialVersionUID = 2789430311171934926L;
+    private String domainKeyName;
     private Set<TaskDTO> tasks = new HashSet<>();
     private Set<DagEdgeDTO> dagEdges = new HashSet<>();
 
     public ScenarioActTemplateDTO() {
+    }
+
+    public String getDomainKeyName() {
+        return domainKeyName;
+    }
+
+    public void setDomainKeyName(String domainKeyName) {
+        this.domainKeyName = domainKeyName;
     }
 
 

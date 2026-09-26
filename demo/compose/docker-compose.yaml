@@ -155,7 +155,7 @@ services:
       - git_server_storage:/srv/git
       - ./conf_infra/git/git-server-init.sh:/srv/git-init.sh:ro
     healthcheck:
-      test: ["CMD-SHELL", "git ls-remote git://127.0.0.1:9418/config-repo.git >/dev/null 2>&1 || exit 1"]
+      test: ["CMD-SHELL", "git ls-remote git://127.0.0.1:9418/platform.git >/dev/null 2>&1 || exit 1"]
       interval: 10s
       timeout: 10s
       retries: 6
@@ -297,18 +297,8 @@ services:
     networks:
       lakehouse_net:
         ipv4_address: 172.20.193.80
-#    environment:
-#      KEYCLOAK_ISSUER_URI: http://keycloak.lakehouse:8085/realms/lakehouse
-#      KEYCLOAK_INTERNAL_CLIENT_SECRET: super-secret-internal-key-987654321
     environment:
-      LAKEHOUSE_CONFIG_SCHEDULE_SEND_KAFKA_PRODUCER_PROPERTIES_BOOTSTRAP_SERVERS: "broker:9092"
-      LAKEHOUSE_CONFIG_SCHEDULE_SEND_KAFKA_PRODUCER_PROPERTIES_CLIENT_ID: "lakehouse-config-service-client"
-      LAKEHOUSE_CONFIG_GIT_REPOSITORY_URL: "git://git-server:9418/config-repo.git"
-      LAKEHOUSE_CONFIG_GIT_BRANCH: "main"
-      LAKEHOUSE_CONFIG_GIT_LOCAL_CLONE_PATH: "/tmp/config-repo"
-      LAKEHOUSE_CONFIG_GIT_SYNC_ENABLED: "true"
-      LAKEHOUSE_CONFIG_GIT_SYNC_INTERVAL_MS: "30000"
-      LAKEHOUSE_CONFIG_GIT_SYNC_INITIAL_DELAY_MS: "10000"
+      LAKEHOUSE_CONFIG_PRODUCE_KAFKA_PRODUCER_PROPERTIES_BOOTSTRAP_SERVERS: "broker:9092"
       KEYCLOAK_ISSUER_URI: "http://keycloak.lakehouse:8085/realms/lakehouse"
       KEYCLOAK_INTERNAL_CLIENT_SECRET: "super-secret-internal-key-987654321"
     command: [
@@ -318,6 +308,25 @@ services:
       "-Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=ConfigSVC",
       "-Dserver.port=8082",
       "-Dlogging.level.org.springframework.boot.context.properties=DEBUG",
+      # Git Sync Settings
+      "-Dlakehouse.config.vcs.git.sync.enabled=true",
+      "-Dlakehouse.config.vcs.git.sync.interval-ms=30000",
+      "-Dlakehouse.config.vcs.git.sync.initial-delay-ms=10000",
+      # Domain: platform
+      "-Dlakehouse.config.vcs.domains.platform.priority=0",
+      "-Dlakehouse.config.vcs.domains.platform.git.repository-url=git://git-server:9418/platform.git",
+      "-Dlakehouse.config.vcs.domains.platform.git.branch=main",
+      "-Dlakehouse.config.vcs.domains.platform.git.local-clone-path=/tmp/platform",
+      # Domain: processing (included in to platform)
+      "-Dlakehouse.config.vcs.domains.platform.domains.processing.priority=0",
+      "-Dlakehouse.config.vcs.domains.platform.domains.processing.git.repository-url=git://git-server:9418/processing.git",
+      "-Dlakehouse.config.vcs.domains.platform.domains.processing.git.branch=main",
+      "-Dlakehouse.config.vcs.domains.platform.domains.processing.git.local-clone-path=/tmp/processing",
+      # Domain: analytics (included in to processing)
+      "-Dlakehouse.config.vcs.domains.platform.domains.processing.domains.analytics.priority=0",
+      "-Dlakehouse.config.vcs.domains.platform.domains.processing.domains.analytics.git.repository-url=git://git-server:9418/analytics.git",
+      "-Dlakehouse.config.vcs.domains.platform.domains.processing.domains.analytics.git.branch=main",
+      "-Dlakehouse.config.vcs.domains.platform.domains.processing.domains.analytics.git.local-clone-path=/tmp/analytics",
       "-jar", "/opt/lakehouse-config-svc-0.11.0-jar-with-dependencies.jar"
     ]
     depends_on:
@@ -345,7 +354,7 @@ services:
       "java",
       "-Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=SchedulerSVC",
       "-Dlakehouse.scheduler.schedule.task.kafka.producer.properties.bootstrap.servers=broker:9092",
-      "-Dlakehouse.scheduler.config.schedule.kafka.consumer.properties.bootstrap.servers=broker:9092",
+      "-Dlakehouse.scheduler.config.change.kafka.consumer.properties.bootstrap.servers=broker:9092",
       "-Dlakehouse.scheduler.registration.delay-ms=5000",
       "-Dlakehouse.scheduler.run.delay-ms=5000",
       "-Dlakehouse.scheduler.resolvedeps.delay-ms=5000",
@@ -565,7 +574,7 @@ services:
       KEYCLOAK_ISSUER_URI: http://keycloak.lakehouse:8085/realms/lakehouse
       KEYCLOAK_UI_CLIENT_SECRET: super-secret-bff-key-1234567890
       LAKEHOUSE_VCS_PROVIDER: local-git
-      LAKEHOUSE_GIT_URL: git://git-server:9418/config-repo.git
+      LAKEHOUSE_GIT_URL: git://git-server:9418/platform.git
       LAKEHOUSE_GIT_BRANCH: main
       LAKEHOUSE_VCS_AUTH_TYPE: token
       LAKEHOUSE_VCS_USER: modeller-bot
@@ -636,13 +645,10 @@ services:
       "-Dlakehouse.ui.services[14].name=openbao",
       "-Dlakehouse.ui.services[14].url=http://172.20.193.150:8200",
       "-Dlakehouse.ui.services[14].health-check-url=http://172.20.193.150:8200/v1/sys/health",
-      "-Dlakehouse.ui.services[15].name=lakehouse-ui-modeller-svc",
-      "-Dlakehouse.ui.services[15].url=http://172.20.193.190:8081",
-      "-Dlakehouse.ui.services[15].health-check-url=http://172.20.193.190:8081/healthz",
-      "-Dlakehouse.ui.services[16].name=git-server",
-      "-Dlakehouse.ui.services[16].url=http://172.20.193.200:9418",
-      "-Dlakehouse.ui.services[16].health-check-url=172.20.193.200:9418",
-      "-Dlakehouse.ui.services[16].check-type=tcp",
+      "-Dlakehouse.ui.services[15].name=git-server",
+      "-Dlakehouse.ui.services[15].url=http://172.20.193.200:9418",
+      "-Dlakehouse.ui.services[15].health-check-url=172.20.193.200:9418",
+      "-Dlakehouse.ui.services[15].check-type=tcp",
       "-Dlakehouse.client.rest.config.server.url=http://172.20.193.80:8082",
       "-Dlakehouse.client.rest.state.server.url=http://172.20.193.100:8084",
       "-Dlakehouse.client.rest.scheduler.server.url=http://172.20.193.90:8083",
@@ -666,11 +672,11 @@ services:
       "-Dlakehouse.ui.vertices.lakehouse-trino=lakehouse-trino",
       "-Dlakehouse.ui.vertices.lakehouse-spark-history=lakehouse-spark-history",
       "-Dlakehouse.ui.vertices.openbao=openbao",
-      "-Dlakehouse.ui.vertices.lakehouse-ui-modeller-svc=lakehouse-ui-modeller-svc",
       "-Dlakehouse.ui.vertices.git-server=git-server",
       "-Dlakehouse.ui.edges.lakehouse-config-svc[0]=confdb",
       "-Dlakehouse.ui.edges.lakehouse-config-svc[1]=topic-schedule-conf",
       "-Dlakehouse.ui.edges.lakehouse-config-svc[2]=lakehouse-scheduler-svc",
+      "-Dlakehouse.ui.edges.lakehouse-config-svc[3]=git-server",
       "-Dlakehouse.ui.edges.topic-schedule-conf[0]=lakehouse-scheduler-svc",
       "-Dlakehouse.ui.edges.lakehouse-scheduler-svc[0]=topic-tasks",
       "-Dlakehouse.ui.edges.lakehouse-scheduler-svc[1]=schedulerdb",
@@ -689,46 +695,15 @@ services:
       "-Dlakehouse.ui.edges.lakehouse-spark-worker[0]=lakehouse-minio",
       "-Dlakehouse.ui.edges.lakehouse-minio[0]=lakehouse-trino",
       "-Dlakehouse.ui.edges.lakehouse-minio[1]=lakehouse-spark-history",
-      "-Dlakehouse.ui.edges.lakehouse-ui-modeller-svc[0]=git-server",
+      "-Dlakehouse.ui.edges.lakehouse-ui-svc[0]=git-server",
+      "-Dlakehouse.modeller.domains.platform.repository-url=git://git-server:9418/platform.git",
+      "-Dlakehouse.modeller.domains.platform.branch-main=main",
+      "-Dlakehouse.modeller.domains.analytics.repository-url=git://git-server:9418/analytics.git",
+      "-Dlakehouse.modeller.domains.analytics.branch-main=main",
+      "-Dlakehouse.modeller.domains.processing.repository-url=git://git-server:9418/processing.git",
+      "-Dlakehouse.modeller.domains.processing.branch-main=main",
       "-jar", "/opt/lakehouse-ui-svc-0.11.0-jar-with-dependencies.jar"
     ]
-
-  lakehouse-ui-modeller-svc:
-    image: lakehouse:0.11.0
-    container_name: lakehouse-ui-modeller-svc
-    hostname: lakehouse-ui-modeller-svc
-    networks:
-      lakehouse_net:
-        ipv4_address: 172.20.193.190
-    ports:
-      - "8081:8081" # host 8081: SPA + Swagger; redirect_uri клиента lakehouse-ui-modeller-svc в realm = localhost:8081
-    environment:
-      KEYCLOAK_ISSUER_URI: http://keycloak.lakehouse:8085/realms/lakehouse
-      LAKEHOUSE_MODELLER_REDIRECT_URI: http://localhost:8081/login/oauth2/code/keycloak
-      KEYCLOAK_MODELLER_CLIENT_SECRET: super-secret-modeller-key-555555555
-      LAKEHOUSE_MODELLER_CLIENT_ID: lakehouse-ui-modeller-client
-      LAKEHOUSE_VCS_PROVIDER: local-git
-      LAKEHOUSE_GIT_URL: git://git-server:9418/config-repo.git
-      LAKEHOUSE_GIT_BRANCH: main
-      LAKEHOUSE_VCS_AUTH_TYPE: token
-      LAKEHOUSE_VCS_USER: modeller-bot
-      LAKEHOUSE_VCS_TOKEN: dummy
-    depends_on:
-      keycloak:
-        condition: service_healthy
-      git-server:
-        condition: service_healthy
-    command: [
-      "java",
-      "-Dspringdoc.api-docs.enabled=false",
-      "-Dspringdoc.swagger-ui.enabled=false",
-      "-Dserver.port=8081",
-      "-Dlakehouse.modeller.storage.root-directory=/opt/lakehouse-workspaces",
-      "-jar", "/opt/lakehouse-ui-modeller-svc-0.11.0-jar-with-dependencies.jar"
-    ]
-    volumes:
-      - "./storages/modeller_workspaces:/opt/lakehouse-workspaces"
-
 
 volumes:
   minio_storage:

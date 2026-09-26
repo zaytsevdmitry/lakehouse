@@ -18,6 +18,7 @@
 package org.lakehouse.config.service.dq;
 
 import jakarta.transaction.Transactional;
+import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.configs.dq.QualityMetricsConfDTO;
 import org.lakehouse.client.api.dto.configs.dq.QualityMetricsConfTestSetDTO;
 import org.lakehouse.config.entities.dq.ElementType;
@@ -26,9 +27,12 @@ import org.lakehouse.config.entities.dq.QualityMetricsConfTestSet;
 import org.lakehouse.config.exception.VcsManagedException;
 import org.lakehouse.config.exception.QualityMetricsConfNotFoundException;
 import org.lakehouse.config.exception.QualityMetricsConfTestSetNotFoundException;
+import org.lakehouse.config.exception.DomainConflictException;
 import org.lakehouse.config.repository.dataset.DataSetRepository;
 import org.lakehouse.config.repository.dq.QualityMetricsConfRepository;
 import org.lakehouse.config.repository.dq.QualityMetricsConfTestSetRepository;
+import org.lakehouse.config.service.ConfigurationProduceService;
+import org.lakehouse.config.produce.QualityMetricsConfConfigurationResolver;
 import org.lakehouse.config.service.dataset.source.DataSetSourceService;
 import org.springframework.stereotype.Service;
 
@@ -44,17 +48,20 @@ public class QualityMetricsConfService {
     private final QualityMetricsConfTestSetRepository qualityMetricsConfTestSetRepository;
     private final QualityMetricsConfTestSetService qualityMetricsConfTestSetService;
     private final DataSetSourceService dataSetSourceService;
+    private final ConfigurationProduceService configurationProduceService;
     public QualityMetricsConfService(
             DataSetRepository dataSetRepository,
             QualityMetricsConfRepository qualityMetricsConfRepository,
             QualityMetricsConfTestSetRepository qualityMetricsConfTestSetRepository,
             QualityMetricsConfTestSetService qualityMetricsConfTestSetService,
-            DataSetSourceService dataSetSourceService) {
+            DataSetSourceService dataSetSourceService,
+            ConfigurationProduceService configurationProduceService) {
         this.dataSetRepository = dataSetRepository;
         this.qualityMetricsConfRepository = qualityMetricsConfRepository;
         this.qualityMetricsConfTestSetRepository = qualityMetricsConfTestSetRepository;
         this.qualityMetricsConfTestSetService = qualityMetricsConfTestSetService;
         this.dataSetSourceService = dataSetSourceService;
+        this.configurationProduceService = configurationProduceService;
     }
 
 
@@ -65,6 +72,7 @@ public class QualityMetricsConfService {
         result.setDqThresholdViolationLevel(qualityMetricsConf.getDqThresholdViolationLevel());
         result.setKeyName(qualityMetricsConf.getKeyName());
         result.setDescription(qualityMetricsConf.getDescription());
+        result.setDomainKeyName(qualityMetricsConf.getDomainKeyName());
         result.setEnabled(qualityMetricsConf.isEnabled());
         result.setDataSetKeyName(qualityMetricsConf.getDataSet().getKeyName());
         result.setSave(qualityMetricsConf.isSave());
@@ -102,6 +110,7 @@ public class QualityMetricsConfService {
         QualityMetricsConf result = new QualityMetricsConf();
         result.setKeyName(dto.getKeyName());
         result.setDescription(dto.getDescription());
+        result.setDomainKeyName(dto.getDomainKeyName());
         result.setEnabled(dto.isEnabled());
         result.setSave(dto.isSave());
         result.setDataSet(dataSetRepository.getReferenceById(dto.getDataSetKeyName()));
@@ -141,6 +150,7 @@ public class QualityMetricsConfService {
 
     private QualityMetricsConfDTO saveInternal(
             QualityMetricsConfDTO qualityMetricsConfDTO, boolean vcsManaged) {
+        rejectDomainConflict(qualityMetricsConfDTO);
         QualityMetricsConf qualityMetricsConf = qualityMetricsConfRepository.save(
                 mapQualityMetricsConf(qualityMetricsConfDTO));
         qualityMetricsConf.setVcsManaged(vcsManaged);
@@ -150,6 +160,8 @@ public class QualityMetricsConfService {
         qualityMetricsConfTestSetService.save(qualityMetricsConf,qualityMetricsConfDTO.getThresholds(), ElementType.THRESHOLD);
         qualityMetricsConfTestSetService.save(qualityMetricsConf,Map.of(qualityMetricsConf.getKeyName(), qualityMetricsConfDTO.getMetric()), ElementType.METRIC);
         dataSetSourceService.save(qualityMetricsConf, qualityMetricsConfDTO.getSources());
+        configurationProduceService.produce(
+                QualityMetricsConfConfigurationResolver.KIND, qualityMetricsConf.getKeyName(), Types.configAction.SAVE);
         return findById(qualityMetricsConfDTO.getKeyName());
     }
 
@@ -170,6 +182,8 @@ public class QualityMetricsConfService {
 
     public void deleteById(String name) {
         rejectIfVcsManaged(name, "deleted");
+        configurationProduceService.produce(
+                QualityMetricsConfConfigurationResolver.KIND, name, Types.configAction.DELETE);
         qualityMetricsConfRepository.deleteById(name);
     }
 
@@ -178,6 +192,20 @@ public class QualityMetricsConfService {
             qualityMetricsConf.setVcsManaged(false);
             qualityMetricsConfRepository.save(qualityMetricsConf);
         });
+    }
+
+    private void rejectDomainConflict(QualityMetricsConfDTO qualityMetricsConfDTO) {
+        if (qualityMetricsConfDTO.getDomainKeyName() == null)
+            return;
+        qualityMetricsConfRepository.findByKeyName(qualityMetricsConfDTO.getKeyName())
+                .filter(existing -> existing.getDomainKeyName() != null)
+                .filter(existing -> !existing.getDomainKeyName().equals(qualityMetricsConfDTO.getDomainKeyName()))
+                .ifPresent(existing -> {
+                    throw new DomainConflictException(
+                            qualityMetricsConfDTO.getKeyName(),
+                            existing.getDomainKeyName(),
+                            qualityMetricsConfDTO.getDomainKeyName());
+                });
     }
 
     private void rejectIfVcsManaged(String name, String operation) {

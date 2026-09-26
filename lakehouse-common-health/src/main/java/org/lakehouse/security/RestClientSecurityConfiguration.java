@@ -31,7 +31,9 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
  * Registers the {@link BearerTokenClientHttpRequestInterceptor} on the auto-configured
  * {@link org.springframework.web.client.RestClient.Builder}, so every {@code RestClient}
  * created from it (including the ones passed to {@code RestClientHelper}) propagates the
- * JWT of the current request or falls back to a {@code client_credentials} token.
+ * JWT of the current request or falls back to a {@code client_credentials} token. The
+ * identity of a BFF session ({@code oauth2Login()}) is propagated too, so a downstream
+ * service can tell which user a call was made for instead of only which service made it.
  * <p>
  * The {@link OAuth2AuthorizedClientManager} bean is defined manually here because Spring
  * Boot does not auto-configure it (only the {@link ClientRegistrationRepository} and the
@@ -55,8 +57,9 @@ public class RestClientSecurityConfiguration {
     @Bean
     public BearerTokenClientHttpRequestInterceptor bearerTokenClientHttpRequestInterceptor(
             OAuth2AuthorizedClientManager authorizedClientManager,
+            OAuth2AuthorizedClientService authorizedClientService,
             @Value("${lakehouse.security.oauth2.client-registration-id:keycloak-internal}") String clientRegistrationId) {
-        return new BearerTokenClientHttpRequestInterceptor(authorizedClientManager, clientRegistrationId);
+        return new BearerTokenClientHttpRequestInterceptor(authorizedClientManager, authorizedClientService, clientRegistrationId);
     }
 
     @Bean

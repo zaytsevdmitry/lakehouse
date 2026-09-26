@@ -149,4 +149,16 @@ public class Types {
         }
 
     }
+
+    public enum configAction {
+        SAVE("SAVE"),
+        DELETE("DELETE");
+        public final String label;
+        configAction(String label){this.label = label;}
+        @Override
+        @JsonValue
+        public String toString() {
+            return label;
+        }
+    }
 }

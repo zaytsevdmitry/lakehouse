@@ -8,6 +8,7 @@ import {
   Handle,
   MarkerType,
   Position,
+  SmoothStepEdge,
   applyNodeChanges,
   useReactFlow,
 } from '@xyflow/react';
@@ -23,6 +24,13 @@ const NODE_WIDTH = 220;
 const NODE_GAP_X = 90;
 const NODE_GAP_Y = 36;
 const FALLBACK_COLOR = '#6b7280';
+
+/** Corner radius of the lineage connectors, in pixels. */
+export const EDGE_CORNER_RADIUS = 16;
+/** Distance of the connector step from the source/target handle. */
+export const EDGE_STEP_OFFSET = 20;
+/** Name of the custom edge type that draws the rounded connectors. */
+export const EDGE_TYPE = 'lineageEdge';
 
 function asNumber(value) {
   const n = Number(value);
@@ -88,9 +96,14 @@ export function buildLineageGraph(doc, dsByKey) {
         id: `${sourceKey}->${keyName}`,
         source: sourceKey,
         target: keyName,
-        type: 'smoothstep',
+        type: EDGE_TYPE,
         markerEnd: { type: MarkerType.ArrowClosed, color: DEFAULT_COLOR, width: 16, height: 16 },
-        style: { stroke: DEFAULT_COLOR, strokeWidth: 1.5 },
+        style: {
+          stroke: DEFAULT_COLOR,
+          strokeWidth: 1.5,
+          strokeLinecap: 'round',
+          strokeLinejoin: 'round',
+        },
       });
       outgoing[keyName] += 1;
       incoming[sourceKey] += 1;
@@ -183,6 +196,22 @@ export function removeLineageDataset(doc, keyName) {
 
 const nodeTypes = { lineageNode: LineageNode };
 
+/**
+ * The built-in `smoothstep` edge type hardcodes `borderRadius: 0` and drops the
+ * radius of the caller, so the connectors are drawn by a custom edge that keeps the
+ * orthogonal step routing but rounds the corners and the line caps.
+ */
+function LineageEdge({ pathOptions, ...props }) {
+  return (
+    <SmoothStepEdge
+      {...props}
+      pathOptions={{ ...pathOptions, borderRadius: EDGE_CORNER_RADIUS, offset: EDGE_STEP_OFFSET }}
+    />
+  );
+}
+
+const edgeTypes = { [EDGE_TYPE]: LineageEdge };
+
 function LineageNode({ data, selected }) {
   return (
     <div className={`lineage-node${selected ? ' lineage-node--selected' : ''}${data.missing ? ' lineage-node--missing' : ''}`}>
@@ -221,7 +250,6 @@ function LineageCanvas({
   uniqueByField,
   dataSetSummaryProvider,
   scriptSummaryProvider,
-  nameSpaceSummaryProvider,
   catalogProviders,
 }) {
   const rf = useReactFlow();
@@ -417,6 +445,7 @@ function LineageCanvas({
           nodes={flowNodes}
           edges={flowEdges}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           onNodesChange={onNodesChange}
           onNodeDragStop={onNodeDragStop}
           onSelectionChange={onSelectionChange}
@@ -504,7 +533,6 @@ function LineageCanvas({
               uniqueByField={uniqueByField}
               dataSetSummaryProvider={dataSetSummaryProvider}
               scriptSummaryProvider={scriptSummaryProvider}
-              nameSpaceSummaryProvider={nameSpaceSummaryProvider}
               catalogProviders={catalogProviders}
             />
           ) : (

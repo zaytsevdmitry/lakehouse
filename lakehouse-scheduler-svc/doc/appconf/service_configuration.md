@@ -41,14 +41,14 @@ lakehouse:
             properties: # https://kafka.apache.org/41/configuration/producer-configs/
               bootstrap.servers: localhost:9092
     config:
-      schedule:
-        kafka: # consumer for receiving schedule changes from the configuration service
+      change:
+        kafka: # consumer for receiving configuration changes from the configuration service
           consumer:
             properties: # https://kafka.apache.org/41/configuration/consumer-configs/
               bootstrap.servers: localhost:9092
               group.id: scheduler
               auto.offset.reset: earliest
-            topics: schedule_effective_changes # topic with schedule changes
+            topics: configuration_changes # topic with configuration changes
             concurrency: 1 # number of consumption threads
     registration: # Periodicity of registration (building) of new schedules
       delay-ms: 6000

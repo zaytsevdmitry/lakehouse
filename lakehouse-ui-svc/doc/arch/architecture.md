@@ -117,8 +117,9 @@ src/main/resources/frontend
         ├── VcsSection.jsx         # VCS sync log + object log (uses
         │                          #   hooks/useResizableSplit)
         ├── ModellerSection.jsx    # Modelling: workspace picker / editor / admin
-        ├── WorkspacePicker.jsx    # branches list, "my workspaces", create branch
-        │                          #   modal; "Open" navigates via workspaceUrl()
+        ├── WorkspacePicker.jsx    # per-domain branch tree, "my workspaces",
+        │                          #   create branch modal; "Open" navigates
+        │                          #   via workspaceUrl()
         ├── EditorView.jsx         # per-workspace file tree + editor pane
         │                          #   (the largest single component, ~1k lines)
         ├── AdminView.jsx          # admin-only: all workspaces, cleanup TTL, logs
@@ -136,8 +137,8 @@ src/main/resources/frontend
         ├── ModelTab.jsx           # model scripts w/ syntax highlighting
         ├── RelationsTab.jsx       # ER-diagram view (React Flow)
         └── __tests__/             # Vitest unit tests for the modeller
-                                   #   (DataLineageDiagramEditor.test.jsx,
-                                   #   ~23 tests) — see §7
+                                   #   (DataLineageDiagramEditor 24, EditorView 4,
+                                   #   WorkspacePicker 5) — see §7
 ```
 
 Purpose of each folder/file:
@@ -190,7 +191,7 @@ Scopes and responsibilities:
     `state-management.puml`);
   - `ModellerSection` — `profile` (from `/api/user`), `openWorkspace`,
     `adminTab`, `notice` (auto-expiring banner), `autoOpenResolved`;
-  - `WorkspacePicker` — `branches`, `workspaces`, `loading`, `working`,
+  - `WorkspacePicker` — `domains`, `workspaces`, `loading`, `working`,
     `branchModal`;
   - `EditorView` — `schemas`, `tree`, `dirs`, `selected`, `selectedFolder`,
     `filter`, `yaml`, `doc`, `keyNameEditable`, `mode` (`form`|`yaml`),
@@ -270,8 +271,8 @@ sections render in `.error-box` blocks.
 **How components fetch data.** Sections call the API functions inside
 `useEffect`/event handlers and store results with `useState`:
 - **Mount-time fetch** — `App.jsx` loads catalog/services/user; `EditorView`
-  loads `/api/schema` + workspace tree/dirs; `WorkspacePicker` loads branches
-  + workspaces; the diagram editors (`ErDiagramEditor`,
+  loads `/api/schema` + workspace tree/dirs; `WorkspacePicker` loads the
+  per-domain branches + workspaces; the diagram editors (`ErDiagramEditor`,
   `DataLineageDiagramEditor`) load the referenced DataSet documents on mount
   (`GET /api/workspaces/{id}/files/**`) to build their nodes.
 - **User-triggered fetch** — stateless *load* functions bound to buttons
@@ -301,7 +302,7 @@ Backend endpoints consumed (all relative, proxied by the BFF):
 | Schedules | `fetchSchedules`, `fetchScheduleHeaders`, `fetchScheduleInstanceDAG` | `/api/schedules*` |
 | Services | `fetchServices`, `fetchServiceEdges`, `fetchServiceVertices` | `/api/services*` |
 | Spark | `fetchSparkSubmissions`, `createSparkSubmission`, `fetchSparkStatus`, `killSparkSubmission`, `killAllSparkSubmissions`, `clearSparkCompleted`, `fetchSparkProperties` | `/api/spark-proxy/*` |
-| VCS | `fetchVcsSyncLogs`, `fetchVcsObjectLogs` | `/api/vcs/logs`, `/api/vcs/objects` |
+| VCS | `fetchVcsSyncLogs`, `fetchVcsObjectLogs` | `/api/vcs/logs`, `/api/vcs/objects` (both filterable by `domainKeyName`) |
 | User | `fetchCurrentUser`, `logout` | `GET /api/user`, `POST /logout` |
 | Modeller | `api()` calls in `WorkspacePicker` / `EditorView` / `AdminView` | `GET /api/vcs/workspaces`, `/api/vcs/branches`, `GET/POST/DELETE /api/vcs/workspace[/{id}]`, `POST /api/vcs/branch`, `POST /api/vcs/review/{id}`, `POST /api/vcs/workspace/{id}/restore`, `GET /api/schema[/{kind}]`, `/api/workspaces/{id}/tree|dirs|files`, `POST /api/workspaces/{id}/files(rename|move)`, `POST /api/workspaces/{id}/dirs(move)`, `/api/admin/workspaces`, `/api/admin/settings/cleanup-ttl-hours`, `/api/admin/sync-logs` |
 
@@ -488,7 +489,7 @@ with `props`/state instead of `hidden`:
   Admin; both render `WorkspacePicker` and `AdminView` respectively.
 - **WorkspacePicker → EditorView** — the modifier flow is *state driven*
   (`openWorkspace` in `ModellerSection`): the workspace picker "Open" action
-  navigates into the editor for a branch (either in the same tab via
+  navigates into the editor for the selected `(domain, branch)` set (either in the same tab via
   `onOpen`, or in a new tab via `workspaceUrl()`). `EditorView` sub-navigates
   with `selected`/`mode` (`form`↔`yaml`) and its modal flags.
 - **DataSourcePanel** — DataSource / Service tabs.
@@ -518,7 +519,7 @@ readers/viewers get a read-only editor (`readOnly`).
 | Module format / target | ESM (`"type": "module"`), Vite default targets |
 | Language | **JavaScript (JSX)** — no TypeScript |
 | Linting / formatting | **None configured** (no ESLint, no Prettier, no `lint` script) |
-| Tests | **Vitest 3 + React Testing Library** (jsdom): `npm test` runs `vitest run`; configured in the `test` block of `vite.config.js` (`globals`, `environment: 'jsdom'`, `setupFiles: ['./test/setup.js']`, `include: src/**/*.test.{js,jsx}`). The current suite covers `DataLineageDiagramEditor` (23 tests: graph translation, position persistence, drag, Add/Edit/Remove + modal flows, full-screen toggle). `test/setup.js` polyfills the browser APIs React Flow needs in jsdom (ResizeObserver, `DOMMatrixReadOnly`, pointer capture, `getBoundingClientRect`, `offsetWidth/Height`). |
+| Tests | **Vitest 3 + React Testing Library** (jsdom): `npm test` runs `vitest run`; configured in the `test` block of `vite.config.js` (`globals`, `environment: 'jsdom'`, `setupFiles: ['./test/setup.js']`, `include: src/**/*.test.{js,jsx}`). The current suite covers `DataLineageDiagramEditor` (24 tests: graph translation, position persistence, drag, Add/Edit/Remove + modal flows, full-screen toggle), `EditorView` (4 tests, incl. the multi-domain workspace leave-on-review flow) and `WorkspacePicker` (5 tests, incl. per-domain branch preselection). `test/setup.js` polyfills the browser APIs React Flow needs in jsdom (ResizeObserver, `DOMMatrixReadOnly`, pointer capture, `getBoundingClientRect`, `offsetWidth/Height`). |
 | Package manager | npm (`package.json` + `package-lock.json`) |
 
 Scripts: `dev` (`vite`), `build` (`vite build`), `preview` (`vite preview`),
@@ -553,11 +554,12 @@ Priorities for refactoring before the application scales:
    round-trip arbitrary documents. The backend re-validates everything, so the
    risk is bounded, but a real `js-yaml` (or a backend round-trip endpoint)
    would make the editor lossless and future-proof.
-2. **Automated verification covers one editor only.** A Vitest + React Testing
-   Library suite now guards `DataLineageDiagramEditor` (graph↔doc
-   translation, drag persistence, Add/Edit/Remove modal flows), but the rest of
-   the app — `FormEditor`, `EditorView`, `ErDiagramEditor`, the section
-   switcher, the review flow — still has no lint, no type check and no
+2. **Automated verification covers one editor well.** A Vitest + React Testing
+   Library suite guards `DataLineageDiagramEditor` (graph↔doc translation, drag
+   persistence, Add/Edit/Remove modal flows), and there is initial coverage of
+   `EditorView` and `WorkspacePicker`, which is where the multi-domain workspace
+   logic lives. The rest of the app — `FormEditor`, `ErDiagramEditor`, the
+   section switcher, the review flow — still has no lint, no type check and no
    tests; the regression net for those surfaces is a manual browser session.
    Minimum viable step: add ESLint + extend the RTL suite to the remaining
    modeller editors and save/restore flow; later a Playwright suite for the

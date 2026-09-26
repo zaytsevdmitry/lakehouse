@@ -18,16 +18,21 @@
 package org.lakehouse.config.service;
 
 import jakarta.transaction.Transactional;
+import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.configs.DagEdgeDTO;
 import org.lakehouse.client.api.dto.configs.schedule.ScenarioActTemplateDTO;
 import org.lakehouse.client.api.dto.configs.schedule.TaskDTO;
 import org.lakehouse.client.api.utils.DateTimeUtils;
+import org.lakehouse.config.entities.Schedule;
 import org.lakehouse.config.entities.scenario.ScenarioAct;
 import org.lakehouse.config.entities.task.Task;
 import org.lakehouse.config.entities.task.TaskProcessorArg;
 import org.lakehouse.config.entities.templates.TemplateScenarioAct;
 import org.lakehouse.config.entities.templates.TemplateTaskEdge;
 import org.lakehouse.config.exception.VcsManagedException;
+import org.lakehouse.config.exception.DomainConflictException;
+import org.lakehouse.config.produce.ScenarioActTemplateConfigurationResolver;
+import org.lakehouse.config.produce.ScheduleConfigurationResolver;
 import org.lakehouse.config.repository.*;
 import org.lakehouse.validator.config.ScenarioActTemplateConfValidator;
 import org.lakehouse.validator.config.ValidationResult;
@@ -49,12 +54,12 @@ public class ScenarioActTemplateService {
     private final TemplateTaskEdgeRepository templateTaskEdgeRepository;
     private final ScenarioActRepository scenarioActRepository;
     private final ScheduleRepository scheduleRepository;
-    private final ScheduleConfigProducerService scheduleConfigProducerService;
+    private final ConfigurationProduceService configurationProduceService;
     private final TaskService taskService;
     public ScenarioActTemplateService(ScenarioActTemplateRepository scenarioActTemplateRepository,
                                       TaskRepository taskRepository,
                                       TaskProcessorArgRepository taskProcessorArgRepository,
-                                      TemplateTaskEdgeRepository templateTaskEdgeRepository, ScenarioActRepository scenarioActRepository, ScheduleRepository scheduleRepository, org.lakehouse.config.service.ScheduleConfigProducerService scheduleConfigProducerService,
+                                      TemplateTaskEdgeRepository templateTaskEdgeRepository, ScenarioActRepository scenarioActRepository, ScheduleRepository scheduleRepository, ConfigurationProduceService configurationProduceService,
                                       TaskService taskService) {
         this.scenarioActTemplateRepository = scenarioActTemplateRepository;
         this.taskRepository = taskRepository;
@@ -62,7 +67,7 @@ public class ScenarioActTemplateService {
         this.templateTaskEdgeRepository = templateTaskEdgeRepository;
         this.scenarioActRepository = scenarioActRepository;
         this.scheduleRepository = scheduleRepository;
-        this.scheduleConfigProducerService = scheduleConfigProducerService;
+        this.configurationProduceService = configurationProduceService;
         this.taskService = taskService;
     }
 
@@ -84,6 +89,7 @@ public class ScenarioActTemplateService {
         ScenarioActTemplateDTO result = new ScenarioActTemplateDTO();
         result.setKeyName(templateScenarioAct.getKeyName());
         result.setDescription(templateScenarioAct.getDescription());
+        result.setDomainKeyName(templateScenarioAct.getDomainKeyName());
         result.setTasks(taskRepository.findByTemplateScenarioActKeyName(templateScenarioAct.getKeyName()).stream()
                 .map(taskService::mapTaskToDTO)
                 .collect(Collectors.toSet()));
@@ -103,6 +109,7 @@ public class ScenarioActTemplateService {
         TemplateScenarioAct result = new TemplateScenarioAct();
         result.setKeyName(scenarioActTemplateDTO.getKeyName());
         result.setDescription(scenarioActTemplateDTO.getDescription());
+        result.setDomainKeyName(scenarioActTemplateDTO.getDomainKeyName());
 
         return result;
     }
@@ -157,6 +164,7 @@ public class ScenarioActTemplateService {
 
     private ScenarioActTemplateDTO doSave(ScenarioActTemplateDTO scenarioActTemplateDTO, boolean vcsManaged) {
         validate(scenarioActTemplateDTO);
+        rejectDomainConflict(scenarioActTemplateDTO);
 
         TemplateScenarioAct templateScenarioAct = mapScenarioToEntity(scenarioActTemplateDTO);
         templateScenarioAct.setVcsManaged(vcsManaged);
@@ -196,11 +204,17 @@ public class ScenarioActTemplateService {
                 .forEach(schedule -> {
                             schedule.setLastChangeNumber(schedule.getLastChangeNumber() + 1);
                             schedule.setLastChangedDateTime(DateTimeUtils.now());
-                            scheduleConfigProducerService.changeSchedule(scheduleRepository.save(schedule));
+                            Schedule savedSchedule = scheduleRepository.save(schedule);
+                            configurationProduceService.produce(
+                                    ScheduleConfigurationResolver.KIND, savedSchedule.getKeyName(), Types.configAction.SAVE);
                         }
 
                 );
 
+        configurationProduceService.produce(
+                ScenarioActTemplateConfigurationResolver.KIND,
+                templateScenarioAct.getKeyName(),
+                Types.configAction.SAVE);
         return mapScenarioToDTO(result);
     }
 
@@ -211,6 +225,8 @@ public class ScenarioActTemplateService {
     @Transactional
     public void deleteById(String name) {
         rejectIfVcsManaged(name, "deleted");
+        configurationProduceService.produce(
+                ScenarioActTemplateConfigurationResolver.KIND, name, Types.configAction.DELETE);
         scenarioActTemplateRepository.deleteById(name);
     }
 
@@ -227,6 +243,20 @@ public class ScenarioActTemplateService {
                 .filter(TemplateScenarioAct::isVcsManaged)
                 .ifPresent(templateScenarioAct -> {
                     throw new VcsManagedException(name, operation);
+                });
+    }
+
+    private void rejectDomainConflict(ScenarioActTemplateDTO scenarioActTemplateDTO) {
+        if (scenarioActTemplateDTO.getDomainKeyName() == null)
+            return;
+        scenarioActTemplateRepository.findById(scenarioActTemplateDTO.getKeyName())
+                .filter(existing -> existing.getDomainKeyName() != null)
+                .filter(existing -> !existing.getDomainKeyName().equals(scenarioActTemplateDTO.getDomainKeyName()))
+                .ifPresent(existing -> {
+                    throw new DomainConflictException(
+                            scenarioActTemplateDTO.getKeyName(),
+                            existing.getDomainKeyName(),
+                            scenarioActTemplateDTO.getDomainKeyName());
                 });
     }
 

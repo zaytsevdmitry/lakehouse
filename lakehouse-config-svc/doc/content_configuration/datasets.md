@@ -5,7 +5,7 @@ Abstraction for defining a data object.
 | Field                                              | Purpose                                                                                                                   |
 |:---------------------------------------------------|:--------------------------------------------------------------------------------------------------------------------------|
 | keyName                                            | Unique identifier                                                                                                         | 
-| nameSpaceKeyName                                   | Belonging to a [namespace](namespaces.md)                                                                                 |
+| domainKeyName                                      | [Domain](domains.md) that owns the dataset (stamped from its Git repository)                                              |
 | dataSourceKeyName                                  | Points to the [data source](datasources.md) where the dataset is located                                                  |
 | databaseSchemaName                                 | Name of the schema where the table is located                                                                             |
 | tableName                                          | Table name                                                                                                                |
@@ -44,7 +44,7 @@ Nested list of table constructs
 ```json
 {
   "keyName": "transaction_dds",
-  "nameSpaceKeyName": "DEMO",
+  "domainKeyName": "ANALYTICS",
   "dataSourceKeyName": "lakehousestorage",
   "databaseSchemaName": "default",
   "tableName": "transaction_dds",

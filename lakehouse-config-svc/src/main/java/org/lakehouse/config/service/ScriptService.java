@@ -17,9 +17,11 @@
 
 package org.lakehouse.config.service;
 
+import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.config.entities.script.Script;
 import org.lakehouse.config.exception.VcsManagedException;
 import org.lakehouse.config.exception.ScriptNotFoundException;
+import org.lakehouse.config.produce.ScriptConfigurationResolver;
 import org.lakehouse.config.repository.ScriptRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,9 +34,11 @@ import java.util.stream.Collectors;
 public class ScriptService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final ScriptRepository scriptRepository;
+    private final ConfigurationProduceService configurationProduceService;
 
-    public ScriptService(ScriptRepository scriptRepository) {
+    public ScriptService(ScriptRepository scriptRepository, ConfigurationProduceService configurationProduceService) {
         this.scriptRepository = scriptRepository;
+        this.configurationProduceService = configurationProduceService;
     }
 
     public Map<String, String> findAll() {
@@ -68,11 +72,14 @@ public class ScriptService {
         script.setKey(key);
         script.setValue(value);
         script.setVcsManaged(vcsManaged);
-        return scriptRepository.save(script).getValue();
+        Script saved = scriptRepository.save(script);
+        configurationProduceService.produce(ScriptConfigurationResolver.KIND, saved.getKey(), Types.configAction.SAVE);
+        return saved.getValue();
     }
 
     public void deleteById(String key) {
         rejectIfVcsManaged(key, "deleted");
+        configurationProduceService.produce(ScriptConfigurationResolver.KIND, key, Types.configAction.DELETE);
         scriptRepository.deleteById(key);
     }
 

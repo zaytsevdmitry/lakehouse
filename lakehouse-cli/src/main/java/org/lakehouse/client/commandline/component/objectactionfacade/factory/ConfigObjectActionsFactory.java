@@ -31,7 +31,6 @@ public class ConfigObjectActionsFactory {
     private final Map<String, ConfigObjectActions> mapObjectActions;
 
     public ConfigObjectActionsFactory(
-            NameSpaceObjectActions nameSpaceObjectActions,
             DataStoreObjectActions dataStoreObjectActions,
             DataSetObjectActions dataSetObjectActions,
             ScenarioActTemplateObjectActions scenarioActTemplateObjectActions,
@@ -39,7 +38,6 @@ public class ConfigObjectActionsFactory {
             TaskExecutionServiceGroupObjectActions taskExecutionServiceGroupObjectActions
     ) {
         Map<String, ConfigObjectActions> mapObjectActions = new HashMap<String, ConfigObjectActions>();
-        mapObjectActions.put("nameSpace", nameSpaceObjectActions);
         mapObjectActions.put("datastore", dataStoreObjectActions);
         mapObjectActions.put("dataset", dataSetObjectActions);
         mapObjectActions.put("scenarioactemplate", scenarioActTemplateObjectActions);

@@ -11,18 +11,21 @@ import org.lakehouse.ui.modeller.vcs.VcsProvider;
 import org.lakehouse.ui.modeller.vcs.VcsProviderException;
 import org.lakehouse.ui.modeller.vcs.VcsReviewResult;
 import org.lakehouse.ui.modeller.vcs.VcsReviewSubmission;
+import org.lakehouse.ui.modeller.workspace.BranchSelection;
 import org.lakehouse.ui.modeller.workspace.Workspace;
 import org.lakehouse.ui.modeller.workspace.WorkspaceManager;
 import org.springframework.security.core.Authentication;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
- * Review workflow (spec section 7): locks the workspace, snapshots all its YAML files,
- * commits with the user as author and the technical service account as committer, pushes
- * to the branch and — for GitLab/GitHub — opens an MR/PR. On success the workspace is
- * deleted; failures leave it untouched and are logged.
+ * Review workflow (spec section 7): locks the workspace, splits its YAML files per selected
+ * (domain, branch), commits each part with the user as author and the technical service
+ * account as committer, pushes to the respective branch and — for GitLab/GitHub — opens an
+ * MR/PR. On success the workspace is deleted; failures leave it untouched and are logged.
  */
 public class ReviewService {
 
@@ -50,25 +53,67 @@ public class ReviewService {
     }
 
     private ReviewResponse doSubmit(Workspace workspace, ReviewRequest request, UserContext user) {
-        Map<String, String> files = reconcile(storage.readAll(workspace.id()));
-        VcsReviewSubmission submission = new VcsReviewSubmission(
-                workspace.branch(),
-                properties.getGit().getBranchMain() == null ? "main" : properties.getGit().getBranchMain(),
-                request.commitMessage() == null || request.commitMessage().isBlank()
-                        ? "Modeller review: " + workspace.branch() : request.commitMessage(),
-                request.comment(),
-                files);
+        if (request == null)
+            throw new IllegalArgumentException("Review request is required");
+        Map<String, String> allFiles = reconcile(storage.readAll(workspace.id()));
+        validateSelectionPaths(workspace, allFiles.keySet());
+        List<String> pushed = new ArrayList<>();
+        List<String> urls = new ArrayList<>();
+        int changedDomains = 0;
         try {
-            VcsReviewResult result = vcs.submitReview(submission, user);
+            for (BranchSelection selection : workspace.selections()) {
+                Map<String, String> domainFiles = filesOfSelection(selection, allFiles);
+                String defaultMessage = "Modeller review: " + selection.folder();
+                VcsReviewSubmission submission = new VcsReviewSubmission(
+                        selection.domain(),
+                        selection.branch(),
+                        properties.domainBranchMain(selection.domain()),
+                        request.commitMessage() == null || request.commitMessage().isBlank()
+                                ? defaultMessage : request.commitMessage(),
+                        request.comment(),
+                        domainFiles);
+                VcsReviewResult result = vcs.submitReview(submission, user);
+                if ("NO_CHANGES".equals(result.status())) {
+                    logs.log("INFO", user.username(), "REVIEW",
+                            "no changes for " + selection.folder(), workspace.id());
+                    continue;
+                }
+                changedDomains++;
+                pushed.addAll(domainFiles.keySet());
+                if (result.url() != null && !result.url().isBlank())
+                    urls.add(result.url());
+                logs.log("INFO", user.username(), "REVIEW",
+                        "pushed " + domainFiles.size() + " files to " + selection.folder()
+                                + (result.url() == null || result.url().isBlank()
+                                ? "" : " -> " + result.url()), workspace.id());
+            }
+            if (changedDomains == 0)
+                return new ReviewResponse("NO_CHANGES", null, pushed);
             manager.deleteWorkspace(workspace.id());
-            logs.log("INFO", user.username(), "REVIEW",
-                    "pushed " + files.size() + " files" + (result.url() == null || result.url().isBlank()
-                            ? "" : " -> " + result.url()), workspace.id());
-            return new ReviewResponse(result.status(), result.url(), files.keySet().stream().toList());
+            return new ReviewResponse("OK", urls.size() == 1 ? urls.get(0) : String.join(", ", urls), pushed);
         } catch (VcsProviderException e) {
             logs.log("ERROR", user.username(), "REVIEW", e.getMessage(), workspace.id());
             throw e;
         }
+    }
+
+    private static void validateSelectionPaths(Workspace workspace, Iterable<String> paths) {
+        for (String path : paths) {
+            boolean covered = workspace.selections().stream().anyMatch(selection -> selection.covers(path));
+            if (!covered)
+                throw new IllegalArgumentException("Workspace file is outside the selected domain folders: " + path);
+        }
+    }
+
+    private static Map<String, String> filesOfSelection(BranchSelection selection, Map<String, String> allFiles) {
+        Map<String, String> scoped = new LinkedHashMap<>();
+        String prefix = selection.folder() + "/";
+        for (Map.Entry<String, String> entry : allFiles.entrySet()) {
+            if (!entry.getKey().startsWith(prefix))
+                continue;
+            scoped.put(entry.getKey().substring(prefix.length()), entry.getValue());
+        }
+        return scoped;
     }
 
     private Map<String, String> reconcile(Map<String, String> files) {

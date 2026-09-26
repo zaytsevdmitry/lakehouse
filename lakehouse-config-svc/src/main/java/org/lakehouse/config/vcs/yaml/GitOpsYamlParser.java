@@ -20,7 +20,6 @@ package org.lakehouse.config.vcs.yaml;
 import org.lakehouse.client.api.constant.YamlMetadataKind;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
-import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
 import org.lakehouse.client.api.dto.configs.dq.QualityMetricsConfDTO;
 import org.lakehouse.client.api.dto.configs.schedule.DriverDTO;
 import org.lakehouse.client.api.dto.configs.schedule.ScenarioActTemplateDTO;
@@ -132,7 +131,6 @@ public class GitOpsYamlParser {
      */
     public String resolveKey(ParsedConfig parsed) {
         return switch (parsed.kind()) {
-            case NAME_SPACE -> ((NameSpaceDTO) parsed.dto()).getKeyName();
             case DRIVER -> ((DriverDTO) parsed.dto()).getKeyName();
             case DATA_SOURCE -> ((DataSourceDTO) parsed.dto()).getKeyName();
             case SCRIPT -> ((ScriptDTO) parsed.dto()).getKey();

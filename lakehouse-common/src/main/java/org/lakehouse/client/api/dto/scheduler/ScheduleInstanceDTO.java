@@ -26,6 +26,8 @@ public class ScheduleInstanceDTO {
 
     private String configScheduleKeyName;
 
+    private String domainKeyName;
+
     private String targetExecutionDateTime;
 
     private Status.Schedule status;
@@ -47,6 +49,14 @@ public class ScheduleInstanceDTO {
 
     public void setConfigScheduleKeyName(String configScheduleKeyName) {
         this.configScheduleKeyName = configScheduleKeyName;
+    }
+
+    public String getDomainKeyName() {
+        return domainKeyName;
+    }
+
+    public void setDomainKeyName(String domainKeyName) {
+        this.domainKeyName = domainKeyName;
     }
 
     public String getTargetExecutionDateTime() {

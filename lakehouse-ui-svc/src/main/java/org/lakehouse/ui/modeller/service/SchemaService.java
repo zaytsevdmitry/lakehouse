@@ -37,6 +37,13 @@ public class SchemaService {
     private static final Pattern ENTITY_PACKAGE = Pattern.compile("^org\\.lakehouse\\.client\\.api\\.dto(\\..*)?$");
     private static final int MAX_DEPTH = 4;
 
+    /**
+     * DTO properties that are derived at runtime and therefore never rendered in the editor.
+     * The configuration domain is stamped from the repository a construct is synchronized
+     * from, so it is not a part of the editable YAML content.
+     */
+    private static final Set<String> DERIVED_PROPERTIES = Set.of("domainKeyName");
+
     /** Requested column order for {@code TaskDTO} (ScenarioActTemplate Tasks table). */
     private static final List<String> TASK_FIELD_ORDER = List.of(
             "name", "template", "taskProcessor", "taskProcessorBody", "taskExecutionServiceGroupName",
@@ -85,7 +92,7 @@ public class SchemaService {
         List<Property> result = new ArrayList<>();
         if (type.isRecord()) {
             for (RecordComponent component : type.getRecordComponents())
-                result.add(new Property(component.getName(), component.getGenericType(), component.getType()));
+                addProperty(result, new Property(component.getName(), component.getGenericType(), component.getType()));
             return result;
         }
         try {
@@ -93,13 +100,19 @@ public class SchemaService {
             for (PropertyDescriptor descriptor : info.getPropertyDescriptors()) {
                 if (descriptor.getReadMethod() == null || descriptor.getWriteMethod() == null)
                     continue;
-                result.add(new Property(descriptor.getName(), descriptor.getReadMethod().getGenericReturnType(),
+                addProperty(result, new Property(descriptor.getName(), descriptor.getReadMethod().getGenericReturnType(),
                         descriptor.getReadMethod().getReturnType()));
             }
         } catch (java.beans.IntrospectionException e) {
             throw new IllegalStateException("Cannot introspect " + type.getName(), e);
         }
         return result;
+    }
+
+    private static void addProperty(List<Property> properties, Property property) {
+        if (DERIVED_PROPERTIES.contains(property.name()))
+            return;
+        properties.add(property);
     }
 
     // ------------------------------------------------------------------
@@ -167,7 +180,6 @@ public class SchemaService {
     private static FieldSchema decorate(FieldSchema field, Class<?> owner, String name) {
         if (owner.getSimpleName().equals("DataSetDTO"))
             return switch (name) {
-                case "nameSpaceKeyName" -> redescribe(field, true, "nameSpace", null, null, null, null, true);
                 case "dataSourceKeyName" -> redescribe(field, true, "dataSource", null, null, null, null, false);
                 default -> field;
             };

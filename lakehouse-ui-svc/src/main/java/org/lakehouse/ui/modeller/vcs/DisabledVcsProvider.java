@@ -17,17 +17,17 @@ public class DisabledVcsProvider implements VcsProvider {
     }
 
     @Override
-    public java.util.Map<String, String> readBranchFiles(String branch) {
+    public java.util.Map<String, String> readBranchFiles(String domain, String branch) {
         throw disabled();
     }
 
     @Override
-    public java.util.List<String> listBranches() {
+    public java.util.List<String> listBranches(String domain) {
         throw disabled();
     }
 
     @Override
-    public void createBranch(String branch, String baseBranch) {
+    public void createBranch(String domain, String branch, String baseBranch) {
         throw disabled();
     }
 

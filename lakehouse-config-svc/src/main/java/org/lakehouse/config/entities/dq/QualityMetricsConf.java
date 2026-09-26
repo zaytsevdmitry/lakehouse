@@ -32,6 +32,7 @@ public class QualityMetricsConf extends KeyEntityAbstract {
     @JoinColumn(foreignKey = @ForeignKey(name = "quality_metrics_conf__data_set__fk"))
     private DataSet dataSet;
     @Column(nullable = false, unique = true) private String keyName;
+    @Column(nullable = true) private String domainKeyName;
     @Column(nullable = true) private String description;
     @Column(nullable = false) private Types.DQThresholdViolationLevel dqThresholdViolationLevel;
     @Column(nullable = false) private boolean enabled;
@@ -73,6 +74,14 @@ public class QualityMetricsConf extends KeyEntityAbstract {
     @Override
     public void setKeyName(String keyName) {
         this.keyName = keyName;
+    }
+
+    public String getDomainKeyName() {
+        return domainKeyName;
+    }
+
+    public void setDomainKeyName(String domainKeyName) {
+        this.domainKeyName = domainKeyName;
     }
 
     @Override

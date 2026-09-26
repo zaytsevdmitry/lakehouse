@@ -1,6 +1,7 @@
 package org.lakehouse.ui.modeller.controller;
 
 import org.lakehouse.ui.modeller.dto.CreateBranchRequest;
+import org.lakehouse.ui.modeller.dto.DomainBranchesResponse;
 import org.lakehouse.ui.modeller.dto.RestoreRequest;
 import org.lakehouse.ui.modeller.dto.RestoreResponse;
 import org.lakehouse.ui.modeller.dto.ReviewRequest;
@@ -57,7 +58,7 @@ public class VcsController {
     }
 
     @GetMapping("/branches")
-    public List<String> branches() {
+    public List<DomainBranchesResponse> branches() {
         return vcsService.branches();
     }
 

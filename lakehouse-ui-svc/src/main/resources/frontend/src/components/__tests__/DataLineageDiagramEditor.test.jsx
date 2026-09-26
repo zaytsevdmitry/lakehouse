@@ -7,6 +7,7 @@ import DataLineageDiagramEditor, {
   setNodePosition,
   addLineageDataset,
   removeLineageDataset,
+  EDGE_TYPE,
 } from '../DataLineageDiagramEditor';
 import { api } from '../../api.js';
 
@@ -89,6 +90,20 @@ describe('buildLineageGraph', () => {
     expect(edges[0].target).toBe('DataSet_B');
     expect(edges[0].markerEnd.type).toBe(MarkerType.ArrowClosed);
     expect(edges[0]).not.toEqual(expect.objectContaining({ sourceHandle: expect.anything() }));
+  });
+
+  it('draws the connectors with the rounded custom edge type', () => {
+    const { edges } = buildLineageGraph(makeDoc(), {
+      DataSet_A: { keyName: 'DataSet_A', doc: { kind: 'DataSet', keyName: 'DataSet_A', sources: {} } },
+      DataSet_B: {
+        keyName: 'DataSet_B',
+        doc: { kind: 'DataSet', keyName: 'DataSet_B', sources: { DataSet_A: { properties: {} } } },
+      },
+    });
+    expect(edges[0].type).toBe(EDGE_TYPE);
+    expect(edges[0].type).not.toBe('smoothstep');
+    expect(edges[0].style.strokeLinecap).toBe('round');
+    expect(edges[0].style.strokeLinejoin).toBe('round');
   });
 
   it('skips sources that are not part of the diagram', () => {
@@ -182,6 +197,7 @@ describe('DataLineageDiagramEditor', () => {
     });
     const firstNode = [...container.querySelectorAll('.react-flow__node')][0];
     expect(firstNode).toHaveClass('react-flow__node-lineageNode');
+    expect(container.querySelectorAll(`.react-flow__edge-${EDGE_TYPE}`)).toHaveLength(1);
   });
 
   it('marks the left handle as target and the right handle as source', async () => {

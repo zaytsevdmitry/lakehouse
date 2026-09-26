@@ -33,6 +33,7 @@ public class VcsObjectLogDTO implements Serializable {
     private String kind;
     private String filePath;
     private String commitId;
+    private String domainKeyName;
 
     public VcsObjectLogDTO() {
     }
@@ -83,6 +84,14 @@ public class VcsObjectLogDTO implements Serializable {
 
     public void setCommitId(String commitId) {
         this.commitId = commitId;
+    }
+
+    public String getDomainKeyName() {
+        return domainKeyName;
+    }
+
+    public void setDomainKeyName(String domainKeyName) {
+        this.domainKeyName = domainKeyName;
     }
 
     @Override

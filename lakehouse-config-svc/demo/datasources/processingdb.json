@@ -1,5 +1,6 @@
 {
   "keyName": "processingdb",
+  "domainKeyName": "DEMO",
   "service":
     {
       "host": "localhost",

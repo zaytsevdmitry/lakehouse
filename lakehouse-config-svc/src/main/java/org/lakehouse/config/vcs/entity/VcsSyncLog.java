@@ -25,6 +25,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 import java.time.OffsetDateTime;
 import java.util.Objects;
@@ -37,14 +38,18 @@ import java.util.Objects;
  * could not be applied and prevents infinite retries of an invalid configuration.
  */
 @Entity
-@Table(name = "vcs_sync_log")
+@Table(name = "vcs_sync_log", uniqueConstraints = @UniqueConstraint(
+        name = "uk_vcs_sync_log_domain_commit", columnNames = {"commit_id", "domain_key_name"}))
 public class VcsSyncLog {
+
+    /** Domain name used for the legacy single-repository configuration. */
+    public static final String DEFAULT_DOMAIN = "default";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 64)
+    @Column(nullable = false, length = 64)
     private String commitId;
 
     @Column(nullable = false)
@@ -54,17 +59,35 @@ public class VcsSyncLog {
     @Column(nullable = false, length = 16)
     private VcsSyncStatus status;
 
+    @Column(nullable = false, length = 128)
+    private String domainKeyName;
+
     @Column(length = 4000)
     private String errorMessage;
 
     public VcsSyncLog() {
     }
 
+    /** Legacy single repository constructor: the commit belongs to the {@code default} domain. */
     public VcsSyncLog(String commitId, OffsetDateTime syncDateTime, VcsSyncStatus status, String errorMessage) {
+        this(commitId, syncDateTime, status, DEFAULT_DOMAIN, errorMessage);
+    }
+
+    public VcsSyncLog(String commitId, OffsetDateTime syncDateTime, VcsSyncStatus status, String domainKeyName,
+                      String errorMessage) {
         this.commitId = commitId;
         this.syncDateTime = syncDateTime;
         this.status = status;
+        this.domainKeyName = domainKeyName == null || domainKeyName.isBlank() ? DEFAULT_DOMAIN : domainKeyName;
         this.errorMessage = errorMessage;
+    }
+
+    public String getDomainKeyName() {
+        return domainKeyName;
+    }
+
+    public void setDomainKeyName(String domainKeyName) {
+        this.domainKeyName = domainKeyName;
     }
 
     public Long getId() {
@@ -127,6 +150,7 @@ public class VcsSyncLog {
                 ", commitId='" + commitId + '\'' +
                 ", syncDateTime=" + syncDateTime +
                 ", status=" + status +
+                ", domainKeyName='" + domainKeyName + '\'' +
                 ", errorMessage='" + errorMessage + '\'' +
                 '}';
     }

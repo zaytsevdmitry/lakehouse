@@ -248,7 +248,6 @@ function ErDiagramCanvas({
   uniqueByField = {},
   dataSetSummaryProvider = null,
   scriptSummaryProvider = null,
-  nameSpaceSummaryProvider = null,
   catalogProviders = {},
 }) {
   const rf = useReactFlow();
@@ -508,7 +507,6 @@ function ErDiagramCanvas({
               uniqueByField={uniqueByField}
               dataSetSummaryProvider={dataSetSummaryProvider}
               scriptSummaryProvider={scriptSummaryProvider}
-              nameSpaceSummaryProvider={nameSpaceSummaryProvider}
               catalogProviders={catalogProviders}
             />
           ) : (

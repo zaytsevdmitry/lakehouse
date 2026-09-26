@@ -47,7 +47,7 @@ class GitOpsChangeSetBuilderTest {
 
     @BeforeEach
     void setUp() {
-        builder = new GitOpsChangeSetBuilder(vcsClient, new GitOpsYamlParser());
+        builder = new GitOpsChangeSetBuilder(new GitOpsYamlParser());
     }
 
     @Test
@@ -56,16 +56,16 @@ class GitOpsChangeSetBuilderTest {
                 new VcsDiffEntry("README.md", VcsChangeType.UPDATED),
                 new VcsDiffEntry("config/ns.yaml", VcsChangeType.CREATED)));
         when(vcsClient.readFileContent(HEAD, "config/ns.yaml"))
-                .thenReturn(Optional.of("kind: NameSpace\nkeyName: ns\n"));
+                .thenReturn(Optional.of("kind: Driver\nkeyName: ns\n"));
 
-        GitSyncChangeSet changeSet = builder.build(HEAD, BASE);
+        GitSyncChangeSet changeSet = builder.build(vcsClient, HEAD, BASE);
 
         assertThat(changeSet.isEmpty()).isFalse();
         assertThat(changeSet.toDelete()).isEmpty();
         assertThat(changeSet.toApply()).hasSize(1);
         GitSyncItem item = changeSet.toApply().get(0);
         assertThat(item.path()).isEqualTo("config/ns.yaml");
-        assertThat(item.parsedConfig().kind()).isEqualTo(YamlMetadataKind.NAME_SPACE);
+        assertThat(item.parsedConfig().kind()).isEqualTo(YamlMetadataKind.DRIVER);
     }
 
     @Test
@@ -73,13 +73,13 @@ class GitOpsChangeSetBuilderTest {
         when(vcsClient.getDiff(BASE)).thenReturn(List.of(
                 new VcsDiffEntry("config/ns.yaml", VcsChangeType.DELETED)));
         when(vcsClient.readFileContent(BASE, "config/ns.yaml"))
-                .thenReturn(Optional.of("kind: NameSpace\nkeyName: ns\n"));
+                .thenReturn(Optional.of("kind: Driver\nkeyName: ns\n"));
 
-        GitSyncChangeSet changeSet = builder.build(HEAD, BASE);
+        GitSyncChangeSet changeSet = builder.build(vcsClient, HEAD, BASE);
 
         assertThat(changeSet.toApply()).isEmpty();
         assertThat(changeSet.toDelete()).hasSize(1);
-        assertThat(changeSet.toDelete().get(0).parsedConfig().kind()).isEqualTo(YamlMetadataKind.NAME_SPACE);
+        assertThat(changeSet.toDelete().get(0).parsedConfig().kind()).isEqualTo(YamlMetadataKind.DRIVER);
     }
 
     @Test
@@ -87,7 +87,7 @@ class GitOpsChangeSetBuilderTest {
         when(vcsClient.getDiff(null)).thenReturn(List.of(
                 new VcsDiffEntry("config/ns.yaml", VcsChangeType.DELETED)));
 
-        GitSyncChangeSet changeSet = builder.build(HEAD, null);
+        GitSyncChangeSet changeSet = builder.build(vcsClient, HEAD, null);
 
         assertThat(changeSet.isEmpty()).isTrue();
     }
@@ -99,7 +99,7 @@ class GitOpsChangeSetBuilderTest {
                 new VcsDiffEntry(".hidden.yaml", VcsChangeType.CREATED),
                 new VcsDiffEntry("docs/readme.md", VcsChangeType.DELETED)));
 
-        GitSyncChangeSet changeSet = builder.build(HEAD, BASE);
+        GitSyncChangeSet changeSet = builder.build(vcsClient, HEAD, BASE);
 
         assertThat(changeSet.isEmpty()).isTrue();
     }
@@ -111,7 +111,7 @@ class GitOpsChangeSetBuilderTest {
         when(vcsClient.readFileContent(HEAD, "config/erdiagram.yaml"))
                 .thenReturn(Optional.of("kind: ERDiagram\nkeyName: er1\nunknownField: 1\n"));
 
-        GitSyncChangeSet changeSet = builder.build(HEAD, BASE);
+        GitSyncChangeSet changeSet = builder.build(vcsClient, HEAD, BASE);
 
         assertThat(changeSet.isEmpty()).isTrue();
     }
@@ -122,7 +122,7 @@ class GitOpsChangeSetBuilderTest {
                 new VcsDiffEntry("config/ns.yaml", VcsChangeType.CREATED)));
         when(vcsClient.readFileContent(HEAD, "config/ns.yaml")).thenReturn(Optional.empty());
 
-        GitSyncChangeSet changeSet = builder.build(HEAD, BASE);
+        GitSyncChangeSet changeSet = builder.build(vcsClient, HEAD, BASE);
 
         assertThat(changeSet.isEmpty()).isTrue();
     }

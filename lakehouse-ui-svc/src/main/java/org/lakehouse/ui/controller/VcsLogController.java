@@ -43,8 +43,9 @@ public class VcsLogController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) String commitId) {
-        return vcsLogService.syncLogs(from, to, status, commitId);
+            @RequestParam(required = false) String commitId,
+            @RequestParam(required = false) String domainKeyName) {
+        return vcsLogService.syncLogs(from, to, status, commitId, domainKeyName);
     }
 
     @GetMapping("/objects")
@@ -54,10 +55,11 @@ public class VcsLogController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
             @RequestParam(required = false) String filePath,
-            @RequestParam(required = false) String objectName) {
+            @RequestParam(required = false) String objectName,
+            @RequestParam(required = false) String domainKeyName) {
         if (commitId != null && !commitId.isBlank()) {
-            return vcsLogService.objectLogs(commitId);
+            return vcsLogService.objectLogs(commitId, domainKeyName);
         }
-        return vcsLogService.objectLogs(kind, from, to, filePath, objectName);
+        return vcsLogService.objectLogs(kind, from, to, filePath, objectName, domainKeyName);
     }
 }

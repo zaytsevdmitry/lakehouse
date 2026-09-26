@@ -3,7 +3,9 @@ package org.lakehouse.ui.modeller.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Declarative configuration matrix of the Modeller ({@code lakehouse.modeller.*}).
@@ -20,6 +22,12 @@ public class ModellerProperties {
     private String vcsProvider = "local-git";
 
     private Git git = new Git();
+
+    /**
+     * Per-domain repositories ({@code lakehouse.modeller.domains.<name>.*}). Each domain
+     * owns a repository with its branches; the branch panel is built from these domains.
+     */
+    private Map<String, DomainVcs> domains = new LinkedHashMap<>();
 
     private Github github = new Github();
 
@@ -40,6 +48,8 @@ public class ModellerProperties {
     public void setVcsProvider(String vcsProvider) { this.vcsProvider = vcsProvider; }
     public Git getGit() { return git; }
     public void setGit(Git git) { this.git = git; }
+    public Map<String, DomainVcs> getDomains() { return domains; }
+    public void setDomains(Map<String, DomainVcs> domains) { this.domains = domains; }
     public Github getGithub() { return github; }
     public void setGithub(Github github) { this.github = github; }
     public String getAuthStrategy() { return authStrategy; }
@@ -94,6 +104,53 @@ public class ModellerProperties {
         public void setRemoteUrl(String remoteUrl) { this.remoteUrl = remoteUrl; }
         public String getBranchMain() { return branchMain; }
         public void setBranchMain(String branchMain) { this.branchMain = branchMain; }
+    }
+
+    /**
+     * Repository settings of a single configuration domain ({@code lakehouse.modeller.domains.<name>}).
+     */
+    public static class DomainVcs {
+        private String repositoryUrl;
+        private String branchMain = "main";
+
+        public String getRepositoryUrl() { return repositoryUrl; }
+        public void setRepositoryUrl(String repositoryUrl) { this.repositoryUrl = repositoryUrl; }
+        public String getBranchMain() { return branchMain; }
+        public void setBranchMain(String branchMain) { this.branchMain = branchMain; }
+    }
+
+    // ------------------------------------------------------------------
+    // domain-aware VCS resolution
+    // ------------------------------------------------------------------
+
+    public List<String> domainNames() {
+        if (domains != null && !domains.isEmpty())
+            return domains.keySet().stream().sorted().toList();
+        if (git != null && git.getRemoteUrl() != null && !git.getRemoteUrl().isBlank())
+            return List.of("default");
+        return List.of();
+    }
+
+    /**
+     * Resolves the repository URL of a domain: the per-domain {@code repository-url} when
+     * configured, otherwise the legacy global {@code git.remote-url}.
+     */
+    public String domainRemoteUrl(String domain) {
+        DomainVcs domainVcs = domain == null ? null : domains == null ? null : domains.get(domain);
+        if (domainVcs != null && domainVcs.getRepositoryUrl() != null && !domainVcs.getRepositoryUrl().isBlank())
+            return domainVcs.getRepositoryUrl();
+        return git == null ? null : git.getRemoteUrl();
+    }
+
+    /**
+     * Resolves the default (main) branch of a domain: the per-domain {@code branch-main} when
+     * configured, otherwise the legacy global {@code git.branch-main}.
+     */
+    public String domainBranchMain(String domain) {
+        DomainVcs domainVcs = domain == null ? null : domains == null ? null : domains.get(domain);
+        if (domainVcs != null && domainVcs.getBranchMain() != null && !domainVcs.getBranchMain().isBlank())
+            return domainVcs.getBranchMain();
+        return git == null || git.getBranchMain() == null ? "main" : git.getBranchMain();
     }
 
     public static class Github {

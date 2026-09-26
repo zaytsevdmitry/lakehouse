@@ -18,11 +18,15 @@
 package org.lakehouse.config.service.datasource;
 
 import jakarta.transaction.Transactional;
+import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.configs.schedule.DriverDTO;
 import org.lakehouse.config.entities.datasource.Driver;
 import org.lakehouse.config.exception.VcsManagedException;
 import org.lakehouse.config.exception.DriverNotFoundException;
+import org.lakehouse.config.exception.DomainConflictException;
 import org.lakehouse.config.repository.datasource.DriverRepository;
+import org.lakehouse.config.service.ConfigurationProduceService;
+import org.lakehouse.config.produce.DriverConfigurationResolver;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -30,24 +34,29 @@ import java.util.List;
 public class DriverService {
     private final DriverRepository driverRepository;
     private final SQLTemplateService sqlTemplateService;
+    private final ConfigurationProduceService configurationProduceService;
 
     public DriverService(
             DriverRepository driverRepository,
-            SQLTemplateService sqlTemplateService) {
+            SQLTemplateService sqlTemplateService,
+            ConfigurationProduceService configurationProduceService) {
         this.driverRepository = driverRepository;
         this.sqlTemplateService = sqlTemplateService;
+        this.configurationProduceService = configurationProduceService;
 
     }
     private Driver mapToEntity(DriverDTO driverDTO){
         Driver result = new Driver();
         result.setDescription(driverDTO.getDescription());
         result.setKeyName(driverDTO.getKeyName());
+        result.setDomainKeyName(driverDTO.getDomainKeyName());
         return result;
     }
     public DriverDTO mapToDTO(Driver driver){
         DriverDTO result = new DriverDTO();
         result.setDescription(driver.getDescription());
         result.setKeyName(driver.getKeyName());
+        result.setDomainKeyName(driver.getDomainKeyName());
         result.setSqlTemplate(sqlTemplateService.getSqlTemplateDTO(driver));
         return result;
     }
@@ -63,12 +72,26 @@ public class DriverService {
     }
 
     private DriverDTO saveInternal(DriverDTO driverDTO, boolean vcsManaged){
+        rejectDomainConflict(driverDTO);
         Driver driver = driverRepository.save(mapToEntity(driverDTO));
         driver.setVcsManaged(vcsManaged);
         driverRepository.save(driver);
         sqlTemplateService.save(driver,driverDTO.getSqlTemplate());
         sqlTemplateService.markDriverManaged(driver, vcsManaged);
+        configurationProduceService.produce(DriverConfigurationResolver.KIND, driver.getKeyName(), Types.configAction.SAVE);
         return mapToDTO(driver);
+    }
+
+    private void rejectDomainConflict(DriverDTO driverDTO) {
+        if (driverDTO.getDomainKeyName() == null)
+            return;
+        driverRepository.findById(driverDTO.getKeyName())
+                .filter(existing -> existing.getDomainKeyName() != null)
+                .filter(existing -> !existing.getDomainKeyName().equals(driverDTO.getDomainKeyName()))
+                .ifPresent(existing -> {
+                    throw new DomainConflictException(
+                            driverDTO.getKeyName(), existing.getDomainKeyName(), driverDTO.getDomainKeyName());
+                });
     }
 
     public List<DriverDTO> findAll() {
@@ -88,6 +111,7 @@ public class DriverService {
 
     public void deleteById(String name) {
         rejectIfVcsManaged(name, "deleted");
+        configurationProduceService.produce(DriverConfigurationResolver.KIND, name, Types.configAction.DELETE);
         driverRepository.deleteById(name);
     }
 

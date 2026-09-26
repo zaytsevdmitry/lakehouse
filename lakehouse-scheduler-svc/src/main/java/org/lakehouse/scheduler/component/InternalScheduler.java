@@ -97,7 +97,6 @@ public class InternalScheduler {
         logger.info("resolveTaskDependency {}", rows);
     }
 
-
     @Scheduled(
             fixedDelayString = "${lakehouse.scheduler.task.retry.delay-ms}",
             initialDelayString = "${lakehouse.scheduler.task.retry.initial-delay-ms}")

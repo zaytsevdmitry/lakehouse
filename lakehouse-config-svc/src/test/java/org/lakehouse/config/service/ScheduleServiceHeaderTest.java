@@ -48,7 +48,7 @@ class ScheduleServiceHeaderTest {
             mock(TaskRepository.class),
             mock(ScenarioActTaskEdgeRepository.class),
             mock(ScenarioActTemplateService.class),
-            mock(ScheduleConfigProducerService.class),
+            mock(ConfigurationProduceService.class),
             mock(DtoMergeUtils.class),
             mock(TaskService.class));
 

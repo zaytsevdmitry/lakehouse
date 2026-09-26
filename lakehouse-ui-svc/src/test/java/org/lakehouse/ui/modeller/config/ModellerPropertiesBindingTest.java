@@ -36,4 +36,29 @@ class ModellerPropertiesBindingTest {
         assertThat(properties.getSession().getInactivityMinutes()).isEqualTo(30);
         assertThat(properties.getLogging().getSyncLogCapacity()).isEqualTo(500);
     }
+
+    @Test
+    void domainRepositoriesBindFromCommandLineProperties() {
+        StandardEnvironment environment = new StandardEnvironment();
+        environment.getPropertySources().addFirst(new org.springframework.core.env.MapPropertySource("cli", java.util.Map.of(
+                "lakehouse.modeller.domains.platform.repository-url", "git://git-server:9418/config-repo.git",
+                "lakehouse.modeller.domains.platform.branch-main", "main",
+                "lakehouse.modeller.domains.analytics.repository-url", "git://other.git",
+                "lakehouse.modeller.domains.analytics.branch-main", "dev",
+                "lakehouse.modeller.git.remote-url", "git://legacy.git",
+                "lakehouse.modeller.git.branch-main", "legacy")));
+
+        ModellerProperties properties = Binder.get(environment)
+                .bind("lakehouse.modeller", Bindable.of(ModellerProperties.class))
+                .orElseThrow(() -> new IllegalStateException("failed to bind lakehouse.modeller"));
+
+        assertThat(properties.domainNames()).containsExactly("analytics", "platform");
+        assertThat(properties.domainRemoteUrl("platform")).isEqualTo("git://git-server:9418/config-repo.git");
+        assertThat(properties.domainBranchMain("platform")).isEqualTo("main");
+        assertThat(properties.domainRemoteUrl("analytics")).isEqualTo("git://other.git");
+        assertThat(properties.domainBranchMain("analytics")).isEqualTo("dev");
+        // unknown domains fall back to the legacy single-repository settings
+        assertThat(properties.domainRemoteUrl("unknown")).isEqualTo("git://legacy.git");
+        assertThat(properties.domainBranchMain("unknown")).isEqualTo("legacy");
+    }
 }

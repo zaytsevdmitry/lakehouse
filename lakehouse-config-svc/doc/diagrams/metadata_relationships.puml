@@ -8,7 +8,7 @@ title Взаимоотношения объектов конфигурации (
 
 package "Базовые объекты" {
 
-    (Namespace) as NS
+    (Domain) as DOM
     (Driver) as DRV
     (Script) as SCR
     (TaskExecutionServiceGroup) as TESG
@@ -57,7 +57,7 @@ SAT *-- TASK : tasks (типовые задачи)
 SAT *-- DAGE : dagEdges (граф задач)
 
 ' ---- Ссылки по ключам (ассоциации) ----
-DST --> NS : nameSpaceKeyName (принадлежность)
+DST --> DOM : domainKeyName (принадлежность)
 DST --> DS : dataSourceKeyName (расположение)
 TASK --> DRV : driverKeyName (используемый драйвер)
 DST --> SCRF : scripts (коллекция ссылок)

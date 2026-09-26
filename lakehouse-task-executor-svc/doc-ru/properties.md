@@ -31,6 +31,20 @@ lakehouse:
       sparkStandAloneClusterTaskProcessor:
         maxWaitToRunningStateTimeoutMs: 120000 # максимальное время ожидания перехода Spark-задачи в состояние RUNNING, мс
         sparkJobStatusCheckIntervalMs: 3000 # интервал опроса статуса Spark-задачи, мс
+    # Настройки источников данных по доменам: domains.<domainKeyName>.<dataSourceKeyName>.service-properties
+    # Связываются DomainDataSourceServiceProperties (префикс lakehouse.task-executor) и доступны
+    # через getServiceProperties(domainKey, dataSourceKey), возвращающей Optional.empty() для
+    # неизвестного домена или источника. ВАЖНО: пока не применяются на пути исполнения - источники
+    # данных резолвятся через lakehouse-config-svc. См. readme.md, глава "Домены".
+    domains:
+      platform:
+        lakehousestorage:
+          service-properties: # свободная карта: опции secret provider, user, fetchSize, ...
+            secretProvider: org.lakehouse.security.jdbc.BaoJdbcSecretProvider
+            secret-key: "kv/data/lakehouse/database:password"
+            vault-url: "http://openbao:8200"
+            user: postgresUser
+            fetchSize: "10000"
     scheduled: # Параметры для получения задач
       task:
         kafka:
@@ -44,6 +58,22 @@ lakehouse:
             # Имя должно совпадать с именем у сервиса расписаний  
             topics: scheduled_task_msg 
 ```
+
+### Доменные параметры источников данных
+
+| Параметр | По умолчанию | Описание |
+|---|---|---|
+| `lakehouse.task-executor.domains.<domainKeyName>.<dataSourceKeyName>.service-properties` | *(пусто)* | Свободная карта настроек подключения одного источника данных одного домена |
+
+Ключи внутри `service-properties` биндингом не проверяются и, как ожидается, совпадают с
+опциями secret provider, которые `lakehouse-credential-providers-jdbc` понимает в
+`service.properties` JDBC-источника (`secretProvider`, `secret-key`, `vault-url`,
+`vault-role`, `vault-k8s-auth-path`, `secret-id`, `secret-version`, `url`, `user`).
+
+Сейчас эти значения **не используются при исполнении**: источники данных, которые открывает
+задача, всегда приходят из `lakehouse-config-svc`. Блок сохранён здесь, потому что он
+связывается и публикуется `DomainDataSourceServiceProperties` и потому что на него
+опирается история развёртывания по доменам. См. readme.md, глава "Домены".
 
 ### Параметры процессоров задач
 

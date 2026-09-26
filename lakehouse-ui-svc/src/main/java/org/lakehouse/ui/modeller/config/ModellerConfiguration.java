@@ -67,7 +67,9 @@ public class ModellerConfiguration {
                                              ModellerProperties properties) {
         int ttlHours = (int) Math.min(Integer.MAX_VALUE,
                 Math.max(1, properties.getStorage().getCleanupTtlHours()));
-        WorkspaceManager manager = new WorkspaceManager(storage, vcs::readBranchFiles, ttlHours);
+        WorkspaceManager manager = new WorkspaceManager(storage,
+                (domain, branch) -> WorkspaceManager.scopeDomain(domain, vcs.readBranchFiles(domain, branch)),
+                ttlHours);
         return manager;
     }
 
@@ -103,8 +105,8 @@ public class ModellerConfiguration {
 
     @Bean
     public VcsService vcsService(WorkspaceManager manager, VcsProvider vcs, WorkspaceStorage storage,
-                                 SyncLogService logs) {
-        return new VcsService(manager, vcs, storage, logs);
+                                 SyncLogService logs, ModellerProperties properties) {
+        return new VcsService(manager, vcs, storage, logs, properties);
     }
 
     @Bean

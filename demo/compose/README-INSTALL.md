@@ -90,7 +90,7 @@ networks:
 Выполнить удаление контейнеров 
 
 ```shell
-docker compose down
+docker compose down -v
 ```
 
 Очистить данные хранилища minio. Потребуются root привилегии тк сервис работает в контейнере под root  

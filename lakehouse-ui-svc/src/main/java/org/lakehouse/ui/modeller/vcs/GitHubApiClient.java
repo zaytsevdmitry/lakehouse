@@ -9,6 +9,7 @@ import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -28,8 +29,11 @@ public class GitHubApiClient {
     private final String repo;
 
     public GitHubApiClient(ModellerProperties properties) {
+        this(properties, properties.getGit().getRemoteUrl());
+    }
+
+    public GitHubApiClient(ModellerProperties properties, String remoteUrl) {
         this.properties = properties;
-        String remoteUrl = properties.getGit().getRemoteUrl();
         if (remoteUrl == null || remoteUrl.isBlank())
             throw new VcsProviderException("No GitHub remote URL configured (lakehouse.modeller.git.remote-url)");
         java.util.regex.Matcher m = java.util.regex.Pattern
@@ -50,6 +54,21 @@ public class GitHubApiClient {
         if (token == null)
             throw new VcsProviderException("GitHub installation access token missing from response");
         return token;
+    }
+
+    public List<String> listBranches() {
+        String token = installationAccessToken();
+        var response = http.get("https://api.github.com/repos/" + owner + "/" + repo
+                + "/branches?per_page=100", "Bearer " + token);
+        if (response.statusCode() < 200 || response.statusCode() >= 300)
+            throw new VcsProviderException("GitHub branch list failed (" + response.statusCode() + "): " + response.body());
+        List<String> branches = new ArrayList<>();
+        for (RestSupport.JsonObj entry : RestSupport.parseArray(response.body())) {
+            String name = entry.getString("name");
+            if (name != null)
+                branches.add(name);
+        }
+        return branches;
     }
 
     public VcsReviewResult openPullRequest(String headBranch, String baseBranch, String description) {

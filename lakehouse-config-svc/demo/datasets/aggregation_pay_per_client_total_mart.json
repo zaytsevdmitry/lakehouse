@@ -1,6 +1,6 @@
 {
   "keyName": "aggregation_pay_per_client_total_mart",
-  "nameSpaceKeyName": "DEMO",
+  "domainKeyName": "DEMO",
   "dataSourceKeyName": "lakehousestorage",
   "databaseSchemaName": "default",
   "tableName": "ggregation_pay_per_client_total_mart",

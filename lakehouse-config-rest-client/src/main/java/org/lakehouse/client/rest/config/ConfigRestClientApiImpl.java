@@ -18,7 +18,6 @@
 package org.lakehouse.client.rest.config;
 
 import org.lakehouse.client.api.constant.Endpoint;
-import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
 import org.lakehouse.client.api.dto.vcs.VcsObjectLogDTO;
 import org.lakehouse.client.api.dto.vcs.VcsSyncLogDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
@@ -50,10 +49,6 @@ public class ConfigRestClientApiImpl extends ConfigRestClientApiAbstract {
     @Override
     public DriverDTO getDriverDTO(String keyName) {
         return restClientHelper.getDtoOne(keyName, Endpoint.DRIVERS_NAME, DriverDTO.class);
-    }
-
-    public NameSpaceDTO getNameSpaceDTO(String keyName) {
-        return restClientHelper.getDtoOne(keyName, Endpoint.NAME_SPACES_NAME, NameSpaceDTO.class);
     }
 
     public DataSourceDTO getDataSourceDTO(String keyName) {
@@ -127,14 +122,6 @@ public class ConfigRestClientApiImpl extends ConfigRestClientApiAbstract {
                 .uri(Endpoint.DRIVERS)
                 .retrieve()
                 .body(DriverDTO[].class));
-    }
-
-    public List<NameSpaceDTO> getNameSpaceDTOList() {
-        return Arrays.asList(restClientHelper.getRestClient()
-                .get()
-                .uri(Endpoint.NAME_SPACES)
-                .retrieve()
-                .body(NameSpaceDTO[].class)); //getDtoByName("",  Endpoint.PROJECTS, List.class);
     }
 
     public List<DataSourceDTO> getDataSourceDTOList() {
@@ -215,7 +202,7 @@ public class ConfigRestClientApiImpl extends ConfigRestClientApiAbstract {
 
     @Override
     public List<VcsSyncLogDTO> getVcsSyncLogDTOList(
-            OffsetDateTime from, OffsetDateTime to, String status, String commitId) {
+            OffsetDateTime from, OffsetDateTime to, String status, String commitId, String domainKeyName) {
         return Arrays.asList(restClientHelper.getRestClient()
                 .get()
                 .uri(uriBuilder -> {
@@ -226,6 +213,8 @@ public class ConfigRestClientApiImpl extends ConfigRestClientApiAbstract {
                         builder.queryParam("status", status);
                     if (commitId != null && !commitId.isBlank())
                         builder.queryParam("commitId", commitId);
+                    if (domainKeyName != null && !domainKeyName.isBlank())
+                        builder.queryParam("domainKeyName", domainKeyName);
                     return builder.build();
                 })
                 .retrieve()
@@ -235,7 +224,7 @@ public class ConfigRestClientApiImpl extends ConfigRestClientApiAbstract {
     @Override
     public List<VcsObjectLogDTO> getVcsObjectLogDTOList(
             String commitId, String kind, OffsetDateTime from, OffsetDateTime to,
-            String filePath, String objectName) {
+            String filePath, String objectName, String domainKeyName) {
         return Arrays.asList(restClientHelper.getRestClient()
                 .get()
                 .uri(uriBuilder -> {
@@ -252,6 +241,8 @@ public class ConfigRestClientApiImpl extends ConfigRestClientApiAbstract {
                         builder.queryParam("filePath", filePath);
                     if (objectName != null && !objectName.isBlank())
                         builder.queryParam("objectName", objectName);
+                    if (domainKeyName != null && !domainKeyName.isBlank())
+                        builder.queryParam("domainKeyName", domainKeyName);
                     return builder.build();
                 })
                 .retrieve()
@@ -263,10 +254,6 @@ public class ConfigRestClientApiImpl extends ConfigRestClientApiAbstract {
         return restClientHelper.deleteDtoByName(name, Endpoint.DRIVERS_NAME);
     }
 
-
-    public int deleteNameSpaceDTO(String NameSpaceName) {
-        return restClientHelper.deleteDtoByName(NameSpaceName, Endpoint.NAME_SPACES_NAME);
-    }
 
     public int deleteDataStoreDTO(String name) {
         return restClientHelper.deleteDtoByName(name, Endpoint.DATA_SOURCES_NAME);
@@ -293,10 +280,6 @@ public class ConfigRestClientApiImpl extends ConfigRestClientApiAbstract {
         return restClientHelper.postDTO(o, Endpoint.DRIVERS);
     }
 
-
-    public int postNameSpaceDTO(NameSpaceDTO o) {
-        return restClientHelper.postDTO(o, Endpoint.NAME_SPACES);
-    }
 
     public int postDataStoreDTO(DataSourceDTO o) {
         return restClientHelper.postDTO(o, Endpoint.DATA_SOURCES);

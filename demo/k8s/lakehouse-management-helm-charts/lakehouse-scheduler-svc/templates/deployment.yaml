@@ -50,7 +50,7 @@ spec:
             -Dserver.port={{ .Values.java.serverPort }}
             -Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=SchedulerSVC
             -Dlakehouse.scheduler.schedule.task.kafka.producer.properties.bootstrap.servers=broker:9092
-            -Dlakehouse.scheduler.config.schedule.kafka.consumer.properties.bootstrap.servers=broker:9092
+            -Dlakehouse.scheduler.config.change.kafka.consumer.properties.bootstrap.servers=broker:9092
             -Dlakehouse.scheduler.registration.delay-ms=5000
             -Dlakehouse.scheduler.run.delay-ms=5000
             -Dlakehouse.scheduler.resolvedeps.delay-ms=5000

@@ -49,6 +49,6 @@ spec:
           args:
             - "java 
             -Dserver.port={{ .Values.java.serverPort }}
-            -Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=ConfigSVC 
-            -Dlakehouse.config.schedule.send.kafka.producer.properties.bootstrap.servers=broker:9092 
+            -Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=ConfigSVC
+            -Dlakehouse.config.produce.kafka.producer.properties.bootstrap.servers=broker:9092 
             -jar /opt/lakehouse-config-svc-{{ .Chart.AppVersion }}-jar-with-dependencies.jar"

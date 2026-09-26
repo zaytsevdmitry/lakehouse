@@ -45,11 +45,11 @@ public class DataSetObjectActions implements ConfigObjectActions {
         List<DataSetDTO> l = configRestClientApi.getDataSetDTOList();
 
         return ObjectActionsHelper.table(
-                new String[]{"name", "description", "nameSpace"},
+                new String[]{"name", "description", "domain"},
                 l.stream().map(o -> new String[]{
                         o.getKeyName(),
                         o.getDescription(),
-                        o.getNameSpaceKeyName()}).toList());
+                        o.getDomainKeyName()}).toList());
     }
 
     @Override

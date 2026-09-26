@@ -11,6 +11,7 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.treewalk.TreeWalk;
+import org.lakehouse.ui.modeller.workspace.WorkspaceManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,12 +42,12 @@ public final class GitRepositoryOps {
      *
      * @param remoteUrl  repository to read from (remote URL or local/git path, may be bare)
      */
-    public static Map<String, String> readBranch(String remoteUrl, String branch, String defaultBranch,
+    public static Map<String, String> readBranch(String remoteUrl, String branch,
                                                  CredentialsProvider credentials) {
         try (TransientRepo holder = openReadRepository(remoteUrl, credentials)) {
             if (!isRemoteUrl(remoteUrl))
-                fetchIfRepositoriesLinked(holder.repo(), defaultBranch, credentials);
-            ObjectId tree = resolveTree(holder.repo(), branch, defaultBranch);
+                fetchIfRepositoriesLinked(holder.repo(), credentials);
+            ObjectId tree = resolveTree(holder.repo(), branch);
             return readYamlTree(holder.repo(), tree);
         } catch (IOException | GitAPIException e) {
             throw new VcsProviderException("Cannot read branch " + branch + " of " + remoteUrl + ": " + e.getMessage(), e);
@@ -95,7 +96,7 @@ public final class GitRepositoryOps {
         try {
             try (Git git = openClone(dir)) {
                 Repository repo = git.getRepository();
-                fetchIfRepositoriesLinked(repo, baseBranch, credentials);
+                fetchIfRepositoriesLinked(repo, credentials);
                 String start = resolveStartPoint(repo, baseBranch);
                 git.checkout().setCreateBranch(true).setName(branch).setStartPoint(start).call();
                 push(git, branch, false, credentials);
@@ -112,24 +113,29 @@ public final class GitRepositoryOps {
      * the logged-in user, committer = the technical account) and pushes to the branch
      * (or the Gerrit {@code refs/for/<branch>} magic ref when {@code gerrit=true}).
      */
-    public static void commitAndPush(String remoteUrl, String branch, String baseBranch, String commitMessage,
-                                     PersonIdent author, Map<String, String> files,
-                                     boolean gerrit, CredentialsProvider credentials) {
+    public static boolean commitAndPush(String remoteUrl, String domain, String branch, String commitMessage,
+                                        PersonIdent author, Map<String, String> files,
+                                        boolean gerrit, CredentialsProvider credentials) {
         Path dir = tempClone(remoteUrl, credentials);
         try {
             try (Git git = openClone(dir)) {
                 Repository repo = git.getRepository();
-                fetchIfRepositoriesLinked(repo, baseBranch, credentials);
-                checkoutReviewBranch(git, repo, branch, baseBranch);
-                clearWorkTree(dir);
-                writeFiles(dir, files);
-                git.add().addFilepattern(".").call();
+                fetchIfRepositoriesLinked(repo, credentials);
+                checkoutReviewBranch(git, branch);
+                boolean domainLayout = usesDomainLayout(dir);
+                Map<String, String> repositoryFiles = WorkspaceManager.expandDomain(domain, files, domainLayout);
+                removeManagedYamlFiles(dir, domain, domainLayout);
+                writeFiles(dir, repositoryFiles);
+                stageAll(git);
+                if (git.status().call().isClean())
+                    return false;
                 git.commit()
                         .setMessage(commitMessage)
                         .setAuthor(author)
                         .setCommitter(new PersonIdent(COMMITTER_NAME, COMMITTER_EMAIL))
                         .call();
                 push(git, branch, gerrit, credentials);
+                return true;
             }
         } catch (GitAPIException | IOException e) {
             throw new VcsProviderException("Cannot push workspace content to " + remoteUrl + ": " + e.getMessage(), e);
@@ -211,7 +217,7 @@ public final class GitRepositoryOps {
         return new File(path);
     }
 
-    private static void fetchIfRepositoriesLinked(Repository repo, String defaultBranch, CredentialsProvider credentials)
+    private static void fetchIfRepositoriesLinked(Repository repo, CredentialsProvider credentials)
             throws GitAPIException, IOException {
         Ref head = repo.findRef(Constants.HEAD);
         if (head == null) {
@@ -224,15 +230,8 @@ public final class GitRepositoryOps {
         }
     }
 
-    private static ObjectId resolveTree(Repository repo, String branch, String defaultBranch) {
-        List<String> candidates = new ArrayList<>();
-        candidates.add("refs/heads/" + branch);
-        candidates.add("refs/remotes/origin/" + branch);
-        if (!branch.equals(defaultBranch)) {
-            candidates.add("refs/heads/" + defaultBranch);
-            candidates.add("refs/remotes/origin/" + defaultBranch);
-        }
-        candidates.add(Constants.HEAD);
+    private static ObjectId resolveTree(Repository repo, String branch) {
+        List<String> candidates = List.of("refs/heads/" + branch, "refs/remotes/origin/" + branch);
         for (String candidate : candidates) {
             try {
                 Ref ref = repo.findRef(candidate);
@@ -302,10 +301,9 @@ public final class GitRepositoryOps {
         return Constants.HEAD;
     }
 
-    private static void checkoutReviewBranch(Git git, Repository repo, String branch, String baseBranch)
+    private static void checkoutReviewBranch(Git git, String branch)
             throws GitAPIException, IOException {
-        // The transient clone checks out a local default branch; pushing to that same
-        // branch (e.g. "main") must reuse it instead of re-creating it.
+        Repository repo = git.getRepository();
         if (repo.findRef("refs/heads/" + branch) != null) {
             git.checkout().setName(branch).call();
             return;
@@ -313,20 +311,52 @@ public final class GitRepositoryOps {
         if (repo.findRef("refs/remotes/origin/" + branch) != null) {
             git.checkout().setCreateBranch(true).setName(branch)
                     .setStartPoint("refs/remotes/origin/" + branch).call();
-        } else {
-            git.checkout().setCreateBranch(true).setName(branch)
-                    .setStartPoint(resolveStartPoint(repo, baseBranch)).call();
+            return;
+        }
+        throw new VcsProviderException("Branch " + branch + " not found in the repository");
+    }
+
+    private static boolean usesDomainLayout(Path dir) throws IOException {
+        Path domains = dir.resolve("domains");
+        if (!Files.isDirectory(domains))
+            return false;
+        try (var children = Files.list(domains)) {
+            return children.anyMatch(Files::isDirectory);
         }
     }
 
-    private static void clearWorkTree(Path dir) throws IOException {
-        File[] children = dir.toFile().listFiles();
-        if (children == null)
+    private static void removeManagedYamlFiles(Path dir, String domain, boolean domainLayout) throws IOException {
+        Path managedRoot = domainLayout ? dir.resolve("domains").resolve(domain) : dir;
+        if (!Files.isDirectory(managedRoot))
             return;
-        for (File child : children) {
-            if (!".git".equals(child.getName()))
-                deleteRecursively(child);
+        Path gitDir = dir.resolve(".git");
+        try (var paths = Files.walk(managedRoot)) {
+            paths.filter(Files::isRegularFile)
+                    .filter(path -> !path.startsWith(gitDir))
+                    .filter(GitRepositoryOps::isYaml)
+                    .forEach(path -> {
+                        try {
+                            Files.deleteIfExists(path);
+                        } catch (IOException e) {
+                            throw new VcsProviderException("Cannot remove managed file " + path, e);
+                        }
+                    });
         }
+    }
+
+    private static boolean isYaml(Path path) {
+        String name = path.getFileName().toString();
+        return name.endsWith(".yaml") || name.endsWith(".yml");
+    }
+
+    /**
+     * Stages the rewritten managed subtree: new and modified files first, then the
+     * removals (JGit {@code setUpdate(true)} only refreshes already tracked paths,
+     * so a single {@code add "."} would leave deleted files behind in the commit).
+     */
+    private static void stageAll(Git git) throws GitAPIException {
+        git.add().addFilepattern(".").call();
+        git.add().addFilepattern(".").setUpdate(true).call();
     }
 
     private static void writeFiles(Path dir, Map<String, String> files) throws IOException {

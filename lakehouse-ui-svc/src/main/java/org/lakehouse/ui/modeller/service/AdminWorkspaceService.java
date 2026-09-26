@@ -25,7 +25,7 @@ public class AdminWorkspaceService {
 
     public List<WorkspaceResponse> listAll(Authentication authentication) {
         return manager.allWorkspaces().stream()
-                .map(w -> new WorkspaceResponse(w.id(), w.branch(), w.owner(), w.createdAt(), w.lastAccessedAt(), false))
+                .map(w -> new WorkspaceResponse(w.id(), w.selections(), w.owner(), w.createdAt(), w.lastAccessedAt(), false))
                 .toList();
     }
 

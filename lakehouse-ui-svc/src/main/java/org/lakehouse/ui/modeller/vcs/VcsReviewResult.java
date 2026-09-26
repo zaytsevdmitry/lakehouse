@@ -18,4 +18,8 @@ public record VcsReviewResult(
     public static VcsReviewResult plainPushed(String url) {
         return new VcsReviewResult(url, "PUSHED");
     }
+
+    public static VcsReviewResult noChanges() {
+        return new VcsReviewResult(null, "NO_CHANGES");
+    }
 }

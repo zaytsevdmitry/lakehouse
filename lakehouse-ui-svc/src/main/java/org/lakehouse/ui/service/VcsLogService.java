@@ -34,16 +34,17 @@ public class VcsLogService {
     }
 
     public List<VcsSyncLogDTO> syncLogs(
-            OffsetDateTime from, OffsetDateTime to, String status, String commitId) {
-        return configRestClientApi.getVcsSyncLogDTOList(from, to, status, commitId);
+            OffsetDateTime from, OffsetDateTime to, String status, String commitId, String domainKeyName) {
+        return configRestClientApi.getVcsSyncLogDTOList(from, to, status, commitId, domainKeyName);
     }
 
-    public List<VcsObjectLogDTO> objectLogs(String commitId) {
-        return configRestClientApi.getVcsObjectLogDTOList(commitId, null, null, null, null, null);
+    public List<VcsObjectLogDTO> objectLogs(String commitId, String domainKeyName) {
+        return configRestClientApi.getVcsObjectLogDTOList(commitId, null, null, null, null, null, domainKeyName);
     }
 
     public List<VcsObjectLogDTO> objectLogs(
-            String kind, OffsetDateTime from, OffsetDateTime to, String filePath, String objectName) {
-        return configRestClientApi.getVcsObjectLogDTOList(null, kind, from, to, filePath, objectName);
+            String kind, OffsetDateTime from, OffsetDateTime to, String filePath, String objectName,
+            String domainKeyName) {
+        return configRestClientApi.getVcsObjectLogDTOList(null, kind, from, to, filePath, objectName, domainKeyName);
     }
 }

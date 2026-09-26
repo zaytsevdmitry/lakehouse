@@ -17,7 +17,6 @@
 
 package org.lakehouse.client.rest.config;
 
-import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
 import org.lakehouse.client.api.dto.configs.ScriptReferenceDTO;
 import org.lakehouse.client.api.dto.vcs.VcsObjectLogDTO;
 import org.lakehouse.client.api.dto.vcs.VcsSyncLogDTO;
@@ -38,8 +37,6 @@ public interface ConfigRestClientApi {
 
 
     DriverDTO getDriverDTO(String name);
-
-    NameSpaceDTO getNameSpaceDTO(String NameSpaceName);
 
     DataSourceDTO getDataSourceDTO(String name);
 
@@ -69,8 +66,6 @@ public interface ConfigRestClientApi {
 
     List<DriverDTO> getDriverDTOList();
 
-    List<NameSpaceDTO> getNameSpaceDTOList();
-
     List<DataSourceDTO> getDataSourceDTOList();
 
     List<DataSetDTO> getDataSetDTOList();
@@ -90,15 +85,13 @@ public interface ConfigRestClientApi {
     List<QualityMetricsConfDTO> getQualityMetricsConfListByDataSetKeyName(String dataSetKeyName);
 
     List<VcsSyncLogDTO> getVcsSyncLogDTOList(
-            OffsetDateTime from, OffsetDateTime to, String status, String commitId);
+            OffsetDateTime from, OffsetDateTime to, String status, String commitId, String domainKeyName);
 
     List<VcsObjectLogDTO> getVcsObjectLogDTOList(
             String commitId, String kind, OffsetDateTime from, OffsetDateTime to,
-            String filePath, String objectName);
+            String filePath, String objectName, String domainKeyName);
 
     int deleteDriverDTO(String name);
-
-    int deleteNameSpaceDTO(String NameSpaceName);
 
     int deleteDataStoreDTO(String name);
 
@@ -111,8 +104,6 @@ public interface ConfigRestClientApi {
     int deleteTaskExecutionServiceGroupDTO(String name);
 
     int postDriverDTO(DriverDTO o);
-
-    int postNameSpaceDTO(NameSpaceDTO o);
 
     int postDataStoreDTO(DataSourceDTO o);
 

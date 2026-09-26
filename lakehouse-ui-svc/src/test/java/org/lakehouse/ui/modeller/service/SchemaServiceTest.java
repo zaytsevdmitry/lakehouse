@@ -13,15 +13,14 @@ class SchemaServiceTest {
 
     private final SchemaService service = new SchemaService();
 
-    @Test
+@Test
     void exposesAllSupportedKindsWithDirectories() {
         List<KindSchema> all = service.all();
-        assertThat(all).hasSize(13);
+        assertThat(all).hasSize(12);
         assertThat(all).extracting(KindSchema::kind)
-                .containsExactlyInAnyOrder("NameSpace", "Driver", "ERDiagram", "DataSet", "DataSource",
+                .containsExactlyInAnyOrder("Driver", "ERDiagram", "DataSet", "DataSource",
                         "QualityMetricsConf", "ScenarioActTemplate", "Schedule",
                         "TaskExecutionServiceGroup", "Task", "MetricDQ", "Script", "DataLineageDiagram");
-        assertThat(service.schema("NameSpace").directory()).isEqualTo("nameSpaces");
         assertThat(service.schema("Driver").directory()).isEqualTo("drivers");
         assertThat(service.schema("ERDiagram").directory()).isEqualTo("erdiagrams");
         assertThat(service.schema("DataSet").directory()).isEqualTo("datasets");
@@ -38,7 +37,6 @@ class SchemaServiceTest {
 
     @Test
     void kindLookupIsCaseAndPunctuationInsensitive() {
-        assertThat(service.schema("NameSpace")).isEqualTo(service.schema("namespace"));
         assertThat(service.schema("metric_dq")).isEqualTo(service.schema("MetricDQ"));
         assertThat(service.schema("unknown")).isNull();
     }
@@ -53,26 +51,6 @@ class SchemaServiceTest {
         FieldSchema dataSets = field(fields, "dataSets");
         assertThat(dataSets.type()).isEqualTo("list");
         assertThat(dataSets.item().children()).extracting(FieldSchema::name).contains("keyName", "x", "y");
-    }
-
-    @Test
-    void namespaceCarriesMandatoryKeyNameFirstAndDescription() {
-        KindSchema schema = service.schema("NameSpace");
-        assertThat(schema.dtoClass()).contains("NameSpaceDTO");
-        List<FieldSchema> fields = schema.fields();
-        assertThat(fields.get(0).name()).isEqualTo("keyName");
-        assertThat(fields.get(0).keyName()).isTrue();
-        assertThat(fields.get(0).label()).isEqualTo("Key Name");
-        assertThat(fields).extracting(FieldSchema::name).contains("description");
-    }
-
-    @Test
-    void dataSetNameSpaceKeyNameIsReadOnlyBackedByNameSpacePicker() {
-        KindSchema schema = service.schema("DataSet");
-        FieldSchema nameSpace = field(schema.fields(), "nameSpaceKeyName");
-        assertThat(nameSpace.readOnly()).isTrue();
-        assertThat(nameSpace.picker()).isEqualTo("nameSpace");
-        assertThat(nameSpace.clearable()).isTrue();
     }
 
     @Test
@@ -298,6 +276,31 @@ class SchemaServiceTest {
         FieldSchema key = field(scripts.item().children(), "key");
         assertThat(key.readOnly()).isTrue();
         assertThat(key.picker()).isEqualTo("scriptKey");
+    }
+
+    @Test
+    void noEditorFieldExposesTheDerivedConfigurationDomain() {
+        List<String> names = new ArrayList<>();
+        List<String> labels = new ArrayList<>();
+        for (KindSchema schema : service.all())
+            collect(schema.fields(), names, labels);
+        assertThat(names).doesNotContain("domainKeyName");
+        assertThat(labels).doesNotContain("Domain Key Name");
+    }
+
+    private static void collect(List<FieldSchema> fields, List<String> names, List<String> labels) {
+        if (fields == null)
+            return;
+        for (FieldSchema field : fields) {
+            names.add(field.name());
+            labels.add(field.label());
+            collect(field.children(), names, labels);
+            if (field.item() != null) {
+                names.add(field.item().name());
+                labels.add(field.item().label());
+                collect(field.item().children(), names, labels);
+            }
+        }
     }
 
     private static FieldSchema field(List<FieldSchema> fields, String name) {

@@ -18,16 +18,19 @@
 package org.lakehouse.config.service.dataset;
 
 import jakarta.transaction.Transactional;
+import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.config.entities.KeyValueAbstract;
 import org.lakehouse.config.entities.dataset.DataSet;
 import org.lakehouse.config.exception.VcsManagedException;
 import org.lakehouse.config.exception.DataSetNotFoundException;
+import org.lakehouse.config.exception.DomainConflictException;
 import org.lakehouse.config.mapper.keyvalue.KeyValueEntityMerger;
-import org.lakehouse.config.repository.NameSpaceRepository;
 import org.lakehouse.config.repository.dataset.DataSetPropertyRepository;
 import org.lakehouse.config.repository.dataset.DataSetRepository;
 import org.lakehouse.config.repository.datasource.DataSourceRepository;
+import org.lakehouse.config.service.ConfigurationProduceService;
+import org.lakehouse.config.produce.DataSetConfigurationResolver;
 import org.lakehouse.config.service.ScriptReferenceService;
 import org.lakehouse.config.service.dataset.source.DataSetSourceService;
 import org.lakehouse.config.service.datasource.SQLTemplateService;
@@ -47,31 +50,31 @@ public class DataSetService {
     private final DataSetRepository dataSetRepository;
     private final DataSetPropertyRepository dataSetPropertyRepository;
     private final DataSetSourceService dataSetSourceService;
-    private final NameSpaceRepository nameSpaceRepository;
     private final DataSourceRepository dataSourceRepository;
     private final ScriptReferenceService scriptReferenceService;
     private final DataSetColumnService dataSetColumnService;
     private final DataSetConstraintService dataSetConstraintService;
     private final SQLTemplateService sqlTemplateService;
+    private final ConfigurationProduceService configurationProduceService;
     public DataSetService(
             DataSetRepository dataSetRepository,
             DataSetPropertyRepository dataSetPropertyRepository,
             DataSetSourceService dataSetSourceService,
-            NameSpaceRepository nameSpaceRepository,
             DataSourceRepository dataSourceRepository,
             ScriptReferenceService scriptReferenceService,
             DataSetColumnService dataSetColumnService,
             DataSetConstraintService dataSetConstraintService,
-            SQLTemplateService sqlTemplateService) {
+            SQLTemplateService sqlTemplateService,
+            ConfigurationProduceService configurationProduceService) {
         this.dataSetRepository = dataSetRepository;
         this.dataSetPropertyRepository = dataSetPropertyRepository;
         this.dataSetSourceService = dataSetSourceService;
-        this.nameSpaceRepository = nameSpaceRepository;
         this.dataSourceRepository = dataSourceRepository;
         this.scriptReferenceService = scriptReferenceService;
         this.dataSetColumnService = dataSetColumnService;
         this.dataSetConstraintService = dataSetConstraintService;
         this.sqlTemplateService = sqlTemplateService;
+        this.configurationProduceService = configurationProduceService;
     }
 
     private DataSetDTO mapDataSetToDTO(DataSet dataSet) {
@@ -79,7 +82,7 @@ public class DataSetService {
         result.setKeyName(dataSet.getKeyName());
         result.setDescription(dataSet.getDescription());
         result.setDataSourceKeyName(dataSet.getDataSource().getKeyName());
-        result.setNameSpaceKeyName(dataSet.getNameSpace().getKeyName());
+        result.setDomainKeyName(dataSet.getDomainKeyName());
         result.setDatabaseSchemaName(dataSet.getDatabaseSchemaName());
         result.setTableName(dataSet.getTableName());
         result.setScripts(scriptReferenceService.findDataSetScriptDTOListByDataSetName(dataSet.getKeyName()));
@@ -98,8 +101,8 @@ public class DataSetService {
         DataSet result = new DataSet();
         result.setKeyName(dataSetDTO.getKeyName());
         result.setDescription(dataSetDTO.getDescription());
-        result.setNameSpace(nameSpaceRepository.getReferenceById(dataSetDTO.getNameSpaceKeyName()));
         result.setDataSource(dataSourceRepository.getReferenceById(dataSetDTO.getDataSourceKeyName()));
+        result.setDomainKeyName(dataSetDTO.getDomainKeyName());
         result.setDatabaseSchemaName(dataSetDTO.getDatabaseSchemaName());
         result.setTableName(dataSetDTO.getTableName());
         return result;
@@ -166,6 +169,8 @@ public class DataSetService {
         logger.info("Saving dataSetDTO={} constraints", dataSetDTO.getKeyName());
         dataSetConstraintService.applyConstraints(dataSet,dataSetDTO.getConstraints());
 
+        configurationProduceService.produce(DataSetConfigurationResolver.KIND, dataSet.getKeyName(), Types.configAction.SAVE);
+
         logger.info("Saving dataSetDTO={} reload", dataSetDTO.getKeyName());
         return mapDataSetToDTO(dataSet);
     }
@@ -184,6 +189,7 @@ public class DataSetService {
     }
 
     public DataSetDTO saveVcs(DataSetDTO dataSetDTO) {
+        rejectDomainConflict(dataSetDTO);
         Optional<DataSet> oldDataSet = dataSetRepository.findById(dataSetDTO.getKeyName());
         if (oldDataSet.isPresent()){
             DataSetDTO old = mapDataSetToDTO(oldDataSet.get());
@@ -206,6 +212,7 @@ public class DataSetService {
     @Transactional
     public void deleteById(String name) {
         rejectIfVcsManaged(name, "deleted");
+        configurationProduceService.produce(DataSetConfigurationResolver.KIND, name, Types.configAction.DELETE);
         dataSetRepository.deleteById(name);
     }
 
@@ -215,6 +222,18 @@ public class DataSetService {
             dataSet.setVcsManaged(false);
             dataSetRepository.save(dataSet);
         });
+    }
+
+    private void rejectDomainConflict(DataSetDTO dataSetDTO) {
+        if (dataSetDTO.getDomainKeyName() == null)
+            return;
+        dataSetRepository.findById(dataSetDTO.getKeyName())
+                .filter(existing -> existing.getDomainKeyName() != null)
+                .filter(existing -> !existing.getDomainKeyName().equals(dataSetDTO.getDomainKeyName()))
+                .ifPresent(existing -> {
+                    throw new DomainConflictException(
+                            dataSetDTO.getKeyName(), existing.getDomainKeyName(), dataSetDTO.getDomainKeyName());
+                });
     }
 
     private void rejectIfVcsManaged(String name, String operation) {

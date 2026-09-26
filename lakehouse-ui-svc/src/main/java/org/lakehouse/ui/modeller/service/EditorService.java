@@ -13,6 +13,7 @@ import org.lakehouse.ui.modeller.dto.RenameFileRequest;
 import org.lakehouse.ui.modeller.dto.SaveFileRequest;
 import org.lakehouse.ui.modeller.dto.TreeResponse;
 import org.lakehouse.ui.modeller.storage.WorkspaceStorage;
+import org.lakehouse.ui.modeller.workspace.BranchSelection;
 import org.lakehouse.ui.modeller.workspace.Workspace;
 import org.lakehouse.ui.modeller.workspace.WorkspaceManager;
 import org.lakehouse.ui.modeller.yaml.VcsConfigParseException;
@@ -75,17 +76,30 @@ public class EditorService {
         YamlMetadataKind kind = YamlMetadataKind.fromYamlValue(request.kind());
         String fileName = safeFileName(request.keyName());
         String dir = safeDirectory(request.directory());
+        if (dir.isEmpty())
+            dir = defaultDirectory(workspace, kind);
         String path = (dir.isEmpty() ? kind.directory() : dir) + "/" + fileName + ".yaml";
+        requireSelectionPath(workspace, path);
         String content = yaml.defaultYaml(kind, request.keyName());
         storage.writeFile(workspaceId, path, content);
         logs.log("INFO", user.username(), "CREATE_FILE", path + " (" + kind.yamlValue() + ")", workspaceId);
         return new FileContentResponse(path, content, kind.yamlValue(), request.keyName(), true);
     }
 
+    /**
+     * The default creation folder sits inside the first selected branch checkout
+     * ({@code <domain> (<branch>)/<kind-dir>/}) so new files always belong to a domain.
+     */
+    private static String defaultDirectory(Workspace workspace, YamlMetadataKind kind) {
+        if (workspace.selections().isEmpty())
+            return kind.directory();
+        return workspace.selections().get(0).folder() + "/" + kind.directory();
+    }
+
     public FileContentResponse readFile(String workspaceId, String path, Authentication authentication) {
         UserContext user = UserContext.from(authentication);
-        requireOwnWorkspace(workspaceId, user);
-        String safePath = safeFilePath(path);
+        Workspace workspace = requireOwnWorkspace(workspaceId, user);
+        String safePath = requireSelectionPath(workspace, safeFilePath(path));
         String content = storage.readFile(workspaceId, safePath)
                 .orElseThrow(() -> new IllegalArgumentException("File not found: " + path));
         try {
@@ -103,8 +117,8 @@ public class EditorService {
     public FileContentResponse saveFile(String workspaceId, String path, SaveFileRequest request,
                                         Authentication authentication) {
         UserContext user = UserContext.from(authentication);
-        requireOwnWorkspace(workspaceId, user);
-        String safePath = safeFilePath(path);
+        Workspace workspace = requireOwnWorkspace(workspaceId, user);
+        String safePath = requireSelectionPath(workspace, safeFilePath(path));
         ObjectNode node = yaml.parse(request.yaml());
         YamlMetadataKind kind = yaml.knownKindOf(node).orElse(null);
         String identifierField = kind == null ? "keyName" : kind.identifierField();
@@ -122,8 +136,8 @@ public class EditorService {
     public FileContentResponse renameFile(String workspaceId, RenameFileRequest request,
                                           Authentication authentication) {
         UserContext user = UserContext.from(authentication);
-        requireOwnWorkspace(workspaceId, user);
-        String safePath = safeFilePath(request.path());
+        Workspace workspace = requireOwnWorkspace(workspaceId, user);
+        String safePath = requireSelectionPath(workspace, safeFilePath(request.path()));
         String name = request.newName() == null ? "" : request.newName().trim();
         if (!name.toLowerCase(Locale.ROOT).endsWith(".yaml"))
             name = name + ".yaml";
@@ -131,6 +145,7 @@ public class EditorService {
             throw new IllegalArgumentException("Invalid file name: " + request.newName());
         String parent = safePath.contains("/") ? safePath.substring(0, safePath.lastIndexOf('/')) : "";
         String newPath = (parent.isEmpty() ? "" : parent + "/") + name;
+        requireSelectionPath(workspace, newPath);
         if (newPath.equals(safePath))
             throw new IllegalArgumentException("New name is identical to the current file name");
         String content = storage.readFile(workspaceId, safePath)
@@ -149,8 +164,8 @@ public class EditorService {
 
     public void deleteFile(String workspaceId, String path, Authentication authentication) {
         UserContext user = UserContext.from(authentication);
-        requireOwnWorkspace(workspaceId, user);
-        String safePath = safeFilePath(path);
+        Workspace workspace = requireOwnWorkspace(workspaceId, user);
+        String safePath = requireSelectionPath(workspace, safeFilePath(path));
         storage.deleteFile(workspaceId, safePath);
         logs.log("INFO", user.username(), "DELETE_FILE", safePath, workspaceId);
     }
@@ -158,9 +173,14 @@ public class EditorService {
     public FileContentResponse moveFile(String workspaceId, MoveFileRequest request,
                                         Authentication authentication) {
         UserContext user = UserContext.from(authentication);
-        requireOwnWorkspace(workspaceId, user);
-        String source = safeFilePath(request.source());
+        Workspace workspace = requireOwnWorkspace(workspaceId, user);
+        String source = requireSelectionPath(workspace, safeFilePath(request.source()));
+        BranchSelection sourceSelection = selectionForPath(workspace, source);
         String targetDir = safeDirectory(request.targetDirectory());
+        if (targetDir.isEmpty())
+            targetDir = sourceSelection.folder();
+        else
+            requireSelectionPath(workspace, targetDir);
         String fileName = source.substring(source.lastIndexOf('/') + 1);
         String newPath = targetDir.isEmpty() ? fileName : targetDir + "/" + fileName;
         if (newPath.equals(source))
@@ -187,11 +207,17 @@ public class EditorService {
 
     public void moveDirectory(String workspaceId, MoveDirectoryRequest request, Authentication authentication) {
         UserContext user = UserContext.from(authentication);
-        requireOwnWorkspace(workspaceId, user);
+        Workspace workspace = requireOwnWorkspace(workspaceId, user);
         String source = safeDirectory(request.source());
         if (source.isEmpty())
             throw new IllegalArgumentException("Cannot move the workspace root");
+        requireSelectionPath(workspace, source);
+        BranchSelection sourceSelection = selectionForPath(workspace, source);
         String targetDir = safeDirectory(request.targetDirectory());
+        if (targetDir.isEmpty())
+            targetDir = sourceSelection.folder();
+        else
+            requireSelectionPath(workspace, targetDir);
         String name = source.substring(source.lastIndexOf('/') + 1);
         String target = targetDir.isEmpty() ? name : targetDir + "/" + name;
         if (target.equals(source))
@@ -208,20 +234,25 @@ public class EditorService {
 
     public void createDirectory(String workspaceId, DirectoryRequest request, Authentication authentication) {
         UserContext user = UserContext.from(authentication);
-        requireOwnWorkspace(workspaceId, user);
+        Workspace workspace = requireOwnWorkspace(workspaceId, user);
         String dir = safeDirectory(request.path());
-        if (dir.isEmpty())
-            throw new IllegalArgumentException("Directory path must not be empty");
+        if (dir.isEmpty()) {
+            if (workspace.selections().isEmpty())
+                throw new IllegalArgumentException("Workspace has no selected domain folders");
+            dir = workspace.selections().get(0).folder();
+        }
+        requireSelectionPath(workspace, dir);
         storage.createDirectory(workspaceId, dir);
         logs.log("INFO", user.username(), "CREATE_DIR", dir, workspaceId);
     }
 
     public void deleteDirectory(String workspaceId, String path, Authentication authentication) {
         UserContext user = UserContext.from(authentication);
-        requireOwnWorkspace(workspaceId, user);
+        Workspace workspace = requireOwnWorkspace(workspaceId, user);
         String dir = safeDirectory(path);
         if (dir.isEmpty())
             throw new IllegalArgumentException("Cannot delete the workspace root");
+        requireSelectionPath(workspace, dir);
         storage.deleteDirectory(workspaceId, dir);
         logs.log("INFO", user.username(), "DELETE_DIR", dir, workspaceId);
     }
@@ -229,6 +260,19 @@ public class EditorService {
     // ------------------------------------------------------------------
     // path / ownership guards
     // ------------------------------------------------------------------
+
+    private static String requireSelectionPath(Workspace workspace, String path) {
+        if (selectionForPath(workspace, path) == null)
+            throw new IllegalArgumentException("Path must be inside a selected domain folder: " + path);
+        return path;
+    }
+
+    private static BranchSelection selectionForPath(Workspace workspace, String path) {
+        for (BranchSelection selection : workspace.selections())
+            if (selection.covers(path))
+                return selection;
+        return null;
+    }
 
     /** The identifier (key name) may be edited inline in the form for code scripts. */
     private static boolean keyEditable(YamlMetadataKind kind) {
@@ -274,7 +318,7 @@ public class EditorService {
         if (normalized.contains("..") || normalized.contains("\\"))
             throw new IllegalArgumentException("Illegal directory path: " + path);
         for (String segment : normalized.split("/")) {
-            if (!segment.matches("[A-Za-z0-9._-]+"))
+            if (!segment.matches("[A-Za-z0-9._() -]+"))
                 throw new IllegalArgumentException("Illegal directory name: " + path);
         }
         return normalized;

@@ -4,7 +4,7 @@ The lakehouse management web UI: a single point for visualizing and administerin
 
 ## Overview
 
-`lakehouse-ui-svc` is the service that aggregates data from all the other lakehouse services and provides a single web interface. For the monitoring sections it is a thin aggregation layer: it calls the other services through their REST clients and returns the result to the frontend. Additionally it hosts the **Modelling** surface — an interactive editor for the configuration documents stored in a central Git repository (workspaces, branches, review submission), which is served directly by this service.
+`lakehouse-ui-svc` is the service that aggregates data from all the other lakehouse services and provides a single web interface. For the monitoring sections it is a thin aggregation layer: it calls the other services through their REST clients and returns the result to the frontend. Additionally it hosts the **Modelling** surface — an interactive editor for the configuration documents stored in the Git repositories of the configuration domains (workspaces, branches, review submission), which is served directly by this service. A domain owns its own repository, and a workspace is a set of `(domain, branch)` selections — see [Domains](#domains).
 
 The service consists of two parts:
 
@@ -18,13 +18,13 @@ UI sections:
 - **Schedules** — schedule instance runs for an interval, the schedule instance DAG.
 - **SparkJobs** — Spark submissions through `lakehouse-task-proxy-for-spark`: create, status, kill, kill all, clear.
 - **VCS** — the configuration GitOps synchronization log (commits) and object log of `lakehouse-config-svc`.
-- **Modelling** — the metadata-modelling workbench: create a workspace from a Git branch, create configuration documents of any supported kind (form view driven by a per-kind schema, raw YAML, or the visual editors — **ER Diagram**, **Data Lineage Diagram**, generic **DAG**), create branches, submit changes for review. Workspaces open in a new browser tab via deep links (`?section=modeller&workspace=<id>`).
+- **Modelling** — the metadata-modelling workbench: create a workspace from one or more domain branches, create configuration documents of any supported kind (form view driven by a per-kind schema, raw YAML, or the visual editors — **ER Diagram**, **Data Lineage Diagram**, generic **DAG**), create branches, submit changes for review. Workspaces open in a new browser tab via deep links (`?section=modeller&workspace=<id>`).
 
 ## Architecture
 
 For the read-only/monitoring sections the service is a thin aggregation layer: each UI section is served by its own controller that delegates to the REST client of the corresponding lakehouse service. The service makes no direct database calls for those sections.
 
-The **Modelling** surface is implemented by the UI service itself: it reads and writes configuration documents in workspaces (local FS or S3 object storage), interacts with the central Git repository for that purpose (via jgit or the GitLab/GitHub API), and exposes schema-driven editing metadata. Workspace contents are user-specific working copies that are opened, edited and finally submitted for review; the authoritative store is the Git repository consumed by `lakehouse-config-svc` (GitOps).
+The **Modelling** surface is implemented by the UI service itself: it reads and writes configuration documents in workspaces (local FS or S3 object storage), interacts with the configuration domain repositories for that purpose (via jgit or the GitLab/GitHub API), and exposes schema-driven editing metadata. Workspace contents are user-specific working copies that are opened, edited and finally submitted for review; the authoritative store is the Git repository consumed by `lakehouse-config-svc` (GitOps). A domain repository may be dedicated to a single domain (flat files at the repository root) or host several domains under `domains/<name>/` — both layouts are supported.
 
 External interactions:
 
@@ -32,7 +32,7 @@ External interactions:
 - **lakehouse-scheduler-svc** — schedule instance runs for an interval, the run DAG.
 - **lakehouse-state-svc** — dataset interval states.
 - **lakehouse-task-proxy-for-spark** — Spark submissions (create, status, kill, clear).
-- **Git repository (GitOps)** — central config repository (via `LAKEHOUSE_GIT_URL`); the modeller clones it per workspace, creates branches and submits changes for review.
+- **Git repositories (GitOps)** — one repository per configuration domain (`lakehouse.modeller.domains.<name>.repository-url`, with `lakehouse.modeller.git.remote-url` as the legacy single-repository fallback); the modeller clones the selected `(domain, branch)` pair per workspace, creates branches and submits changes for review.
 
 Controllers (top-level `controller`):
 
@@ -58,6 +58,123 @@ AdminController  /api/admin        — admin-only: all workspaces, cleanup TTL, 
 Service statuses are computed by `HealthChecker`: either an HTTP request to `healthCheckUrl` (type `http`) or a TCP port probe (type `tcp`). The set of services, graph edges and vertices are defined by the `lakehouse.ui.services/edges/vertices` configuration.
 
 The frontend is built with Vite (the `frontend` directory), and the build output goes to `src/main/resources/static`. In dev mode Vite proxies `/api` to the service (`vite.config.js`).
+
+## Domains
+
+A **domain** is the unit of isolation of the configuration in `lakehouse-config-svc`: every
+domain owns its own Git repository, and every construct loaded from it is stamped with the
+domain name as `domainKeyName`. That is an ownership label, not part of the identity -
+`keyName` stays global, so the modeller never has to disambiguate a name by domain. The
+modeller
+does not invent domains — it presents them. A configured domain repository is a root of the
+branch panel, and a workspace is a set of `(domain, branch)` selections across those
+repositories. See
+[config-svc: Domains](../../lakehouse-config-svc/doc/content_configuration/domains.md).
+
+### One repository (and one branch) per domain
+
+`ModellerProperties` (prefix `lakehouse.modeller`) declares a `domains` map:
+
+```yaml
+lakehouse:
+  modeller:
+    domains:                        # <domainKeyName>:
+      platform:                     #   repository-url: ...
+        repository-url: git://git-server:9418/platform.git
+        branch-main: main
+      analytics:
+        repository-url: git://git-server:9418/analytics.git
+        branch-main: main
+    git:                            # legacy single-repository fallback
+      remote-url: ${LAKEHOUSE_GIT_URL:}
+      branch-main: main
+```
+
+Resolution rules:
+
+| Rule | Behaviour |
+|---|---|
+| Domain list | `domainNames()` is the `domains` keys **sorted alphabetically**; the modeller has no domain tree and no `priority` |
+| No `domains` | falls back to the single domain `default` if `git.remote-url` is set; an empty list otherwise |
+| Repository URL | per-domain `repository-url`, else legacy `git.remote-url`, else the domain is unusable |
+| Main branch | per-domain `branch-main`, else legacy `git.branch-main`, else `main` |
+| Unavailable repository | the domain is listed with an **empty** branch list (the branch panel still shows the root), it is not an error |
+| Missing repository URL | a hard error: `No repository URL configured for domain <name> (lakehouse.modeller.domains.<name>.repository-url)` |
+
+`branch-main` is also the **target branch of a review**: a submission is merged back into
+`domainBranchMain(domain)` of its own domain.
+
+### The branch panel is a domain tree
+
+`GET /api/vcs/branches` returns one `DomainBranchesResponse` per configured domain -
+`{domain, branches[], branchMain}` - and the frontend renders it as a tree with the domains at
+the root and their branches hanging off them. `POST /api/vcs/branch` takes
+`{domain, branch, baseBranch}`, so a branch is always created in a named domain repository.
+
+### A workspace is a set of `(domain, branch)` pairs
+
+`POST /api/vcs/workspace` takes `branches: [{domain, branch}, ...]`:
+
+- at least one selection is required, and every entry needs a non-blank `domain` **and**
+  `branch`;
+- a domain not listed in the request is simply not part of the workspace;
+- the workspace id is `md5(username + "|" + sorted "domain=branch" pairs)`, so the same user
+  reopening the same selection set gets the same workspace;
+- each selection is checked out into its **own folder** named `<domain> (<branch>)`, so the
+  file tree of a multi-domain workspace looks like `platform (feature-a)/ … analytics (main)/ …`;
+- the selection list is persisted in `_workspace.json` and returned in `WorkspaceResponse`.
+
+Inside the workspace, `domainKeyName` is **not editable**. It is excluded from every form
+schema (`SchemaService.DERIVED_PROPERTIES`) because the domain is derived from the repository
+a construct is submitted to, not from the file content — the same YAML is valid in every
+domain. A repository may also be shared: if it hosts several domains under `domains/<name>/`,
+the workspace keeps only the subtree of the selected domain and strips the prefix, so a
+workspace folder never contains a `domains/` level.
+
+### Review is submitted per domain
+
+`POST /api/vcs/review/{workspaceId}` takes only `{comment, commitMessage}` — the split is
+derived server-side:
+
+- the workspace files are grouped by the `<domain> (<branch>)` folder that covers them; a file
+  outside every selected domain folder is rejected;
+- each group is committed to its own `(domain, branch)` with the user as author and the
+  technical service account as committer, pushed to the domain branch and — for
+  GitLab/GitHub — turned into an MR/PR against `branch-main` of that domain;
+- a domain whose diff is empty is skipped (`NO_CHANGES`);
+- the aggregate answer is `OK` (with the MR/PR URLs, comma-joined when there are several) or
+  `NO_CHANGES` when nothing changed at all;
+- **the workspace is deleted only on success** — a failed submission leaves it open;
+- a user must own the workspace (or be `ADMIN`), and the whole submission runs under a
+  per-workspace lock.
+
+### Domain as a filter of the VCS logs
+
+The VCS sections read the synchronization history of `lakehouse-config-svc`, which is
+per domain. Both read-only endpoints accept a `domainKeyName` filter, and both tables show
+the `Domain Key Name` column:
+
+| Endpoint | Filters |
+|---|---|
+| `GET /api/vcs/logs` | `status`, `commitId`, `domainKeyName` |
+| `GET /api/vcs/objects` | `commitId`, `kind`, `from`, `to`, `filePath`, `objectName`, `domainKeyName` |
+
+The filter is passed through the REST client to config-svc unchanged, so the UI shows exactly
+what the configuration service recorded for a given domain.
+
+### Configuration reference
+
+| Property | Description |
+|---|---|
+| `lakehouse.modeller.domains.<name>.repository-url` | Repository of the domain; required for the domain to appear in the branch panel |
+| `lakehouse.modeller.domains.<name>.branch-main` | Main branch of the domain (default `main`), also the review target |
+| `lakehouse.modeller.git.remote-url` | Legacy fallback, used when `domains` is empty; the domain is named `default` |
+| `lakehouse.modeller.git.branch-main` | Legacy fallback main branch (default `main`) |
+
+Per-domain environment variables are not declared in the shipped `application.yml`; a
+deployment supplies them, e.g. as system properties
+(`-Dlakehouse.modeller.domains.platform.repository-url=...`, as `demo/compose` does) or via
+relaxed-binding environment variables.
 
 ## Modules
 
@@ -109,16 +226,16 @@ Depends on: `lakehouse-common` (shared constants and config DTOs used by the edi
 | POST | `/api/spark-proxy/submissions/killall` | Kill all submissions |
 | POST | `/api/spark-proxy/submissions/clear` | Clear completed submissions |
 | POST | `/api/states` | Dataset interval states (`dataSetKeyName`, `fromDate`, `toDate`) |
-| GET | `/api/vcs/logs` | GitOps sync log (commits) with filters |
-| GET | `/api/vcs/objects` | GitOps object log (changed configuration objects) |
+| GET | `/api/vcs/logs` | GitOps sync log (commits), filters `status`, `commitId`, `domainKeyName` |
+| GET | `/api/vcs/objects` | GitOps object log (changed configuration objects), filters `commitId`, `kind`, `from`, `to`, `filePath`, `objectName`, `domainKeyName` |
 | GET | `/api/user` | Current user profile (`username`, `roles`, `effectiveRole`) |
 | GET | `/api/vcs/workspaces` | Workspaces of the current user |
-| POST | `/api/vcs/workspace` | Open a workspace for a branch (creates a working copy) |
+| POST | `/api/vcs/workspace` | Open a workspace for a list of `{domain, branch}` selections (creates a working copy) |
 | DELETE | `/api/vcs/workspace/{workspaceId}` | Delete the user's workspace |
-| GET | `/api/vcs/branches` | Available branches of the config repository |
-| POST | `/api/vcs/branch` | Create a branch (`branch`, `baseBranch`) |
-| POST | `/api/vcs/review/{workspaceId}` | Submit the workspace for review (commit + comment) |
-| POST | `/api/vcs/workspace/{workspaceId}/restore` | Restore a file/folder from the VCS state |
+| GET | `/api/vcs/branches` | Branches grouped by domain: one entry per configured domain repository |
+| POST | `/api/vcs/branch` | Create a branch in a domain repository (`domain`, `branch`, `baseBranch`) |
+| POST | `/api/vcs/review/{workspaceId}` | Submit the workspace for review, split per domain (`comment`, `commitMessage`); answer `OK` or `NO_CHANGES` |
+| POST | `/api/vcs/workspace/{workspaceId}/restore` | Restore a file/folder from the VCS state; the owning domain is resolved from the path |
 | GET | `/api/schema` | Form schemas of all configuration kinds |
 | GET | `/api/schema/{kind}` | Form schema of one configuration kind |
 | GET | `/api/workspaces/{workspaceId}/tree` | File tree of the workspace |
@@ -183,9 +300,18 @@ lakehouse:
         secret-key: ...
         region: us-east-1
       cleanup-ttl-hours: 4
-    vcs-provider: local-git      # [local-git, gitlab-api, github-app, gerrit-ssh, disabled]
-    git:
-      remote-url: ${LAKEHOUSE_GIT_URL}
+    vcs-provider: local-git      # [local-git, gitlab-api, github-app, gerrit-ssh]
+    # One repository per configuration domain. When `domains` is empty the legacy
+    # `git.*` block below is used as the single domain `default`.
+    domains:
+      platform:
+        repository-url: git://git-server:9418/platform.git
+        branch-main: main
+      analytics:
+        repository-url: git://git-server:9418/analytics.git
+        branch-main: main
+    git:                        # legacy single-repository fallback
+      remote-url: ${LAKEHOUSE_GIT_URL:}
       branch-main: main
     auth-strategy: jwt-rbac      # [jwt-rbac, token-exchange]
     session:
@@ -219,8 +345,10 @@ lakehouse:
 | `lakehouse.modeller.storage.s3.*` | S3 endpoint/bucket/credentials (S3 type) |
 | `lakehouse.modeller.storage.cleanup-ttl-hours` | Lifetime of an inactive workspace (default 4 h) |
 | `lakehouse.modeller.vcs-provider` | Git integration: `local-git`, `gitlab-api`, `github-app`, `gerrit-ssh` or `disabled` |
-| `lakehouse.modeller.git.remote-url` | Central config repository URL |
-| `lakehouse.modeller.git.branch-main` | Main branch name |
+| `lakehouse.modeller.domains.<name>.repository-url` | Repository URL of the domain (required for a domain to be listed in the branch panel) |
+| `lakehouse.modeller.domains.<name>.branch-main` | Main branch of the domain (default `main`); also the review target branch |
+| `lakehouse.modeller.git.remote-url` | Legacy fallback repository URL, used when `domains` is empty; the domain is then named `default` |
+| `lakehouse.modeller.git.branch-main` | Legacy fallback main branch (default `main`) |
 | `lakehouse.modeller.auth-strategy` | `jwt-rbac` (default) or `token-exchange` |
 | `lakehouse.modeller.session.inactivity-minutes` | Workspace session inactivity timeout |
 | `lakehouse.modeller.vcs-system-account.*` | Credentials used for git operations (`ssh`/`token`/`basic`) |
@@ -260,8 +388,8 @@ Rules are applied in `SecurityConfig` (`/api/admin/**` → ADMIN; `/api/workspac
 | `LAKEHOUSE_UI_REDIRECT_URI` | `{baseUrl}/login/oauth2/code/{registrationId}` | OAuth2 redirect URI of the BFF |
 | `KEYCLOAK_INTERNAL_CLIENT_SECRET` | `super-secret-internal-key-987654321` | Secret of the `lakehouse-internal-client` (service-to-service calls) |
 | `LAKEHOUSE_VCS_PROVIDER` | `local-git` | Git provider for the modeller |
-| `LAKEHOUSE_GIT_URL` | — | Central config repository URL |
-| `LAKEHOUSE_GIT_BRANCH` | `main` | Main branch |
+| `LAKEHOUSE_GIT_URL` | — | Legacy fallback config repository URL (used when no domain is configured) |
+| `LAKEHOUSE_GIT_BRANCH` | `main` | Legacy fallback main branch |
 | `LAKEHOUSE_VCS_AUTH_TYPE` / `LAKEHOUSE_VCS_USER` / `LAKEHOUSE_VCS_TOKEN` / `LAKEHOUSE_VCS_PASSWORD` / `LAKEHOUSE_VCS_SSH_KEY_PATH` | — | Git system-account credentials |
 | `LAKEHOUSE_WORKSPACE_STORAGE` / `LAKEHOUSE_WORKSPACE_ROOT` | `local` / `/tmp/lakehouse-workspaces` | Workspace storage backend |
 | `LAKEHOUSE_WORKSPACE_TTL_HOURS` | `4` | Inactive-workspace cleanup TTL |

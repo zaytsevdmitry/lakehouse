@@ -18,7 +18,7 @@
 
 ![services.png](services.png)
 
-- **config-svc** — источник конфигураций. Расписания публикуются в Kafka (topic `schedule_effective_changes`), остальное отдается через REST.
+- **config-svc** — источник конфигураций. Изменения конфигураций публикуются в Kafka (topic `configuration_changes`) как `ConfigurationChangeDTO`, остальное отдается через REST.
 - **scheduler-svc** — потребляет изменения расписаний из Kafka, при построении задач запрашивает у config-svc эффективные конфигурации задач (`getEffectiveTaskDTO`) и источник (`getSourceConfDTO`). Готовые к выполнению задачи публикует в Kafka (topic `scheduled_task_msg`). Предоставляет REST для блокировок.
 - **task-executor-svc** — потребляет `scheduled_task_msg`, блокирует задачу в scheduler-svc (`lockTaskById`), получает конфигурацию источника из config-svc, ведет состояния интервалов в state-svc, для spark-задач отправляет задание через spark REST `/v1/submissions` (напрямую или через task-proxy-for-spark). По завершении возвращает результат (release) и уведомляет heartbeat'ом.
 - **state-svc** — хранит состояния интервалов датасетов; используется task-executor-svc для установки LOCKED/SUCCESS и проверки «дыр».
@@ -28,8 +28,8 @@
 
 ![services-sequence.png](services-sequence.png)
 
-1. config-svc публикует изменения расписаний в Kafka (topic `schedule_effective_changes`) как `ScheduleEffectiveDTO`.
-2. scheduler-svc потребляет `ScheduleEffectiveDTO`, при построении экземпляра задачи запрашивает у config-svc эффективную конфигурацию задачи (`TaskDTO`) и формирует `ScheduleTaskInstance`.
+1. config-svc публикует изменения конфигураций в Kafka (topic `configuration_changes`) как `ConfigurationChangeDTO` (kind `Schedule`, action `SAVE`, object `ScheduleEffectiveDTO`).
+2. scheduler-svc потребляет `ConfigurationChangeDTO`, при построении экземпляра задачи запрашивает у config-svc эффективную конфигурацию задачи (`TaskDTO`) и формирует `ScheduleTaskInstance`.
 3. scheduler-svc публикует `ScheduledTaskMsgDTO` в Kafka (topic `scheduled_task_msg`).
 4. task-executor-svc потребляет `ScheduledTaskMsgDTO`, блокирует задачу в scheduler-svc (`lockTaskById`), получая полное описание задачи (`ScheduledTaskLockDTO`).
 5. task-executor-svc получает конфигурацию источника (`SourceConfDTO`) из config-svc, переводит интервал датасета в состояние LOCKED в state-svc.

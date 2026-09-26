@@ -1,11 +1,13 @@
 package org.lakehouse.ui.modeller.dto;
 
+import org.lakehouse.ui.modeller.workspace.BranchSelection;
+
 import java.util.List;
 
 /**
- * Body for opening (creating) a workspace on a given branch.
+ * Body for opening (creating) a workspace on a set of branches — one per selected
+ * domain repository. Unlisted domains are simply not part of the workspace.
  */
 public record WorkspaceOpenRequest(
-        String branch,
-        List<String> files) {
+        List<BranchSelection> branches) {
 }

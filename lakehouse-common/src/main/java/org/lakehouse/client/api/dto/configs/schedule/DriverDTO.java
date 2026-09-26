@@ -22,6 +22,7 @@ import org.lakehouse.client.api.dto.common.SQLTemplateDTO;
 import java.util.Objects;
 
 public class DriverDTO {
+    private String domainKeyName;
     private String keyName;
     private String description;
     private SQLTemplateDTO sqlTemplate;
@@ -31,6 +32,14 @@ public class DriverDTO {
 
     public void setKeyName(String keyName) {
         this.keyName = keyName;
+    }
+
+    public String getDomainKeyName() {
+        return domainKeyName;
+    }
+
+    public void setDomainKeyName(String domainKeyName) {
+        this.domainKeyName = domainKeyName;
     }
 
 

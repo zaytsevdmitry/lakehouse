@@ -18,21 +18,28 @@
 package org.lakehouse.config.service;
 
 import jakarta.transaction.Transactional;
+import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.configs.schedule.TaskExecutionServiceGroupDTO;
 import org.lakehouse.config.entities.TaskExecutionServiceGroup;
 import org.lakehouse.config.exception.VcsManagedException;
 import org.lakehouse.config.exception.TaskExecutionServiceGroupNotFoundException;
+import org.lakehouse.config.produce.TaskExecutionServiceGroupConfigurationResolver;
 import org.lakehouse.config.repository.TaskExecutionServiceGroupRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class TaskExecutionServiceGroupService {
     private final TaskExecutionServiceGroupRepository taskExecutionServiceGroupRepository;
+    private final ConfigurationProduceService configurationProduceService;
 
-    public TaskExecutionServiceGroupService(TaskExecutionServiceGroupRepository taskExecutionServiceGroupRepository) {
+    public TaskExecutionServiceGroupService(
+            TaskExecutionServiceGroupRepository taskExecutionServiceGroupRepository,
+            ConfigurationProduceService configurationProduceService) {
         this.taskExecutionServiceGroupRepository = taskExecutionServiceGroupRepository;
+        this.configurationProduceService = configurationProduceService;
     }
 
     private TaskExecutionServiceGroupDTO mapTaskExecutionServiceGroupToDTO(
@@ -40,6 +47,10 @@ public class TaskExecutionServiceGroupService {
         TaskExecutionServiceGroupDTO result = new TaskExecutionServiceGroupDTO();
         result.setName(taskExecutionServiceGroup.getKeyName());
         result.setDescription(taskExecutionServiceGroup.getDescription());
+        result.setDomainKeyName(taskExecutionServiceGroup.getDomainKeyName());
+        result.setAllowedDomains(taskExecutionServiceGroup.getAllowedDomains() == null
+                ? new ArrayList<>()
+                : new ArrayList<>(taskExecutionServiceGroup.getAllowedDomains()));
         return result;
 
     }
@@ -49,9 +60,12 @@ public class TaskExecutionServiceGroupService {
         TaskExecutionServiceGroup result = new TaskExecutionServiceGroup();
         result.setKeyName(taskExecutionServiceGroupDTO.getName());
         result.setDescription(taskExecutionServiceGroupDTO.getDescription());
+        result.setDomainKeyName(taskExecutionServiceGroupDTO.getDomainKeyName());
+        result.setAllowedDomains(taskExecutionServiceGroupDTO.getAllowedDomains());
         return result;
     }
 
+    @Transactional
     public List<TaskExecutionServiceGroupDTO> findAll() {
         return taskExecutionServiceGroupRepository.findAll().stream().map(this::mapTaskExecutionServiceGroupToDTO)
                 .toList();
@@ -72,9 +86,13 @@ public class TaskExecutionServiceGroupService {
             TaskExecutionServiceGroupDTO taskExecutionServiceGroupDTO, boolean vcsManaged) {
         TaskExecutionServiceGroup group = mapTaskExecutionServiceGroupToEntity(taskExecutionServiceGroupDTO);
         group.setVcsManaged(vcsManaged);
-        return mapTaskExecutionServiceGroupToDTO(taskExecutionServiceGroupRepository.save(group));
+        TaskExecutionServiceGroup saved = taskExecutionServiceGroupRepository.save(group);
+        configurationProduceService.produce(
+                TaskExecutionServiceGroupConfigurationResolver.KIND, saved.getKeyName(), Types.configAction.SAVE);
+        return mapTaskExecutionServiceGroupToDTO(saved);
     }
 
+    @Transactional
     public TaskExecutionServiceGroupDTO findById(String name) {
         return mapTaskExecutionServiceGroupToDTO(taskExecutionServiceGroupRepository.findById(name)
                 .orElseThrow(() -> new TaskExecutionServiceGroupNotFoundException(name)));
@@ -83,6 +101,8 @@ public class TaskExecutionServiceGroupService {
     @Transactional
     public void deleteById(String name) {
         rejectIfVcsManaged(name, "deleted");
+        configurationProduceService.produce(
+                TaskExecutionServiceGroupConfigurationResolver.KIND, name, Types.configAction.DELETE);
         taskExecutionServiceGroupRepository.deleteById(name);
     }
 

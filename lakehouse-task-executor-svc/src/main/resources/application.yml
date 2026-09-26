@@ -36,6 +36,15 @@ lakehouse:
       sparkStandAloneClusterTaskProcessor:
         maxWaitToRunningStateTimeoutMs: 120000
         sparkJobStatusCheckIntervalMs: 3000
+    domains:
+      platform:
+        lakehousestorage:
+          service-properties: # keys are domain/data-source specific, hence a free-form map
+            secretProvider: org.lakehouse.security.jdbc.BaoJdbcSecretProvider
+            secret-key: "kv/data/lakehouse/database:password"
+            vault-url: "http://openbao:8200"
+            user: postgresUser
+            fetchSize: "10000"
     service:
       heart-beat-initial-delaY-ms: 5000
       heart-beat-interval-ms: 5000 # must be lower than lakehouse.scheduler.task.retry.delay-ms

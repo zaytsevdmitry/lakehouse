@@ -148,8 +148,17 @@ lakehouse:
 
     vcs-provider: ${LAKEHOUSE_VCS_PROVIDER:local-git}     # [local-git, gitlab-api, github-app, gerrit-ssh]
     git:
-      remote-url: ${LAKEHOUSE_GIT_URL:}
+      remote-url: ${LAKEHOUSE_GIT_URL:}                  # legacy single-repository fallback
       branch-main: ${LAKEHOUSE_GIT_BRANCH:main}
+    # Domain-aware VCS model: one repository (optionally several branches) per domain.
+    # When no domains are configured the branch panel falls back to the legacy repository above.
+    # domains:
+    #   platform:
+    #     repository-url: git://git-server:9418/config-repo.git   # or ${LAKEHOUSE_MODELLER_DOMAIN_PLATFORM_URL:}
+    #     branch-main: main
+    #   analytics:
+    #     repository-url: ${LAKEHOUSE_MODELLER_DOMAIN_ANALYTICS_URL:}
+    #     branch-main: ${LAKEHOUSE_MODELLER_DOMAIN_ANALYTICS_BRANCH:main}
 
     auth-strategy: ${LAKEHOUSE_AUTH_STRATEGY:jwt-rbac}    # [jwt-rbac, token-exchange]
 

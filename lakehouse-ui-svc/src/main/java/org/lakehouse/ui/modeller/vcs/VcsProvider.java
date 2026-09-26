@@ -18,19 +18,20 @@ public interface VcsProvider {
 
     /**
      * Content of a branch as a path-to-YAML map, used to seed workspaces on first open.
+     * {@code domain} selects the repository the branch belongs to.
      */
-    Map<String, String> readBranchFiles(String branch) throws VcsProviderException;
+    Map<String, String> readBranchFiles(String domain, String branch) throws VcsProviderException;
 
     /**
-     * Branches currently available in the central repository.
+     * Branches currently available in the repository of the given domain.
      */
-    java.util.List<String> listBranches() throws VcsProviderException;
+    java.util.List<String> listBranches(String domain) throws VcsProviderException;
 
     /**
-     * Creates a new branch in the central repository (spec section 7), usually forked
-     * from the main branch.
+     * Creates a new branch in the repository of the given domain (spec section 7), usually
+     * forked from the main branch.
      */
-    void createBranch(String branch, String baseBranch) throws VcsProviderException;
+    void createBranch(String domain, String branch, String baseBranch) throws VcsProviderException;
 
     /**
      * Commits the workspace files with the given user as author, pushes them to the

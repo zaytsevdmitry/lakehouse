@@ -30,6 +30,7 @@ import java.util.Objects;
  */
 
 public class QualityMetricsConfDTO {
+    private String domainKeyName;
     private String dataSetKeyName;
     private String keyName;
     private String description;
@@ -43,6 +44,14 @@ public class QualityMetricsConfDTO {
     private QualityMetricsConfTestSetDTO metric;
 
     public QualityMetricsConfDTO() {
+    }
+
+    public String getDomainKeyName() {
+        return domainKeyName;
+    }
+
+    public void setDomainKeyName(String domainKeyName) {
+        this.domainKeyName = domainKeyName;
     }
 
     public boolean isSave() {

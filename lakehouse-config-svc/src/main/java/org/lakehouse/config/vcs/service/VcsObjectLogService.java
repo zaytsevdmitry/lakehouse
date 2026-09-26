@@ -41,8 +41,8 @@ public class VcsObjectLogService {
 
     /**
      * Searches object log entries either by commit id, or within the given datetime
-     * interval, narrowing optionally by kind, file path (substring, case-insensitive)
-     * and object name (substring, case-insensitive).
+     * interval, narrowing optionally by kind, file path (substring, case-insensitive),
+     * object name (substring, case-insensitive) and domain.
      */
     @Transactional(readOnly = true)
     public List<VcsObjectLogDTO> find(
@@ -51,7 +51,8 @@ public class VcsObjectLogService {
             OffsetDateTime from,
             OffsetDateTime to,
             String filePath,
-            String objectName) {
+            String objectName,
+            String domainKeyName) {
         Specification<VcsObjectLog> spec;
         if (commitId != null && !commitId.isBlank()) {
             spec = (root, query, cb) -> cb.equal(root.get("commitId"), commitId);
@@ -68,6 +69,8 @@ public class VcsObjectLogService {
         if (objectName != null && !objectName.isBlank())
             spec = spec.and((root, query, cb) ->
                     cb.like(cb.lower(root.get("objectName")), "%" + objectName.toLowerCase() + "%"));
+        if (domainKeyName != null && !domainKeyName.isBlank())
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("domainKeyName"), domainKeyName));
         return vcsObjectLogRepository.findAll(spec).stream().map(this::mapToDTO).toList();
     }
 
@@ -79,6 +82,7 @@ public class VcsObjectLogService {
         dto.setKind(log.getKind());
         dto.setFilePath(log.getFilePath());
         dto.setCommitId(log.getCommitId());
+        dto.setDomainKeyName(log.getDomainKeyName());
         return dto;
     }
 }

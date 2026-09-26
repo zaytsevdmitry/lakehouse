@@ -2,6 +2,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { api } from '../api.js';
 import Modal from './Modal';
 
+const labelOf = (ws) =>
+  (ws.branches || []).map((sel) => `${sel.domain} (${sel.branch})`).join(', ') || ws.id;
+
 export default function AdminView({ profile, onNotice }) {
   const [workspaces, setWorkspaces] = useState([]);
   const [ttl, setTtl] = useState(0);
@@ -30,7 +33,7 @@ export default function AdminView({ profile, onNotice }) {
   }, [loadWorkspaces, loadTtl, loadLogs]);
 
   const forceDelete = async (ws) => {
-    if (!window.confirm(`Force-delete workspace for branch "${ws.branch}" (${ws.owner})?`)) return;
+    if (!window.confirm(`Force-delete workspace for "${labelOf(ws)}" (${ws.owner})?`)) return;
     setBusy(true);
     try {
       await api(`/api/admin/workspaces/${encodeURIComponent(ws.id)}`, { method: 'DELETE' });
@@ -82,7 +85,7 @@ export default function AdminView({ profile, onNotice }) {
             <tbody>
               {workspaces.map((ws) => (
                 <tr key={ws.id}>
-                  <td>{ws.branch}</td>
+                  <td>{labelOf(ws)}</td>
                   <td>{ws.owner}</td>
                   <td>{new Date(ws.createdAt).toLocaleString()}</td>
                   <td>{new Date(ws.lastAccessedAt).toLocaleString()}</td>

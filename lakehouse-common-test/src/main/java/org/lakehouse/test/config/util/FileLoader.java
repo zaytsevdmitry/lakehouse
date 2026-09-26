@@ -18,7 +18,6 @@
 package org.lakehouse.test.config.util;
 
 import tools.jackson.databind.ObjectMapper;
-import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.configs.schedule.*;
@@ -56,10 +55,6 @@ public class FileLoader {
             }
         }
         return result;
-    }
-
-    public NameSpaceDTO loadNameSpaceDTO() throws IOException {
-        return objectMapper.readValue(new File(rootPath.concat("/name-spaces/demo.json")), NameSpaceDTO.class);
     }
 
     public TaskExecutionServiceGroupDTO loadTaskExecutionServiceGroupDTO() throws IOException {

@@ -58,6 +58,7 @@ public class ScheduleTaskInstance {
     @Column(nullable = false, columnDefinition = "int default -1")
     private Integer maxRetries = -1;
 
+
     private String serviceId;
 
     private String causes;

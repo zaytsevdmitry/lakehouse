@@ -41,14 +41,14 @@ lakehouse:
             properties: # https://kafka.apache.org/41/configuration/producer-configs/
               bootstrap.servers: localhost:9092
     config:
-      schedule:
-        kafka: # consumer для получения изменений расписаний от сервиса конфигурации
+      change:
+        kafka: # consumer для получения изменений конфигурации от сервиса конфигурации
           consumer:
             properties: # https://kafka.apache.org/41/configuration/consumer-configs/
               bootstrap.servers: localhost:9092
               group.id: scheduler
               auto.offset.reset: earliest
-            topics: schedule_effective_changes # топик с изменениями расписаний
+            topics: configuration_changes # топик с изменениями конфигурации
             concurrency: 1 # число потоков потребления
     registration: # Периодичность регистрации (формирования) новых расписаний
       delay-ms: 6000

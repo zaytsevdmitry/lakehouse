@@ -47,7 +47,8 @@ public class VcsSyncLogController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) String commitId) {
-        return vcsSyncLogService.find(from, to, status, commitId);
+            @RequestParam(required = false) String commitId,
+            @RequestParam(required = false) String domainKeyName) {
+        return vcsSyncLogService.find(from, to, status, commitId, domainKeyName);
     }
 }

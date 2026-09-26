@@ -21,7 +21,6 @@ import org.apache.hc.core5.http.HttpStatus;
 import org.lakehouse.client.api.constant.SystemVarKeys;
 import org.lakehouse.client.api.dto.vcs.VcsObjectLogDTO;
 import org.lakehouse.client.api.dto.vcs.VcsSyncLogDTO;
-import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
 import org.lakehouse.client.api.dto.configs.ScriptReferenceDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetLineageDTO;
@@ -82,12 +81,6 @@ public class ConfigRestClientApiTest extends ConfigRestClientApiAbstract {
         return driverDTOMap.get(name);
     }
 
-    @Override
-    public NameSpaceDTO getNameSpaceDTO(String NameSpaceName) {
-        return null;
-    }
-
-    @Override
     public DataSourceDTO getDataSourceDTO(String name) {
         return dataStoreDTOMap.get(name);
     }
@@ -187,11 +180,6 @@ public class ConfigRestClientApiTest extends ConfigRestClientApiAbstract {
     }
 
     @Override
-    public List<NameSpaceDTO> getNameSpaceDTOList() {
-        return List.of();
-    }
-
-    @Override
     public List<DataSourceDTO> getDataSourceDTOList() {
         return List.of();
     }
@@ -241,23 +229,18 @@ public class ConfigRestClientApiTest extends ConfigRestClientApiAbstract {
     }
 
     @Override
-    public List<VcsSyncLogDTO> getVcsSyncLogDTOList(OffsetDateTime from, OffsetDateTime to, String status, String commitId) {
+    public List<VcsSyncLogDTO> getVcsSyncLogDTOList(OffsetDateTime from, OffsetDateTime to, String status, String commitId, String domainKeyName) {
         return List.of();
     }
 
     @Override
-    public List<VcsObjectLogDTO> getVcsObjectLogDTOList(String commitId, String kind, OffsetDateTime from, OffsetDateTime to, String filePath, String objectName) {
+    public List<VcsObjectLogDTO> getVcsObjectLogDTOList(String commitId, String kind, OffsetDateTime from, OffsetDateTime to, String filePath, String objectName, String domainKeyName) {
         return List.of();
     }
 
     @Override
     public int deleteDriverDTO(String name) {
         return 0;
-    }
-
-    @Override
-    public int deleteNameSpaceDTO(String NameSpaceName) {
-        return HttpStatus.SC_NOT_IMPLEMENTED;
     }
 
     @Override
@@ -288,11 +271,6 @@ public class ConfigRestClientApiTest extends ConfigRestClientApiAbstract {
     @Override
     public int postDriverDTO(DriverDTO o) {
         return 0;
-    }
-
-    @Override
-    public int postNameSpaceDTO(NameSpaceDTO o) {
-        return HttpStatus.SC_NOT_IMPLEMENTED;
     }
 
     @Override

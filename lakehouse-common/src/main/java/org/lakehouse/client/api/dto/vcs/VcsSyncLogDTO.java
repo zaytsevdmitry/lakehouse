@@ -32,6 +32,7 @@ public class VcsSyncLogDTO implements Serializable {
     private OffsetDateTime syncDateTime;
     private String status;
     private String errorMessage;
+    private String domainKeyName;
 
     public VcsSyncLogDTO() {
     }
@@ -74,6 +75,14 @@ public class VcsSyncLogDTO implements Serializable {
 
     public void setErrorMessage(String errorMessage) {
         this.errorMessage = errorMessage;
+    }
+
+    public String getDomainKeyName() {
+        return domainKeyName;
+    }
+
+    public void setDomainKeyName(String domainKeyName) {
+        this.domainKeyName = domainKeyName;
     }
 
     @Override

@@ -27,8 +27,17 @@ import java.util.Objects;
 public class ScriptDTO {
     private String key;
     private String value;
+    private String domainKeyName;
 
     public ScriptDTO() {
+    }
+
+    public String getDomainKeyName() {
+        return domainKeyName;
+    }
+
+    public void setDomainKeyName(String domainKeyName) {
+        this.domainKeyName = domainKeyName;
     }
 
     public String getKey() {

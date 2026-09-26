@@ -1,0 +1,5 @@
+kind: TaskExecutionServiceGroup
+name: database
+allowedDomains:
+  - processing
+description: Database jdbc group

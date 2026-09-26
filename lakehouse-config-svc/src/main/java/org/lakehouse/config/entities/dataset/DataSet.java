@@ -19,7 +19,6 @@ package org.lakehouse.config.entities.dataset;
 
 import jakarta.persistence.*;
 import org.lakehouse.config.entities.KeyEntityAbstract;
-import org.lakehouse.config.entities.NameSpace;
 import org.lakehouse.config.entities.datasource.DataSource;
 
 import java.util.Objects;
@@ -27,9 +26,8 @@ import java.util.Objects;
 @Entity
 public class DataSet extends KeyEntityAbstract {
 
-    @ManyToOne(optional = false)
-    @JoinColumn(foreignKey = @ForeignKey(name = "data_set__nameSpace_fk"))
-    private NameSpace nameSpace;
+    @Column(nullable = true)
+    private String domainKeyName;
 
     @ManyToOne(optional = false)
     @JoinColumn(foreignKey = @ForeignKey(name = "data_set__data_source_fk"))
@@ -56,12 +54,12 @@ public class DataSet extends KeyEntityAbstract {
         this.isVcsManaged = vcsManaged;
     }
 
-    public NameSpace getNameSpace() {
-        return nameSpace;
+    public String getDomainKeyName() {
+        return domainKeyName;
     }
 
-    public void setNameSpace(NameSpace nameSpace) {
-        this.nameSpace = nameSpace;
+    public void setDomainKeyName(String domainKeyName) {
+        this.domainKeyName = domainKeyName;
     }
 
     public DataSource getDataSource() {
@@ -93,11 +91,11 @@ public class DataSet extends KeyEntityAbstract {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         DataSet dataSet = (DataSet) o;
-        return Objects.equals(getNameSpace(), dataSet.getNameSpace()) && Objects.equals(getDataSource(), dataSet.getDataSource()) && Objects.equals(getDatabaseSchemaName(), dataSet.getDatabaseSchemaName()) && Objects.equals(getTableName(), dataSet.getTableName());
+        return Objects.equals(getDomainKeyName(), dataSet.getDomainKeyName()) && Objects.equals(getDataSource(), dataSet.getDataSource()) && Objects.equals(getDatabaseSchemaName(), dataSet.getDatabaseSchemaName()) && Objects.equals(getTableName(), dataSet.getTableName());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), getNameSpace(), getDataSource(), getDatabaseSchemaName(), getTableName());
+        return Objects.hash(super.hashCode(), getDomainKeyName(), getDataSource(), getDatabaseSchemaName(), getTableName());
     }
 }

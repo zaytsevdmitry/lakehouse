@@ -35,7 +35,7 @@ public class DataSetDTO implements Serializable {
     * */
 
     private String keyName;
-    private String nameSpaceKeyName;
+    private String domainKeyName;
     private String dataSourceKeyName;
     private String databaseSchemaName;
     private String tableName;
@@ -59,12 +59,12 @@ public class DataSetDTO implements Serializable {
         this.keyName = keyName;
     }
 
-    public String getNameSpaceKeyName() {
-        return nameSpaceKeyName;
+    public String getDomainKeyName() {
+        return domainKeyName;
     }
 
-    public void setNameSpaceKeyName(String nameSpaceKeyName) {
-        this.nameSpaceKeyName = nameSpaceKeyName;
+    public void setDomainKeyName(String domainKeyName) {
+        this.domainKeyName = domainKeyName;
     }
 
     public String getDataSourceKeyName() {
@@ -156,7 +156,7 @@ public class DataSetDTO implements Serializable {
         if (o == null || getClass() != o.getClass()) return false;
         DataSetDTO that = (DataSetDTO) o;
         return Objects.equals(getKeyName(), that.getKeyName()) &&
-                Objects.equals(getNameSpaceKeyName(), that.getNameSpaceKeyName()) &&
+                Objects.equals(getDomainKeyName(), that.getDomainKeyName()) &&
                 Objects.equals(getDataSourceKeyName(), that.getDataSourceKeyName()) &&
                 Objects.equals(getDatabaseSchemaName(), that.getDatabaseSchemaName()) &&
                 Objects.equals(getTableName(), that.getTableName()) &&
@@ -172,7 +172,7 @@ public class DataSetDTO implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hash(getKeyName(),
-                getNameSpaceKeyName(),
+                getDomainKeyName(),
                 getDataSourceKeyName(),
                 getDatabaseSchemaName(),
                 getTableName(),
@@ -189,7 +189,7 @@ public class DataSetDTO implements Serializable {
     public String toString() {
         return "DataSetDTO{" +
                 "keyName='" + keyName + '\'' +
-                ", nameSpaceKeyName='" + nameSpaceKeyName + '\'' +
+                ", domainKeyName='" + domainKeyName + '\'' +
                 ", dataSourceKeyName='" + dataSourceKeyName + '\'' +
                 ", databaseSchemaName='" + databaseSchemaName + '\'' +
                 ", tableName='" + tableName + '\'' +

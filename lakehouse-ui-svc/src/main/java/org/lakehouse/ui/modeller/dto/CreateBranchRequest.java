@@ -1,9 +1,10 @@
 package org.lakehouse.ui.modeller.dto;
 
 /**
- * Branch creation request (spec section 7).
+ * Body for creating a branch in the repository of one domain.
  */
 public record CreateBranchRequest(
+        String domain,
         String branch,
         String baseBranch) {
 }

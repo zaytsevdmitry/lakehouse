@@ -6,7 +6,7 @@
 
 `lakehouse-scheduler-svc` отвечает за:
 
-- **Регистрацию расписаний** - получение изменений расписаний из Kafka (topic `schedule_effective_changes`) от config-svc и формирование экземпляров расписаний по интервалам (`intervalExpression`).
+- **Регистрацию расписаний** - получение изменений конфигураций из Kafka (topic `configuration_changes`) от config-svc и формирование экземпляров расписаний по интервалам (`intervalExpression`).
 - **Жизненный цикл расписания** - перевод расписания по статусам NEW → RUNNING → SUCCESS/FAILED.
 - **Сценарии (акты) и задачи** - создание экземпляров сценариев и задач, ведение статусов каждого элемента.
 - **Разрешение зависимостей** - направленные графы `scenarioActEdges` и `dagEdges`: задача/сценарий переводится в SUCCESS только после успеха всех зависимостей.
@@ -17,12 +17,13 @@
 ## Архитектура
 
 ```
-┌──────────────┐   Kafka: schedule_effective_changes   ┌─────────────────────────────────────┐
+┌──────────────┐   Kafka: configuration_changes   ┌─────────────────────────────────────┐
 │ lakehouse-   │ ─────────────────────────────────────▶│          lakehouse-scheduler-svc    │
 │ config-svc   │                                       │                                     │
 └──────────────┘                                       │  ┌───────────────────────────────┐  │
-                                                       │  │ ScheduleConfigConsumerService │  │
-                                                       │  │ (consumes schedule changes)   │  │
+                                                       │  │ ConfigurationChangeConsumer- │  │
+                                                       │  │ Service (consumes Schedule   │  │
+                                                       │  │ changes from config-svc)     │  │
                                                        │  └───────────────────────────────┘  │
 ┌──────────────┐                                       │  ┌───────────────────────────────┐  │
 │ Admin / UI / │  REST (8081)                          │  │ InternalScheduler             │  │
@@ -54,11 +55,81 @@
 - **ManageStateService** - перевод статусов расписаний и сценариев, разрешение зависимостей сценариев, поиск следующего интервала.
 - **ScheduleTaskInstanceService** - жизненный цикл задач: очередь, продюсирование в Kafka, блокировки, heartbeat, release, повторные запуски.
 - **ScheduleEffectiveService** - вычисление следующего интервала по `intervalExpression` (cron/@daily и т.п.).
-- **ScheduleConfigConsumerService** - потребление изменений расписаний из config-svc (Kafka).
+- **ConfigurationChangeConsumerService** - потребление изменений конфигураций из config-svc (Kafka). В области действия два kind: `Schedule` (при сохранении, action SAVE, регистрирует расписание; DELETE только логируется) и `TaskExecutionServiceGroup` (при SAVE кладёт DTO группы в кэш, при DELETE убирает из кэша). Любой другой kind логируется как вне области действия планировщика и игнорируется.
 - **ScheduledTaskDTOProducerService** - публикация задач исполнителям (Kafka).
 - **Factory / Repository (JPA)** - построение и персистентность сущностей.
 
 Структура расписания, статусные модели и диаграммы классов описаны в [scheduling/Scheduling.md](scheduling/Scheduling.md).
+
+## Домены
+
+**Домен** - единица изоляции конфигурации в `lakehouse-config-svc`: каждый домен владеет
+собственным Git-репозиторием, и на каждый загруженный из него конструкт проставляется имя
+домена как `domainKeyName`. Домен - это метка владения, а не часть идентичности: `keyName`
+остаётся сквозным и не повторяется между доменами. Этот сервис доменами не управляет - он их
+потребляет. См.
+[config-svc: Домены](../../lakehouse-config-svc/doc-ru/content_configuration/domains.md).
+
+Планировщик не владеет ни деревом доменов, ни реестром доменов, ни доменной конфигурацией.
+Домен приходит в него ровно в одном месте и используется ровно один раз: как **проверка
+разрешения на уровне задачи**.
+
+### Что получает планировщик
+
+```
+lakehouse-config-svc ──Kafka: configuration_changes──▶ ConfigurationChangeConsumerService
+                                                          ├─ SCHEDULE_KIND  → BuildService.registration(dto)
+                                                          │                  → кэш ScheduleEffectiveService
+                                                          └─ TASK_GROUP_KIND → кэш TaskExecutionServiceGroupConfigService
+
+produceScheduledTasks()  (ScheduleTaskInstanceService)
+  └─ checkDomain(taskDTO, scheduleEffectiveDTO)   ← единственный домен-осознанный участок кода
+       scheduleEffectiveDTO.domainKeyName  ∈  taskGroup.allowedDomains ∪ {taskGroup.domainKeyName}
+```
+
+- **`ScheduleEffectiveDTO.domainKeyName`** - домен расписания, читаемый из сервиса
+  конфигурации через `ScheduleEffectiveService.getScheduleEffectiveDTO(...)`. DTO расписания
+  кэшируется при обработке изменения kind `Schedule` и перечитывается по необходимости.
+- **`TaskExecutionServiceGroupDTO.domainKeyName` и `.allowedDomains`** - домен, которому
+  принадлежит группа исполнителей, и список дополнительных доменов, которые группа вправе
+  обслуживать. DTO группы кэшируется в `TaskExecutionServiceGroupConfigService` при
+  обработке изменения kind `TaskExecutionServiceGroup` и запрашивается по необходимости.
+
+### Проверка домена
+
+`ScheduleTaskInstanceService.checkDomain(taskDTO, scheduleEffectiveDTO)` выполняется для
+каждого сообщения перед публикацией в `scheduled_task_msg`:
+
+1. resolve группу `TaskExecutionServiceGroup` задачи по `taskExecutionServiceGroupName`;
+2. если группа не найдена, залогировать предупреждение и **пропустить** проверку (задача
+   публикуется);
+3. собрать разрешённое множество как `taskGroup.allowedDomains` плюс
+   `taskGroup.domainKeyName` - группа всегда обслуживает собственный домен;
+4. если домен расписания не входит в это множество, бросить
+   `TaskConfigurationException("Domain <домен> not allowed in <группа> taskExecutionServiceGroup")`.
+
+Вызывающий трактует это как ошибку конфигурации: `ScheduleTaskInstance` переводится в
+`CONF_ERROR`, причина пишется в `causes`, отложенное сообщение удаляется и **задача не
+публикуется** - этот путь её не повторяет. Группировка исполнителей, которые фактически
+выполняют задачу, остаётся недоменной: исполнитель берёт задачу по совпадению
+`taskExecutionServiceGroupName` с Kafka `group.id`, поэтому именно проверка домена не даёт
+чужому домену попасть в группу исполнителей.
+
+### Известные ограничения
+
+- `ScheduleInstance.domainKeyName` - nullable-колонка таблицы `schedule_instance`, но её
+  сеттер нигде не вызывается: `ScheduleInstanceFactory.newScheduleInstance(...)` получает
+  `ScheduleEffectiveDTO` и не копирует домен. Колонка всегда `null`, и `ScheduleInstanceDTO`
+  домен тоже не выставляет. Домен всегда читается заново из сервиса конфигурации - поэтому
+  проверка выше и работает.
+- `ScheduledTaskMsgDTO.domainKeyName` - поле, которое должно было бы нести домен
+  опубликованной задачи, - тоже не заполняется. Сообщение о задаче, приходящее к исполнителю,
+  поэтому сегодня несёт `domainKeyName = null`. Ничто в этом сервисе от этого не зависит, а
+  `lakehouse-task-executor-svc` в любом случае резолвит источники данных через сервис
+  конфигурации (см. [task-executor-svc: Домены](../../lakehouse-task-executor-svc/doc-ru/readme.md#домены)).
+- Доменных настроек в этом сервисе нет: свойства `lakehouse.scheduler.*.domains.*`
+  не существуют, и ни один REST-эндпоинт не принимает параметр домена. Все параметры
+  приложения перечислены в [appconf/service_configuration.md](appconf/service_configuration.md).
 
 ## Модули
 

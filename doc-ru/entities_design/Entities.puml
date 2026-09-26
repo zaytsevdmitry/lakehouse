@@ -62,21 +62,24 @@ TaskAbstract --> "1" TaskExecutionServiceGroup : taskExecutionServiceGroup
 class TaskExecutionServiceGroup {
 }
 TaskAbstract --> "1" TaskExecutionServiceGroup : getTaskExecutionServiceGroup()
-class ScheduleProduceMessage [[java:org.lakehouse.config.entities.ScheduleProduceMessage]] {
+class ConfigurationProduceMessage [[java:org.lakehouse.config.entities.ConfigurationProduceMessage]] {
 	-id: Long
-	+ScheduleProduceMessage()
+	-kind: String
+	-keyName: String
+	-createdDateTime: OffsetDateTime
+	+ConfigurationProduceMessage()
+	+ConfigurationProduceMessage(kind: String, keyName: String, createdDateTime: OffsetDateTime)
 	+getId(): Long
 	+setId(id: Long): void
-	+setSchedule(schedule: Schedule): void
+	+getKind(): String
+	+setKind(kind: String): void
+	+getKeyName(): String
+	+setKeyName(keyName: String): void
+	+getCreatedDateTime(): OffsetDateTime
+	+setCreatedDateTime(createdDateTime: OffsetDateTime): void
 	+equals(o: Object): boolean
 	+hashCode(): int
 }
-class Schedule {
-}
-ScheduleProduceMessage --> "1" Schedule : schedule
-class Schedule {
-}
-ScheduleProduceMessage --> "1" Schedule : getSchedule()
 abstract class KeyValueAbstract [[java:org.lakehouse.config.entities.KeyValueAbstract]] {
 	-id: Long
 	-key: String

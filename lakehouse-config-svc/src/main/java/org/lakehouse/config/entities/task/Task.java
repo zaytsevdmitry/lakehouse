@@ -104,7 +104,18 @@ public class Task  {
     @Column(nullable = false)
     private boolean isVcsManaged;
 
+    @Column(nullable = true)
+    private String domainKeyName;
+
     public Task() {
+    }
+
+    public String getDomainKeyName() {
+        return domainKeyName;
+    }
+
+    public void setDomainKeyName(String domainKeyName) {
+        this.domainKeyName = domainKeyName;
     }
 
     public boolean isVcsManaged() {

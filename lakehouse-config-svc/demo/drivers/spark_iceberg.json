@@ -1,5 +1,6 @@
 {
   "keyName" : "spark_iceberg",
+  "domainKeyName": "DEMO",
   "description" : null,
   "sqlTemplate" : {
     "databaseSchemaName" : "sql-template-spark_iceberg.databaseSchemaName.sql",

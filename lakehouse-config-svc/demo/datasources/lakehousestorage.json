@@ -1,5 +1,6 @@
 {
   "keyName": "lakehousestorage",
+  "domainKeyName": "DEMO",
   "service":
     {
       "host": "localhost",

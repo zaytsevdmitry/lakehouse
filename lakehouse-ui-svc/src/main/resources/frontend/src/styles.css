@@ -1699,6 +1699,115 @@ a {
   gap: 8px;
 }
 
+  .modeller .repository-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+  .modeller .repository-node {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+}
+
+  .modeller .repository-root {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+  .modeller .repository-root:hover {
+  background: var(--panel-hover);
+}
+
+  .modeller .repository-caret {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+  .modeller .repository-name {
+  flex: 1;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+  .modeller .repository-count,
+  .modeller .repository-default {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--badge-bg);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+  .modeller .repository-branches {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 5px;
+  border-top: 1px solid var(--border);
+  background: var(--panel);
+}
+
+  .modeller .repository-branch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 7px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+  .modeller .repository-branch:hover {
+  background: var(--panel-hover);
+}
+
+  .modeller .repository-branch.selected {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+  .modeller .repository-branch input {
+  margin: 0;
+  flex: none;
+}
+
+  .modeller .repository-branch-name {
+  flex: 1;
+  overflow: hidden;
+  font-family: ui-monospace, Monaco, monospace;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+  .modeller .repository-selection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+}
+
+  .modeller .repository-selection .branch-name {
+  overflow-wrap: anywhere;
+}
+
   .modeller .branch-row,
   .modeller .workspace-row {
   display: flex;

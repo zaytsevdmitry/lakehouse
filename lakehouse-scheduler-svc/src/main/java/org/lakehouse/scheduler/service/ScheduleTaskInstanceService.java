@@ -19,13 +19,16 @@ package org.lakehouse.scheduler.service;
 
 import org.apache.kafka.common.KafkaException;
 import org.lakehouse.client.api.constant.Status;
+import org.lakehouse.client.api.dto.configs.schedule.ScheduleEffectiveDTO;
 import org.lakehouse.client.api.dto.configs.schedule.TaskDTO;
+import org.lakehouse.client.api.dto.configs.schedule.TaskExecutionServiceGroupDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskExecutionHeartBeatDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskInstanceReleaseDTO;
 import org.lakehouse.client.api.dto.scheduler.lock.TaskResultDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.lakehouse.client.api.dto.scheduler.tasks.ScheduledTaskMsgDTO;
+import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.utils.Coalesce;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
@@ -50,6 +53,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -64,6 +68,8 @@ public class ScheduleTaskInstanceService {
     private final ConfigRestClientApi configRestClientApi;
     private final ScheduleTaskInstanceFactory scheduleTaskInstanceFactory;
     private final SchedulerTaskRetryProperties schedulerTaskRetryProperties;
+    private final ScheduleEffectiveService scheduleEffectiveService;
+    private final TaskExecutionServiceGroupConfigService taskExecutionServiceGroupConfigService;
 
     public ScheduleTaskInstanceService(
             ScheduleTaskInstanceRepository repository,
@@ -73,7 +79,7 @@ public class ScheduleTaskInstanceService {
             ScheduledTaskForProducerMessagesRepository scheduledTaskForProducerMessagesRepository,
             ConfigRestClientApi configRestClientApi,
             ScheduleTaskInstanceFactory scheduleTaskInstanceFactory,
-            SchedulerTaskRetryProperties schedulerTaskRetryProperties
+            SchedulerTaskRetryProperties schedulerTaskRetryProperties, ScheduleEffectiveService scheduleEffectiveService, TaskExecutionServiceGroupConfigService taskExecutionServiceGroupConfigService
 
     ) {
         this.repository = repository;
@@ -84,6 +90,8 @@ public class ScheduleTaskInstanceService {
         this.scheduledTaskDTOProducerService = scheduledTaskDTOProducerService;
         this.scheduleTaskInstanceFactory = scheduleTaskInstanceFactory;
         this.schedulerTaskRetryProperties = schedulerTaskRetryProperties;
+        this.scheduleEffectiveService = scheduleEffectiveService;
+        this.taskExecutionServiceGroupConfigService = taskExecutionServiceGroupConfigService;
     }
 
 
@@ -106,7 +114,30 @@ public class ScheduleTaskInstanceService {
         putToQueue(l);
         return l.size();
     }
+    private void checkDomain(TaskDTO taskDTO, ScheduleEffectiveDTO scheduleEffectiveDTO) throws TaskConfigurationException {
 
+        TaskExecutionServiceGroupDTO taskGroup = taskExecutionServiceGroupConfigService
+                .getTaskExecutionServiceGroupDTO(taskDTO.getTaskExecutionServiceGroupName());
+
+        String scheduleDomainKeyName = scheduleEffectiveDTO.getDomainKeyName();
+
+        if (taskGroup == null) {
+            logger.warn("TaskExecutionServiceGroup {} not found, domain check skipped",
+                    taskDTO.getTaskExecutionServiceGroupName());
+            return;
+        }
+
+        List<String> allowedDomains = new ArrayList<>(taskGroup.getAllowedDomains());
+
+        allowedDomains.add(taskGroup.getDomainKeyName());
+
+        if ( !allowedDomains.contains(  scheduleDomainKeyName))
+            throw  new TaskConfigurationException(
+                    String.format(
+                            "Domain %s not allowed in %s taskExecutionServiceGroup",
+                            scheduleDomainKeyName,
+                            taskGroup.getName()));
+    }
     public Integer produceScheduledTasks() {
         Integer result = 0;
         for (ScheduledTaskForProducerMessage message : scheduledTaskForProducerMessagesRepository.findAll()) {
@@ -119,24 +150,27 @@ public class ScheduleTaskInstanceService {
                     message.getScheduleTaskInstance().getScheduleScenarioActInstance().getConfDataSetKeyName(),
                     message.getScheduleTaskInstance().getName());
             TaskDTO t = null;
+            ScheduleTaskInstance scheduleTaskInstance = message.getScheduleTaskInstance();
+            String scheduleKeyName = scheduleTaskInstance.getScheduleScenarioActInstance().getScheduleInstance()
+                    .getConfigScheduleKeyName();
+            String actName = scheduleTaskInstance.getScheduleScenarioActInstance().getName();
+            String taskName = scheduleTaskInstance.getName();
 
             logger.info("Getting effective taskDTO for schedule={} scenarioAct={} task={}",
-                    message.getScheduleTaskInstance().getScheduleScenarioActInstance()
-                            .getScheduleInstance()
-                            .getConfigScheduleKeyName(),
-                    message.getScheduleTaskInstance().getScheduleScenarioActInstance().getConfDataSetKeyName(),
-                    message.getScheduleTaskInstance().getName());
+                    scheduleKeyName, actName, taskName);
             try {
-                t = configRestClientApi.getEffectiveTaskDTO(
-                        message.getScheduleTaskInstance().getScheduleScenarioActInstance()
-                                .getScheduleInstance()
-                                .getConfigScheduleKeyName(),
-                        message.getScheduleTaskInstance().getScheduleScenarioActInstance().getConfDataSetKeyName(),
-                        message.getScheduleTaskInstance().getName());
+                t    =  scheduleEffectiveService.getTaskDTO(scheduleKeyName, actName, taskName);
                 scheduledTaskMsgDTO.setTaskExecutionServiceGroupName(t.getTaskExecutionServiceGroupName());
-            } catch (RuntimeException e) {
+                checkDomain(t,scheduleEffectiveService.getScheduleEffectiveDTO(scheduleKeyName));
+            } catch (TaskConfigurationException e) {
                 logger.warn("Error when getting EffectiveTaskDTO from config service", e);
+                scheduleTaskInstance.setStatus(Status.Task.CONF_ERROR);
+                scheduleTaskInstance.setCauses(e.getMessage());
+                repository.save(scheduleTaskInstance);
+                scheduledTaskForProducerMessagesRepository.delete(message);
+                continue;
             }
+
             if (t != null) {
 
                 try {

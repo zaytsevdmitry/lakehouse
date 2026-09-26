@@ -17,7 +17,6 @@
 
 package org.lakehouse.client.api.constant;
 
-import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
 import org.lakehouse.client.api.dto.configs.datalineage.DataLineageDiagramDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
@@ -44,7 +43,6 @@ import java.util.Locale;
  */
 public enum YamlMetadataKind {
 
-    NAME_SPACE("NameSpace", NameSpaceDTO.class, 1, "keyName", true),
     DRIVER("Driver", DriverDTO.class, 2, "keyName", true),
     DATA_SOURCE("DataSource", DataSourceDTO.class, 3, "keyName", true),
     SCRIPT("Script", ScriptDTO.class, 4, "key", true),
@@ -102,7 +100,6 @@ public enum YamlMetadataKind {
     /** Directory of the repository where files of this kind are stored. */
     public String directory() {
         return switch (this) {
-            case NAME_SPACE -> "nameSpaces";
             case DRIVER -> "drivers";
             case ER_DIAGRAM -> "erdiagrams";
             case DATA_SET -> "datasets";

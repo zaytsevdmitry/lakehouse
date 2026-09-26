@@ -4,10 +4,11 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Material to deliver to the central repository: full workspace file set, target branch,
- * commit message and review comment.
+ * Material to deliver to the central repository: full workspace file set of a single domain,
+ * target branch, commit message and review comment.
  */
 public record VcsReviewSubmission(
+        String domain,
         String branch,
         String targetBranch,
         String commitMessage,

@@ -1,5 +1,6 @@
 {
   "dataSetKeyName": "transaction_dds",
+  "domainKeyName": "DEMO",
   "keyName": "transaction_dds_qm_const",
   "description": "",
   "enabled": false,

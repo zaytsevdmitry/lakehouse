@@ -1,6 +1,7 @@
 package org.lakehouse.ui.modeller.workspace;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
  * Persisted per-workspace bookkeeping stored in {@code _workspace.json} inside the
@@ -8,12 +9,12 @@ import java.time.Instant;
  */
 public record WorkspaceMetadata(
         String workspace,
-        String branch,
+        List<BranchSelection> selections,
         String owner,
         Instant createdAt,
         Instant lastAccessedAt) {
 
     public WorkspaceMetadata withLastAccessedAt(Instant newLastAccessedAt) {
-        return new WorkspaceMetadata(workspace, branch, owner, createdAt, newLastAccessedAt);
+        return new WorkspaceMetadata(workspace, selections, owner, createdAt, newLastAccessedAt);
     }
 }

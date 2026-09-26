@@ -1,0 +1,6 @@
+kind: TaskExecutionServiceGroup
+name: state-service
+allowedDomains:
+  - analytics
+  - processing
+description: Dataset state management group

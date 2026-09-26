@@ -29,7 +29,6 @@
         <module>lakehouse-state-rest-client</module>
         <module>lakehouse-task-executor-svc</module>
         <module>lakehouse-ui-svc</module>
-        <module>lakehouse-ui-modeller-svc</module>
         <module>lakehouse-cli</module>
         <module>lakehouse-common-test</module>
         <module>lakehouse-common-rest-client</module>

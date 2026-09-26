@@ -21,8 +21,8 @@ import org.junit.jupiter.api.Test;
 import org.lakehouse.client.api.constant.YamlMetadataKind;
 import org.lakehouse.client.api.constant.DatabaseProtocol;
 import org.lakehouse.client.api.constant.Types;
-import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
+import org.lakehouse.client.api.dto.configs.schedule.DriverDTO;
 import org.lakehouse.client.api.dto.configs.script.ScriptDTO;
 
 import java.util.Arrays;
@@ -35,19 +35,19 @@ class GitOpsYamlParserTest {
     private final GitOpsYamlParser parser = new GitOpsYamlParser();
 
     @Test
-    void parsesNameSpace() {
+    void parsesDriver() {
         ParsedConfig parsed = parser.parse("""
-                kind: NameSpace
-                keyName: fin
-                description: Finance namespace
+                kind: Driver
+                keyName: postgres
+                description: Postgres driver
                 """);
 
-        assertThat(parsed.kind()).isEqualTo(YamlMetadataKind.NAME_SPACE);
-        assertThat(parsed.dto()).isInstanceOf(NameSpaceDTO.class);
-        NameSpaceDTO dto = (NameSpaceDTO) parsed.dto();
-        assertThat(dto.getKeyName()).isEqualTo("fin");
-        assertThat(dto.getDescription()).isEqualTo("Finance namespace");
-        assertThat(parser.resolveKey(parsed)).isEqualTo("fin");
+        assertThat(parsed.kind()).isEqualTo(YamlMetadataKind.DRIVER);
+        assertThat(parsed.dto()).isInstanceOf(DriverDTO.class);
+        DriverDTO dto = (DriverDTO) parsed.dto();
+        assertThat(dto.getKeyName()).isEqualTo("postgres");
+        assertThat(dto.getDescription()).isEqualTo("Postgres driver");
+        assertThat(parser.resolveKey(parsed)).isEqualTo("postgres");
     }
 
     @Test
@@ -106,7 +106,6 @@ class GitOpsYamlParserTest {
 
     @Test
     void resolveKeyUsesRowKeysOfEveryConstruct() {
-        assertThat(parser.resolveKey(parse("kind: NameSpace\nkeyName: ns"))).isEqualTo("ns");
         assertThat(parser.resolveKey(parse("kind: Driver\nkeyName: drv"))).isEqualTo("drv");
         assertThat(parser.resolveKey(parse("kind: DataSource\nkeyName: ds"))).isEqualTo("ds");
         assertThat(parser.resolveKey(parse("kind: Script\nkey: scr\nvalue: v"))).isEqualTo("scr");
@@ -134,7 +133,7 @@ class GitOpsYamlParserTest {
 
     @Test
     void rejectsUnknownProperties() {
-        assertThatThrownBy(() -> parser.parse("kind: NameSpace\nkeyName: ns\nbogusProperty: 1"))
+        assertThatThrownBy(() -> parser.parse("kind: Driver\nkeyName: drv\nbogusProperty: 1"))
                 .isInstanceOf(VcsConfigParseException.class);
     }
 

@@ -20,7 +20,6 @@ package org.lakehouse.client.rest.config.test;
 import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.lakehouse.client.api.constant.Endpoint;
-import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
 import org.lakehouse.client.api.dto.configs.schedule.DriverDTO;
 import org.lakehouse.client.api.dto.configs.schedule.ScenarioActTemplateDTO;
 import org.lakehouse.client.api.dto.configs.schedule.ScheduleDTO;
@@ -71,19 +70,6 @@ public class ConfigRestClientHelperTest {
 
         DriverDTO driverDTO = this.client.getDriverDTO(expectDriverDTO.getKeyName());
         assert (expectDriverDTO.equals(driverDTO));
-    }
-
-    @Test
-    public void MakesCorrectCallNameSpaceDTO() throws Exception {
-        NameSpaceDTO expectNameSpaceDTO = fileLoader.loadNameSpaceDTO();
-        server.expect(ExpectedCount.manyTimes(),
-                        requestTo(String.format("%s/%s", Endpoint.NAME_SPACES, expectNameSpaceDTO.getKeyName())))
-                .andRespond(withSuccess(objectMapper.writeValueAsString(expectNameSpaceDTO), MediaType.APPLICATION_JSON));
-        System.out.println("NameSpace is loaded");
-
-
-        NameSpaceDTO nameSpaceDTO = this.client.getNameSpaceDTO(expectNameSpaceDTO.getKeyName());
-        assert (expectNameSpaceDTO.equals(nameSpaceDTO));
     }
 
     @Test

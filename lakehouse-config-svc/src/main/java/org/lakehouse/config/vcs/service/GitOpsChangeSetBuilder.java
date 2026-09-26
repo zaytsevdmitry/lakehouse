@@ -24,7 +24,6 @@ import org.lakehouse.config.vcs.yaml.GitOpsYamlParser;
 import org.lakehouse.config.vcs.yaml.PreliminaryConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -38,22 +37,22 @@ import java.util.Optional;
  * Only YAML/JSON files are considered configuration files; every other file in the
  * repository is ignored. Created and updated files are parsed from the head commit,
  * deleted files from the base commit.
+ * <p>
+ * The {@link VcsClient} is passed per call because every configuration domain owns
+ * its own repository.
  */
 @Component
-@ConditionalOnProperty(prefix = "lakehouse.config.vcs.git.sync", name = "enabled", havingValue = "true")
 public class GitOpsChangeSetBuilder {
 
     private static final Logger logger = LoggerFactory.getLogger(GitOpsChangeSetBuilder.class);
 
-    private final VcsClient vcsClient;
     private final GitOpsYamlParser yamlParser;
 
-    public GitOpsChangeSetBuilder(VcsClient vcsClient, GitOpsYamlParser yamlParser) {
-        this.vcsClient = vcsClient;
+    public GitOpsChangeSetBuilder(GitOpsYamlParser yamlParser) {
         this.yamlParser = yamlParser;
     }
 
-    public GitSyncChangeSet build(String head, String base) {
+    public GitSyncChangeSet build(VcsClient vcsClient, String head, String base) {
         List<VcsDiffEntry> diff = vcsClient.getDiff(base);
         List<GitSyncItem> toApply = new ArrayList<>();
         List<GitSyncItem> toDelete = new ArrayList<>();
@@ -65,11 +64,11 @@ public class GitOpsChangeSetBuilder {
             }
             if (entry.type() == VcsChangeType.DELETED) {
                 if (StringUtils.hasText(base)) {
-                    readConfigContent(base, entry.path()).flatMap(content -> parseConfigItem(entry.path(), content))
+                    readConfigContent(vcsClient, base, entry.path()).flatMap(content -> parseConfigItem(entry.path(), content))
                             .ifPresent(toDelete::add);
                 }
             } else {
-                readConfigContent(head, entry.path()).flatMap(content -> parseConfigItem(entry.path(), content))
+                readConfigContent(vcsClient, head, entry.path()).flatMap(content -> parseConfigItem(entry.path(), content))
                         .ifPresent(toApply::add);
             }
         }
@@ -90,7 +89,7 @@ public class GitOpsChangeSetBuilder {
         return Optional.of(new GitSyncItem(path, yamlParser.parseFull(preliminary)));
     }
 
-    private Optional<String> readConfigContent(String commitId, String path) {
+    private Optional<String> readConfigContent(VcsClient vcsClient, String commitId, String path) {
         Optional<String> content = vcsClient.readFileContent(commitId, path);
         if (content.isEmpty())
             logger.warn("File {} not found at commit {}", path, commitId);

@@ -35,7 +35,7 @@ lakehouse:
       client:
         server:
           url=http://127:0:0:1:8080
-      schedule:
+      change:
         kafka:
           consumer:
             properties:

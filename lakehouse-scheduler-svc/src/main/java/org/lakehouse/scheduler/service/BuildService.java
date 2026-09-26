@@ -147,8 +147,6 @@ public class BuildService {
             ssaid.setTo(actInstanceMap.get(dagEdgeDTO.getTo()));
             scheduleScenarioActInstanceDependencyRepository.save(ssaid);
         });
-
-
     }
 
 
@@ -171,8 +169,6 @@ public class BuildService {
         }
         try {
             nextOffsetDateTime = DateTimeUtils.getNextTargetExecutionDateTime(scheduleEffectiveDTO.getIntervalExpression(), lastOffsetDateTime);
-
-
             result = scheduleEffectiveService.isBefore(scheduleEffectiveDTO.getIntervalExpression(), lastOffsetDateTime)
                     && (
                     stopOffsetDateTime == null || stopOffsetDateTime.isAfter(nextOffsetDateTime)

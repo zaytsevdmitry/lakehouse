@@ -32,12 +32,12 @@ public class LocalGitVcsProvider implements VcsProvider {
         return VcsProviderFactory.normalize(properties.getVcsProvider());
     }
 
-    private String remoteUrl() {
-        return properties.getGit().getRemoteUrl();
-    }
-
-    private String branchMain() {
-        return properties.getGit().getBranchMain() == null ? "main" : properties.getGit().getBranchMain();
+    private String remoteUrl(String domain) {
+        String url = properties.domainRemoteUrl(domain);
+        if (url == null || url.isBlank())
+            throw new VcsProviderException(
+                    "No repository URL configured for domain " + domain + " (lakehouse.modeller.domains.<" + domain + ">.repository-url)");
+        return url;
     }
 
     private boolean isGerrit() {
@@ -45,18 +45,19 @@ public class LocalGitVcsProvider implements VcsProvider {
     }
 
     @Override
-    public Map<String, String> readBranchFiles(String branch) {
-        return GitRepositoryOps.readBranch(remoteUrl(), branch, branchMain(), credentials);
+    public Map<String, String> readBranchFiles(String domain, String branch) {
+        return GitRepositoryOps.readBranch(remoteUrl(domain), branch, credentials);
     }
 
     @Override
-    public java.util.List<String> listBranches() {
-        return GitRepositoryOps.listBranches(remoteUrl(), credentials);
+    public java.util.List<String> listBranches(String domain) {
+        return GitRepositoryOps.listBranches(remoteUrl(domain), credentials);
     }
 
     @Override
-    public void createBranch(String branch, String baseBranch) {
-        GitRepositoryOps.createBranch(remoteUrl(), branch, baseBranch == null ? branchMain() : baseBranch, credentials);
+    public void createBranch(String domain, String branch, String baseBranch) {
+        GitRepositoryOps.createBranch(remoteUrl(domain), branch,
+                baseBranch == null ? properties.domainBranchMain(domain) : baseBranch, credentials);
     }
 
     @Override
@@ -65,17 +66,19 @@ public class LocalGitVcsProvider implements VcsProvider {
                 firstNonBlank(user.name(), user.username(), "anonymous"),
                 blankToDefault(user.email(), "anonymous@lakehouse.local"));
         boolean gerrit = isGerrit();
-        GitRepositoryOps.commitAndPush(
-                remoteUrl(),
+        boolean changed = GitRepositoryOps.commitAndPush(
+                remoteUrl(submission.domain()),
+                submission.domain(),
                 submission.branch(),
-                submission.targetBranch() == null ? branchMain() : submission.targetBranch(),
                 submission.commitMessage() == null ? "Modeller update" : submission.commitMessage(),
                 author,
                 submission.files(),
                 gerrit,
                 credentials);
-        String url = remoteUrl();
-        return gerrit ? VcsReviewResult.plainPushed(url) : VcsReviewResult.plainPushed(url);
+        if (!changed)
+            return VcsReviewResult.noChanges();
+        String url = remoteUrl(submission.domain());
+        return VcsReviewResult.plainPushed(url);
     }
 
     private static String firstNonBlank(String... values) {

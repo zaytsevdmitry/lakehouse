@@ -71,13 +71,13 @@ public class ObjectMapping {
                 .writeValueAsString(obj);
     }
     public static Map<String,Object> asMap(final Object obj) throws JacksonException {
-        String str = asJsonStringPretty(obj);
+
         return objectMapper
                 .readValue(asJsonStringPretty(obj), new TypeReference<>() {
                 });
     }
     public static Map<String,String> asMapOfStrings(final Object obj) throws JacksonException {
-        String str = asJsonStringPretty(obj);
+
         return objectMapper
                 .readValue(asJsonStringPretty(obj), new TypeReference<>() {
                 });

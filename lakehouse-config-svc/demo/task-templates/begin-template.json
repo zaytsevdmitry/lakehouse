@@ -1,5 +1,6 @@
 {
   "name": "beginTemplate",
+  "domainKeyName": "DEMO",
   "taskExecutionServiceGroupName": "default",
   "taskProcessor": "lockedStateTaskProcessor",
   "importance": "critical",

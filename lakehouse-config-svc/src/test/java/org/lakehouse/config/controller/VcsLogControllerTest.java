@@ -48,13 +48,25 @@ class VcsLogControllerTest {
         log.setCommitId("abc123");
         log.setSyncDateTime(to);
         log.setStatus("SUCCESS");
-        when(syncLogService.find(from, to, "SUCCESS", "abc123")).thenReturn(List.of(log));
+        log.setDomainKeyName("sales");
+        when(syncLogService.find(from, to, "SUCCESS", "abc123", "sales")).thenReturn(List.of(log));
 
-        List<VcsSyncLogDTO> result = syncLogController.find(from, to, "SUCCESS", "abc123");
+        List<VcsSyncLogDTO> result = syncLogController.find(from, to, "SUCCESS", "abc123", "sales");
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getCommitId()).isEqualTo("abc123");
-        verify(syncLogService).find(from, to, "SUCCESS", "abc123");
+        assertThat(result.get(0).getDomainKeyName()).isEqualTo("sales");
+        verify(syncLogService).find(from, to, "SUCCESS", "abc123", "sales");
+    }
+
+    @Test
+    void syncLogFindWithoutDomainPassesNull() {
+        OffsetDateTime from = OffsetDateTime.now().minusDays(1);
+        OffsetDateTime to = OffsetDateTime.now();
+        when(syncLogService.find(from, to, null, null, null)).thenReturn(List.of());
+
+        assertThat(syncLogController.find(from, to, null, null, null)).isEmpty();
+        verify(syncLogService).find(from, to, null, null, null);
     }
 
     @Test
@@ -64,32 +76,36 @@ class VcsLogControllerTest {
         obj.setObjectName("dataset/transaction_dds");
         obj.setKind("dataSet");
         obj.setCommitId("abc123");
-        when(objectLogService.find("abc123", null, null, null, null, null))
+        obj.setDomainKeyName("sales");
+        when(objectLogService.find("abc123", null, null, null, null, null, "sales"))
                 .thenReturn(List.of(obj));
 
-        List<VcsObjectLogDTO> result = objectLogController.find("abc123", null, null, null, null, null);
+        List<VcsObjectLogDTO> result = objectLogController.find("abc123", null, null, null, null, null, "sales");
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getObjectName()).isEqualTo("dataset/transaction_dds");
-        verify(objectLogService).find("abc123", null, null, null, null, null);
+        assertThat(result.get(0).getDomainKeyName()).isEqualTo("sales");
+        verify(objectLogService).find("abc123", null, null, null, null, null, "sales");
     }
 
     @Test
     void objectLogFindByIntervalDelegatesToService() {
         OffsetDateTime from = OffsetDateTime.now().minusDays(1);
         OffsetDateTime to = OffsetDateTime.now();
-        when(objectLogService.find(null, "dataSet", from, to, "dir/", "transaction"))
+        when(objectLogService.find(null, "dataSet", from, to, "dir/", "transaction", "sales"))
                 .thenReturn(List.of());
 
-        List<VcsObjectLogDTO> result = objectLogController.find(null, "dataSet", from, to, "dir/", "transaction");
+        List<VcsObjectLogDTO> result =
+                objectLogController.find(null, "dataSet", from, to, "dir/", "transaction", "sales");
 
         assertThat(result).isEmpty();
-        verify(objectLogService).find(null, "dataSet", from, to, "dir/", "transaction");
+        verify(objectLogService).find(null, "dataSet", from, to, "dir/", "transaction", "sales");
     }
 
     @Test
     void objectLogFindRejectsNeitherCommitNorInterval() {
-        assertThatThrownBy(() -> objectLogController.find(null, null, null, null, null, null))
+        assertThatThrownBy(() ->
+                objectLogController.find(null, null, null, null, null, null, null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("commitId");
     }

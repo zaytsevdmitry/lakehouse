@@ -7,7 +7,6 @@ import {
   ConstraintPickerModal,
   DataSetKeyPickerModal,
   NamedItemPickerModal,
-  NameSpacePickerModal,
   ScriptKeyPreviewModal,
 } from './Pickers';
 
@@ -26,7 +25,6 @@ const FormContext = React.createContext({
   rootDoc: null,
   dataSetSummaryProvider: null,
   scriptSummaryProvider: null,
-  nameSpaceSummaryProvider: null,
   catalogProviders: {},
 });
 
@@ -64,7 +62,6 @@ export default function FormEditor({
   uniqueByField = {},
   dataSetSummaryProvider = null,
   scriptSummaryProvider = null,
-  nameSpaceSummaryProvider = null,
   catalogProviders = {},
 }) {
   const fields = schema.fields || [];
@@ -82,7 +79,7 @@ export default function FormEditor({
   };
 
   return (
-    <FormContext.Provider value={{ uniqueByField, rootDoc: root, dataSetSummaryProvider, scriptSummaryProvider, nameSpaceSummaryProvider, catalogProviders }}>
+    <FormContext.Provider value={{ uniqueByField, rootDoc: root, dataSetSummaryProvider, scriptSummaryProvider, catalogProviders }}>
       <div className="form-editor">
       <div className="tab-list">
         {tabs.map((t) => (
@@ -264,10 +261,18 @@ function SourceMapEditor({ field, value, onChange, readOnly }) {
   const obj = value && typeof value === 'object' ? value : {};
   const { dataSetSummaryProvider } = React.useContext(FormContext);
   const keys = Object.keys(obj);
-  const [sel, setSel] = useState(null);
+  const [selState, setSel] = useState(null);
   const [keyFilter, setKeyFilter] = useState('');
   const [dlg, setDlg] = useState(null);
   const [confirmRemove, setConfirmRemove] = useState(false);
+  // The selected key belongs to the document that was open when it was picked, so it can
+  // name a key the current one does not have. Treat such a selection as "nothing selected"
+  // instead of dereferencing it.
+  const sel = selState != null && Object.prototype.hasOwnProperty.call(obj, selState) ? selState : null;
+  const selected = sel == null ? null : obj[sel] || {};
+  const selectedProps = selected && selected.properties && typeof selected.properties === 'object'
+    ? selected.properties
+    : {};
 
   const q = keyFilter.trim().toLowerCase();
   const displayedKeys = keys.filter((k) => !q || k.toLowerCase().includes(q));
@@ -297,7 +302,7 @@ function SourceMapEditor({ field, value, onChange, readOnly }) {
     if (sel == null) return;
     const map = {};
     for (const r of rows) if (r.__key__ && r.__key__.trim()) map[r.__key__] = r.__value__;
-    onChange({ ...obj, [sel]: { ...obj[sel], properties: map } });
+    onChange({ ...obj, [sel]: { ...selected, properties: map } });
   };
 
   return (
@@ -351,9 +356,9 @@ function SourceMapEditor({ field, value, onChange, readOnly }) {
               { name: '__value__', type: 'string', label: 'Value' },
             ]}
             needKey
-            rows={Object.keys(obj[sel].properties || {}).map((k) => ({
+            rows={Object.keys(selectedProps).map((k) => ({
               __key__: k,
-              __value__: obj[sel].properties[k],
+              __value__: selectedProps[k],
             }))}
             toEntry={(r) => r.__value__}
             onChange={setKeyProps}
@@ -812,13 +817,12 @@ function ScalarField({ field, value, onChange, readOnly, keyNameEditable = true 
   const label = field.label || field.name;
   const title = field.description || '';
   const inputRef = useRef(null);
-  const { uniqueByField, rootDoc, scriptSummaryProvider, nameSpaceSummaryProvider, catalogProviders } = React.useContext(FormContext);
+  const { uniqueByField, rootDoc, scriptSummaryProvider, catalogProviders } = React.useContext(FormContext);
   const uniqueCheck = field.uniqueAcrossKind ? (uniqueByField[field.name] || null) : null;
   const [invalid, setInvalid] = useState(false);
   const [errorVisible, setErrorVisible] = useState(false);
   const [columnsOpen, setColumnsOpen] = useState(false);
   const [scriptKeyOpen, setScriptKeyOpen] = useState(false);
-  const [nameSpaceOpen, setNameSpaceOpen] = useState(false);
   const [namedOpen, setNamedOpen] = useState(false);
   const [clearOpen, setClearOpen] = useState(false);
 
@@ -863,54 +867,6 @@ function ScalarField({ field, value, onChange, readOnly, keyNameEditable = true 
         </div>
         {columnsOpen && (
           <ColumnPickerModal columns={columns} value={value} onClose={() => setColumnsOpen(false)} onApply={onChange} />
-        )}
-      </div>
-    );
-  }
-
-  if (field.picker === 'nameSpace') {
-    return (
-      <div className="scalar-row">
-        <span className="label" title={title}>
-          {label}
-          {field.required && <span className="req">*</span>}
-        </span>
-        <div className="scalar-input-wrap">
-          <input value={stringify(value)} readOnly placeholder="Choose a name space" />
-          {!readOnly && (
-            <>
-              <button className="square picker-btn" title="Choose name space" onClick={() => setNameSpaceOpen(true)}>…</button>
-              {field.clearable && (
-                <button
-                  className="square picker-btn clear-btn"
-                  title="Clear field"
-                  onClick={() => setClearOpen(true)}
-                >×</button>
-              )}
-            </>
-          )}
-        </div>
-        {nameSpaceOpen && nameSpaceSummaryProvider && (
-          <NameSpacePickerModal
-            summaryProvider={nameSpaceSummaryProvider}
-            onClose={() => setNameSpaceOpen(false)}
-            onApply={onChange}
-          />
-        )}
-        {clearOpen && (
-          <Modal title="Clear field" onClose={() => setClearOpen(false)}>
-            <p>Clear <strong>{label}</strong>?</p>
-            <div className="btn-row">
-              <button
-                className="danger"
-                onClick={() => {
-                  onChange(null);
-                  setClearOpen(false);
-                }}
-              >Yes</button>
-              <button onClick={() => setClearOpen(false)}>Cancel</button>
-            </div>
-          </Modal>
         )}
       </div>
     );

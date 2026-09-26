@@ -3366,3 +3366,4 @@ lakehouse-task-executor-spark-dq-app/dependency-reduced-pom.xml
 /lakehouse-ui-modeller-svc/src/main/resources/frontend/node_modules/zustand/vanilla.js
 /lakehouse-ui-modeller-svc/src/main/resources/frontend/node_modules/.package-lock.json
 /demo/compose/ports.txt
+/lakehouse-task-executor-svc/logs/
