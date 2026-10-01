@@ -102,7 +102,6 @@ done
 
 
 CATEGORIES=(
-    "nameSpaces"
     "drivers"
     "datasources"
     "taskexecutionservicegroups"

@@ -10,8 +10,12 @@
 version: '3.9'
 services:
   minio-dev:
-    image: quay.io/minio/minio
+    image: bitnamilegacy/minio:2025.7.23
     container_name: minio-dev
+    # The Bitnami image would run as uid 1001, but the named volume is created
+    # root:root and the demo data in it is root-owned, so the server keeps
+    # running as root, exactly as it did with the previous image
+    user: root
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -23,9 +27,15 @@ services:
     environment:
       MINIO_ROOT_USER: spark_user
       MINIO_ROOT_PASSWORD: spark_pwd
+    # Passed to the Bitnami entrypoint, which execs the binary as is. Without
+    # `command` the entrypoint would start the server in the background, ignore
+    # SIGTERM and leave the container to be killed after the stop timeout
     command: server --console-address ":9001" /data
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      # The documented health endpoint, the same one the k8s probes use. The
+      # `local` alias that `mc ready` relies on is only created by the Bitnami
+      # entrypoint when it starts the server on its own, and it has no credentials
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9000/minio/health/live || exit 1"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -151,7 +161,7 @@ services:
       lakehouse_net:
         ipv4_address: 172.20.193.200
     volumes:
-      - ./conf_git:/conf:ro
+      - ../conf_git:/conf:ro
       - git_server_storage:/srv/git
       - ./conf_infra/git/git-server-init.sh:/srv/git-init.sh:ro
     healthcheck:
@@ -649,9 +659,9 @@ services:
       "-Dlakehouse.ui.services[15].url=http://172.20.193.200:9418",
       "-Dlakehouse.ui.services[15].health-check-url=172.20.193.200:9418",
       "-Dlakehouse.ui.services[15].check-type=tcp",
-      "-Dlakehouse.client.rest.config.server.url=http://172.20.193.80:8082",
-      "-Dlakehouse.client.rest.state.server.url=http://172.20.193.100:8084",
-      "-Dlakehouse.client.rest.scheduler.server.url=http://172.20.193.90:8083",
+      "-Dlakehouse.client.rest.config.server.url=http://lakehouse-config-svc:8082",
+      "-Dlakehouse.client.rest.state.server.url=http://lakehouse-state-svc:8084",
+      "-Dlakehouse.client.rest.scheduler.server.url=http://lakehouse-scheduler-svc:8083",
       "-Dlakehouse.client.rest.task-proxy-for-spark.server.url=http://172.20.193.160:8086",
       "-Dlakehouse.ui.vertices.lakehouse-config-svc=lakehouse-config-svc",
       "-Dlakehouse.ui.vertices.topic-schedule-conf=kafka-broker",

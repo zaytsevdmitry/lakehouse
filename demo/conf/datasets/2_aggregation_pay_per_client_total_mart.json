@@ -1,24 +1,18 @@
 {
-  "keyName": "aggregation_pay_per_client_daily_mart",
-  "nameSpaceKeyName": "DEMO",
+  "keyName": "aggregation_pay_per_client_total_mart",
+
   "dataSourceKeyName": "lakehousestorage",
   "databaseSchemaName": "default",
-  "tableName": "aggregation_pay_per_client_daily_mart",
+  "tableName": "ggregation_pay_per_client_total_mart",
   "scripts": [
     {
-      "key": "dataset-sql-model.aggregation_pay_per_client_daily_mart.sql"
+      "key": "dataset-sql-model.aggregation_pay_per_client_total_mart.sql"
     }
   ],
   "sources": {
     "transaction_dds": {}
   },
   "columnSchema": [
-    {
-      "name": "reg_date",
-      "description": "Truncated reg date time for daily aggregation",
-      "dataType": "date",
-      "nullable": false
-    },
     {
       "name": "client_name",
       "description": "Name of client",
@@ -39,15 +33,15 @@
     }
   ],
   "constraints": {
-    "aggregation_pay_per_client_daily_mart_pk": {
+    "aggregation_pay_per_client_total_mart_pk":{
       "type": "primary",
-      "columns": "client_name,reg_date",
+      "columns": "client_name",
       "enabled": true,
       "constraintLevelCheck": "dataQuality"
-    }
-  },
+  }
+},
   "properties": {
-    "location": "s3a://data/warehouse/default/aggregation_pay_per_client_daily_mart",
+    "location": "s3a://data/warehouse/default/aggregation_pay_per_client_total_mart",
     "using": "iceberg"
   },
   "description": "We want to know who our most profitable clients are"
