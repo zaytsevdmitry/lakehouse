@@ -1,7 +1,15 @@
 [RU](README_ru.md)
 #  Lakehouse management tool
 Implementing a Metadata-Driven Approach allows for the dynamic management and automation of ETL/ELT pipelines and data integration. By moving away from rigid, hard-coded logic to external configurations (SQL/JSON), we transform data processing into a scalable, flexible, and fully automated ecosystem.
-Key Business Benefits
+
+## Target Audience & Purpose:
+
+1. **Empower Analytics Engineers & Data Analysts:** To change data transformation logic seamlessly by simply updating configurations in the UI, completely bypassing the need to rewrite core pipeline code.
+2. **Decentralized Domain Ownership:** To allow Domain Teams to own and manage their data independently, eliminating bottlenecks and offloading the core data engineering team.
+3. **Free Data Engineers from Routine:** To automate repetitive tasks (such as manual DDL updates and building identical pipelines), allowing data engineers to focus on high-value business logic and scalable architecture.
+4. **Optimize Product Management Costs (PO Value):** To help Product Owners save development time and budget. Feature delivery and data insights achieve a faster Time-to-Market, while expensive engineering resources are no longer wasted on repetitive backlog tickets.
+
+## Key Business Benefits
 * Faster Time-to-Market: Instead of writing custom code for every new data source, a single universal pipeline handles multiple streams. This significantly reduces development cycles and project timelines.
 * Enhanced Agility: Business requirements change rapidly. With this approach, updates to data structures or transformation rules are handled by simply modifying metadata, avoiding costly and lengthy code rewrites.
 * Improved Governance & Compliance: Centralized metadata provides a "single source of truth" for data lineage, access control, and regulatory requirements, ensuring total transparency.
@@ -16,12 +24,12 @@ Key Business Benefits
 MetaData Driven
 Domain Driven Design (DDD)
 Data mesh
-Data vault
+Data Self Service
+Data engineer tool
 Data governance
 Scheduling
 Custom code
 SQL
-Data engineer tool
 Lakehouse management tool
 United namespace
 
