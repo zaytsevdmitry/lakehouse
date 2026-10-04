@@ -60,3 +60,19 @@ lakehouse:
     liveness-path: /healthz # Liveness probe
     readiness-path: /readyz # Readiness probe
 ```
+
+## Domains
+
+`lakehouse.config.vcs` is bound by `LakehouseVCSProperties`; the `domains` map above is the only
+place where repositories are declared. Each domain is one Git repository, is fetched and applied
+on its own, and every construct loaded from it is stamped with `domainKeyName`. `local-clone-path`
+must be unique per domain, and a domain without `git.repository-url` is skipped entirely.
+
+When `domains` is empty and the legacy `lakehouse.config.vcs.git.repository-url` is set, that
+single repository is exposed as one domain named `default`; as soon as `domains` has at least one
+entry, the legacy block is ignored and does **not** become an additional `default` domain.
+
+The synchronisation cycle itself is global, not per domain: `lakehouse.config.vcs.git.sync.*`
+(enabled / interval-ms / initial-delay-ms). Full description of the tree, the apply order
+(`priority`, parents before children), the isolation rules and the legacy block:
+[Domains](../content_configuration/domains.md).

@@ -34,8 +34,9 @@ lakehouse:
     # Настройки источников данных по доменам: domains.<domainKeyName>.<dataSourceKeyName>.service-properties
     # Связываются DomainDataSourceServiceProperties (префикс lakehouse.task-executor) и доступны
     # через getServiceProperties(domainKey, dataSourceKey), возвращающей Optional.empty() для
-    # неизвестного домена или источника. ВАЖНО: пока не применяются на пути исполнения - источники
-    # данных резолвятся через lakehouse-config-svc. См. readme.md, глава "Домены".
+    # неизвестного домена или источника. ПРИМЕНЯЮТСЯ на пути исполнения: ExecuteService.prepareProperties(...)
+    # сливает карту в DataSourceDTO.getService().getProperties(), перекрывая значения
+    # lakehouse-config-svc (putAll). См. readme.md, глава "Домены".
     domains:
       platform:
         lakehousestorage:
@@ -70,10 +71,14 @@ lakehouse:
 `service.properties` JDBC-источника (`secretProvider`, `secret-key`, `vault-url`,
 `vault-role`, `vault-k8s-auth-path`, `secret-id`, `secret-version`, `url`, `user`).
 
-Сейчас эти значения **не используются при исполнении**: источники данных, которые открывает
-задача, всегда приходят из `lakehouse-config-svc`. Блок сохранён здесь, потому что он
-связывается и публикуется `DomainDataSourceServiceProperties` и потому что на него
-опирается история развёртывания по доменам. См. readme.md, глава "Домены".
+Эти значения **применяются при исполнении**: `ExecuteService.prepareProperties(...)` для каждого
+источника данных разбираемой конфигурации делает lookup по
+`scheduledTaskDTO.getDomainKeyName()` и сливает результат в `service.properties`, которые
+потом доходят до JDBC-разрешения секретов. Семантика - `putAll`, поэтому блок работает как
+доменное **переопределение** объявленных в репозитории `service.properties`; обычная причина
+задать его - не держать учётные данные в Git. Когда домен задачи равен `null`, lookup даёт
+`Optional.empty()` и остаются в силе значения из `lakehouse-config-svc`. См. readme.md, глава
+"Домены".
 
 ### Параметры процессоров задач
 
@@ -99,4 +104,5 @@ lakehouse:
 | `user` | Имя пользователя; сам пароль приходит из провайдера |
 
 Требуется переменная окружения `VAULT_TOKEN` (OpenBao) или `YC_AUTH_KEY_PATH` (Lockbox). Реальный пример:
-`demo/compose/conf/datasources/processingdb.json`. Подробнее: [руководство по безопасности](../../doc-ru/security/security.md).
+`demo/conf/datasources/processingdb.json` (в виде репозитория:
+`demo/conf_git/domains/platform/datasources/processingdb.yaml`). Подробнее: [руководство по безопасности](../../doc-ru/security/security.md).

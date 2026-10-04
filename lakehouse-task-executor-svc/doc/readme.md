@@ -115,26 +115,30 @@ validated by the binding; they carry the same secret-provider options as the
 `service.properties` of a JDBC data source (see
 [Secret resolution in the JDBC path](#secret-resolution-in-the-jdbc-path)).
 
+The map **is applied on the execution path**. `ExecuteService.prepareProperties(...)` looks up
+every data source of the resolved source configuration under
+`scheduledTaskDTO.getDomainKeyName()` and merges the result into
+`dataSourceDTO.getService().getProperties()` - the very map that reaches `JdbcConnectionFactory`
+and the secret resolution. `putAll` semantics apply: values from the domain-local
+configuration **override** the same keys coming from `lakehouse-config-svc`, which makes the
+block a per-domain override of the repository-declared `service.properties` (useful for
+keeping credentials out of Git). A domain that is `null` — for example a task message without a
+domain — simply resolves to `Optional.empty()` and leaves the repository values untouched.
+
 ### Known limitations
 
 The following is the current state of the code and is intentional to document explicitly:
 
-- The domain-scoped `domains` map is **bound and available but not applied to execution**.
-  `DomainDataSourceServiceProperties` is injected into `ExecuteService`, but its
-  `getServiceProperties(...)` is not called anywhere on the execution path: every data
-  source, driver and property actually used comes from
-  `ConfigRestClientApi.getSourceConfDTO(dataSetKeyName)`. A value configured under
-  `lakehouse.task-executor.domains.<domain>.<dataSource>.service-properties` therefore has
-  **no effect today**, and the same options must be kept in the domain's repository (as the
-  `service.properties` of the `DataSource` construct) to be effective. Configuring both
-  places is harmless as long as the effective source is the configuration service.
-- `ScheduledTaskMsgDTO.domainKeyName` is not populated by the scheduler yet (the scheduler
-  never calls its setter), so the domain of an incoming task message is `null`. This does
-  not affect execution, because the executor resolves the data sources through the
-  configuration service anyway.
+- The lookup key is `scheduledTaskDTO.getDomainKeyName()`. `ScheduledTaskMsgDTO.domainKeyName`
+  is not populated by the scheduler (the scheduler never calls its setter), so the domain of an
+  incoming task message is `null`; whether the domain-local block is applied therefore depends on
+  how `lockTaskById` populates `ScheduledTaskLockDTO.scheduledTaskEffectiveDTO`. Verify
+  `domainKeyName` on the effective task description before relying on the override.
 - The data source is looked up by the data set key alone: `getSourceConfDTO` takes no domain
   parameter. The domain scoping of the returned constructs is decided by the configuration
   service.
+- `service-properties` is merged unvalidated: an unknown key or a typo is silently passed
+  downstream, where it is ignored by the secret resolver.
 
 ## Modules
 

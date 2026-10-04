@@ -56,7 +56,25 @@ lakehouse:
                 local-clone-path: ${LAKEHOUSE_CONFIG_GIT_<NESTED_DOMAIN>_CLONE_PATH:}
                 private-key-path: ${LAKEHOUSE_CONFIG_GIT_<NESTED_DOMAIN>_PRIVATE_KEY_PATH:}
 
-  health: # Эндпоинты проверки состояния сервиса
-    liveness-path: /healthz # Liveness-проба
+health: # Эндпоинты проверки состояния сервиса
+    liveness-path: /healthz # Лiveness-проба
     readiness-path: /readyz # Readiness-проба
 ```
+
+## Домены
+
+`lakehouse.config.vcs` связывается классом `LakehouseVCSProperties`; карта `domains` выше -
+единственное место, где объявляются репозитории. Каждый домен - это один Git-репозиторий, он
+забирается и применяется сам по себе, и каждый загруженный из него конструкт получает метку
+`domainKeyName`. `local-clone-path` должен быть уникален на домен, а домен без
+`git.repository-url` пропускается целиком.
+
+Если `domains` пуст и задано legacy-свойство `lakehouse.config.vcs.git.repository-url`, этот
+единственный репозиторий публикуется как один домен с именем `default`; как только в `domains`
+появится хотя бы одна запись, legacy-блок игнорируется и **не** становится дополнительным доменом
+`default`.
+
+Сам цикл синхронизации глобален, а не посегментный по доменам:
+`lakehouse.config.vcs.git.sync.*` (enabled / interval-ms / initial-delay-ms). Полное описание
+дерева, порядка применения (`priority`, родители перед детьми), правил изоляции и legacy-блока:
+[Домены](../content_configuration/domains.md).

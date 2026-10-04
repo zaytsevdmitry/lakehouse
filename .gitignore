@@ -31,3 +31,4 @@ lakehouse-task-executor-spark-dq-app/dependency-reduced-pom.xml
 spark-warehouse
 target
 /demo/k8s/lakehouse-management-helm-charts/lakehouse-management/charts/
+/demo/k8s/lakehouse-management-helm-charts/lakehouse-management/charts/

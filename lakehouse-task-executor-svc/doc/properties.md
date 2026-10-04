@@ -34,8 +34,9 @@ lakehouse:
     # Per-domain data source settings: domains.<domainKeyName>.<dataSourceKeyName>.service-properties
     # Bound by DomainDataSourceServiceProperties (prefix lakehouse.task-executor) and exposed via
     # getServiceProperties(domainKey, dataSourceKey), which returns Optional.empty() for an unknown
-    # domain or data source. NOTE: not applied to the execution path yet - the executor resolves
-    # data sources through lakehouse-config-svc. See readme.md, chapter "Domains".
+    # domain or data source. APPLIED on the execution path: ExecuteService.prepareProperties(...) merges
+    # the map into DataSourceDTO.getService().getProperties(), overriding the values of
+    # lakehouse-config-svc (putAll). See readme.md, chapter "Domains".
     domains:
       platform:
         lakehousestorage:
@@ -70,10 +71,13 @@ the same secret provider options that `lakehouse-credential-providers-jdbc` unde
 the `service.properties` of a JDBC data source (`secretProvider`, `secret-key`, `vault-url`,
 `vault-role`, `vault-k8s-auth-path`, `secret-id`, `secret-version`, `url`, `user`).
 
-These values are currently **not used during execution**: the data sources a task opens are
-always the ones returned by `lakehouse-config-svc`. The block is kept here because it is
-bound and exposed by `DomainDataSourceServiceProperties`, and because the per-domain
-deployment story depends on it. See readme.md, chapter "Domains".
+These values are **applied during execution**: `ExecuteService.prepareProperties(...)` looks up
+every data source of the resolved configuration under `scheduledTaskDTO.getDomainKeyName()` and
+merges the result into the `service.properties` that later reaches the JDBC secret resolution.
+`putAll` semantics apply, so the block is a per-domain **override** of the repository-declared
+`service.properties` - the usual reason to set it is to keep credentials out of Git. When the
+domain of the task is `null` the lookup yields `Optional.empty()` and the values from
+`lakehouse-config-svc` stay effective. See readme.md, chapter "Domains".
 
 ### Task processor parameters
 
@@ -99,4 +103,5 @@ the password at runtime and strips the security options before opening the conne
 | `user` | User name; the password itself comes from the provider |
 
 Requires the `VAULT_TOKEN` environment variable (OpenBao) or `YC_AUTH_KEY_PATH` (Lockbox). Real example:
-`demo/compose/conf/datasources/processingdb.json`. Full details: [security guide](../../doc/security/security.md).
+`demo/conf/datasources/processingdb.json` (repository form:
+`demo/conf_git/domains/platform/datasources/processingdb.yaml`). Full details: [security guide](../../doc/security/security.md).

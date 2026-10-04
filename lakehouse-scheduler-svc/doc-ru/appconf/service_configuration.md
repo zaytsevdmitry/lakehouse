@@ -66,7 +66,35 @@ lakehouse:
         lag-when-failed: 10000 # задержка повторного запуска для FAILED задач
         lag-when-config-failed: 240000 # задержка повторного запуска для CONF_ERROR задач
 
-  health: # Эндпоинты проверки состояния сервиса
-    liveness-path: /healthz # Liveness-проба
+health: # Эндпоинты проверки состояния сервиса
+    liveness-path: /healthz # Лiveness-проба
     readiness-path: /readyz # Readiness-проба
 ```
+
+## Домены
+
+Сервис **не хранит собственной доменной конфигурации**: в YAML выше нет ни свойства
+`lakehouse.scheduler.*.domains`, ни реестра доменов, ни доменного фильтра. Домен приходит как
+метаданные вместе с конфигурационными объектами, прочитанными из `lakehouse-config-svc`, и
+каждый домен владеет своим Git-репозиторием там же (см.
+[config-svc: Домены](../../../lakehouse-config-svc/doc-ru/content_configuration/domains.md)).
+
+На поведение доменов здесь влияют ровно две точки конфигурации, и обе живут в метаданных, а не в
+этом сервисе:
+
+| Где | Свойство / поле | Влияние |
+|---|---|---|
+| Метаданные config-svc | `Schedule.domainKeyName` | Домен расписания, проставляется из репозитория, из которого он загружен |
+| Метаданные config-svc | `TaskExecutionServiceGroup.domainKeyName`, `TaskExecutionServiceGroup.allowedDomains` | Домены, которыми группа исполнителей владеет и которые дополнительно обслуживает |
+
+При каждом цикле публикации `ScheduleTaskInstanceService.checkDomain(...)` сравнивает домен
+расписания с `allowedDomains ∪ {domainKeyName}` группы, указанной в
+`taskExecutionServiceGroupName` задачи. Несовпадение - это не ошибка расписания, а ошибка
+маршрутизации: `ScheduleTaskInstance` сохраняется со статусом `CONF_ERROR` и сообщением
+`Domain <домен> not allowed in <группа> taskExecutionServiceGroup`, отложенное сообщение
+продюсера удаляется и в `scheduled_task_msg` ничего не отправляется. Отсутствующая группа **не
+является отказом** - проверка пропускается с предупреждением, и задача публикуется.
+
+Так как исполнители группируются только по `taskExecutionServiceGroupName` (это Kafka `group.id`),
+именно эта проверка не пускает чужой домен в группу исполнителей. См.
+[Домены](../readme.md#домены).
