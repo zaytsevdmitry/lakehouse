@@ -103,54 +103,6 @@ data:
           "optionalClientScopes": [
             "offline_access"
           ]
-        },
-        {
-          "clientId": "lakehouse-ui-modeller-client",
-          "name": "UI Modeller BFF Client",
-          "enabled": true,
-          "protocol": "openid-connect",
-          "publicClient": false,
-          "secret": "{{ .Values.keycloak.modellerClientSecret }}",
-          "standardFlowEnabled": true,
-          "directAccessGrantsEnabled": false,
-          "redirectUris": [
-            "http://localhost:8081/*",
-            "http://localhost:8081/login/oauth2/code/keycloak"
-          ],
-          "webOrigins": [
-            "http://localhost:8081"
-          ],
-          "attributes": {
-            "pkce.code.challenge.method": "S256",
-            "post.logout.redirect.uris": "http://localhost:8081/*"
-          },
-          "defaultClientScopes": [
-            "web-origins",
-            "acr",
-            "profile",
-            "roles",
-            "email"
-          ],
-          "optionalClientScopes": [
-            "offline_access"
-          ],
-          "protocolMappers": [
-            {
-              "id": "modeller-realm-roles-id-token",
-              "name": "modeller realm roles (id token)",
-              "protocol": "openid-connect",
-              "protocolMapper": "oidc-usermodel-realm-role-mapper",
-              "consentRequired": false,
-              "config": {
-                "multivalued": "true",
-                "userinfo.token.claim": "true",
-                "id.token.claim": "true",
-                "access.token.claim": "false",
-                "claim.name": "realm_access.roles",
-                "jsonType.label": "String"
-              }
-            }
-          ]
         }
       ],
       "clientScopes": [

@@ -1,1 +1,0 @@
-ALTER TABLE  {{ ref(targetDataSetKeyName) }} ADD CONSTRAINT {{ constraint.name }} CHECK ({{ constraint.checkExpr }})

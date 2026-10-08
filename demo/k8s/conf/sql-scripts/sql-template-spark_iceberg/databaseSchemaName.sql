@@ -1,1 +1,0 @@
-{%set schema=dataSets[currentDataSetKeyName].dataSourceKeyName~'.'~dataSets[currentDataSetKeyName].databaseSchemaName%}{{schema}}

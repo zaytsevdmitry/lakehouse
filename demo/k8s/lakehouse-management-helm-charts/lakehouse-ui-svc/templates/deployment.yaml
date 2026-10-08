@@ -34,7 +34,7 @@ spec:
               value: {{ .Values.keycloak.internalClientSecret | quote }}
           command: ["bash", "-c"]
           args:
-            - "java
+            - "java  
             -Dserver.port={{ .Values.java.serverPort }}
             -Dlakehouse.ui.health-check-timeout-ms=3000
             -Dlakehouse.ui.services[0].name=lakehouse-config-svc
@@ -59,7 +59,7 @@ spec:
             -Dlakehouse.ui.services[6].url=http://spark-history:18080
             -Dlakehouse.ui.services[6].health-check-url=http://spark-history:18080
             -Dlakehouse.ui.services[7].name=lakehouse-minio
-            -Dlakehouse.ui.services[7].url=http://minio:9001
+            -Dlakehouse.ui.services[7].url=http://minio:9001  
             -Dlakehouse.ui.services[7].health-check-url=http://minio:9000/minio/health/live
             -Dlakehouse.ui.services[8].name=db-dev
             -Dlakehouse.ui.services[8].url=http://db-dev:5432
@@ -69,6 +69,10 @@ spec:
             -Dlakehouse.ui.services[9].url=http://broker:9092
             -Dlakehouse.ui.services[9].health-check-url=broker:9092
             -Dlakehouse.ui.services[9].check-type=tcp
+            -Dlakehouse.ui.services[10].name=git-server
+            -Dlakehouse.ui.services[10].url=http://git-server:9418
+            -Dlakehouse.ui.services[10].health-check-url=git-server:9418
+            -Dlakehouse.ui.services[10].check-type=tcp
             -Dlakehouse.client.rest.config.server.url=http://lakehouse-config-svc:8082
             -Dlakehouse.client.rest.state.server.url=http://lakehouse-state-svc:8084
             -Dlakehouse.client.rest.scheduler.server.url=http://lakehouse-scheduler-svc:8083
@@ -90,6 +94,7 @@ spec:
             -Dlakehouse.ui.edges.lakehouse-config-svc[0]=confdb
             -Dlakehouse.ui.edges.lakehouse-config-svc[1]=topic-schedule-conf
             -Dlakehouse.ui.edges.lakehouse-config-svc[2]=lakehouse-scheduler-svc
+            -Dlakehouse.ui.edges.lakehouse-config-svc[3]=git-server
             -Dlakehouse.ui.edges.topic-schedule-conf[0]=lakehouse-scheduler-svc
             -Dlakehouse.ui.edges.lakehouse-scheduler-svc[0]=topic-tasks
             -Dlakehouse.ui.edges.lakehouse-scheduler-svc[1]=schedulerdb
@@ -102,4 +107,11 @@ spec:
             -Dlakehouse.ui.edges.lakehouse-task-proxy-for-spark[1]=lakehouse-minio
             -Dlakehouse.ui.edges.lakehouse-minio[0]=lakehouse-trino
             -Dlakehouse.ui.edges.lakehouse-minio[1]=lakehouse-spark-history
+            -Dlakehouse.ui.edges.lakehouse-ui-svc[0]=git-server
+            -Dlakehouse.modeller.domains.platform.repository-url=git://git-server:9418/platform.git
+            -Dlakehouse.modeller.domains.platform.branch-main=main
+            -Dlakehouse.modeller.domains.analytics.repository-url=git://git-server:9418/analytics.git
+            -Dlakehouse.modeller.domains.analytics.branch-main=main
+            -Dlakehouse.modeller.domains.processing.repository-url=git://git-server:9418/processing.git
+            -Dlakehouse.modeller.domains.processing.branch-main=main
             -jar /opt/lakehouse-ui-svc-{{ .Chart.AppVersion }}-jar-with-dependencies.jar"

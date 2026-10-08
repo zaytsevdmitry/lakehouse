@@ -1,4 +1,0 @@
-kind: Script
-key: sql-template-postgres.checkConstraintDDLAdd.sql
-value: |
-  ALTER TABLE  {{ ref(targetDataSetKeyName) }} ADD CONSTRAINT {{ constraint.name }} CHECK ({{ constraint.checkExpr }})

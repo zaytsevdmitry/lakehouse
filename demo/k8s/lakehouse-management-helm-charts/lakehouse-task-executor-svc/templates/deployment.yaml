@@ -1,47 +1,53 @@
+{{- $root := index .Values "lakehouse-task-executor-service" }}
+{{- range $instance := $root.instances }}
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: lakehouse-task-executor-svc
+  name: lakehouse-task-executor-svc-{{ $instance.name }}
 spec:
   replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: lakehouse-task-executor-svc
-      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/instance: {{ $.Release.Name }}
+      app.kubernetes.io/component: {{ $instance.name }}
   template:
     metadata:
       labels:
         app.kubernetes.io/name: lakehouse-task-executor-svc
-        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/instance: {{ $.Release.Name }}
+        app.kubernetes.io/component: {{ $instance.name }}
     spec:
-      serviceAccountName: {{ index .Values "lakehouse-task-executor-service" "serviceAccount" "name" }}
+      serviceAccountName: {{ $root.serviceAccount.name }}
       initContainers:
         - name: wait-for-keycloak
           image: busybox:1.37
-          command: ['sh', '-c', 'until wget -q -O /dev/null {{ .Values.keycloak.issuerUri }}; do echo waiting for keycloak; sleep 3; done']
+          command: ['sh', '-c', 'until wget -q -O /dev/null {{ $.Values.keycloak.issuerUri }}; do echo waiting for keycloak; sleep 3; done']
       containers:
         - name: task-executor-svc
-          image: "{{ index .Values "lakehouse-task-executor-service" "image" "repository" }}:{{ index .Values "lakehouse-task-executor-service" "image" "tag" }}"
-          imagePullPolicy: {{ index .Values "lakehouse-task-executor-service" "image" "pullPolicy" }}
+          image: "{{ $root.image.repository }}:{{ $root.image.tag }}"
+          imagePullPolicy: {{ $root.image.pullPolicy }}
           ports:
             - containerPort: 8090
               protocol: TCP
           env:
             - name: KEYCLOAK_ISSUER_URI
-              value: {{ .Values.keycloak.issuerUri | quote }}
+              value: {{ $.Values.keycloak.issuerUri | quote }}
             - name: KEYCLOAK_INTERNAL_CLIENT_SECRET
-              value: {{ .Values.keycloak.internalClientSecret | quote }}
+              value: {{ $.Values.keycloak.internalClientSecret | quote }}
             - name: VAULT_TOKEN
-              value: {{ .Values.vault.token | quote }}
+              value: {{ $.Values.vault.token | quote }}
           command: ["bash", "-c"]
           args:
             - "java
             -Dserver.port=8090
-            -Dlakehouse.client.rest.config.server.url=http://lakehouse-config-svc:8082
-            -Dlakehouse.client.rest.scheduler.server.url=http://lakehouse-scheduler-svc:8083
-            -Dlakehouse.client.rest.state.server.url=http://lakehouse-state-svc:8084
-            -Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id=default
-            -Dlakehouse.task-executor.service.id=default
-            -Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=5
-            -Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=broker:9092
-            -jar /opt/lakehouse-task-executor-svc-{{ .Chart.AppVersion }}-jar-with-dependencies.jar"
+            -Dlakehouse.client.rest.config.server.url={{ $root.clients.configUrl }}
+            -Dlakehouse.client.rest.scheduler.server.url={{ $root.clients.schedulerUrl }}
+            -Dlakehouse.client.rest.state.server.url={{ $root.clients.stateUrl }}
+            -Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id={{ $instance.groupId }}
+            -Dlakehouse.task-executor.service.id={{ $instance.serviceId }}
+            -Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency={{ $instance.concurrency }}
+            -Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers={{ $root.kafka.bootstrapServers }}
+            -jar /opt/lakehouse-task-executor-svc-{{ $.Chart.AppVersion }}-jar-with-dependencies.jar"
+{{- end }}

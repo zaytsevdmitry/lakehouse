@@ -34,9 +34,6 @@ dependencies:
     version: 0.1.0
     repository: "file://../lakehouse-ui-svc"
   - name: git-server
-    version: 0.1.0
+    version: "0.1.0"
     repository: "file://../git-server"
-  - name: lakehouse-ui-modeller-svc
-    version: 0.1.0
-    repository: "file://../lakehouse-ui-modeller-svc"
 

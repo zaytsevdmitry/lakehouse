@@ -1,4 +1,0 @@
-kind: Script
-key: sql-template-spark_iceberg.databaseSchemaDDLCreate.sql
-value: |
-  CREATE SCHEMA IF NOT EXISTS {{ refCatSchema(targetDataSetKeyName) }}

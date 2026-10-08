@@ -30,7 +30,6 @@ for svc in \
   "lakehouse-state-service 8084:8084" \
   "db-dev 5432:5432" \
   "broker 9092:9092" \
-  "lakehouse-ui-modeller-svc 8081:8081" \
   "lakehouse-ui-svc 8080:8080" \
   "keycloak 8085:8085"
 do
@@ -38,3 +37,4 @@ do
   echo $1
   kubectl port-forward svc/$1 $2 -n lakehouse-management &
 done
+

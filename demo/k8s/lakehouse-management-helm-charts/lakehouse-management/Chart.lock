@@ -29,8 +29,5 @@ dependencies:
 - name: git-server
   repository: file://../git-server
   version: 0.1.0
-- name: lakehouse-ui-modeller-svc
-  repository: file://../lakehouse-ui-modeller-svc
-  version: 0.1.0
-digest: sha256:caaa98933461ec6da9293cf947f34839111cdc30e4fe63ef8b08fbba27e8fda3
-generated: "2026-09-15T20:40:10.03394011+03:00"
+digest: sha256:16f3b61fa464026796c79d68c4252c255c918e28d6359566a9890aac4caa5038
+generated: "2026-09-27T15:03:47.809908119+03:00"

@@ -1,9 +1,30 @@
+{{- $root := index .Values "lakehouse-task-executor-service" }}
+{{- range $instance := $root.instances }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lakehouse-task-executor-svc-{{ $instance.name }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8090
+      targetPort: 8090
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: lakehouse-task-executor-svc
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+    app.kubernetes.io/component: {{ $instance.name }}
+{{- end }}
+---
+# Aggregates every instance. lakehouse-ui-svc health-checks this name
+# (lakehouse.ui.services[4].health-check-url), so it must not be renamed.
 apiVersion: v1
 kind: Service
 metadata:
   name: lakehouse-task-executor-svc
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
     - port: 8090
       targetPort: 8090

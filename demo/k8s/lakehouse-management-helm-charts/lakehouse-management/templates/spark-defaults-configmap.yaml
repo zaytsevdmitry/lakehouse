@@ -80,3 +80,5 @@ data:
     spark.kubernetes.container.image=lakehouse-spark-aws:0.11.0
     spark.kubernetes.executor.deleteOnTermination=true
     spark.kubernetes.namespace={{ .Release.Namespace }}
+    spark.kubernetes.file.upload.path=file:///tmp
+

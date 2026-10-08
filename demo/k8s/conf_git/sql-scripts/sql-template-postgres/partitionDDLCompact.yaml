@@ -1,4 +1,0 @@
-kind: Script
-key: sql-template-postgres.partitionDDLCompact.sql
-value: |
-  fix me

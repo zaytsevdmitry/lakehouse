@@ -11,13 +11,10 @@ To reach the services from your machine (kubectl port-forward), run:
   kubectl -n {{ .Release.Namespace }} port-forward svc/lakehouse-task-executor-svc 8090:8090
   kubectl -n {{ .Release.Namespace }} port-forward svc/lakehouse-task-proxy4spark 8086:8086
   kubectl -n {{ .Release.Namespace }} port-forward svc/lakehouse-ui-svc 8080:8080      # UI BFF
-  kubectl -n {{ .Release.Namespace }} port-forward svc/lakehouse-ui-modeller-svc 8081:8081
   kubectl -n {{ .Release.Namespace }} port-forward svc/spark-history 18080:18080
   kubectl -n {{ .Release.Namespace }} port-forward svc/{{ .Release.Name }}-trino 8080:8080
   kubectl -n {{ .Release.Namespace }} port-forward svc/broker 9092:9092                # Kafka
   kubectl -n {{ .Release.Namespace }} port-forward svc/openbao 8200:8200               # OpenBao
 
 UI BFF:   http://localhost:8080
-UI modeller (OAuth2 redirect is registered for localhost:8081):
-  http://localhost:8081
 Keycloak admin console: http://localhost:8085 (admin / admin_local_password)

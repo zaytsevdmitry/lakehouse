@@ -16,20 +16,60 @@ nameOverride: ""
 fullnameOverride: ""
 
 # ============================================================================
+# Task executor — renders one Deployment + Service per entry of `instances`
+# (see the subchart values for the groupId / serviceId contract). The subchart
+# default already matches demo/conf_git and demo/compose, so nothing has to be
+# repeated here; the block below only exists to show the override keys.
+#
+# Lists are replaced by Helm, never merged: an override of `instances` must
+# therefore repeat every instance it wants to keep.
+# lakehouse-task-executor-service:
+#   image:
+#     tag: "0.11.0"
+#   instances:
+#     - name: database
+#       groupId: "database"
+#       serviceId: "database"
+#       concurrency: 1
+#     - name: spark
+#       groupId: "spark-cluster"
+#       serviceId: "spark-exec-1"
+#       concurrency: 1
+#     - name: state
+#       groupId: "state-service"
+#       serviceId: "state-service"
+#       concurrency: 1
+
+# ============================================================================
 # MinIO — object storage (feeds sparklogs/eventlog, hive-metastore, trino).
 # Consumed by templates/minio-dev.yaml.
 minio:
   image:
-    registry: quay.io
-    repository: minio/minio
-    tag: latest
+    # The Bitnami catalog no longer publishes versioned tags (they moved to
+    # bitnamilegacy after the August 2025 catalog cleanup), so the legacy
+    # repository is referenced here. Swap to quay.io/minio/minio to go back.
+    registry: docker.io
+    repository: bitnamilegacy/minio
+    tag: 2025.7.23
+    pullPolicy: IfNotPresent
+
+  # Image of the minio-bucket-init hook Job that creates the buckets and the
+  # .keep markers (see templates/minio-bucket-init-job.yaml)
+  clientImage:
+    registry: docker.io
+    repository: bitnamilegacy/minio-client
+    tag: 2025.7.21
     pullPolicy: IfNotPresent
 
   auth:
     rootUser: "spark_user"
     rootPassword: "spark_pwd"
 
-  defaultBuckets: "data,sparklogs"
+  # Buckets created by the minio-bucket-init hook Job. Each entry is either a
+  # plain bucket name ("sparklogs") or "bucket:prefix" when a directory with a
+  # .keep marker has to exist in it ("data:warehouse" keeps Spark from losing
+  # the prefix when the first job writes).
+  defaultBuckets: "data:warehouse,sparklogs:eventlog"
 
   service:
     type: ClusterIP
@@ -63,7 +103,6 @@ keycloak:
   issuerUri: "http://keycloak:8085/realms/lakehouse"
   uiClientSecret: "super-secret-bff-key-1234567890"
   internalClientSecret: "super-secret-internal-key-987654321"
-  modellerClientSecret: "super-secret-modeller-key-555555555"
   service:
     port: 8085
   image:
