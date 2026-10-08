@@ -67,10 +67,10 @@ public class ConstraintTestSetRunner implements TestSetRunner {
 
         for (Map.Entry<String, DataSetConstraintDTO> constraint: constraints.entrySet()) {
             Dataset<Row> current = switch (constraint.getValue().getType()) {
-                case primary -> check.getPrimary(constraint);
-                case foreign -> check.getForeign(constraint);
-                case unique -> check.getUnique(constraint);
-                case check -> check.getCheck(constraint);
+                case PRIMARY -> check.getPrimary(constraint);
+                case FOREIGN -> check.getForeign(constraint);
+                case UNIQUE -> check.getUnique(constraint);
+                case CHECK -> check.getCheck(constraint);
             };
             result.unionAll(current);
         }

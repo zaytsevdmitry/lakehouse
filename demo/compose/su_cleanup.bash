@@ -18,6 +18,7 @@
 
 
 pwd
-sudo -u root rm -rf ./storages/minio_storage/.minio.sys
-sudo -u root rm -rf ./storages/minio_storage/data
-sudo -u root rm -rf ./storages/minio_storage/sparklogs
+sudo -u root rm -rf ./storages/minio_storage
+sudo -u root rm -rf ./storages/modeller_workspaces
+mkdir -p ./storages/minio_storage
+echo "Directory for mount to minio storage"  > ./storages/minio_storage/dir-info.md

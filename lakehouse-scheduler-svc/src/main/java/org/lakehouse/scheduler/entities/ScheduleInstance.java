@@ -35,6 +35,9 @@ public class ScheduleInstance {
     @Column(nullable = false)
     private String configScheduleKeyName;
 
+    @Column(nullable = true)
+    private String domainKeyName;
+
     @Column(nullable = false)
     private OffsetDateTime targetExecutionDateTime;
 
@@ -59,6 +62,14 @@ public class ScheduleInstance {
 
     public void setConfigScheduleKeyName(String configScheduleKeyName) {
         this.configScheduleKeyName = configScheduleKeyName;
+    }
+
+    public String getDomainKeyName() {
+        return domainKeyName;
+    }
+
+    public void setDomainKeyName(String domainKeyName) {
+        this.domainKeyName = domainKeyName;
     }
 
     public OffsetDateTime getTargetExecutionDateTime() {

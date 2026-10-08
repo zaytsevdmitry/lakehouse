@@ -26,7 +26,11 @@ import java.util.Optional;
  * <p>
  * The only bundled implementation is a Git backed one via JGit.
  */
-public interface VcsClient {
+public interface VcsClient extends AutoCloseable {
+
+    @Override
+    default void close() {
+    }
 
     /**
      * Makes sure the local copy/repository is present and points to the configured remote.

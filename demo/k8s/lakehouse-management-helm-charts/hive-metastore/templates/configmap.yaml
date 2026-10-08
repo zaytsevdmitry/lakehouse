@@ -50,7 +50,7 @@ data:
         </property>
         <property>
             <name>fs.s3a.path.style.access</name>
-            <value>true</value>
+            <value>{{ .Values.config.s3.pathStyleAccess }}</value>
         </property>
         <property>
             <name>fs.s3a.connection.ssl.enabled</name>

@@ -31,7 +31,6 @@ public class ObjectActionsFactory {
     private final Map<String, ObjectActions> mapObjectActions;
 
     public ObjectActionsFactory(
-            NameSpaceObjectActions nameSpaceObjectActions,
             DataStoreObjectActions dataStoreObjectActions,
             DataSetObjectActions dataSetObjectActions,
             ScenarioActTemplateObjectActions scenarioActTemplateObjectActions,
@@ -40,7 +39,6 @@ public class ObjectActionsFactory {
             ScheduledTaskObjectActions scheduledTaskObjectActions,
             TaskLockObjectActionsImpl taskLockObjectActions) {
         Map<String, ObjectActions> mapObjectActions = new HashMap<String, ObjectActions>();
-        mapObjectActions.put("nameSpace", nameSpaceObjectActions);
         mapObjectActions.put("datastore", dataStoreObjectActions);
         mapObjectActions.put("dataset", dataSetObjectActions);
         mapObjectActions.put("scenarioactemplate", scenarioActTemplateObjectActions);

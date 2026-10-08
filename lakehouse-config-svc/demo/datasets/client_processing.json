@@ -1,6 +1,6 @@
 {
   "keyName": "client_processing",
-  "nameSpaceKeyName": "DEMO",
+  "domainKeyName": "DEMO",
   "dataSourceKeyName": "processingdb",
   "databaseSchemaName": "proc",
   "tableName": "client",

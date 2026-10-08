@@ -18,7 +18,7 @@
 package org.lakehouse.scheduler;
 
 import org.lakehouse.jinja.java.configuration.JinJavaConfiguration;
-import org.lakehouse.scheduler.configuration.ScheduleConfigConsumerKafkaConfigurationProperties;
+import org.lakehouse.scheduler.configuration.ConfigurationChangeConsumerKafkaConfigurationProperties;
 import org.lakehouse.scheduler.configuration.SchedulerTaskRetryProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -31,7 +31,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
         "org.lakehouse.security"},
 scanBasePackageClasses = {JinJavaConfiguration.class})
 
-@EnableConfigurationProperties(value = {ScheduleConfigConsumerKafkaConfigurationProperties.class,
+@EnableConfigurationProperties(value = {ConfigurationChangeConsumerKafkaConfigurationProperties.class,
         SchedulerTaskRetryProperties.class})
 public class LakehouseSchedulerApp {
     public static void main(String[] args) {

@@ -45,6 +45,99 @@
 
 Процессоры, использующие шаблоны SQLTemplate, совместимы со Spark-задачами и JDBC-процессором. Подробно процессоры описаны в [processors.md](processors.md).
 
+## Домены
+
+**Домен** - единица изоляции конфигурации (`lakehouse-config-svc`): каждый домен владеет
+собственным Git-репозиторием, и на каждый загруженный из него конструкт проставляется имя
+домена как `domainKeyName`. Эта метка - признак владения, а не идентичности: `keyName`
+остаётся сквозным первичным ключом, поэтому он не может повторяться - два домена, указывающие
+на одну и ту же физическую таблицу, используют два разных `keyName`. См. [config-svc: Домены](../../lakehouse-config-svc/doc-ru/content_configuration/domains.md).
+
+Этот сервис доменами не владеет: у него нет ни дерева доменов, ни реестра, ни собственного
+доменного фильтра. Домен приходит в него только как метаданные на тех объектах, с которыми
+сервис и так работает.
+
+### Откуда берётся домен
+
+```
+lakehouse-scheduler-svc
+  └─ ScheduledTaskMsgDTO.domainKeyName            (сообщение о задаче в scheduled_task_msg)
+       └─ ScheduledTaskLockDTO
+            └─ ExecuteService
+                 ├─ configRestClientApi.getSourceConfDTO(dataSetKeyName)  ──▶ lakehouse-config-svc
+                 │     DataSourceDTO / DataSetDTO / DriverDTO — у каждого свой domainKeyName
+                 └─ DataSourceDTO.service.properties  ──▶ JdbcConnectionFactory (разрешение секретов)
+```
+
+Домен попадает в исполнение задачи двумя путями:
+
+- **`ScheduledTaskMsgDTO.domainKeyName`** - поле Kafka-сообщения, которое публикует
+  планировщик в `scheduled_task_msg`. Сообщение десериализуется в `ScheduledTaskLockDTO`
+  вместе с описанием задачи, полученным от `lockTaskById`.
+- **Сами DTO конфигурации** - `DataSourceDTO`, `DataSetDTO` и `DriverDTO`, возвращаемые
+  `getSourceConfDTO(...)`, выставляют `domainKeyName`, поэтому исполнитель всегда знает, к
+  какому домену относится каждый открываемый источник данных. Фактически используемый
+  источник выбирается по датасету задачи, а датасет домена определён в репозитории этого
+  домена.
+
+Группировка исполнителей **не** доменная. Экземпляр берёт только задачи, у которых
+`taskExecutionServiceGroupName` совпадает с Kafka `group.id` его консьюмера; разделение по
+доменам между исполнителями одной группы обеспечивает планировщик, который не публикует
+задачу, если домен её расписания не разрешён в `TaskExecutionServiceGroup` задачи (см.
+[scheduler-svc: Домены](../../lakehouse-scheduler-svc/doc-ru/readme.md#домены)).
+
+### Доменные настройки источников данных
+
+Для развёртываний, которые держат настройки подключения локально отдельно на каждый домен,
+сервис связывает двухуровневую карту под префиксом `lakehouse.task-executor`
+(`DomainDataSourceServiceProperties`):
+
+```yaml
+lakehouse:
+  task-executor:
+    domains:                          # <domainKeyName>:
+      platform:                       #   <dataSourceKeyName>:
+        lakehousestorage:             #     service-properties:   (свободная карта)
+          service-properties:
+            secretProvider: org.lakehouse.security.jdbc.BaoJdbcSecretProvider
+            secret-key: "kv/data/lakehouse/database:password"
+            vault-url: "http://openbao:8200"
+            user: postgresUser
+            fetchSize: "10000"
+```
+
+`getServiceProperties(domainKey, dataSourceKey)` разбирает карту и возвращает
+`Optional.empty()` для неизвестного домена, неизвестного источника данных или источника без
+`service-properties`. Ключи внутри `service-properties` свободной формы и биндингом не
+проверяются; в них несут те же опции secret-provider, что и `service.properties` JDBC-источника
+(см. [Разрешение секретов в JDBC-пути](#разрешение-секретов-в-jdbc-пути)).
+
+Карта **применяется на пути исполнения**. `ExecuteService.prepareProperties(...)` для каждого
+источника данных разбираемой конфигурации делаетlookup по
+`scheduledTaskDTO.getDomainKeyName()` и сливает результат в
+`dataSourceDTO.getService().getProperties()` - ту самую карту, которая доходит до
+`JdbcConnectionFactory` и до разрешения секретов. Семантика - `putAll`: значения из
+доменной локальной конфигурации **перекрывают** те же ключи, пришедшие из
+`lakehouse-config-svc`, поэтому блок работает как доменное переопределение объявленных в
+репозитории `service.properties` (удобно, чтобы не держать учётные данные в Git). Домен
+`null` - например, у сообщения о задаче без домена - просто даёт `Optional.empty()` и
+оставляет значения репозитория нетронутыми.
+
+### Известные ограничения
+
+Ниже - текущее состояние кода, зафиксированное намеренно:
+
+- Ключомlookup служит `scheduledTaskDTO.getDomainKeyName()`. Поле
+  `ScheduledTaskMsgDTO.domainKeyName` планировщиком не заполняется (сеттер не вызывается),
+  поэтому домен входящего сообщения о задаче равен `null`; применится ли доменный блок,
+  зависит от того, как `lockTaskById` заполняет
+  `ScheduledTaskLockDTO.scheduledTaskEffectiveDTO`. Проверяйте `domainKeyName` в описании
+  задачи, прежде чем полагаться на переопределение.
+- Источник данных ищется только по ключу датасета: `getSourceConfDTO` не принимает параметр
+  домена. Доменную разметку возвращённых конструктов определяет сервис конфигурации.
+- `service-properties` сливается без валидации: неизвестный ключ или опечатка молча уходит
+  дальше и игнорируется резолвером секретов.
+
 ## Модули
 
 ### lakehouse-task-executor-svc
@@ -112,6 +205,13 @@ lakehouse:
         server:
           url: http://127.0.0.1:8081
   task-executor:
+    # Доменные настройки источников данных. Связываются, но пока не применяются при
+    # исполнении - см. подраздел "Известные ограничения" главы "Домены".
+    domains:
+      platform:
+        lakehousestorage:
+          service-properties:
+            user: postgresUser
     service:
       heart-beat-initial-delaY-ms: 5000
       heart-beat-interval-ms: 5000
@@ -152,6 +252,7 @@ lakehouse:
 | `...consumer.topics` | Топик получения задач (по умолчанию `scheduled_task_msg`) |
 | `lakehouse.task-executor.processor.sparkStandAloneClusterTaskProcessor.maxWaitToRunningStateTimeoutMs` | Максимальное время ожидания перехода Spark-задачи в состояние `RUNNING` (по умолчанию `120000` мс) |
 | `lakehouse.task-executor.processor.sparkStandAloneClusterTaskProcessor.sparkJobStatusCheckIntervalMs` | Интервал опроса статуса Spark-задачи (по умолчанию `3000` мс) |
+| `lakehouse.task-executor.domains.<домен>.<источникДанных>.service-properties` | Свободная карта настроек подключения источника данных домена. Связывается, но пока не применяется при исполнении, см. [Домены](#домены) |
 
 ### Разрешение секретов в JDBC-пути
 

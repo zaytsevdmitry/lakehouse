@@ -8,7 +8,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 5Gi
+      storage: {{ .Values.minio.persistence.size }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -17,6 +17,9 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     app: minio
+# The buckets and their .keep markers are created by the minio-bucket-init hook
+# Job (templates/minio-bucket-init-job.yaml) once this Deployment is up, not by
+# a postStart hook — the container stays free of bootstrap side effects.
 spec:
   replicas: 1
   selector:
@@ -27,15 +30,23 @@ spec:
       labels:
         app: minio
     spec:
+      # The PVC is provisioned by the kubelet as root:root, so the pod group is
+      # set to 1001 to make the volume writable for the non-root MinIO
+      securityContext:
+        fsGroup: 1001
       containers:
         - name: minio
-          image: quay.io/minio/minio:latest
-          imagePullPolicy: IfNotPresent
+          image: "{{ .Values.minio.image.registry }}/{{ .Values.minio.image.repository }}:{{ .Values.minio.image.tag }}"
+          imagePullPolicy: {{ .Values.minio.image.pullPolicy }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+          command: ["/opt/bitnami/minio/bin/minio"]
           args:
             - server
-            - /data
+            - {{ .Values.minio.persistence.mountPath }}
             - --console-address
-            - :9001
+            - ":9001"
           ports:
             - containerPort: 9000
               name: api
@@ -43,11 +54,11 @@ spec:
               name: console
           env:
             - name: MINIO_ROOT_USER
-              value: "spark_user"
+              value: {{ .Values.minio.auth.rootUser | quote }}
             - name: MINIO_ROOT_PASSWORD
-              value: "spark_pwd"
+              value: {{ .Values.minio.auth.rootPassword | quote }}
           volumeMounts:
-            - mountPath: /data
+            - mountPath: {{ .Values.minio.persistence.mountPath }}
               name: storage
           livenessProbe:
             httpGet:
@@ -61,42 +72,6 @@ spec:
               port: 9000
             initialDelaySeconds: 5
             periodSeconds: 5
-        - name: minio-lifecycle-init
-          image: minio/mc:latest
-          imagePullPolicy: IfNotPresent
-          command: ["/bin/sh", "-c"]
-          args:
-            - |
-              echo "Waiting for local MinIO API to become ready..."
-              until nc -z localhost 9000; do
-                echo "Waiting for localhost 9000. zzZ"
-                sleep 3
-              done
-              
-              echo "MinIO API is up. Configuring client alias..."
-              mc alias set localminio http://localhost:9000 spark_user spark_pwd
-              
-              echo "Executing bucket lifecycle checks..."
-              
-              if ! mc ls localminio/data > /dev/null 2>&1; then
-                echo "Creating bucket: data"
-                mc mb localminio/data
-              fi
-              echo "Ensuring path: data/warehouse/"
-              echo -n "" | mc pipe localminio/data/warehouse/.keep
-
-              if ! mc ls localminio/sparklogs > /dev/null 2>&1; then
-                echo "Creating bucket: sparklogs"
-                mc mb localminio/sparklogs
-              fi
-              echo "Ensuring path: sparklogs/eventlog/"
-              echo -n "" | mc pipe localminio/sparklogs/eventlog/.keep
-              
-              echo "Storage provisioning completed successfully!"
-          resources:
-            requests:
-              cpu: 10m
-              memory: 10Mi
 
       volumes:
         - name: storage

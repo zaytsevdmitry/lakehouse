@@ -19,7 +19,53 @@ package org.lakehouse.client.api.dto.configs.schedule;
 
 import org.lakehouse.client.api.dto.configs.NameDescriptionAbstract;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
 public class TaskExecutionServiceGroupDTO extends NameDescriptionAbstract {
 
     private static final long serialVersionUID = 4350312904681179326L;
+
+    private String domainKeyName;
+    private List<String> allowedDomains = new ArrayList<>();
+
+    public String getDomainKeyName() {
+        return domainKeyName;
+    }
+
+    public void setDomainKeyName(String domainKeyName) {
+        this.domainKeyName = domainKeyName;
+    }
+
+
+    public List<String> getAllowedDomains() {
+        return allowedDomains;
+    }
+
+    public void setAllowedDomains(List<String> allowedDomains) {
+        this.allowedDomains = allowedDomains;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        TaskExecutionServiceGroupDTO that = (TaskExecutionServiceGroupDTO) o;
+        return Objects.equals(getDomainKeyName(), that.getDomainKeyName()) && Objects.equals(getAllowedDomains(), that.getAllowedDomains());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), getDomainKeyName(), getAllowedDomains());
+    }
+
+    @Override
+    public String toString() {
+        return "TaskExecutionServiceGroupDTO{" +
+                "keyNamw" + getName() + '\'' +
+                "domainKeyName='" + domainKeyName + '\'' +
+                ", allowedDomains=" + allowedDomains +
+                '}';
+    }
 }

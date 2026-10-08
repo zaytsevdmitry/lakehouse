@@ -19,7 +19,7 @@ package org.lakehouse.config.controller;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.lakehouse.client.api.constant.Endpoint;
-import org.lakehouse.client.api.dto.configs.VcsObjectLogDTO;
+import org.lakehouse.client.api.dto.vcs.VcsObjectLogDTO;
 import org.lakehouse.config.vcs.service.VcsObjectLogService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -44,7 +44,8 @@ public class VcsObjectLogController {
 
     /**
      * Returns object log entries. Either {@code commitId} or both {@code from} and
-     * {@code to} must be supplied; kind, filePath and objectName are optional filters.
+     * {@code to} must be supplied; kind, filePath, objectName and domainKeyName are
+     * optional filters.
      */
     @GetMapping(Endpoint.VCS_OBJECT_LOGS)
     List<VcsObjectLogDTO> find(
@@ -53,9 +54,10 @@ public class VcsObjectLogController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
             @RequestParam(required = false) String filePath,
-            @RequestParam(required = false) String objectName) {
+            @RequestParam(required = false) String objectName,
+            @RequestParam(required = false) String domainKeyName) {
         validateEitherCommitOrInterval(commitId, from, to);
-        return vcsObjectLogService.find(commitId, kind, from, to, filePath, objectName);
+        return vcsObjectLogService.find(commitId, kind, from, to, filePath, objectName, domainKeyName);
     }
 
     private void validateEitherCommitOrInterval(String commitId, OffsetDateTime from, OffsetDateTime to) {

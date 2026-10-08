@@ -22,7 +22,7 @@ import org.lakehouse.client.api.constant.Types;
 import java.util.Objects;
 
 public class DataSetConstraintDTO {
-    private Types.Constraint type;
+    private Types.ConstraintType type;
     private String columns = "";
     private boolean enabled = true;
     private Types.ConstraintLevelCheck constraintLevelCheck;
@@ -33,11 +33,11 @@ public class DataSetConstraintDTO {
     public DataSetConstraintDTO() {
     }
 
-    public Types.Constraint getType() {
+    public Types.ConstraintType getType() {
         return type;
     }
 
-    public void setType(Types.Constraint type) {
+    public void setType(Types.ConstraintType type) {
         this.type = type;
     }
 

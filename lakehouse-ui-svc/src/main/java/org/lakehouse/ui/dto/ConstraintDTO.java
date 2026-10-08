@@ -16,20 +16,22 @@
  */
 package org.lakehouse.ui.dto;
 
+import org.lakehouse.client.api.constant.Types;
+
 public class ConstraintDTO {
 
     private String name;
-    private String type;
+    private Types.ConstraintType type;
     private String columns;
     private boolean enabled;
-    private String constraintLevelCheck;
+    private Types.ConstraintLevelCheck constraintLevelCheck;
     private String checkExpr;
     private String tableConstraintDDLCreateOverride;
     private String tableConstraintDDLAddOverride;
     private String referencedTable;
     private String referenceConstraintName;
-    private String onDelete;
-    private String onUpdate;
+    private Types.ReferenceAction onDelete;
+    private Types.ReferenceAction onUpdate;
 
     public String getName() {
         return name;
@@ -39,11 +41,11 @@ public class ConstraintDTO {
         this.name = name;
     }
 
-    public String getType() {
+    public Types.ConstraintType getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(Types.ConstraintType type) {
         this.type = type;
     }
 
@@ -63,11 +65,11 @@ public class ConstraintDTO {
         this.enabled = enabled;
     }
 
-    public String getConstraintLevelCheck() {
+    public Types.ConstraintLevelCheck getConstraintLevelCheck() {
         return constraintLevelCheck;
     }
 
-    public void setConstraintLevelCheck(String constraintLevelCheck) {
+    public void setConstraintLevelCheck(Types.ConstraintLevelCheck constraintLevelCheck) {
         this.constraintLevelCheck = constraintLevelCheck;
     }
 
@@ -111,19 +113,19 @@ public class ConstraintDTO {
         this.referenceConstraintName = referenceConstraintName;
     }
 
-    public String getOnDelete() {
+    public Types.ReferenceAction getOnDelete() {
         return onDelete;
     }
 
-    public void setOnDelete(String onDelete) {
+    public void setOnDelete(Types.ReferenceAction onDelete) {
         this.onDelete = onDelete;
     }
 
-    public String getOnUpdate() {
+    public Types.ReferenceAction getOnUpdate() {
         return onUpdate;
     }
 
-    public void setOnUpdate(String onUpdate) {
+    public void setOnUpdate(Types.ReferenceAction onUpdate) {
         this.onUpdate = onUpdate;
     }
 }

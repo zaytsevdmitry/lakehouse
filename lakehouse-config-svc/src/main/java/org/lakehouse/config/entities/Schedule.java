@@ -26,6 +26,9 @@ import java.util.Objects;
 @Entity
 public class Schedule extends KeyEntityAbstract {
 
+    @Column(nullable = true)
+    private String domainKeyName;
+
     @Column(nullable = false)
     private String intervalExpression;
 
@@ -47,6 +50,14 @@ public class Schedule extends KeyEntityAbstract {
     private Long lastChangeNumber = 0L;
 
     public Schedule() {
+    }
+
+    public String getDomainKeyName() {
+        return domainKeyName;
+    }
+
+    public void setDomainKeyName(String domainKeyName) {
+        this.domainKeyName = domainKeyName;
     }
 
     public String getIntervalExpression() {

@@ -96,7 +96,7 @@ public class SparkStandAloneClusterTaskProcessor extends AbstractTaskProcessor {
                 sourceConfDTO, scheduledTaskDTO);
 
         sourceConfDTO.getDataSources().forEach((s, dataSourceDTO) -> {
-            if (dataSourceDTO.getDataSourceType().equals(Types.DataSourceType.database)){
+            if (dataSourceDTO.getDataSourceType().equals(Types.DataSourceType.DATABASE)){
                 String key = String.format("spark.sql.catalog.%s.url", dataSourceDTO.getKeyName());
                 if (!sparkProperties.containsKey(key)){
                     sparkProperties.put(

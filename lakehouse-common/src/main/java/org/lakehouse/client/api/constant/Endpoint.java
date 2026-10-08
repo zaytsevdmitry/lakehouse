@@ -21,9 +21,6 @@ public class Endpoint {
     public final static String ROOT_API_V1_0 = "/v1_0";
     public final static String CONFIGS = ROOT_API_V1_0 + "/configs";
 
-    public final static String NAME_SPACES = CONFIGS + "/nameSpaces";
-    public final static String NAME_SPACES_NAME = NAME_SPACES + "/{keyName}";
-
     public final static String TASK_EXECUTION_SERVICE_GROUPS = CONFIGS + "/taskexecutionservicegroups";
     public final static String TASK_EXECUTION_SERVICE_GROUPS_NAME = TASK_EXECUTION_SERVICE_GROUPS + "/{keyName}";
 
@@ -32,8 +29,8 @@ public class Endpoint {
     public final static String SCRIPT_BY_KEY = CONFIGS + "/scripts/{key}";
 
     public final static String DATA_SETS = CONFIGS + "/datasets";
-    public final static String DATA_SETS_NAME = CONFIGS + DATA_SETS + "/{keyName}";
-    public final static String DATA_LINEAGE_DATASET = CONFIGS + "/lineage" + DATA_SETS + "/{keyName}";
+    public final static String DATA_SETS_NAME = DATA_SETS + "/{keyName}";
+    public final static String DATA_LINEAGE_DATASET = CONFIGS + "/lineage/datasets/{keyName}";
 
     public final static String QUALITY_METRICS = CONFIGS + "/quality/metrics";
     public final static String QUALITY_METRICS_NAME = QUALITY_METRICS + "/{keyName}";

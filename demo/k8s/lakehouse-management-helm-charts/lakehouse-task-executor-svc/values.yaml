@@ -1,0 +1,50 @@
+lakehouse-task-executor-service:
+  image:
+    repository: lakehouse
+    tag: "0.11.0"
+    pullPolicy: IfNotPresent
+  serviceAccount:
+    create: false
+    name: "lakehouse-app-sa"
+  # Downstream services every task executor instance calls.
+  clients:
+    configUrl: "http://lakehouse-config-svc:8082"
+    schedulerUrl: "http://lakehouse-scheduler-svc:8083"
+    stateUrl: "http://lakehouse-state-svc:8084"
+  kafka:
+    bootstrapServers: "broker:9092"
+  # One Deployment + Service per entry, named lakehouse-task-executor-svc-<name>.
+  #
+  # groupId  — the consumer group of the Kafka client. A scheduled task is executed
+  #            only when its taskExecutionServiceGroupName equals the group id, so
+  #            this must name a TaskExecutionServiceGroup of the config; the demo
+  #            ones live in demo/conf_git/domains/platform/taskexecutionservicegroups.
+  #            Replicas of one instance share it and split the partitions.
+  # serviceId — identifies this executor as the owner of the task lock it takes
+  #            (lockTaskById(id, serviceId)), so it must be unique per instance.
+  #
+  # Ids and ports mirror demo/compose/docker-compose.yaml.
+  instances:
+    - name: database
+      groupId: "database"
+      serviceId: "database"
+      concurrency: 1
+    - name: spark
+      groupId: "spark-cluster"
+      serviceId: "spark-exec-1"
+      concurrency: 1
+    - name: state
+      groupId: "state-service"
+      serviceId: "state-service"
+      concurrency: 1
+
+keycloak:
+  issuerUri: "http://keycloak:8085/realms/lakehouse"
+  internalClientSecret: "super-secret-internal-key-987654321"
+
+# Scoped OpenBao token (read-only policy lakehouse-spark-readonly) used by the
+# JdbcSecretResolver when reading datasource credentials from OpenBao
+# (see processingdb.json: BaoJdbcSecretProvider). Demo default only — in
+# production the token is provisioned by the information security administrator.
+vault:
+  token: "lakehouse-spark-token"

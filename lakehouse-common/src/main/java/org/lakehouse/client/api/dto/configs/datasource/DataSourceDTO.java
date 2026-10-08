@@ -25,6 +25,7 @@ import java.util.Objects;
 
 public class DataSourceDTO {
     private String keyName;
+    private String domainKeyName;
     ServiceDTO service;
     private String description;
     private DatabaseProtocol databaseProtocol;
@@ -39,6 +40,14 @@ public class DataSourceDTO {
 
     public void setKeyName(String keyName) {
         this.keyName = keyName;
+    }
+
+    public String getDomainKeyName() {
+        return domainKeyName;
+    }
+
+    public void setDomainKeyName(String domainKeyName) {
+        this.domainKeyName = domainKeyName;
     }
 
     public String getDescription() {

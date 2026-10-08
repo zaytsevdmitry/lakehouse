@@ -21,6 +21,7 @@ import org.lakehouse.client.api.dto.configs.schedule.ScheduleEffectiveDTO;
 import org.lakehouse.client.api.dto.configs.schedule.ScheduleScenarioActEffectiveDTO;
 import org.lakehouse.client.api.dto.configs.schedule.TaskDTO;
 import org.lakehouse.client.api.exception.CronParceErrorException;
+import org.lakehouse.client.api.exception.TaskConfigurationException;
 import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.scheduler.entities.ScheduleInstance;
@@ -73,5 +74,20 @@ public class ScheduleEffectiveService {
             logger.error("Error when parsing cron statement in intervalExpression {}", intervalExpression, e);
             return false;
         }
+    }
+    public TaskDTO getTaskDTO(String scheduleKeyName, String actName, String taskName) throws TaskConfigurationException {
+        return getScheduleEffectiveDTO(scheduleKeyName)
+                .getScenarioActs()
+                .stream()
+                .filter(a -> a.getName().equals(actName))
+                .findFirst()
+                .orElseThrow(() -> new TaskConfigurationException(
+                        String.format("Schedule configuration %s: Act %s not found", scheduleKeyName, actName)))
+                .getTasks()
+                .stream()
+                .filter(t -> t.getName().equals(taskName))
+                .findFirst()
+                .orElseThrow(() -> new TaskConfigurationException(
+                        String.format("Schedule configuration %s: Act %s task %s not found", scheduleKeyName, actName, taskName)));
     }
 }

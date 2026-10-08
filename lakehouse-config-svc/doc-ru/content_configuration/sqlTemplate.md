@@ -45,7 +45,7 @@
 |checkConstraintDDLAdd| Добавление проверочного ключа в существующую таблицу     |
 |checkConstraintCheckIntegrity| Проверка соответствия конструктиву Check                 |
 
-[код](../../../lakehouse-common/src/main/java/org/lakehouse/client/api/factory/SQLTemplateFactory.java)
+[код](../../../lakehouse-task-executor-api/src/main/java/org/lakehouse/taskexecutor/api/factory/SQLTemplateFactory.java)
 
 Пример
 ````json

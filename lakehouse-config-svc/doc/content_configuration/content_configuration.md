@@ -9,7 +9,7 @@
 
 
 # Configuration description
-[Namespaces](namespaces.md)
+[Domains](domains.md)
 
 [Drivers](drivers.md)
 

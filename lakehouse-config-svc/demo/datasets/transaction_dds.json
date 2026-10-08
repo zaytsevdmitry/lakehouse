@@ -1,6 +1,6 @@
 {
   "keyName": "transaction_dds",
-  "nameSpaceKeyName": "DEMO",
+  "domainKeyName": "DEMO",
   "dataSourceKeyName": "lakehousestorage",
   "databaseSchemaName": "default",
   "tableName": "transaction_dds",

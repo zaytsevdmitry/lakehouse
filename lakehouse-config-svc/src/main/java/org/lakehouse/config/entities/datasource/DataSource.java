@@ -30,6 +30,9 @@ import java.util.Objects;
 @Entity
 public class DataSource extends KeyEntityAbstract {
 
+    @Column(nullable = true)
+    private String domainKeyName;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
 
@@ -42,6 +45,14 @@ public class DataSource extends KeyEntityAbstract {
     private boolean isVcsManaged;
 
     public DataSource() {
+    }
+
+    public String getDomainKeyName() {
+        return domainKeyName;
+    }
+
+    public void setDomainKeyName(String domainKeyName) {
+        this.domainKeyName = domainKeyName;
     }
 
     public boolean isVcsManaged() {

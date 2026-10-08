@@ -1,5 +1,6 @@
 {
   "keyName": "spark-dq",
+  "domainKeyName": "DEMO",
   "description": "Spark job scenario",
   "tasks": [
     {

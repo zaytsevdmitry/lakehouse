@@ -1,1 +1,0 @@
-CONSTRAINT {{ constraint.name }} UNIQUE({{ constraint.columns }})

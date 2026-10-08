@@ -29,7 +29,7 @@ import org.lakehouse.client.api.utils.DateTimeUtils;
 import org.lakehouse.client.rest.config.ConfigRestClientApi;
 import org.lakehouse.jinja.java.JinJavaUtils;
 import org.lakehouse.jinja.java.configuration.JinJavaConfiguration;
-import org.lakehouse.scheduler.configuration.ScheduleConfigConsumerKafkaConfigurationProperties;
+import org.lakehouse.scheduler.configuration.ConfigurationChangeConsumerKafkaConfigurationProperties;
 import org.lakehouse.scheduler.entities.*;
 import org.lakehouse.scheduler.repository.*;
 import org.lakehouse.scheduler.service.BuildService;
@@ -64,12 +64,12 @@ import java.util.Objects;
 @SpringBootTest(
         properties = {
                 "spring.main.allow-bean-definition-overriding=true",
-                "lakehouse.scheduler.config.schedule.kafka.consumer.properties.group.id=getTestScheduleConfGroup",
-                "lakehouse.scheduler.config.schedule.kafka.consumer.properties.auto.offset.reset=earliest",
+                "lakehouse.scheduler.config.change.kafka.consumer.properties.group.id=getTestScheduleConfGroup",
+                "lakehouse.scheduler.config.change.kafka.consumer.properties.auto.offset.reset=earliest",
                 "lakehouse.scheduler.schedule.task.kafka.producer.topic=test_send_scheduled_task_topic",
                 "scheduling.enabled: false"
         })
-@EnableConfigurationProperties(value = ScheduleConfigConsumerKafkaConfigurationProperties.class)
+@EnableConfigurationProperties(value = ConfigurationChangeConsumerKafkaConfigurationProperties.class)
 @ComponentScan(basePackages = {
         "org.lakehouse.scheduler"
 },
@@ -141,7 +141,7 @@ public class SchedulesTest {
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
         registry.add("spring.kafka.bootstrap-servers", kafka::getBootstrapServers);
-        registry.add("lakehouse.scheduler.config.schedule.kafka.consumer.properties.bootstrap.servers", kafka::getBootstrapServers);
+        registry.add("lakehouse.scheduler.config.change.kafka.consumer.properties.bootstrap.servers", kafka::getBootstrapServers);
         registry.add("lakehouse.scheduler.schedule.task.kafka.producer.properties.bootstrap.servers", kafka::getBootstrapServers);
     }
 

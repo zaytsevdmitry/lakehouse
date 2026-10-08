@@ -38,6 +38,7 @@
       <module name="lakehouse-job-launcher-for-spark" target="17" />
       <module name="lakehouse-rest-client-for-kyuubi" target="17" />
       <module name="lakehouse-rest-client-for-spark" target="17" />
+      <module name="lakehouse-ui-modeller-svc" target="23" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
@@ -67,6 +68,7 @@
       <module name="lakehouse-task-proxy-for-spark" options="-parameters" />
       <module name="lakehouse-task-proxy-for-spark-api" options="-parameters" />
       <module name="lakehouse-task-proxy-for-spark-rest-client" options="-parameters" />
+      <module name="lakehouse-ui-modeller-svc" options="-parameters" />
       <module name="lakehouse-ui-svc" options="-parameters" />
       <module name="lakehouse-validators" options="-parameters" />
     </option>

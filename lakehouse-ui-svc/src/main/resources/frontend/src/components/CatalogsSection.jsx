@@ -405,7 +405,6 @@ function DatasetFields({ dataSet, loading, error }) {
   }
   const fields = [
     ['Key name', dataSet.keyName],
-    ['Namespace', dataSet.nameSpaceKeyName],
     ['Data source', dataSet.dataSourceKeyName],
     ['Schema', dataSet.databaseSchemaName],
     ['Table', dataSet.tableName],

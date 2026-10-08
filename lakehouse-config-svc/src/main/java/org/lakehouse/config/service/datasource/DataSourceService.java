@@ -18,6 +18,7 @@
 package org.lakehouse.config.service.datasource;
 
 import jakarta.transaction.Transactional;
+import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
 import org.lakehouse.client.api.dto.configs.datasource.ServiceDTO;
 import org.lakehouse.config.entities.KeyValueAbstract;
@@ -27,11 +28,14 @@ import org.lakehouse.config.entities.datasource.DataSourceSvcItemProperty;
 import org.lakehouse.config.exception.VcsManagedException;
 import org.lakehouse.config.exception.DataSourceNotFoundException;
 import org.lakehouse.config.exception.DataSourceServiceNotFoundException;
+import org.lakehouse.config.exception.DomainConflictException;
 import org.lakehouse.config.mapper.keyvalue.KeyValueEntityMerger;
 import org.lakehouse.config.repository.datasource.DataSourcePropertyRepository;
 import org.lakehouse.config.repository.datasource.DataSourceRepository;
 import org.lakehouse.config.repository.datasource.DataSourceSvcItemPropertyRepository;
 import org.lakehouse.config.repository.datasource.DataSourceSvcItemRepository;
+import org.lakehouse.config.service.ConfigurationProduceService;
+import org.lakehouse.config.produce.DataSourceConfigurationResolver;
 import org.lakehouse.config.specifier.DataSourcePropertyKeyValueEntitySpecifier;
 import org.lakehouse.config.specifier.DataSourceServicePropertyKeyValueEntitySpecifier;
 import org.slf4j.Logger;
@@ -51,19 +55,22 @@ public class DataSourceService {
     private final DataSourceSvcItemPropertyRepository dataSourceSvcItemPropertyRepository;
     private final DriverService driverService;
     private final SQLTemplateService sqlTemplateService;
+    private final ConfigurationProduceService configurationProduceService;
     public DataSourceService(
             DataSourceRepository dataSourceRepository,
             DataSourcePropertyRepository dataSourcePropertyRepository,
             DataSourceSvcItemRepository dataSourceSvcItemRepository,
             DataSourceSvcItemPropertyRepository dataSourceSvcItemPropertyRepository,
             DriverService driverService,
-            SQLTemplateService sqlTemplateService) {
+            SQLTemplateService sqlTemplateService,
+            ConfigurationProduceService configurationProduceService) {
         this.dataSourceRepository = dataSourceRepository;
         this.dataSourcePropertyRepository = dataSourcePropertyRepository;
         this.dataSourceSvcItemRepository = dataSourceSvcItemRepository;
         this.dataSourceSvcItemPropertyRepository = dataSourceSvcItemPropertyRepository;
         this.driverService = driverService;
         this.sqlTemplateService = sqlTemplateService;
+        this.configurationProduceService = configurationProduceService;
     }
 
     private ServiceDTO findDataSourceService(String dataSourceKeyName){
@@ -88,6 +95,7 @@ public class DataSourceService {
         DataSourceDTO result = new DataSourceDTO();
         result.setKeyName(dataSource.getKeyName());
         result.setDescription(dataSource.getDescription());
+        result.setDomainKeyName(dataSource.getDomainKeyName());
         result.setService(findDataSourceService(dataSource.getKeyName()));
         result.setDataSourceType(dataSource.getDataSourceType());
         result.setDatabaseProtocol(dataSource.getDatabaseProtocol());
@@ -99,6 +107,7 @@ public class DataSourceService {
         DataSource result = new DataSource();
         result.setKeyName(dataSourceDTO.getKeyName());
         result.setDescription(dataSourceDTO.getDescription());
+        result.setDomainKeyName(dataSourceDTO.getDomainKeyName());
         result.setDataSourceType(dataSourceDTO.getDataSourceType());
         result.setDatabaseProtocol(dataSourceDTO.getDatabaseProtocol());
         return result;
@@ -163,6 +172,7 @@ public class DataSourceService {
     }
 
     private DataSourceDTO saveInternal(DataSourceDTO dataSourceDTO, boolean vcsManaged) {
+        rejectDomainConflict(dataSourceDTO);
         DataSource dataSource = dataSourceRepository.save(mapDataSourceToEntity(dataSourceDTO));
         dataSource.setVcsManaged(vcsManaged);
         dataSourceRepository.save(dataSource);
@@ -176,8 +186,21 @@ public class DataSourceService {
 
          saveSvcProperty(dataSourceSvcItem,dataSourceDTO.getService().getProperties());
 
+        configurationProduceService.produce(DataSourceConfigurationResolver.KIND, dataSource.getKeyName(), Types.configAction.SAVE);
 
         return mapDataSourceToDTO(dataSource);
+    }
+
+    private void rejectDomainConflict(DataSourceDTO dataSourceDTO) {
+        if (dataSourceDTO.getDomainKeyName() == null)
+            return;
+        dataSourceRepository.findById(dataSourceDTO.getKeyName())
+                .filter(existing -> existing.getDomainKeyName() != null)
+                .filter(existing -> !existing.getDomainKeyName().equals(dataSourceDTO.getDomainKeyName()))
+                .ifPresent(existing -> {
+                    throw new DomainConflictException(
+                            dataSourceDTO.getKeyName(), existing.getDomainKeyName(), dataSourceDTO.getDomainKeyName());
+                });
     }
 
     public DataSourceDTO findById(String name) {
@@ -188,6 +211,7 @@ public class DataSourceService {
     @Transactional
     public void deleteById(String name) {
         rejectIfVcsManaged(name, "deleted");
+        configurationProduceService.produce(DataSourceConfigurationResolver.KIND, name, Types.configAction.DELETE);
         dataSourceRepository.deleteById(name);
     }
 

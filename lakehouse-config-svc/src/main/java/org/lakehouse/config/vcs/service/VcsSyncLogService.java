@@ -17,7 +17,7 @@
 
 package org.lakehouse.config.vcs.service;
 
-import org.lakehouse.client.api.dto.configs.VcsSyncLogDTO;
+import org.lakehouse.client.api.dto.vcs.VcsSyncLogDTO;
 import org.lakehouse.config.vcs.entity.VcsSyncLog;
 import org.lakehouse.config.vcs.entity.VcsSyncStatus;
 import org.lakehouse.config.vcs.repository.VcsSyncLogRepository;
@@ -42,14 +42,15 @@ public class VcsSyncLogService {
 
     /**
      * Returns synchronization entries within the given interval, optionally narrowed
-     * by status and commit id. Both interval bounds are required.
+     * by status, commit id and domain. Both interval bounds are required.
      */
     @Transactional(readOnly = true)
     public List<VcsSyncLogDTO> find(
             OffsetDateTime from,
             OffsetDateTime to,
             String status,
-            String commitId) {
+            String commitId,
+            String domainKeyName) {
         Specification<VcsSyncLog> spec =
                 (root, query, cb) -> cb.and(
                         cb.greaterThanOrEqualTo(root.get("syncDateTime"), from),
@@ -58,6 +59,8 @@ public class VcsSyncLogService {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), VcsSyncStatus.valueOf(status)));
         if (commitId != null && !commitId.isBlank())
             spec = spec.and((root, query, cb) -> cb.equal(root.get("commitId"), commitId));
+        if (domainKeyName != null && !domainKeyName.isBlank())
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("domainKeyName"), domainKeyName));
         return vcsSyncLogRepository.findAll(spec).stream().map(this::mapToDTO).toList();
     }
 
@@ -67,6 +70,7 @@ public class VcsSyncLogService {
         dto.setCommitId(log.getCommitId());
         dto.setSyncDateTime(log.getSyncDateTime());
         dto.setStatus(log.getStatus() == null ? null : log.getStatus().name());
+        dto.setDomainKeyName(log.getDomainKeyName());
         dto.setErrorMessage(log.getErrorMessage());
         return dto;
     }

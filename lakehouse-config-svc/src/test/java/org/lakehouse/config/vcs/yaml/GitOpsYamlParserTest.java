@@ -18,10 +18,14 @@
 package org.lakehouse.config.vcs.yaml;
 
 import org.junit.jupiter.api.Test;
+import org.lakehouse.client.api.constant.YamlMetadataKind;
 import org.lakehouse.client.api.constant.DatabaseProtocol;
 import org.lakehouse.client.api.constant.Types;
-import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
+import org.lakehouse.client.api.dto.configs.schedule.DriverDTO;
+import org.lakehouse.client.api.dto.configs.script.ScriptDTO;
+
+import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -31,19 +35,19 @@ class GitOpsYamlParserTest {
     private final GitOpsYamlParser parser = new GitOpsYamlParser();
 
     @Test
-    void parsesNameSpace() {
+    void parsesDriver() {
         ParsedConfig parsed = parser.parse("""
-                kind: NameSpace
-                keyName: fin
-                description: Finance namespace
+                kind: Driver
+                keyName: postgres
+                description: Postgres driver
                 """);
 
-        assertThat(parsed.kind()).isEqualTo(ConfigKind.NAME_SPACE);
-        assertThat(parsed.dto()).isInstanceOf(NameSpaceDTO.class);
-        NameSpaceDTO dto = (NameSpaceDTO) parsed.dto();
-        assertThat(dto.getKeyName()).isEqualTo("fin");
-        assertThat(dto.getDescription()).isEqualTo("Finance namespace");
-        assertThat(parser.resolveKey(parsed)).isEqualTo("fin");
+        assertThat(parsed.kind()).isEqualTo(YamlMetadataKind.DRIVER);
+        assertThat(parsed.dto()).isInstanceOf(DriverDTO.class);
+        DriverDTO dto = (DriverDTO) parsed.dto();
+        assertThat(dto.getKeyName()).isEqualTo("postgres");
+        assertThat(dto.getDescription()).isEqualTo("Postgres driver");
+        assertThat(parser.resolveKey(parsed)).isEqualTo("postgres");
     }
 
     @Test
@@ -55,10 +59,10 @@ class GitOpsYamlParserTest {
                   merge into target using source;
                 """);
 
-        assertThat(parsed.kind()).isEqualTo(ConfigKind.SCRIPT);
-        assertThat(parsed.dto()).isInstanceOf(ScriptContent.class);
-        assertThat(((ScriptContent) parsed.dto()).key()).isEqualTo("sql/merge");
-        assertThat(((ScriptContent) parsed.dto()).value()).contains("merge into target using source;");
+        assertThat(parsed.kind()).isEqualTo(YamlMetadataKind.SCRIPT);
+        assertThat(parsed.dto()).isInstanceOf(ScriptDTO.class);
+        assertThat(((ScriptDTO) parsed.dto()).getKey()).isEqualTo("sql/merge");
+        assertThat(((ScriptDTO) parsed.dto()).getValue()).contains("merge into target using source;");
         assertThat(parser.resolveKey(parsed)).isEqualTo("sql/merge");
     }
 
@@ -74,35 +78,34 @@ class GitOpsYamlParserTest {
                   host: localhost
                 """);
 
-        assertThat(parsed.kind()).isEqualTo(ConfigKind.DATA_SOURCE);
+        assertThat(parsed.kind()).isEqualTo(YamlMetadataKind.DATA_SOURCE);
         assertThat(parsed.dto()).isInstanceOf(DataSourceDTO.class);
         DataSourceDTO dto = (DataSourceDTO) parsed.dto();
-        assertThat(dto.getDataSourceType()).isEqualTo(Types.DataSourceType.database);
+        assertThat(dto.getDataSourceType()).isEqualTo(Types.DataSourceType.DATABASE);
         assertThat(dto.getDatabaseProtocol()).isEqualTo(DatabaseProtocol.MYSQL);
         assertThat(parser.resolveKey(parsed)).isEqualTo("mysql");
     }
 
     @Test
     void resolvesKindTolerantToSeparatorsAndCase() {
-        assertThat(ConfigKind.fromYamlValue("DataSet")).isEqualTo(ConfigKind.DATA_SET);
-        assertThat(ConfigKind.fromYamlValue("data-set")).isEqualTo(ConfigKind.DATA_SET);
-        assertThat(ConfigKind.fromYamlValue("dataset")).isEqualTo(ConfigKind.DATA_SET);
-        assertThat(ConfigKind.fromYamlValue("DATA SET")).isEqualTo(ConfigKind.DATA_SET);
-        assertThat(ConfigKind.fromYamlValue("task_execution_service_group"))
-                .isEqualTo(ConfigKind.TASK_EXECUTION_SERVICE_GROUP);
-        assertThat(ConfigKind.fromYamlValue("scenario-act-template"))
-                .isEqualTo(ConfigKind.SCENARIO_ACT_TEMPLATE);
+        assertThat(YamlMetadataKind.fromYamlValue("DataSet")).isEqualTo(YamlMetadataKind.DATA_SET);
+        assertThat(YamlMetadataKind.fromYamlValue("data-set")).isEqualTo(YamlMetadataKind.DATA_SET);
+        assertThat(YamlMetadataKind.fromYamlValue("dataset")).isEqualTo(YamlMetadataKind.DATA_SET);
+        assertThat(YamlMetadataKind.fromYamlValue("DATA SET")).isEqualTo(YamlMetadataKind.DATA_SET);
+        assertThat(YamlMetadataKind.fromYamlValue("task_execution_service_group"))
+                .isEqualTo(YamlMetadataKind.TASK_EXECUTION_SERVICE_GROUP);
+        assertThat(YamlMetadataKind.fromYamlValue("scenario-act-template"))
+                .isEqualTo(YamlMetadataKind.SCENARIO_ACT_TEMPLATE);
     }
 
     @Test
     void rejectsBlankKind() {
-        assertThatThrownBy(() -> ConfigKind.fromYamlValue(" ")).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> ConfigKind.fromYamlValue(null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> YamlMetadataKind.fromYamlValue(" ")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> YamlMetadataKind.fromYamlValue(null)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void resolveKeyUsesRowKeysOfEveryConstruct() {
-        assertThat(parser.resolveKey(parse("kind: NameSpace\nkeyName: ns"))).isEqualTo("ns");
         assertThat(parser.resolveKey(parse("kind: Driver\nkeyName: drv"))).isEqualTo("drv");
         assertThat(parser.resolveKey(parse("kind: DataSource\nkeyName: ds"))).isEqualTo("ds");
         assertThat(parser.resolveKey(parse("kind: Script\nkey: scr\nvalue: v"))).isEqualTo("scr");
@@ -130,7 +133,7 @@ class GitOpsYamlParserTest {
 
     @Test
     void rejectsUnknownProperties() {
-        assertThatThrownBy(() -> parser.parse("kind: NameSpace\nkeyName: ns\nbogusProperty: 1"))
+        assertThatThrownBy(() -> parser.parse("kind: Driver\nkeyName: drv\nbogusProperty: 1"))
                 .isInstanceOf(VcsConfigParseException.class);
     }
 
@@ -139,6 +142,25 @@ class GitOpsYamlParserTest {
         assertThatThrownBy(() -> parser.parse("")).isInstanceOf(VcsConfigParseException.class);
         assertThatThrownBy(() -> parser.parse("   \n")).isInstanceOf(VcsConfigParseException.class);
         assertThatThrownBy(() -> parser.parse("- just\n- a\n- list\n")).isInstanceOf(VcsConfigParseException.class);
+    }
+
+    @Test
+    void preliminaryParseDetectsKindWithoutBindingTheBody() {
+        PreliminaryConfig preliminary = parser.parsePreliminary("""
+                kind: ERDiagram
+                keyName: sales
+                unknownField: 1
+                """);
+
+        assertThat(preliminary.kind()).isEqualTo(YamlMetadataKind.ER_DIAGRAM);
+        assertThat(preliminary.kind().isConfig()).isFalse();
+        assertThat(preliminary.body()).containsEntry("keyName", "sales").containsEntry("unknownField", 1);
+    }
+
+    @Test
+    void onlyDiagramKindsAreNotConfigKinds() {
+        assertThat(Arrays.stream(YamlMetadataKind.values()).filter(kind -> !kind.isConfig()).toList())
+                .containsExactlyInAnyOrder(YamlMetadataKind.ER_DIAGRAM, YamlMetadataKind.DATA_LINEAGE_DIAGRAM);
     }
 
     private ParsedConfig parse(String yaml) {

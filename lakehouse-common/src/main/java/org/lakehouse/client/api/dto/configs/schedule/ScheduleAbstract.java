@@ -27,9 +27,18 @@ import java.util.Objects;
 import java.util.Set;
 
 public class ScheduleAbstract extends ScheduleHeaderDTO {
+    private String domainKeyName;
     private Set<DagEdgeDTO> scenarioActEdges = new HashSet<>();
 
     public ScheduleAbstract() {
+    }
+
+    public String getDomainKeyName() {
+        return domainKeyName;
+    }
+
+    public void setDomainKeyName(String domainKeyName) {
+        this.domainKeyName = domainKeyName;
     }
 
 
@@ -47,7 +56,8 @@ public class ScheduleAbstract extends ScheduleHeaderDTO {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         ScheduleAbstract that = (ScheduleAbstract) o;
-        return isEnabled() == that.isEnabled()
+        return Objects.equals(getDomainKeyName(), that.getDomainKeyName())
+                && isEnabled() == that.isEnabled()
                 && Objects.equals(getIntervalExpression(), that.getIntervalExpression())
                 && DateTimeUtils.strEquals(getStartDateTime(), that.getStartDateTime())
                 && DateTimeUtils.strEquals(getStopDateTime(), that.getStopDateTime())
@@ -58,6 +68,7 @@ public class ScheduleAbstract extends ScheduleHeaderDTO {
     public int hashCode() {
         return Objects.hash(
                 super.hashCode(),
+                getDomainKeyName(),
                 getIntervalExpression(),
                 DateTimeUtils.parseDateTimeFormatWithTZ(getStartDateTime()),
                 DateTimeUtils.parseDateTimeFormatWithTZ(getStopDateTime()),
@@ -69,6 +80,7 @@ public class ScheduleAbstract extends ScheduleHeaderDTO {
         ScheduleAbstract result = new ScheduleAbstract();
         result.setEnabled(isEnabled());
         result.setKeyName(getKeyName());
+        result.setDomainKeyName(getDomainKeyName());
         result.setIntervalExpression(getIntervalExpression());
         result.setStartDateTime(getStartDateTime());
         result.setStopDateTime(getStopDateTime());

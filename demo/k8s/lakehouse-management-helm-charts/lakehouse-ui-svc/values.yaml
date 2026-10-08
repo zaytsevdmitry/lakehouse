@@ -1,0 +1,20 @@
+ui-svc:
+  image:
+    repository: lakehouse
+    tag: "0.11.0"
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    type: NodePort
+    port: 8080
+    targetPort: 8080
+
+keycloak:
+  issuerUri: "http://keycloak:8085/realms/lakehouse"
+  uiClientSecret: "super-secret-bff-key-1234567890"
+  internalClientSecret: "super-secret-internal-key-987654321"
+
+java:
+  springdocApiDocsEnabled: "false"
+  springdocSwaggerUiEnabled: "false"
+  serverPort: 8080

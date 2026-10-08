@@ -21,7 +21,6 @@ import tools.jackson.core.JacksonException;
 import org.junit.jupiter.api.*;
 import org.lakehouse.client.api.constant.Endpoint;
 import org.lakehouse.client.api.dto.configs.DagEdgeDTO;
-import org.lakehouse.client.api.dto.configs.NameSpaceDTO;
 import org.lakehouse.client.api.dto.configs.dataset.ColumnDTO;
 import org.lakehouse.client.api.dto.configs.dataset.DataSetDTO;
 import org.lakehouse.client.api.dto.configs.datasource.DataSourceDTO;
@@ -68,7 +67,6 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 import org.springframework.kafka.core.KafkaAdmin;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.KafkaContainer;
@@ -143,9 +141,6 @@ public class TestWithPostgres {
     );
 
 
-    @Autowired
-    private KafkaTemplate<String, ScheduleEffectiveDTO> kafkaTemplate;
-
     @LocalServerPort
     private Integer port;
 
@@ -169,33 +164,18 @@ public class TestWithPostgres {
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.kafka.bootstrap-servers", kafka::getBootstrapServers);
-        registry.add("lakehouse.config.schedule.kafka.producer.bootstrap-servers", kafka::getBootstrapServers);
+        registry.add("lakehouse.config.produce.kafka.producer.properties.bootstrap.servers", kafka::getBootstrapServers);
         registry.add("spring.datasource.url", postgres::getJdbcUrl);
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
 
     }
 
-    private NameSpaceDTO putNameSpaceDTO() throws Exception {
-        NameSpaceDTO dto = fileLoader.loadNameSpaceDTO();
-
-        return ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getKeyName(),
-                ObjectMapping.asJsonStringPretty(dto), Endpoint.NAME_SPACES, Endpoint.NAME_SPACES_NAME), NameSpaceDTO.class);
-    }
     private DriverDTO putDriverDTO(String name) throws Exception {
         DriverDTO dto = fileLoader.loadDriverDTO(name);
 
         return ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getKeyName(),
                 ObjectMapping.asJsonStringPretty(dto), Endpoint.DRIVERS, Endpoint.DRIVERS_NAME), DriverDTO.class);
-    }
-
-    @Test
-    @Order(1)
-    void shouldTestNameSpaceDTO() throws Exception {
-        NameSpaceDTO dto = fileLoader.loadNameSpaceDTO();
-        NameSpaceDTO resultDTO = putNameSpaceDTO();
-        restManipulator.deleteDTO(dto.getKeyName(), Endpoint.NAME_SPACES_NAME);
-        assert (resultDTO.equals(dto));
     }
 
     @Test
@@ -321,14 +301,13 @@ public class TestWithPostgres {
         DriverDTO driverDTO = putDriverDTO("postgres");
         DataSourceDTO dataSourceDTO = putDataSourceDTO("processingdb");
 
-        NameSpaceDTO nameSpaceDTO = putNameSpaceDTO();
         DataSetDTO dto = putDataSetDTO(name);
 
         DataSetDTO resultDTO = ObjectMapping.stringToObject(restManipulator.writeAndReadDTOTest(dto.getKeyName(),
                 ObjectMapping.asJsonStringPretty(dto), Endpoint.DATA_SETS, Endpoint.DATA_SETS_NAME), DataSetDTO.class);
         restManipulator.deleteDTO(dto.getKeyName(), Endpoint.DATA_SETS_NAME);
         restManipulator.deleteDTO(dataSourceDTO.getKeyName(), Endpoint.DATA_SOURCES_NAME);
-        restManipulator.deleteDTO(nameSpaceDTO.getKeyName(), Endpoint.NAME_SPACES_NAME);
+
         restManipulator.deleteDTO(driverDTO.getKeyName(), Endpoint.DRIVERS_NAME);
         assert (resultDTO.equals(dto));
     }
@@ -342,7 +321,6 @@ public class TestWithPostgres {
         DriverDTO driverDTO = putDriverDTO("postgres");
         DataSourceDTO dataSourceDTO = putDataSourceDTO("processingdb");
 
-        NameSpaceDTO nameSpaceDTO = putNameSpaceDTO();
         DataSetDTO dictDto = putDataSetDTO(dictName);
         DataSetDTO dto = putDataSetDTO(name);
 
@@ -354,7 +332,7 @@ public class TestWithPostgres {
         restManipulator.deleteDTO(dto.getKeyName(), Endpoint.DATA_SETS_NAME);
         restManipulator.deleteDTO(dictDto.getKeyName(), Endpoint.DATA_SETS_NAME);
         restManipulator.deleteDTO(dataSourceDTO.getKeyName(), Endpoint.DATA_SOURCES_NAME);
-        restManipulator.deleteDTO(nameSpaceDTO.getKeyName(), Endpoint.NAME_SPACES_NAME);
+
         restManipulator.deleteDTO(driverDTO.getKeyName(), Endpoint.DRIVERS_NAME);
         assert (resultDTO.equals(dto));
     }
@@ -405,7 +383,6 @@ public class TestWithPostgres {
 
         DriverDTO driverDTO = putDriverDTO("postgres");
         DataSourceDTO dataSourceDTO = putDataSourceDTO("processingdb");
-        NameSpaceDTO nameSpaceDTO = putNameSpaceDTO();
 
         DataSetDTO dto = putDataSetDTO("client_processing");
 
@@ -441,7 +418,7 @@ public class TestWithPostgres {
         scheduleRepository.delete(resultSchedule);
         restManipulator.deleteDTO(dto.getKeyName(), Endpoint.DATA_SETS_NAME);
         restManipulator.deleteDTO(dataSourceDTO.getKeyName(), Endpoint.DATA_SOURCES_NAME);
-        restManipulator.deleteDTO(nameSpaceDTO.getKeyName(), Endpoint.NAME_SPACES_NAME);
+
         restManipulator.deleteDTO(driverDTO.getKeyName(), Endpoint.DRIVERS_NAME);
 
     }
@@ -491,8 +468,6 @@ public class TestWithPostgres {
     void shouldTestAllDTO() throws Exception {
 
         logger.info("{} {} {}", postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
-
-        NameSpaceDTO nameSpaceDTO = putNameSpaceDTO();
 
         // datastores
         DriverDTO pgDriverDTO = putDriverDTO("postgres");
@@ -605,7 +580,7 @@ public class TestWithPostgres {
 
         restManipulator.deleteDTO(mydbDataSourceDTO.getKeyName(), Endpoint.DATA_SOURCES_NAME);
         restManipulator.deleteDTO(someelsedbDataSourceDTO.getKeyName(), Endpoint.DATA_SOURCES_NAME);
-        restManipulator.deleteDTO(nameSpaceDTO.getKeyName(), Endpoint.NAME_SPACES_NAME);
+
         restManipulator.deleteDTO(pgDriverDTO.getKeyName(), Endpoint.DRIVERS_NAME);
         restManipulator.deleteDTO(sparkDriverDTO.getKeyName(), Endpoint.DRIVERS_NAME);
         restManipulator.deleteDTO(taskTemplateDTOBegin.getName(),Endpoint.TASKS_TEMPLATE_NAME);
@@ -633,7 +608,6 @@ public class TestWithPostgres {
 
         dataSetRepository.deleteAll();
 
-        NameSpaceDTO nameSpaceDTO = putNameSpaceDTO();
         // datastores
         DriverDTO pgDriverDTO = putDriverDTO("postgres");
         DriverDTO sparkDriverDTO = putDriverDTO("spark_iceberg");
@@ -725,7 +699,6 @@ public class TestWithPostgres {
                 Endpoint.TASK_EXECUTION_SERVICE_GROUPS_NAME);
         restManipulator.deleteDTO(mydbDataSourceDTO.getKeyName(), Endpoint.DATA_SOURCES_NAME);
         restManipulator.deleteDTO(someelsedbDataSourceDTO.getKeyName(), Endpoint.DATA_SOURCES_NAME);
-        restManipulator.deleteDTO(nameSpaceDTO.getKeyName(), Endpoint.NAME_SPACES_NAME);
         restManipulator.deleteDTO(pgDriverDTO.getKeyName(), Endpoint.DRIVERS_NAME);
         restManipulator.deleteDTO(sparkDriverDTO.getKeyName(), Endpoint.DRIVERS_NAME);
 
@@ -871,7 +844,6 @@ public class TestWithPostgres {
         dataSetSourceRepository.deleteAll();
         dataSetRepository.deleteAll();
 
-        NameSpaceDTO nameSpaceDTO = putNameSpaceDTO();
         // datastores
         DriverDTO pgDriverDTO = putDriverDTO("postgres");
         DriverDTO sparkDriverDTO = putDriverDTO("spark_iceberg");
@@ -911,7 +883,6 @@ public class TestWithPostgres {
         restManipulator.deleteDTO(defaultTaskExecutionServiceGroupDTO.getName(), Endpoint.TASK_EXECUTION_SERVICE_GROUPS_NAME);
         restManipulator.deleteDTO(mydbDataSourceDTO.getKeyName(), Endpoint.DATA_SOURCES_NAME);
         restManipulator.deleteDTO(someelsedbDataSourceDTO.getKeyName(), Endpoint.DATA_SOURCES_NAME);
-        restManipulator.deleteDTO(nameSpaceDTO.getKeyName(), Endpoint.NAME_SPACES_NAME);
         restManipulator.deleteDTO(pgDriverDTO.getKeyName(), Endpoint.DRIVERS_NAME);
         restManipulator.deleteDTO(sparkDriverDTO.getKeyName(), Endpoint.DRIVERS_NAME);
         System.out.println("expected ->> \n" + ObjectMapping.asJsonStringPretty(expected));
@@ -970,8 +941,6 @@ public class TestWithPostgres {
     Arrays.asList(
         Endpoint.ROOT_API_V1_0,
         Endpoint.CONFIGS,
-        Endpoint.NAME_SPACES,
-        Endpoint.NAME_SPACES_NAME,
         Endpoint.TASK_EXECUTION_SERVICE_GROUPS,
         Endpoint.TASK_EXECUTION_SERVICE_GROUPS_NAME,
         Endpoint.SCRIPTS,

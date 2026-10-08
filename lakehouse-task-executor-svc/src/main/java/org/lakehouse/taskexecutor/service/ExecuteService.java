@@ -36,6 +36,7 @@ import org.lakehouse.client.rest.scheduler.SchedulerRestClientApi;
 import org.lakehouse.jinja.java.JinJavaFactory;
 import org.lakehouse.jinja.java.JinJavaUtils;
 import org.lakehouse.taskexecutor.api.processor.TaskProcessor;
+import org.lakehouse.taskexecutor.configuration.DomainDataSourceServiceProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -52,14 +53,27 @@ public class ExecuteService {
     private final ConfigRestClientApi configRestClientApi;
     private final ConfigurableApplicationContext applicationContext;
     private final HeardBeatService heardBeatService;
+    private final DomainDataSourceServiceProperties domainDataSourceServiceProperties;
+
     public ExecuteService(
             SchedulerRestClientApi schedulerRestClientApi, ConfigRestClientApi configRestClientApi,
             ConfigurableApplicationContext applicationContext,
-            HeardBeatService heardBeatService) {
+            HeardBeatService heardBeatService,
+            DomainDataSourceServiceProperties domainDataSourceServiceProperties) {
         this.schedulerRestClientApi = schedulerRestClientApi;
         this.configRestClientApi = configRestClientApi;
         this.applicationContext = applicationContext;
         this.heardBeatService = heardBeatService;
+        this.domainDataSourceServiceProperties = domainDataSourceServiceProperties;
+    }
+
+    /**
+     * The configuration of every domain with its data sources and the per-data-source
+     * {@code service-properties} map, bound from {@code lakehouse.task-executor.domains}.
+     * Exposed as a Spring bean so the caller decides how the data source properties are used.
+     */
+    public DomainDataSourceServiceProperties getDomainDataSourceServiceProperties() {
+        return domainDataSourceServiceProperties;
     }
 
 
@@ -73,7 +87,7 @@ public class ExecuteService {
             TaskProcessor p = (TaskProcessor) applicationContext.getBean(scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getTaskProcessor());
             SourceConfDTO sourceConfDTO = configRestClientApi.getSourceConfDTO(scheduledTaskLockDTO.getScheduledTaskEffectiveDTO().getDataSetKeyName());
             // made task globalContext based on task and source information
-            JinJavaUtils jinJavaUtils = renderProperties(
+            JinJavaUtils jinJavaUtils = prepareProperties(
                     sourceConfDTO,
                     scheduledTaskLockDTO.getScheduledTaskEffectiveDTO());
 
@@ -109,7 +123,7 @@ public class ExecuteService {
         }
     }
 
-    private JinJavaUtils renderProperties(
+    private JinJavaUtils prepareProperties(
             SourceConfDTO sourceConfDTO,
             ScheduledTaskDTO scheduledTaskDTO
     ) throws TaskConfigurationException {
@@ -129,7 +143,11 @@ public class ExecuteService {
                     dataSetDTO.setProperties(jinJavaUtils.renderMap(dataSetDTO.getProperties(),localContext));
                 }
             }
+            domainDataSourceServiceProperties
+                    .getServiceProperties(scheduledTaskDTO.getDomainKeyName(), dataSourceDTO.getKeyName())
+                    .ifPresent(map -> dataSourceDTO.getService().getProperties().putAll(map));
         }
+
         try {
             jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(sourceConfDTO));
             jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(scheduledTaskDTO));

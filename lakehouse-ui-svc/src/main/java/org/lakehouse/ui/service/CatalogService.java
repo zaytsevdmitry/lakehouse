@@ -126,12 +126,12 @@ public class CatalogService {
             ConstraintDTO dto = new ConstraintDTO();
             dto.setName(name);
             if (constraint.getType() != null) {
-                dto.setType(constraint.getType().toString());
+                dto.setType(constraint.getType());
             }
             dto.setColumns(constraint.getColumns());
             dto.setEnabled(constraint.isEnabled());
             if (constraint.getConstraintLevelCheck() != null) {
-                dto.setConstraintLevelCheck(constraint.getConstraintLevelCheck().toString());
+                dto.setConstraintLevelCheck(constraint.getConstraintLevelCheck());
             }
             dto.setCheckExpr(constraint.getCheckExpr());
             dto.setTableConstraintDDLCreateOverride(constraint.getTableConstraintDDLCreateOverride());
@@ -141,10 +141,10 @@ public class CatalogService {
             if (reference != null) {
                 dto.setReferenceConstraintName(reference.getConstraintName());
                 if (reference.getOnDelete() != null) {
-                    dto.setOnDelete(reference.getOnDelete().getValue());
+                    dto.setOnDelete(reference.getOnDelete());
                 }
                 if (reference.getOnUpdate() != null) {
-                    dto.setOnUpdate(reference.getOnUpdate().getValue());
+                    dto.setOnUpdate(reference.getOnUpdate());
                 }
                 DataSetDTO referenced = configRestClientApi.getDataSetDTO(reference.getDataSetKeyName());
                 if (referenced != null) {

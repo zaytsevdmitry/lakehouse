@@ -1,1 +1,0 @@
-{%set targetDataSet=dataSets[targetDataSetKeyName]%}VACUUM {{ targetDataSet.databaseSchemaName~'.'~targetDataSet.tableName }}

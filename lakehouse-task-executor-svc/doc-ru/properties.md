@@ -31,6 +31,21 @@ lakehouse:
       sparkStandAloneClusterTaskProcessor:
         maxWaitToRunningStateTimeoutMs: 120000 # максимальное время ожидания перехода Spark-задачи в состояние RUNNING, мс
         sparkJobStatusCheckIntervalMs: 3000 # интервал опроса статуса Spark-задачи, мс
+    # Настройки источников данных по доменам: domains.<domainKeyName>.<dataSourceKeyName>.service-properties
+    # Связываются DomainDataSourceServiceProperties (префикс lakehouse.task-executor) и доступны
+    # через getServiceProperties(domainKey, dataSourceKey), возвращающей Optional.empty() для
+    # неизвестного домена или источника. ПРИМЕНЯЮТСЯ на пути исполнения: ExecuteService.prepareProperties(...)
+    # сливает карту в DataSourceDTO.getService().getProperties(), перекрывая значения
+    # lakehouse-config-svc (putAll). См. readme.md, глава "Домены".
+    domains:
+      platform:
+        lakehousestorage:
+          service-properties: # свободная карта: опции secret provider, user, fetchSize, ...
+            secretProvider: org.lakehouse.security.jdbc.BaoJdbcSecretProvider
+            secret-key: "kv/data/lakehouse/database:password"
+            vault-url: "http://openbao:8200"
+            user: postgresUser
+            fetchSize: "10000"
     scheduled: # Параметры для получения задач
       task:
         kafka:
@@ -44,6 +59,26 @@ lakehouse:
             # Имя должно совпадать с именем у сервиса расписаний  
             topics: scheduled_task_msg 
 ```
+
+### Доменные параметры источников данных
+
+| Параметр | По умолчанию | Описание |
+|---|---|---|
+| `lakehouse.task-executor.domains.<domainKeyName>.<dataSourceKeyName>.service-properties` | *(пусто)* | Свободная карта настроек подключения одного источника данных одного домена |
+
+Ключи внутри `service-properties` биндингом не проверяются и, как ожидается, совпадают с
+опциями secret provider, которые `lakehouse-credential-providers-jdbc` понимает в
+`service.properties` JDBC-источника (`secretProvider`, `secret-key`, `vault-url`,
+`vault-role`, `vault-k8s-auth-path`, `secret-id`, `secret-version`, `url`, `user`).
+
+Эти значения **применяются при исполнении**: `ExecuteService.prepareProperties(...)` для каждого
+источника данных разбираемой конфигурации делает lookup по
+`scheduledTaskDTO.getDomainKeyName()` и сливает результат в `service.properties`, которые
+потом доходят до JDBC-разрешения секретов. Семантика - `putAll`, поэтому блок работает как
+доменное **переопределение** объявленных в репозитории `service.properties`; обычная причина
+задать его - не держать учётные данные в Git. Когда домен задачи равен `null`, lookup даёт
+`Optional.empty()` и остаются в силе значения из `lakehouse-config-svc`. См. readme.md, глава
+"Домены".
 
 ### Параметры процессоров задач
 
@@ -69,4 +104,5 @@ lakehouse:
 | `user` | Имя пользователя; сам пароль приходит из провайдера |
 
 Требуется переменная окружения `VAULT_TOKEN` (OpenBao) или `YC_AUTH_KEY_PATH` (Lockbox). Реальный пример:
-`demo/compose/conf/datasources/processingdb.json`. Подробнее: [руководство по безопасности](../../doc-ru/security/security.md).
+`demo/conf/datasources/processingdb.json` (в виде репозитория:
+`demo/conf_git/domains/platform/datasources/processingdb.yaml`). Подробнее: [руководство по безопасности](../../doc-ru/security/security.md).

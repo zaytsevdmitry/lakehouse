@@ -38,14 +38,15 @@ docker container rm spark-history
 docker container rm spark-master
 docker container rm spark-worker-1
 docker container rm state-svc
-docker container rm task-executor-svc-1
-docker container rm task-executor-svc-2 
-docker container rm task-executor-svc-3 
+docker container rm task-executor-svc-database
+docker container rm task-executor-svc-spark
+docker container rm task-executor-svc-state
 docker container rm lakehouse-task-proxy4spark
 
 ```
 #### Сеть
-В конфигурации определена сеть
+В конфигурации определена сеть. Для обычной демонстрации это не нужно, но для использования сервисов клиентам хост-машины не всегда достаточно пробросить порт контейнера на localhost. 
+На пример брокер или spark-master/worker ui.   
 ```yaml
 networks:
   lakehouse_net:
@@ -90,7 +91,7 @@ networks:
 Выполнить удаление контейнеров 
 
 ```shell
-docker compose down
+docker compose down -v
 ```
 
 Очистить данные хранилища minio. Потребуются root привилегии тк сервис работает в контейнере под root  

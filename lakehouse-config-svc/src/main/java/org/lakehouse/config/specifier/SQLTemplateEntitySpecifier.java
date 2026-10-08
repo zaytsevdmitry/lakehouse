@@ -43,7 +43,16 @@ public  class SQLTemplateEntitySpecifier extends KeyValueEntitySpecifierAbstract
         SQLTemplate result = (SQLTemplate) keyValueAbstract;
         result.setDriver(driver);
         result.setTask(task);
+        result.setDomainKeyName(domainOf());
         return result;
+    }
+
+    private String domainOf() {
+        if (driver != null && driver.getDomainKeyName() != null)
+            return driver.getDomainKeyName();
+        if (task != null && task.getDomainKeyName() != null)
+            return task.getDomainKeyName();
+        return null;
     }
 
     @Override

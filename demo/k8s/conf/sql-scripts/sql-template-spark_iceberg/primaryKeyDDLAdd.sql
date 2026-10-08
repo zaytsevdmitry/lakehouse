@@ -1,1 +1,0 @@
-ALTER TABLE  {{ refCat(targetDataSetKeyName) }} ADD CONSTRAINT {{ constraintName }} PRIMARY KEY ({{ targetDataSet.constraints[constraintName].columns }}

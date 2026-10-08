@@ -1,4 +1,4 @@
-# Сборка
+do# Сборка
 
 [Описание сборки образов](../../docker/readme.md)
 
@@ -6,14 +6,14 @@
 - Установить minikube 
 - обновить или просто скачать kubectl v1.36.0
 
-```commandline
+```shell
  curl -LO https://dl.k8s.io/release/v1.36.0/bin/linux/amd64/kubectl
 ```
 
 >Пример приведен для linux. [Тут](https://kubernetes.io/docs/tasks/tools/) можно подобрать под свою операционную систему.
 Файл нужно расположить "поближе" в переменной окружения PATH. На пример $HOME/bin
 
-```commandline
+```shell
 mv kubectl $HOME/bin/
 ```
 - установить helm
@@ -21,7 +21,7 @@ mv kubectl $HOME/bin/
 - Запустить minikube
 
 ```shell
-minikube start --cpus 4 --memory 8192 --registry-mirror=https://dh-mirror.gitverse.ru
+minikube start --cpus 4 --memory 10192 --registry-mirror=https://dh-mirror.gitverse.ru
 ```
 
 >Сборка тестировалась с применением ближайшего registry-mirror. Можно указать любой либо убрать и использовать настройку по умолчанию.
@@ -78,7 +78,10 @@ Waiting Config-SVC: The request failed. Sleeping...zzZ
 All configurations loaded
 ```
 ### CVS-git вариант 
-Выполните файл  bootstrap-configs.bash. Он сам прокинет порт к pod на localhost. Создаст папку в /tmp и запишет в мейнветку git-server  файлы  из каталога ./conf_git
+Выполните файл  bootstrap-configs.bash. Он сам прокинет порт к pod на localhost. Создаст папку в /tmp и запишет в мейнветку git-server файлы  из каталога `demo/conf_git` (общего с `demo/compose`, путь разрешается от расположения скрипта, поэтому его можно запускать из любого каталога; переопределяется переменной `CONF_GIT_SRC`).
+Каждый подкаталог `conf_git/domains` обслуживается собственным репозиторием с тем же именем: `conf_git/domains/platform` -> `git://git-server:9418/platform.git`. Сейчас это три домена: `analytics`, `platform`, `processing`.
+Скрипт сам создаёт недостающие репозитории в pod-е, поэтому список доменов можно менять, не трогая chart. Имя репозитория важно: домен проставляется объектам по имени синхронизируемого репозитория, в YAML его указывать не нужно.
+Для обратной совместимости дополнительно наполняется прежний единый репозиторий `config-repo.git` (всё дерево `conf_git`); когда chart перейдёт на доменные репозитории, эту импортацию можно отключить, задав `LEGACY_REPO=""` в начале скрипта.
 > После наполнения через git каждый загруженный объект будет помечен как git-managed и его нельзя будет переписать через rest-api
 
 ```shell
@@ -144,10 +147,10 @@ kubectl -n lakehouse-management scale deployment lakehouse-management-task-execu
 # Де-инсталляция
 ## Удаление сервисов
 ```shell 
-sh uninstall.bash
+bash uninstall.bash
 ```
 ## Удаление образов
 ```shell
-sh remove_images.bash
+bash remove_images.bash
 ```
 

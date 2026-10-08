@@ -29,7 +29,7 @@ import java.util.Map;
 @Configuration
 public class KafkaConfiguration {
     @Bean
-    public KafkaAdmin admin(@Value("${lakehouse.config.schedule.kafka.producer.bootstrap-servers}") String servers) {
+    public KafkaAdmin admin(@Value("${lakehouse.config.produce.kafka.producer.properties.bootstrap.servers}") String servers) {
         Map<String, Object> configs = new HashMap<>();
         configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, servers);
         return new KafkaAdmin(configs);

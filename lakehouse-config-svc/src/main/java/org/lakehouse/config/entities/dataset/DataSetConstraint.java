@@ -42,7 +42,7 @@ public class DataSetConstraint {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Types.Constraint type;
+    private Types.ConstraintType type;
 
     @Column(nullable = false)
     private String columns;
@@ -82,11 +82,11 @@ public class DataSetConstraint {
         this.name = name;
     }
 
-    public Types.Constraint getType() {
+    public Types.ConstraintType getType() {
         return type;
     }
 
-    public void setType(Types.Constraint type) {
+    public void setType(Types.ConstraintType type) {
         this.type = type;
     }
 

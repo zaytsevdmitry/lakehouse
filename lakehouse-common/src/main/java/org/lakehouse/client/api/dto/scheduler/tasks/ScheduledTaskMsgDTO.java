@@ -20,6 +20,7 @@ package org.lakehouse.client.api.dto.scheduler.tasks;
 public class ScheduledTaskMsgDTO {
     private Long id;
     private String taskExecutionServiceGroupName;
+    private String domainKeyName;
 
     public ScheduledTaskMsgDTO() {
 
@@ -39,5 +40,13 @@ public class ScheduledTaskMsgDTO {
 
     public void setTaskExecutionServiceGroupName(String taskExecutionServiceGroupName) {
         this.taskExecutionServiceGroupName = taskExecutionServiceGroupName;
+    }
+
+    public String getDomainKeyName() {
+        return domainKeyName;
+    }
+
+    public void setDomainKeyName(String domainKeyName) {
+        this.domainKeyName = domainKeyName;
     }
 }

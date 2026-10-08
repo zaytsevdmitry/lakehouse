@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lakehouse-state-svc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: lakehouse-state-svc
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: lakehouse-state-svc
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      initContainers:
+        - name: wait-for-keycloak
+          image: busybox:1.37
+          command: ['sh', '-c', 'until wget -q -O /dev/null {{ .Values.keycloak.issuerUri }}; do echo waiting for keycloak; sleep 3; done']
+      containers:
+        - name: state-svc
+          image: "{{ index .Values "conf-svc" "image" "repository" }}:{{ index .Values "conf-svc" "image" "tag" }}"
+          imagePullPolicy: {{ index .Values "conf-svc" "image" "pullPolicy" }}
+          ports:
+            - containerPort: 8084
+              protocol: TCP
+          env:
+            - name: KEYCLOAK_ISSUER_URI
+              value: {{ .Values.keycloak.issuerUri | quote }}
+            - name: KEYCLOAK_INTERNAL_CLIENT_SECRET
+              value: {{ .Values.keycloak.internalClientSecret | quote }}
+          command: ["bash", "-c"]
+          args:
+            - "java
+            -Dserver.port={{ .Values.java.serverPort }}
+            -Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=StateSVC
+            -jar /opt/lakehouse-state-svc-{{ .Chart.AppVersion }}-jar-with-dependencies.jar"

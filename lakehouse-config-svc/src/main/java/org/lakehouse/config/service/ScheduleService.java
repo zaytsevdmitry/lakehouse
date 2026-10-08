@@ -18,6 +18,7 @@
 package org.lakehouse.config.service;
 
 import jakarta.transaction.Transactional;
+import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.configs.DagEdgeDTO;
 import org.lakehouse.client.api.dto.configs.schedule.*;
 import org.lakehouse.client.api.utils.DateTimeUtils;
@@ -30,6 +31,8 @@ import org.lakehouse.config.exception.VcsManagedException;
 import org.lakehouse.config.exception.DataSetNotFoundException;
 import org.lakehouse.config.exception.ScenarioActNotFoundException;
 import org.lakehouse.config.exception.ScheduleNotFoundException;
+import org.lakehouse.config.exception.DomainConflictException;
+import org.lakehouse.config.produce.ScheduleConfigurationResolver;
 import org.lakehouse.config.repository.*;
 import org.lakehouse.config.repository.dataset.DataSetRepository;
 import org.lakehouse.validator.config.ScheduleConfValidator;
@@ -55,7 +58,7 @@ public class ScheduleService {
     private final TaskRepository taskRepository;
     private final ScenarioActTaskEdgeRepository scenarioActTaskEdgeRepository;
     private final ScenarioActTemplateService scenarioActTemplateService;
-    private final ScheduleConfigProducerService scheduleConfigProducerService;
+    private final ConfigurationProduceService configurationProduceService;
     private final DtoMergeUtils dtoMergeUtils;
     private final TaskService taskService;
 
@@ -68,7 +71,7 @@ public class ScheduleService {
             TaskRepository taskRepository,
             ScenarioActTaskEdgeRepository scenarioActTaskEdgeRepository,
             ScenarioActTemplateService scenarioActTemplateService,
-            ScheduleConfigProducerService scheduleConfigProducerService,
+            ConfigurationProduceService configurationProduceService,
             @Lazy DtoMergeUtils dtoMergeUtils,
             TaskService taskService) {
         this.scheduleRepository = scheduleRepository;
@@ -79,7 +82,7 @@ public class ScheduleService {
         this.taskRepository = taskRepository;
         this.scenarioActTaskEdgeRepository = scenarioActTaskEdgeRepository;
         this.scenarioActTemplateService = scenarioActTemplateService;
-        this.scheduleConfigProducerService = scheduleConfigProducerService;
+        this.configurationProduceService = configurationProduceService;
         this.taskService = taskService;
         this.dtoMergeUtils = dtoMergeUtils;
     }
@@ -163,6 +166,7 @@ public class ScheduleService {
 
         scheduleAbstractResult.setKeyName(schedule.getKeyName());
         scheduleAbstractResult.setDescription(schedule.getDescription());
+        scheduleAbstractResult.setDomainKeyName(schedule.getDomainKeyName());
         scheduleAbstractResult.setIntervalExpression(schedule.getIntervalExpression());
         scheduleAbstractResult.setStartDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(schedule.getStartDateTime()));
         scheduleAbstractResult.setEnabled(schedule.isEnabled());
@@ -181,6 +185,7 @@ public class ScheduleService {
     private Schedule mapScheduleToEntity(Schedule schedule, ScheduleDTO scheduleDTO) {
         schedule.setKeyName(scheduleDTO.getKeyName());
         schedule.setDescription(scheduleDTO.getDescription());
+        schedule.setDomainKeyName(scheduleDTO.getDomainKeyName());
         schedule.setIntervalExpression(scheduleDTO.getIntervalExpression());
         schedule.setStartDateTime(DateTimeUtils.parseDateTimeFormatWithTZ(scheduleDTO.getStartDateTime()));
         schedule.setEnabled(scheduleDTO.isEnabled());
@@ -241,6 +246,8 @@ public class ScheduleService {
                         .findById(scheduleDTO.getKeyName())
                         .orElse(new Schedule());
 
+        rejectDomainConflict(scheduleDTO, currentScheduleVersion);
+
         if (scheduleDTO.equals(mapScheduleToDTO(currentScheduleVersion))) {
             logger.info("Schedule configs are equal");
             // the construct is unchanged; keep the VCS-managed marker in sync anyway
@@ -292,8 +299,17 @@ public class ScheduleService {
         });
         // -------------------------
         ScheduleDTO result = mapScheduleToDTO(schedule);
-        scheduleConfigProducerService.changeSchedule(schedule);
+        configurationProduceService.produce(
+                ScheduleConfigurationResolver.KIND, schedule.getKeyName(), Types.configAction.SAVE);
         return result;
+    }
+
+    private void rejectDomainConflict(ScheduleDTO scheduleDTO, Schedule existing) {
+        if (scheduleDTO.getDomainKeyName() == null || existing.getDomainKeyName() == null)
+            return;
+        if (!existing.getDomainKeyName().equals(scheduleDTO.getDomainKeyName()))
+            throw new DomainConflictException(
+                    scheduleDTO.getKeyName(), existing.getDomainKeyName(), scheduleDTO.getDomainKeyName());
     }
 
     public ScheduleDTO findDtoById(String name) {
@@ -310,6 +326,8 @@ public class ScheduleService {
     @Transactional
     public void deleteById(String name) {
         rejectIfVcsManaged(name, "deleted");
+        configurationProduceService.produce(
+                ScheduleConfigurationResolver.KIND, name, Types.configAction.DELETE);
         scheduleRepository.deleteById(name);
     }
 

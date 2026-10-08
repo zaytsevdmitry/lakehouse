@@ -1,0 +1,82 @@
+{{/*
+Bucket provisioning for MinIO.
+
+Runs as a post-install/post-upgrade hook so it starts only after the MinIO
+Deployment has been submitted; the script itself blocks on `mc ready` until the
+S3 API answers. The bucket list is rendered from minio.defaultBuckets and the
+script is idempotent, so a re-run on every upgrade is harmless.
+*/}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-bucket-init
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "lakehouse-management.labels" . | nindent 4 }}
+    app.kubernetes.io/component: minio
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  # hook-failed is deliberately absent from the delete policy: a failed Job stays
+  # behind so that `kubectl logs job/minio-bucket-init` is available.
+  backoffLimit: 6
+  template:
+    metadata:
+      labels:
+        app: minio-bucket-init
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: minio-bucket-init
+          image: "{{ .Values.minio.clientImage.registry }}/{{ .Values.minio.clientImage.repository }}:{{ .Values.minio.clientImage.tag }}"
+          imagePullPolicy: {{ .Values.minio.clientImage.pullPolicy }}
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eu
+
+              # minio.defaultBuckets holds "bucket" or "bucket:prefix" entries
+              # separated by commas; tr turns them into plain words for the loop.
+              buckets=$(printf '%s' "$MINIO_BUCKETS" | tr ',' ' ')
+
+              echo "Configuring client alias for {{ .Release.Name }}-minio..."
+              mc alias set localminio "$MINIO_ENDPOINT" "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
+
+              echo "Waiting for MinIO API to become ready..."
+              until mc ready localminio > /dev/null 2>&1; do
+                echo "Waiting for localminio. zzZ"
+                sleep 3
+              done
+
+              echo "Executing bucket lifecycle checks..."
+              for entry in $buckets; do
+                bucket="${entry%%:*}"
+                prefix="${entry#*:}"
+                if [ "$prefix" = "$bucket" ]; then
+                  prefix=""
+                fi
+
+                if ! mc ls "localminio/${bucket}" > /dev/null 2>&1; then
+                  echo "Creating bucket: ${bucket}"
+                  mc mb "localminio/${bucket}"
+                else
+                  echo "Bucket already present: ${bucket}"
+                fi
+
+                if [ -n "$prefix" ]; then
+                  echo -n "" | mc pipe "localminio/${bucket}/${prefix}/.keep"
+                fi
+              done
+
+              echo "Storage provisioning completed successfully!"
+          env:
+            - name: MINIO_ENDPOINT
+              value: "http://minio:{{ .Values.minio.service.ports.api }}"
+            - name: MINIO_BUCKETS
+              value: {{ .Values.minio.defaultBuckets | quote }}
+            - name: MINIO_ROOT_USER
+              value: {{ .Values.minio.auth.rootUser | quote }}
+            - name: MINIO_ROOT_PASSWORD
+              value: {{ .Values.minio.auth.rootPassword | quote }}

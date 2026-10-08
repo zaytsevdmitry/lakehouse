@@ -19,7 +19,7 @@ package org.lakehouse.config.controller;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.lakehouse.client.api.constant.Endpoint;
-import org.lakehouse.client.api.dto.configs.VcsSyncLogDTO;
+import org.lakehouse.client.api.dto.vcs.VcsSyncLogDTO;
 import org.lakehouse.config.vcs.service.VcsSyncLogService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -47,7 +47,8 @@ public class VcsSyncLogController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) String commitId) {
-        return vcsSyncLogService.find(from, to, status, commitId);
+            @RequestParam(required = false) String commitId,
+            @RequestParam(required = false) String domainKeyName) {
+        return vcsSyncLogService.find(from, to, status, commitId, domainKeyName);
     }
 }

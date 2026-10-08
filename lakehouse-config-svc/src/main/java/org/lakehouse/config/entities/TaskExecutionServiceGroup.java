@@ -17,14 +17,27 @@
 
 package org.lakehouse.config.entities;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
+import jakarta.persistence.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 public class TaskExecutionServiceGroup extends KeyEntityAbstract {
 
     @Column(nullable = false)
     private boolean isVcsManaged;
+
+    @Column
+    private String domainKeyName;
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+            name = "task_execution_service_group_domains", // Имя отдельной таблицы для хранения списка
+            joinColumns = @JoinColumn(name = "tesg_keyName")   // Внешний ключ, связывающий с основной таблицей
+    )
+    @Column(name = "domain_name") // Имя колонки для самого значения String в новой таблице
+    private List<String> allowedDomains = new ArrayList<>();
 
     public TaskExecutionServiceGroup() {
     }
@@ -37,4 +50,19 @@ public class TaskExecutionServiceGroup extends KeyEntityAbstract {
         this.isVcsManaged = vcsManaged;
     }
 
+    public List<String> getAllowedDomains() {
+        return allowedDomains;
+    }
+
+    public void setAllowedDomains(List<String> allowedDomains) {
+        this.allowedDomains = allowedDomains;
+    }
+
+    public String getDomainKeyName() {
+        return domainKeyName;
+    }
+
+    public void setDomainKeyName(String domainKeyName) {
+        this.domainKeyName = domainKeyName;
+    }
 }

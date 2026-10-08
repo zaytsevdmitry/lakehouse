@@ -37,6 +37,11 @@ public class TaskDTO {
     private String name;
 
     /**
+     * Key name of the owning domain.
+     */
+    private String domainKeyName;
+
+    /**
      * Name of the task template
      * */
     private String template;
@@ -93,6 +98,14 @@ public class TaskDTO {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getDomainKeyName() {
+        return domainKeyName;
+    }
+
+    public void setDomainKeyName(String domainKeyName) {
+        this.domainKeyName = domainKeyName;
     }
 
     public String getTemplate() {

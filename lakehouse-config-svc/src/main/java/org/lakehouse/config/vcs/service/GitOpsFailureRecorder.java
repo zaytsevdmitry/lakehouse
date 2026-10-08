@@ -46,9 +46,9 @@ public class GitOpsFailureRecorder {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void recordFailure(String commitId, String errorMessage) {
-        logger.error("Synchronization of commit {} failed: {}", commitId, errorMessage);
-        VcsSyncLog log = new VcsSyncLog(commitId, OffsetDateTime.now(), VcsSyncStatus.FAILED, errorMessage);
+    public void recordFailure(String domainKeyName, String commitId, String errorMessage) {
+        logger.error("Synchronization of commit {} (domain {}) failed: {}", commitId, domainKeyName, errorMessage);
+        VcsSyncLog log = new VcsSyncLog(commitId, OffsetDateTime.now(), VcsSyncStatus.FAILED, domainKeyName, errorMessage);
         vcsSyncLogRepository.save(log);
     }
 }

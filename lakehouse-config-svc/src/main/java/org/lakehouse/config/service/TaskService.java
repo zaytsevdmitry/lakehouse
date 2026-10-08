@@ -18,6 +18,7 @@
 package org.lakehouse.config.service;
 
 import jakarta.transaction.Transactional;
+import org.lakehouse.client.api.constant.Types;
 import org.lakehouse.client.api.dto.configs.schedule.TaskDTO;
 import org.lakehouse.client.api.utils.DtoMergeUtils;
 import org.lakehouse.config.entities.scenario.ScenarioAct;
@@ -27,6 +28,7 @@ import org.lakehouse.config.entities.templates.TemplateScenarioAct;
 import org.lakehouse.config.exception.VcsManagedException;
 import org.lakehouse.config.exception.TaskEffectiveNotFoundException;
 import org.lakehouse.config.exception.TaskNotFoundException;
+import org.lakehouse.config.produce.TaskConfigurationResolver;
 import org.lakehouse.config.repository.TaskExecutionServiceGroupRepository;
 import org.lakehouse.config.repository.TaskProcessorArgRepository;
 import org.lakehouse.config.repository.TaskRepository;
@@ -54,19 +56,22 @@ public class TaskService {
     private final DriverService driverService;
     private final SQLTemplateService sqlTemplateService;
     private final DtoMergeUtils dtoMergeUtils;
+    private final ConfigurationProduceService configurationProduceService;
     public TaskService(
             TaskRepository taskRepository,
             TaskProcessorArgRepository taskProcessorArgRepository,
             TaskExecutionServiceGroupRepository taskExecutionServiceGroupRepository,
             DriverService driverService,
             SQLTemplateService sqlTemplateService,
-            @Lazy DtoMergeUtils dtoMergeUtils) {
+            @Lazy DtoMergeUtils dtoMergeUtils,
+            ConfigurationProduceService configurationProduceService) {
         this.taskRepository = taskRepository;
         this.taskProcessorArgRepository = taskProcessorArgRepository;
         this.taskExecutionServiceGroupRepository = taskExecutionServiceGroupRepository;
         this.driverService = driverService;
         this.sqlTemplateService = sqlTemplateService;
         this.dtoMergeUtils = dtoMergeUtils;
+        this.configurationProduceService = configurationProduceService;
     }
 
     private Task mapToEntity(TaskDTO taskDTO, Task existingTask) {
@@ -80,6 +85,7 @@ public class TaskService {
         result.setMaxRetries(taskDTO.getMaxRetries());
         result.setTaskProcessor(taskDTO.getTaskProcessor());
         result.setTaskProcessorBody(taskDTO.getTaskProcessorBody());
+        result.setDomainKeyName(taskDTO.getDomainKeyName());
         if (StringUtils.hasText(taskDTO.getTaskExecutionServiceGroupName()))
             result.setTaskExecutionServiceGroup(
                 taskExecutionServiceGroupRepository.getReferenceById(taskDTO.getTaskExecutionServiceGroupName()));
@@ -130,6 +136,10 @@ public class TaskService {
 
         logger.info("Saving taskProcessorArgs of task.name={}", taskDTO.getName());
         saveArgs(task, taskDTO);
+
+        if (templateScenarioAct == null && scenarioAct == null) {
+            configurationProduceService.produce(TaskConfigurationResolver.KIND, task.getName(), Types.configAction.SAVE);
+        }
 
         logger.info("Saved task.name={}", taskDTO.getName());
         return new SaveTaskResult(task, mapTaskToDTO(task));
@@ -188,7 +198,13 @@ public class TaskService {
         rejectIfVcsManaged(name, templateScenarioAct, scenarioAct, "deleted");
         findTaskEntityByName(name,templateScenarioAct,scenarioAct)
                 .ifPresentOrElse(
-                        taskRepository::delete,
+                        task -> {
+                            if (templateScenarioAct == null && scenarioAct == null) {
+                                configurationProduceService.produce(
+                                        TaskConfigurationResolver.KIND, task.getName(), Types.configAction.DELETE);
+                            }
+                            taskRepository.delete(task);
+                        },
                         () -> {
                             throw new TaskNotFoundException(
                                     String.format("Task with name %s not found", name));
@@ -226,6 +242,7 @@ public class TaskService {
         taskDTO.setMaxRetries(task.getMaxRetries());
         taskDTO.setTaskProcessor(task.getTaskProcessor());
         taskDTO.setTaskProcessorBody(task.getTaskProcessorBody());
+        taskDTO.setDomainKeyName(task.getDomainKeyName());
         if (task.getTaskExecutionServiceGroup()!= null)
             taskDTO.setTaskExecutionServiceGroupName(task.getTaskExecutionServiceGroup().getKeyName());
         taskDTO.setTaskProcessorArgs(

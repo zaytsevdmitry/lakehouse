@@ -2,7 +2,7 @@
 
 class ScheduleEffectiveDTO.java
 
-ScheduleConfigConsumerService.listen -->   BuildService.registration : put ScheduleEffectiveDTO
+ConfigurationChangeConsumerService.listen -->   BuildService.registration : put ScheduleEffectiveDTO (on Schedule kind SAVE)
 
 InternalScheduler.build --> BuildService.buildAll : call
 

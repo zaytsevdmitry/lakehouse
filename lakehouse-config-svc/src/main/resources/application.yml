@@ -47,17 +47,15 @@ lakehouse:
   security:
     enabled: true
   config:
-    schedule:
-      send:
-        delay-ms: 10000
-        initial-delay-ms: 20000
-        limit: 100
-        topic: schedule_effective_changes
-        kafka:
-          producer:
-            properties:
+    produce:
+      delay-ms: 10000
+      initial-delay-ms: 20000
+      limit: 100
+      topic: configuration_changes
+      kafka:
+        producer:
+          properties:
               bootstrap.servers: localhost:9092
-
     vcs:
       git:
         repository-url: ${LAKEHOUSE_CONFIG_GIT_REPOSITORY_URL:}
@@ -70,6 +68,7 @@ lakehouse:
           initial-delay-ms: ${LAKEHOUSE_CONFIG_GIT_SYNC_INITIAL_DELAY_MS:10000}
 
   health:
+
     liveness-path: /healthz
     readiness-path: /readyz
 

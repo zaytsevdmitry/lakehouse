@@ -1,5 +1,159 @@
 # Changelog
 
+## [0.11.0] — 2026-10-02
+
+Configuration domains became first-class: **a domain is a Git repository**, and the domain stamp
+(`domainKeyName`) now travels from the repository through config-svc, the scheduler, the UI
+modeller and the task executor. On the UI side this arrived together with the **Modelling
+workbench** — a Git-backed metadata editor with workspaces, branches and reviews.
+
+### Added
+
+#### Domains and per-domain repositories
+
+- **Domain = Git repository** (`lakehouse-config-svc`): `LakehouseVCSProperties` binds
+  `lakehouse.config.vcs.domains.<name>` — a tree of domains, each with its own
+  `git.repository-url` / `branch` / `local-clone-path` / `private-key-path`, a `priority` and
+  nested `domains`. Each domain is fetched and applied on its own; the apply order is
+  depth-first with parents before children (`orderedDomains()`), `priority` ascending inside one
+  level, `Integer.MAX_VALUE` and last otherwise, ties broken by domain name. A domain without
+  `repository-url` is skipped entirely; a failing domain skips its whole sub-tree until the
+  parent succeeds. Per-domain env vars: `LAKEHOUSE_CONFIG_GIT_<NAME>_URL|_BRANCH|_CLONE_PATH|_PRIVATE_KEY_PATH`.
+- **Legacy single-repository mode kept**: when `domains` is empty and `git.repository-url` is
+  set, that repository is exposed as one domain named `default` (`rootDomains()`); as soon as
+  `domains` has an entry the legacy block is ignored and does not become an extra `default`.
+  The sync cycle itself stays global: `lakehouse.config.vcs.git.sync.{enabled,interval-ms,initial-delay-ms}`.
+- **`domainKeyName` stamping and identity rules**: `GitOpsSynchronizer.stampDomainOn(...)` stamps
+  every managed kind except `Script`; `SQLTemplate` rows are content-only and shared between
+  domains, their domain derived from the referencing `Driver`/`Task`
+  (`SQLTemplateEntitySpecifier.domainOf()`). `keyName` stays the global primary key and is **not**
+  part of a composite key with `domainKeyName`. REST-created constructs have `domainKeyName = null`.
+- **Domain isolation rules**: a `Schedule` may only reference data sets of its own domain — a
+  foreign or domain-less data set fails the whole commit with the new
+  `DataSetDomainConflictException` (`GitOpsSynchronizer.checkScheduleDatasetDomains()`); the REST
+  API refuses to overwrite a construct of one domain with a construct of another —
+  `DomainConflictException` → `409 Conflict` via `rejectDomainConflict(...)` in the services of
+  `DataSet`, `DataSource`, `Driver`, `Task`, `ScenarioActTemplate`, `Schedule`,
+  `QualityMetricsConf` and `TaskExecutionServiceGroup`. `domain_key_name` was added to
+  `vcs_sync_log` and `vcs_object_log`, and `domainKeyName` became an optional filter of
+  `GET /v1_0/configs/vcs/logs` and `.../vcs/objectlogs`.
+- **Domain-scoped executor configuration** (`lakehouse-task-executor-svc`):
+  `DomainDataSourceServiceProperties` binds
+  `lakehouse.task-executor.domains.<domainKeyName>.<dataSourceKeyName>.service-properties`
+  (free-form map). `ExecuteService.prepareProperties(...)` looks it up per data source and merges
+  it into `DataSourceDTO.getService().getProperties()` (`putAll` — the local value overrides the
+  repository-declared one), so per-domain connection settings and secret-provider options reach
+  `JdbcConnectionFactory` without being committed to Git.
+- **Domain check in the scheduler** (`lakehouse-scheduler-svc`):
+  `ScheduleTaskInstanceService.checkDomain(...)` compares the schedule domain against
+  `allowedDomains ∪ {domainKeyName}` of the task's `TaskExecutionServiceGroup` (new fields
+  `domainKeyName` and `allowedDomains`, the latter in the `task_execution_service_group_domains`
+  collection table). A mismatch stores the `ScheduleTaskInstance` as `CONF_ERROR`, deletes the
+  pending producer message and publishes nothing; a missing group is only a warning. Since
+  executors are grouped solely by `taskExecutionServiceGroupName` (the Kafka `group.id`), this
+  check is what keeps a foreign domain out of an executor group.
+- **Per-domain repositories in the UI modeller** (`lakehouse-ui-svc`):
+  `lakehouse.modeller.domains.<name>.{repository-url,branch-main}` — `GET /api/vcs/branches`
+  returns one `DomainBranchesResponse {domain, branches[], branchMain}` per domain (the branch
+  panel renders a domain tree), `POST /api/vcs/branch` creates a branch inside a named domain,
+  and a workspace is a set of `(domain, branch)` pairs (`POST /api/vcs/workspace`) checked out
+  into per-domain folders `<domain> (<branch>)` with id
+  `md5(username + "|" + sorted "domain=branch")`. Review is submitted **per domain**
+  (`POST /api/vcs/review/{workspaceId}`): files are grouped by their covering folder, each group
+  is committed and pushed to its own domain branch and turned into an MR/PR against that
+  domain's `branch-main`; an empty diff yields `NO_CHANGES`. `domainKeyName` is excluded from
+  every form schema (`SchemaService.DERIVED_PROPERTIES`) — the domain comes from the repository,
+  never from the file content. Resolution falls back to the legacy single repository as the
+  domain `default` (`ModellerProperties.domainNames()/domainRemoteUrl()/domainBranchMain()`).
+- **Tests**: `ScheduleTaskInstanceServiceDomainCheckTest` (foreign domain rejected and the task
+  not published, a domain in `allowedDomains` accepted, the group's own domain accepted) and
+  `DomainDataSourceServicePropertiesTest` (dynamic-map binding through `Environment`, per-entry
+  isolation, same singleton exposed by `ExecuteService`).
+
+#### Modelling workbench in `lakehouse-ui-svc`
+
+- **Workspaces from a Git branch**: `WorkspaceStorage` SPI — `LocalFsWorkspaceStorage`
+  (`lakehouse.modeller.storage.root-directory`) and `S3WorkspaceStorage` (S3 with a minimal
+  built-in AWS SigV4 signer); `WorkspaceManager`, `WorkspaceSeeder`, background
+  `WorkspaceCleanupTask` (inactivity TTL, default 4 h) and
+  `lakehouse.modeller.session.inactivity-minutes`.
+- **VCS provider SPI**: `LocalGitVcsProvider` (JGit), `GitLabApiVcsProvider`,
+  `GitHubAppVcsProvider`, `DisabledVcsProvider` plus a factory; system technical account
+  (`lakehouse.modeller.vcs-system-account`, auth type `ssh`/`token`/`basic`, GitHub App options);
+  declarative matrix in `lakehouse.modeller.*` (`vcs-provider`, `auth-strategy`
+  `jwt-rbac`/`token-exchange`).
+- **File CRUD and editors**: `EditorController` (tree/dirs, create by `kind`+`keyName`+`directory`,
+  read, save via `YamlEditorService`, rename/move/delete of files and directories, restore from
+  the VCS state), schema-driven forms (`SchemaController`, `KindSchema`/`FieldSchema`,
+  `EnumOptionsService`) with a form ↔ raw-YAML toggle, and React Flow visual editors —
+  `ErDiagramEditor` (`kind: ERDiagram`), `DataLineageDiagramEditor`
+  (`kind: DataLineageDiagram`) and a generic DAG editor. `ERDiagram`/`DataLineageDiagram` are
+  non-configurational (`isConfig=false`): stored in the repository but not applied by config-svc.
+- **Review, RBAC and observability**: submission to review with a comment
+  (`ReviewService`), restore, modeller roles `LAKEHOUSE_MODELLER_VIEWER < EDITOR < ADMIN` with
+  ownership-based edit rights and `readOnly` from `effectiveRole`, admin surface
+  (`AdminController`: all workspaces, force-delete, cleanup TTL, sync-log tail), sync-log
+  capacity (`lakehouse.modeller.logging.sync-log-capacity`).
+- **New shared kinds** `ER_DIAGRAM` (order 11) and `DATA_LINEAGE_DIAGRAM` (order 13) in
+  `YamlMetadataKind`, with directories `erdiagrams` / `datalineagediagrams`.
+- **Frontend test suite**: Vitest 3 + React Testing Library (jsdom), configured in
+  `vite.config.js` (`test/setup.js` polyfills the React Flow browser APIs) — 41 tests across
+  `DataLineageDiagramEditor` (24), `FormEditor` (7), `EditorView` (5, incl. the multi-domain
+  leave-on-review flow) and `WorkspacePicker` (5, incl. per-domain branch preselection).
+
+#### Documentation and repository housekeeping
+
+- New `lakehouse-config-svc/doc/content_configuration/domains.md` (+ `doc-ru` mirror): the tree
+  and apply order, ownership and identity rules, isolation rules, the full property table, the
+  legacy single-repository block, observability and object fields.
+- New `lakehouse-ui-svc/doc/arch/architecture.md` (frontend architecture review with PlantUML
+  sources under `doc/arch/diagrams/`) and `lakehouse-ui-svc/doc/doc_requirements.md`.
+- Domain chapters and configuration references added to
+  `lakehouse-ui-svc/doc/readme.md` (+ RU), `lakehouse-scheduler-svc/doc/readme.md` (+ RU),
+  `lakehouse-task-executor-svc/doc/readme.md` and `properties.md` (+ RU mirrors) and
+  `lakehouse-config-svc/doc/readme.md` (+ RU).
+- `taskexecutionservicegroups.md` (EN/RU) documents `domainKeyName` and `allowedDomains`.
+- **License headers**: the Apache-2.0 notice from `NOTICE` was added to every `.java`, `.bash`
+  and `.sh` file that did not carry a copyright notice (via `.utils/autonotice.bash`).
+- Russian VCS docs moved from `doc-ru/cvs/` to `doc-ru/vcs/`, fixing the `cvs`/`vcs` path typo;
+  `content_configuration/namespaces.md` (EN/RU) removed together with the `NameSpace` kind.
+- `SUMMARY_FEATURES.md` extended with a dedicated "Домены и репозитории" section and
+  per-service cross-references.
+
+### Changed
+
+- **`ConfigurationProduceResolver` SPI replaces the `ConfigKind` enum**
+  (`lakehouse-config-svc`): one `@Component` per kind (`Driver`, `DataSource`, `Task`,
+  `TaskExecutionServiceGroup`, `DataSet`, `Schedule`, `ScenarioActTemplate`, `Script`,
+  `QualityMetricsConf`) each declaring `getKind()` and `resolve(keyName)`, collected by
+  `ConfigurationProduceResolverRegistry.findByKind(...)` (duplicate kinds fail fast). Kinds are
+  resolved through services instead of a hard-coded DTO/order table, which is what the
+  `NameSpace` kind removal and the new domain stamp needed.
+- `GitVcsConfigurationProperties` replaced by `LakehouseVCSProperties`; the client factory moved
+  to `GitVcsClientFactory`; `GitOpsChangeSetBuilder`, `GitOpsSynchronizer`,
+  `GitOpsFailureRecorder`, `GitOpsScheduler`, `VcsClient`, `GitVcsClient` and the log
+  services/repositories became domain-aware.
+- `CurrentDomainContext` (`org.lakehouse.config.vcs`) carries the domain being applied through
+  the stamping and validation path.
+- **`lakehouse-scheduler-svc`**: `ScheduleConfigConsumerService` → `ConfigurationChangeConsumerService`
+  with `ConfigurationChangeKafkaConfiguration` /
+  `ConfigurationChangeConsumerKafkaConfigurationProperties`, consuming the
+  `configuration_changes` topic; added `TaskExecutionServiceGroupConfigService` as an in-memory
+  cache of executor-group configuration (populated by Kafka change events, fetched on miss over
+  REST).
+- **Demo**: the configuration repository is now laid out per domain
+  (`demo/conf_git/domains/{platform,processing,analytics}`), and the REST-loaded demo
+  configurations moved to `demo/conf/`.
+- Project and module versions bumped `0.10.0` → `0.11.0`.
+
+### New dependencies
+
+None. All libraries required by the Modelling workbench (`org.eclipse.jgit`,
+`org.eclipse.jgit.ssh.apache`, `tools.jackson.dataformat:jackson-dataformat-yaml`,
+`spring-boot-starter-oauth2-resource-server`) were already declared by the project at tag
+`0.10.0` — `lakehouse-ui-svc` only started consuming them — so `THIRD-PARTY-NOTICES` is
+unchanged.
+
 ## [0.10.0] — 2026-09-01
 
 ### Added

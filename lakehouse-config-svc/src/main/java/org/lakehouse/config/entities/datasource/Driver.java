@@ -27,11 +27,22 @@ public class Driver extends KeyEntityAbstract {
     @Column(nullable = false)
     private boolean isVcsManaged;
 
+    @Column(nullable = true)
+    private String domainKeyName;
+
     public boolean isVcsManaged() {
         return isVcsManaged;
     }
 
     public void setVcsManaged(boolean vcsManaged) {
         this.isVcsManaged = vcsManaged;
+    }
+
+    public String getDomainKeyName() {
+        return domainKeyName;
+    }
+
+    public void setDomainKeyName(String domainKeyName) {
+        this.domainKeyName = domainKeyName;
     }
 }

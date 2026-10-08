@@ -70,7 +70,7 @@ public class DataSetConstraintService {
 
         for (DataSetConstraint dataSetConstraint: newConst){
             dataSetConstraintRepository.save(dataSetConstraint);
-            if (dataSetConstraint.getType().equals(Types.Constraint.foreign)) {
+            if (dataSetConstraint.getType().equals(Types.ConstraintType.FOREIGN)) {
                 ForeignKeyReference newForeignKeyReference = findReference(dataSetConstraint,dataSetConstraintDTOList);
                 if(dataSetConstraint.getId() != null && dataSetConstraint.getId() > 0){
                     foreignKeyReferenceRepository.findByDataSetConstraintId(dataSetConstraint.getId()).ifPresent(foreignKeyReference -> newForeignKeyReference.setId(foreignKeyReference.getId()));
@@ -138,7 +138,7 @@ public class DataSetConstraintService {
             result.setEnabled(dataSetConstraint.isEnabled());
             result.setConstraintLevelCheck(dataSetConstraint.getConstraintLevelCheck());
             result.setTableConstraintDDLCreateOverride(dataSetConstraint.getCreateConstraintDDLOverride());
-            if (dataSetConstraint.getType().equals(Types.Constraint.foreign)) {
+            if (dataSetConstraint.getType().equals(Types.ConstraintType.FOREIGN)) {
                 ForeignKeyReferenceDTO foreignKeyReferenceDTO = new ForeignKeyReferenceDTO();
                 foreignKeyReferenceRepository.findByDataSetConstraintId(dataSetConstraint.getId()).ifPresent(foreignKeyReference -> {
                     foreignKeyReferenceDTO.setDataSetKeyName(

@@ -1,6 +1,6 @@
   {
   "keyName": "transaction_processing",
-  "nameSpaceKeyName": "DEMO",
+  "domainKeyName": "DEMO",
   "dataSourceKeyName": "processingdb",
   "databaseSchemaName":  "proc",
   "tableName": "transactions",

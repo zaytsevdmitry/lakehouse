@@ -2,203 +2,74 @@ dbDev:
   image:
     repository: postgres
     tag: "latest"
-    pullPolicy: IfNotPresent
-
-  service:
-    type: ClusterIP
-    port: 5432
-    targetPort: 5432
-  persistence:
-    enabled: true
-    size: 2Gi
   env:
     POSTGRES_USER: postgresUser
     POSTGRES_PASSWORD: postgresPW
     POSTGRES_DB: postgresDB
+
 broker:
   image:
     repository: apache/kafka
     tag: "latest"
-    pullPolicy: IfNotPresent
-  service:
-    type: ClusterIP
-    port: 9092
-    targetPort: 9092
 
-spark-operator:
-  rbac:
-    create: true
-    # one space role
-    clusterRole: false
-  watchNamespaces:
-    - "lakehouse-management"
-  webhook:
-    enable: false
-
-replicaCount: 1
-
-image:
-  repository: nginx
-  pullPolicy: IfNotPresent
-  tag: ""
-
-imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
-# This section builds out the service account more information can be found here: https://kubernetes.io/docs/concepts/security/service-accounts/
-serviceAccount:
-  # Specifies whether a service account should be created
-  create: true
-  # Automatically mount a ServiceAccount's API credentials?
-  automount: true
-  # Annotations to add to the service account
-  annotations: {}
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
-  name: ""
+# ============================================================================
+# Task executor — renders one Deployment + Service per entry of `instances`
+# (see the subchart values for the groupId / serviceId contract). The subchart
+# default already matches demo/conf_git and demo/compose, so nothing has to be
+# repeated here; the block below only exists to show the override keys.
+#
+# Lists are replaced by Helm, never merged: an override of `instances` must
+# therefore repeat every instance it wants to keep.
+# lakehouse-task-executor-service:
+#   image:
+#     tag: "0.11.0"
+#   instances:
+#     - name: database
+#       groupId: "database"
+#       serviceId: "database"
+#       concurrency: 1
+#     - name: spark
+#       groupId: "spark-cluster"
+#       serviceId: "spark-exec-1"
+#       concurrency: 1
+#     - name: state
+#       groupId: "state-service"
+#       serviceId: "state-service"
+#       concurrency: 1
 
-# This is for setting Kubernetes Annotations to a Pod.
-# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
-podAnnotations: {}
-# This is for setting Kubernetes Labels to a Pod.
-# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
-podLabels: {}
-
-podSecurityContext: {}
-  # fsGroup: 2000
-
-securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
-
-# This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/
-service:
-  # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
-  type: ClusterIP
-  # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
-  port: 80
-
-# This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
-ingress:
-  enabled: false
-  className: ""
-  annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  hosts:
-    - host: chart-example.local
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
-
-# -- Expose the service via gateway-api HTTPRoute
-# Requires Gateway API resources and suitable controller installed within the cluster
-# (see: https://gateway-api.sigs.k8s.io/guides/)
-httpRoute:
-  # HTTPRoute enabled.
-  enabled: false
-  # HTTPRoute annotations.
-  annotations: {}
-  # Which Gateways this Route is attached to.
-  parentRefs:
-  - name: gateway
-    sectionName: http
-    # namespace: default
-  # Hostnames matching HTTP header.
-  hostnames:
-  - chart-example.local
-  # List of rules and filters applied.
-  rules:
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /headers
-  #   filters:
-  #   - type: RequestHeaderModifier
-  #     requestHeaderModifier:
-  #       set:
-  #       - name: My-Overwrite-Header
-  #         value: this-is-the-only-value
-  #       remove:
-  #       - User-Agent
-  # - matches:
-  #   - path:
-  #       type: PathPrefix
-  #       value: /echo
-  #     headers:
-  #     - name: version
-  #       value: v2
-
-resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
-
-# This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
-livenessProbe:
-  httpGet:
-    path: /
-    port: http
-readinessProbe:
-  httpGet:
-    path: /
-    port: http
-
-# This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
-autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 100
-  targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
-
-# Additional volumes on the output Deployment definition.
-volumes: []
-# - name: foo
-#   secret:
-#     secretName: mysecret
-#     optional: false
-
-# Additional volumeMounts on the output Deployment definition.
-volumeMounts: []
-# - name: foo
-#   mountPath: "/etc/foo"
-#   readOnly: true
-
-nodeSelector: {}
-
-tolerations: []
-
-affinity: {}
+# ============================================================================
+# MinIO — object storage (feeds sparklogs/eventlog, hive-metastore, trino).
+# Consumed by templates/minio-dev.yaml.
 minio:
-  # 1. Используем тот же образ, что и в Docker Compose
   image:
-    registry: quay.io
-    repository: minio/minio
-    tag: latest
+    # The Bitnami catalog no longer publishes versioned tags (they moved to
+    # bitnamilegacy after the August 2025 catalog cleanup), so the legacy
+    # repository is referenced here. Swap to quay.io/minio/minio to go back.
+    registry: docker.io
+    repository: bitnamilegacy/minio
+    tag: 2025.7.23
+    pullPolicy: IfNotPresent
+
+  # Image of the minio-bucket-init hook Job that creates the buckets and the
+  # .keep markers (see templates/minio-bucket-init-job.yaml)
+  clientImage:
+    registry: docker.io
+    repository: bitnamilegacy/minio-client
+    tag: 2025.7.21
     pullPolicy: IfNotPresent
 
   auth:
     rootUser: "spark_user"
     rootPassword: "spark_pwd"
 
-  defaultBuckets: "data,sparklogs"
+  # Buckets created by the minio-bucket-init hook Job. Each entry is either a
+  # plain bucket name ("sparklogs") or "bucket:prefix" when a directory with a
+  # .keep marker has to exist in it ("data:warehouse" keeps Spark from losing
+  # the prefix when the first job writes).
+  defaultBuckets: "data:warehouse,sparklogs:eventlog"
 
   service:
     type: ClusterIP
@@ -224,7 +95,16 @@ minio:
     initialDelaySeconds: 5
     periodSeconds: 5
     timeoutSeconds: 5
+
+# ============================================================================
+# Keycloak — OIDC IdP (realm + client secrets are templated into
+# templates/keycloak-realm-configmap.yaml).
 keycloak:
+  issuerUri: "http://keycloak:8085/realms/lakehouse"
+  uiClientSecret: "super-secret-bff-key-1234567890"
+  internalClientSecret: "super-secret-internal-key-987654321"
+  service:
+    port: 8085
   image:
     repository: quay.io/keycloak/keycloak
     tag: "26.0"
@@ -290,42 +170,3 @@ openbao:
   seed:
     enabled: true
     env: []   # optional overrides (see the valueFrom example above)
-
-lakehouse-management-task-executor-service:
-  serviceAccount:
-    create: false
-    name: "lakehouse-app-sa"
-
-lakehouse-task-proxy4spark:
-  image:
-    repository: lakehouse-task-proxy4spark
-    tag: "0.10.0"
-    pullPolicy: IfNotPresent
-  service:
-    type: NodePort
-    port: 8090
-  replicaCount: 1
-  adapter: k8s
-  sparkMaster: "k8s://https://kubernetes.default.svc"
-  k8s:
-    namespace: "lakehouse-management"
-    restUrl: "https://kubernetes.default.svc"
-  scheduler:
-    pollIntervalMs: 5000
-    poolSize: 2
-  metrics:
-    submissionTimeoutSeconds: 30
-
-lakehouse-management-ui-svc:
-  ui-svc:
-    image:
-      repository: lakehouse
-      tag: "0.10.0"
-      pullPolicy: IfNotPresent
-    replicaCount: 1
-    service:
-      type: NodePort
-      port: 8084
-      targetPort: 8084
-
-

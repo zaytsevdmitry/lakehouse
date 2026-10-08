@@ -53,7 +53,7 @@ public class SparkRestClientHelperTest {
     private final FileLoader fileLoader = new FileLoader();
 
     @Test
-    public void MakesCorrectCallNameSpaceDTO() throws Exception {
+    public void MakesCorrectCallCreateSubmission() throws Exception {
         CreateRequest request = ObjectMapping.stringToObject("{\n" +
                 "  \"appResource\": \"\",\n" +
                 "  \"sparkProperties\": {\n" +

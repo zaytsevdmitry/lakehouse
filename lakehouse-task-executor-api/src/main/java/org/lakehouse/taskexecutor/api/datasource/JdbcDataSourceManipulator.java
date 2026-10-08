@@ -138,7 +138,7 @@ public class JdbcDataSourceManipulator implements DataSourceManipulator {
         for (String constraintName: constraints
                 .entrySet()
                 .stream()
-                .filter(e -> e.getValue().getConstraintLevelCheck().equals(Types.ConstraintLevelCheck.construct))
+                .filter(e -> e.getValue().getConstraintLevelCheck().equals(Types.ConstraintLevelCheck.CONSTRUCT))
                 .map(Map.Entry::getKey)
                 .toList()){
             try {
@@ -160,13 +160,13 @@ public class JdbcDataSourceManipulator implements DataSourceManipulator {
 
     private String getConstraintTemplate(Map.Entry<String,DataSetConstraintDTO> constraint) throws ConstraintException {
         String template = null;
-        if ( constraint.getValue().getType().equals(Types.Constraint.primary))
+        if ( constraint.getValue().getType().equals(Types.ConstraintType.PRIMARY))
             template = sqlTemplateResolver().getPrimaryKeyDDLAdd();
-        else if (constraint.getValue().getType().equals(Types.Constraint.unique))
+        else if (constraint.getValue().getType().equals(Types.ConstraintType.UNIQUE))
             template = sqlTemplateResolver().getUniqueKeyDDLAdd();
-        else if (constraint.getValue().getType().equals(Types.Constraint.foreign))
+        else if (constraint.getValue().getType().equals(Types.ConstraintType.FOREIGN))
             template = sqlTemplateResolver().getForeignKeyDDLAdd();
-        else if (constraint.getValue().getType().equals(Types.Constraint.check))
+        else if (constraint.getValue().getType().equals(Types.ConstraintType.CHECK))
             template = sqlTemplateResolver().getCheckConstraintDDLAdd();
         else throw new
                     ConstraintException(
@@ -185,7 +185,7 @@ public class JdbcDataSourceManipulator implements DataSourceManipulator {
                 .entrySet()
                 .stream()
                 .filter(e ->
-                        e.getValue().getConstraintLevelCheck().equals(Types.ConstraintLevelCheck.construct))
+                        e.getValue().getConstraintLevelCheck().equals(Types.ConstraintLevelCheck.CONSTRUCT))
                 .toList()){
             try {
                 String template = getConstraintTemplate(constraint);

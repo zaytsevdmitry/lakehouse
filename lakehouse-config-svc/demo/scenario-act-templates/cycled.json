@@ -1,6 +1,6 @@
 {
   "keyName": "default",
-  "description": "Default scenario",
+  "domainKeyName": "DEMO",
   "tasks": [
     {
       "name": "check",

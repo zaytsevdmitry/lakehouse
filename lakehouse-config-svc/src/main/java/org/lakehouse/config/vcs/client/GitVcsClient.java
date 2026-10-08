@@ -69,6 +69,9 @@ public class GitVcsClient implements VcsClient {
 
     private Git git;
     private Repository repository;
+    private SshSessionFactory previousSshSessionFactory;
+    private SshdSessionFactory ownSshSessionFactory;
+    private boolean sshSessionFactoryReplaced;
 
     public GitVcsClient(String repositoryUrl, String branch, String localClonePath, String privateKeyPath) {
         if (!StringUtils.hasText(repositoryUrl))
@@ -233,8 +236,9 @@ public class GitVcsClient implements VcsClient {
     }
 
     private void applySshSettings() {
-        if (!StringUtils.hasText(privateKeyPath))
+        if (!StringUtils.hasText(privateKeyPath)) {
             return;
+        }
         Path key = Paths.get(privateKeyPath).toAbsolutePath();
         if (!Files.isReadable(key))
             throw new VcsClientException("SSH private key is not readable: " + key);
@@ -246,17 +250,40 @@ public class GitVcsClient implements VcsClient {
                     .setPreferredAuthentications("publickey")
                     .setDefaultIdentities(ignored -> List.of(key.toAbsolutePath()))
                     .build(new JGitKeyCache());
+            // JGit keeps the SSH factory in a static: the previously installed instance is
+            // restored on close so a client of one domain never inherits the key of another.
+            previousSshSessionFactory = SshSessionFactory.getInstance();
             SshSessionFactory.setInstance(sshdFactory);
+            ownSshSessionFactory = sshdFactory;
+            sshSessionFactoryReplaced = true;
         } catch (Exception e) {
             throw new VcsClientException("Cannot create SSH session factory for key " + key, e);
         }
     }
 
-    private void close() {
+    @Override
+    public synchronized void close() {
         if (git != null) {
             git.close();
             git = null;
             repository = null;
+        }
+        if (sshSessionFactoryReplaced) {
+            SshSessionFactory.setInstance(previousSshSessionFactory);
+            closeSshSessionFactory(ownSshSessionFactory);
+            ownSshSessionFactory = null;
+            sshSessionFactoryReplaced = false;
+            previousSshSessionFactory = null;
+        }
+    }
+
+    private void closeSshSessionFactory(SshdSessionFactory factory) {
+        if (factory == null)
+            return;
+        try {
+            factory.close();
+        } catch (Exception e) {
+            logger.warn("Cannot close SSH session factory of repository {}: {}", repositoryUrl, e.getMessage());
         }
     }
 }

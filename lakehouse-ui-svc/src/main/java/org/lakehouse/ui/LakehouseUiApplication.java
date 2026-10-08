@@ -19,7 +19,9 @@ package org.lakehouse.ui;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.lakehouse.ui.config.UiServiceProperties;
+import org.lakehouse.ui.modeller.config.ModellerProperties;
 
 @SpringBootApplication(scanBasePackages = {
         "org.lakehouse.ui",
@@ -28,7 +30,8 @@ import org.lakehouse.ui.config.UiServiceProperties;
         "org.lakehouse.client.rest.state",
         "org.lakehouse.client.rest.scheduler",
         "org.lakehouse.client.rest.taskproxy"})
-@EnableConfigurationProperties(UiServiceProperties.class)
+@EnableConfigurationProperties({UiServiceProperties.class, ModellerProperties.class})
+@EnableScheduling
 public class LakehouseUiApplication {
 
     public static void main(String[] args) {

@@ -54,6 +54,9 @@ public class VcsObjectLog {
     @Column(nullable = false, length = 64)
     private String commitId;
 
+    @Column(nullable = false, length = 128)
+    private String domainKeyName;
+
     public VcsObjectLog() {
     }
 
@@ -68,6 +71,25 @@ public class VcsObjectLog {
         this.kind = kind;
         this.filePath = filePath;
         this.commitId = commitId;
+    }
+
+    public VcsObjectLog(
+            OffsetDateTime dateTimeRec,
+            String objectName,
+            String kind,
+            String filePath,
+            String commitId,
+            String domainKeyName) {
+        this(dateTimeRec, objectName, kind, filePath, commitId);
+        this.domainKeyName = domainKeyName;
+    }
+
+    public String getDomainKeyName() {
+        return domainKeyName;
+    }
+
+    public void setDomainKeyName(String domainKeyName) {
+        this.domainKeyName = domainKeyName;
     }
 
     public Long getId() {
@@ -140,6 +162,7 @@ public class VcsObjectLog {
                 ", kind='" + kind + '\'' +
                 ", filePath='" + filePath + '\'' +
                 ", commitId='" + commitId + '\'' +
+                ", domainKeyName='" + domainKeyName + '\'' +
                 '}';
     }
 }

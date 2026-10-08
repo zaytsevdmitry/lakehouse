@@ -23,12 +23,14 @@ import org.lakehouse.client.rest.state.configuration.StateRestClientConfiguratio
 import org.lakehouse.taskexecutor.configuration.ScheduledTaskKafkaConfigurationProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableScheduling
+@ConfigurationPropertiesScan
 @EnableConfigurationProperties(value = {
         ScheduledTaskKafkaConfigurationProperties.class})
 @ComponentScan(

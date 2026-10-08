@@ -1,6 +1,6 @@
 {
   "keyName": "aggregation_pay_per_client_daily_mart",
-  "nameSpaceKeyName": "DEMO",
+  "domainKeyName": "DEMO",
   "dataSourceKeyName": "lakehousestorage",
   "databaseSchemaName": "default",
   "tableName": "aggregation_pay_per_client_daily_mart",

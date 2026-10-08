@@ -33,6 +33,8 @@ import java.util.Objects;
 )
 public class SQLTemplate extends KeyValueAbstract {
 
+    @Column(nullable = true)
+    private String domainKeyName;
 
     @ManyToOne
     @JoinColumn(name = "task_id", foreignKey = @ForeignKey(name = "sql_template__task_fk"))
@@ -53,6 +55,14 @@ public class SQLTemplate extends KeyValueAbstract {
     private String value;
 
     public SQLTemplate() {
+    }
+
+    public String getDomainKeyName() {
+        return domainKeyName;
+    }
+
+    public void setDomainKeyName(String domainKeyName) {
+        this.domainKeyName = domainKeyName;
     }
 
     public boolean isVcsManaged() {

@@ -6,7 +6,7 @@ The lakehouse task scheduling and execution management service. It consumes sche
 
 `lakehouse-scheduler-svc` is responsible for:
 
-- **Schedule registration** - consuming schedule changes from Kafka (topic `schedule_effective_changes`) coming from config-svc and building schedule instances by intervals (`intervalExpression`).
+- **Schedule registration** - consuming configuration changes from Kafka (topic `configuration_changes`) coming from config-svc and building schedule instances by intervals (`intervalExpression`).
 - **Schedule lifecycle** - moving a schedule through the statuses NEW → RUNNING → SUCCESS/FAILED.
 - **Scenarios (acts) and tasks** - creating scenario and task instances and tracking the status of each element.
 - **Dependency resolution** - directed graphs `scenarioActEdges` and `dagEdges`: a task/scenario is moved to SUCCESS only after all its dependencies succeed.
@@ -17,12 +17,13 @@ The lakehouse task scheduling and execution management service. It consumes sche
 ## Architecture
 
 ```
-┌──────────────┐   Kafka: schedule_effective_changes   ┌─────────────────────────────────────┐
+┌──────────────┐   Kafka: configuration_changes   ┌─────────────────────────────────────┐
 │ lakehouse-   │ ─────────────────────────────────────▶│          lakehouse-scheduler-svc    │
 │ config-svc   │                                       │                                     │
 └──────────────┘                                       │  ┌───────────────────────────────┐  │
-                                                       │  │ ScheduleConfigConsumerService │  │
-                                                       │  │ (consumes schedule changes)   │  │
+                                                       │  │ ConfigurationChangeConsumer- │  │
+                                                       │  │ Service (consumes Schedule   │  │
+                                                       │  │ changes from config-svc)     │  │
                                                        │  └───────────────────────────────┘  │
 ┌──────────────┐                                       │  ┌───────────────────────────────┐  │
 │ Admin / UI / │  REST (8081)                          │  │ InternalScheduler             │  │
@@ -54,11 +55,80 @@ The lakehouse task scheduling and execution management service. It consumes sche
 - **ManageStateService** - moving schedule and scenario statuses, resolving scenario dependencies, finding the next interval.
 - **ScheduleTaskInstanceService** - task lifecycle: queue, Kafka production, locks, heartbeat, release, retries.
 - **ScheduleEffectiveService** - computing the next interval by `intervalExpression` (cron/@daily, etc.).
-- **ScheduleConfigConsumerService** - consuming schedule changes from config-svc (Kafka).
+- **ConfigurationChangeConsumerService** - consuming configuration changes from config-svc (Kafka). Two kinds are in scope: `Schedule` (registers the schedule on a SAVE action, DELETE is logged only) and `TaskExecutionServiceGroup` (caches the group DTO on SAVE, drops it from the cache on DELETE). Any other kind is logged as out of scope and ignored.
 - **ScheduledTaskDTOProducerService** - publishing tasks to executors (Kafka).
 - **Factory / Repository (JPA)** - building and persisting entities.
 
 The schedule structure, status models and class diagrams are described in [scheduling/Scheduling.md](scheduling/Scheduling.md).
+
+## Domains
+
+A **domain** is the unit of isolation of the configuration in `lakehouse-config-svc`: every
+domain owns its own Git repository and every construct loaded from it is stamped with the
+domain name as `domainKeyName`. The domain is an ownership label, not part of the identity:
+`keyName` stays global, so it never repeats across domains. This service
+does not manage domains - it consumes them. See
+[config-svc: Domains](../../lakehouse-config-svc/doc/content_configuration/domains.md).
+
+The scheduler owns no domain tree, no domain registry and no per-domain configuration. The
+domain reaches it in exactly one place, and it is used exactly once: as a **permission check
+on the task level**.
+
+### What the scheduler receives
+
+```
+lakehouse-config-svc ──Kafka: configuration_changes──▶ ConfigurationChangeConsumerService
+                                                          ├─ SCHEDULE_KIND  → BuildService.registration(dto)
+                                                          │                  → ScheduleEffectiveService cache
+                                                          └─ TASK_GROUP_KIND → TaskExecutionServiceGroupConfigService cache
+
+produceScheduledTasks()  (ScheduleTaskInstanceService)
+  └─ checkDomain(taskDTO, scheduleEffectiveDTO)   ← the only domain-aware code path
+       scheduleEffectiveDTO.domainKeyName  ∈  taskGroup.allowedDomains ∪ {taskGroup.domainKeyName}
+```
+
+- **`ScheduleEffectiveDTO.domainKeyName`** - the domain of the schedule, read live from the
+  configuration service through `ScheduleEffectiveService.getScheduleEffectiveDTO(...)`. The
+  schedule DTO is cached when a `Schedule` change is consumed, and re-read on demand.
+- **`TaskExecutionServiceGroupDTO.domainKeyName` and `.allowedDomains`** - the domain the
+  executor group belongs to, plus the list of additional domains the group is allowed to
+  serve. The group DTO is cached in `TaskExecutionServiceGroupConfigService` when a
+  `TaskExecutionServiceGroup` change is consumed, and fetched on demand.
+
+### The domain check
+
+`ScheduleTaskInstanceService.checkDomain(taskDTO, scheduleEffectiveDTO)` runs for every
+message about to be published to `scheduled_task_msg`:
+
+1. resolve the `TaskExecutionServiceGroup` of the task by `taskExecutionServiceGroupName`;
+2. if the group is not found, log a warning and **skip** the check (the task is published);
+3. build the allowed set as `taskGroup.allowedDomains` plus `taskGroup.domainKeyName` -
+   a group always serves its own domain;
+4. if the schedule domain is not in that set, throw
+   `TaskConfigurationException("Domain <domain> not allowed in <group> taskExecutionServiceGroup")`.
+
+The caller treats it as a configuration error: the `ScheduleTaskInstance` is set to
+`CONF_ERROR` with the message in `causes`, the pending message is dropped and **the task is
+not published** - it is not retried by this path. The grouping of the executors that
+actually run the task stays non-domain based: an executor takes a task by matching
+`taskExecutionServiceGroupName` against its Kafka `group.id`, so the domain check is what
+keeps a foreign domain out of an executor group.
+
+### Known limitations
+
+- `ScheduleInstance.domainKeyName` is a nullable column of the `schedule_instance` table, but
+  its setter is never called: `ScheduleInstanceFactory.newScheduleInstance(...)` receives the
+  `ScheduleEffectiveDTO` and does not copy the domain. The column is therefore always `null`,
+  and `ScheduleInstanceDTO` does not expose the domain either. The domain is always read live
+  from the configuration service instead, which is why the check above works.
+- `ScheduledTaskMsgDTO.domainKeyName` - the field that would carry the domain of a published
+  task - is not populated either. A task message that arrives at an executor therefore carries
+  `domainKeyName = null` today. Nothing in this service depends on it, and
+  `lakehouse-task-executor-svc` resolves its data sources through the configuration service
+  regardless (see [task-executor-svc: Domains](../../lakehouse-task-executor-svc/doc/readme.md#domains)).
+- There are no domain-scoped settings in this service: no `lakehouse.scheduler.*.domains.*`
+  property exists, and no REST endpoint takes a domain parameter. All application parameters
+  are listed in [appconf/service_configuration.md](appconf/service_configuration.md).
 
 ## Modules
 
