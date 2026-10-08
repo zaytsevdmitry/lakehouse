@@ -149,7 +149,7 @@ services:
   # used by lakehouse-config-svc (CVS subsystem, git:// protocol).
   # On first start it imports ./conf_git (YAML mirror of ./conf) into branch main.
   git-server:
-    image: alpine/git:latest
+    image: lakehouse-git-server:0.11.0
     build:
       context: ./conf_infra/git
       dockerfile: Dockerfile
