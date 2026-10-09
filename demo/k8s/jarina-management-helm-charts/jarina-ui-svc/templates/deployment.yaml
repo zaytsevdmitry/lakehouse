@@ -1,0 +1,117 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jarina-ui-svc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: jarina-ui-svc
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: jarina-ui-svc
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      initContainers:
+        - name: wait-for-keycloak
+          image: busybox:1.37
+          command: ['sh', '-c', 'until wget -q -O /dev/null {{ .Values.keycloak.issuerUri }}; do echo waiting for keycloak; sleep 3; done']
+      containers:
+        - name: ui-svc
+          image: "{{ index .Values "ui-svc" "image" "repository" }}:{{ index .Values "ui-svc" "image" "tag" }}"
+          imagePullPolicy: {{ index .Values "ui-svc" "image" "pullPolicy" }}
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          env:
+            - name: KEYCLOAK_ISSUER_URI
+              value: {{ .Values.keycloak.issuerUri | quote }}
+            - name: KEYCLOAK_UI_CLIENT_SECRET
+              value: {{ .Values.keycloak.uiClientSecret | quote }}
+            - name: KEYCLOAK_INTERNAL_CLIENT_SECRET
+              value: {{ .Values.keycloak.internalClientSecret | quote }}
+          command: ["bash", "-c"]
+          args:
+            - "java  
+            -Dserver.port={{ .Values.java.serverPort }}
+            -Djarina.ui.health-check-timeout-ms=3000
+            -Djarina.ui.services[0].name=jarina-config-svc
+            -Djarina.ui.services[0].url=http://jarina-config-svc:8082
+            -Djarina.ui.services[0].health-check-url=http://jarina-config-svc:8082/healthz
+            -Djarina.ui.services[1].name=jarina-scheduler-svc
+            -Djarina.ui.services[1].url=http://jarina-scheduler-svc:8083
+            -Djarina.ui.services[1].health-check-url=http://jarina-scheduler-svc:8083/healthz
+            -Djarina.ui.services[2].name=jarina-state-svc
+            -Djarina.ui.services[2].url=http://jarina-state-svc:8084
+            -Djarina.ui.services[2].health-check-url=http://jarina-state-svc:8084/healthz
+            -Djarina.ui.services[3].name=jarina-task-proxy-for-spark
+            -Djarina.ui.services[3].url=http://jarina-task-proxy4spark:8086
+            -Djarina.ui.services[3].health-check-url=http://jarina-task-proxy4spark:8086/healthz
+            -Djarina.ui.services[4].name=jarina-task-executor-svc
+            -Djarina.ui.services[4].url=http://jarina-task-executor-svc:8090
+            -Djarina.ui.services[4].health-check-url=http://jarina-task-executor-svc:8090/healthz
+            -Djarina.ui.services[5].name=jarina-trino
+            -Djarina.ui.services[5].url=http://{{ .Release.Name }}-trino:8080
+            -Djarina.ui.services[5].health-check-url=http://{{ .Release.Name }}-trino:8080
+            -Djarina.ui.services[6].name=jarina-spark-history
+            -Djarina.ui.services[6].url=http://spark-history:18080
+            -Djarina.ui.services[6].health-check-url=http://spark-history:18080
+            -Djarina.ui.services[7].name=jarina-minio
+            -Djarina.ui.services[7].url=http://minio:9001  
+            -Djarina.ui.services[7].health-check-url=http://minio:9000/minio/health/live
+            -Djarina.ui.services[8].name=db-dev
+            -Djarina.ui.services[8].url=http://db-dev:5432
+            -Djarina.ui.services[8].health-check-url=db-dev:5432
+            -Djarina.ui.services[8].check-type=tcp
+            -Djarina.ui.services[9].name=kafka-broker
+            -Djarina.ui.services[9].url=http://broker:9092
+            -Djarina.ui.services[9].health-check-url=broker:9092
+            -Djarina.ui.services[9].check-type=tcp
+            -Djarina.ui.services[10].name=git-server
+            -Djarina.ui.services[10].url=http://git-server:9418
+            -Djarina.ui.services[10].health-check-url=git-server:9418
+            -Djarina.ui.services[10].check-type=tcp
+            -Djarina.client.rest.config.server.url=http://jarina-config-svc:8082
+            -Djarina.client.rest.state.server.url=http://jarina-state-svc:8084
+            -Djarina.client.rest.scheduler.server.url=http://jarina-scheduler-svc:8083
+            -Djarina.client.rest.task-proxy-for-spark.server.url=http://jarina-task-proxy4spark:8086
+            -Djarina.ui.vertices.jarina-config-svc=jarina-config-svc
+            -Djarina.ui.vertices.topic-schedule-conf=kafka-broker
+            -Djarina.ui.vertices.topic-tasks=kafka-broker
+            -Djarina.ui.vertices.jarina-scheduler-svc=jarina-scheduler-svc
+            -Djarina.ui.vertices.jarina-task-executor-svc=jarina-task-executor-svc
+            -Djarina.ui.vertices.jarina-state-svc=jarina-state-svc
+            -Djarina.ui.vertices.jarina-task-proxy-for-spark=jarina-task-proxy-for-spark
+            -Djarina.ui.vertices.processingdb=db-dev
+            -Djarina.ui.vertices.confdb=db-dev
+            -Djarina.ui.vertices.schedulerdb=db-dev
+            -Djarina.ui.vertices.sparkproxydb=db-dev
+            -Djarina.ui.vertices.jarina-minio=jarina-minio
+            -Djarina.ui.vertices.jarina-trino=jarina-trino
+            -Djarina.ui.vertices.jarina-spark-history=jarina-spark-history
+            -Djarina.ui.edges.jarina-config-svc[0]=confdb
+            -Djarina.ui.edges.jarina-config-svc[1]=topic-schedule-conf
+            -Djarina.ui.edges.jarina-config-svc[2]=jarina-scheduler-svc
+            -Djarina.ui.edges.jarina-config-svc[3]=git-server
+            -Djarina.ui.edges.topic-schedule-conf[0]=jarina-scheduler-svc
+            -Djarina.ui.edges.jarina-scheduler-svc[0]=topic-tasks
+            -Djarina.ui.edges.jarina-scheduler-svc[1]=schedulerdb
+            -Djarina.ui.edges.topic-tasks[0]=jarina-task-executor-svc
+            -Djarina.ui.edges.jarina-task-executor-svc[0]=jarina-state-svc
+            -Djarina.ui.edges.jarina-task-executor-svc[1]=jarina-task-proxy-for-spark
+            -Djarina.ui.edges.jarina-task-executor-svc[2]=processingdb
+            -Djarina.ui.edges.jarina-task-executor-svc[3]=jarina-scheduler-svc
+            -Djarina.ui.edges.jarina-task-proxy-for-spark[0]=sparkproxydb
+            -Djarina.ui.edges.jarina-task-proxy-for-spark[1]=jarina-minio
+            -Djarina.ui.edges.jarina-minio[0]=jarina-trino
+            -Djarina.ui.edges.jarina-minio[1]=jarina-spark-history
+            -Djarina.ui.edges.jarina-ui-svc[0]=git-server
+            -Djarina.modeller.domains.platform.repository-url=git://git-server:9418/platform.git
+            -Djarina.modeller.domains.platform.branch-main=main
+            -Djarina.modeller.domains.analytics.repository-url=git://git-server:9418/analytics.git
+            -Djarina.modeller.domains.analytics.branch-main=main
+            -Djarina.modeller.domains.processing.repository-url=git://git-server:9418/processing.git
+            -Djarina.modeller.domains.processing.branch-main=main
+            -jar /opt/jarina-ui-svc-{{ .Chart.AppVersion }}-jar-with-dependencies.jar"

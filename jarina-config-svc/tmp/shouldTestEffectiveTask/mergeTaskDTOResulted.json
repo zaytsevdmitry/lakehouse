@@ -1,0 +1,14 @@
+{
+  "description" : "Dependency check",
+  "domainKeyName" : null,
+  "driverKeyName" : null,
+  "importance" : "critical",
+  "maxRetries" : null,
+  "name" : "check",
+  "sqlTemplate" : null,
+  "taskExecutionServiceGroupName" : "default",
+  "taskProcessor" : "dependencyCheckStateTaskProcessor",
+  "taskProcessorArgs" : { },
+  "taskProcessorBody" : null,
+  "template" : null
+}

@@ -1,5 +1,5 @@
 [RU](README_ru.md)
-#  Lakehouse management tool
+#  Jarina dataset self service
 Implementing a Metadata-Driven Approach allows for the dynamic management and automation of ETL/ELT pipelines and data integration. By moving away from rigid, hard-coded logic to external configurations (SQL/JSON), we transform data processing into a scalable, flexible, and fully automated ecosystem.
 
 ## Target Audience & Purpose:
@@ -30,7 +30,7 @@ Data governance
 Scheduling
 Custom code
 SQL
-Lakehouse management tool
+Jarina dataset self service
 United namespace
 
 
@@ -40,25 +40,25 @@ United namespace
 
 | Component                                                                              | Status       | Documentation                                                                                   |   
 |----------------------------------------------------------------------------------------|--------------|-------------------------------------------------------------------------------------------------|
-| [lakehouse-cli](lakehouse-cli)                                                         | Prototype    | [doc](lakehouse-cli/doc/commandline.MD)                                                         |
-| [lakehouse-common-rest-client](lakehouse-common-rest-client)                           | Candidate    |                                                                                                 |
-| [lakehouse-common-test](lakehouse-common-test)                                         | Candidate    |                                                                                                 |
-| [lakehouse-config-rest-client](lakehouse-config-rest-client)                           | Candidate    |                                                                                                 |
-| [lakehouse-config-svc](lakehouse-config-svc)                                           | Candidate    | [doc](lakehouse-config-svc/doc/readme.md)                                                       |
-| [lakehouse-scheduler-rest-client](lakehouse-scheduler-rest-client)                     | Candidate    |                                                                                                 |
-| [lakehouse-scheduler-svc](lakehouse-scheduler-svc)                                     | Candidate    | [doc](lakehouse-scheduler-svc/doc/readme.md)                                                    |
-| [lakehouse-state-rest-client](lakehouse-state-rest-client)                             | Candidate    |                                                                                                 |
-| [lakehouse-state-svc](lakehouse-state-svc)                                             | Candidate    | [doc](lakehouse-state-svc/doc/readme.md)                                                        |
-| [lakehouse-task-executor-api](lakehouse-task-executor-api)                             | Candidate    |                                                                                                 |
-| [lakehouse-task-executor-rest-client](lakehouse-task-executor-rest-client)             | Candidate    |                                                                                                 |
-| [lakehouse-task-executor-svc](lakehouse-task-executor-svc)                             | Candidate    | [doc](lakehouse-task-executor-svc/README.md)  |
-| [lakehouse-task-executor-spark-api](lakehouse-task-executor-spark-api)                 | Candidate    | [doc](lakehouse-task-executor-spark-api/doc/readme.md)                                          |
-| [lakehouse-task-executor-spark-dataset-app](lakehouse-task-executor-spark-dataset-app) | Candidate    |                                                                                                 |
-| [lakehouse-task-executor-spark-dq-app](lakehouse-task-executor-spark-dq-app)           | Prototype    |                                                                                                 |
-| [lakehouse-validators](lakehouse-validators)                                           | Prototype    |                                                                                                 |
-| [lakehouse-ui-svc](lakehouse-ui-svc)                                                   | Prototype| [doc](lakehouse-ui-svc/doc/readme.md)                                                           |
-| [lakehouse-task-proxy-for-spark](lakehouse-task-proxy-for-spark)                       | Candidate| [doc](lakehouse-task-proxy-for-spark/README.md)                                                 |
-| [lakehouse-task-proxy-for-spark-api](lakehouse-task-proxy-for-spark-api)               | Candidate|                                                                                                 |
+| [jarina-cli](jarina-cli)                                                         | Prototype    | [doc](jarina-cli/doc/commandline.MD)                                                         |
+| [jarina-common-rest-client](jarina-common-rest-client)                           | Candidate    |                                                                                                 |
+| [jarina-common-test](jarina-common-test)                                         | Candidate    |                                                                                                 |
+| [jarina-config-rest-client](jarina-config-rest-client)                           | Candidate    |                                                                                                 |
+| [jarina-config-svc](jarina-config-svc)                                           | Candidate    | [doc](jarina-config-svc/doc/readme.md)                                                       |
+| [jarina-scheduler-rest-client](jarina-scheduler-rest-client)                     | Candidate    |                                                                                                 |
+| [jarina-scheduler-svc](jarina-scheduler-svc)                                     | Candidate    | [doc](jarina-scheduler-svc/doc/readme.md)                                                    |
+| [jarina-state-rest-client](jarina-state-rest-client)                             | Candidate    |                                                                                                 |
+| [jarina-state-svc](jarina-state-svc)                                             | Candidate    | [doc](jarina-state-svc/doc/readme.md)                                                        |
+| [jarina-task-executor-api](jarina-task-executor-api)                             | Candidate    |                                                                                                 |
+| [jarina-task-executor-rest-client](jarina-task-executor-rest-client)             | Candidate    |                                                                                                 |
+| [jarina-task-executor-svc](jarina-task-executor-svc)                             | Candidate    | [doc](jarina-task-executor-svc/README.md)  |
+| [jarina-task-executor-spark-api](jarina-task-executor-spark-api)                 | Candidate    | [doc](jarina-task-executor-spark-api/doc/readme.md)                                          |
+| [jarina-task-executor-spark-dataset-app](jarina-task-executor-spark-dataset-app) | Candidate    |                                                                                                 |
+| [jarina-task-executor-spark-dq-app](jarina-task-executor-spark-dq-app)           | Prototype    |                                                                                                 |
+| [jarina-validators](jarina-validators)                                           | Prototype    |                                                                                                 |
+| [jarina-ui-svc](jarina-ui-svc)                                                   | Prototype| [doc](jarina-ui-svc/doc/readme.md)                                                           |
+| [jarina-task-proxy-for-spark](jarina-task-proxy-for-spark)                       | Candidate| [doc](jarina-task-proxy-for-spark/README.md)                                                 |
+| [jarina-task-proxy-for-spark-api](jarina-task-proxy-for-spark-api)               | Candidate|                                                                                                 |
 | Authorization & security                                                               | Candidate | [doc](doc/security/security.md)                                                                 |
 | [Docker](docker)                                                                       | Candidate | [doc](docker/readme.md)                                                                         |
 
@@ -70,17 +70,17 @@ United namespace
 
 [Entities design](./doc/entities_design/entities_design.md)
 
-[Scheduling](lakehouse-scheduler-svc/doc/scheduling/Scheduling.md)
+[Scheduling](jarina-scheduler-svc/doc/scheduling/Scheduling.md)
 
-[States](lakehouse-state-svc/doc/state_model/state-models.MD)
+[States](jarina-state-svc/doc/state_model/state-models.MD)
 
-[Command line](./lakehouse-cli/doc/commandline.MD)
+[Command line](./jarina-cli/doc/commandline.MD)
 
 
 
 # Copyright
-"Lakehouse management tool" - the services set for managing data changes based on a metadata-driven approach
-    Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/lakehouse
+"Jarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+    Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
     
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.

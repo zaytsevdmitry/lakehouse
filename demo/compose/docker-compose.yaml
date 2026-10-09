@@ -1,12 +1,12 @@
 # Требования к хост-машине:
-#   1. В /etc/hosts должна быть строка: 127.0.0.1 keycloak.lakehouse
-#      (issuer Keycloak = http://keycloak.lakehouse:8085/realms/lakehouse и должен
+#   1. В /etc/hosts должна быть строка: 127.0.0.1 keycloak.jarina
+#      (issuer Keycloak = http://keycloak.jarina:8085/realms/jarina и должен
 #      разрешаться одинаково из контейнеров и из браузера хоста).
-#   2. Админ-консоль Keycloak: http://keycloak.lakehouse:8085 (admin / admin_local_password);
+#   2. Админ-консоль Keycloak: http://keycloak.jarina:8085 (admin / admin_local_password);
 #      при KC_HOSTNAME_STRICT=true доступ по localhost:8085 не работает.
-#   3. lakehouse-config-svc (Swagger) опубликован на http://localhost:18081,
-#      хост-порт 8080 занят lakehouse-ui-svc (redirect_uri в realm = localhost:8080),
-#      порт 8081 занят lakehouse-ui-modeller-svc, 18080 занят spark-history.
+#   3. jarina-config-svc (Swagger) опубликован на http://localhost:18081,
+#      хост-порт 8080 занят jarina-ui-svc (redirect_uri в realm = localhost:8080),
+#      порт 8081 занят jarina-ui-modeller-svc, 18080 занят spark-history.
 version: '3.9'
 services:
   minio-dev:
@@ -20,7 +20,7 @@ services:
       - "9000:9000"
       - "9001:9001"
     networks:
-      lakehouse_net:
+      jarina_net:
         ipv4_address: 172.20.193.30
     volumes:
       - minio_storage:/data
@@ -56,7 +56,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      lakehouse_net:
+      jarina_net:
         ipv4_address: 172.20.193.10
     volumes:
       - ./conf_infra/security/init_keycloak_schema.sql:/docker-entrypoint-initdb.d/init_keycloak_schema.sql
@@ -75,17 +75,16 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: admin_local_password
       KC_HEALTH_ENABLED: "true"
       KC_METRICS_ENABLED: "true"
-      KC_HOSTNAME: keycloak.lakehouse
-      KC_HOSTNAME_PORT: 8085
+      KC_HOSTNAME: keycloak.jarina
       KC_HOSTNAME_STRICT: "true"
       KC_HTTP_PORT: 8085
     ports:
       - "8085:8085"
     networks:
-      lakehouse_net:
+      jarina_net:
         ipv4_address: 172.20.193.180
         aliases:
-          - keycloak.lakehouse
+          - keycloak.jarina
     healthcheck:
       test: ["CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/8085' || exit 1"]
       interval: 10s
@@ -96,23 +95,20 @@ services:
       db-dev:
         condition: service_healthy
     volumes:
-      - ./conf_infra/security/realms/lakehouse-realm.json:/opt/keycloak/data/import/lakehouse-realm.json
-
-
+      - ./conf_infra/security/realms/jarina-realm.json:/opt/keycloak/data/import/jarina-realm.json
 
   openbao:
     image: quay.io/openbao/openbao:2.0
-    container_name: lakehouse-openbao
     ports:
       - "8200:8200"
     networks:
-      lakehouse_net:
+      jarina_net:
         ipv4_address: 172.20.193.150
     environment:
       BAO_DEV_LISTEN_ADDRESS: "0.0.0.0:8200"
-      BAO_DEV_ROOT_TOKEN_ID: "lakehouse-root-token"
+      BAO_DEV_ROOT_TOKEN_ID: "jarina-root-token"
       BAO_ADDR: "http://127.0.0.1:8200"
-      BAO_TOKEN: "lakehouse-root-token"
+      BAO_TOKEN: "jarina-root-token"
     entrypoint: ["/bin/sh", "/opt/bao/init.sh"]
     volumes:
       - ./conf_infra/openbao/init.sh:/opt/bao/init.sh:ro
@@ -129,7 +125,7 @@ services:
     ports:
       - "9092:9092"
     networks:
-      lakehouse_net:
+      jarina_net:
         ipv4_address: 172.20.193.20
     environment:
       KAFKA_NODE_ID: 1
@@ -146,10 +142,10 @@ services:
       KAFKA_NUM_PARTITIONS: 4
 
   # Lightweight git server hosting the declarative configuration repository
-  # used by lakehouse-config-svc (CVS subsystem, git:// protocol).
+  # used by jarina-config-svc (CVS subsystem, git:// protocol).
   # On first start it imports ./conf_git (YAML mirror of ./conf) into branch main.
   git-server:
-    image: lakehouse-git-server:0.11.0
+    image: jarina-git-server:0.11.0
     build:
       context: ./conf_infra/git
       dockerfile: Dockerfile
@@ -158,7 +154,7 @@ services:
     entrypoint: ["/bin/sh"]
     command: ["/srv/git-init.sh"]
     networks:
-      lakehouse_net:
+      jarina_net:
         ipv4_address: 172.20.193.200
     volumes:
       - ../conf_git:/conf:ro
@@ -172,7 +168,7 @@ services:
       start_period: 20s
 
   hive-metastore:
-    image: lakehouse-hms:0.11.0
+    image: jarina-hms:0.11.0
     entrypoint: ["/bin/sh", "-c", "/service.sh"]
     container_name: hive-metastore
     restart: on-failure
@@ -190,11 +186,11 @@ services:
     volumes:
       - ./conf_infra/metastore-site.xml:/opt/hive/conf/hive-site.xml
     networks:
-      lakehouse_net:
+      jarina_net:
         ipv4_address: 172.20.193.60
 
   spark-master:
-    image: lakehouse-spark-aws:0.11.0
+    image: jarina-spark-aws:0.11.0
     entrypoint: ["/bin/sh", "-c", "/service.sh"]
     container_name: spark-master
     hostname: spark-master
@@ -208,17 +204,17 @@ services:
       SPARK_MASTER_OPTS: "-Dspark.master.rest.enabled=true"
       AWS_ACCESS_KEY_ID: spark_user
       AWS_SECRET_ACCESS_KEY: spark_pwd
-      VAULT_TOKEN: lakehouse-spark-token
+      VAULT_TOKEN: jarina-spark-token
       S3_ENDPOINT: http://172.20.193.30:9000
       S3_TEST_URL: http://172.20.193.30:9001
-      KEYCLOAK_ISSUER_URI: http://keycloak.lakehouse:8085/realms/lakehouse
+      KEYCLOAK_ISSUER_URI: http://keycloak.jarina:8085/realms/jarina
       KEYCLOAK_INTERNAL_CLIENT_SECRET: super-secret-internal-key-987654321
     ports:
       - "6066:6066"
       - "7077:7077"
       - "8400:8400"
     networks:
-      lakehouse_net:
+      jarina_net:
         ipv4_address: 172.20.193.40
     volumes:
       - ./conf_infra/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
@@ -236,7 +232,7 @@ services:
         condition: service_healthy
 
   spark-worker-1:
-    image: lakehouse-spark-aws:0.11.0
+    image: jarina-spark-aws:0.11.0
     entrypoint: ["/bin/sh", "-c", "/service.sh"]
     container_name: spark-worker-1
     environment:
@@ -250,10 +246,10 @@ services:
       SPARK_WORKER_HOSTNAME: 172.20.193.50
       AWS_ACCESS_KEY_ID: spark_user
       AWS_SECRET_ACCESS_KEY: spark_pwd
-      VAULT_TOKEN: lakehouse-spark-token
+      VAULT_TOKEN: jarina-spark-token
       S3_ENDPOINT: http://172.20.193.30:9000
       S3_TEST_URL: http://172.20.193.30:9001
-      KEYCLOAK_ISSUER_URI: http://keycloak.lakehouse:8085/realms/lakehouse
+      KEYCLOAK_ISSUER_URI: http://keycloak.jarina:8085/realms/jarina
       KEYCLOAK_INTERNAL_CLIENT_SECRET: super-secret-internal-key-987654321
     ports:
       - "8401:8401"
@@ -261,7 +257,7 @@ services:
       - "4041:4041"
       - "4042:4042"
     networks:
-      lakehouse_net:
+      jarina_net:
         ipv4_address: 172.20.193.50
     volumes:
       - ./conf_infra/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
@@ -276,7 +272,7 @@ services:
         condition: service_started
 
   spark-history:
-    image: lakehouse-spark-aws:0.11.0
+    image: jarina-spark-aws:0.11.0
     entrypoint: ["/bin/sh", "-c", "/service.sh"]
     container_name: spark-history
     environment:
@@ -285,11 +281,11 @@ services:
       S3_ENDPOINT: http://172.20.193.30:9000
       S3_TEST_URL: http://172.20.193.30:9001
       SPARK_MODE: history
-      VAULT_TOKEN: lakehouse-spark-token
+      VAULT_TOKEN: jarina-spark-token
     ports:
       - "18080:18080"
     networks:
-      lakehouse_net:
+      jarina_net:
         ipv4_address: 172.20.193.70
     volumes:
       - ./conf_infra/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
@@ -299,17 +295,17 @@ services:
           cpus: "2"
           memory: 4g
 
-  lakehouse-config-svc:
-    image: lakehouse:0.11.0
-    container_name: lakehouse-config-svc
+  jarina-config-svc:
+    image: jarina:0.11.0
+    container_name: jarina-config-svc
     ports:
       - "8082:8082"
     networks:
-      lakehouse_net:
+      jarina_net:
         ipv4_address: 172.20.193.80
     environment:
-      LAKEHOUSE_CONFIG_PRODUCE_KAFKA_PRODUCER_PROPERTIES_BOOTSTRAP_SERVERS: "broker:9092"
-      KEYCLOAK_ISSUER_URI: "http://keycloak.lakehouse:8085/realms/lakehouse"
+      JARINA_CONFIG_PRODUCE_KAFKA_PRODUCER_PROPERTIES_BOOTSTRAP_SERVERS: "broker:9092"
+      KEYCLOAK_ISSUER_URI: "http://keycloak.jarina:8085/realms/jarina"
       KEYCLOAK_INTERNAL_CLIENT_SECRET: "super-secret-internal-key-987654321"
     command: [
       "java",
@@ -319,25 +315,25 @@ services:
       "-Dserver.port=8082",
       "-Dlogging.level.org.springframework.boot.context.properties=DEBUG",
       # Git Sync Settings
-      "-Dlakehouse.config.vcs.git.sync.enabled=true",
-      "-Dlakehouse.config.vcs.git.sync.interval-ms=30000",
-      "-Dlakehouse.config.vcs.git.sync.initial-delay-ms=10000",
+      "-Djarina.config.vcs.git.sync.enabled=true",
+      "-Djarina.config.vcs.git.sync.interval-ms=30000",
+      "-Djarina.config.vcs.git.sync.initial-delay-ms=10000",
       # Domain: platform
-      "-Dlakehouse.config.vcs.domains.platform.priority=0",
-      "-Dlakehouse.config.vcs.domains.platform.git.repository-url=git://git-server:9418/platform.git",
-      "-Dlakehouse.config.vcs.domains.platform.git.branch=main",
-      "-Dlakehouse.config.vcs.domains.platform.git.local-clone-path=/tmp/platform",
+      "-Djarina.config.vcs.domains.platform.priority=0",
+      "-Djarina.config.vcs.domains.platform.git.repository-url=git://git-server:9418/platform.git",
+      "-Djarina.config.vcs.domains.platform.git.branch=main",
+      "-Djarina.config.vcs.domains.platform.git.local-clone-path=/tmp/platform",
       # Domain: processing (included in to platform)
-      "-Dlakehouse.config.vcs.domains.platform.domains.processing.priority=0",
-      "-Dlakehouse.config.vcs.domains.platform.domains.processing.git.repository-url=git://git-server:9418/processing.git",
-      "-Dlakehouse.config.vcs.domains.platform.domains.processing.git.branch=main",
-      "-Dlakehouse.config.vcs.domains.platform.domains.processing.git.local-clone-path=/tmp/processing",
+      "-Djarina.config.vcs.domains.platform.domains.processing.priority=0",
+      "-Djarina.config.vcs.domains.platform.domains.processing.git.repository-url=git://git-server:9418/processing.git",
+      "-Djarina.config.vcs.domains.platform.domains.processing.git.branch=main",
+      "-Djarina.config.vcs.domains.platform.domains.processing.git.local-clone-path=/tmp/processing",
       # Domain: analytics (included in to processing)
-      "-Dlakehouse.config.vcs.domains.platform.domains.processing.domains.analytics.priority=0",
-      "-Dlakehouse.config.vcs.domains.platform.domains.processing.domains.analytics.git.repository-url=git://git-server:9418/analytics.git",
-      "-Dlakehouse.config.vcs.domains.platform.domains.processing.domains.analytics.git.branch=main",
-      "-Dlakehouse.config.vcs.domains.platform.domains.processing.domains.analytics.git.local-clone-path=/tmp/analytics",
-      "-jar", "/opt/lakehouse-config-svc-0.11.0-jar-with-dependencies.jar"
+      "-Djarina.config.vcs.domains.platform.domains.processing.domains.analytics.priority=0",
+      "-Djarina.config.vcs.domains.platform.domains.processing.domains.analytics.git.repository-url=git://git-server:9418/analytics.git",
+      "-Djarina.config.vcs.domains.platform.domains.processing.domains.analytics.git.branch=main",
+      "-Djarina.config.vcs.domains.platform.domains.processing.domains.analytics.git.local-clone-path=/tmp/analytics",
+      "-jar", "/opt/jarina-config-svc-0.11.0-jar-with-dependencies.jar"
     ]
     depends_on:
       db-dev:
@@ -349,28 +345,28 @@ services:
       git-server:
         condition: service_healthy
 
-  lakehouse-scheduler-svc:
-    image: lakehouse:0.11.0
-    container_name: lakehouse-scheduler-svc
+  jarina-scheduler-svc:
+    image: jarina:0.11.0
+    container_name: jarina-scheduler-svc
     ports:
       - "8083:8083"
     networks:
-      lakehouse_net:
+      jarina_net:
         ipv4_address: 172.20.193.90
     environment:
-      KEYCLOAK_ISSUER_URI: http://keycloak.lakehouse:8085/realms/lakehouse
+      KEYCLOAK_ISSUER_URI: http://keycloak.jarina:8085/realms/jarina
       KEYCLOAK_INTERNAL_CLIENT_SECRET: super-secret-internal-key-987654321
     command: [
       "java",
       "-Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=SchedulerSVC",
-      "-Dlakehouse.scheduler.schedule.task.kafka.producer.properties.bootstrap.servers=broker:9092",
-      "-Dlakehouse.scheduler.config.change.kafka.consumer.properties.bootstrap.servers=broker:9092",
-      "-Dlakehouse.scheduler.registration.delay-ms=5000",
-      "-Dlakehouse.scheduler.run.delay-ms=5000",
-      "-Dlakehouse.scheduler.resolvedeps.delay-ms=5000",
+      "-Djarina.scheduler.schedule.task.kafka.producer.properties.bootstrap.servers=broker:9092",
+      "-Djarina.scheduler.config.change.kafka.consumer.properties.bootstrap.servers=broker:9092",
+      "-Djarina.scheduler.registration.delay-ms=5000",
+      "-Djarina.scheduler.run.delay-ms=5000",
+      "-Djarina.scheduler.resolvedeps.delay-ms=5000",
       "-Dserver.port=8083",
-      "-Dlakehouse.client.rest.config.server.url=http://lakehouse-config-svc:8082",
-      "-jar", "/opt/lakehouse-scheduler-svc-0.11.0-jar-with-dependencies.jar"
+      "-Djarina.client.rest.config.server.url=http://jarina-config-svc:8082",
+      "-jar", "/opt/jarina-scheduler-svc-0.11.0-jar-with-dependencies.jar"
       ]
     depends_on:
       db-dev:
@@ -379,138 +375,134 @@ services:
         condition: service_started
       keycloak:
         condition: service_healthy
-      lakehouse-config-svc:
+      jarina-config-svc:
         condition: service_started
 
-  lakehouse-state-svc:
-    image: lakehouse:0.11.0
-    container_name: lakehouse-state-svc
+  jarina-state-svc:
+    image: jarina:0.11.0
+    container_name: jarina-state-svc
     ports:
       - "8084:8084"
     networks:
-      lakehouse_net:
+      jarina_net:
         ipv4_address: 172.20.193.100
     environment:
-      KEYCLOAK_ISSUER_URI: http://keycloak.lakehouse:8085/realms/lakehouse
+      KEYCLOAK_ISSUER_URI: http://keycloak.jarina:8085/realms/jarina
       KEYCLOAK_INTERNAL_CLIENT_SECRET: super-secret-internal-key-987654321
     command: >
       bash -c "java
       -Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=StateSVC
       -Dserver.port=8084
-      -jar /opt/lakehouse-state-svc-0.11.0-jar-with-dependencies.jar"
+      -jar /opt/jarina-state-svc-0.11.0-jar-with-dependencies.jar"
     depends_on:
       db-dev:
         condition: service_healthy
       keycloak:
         condition: service_healthy
 
-  lakehouse-task-executor-svc-database:
-    image: lakehouse:0.11.0
+  jarina-task-executor-svc-database:
+    image: jarina:0.11.0
     container_name: task-executor-svc-database
-    hostname: task-executor-svc-1
     ports:
       - "8090:8090"
     networks:
-      lakehouse_net:
+      jarina_net:
         ipv4_address: 172.20.193.110
     environment:
-      KEYCLOAK_ISSUER_URI: http://keycloak.lakehouse:8085/realms/lakehouse
+      KEYCLOAK_ISSUER_URI: http://keycloak.jarina:8085/realms/jarina
       KEYCLOAK_INTERNAL_CLIENT_SECRET: super-secret-internal-key-987654321
-      VAULT_TOKEN: lakehouse-spark-token
+      VAULT_TOKEN: jarina-spark-token
     command: [
       "java",
       "-Dserver.port=8090",
-      "-Dlakehouse.client.rest.config.server.url=http://lakehouse-config-svc:8082",
-      "-Dlakehouse.client.rest.scheduler.server.url=http://lakehouse-scheduler-svc:8083",
-      "-Dlakehouse.client.rest.state.server.url=http://lakehouse-state-svc:8084",
-      "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id=database",
-      "-Dlakehouse.task-executor.service.id=database",
-      "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1",
-      "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=broker:9092",
-      "-jar", "/opt/lakehouse-task-executor-svc-0.11.0-jar-with-dependencies.jar"
+      "-Djarina.client.rest.config.server.url=http://jarina-config-svc:8082",
+      "-Djarina.client.rest.scheduler.server.url=http://jarina-scheduler-svc:8083",
+      "-Djarina.client.rest.state.server.url=http://jarina-state-svc:8084",
+      "-Djarina.task-executor.scheduled.task.kafka.consumer.properties.group.id=database",
+      "-Djarina.task-executor.service.id=database",
+      "-Djarina.task-executor.scheduled.task.kafka.consumer.concurrency=1",
+      "-Djarina.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=broker:9092",
+      "-jar", "/opt/jarina-task-executor-svc-0.11.0-jar-with-dependencies.jar"
     ]
     depends_on:
       broker:
         condition: service_started
       keycloak:
         condition: service_healthy
-      lakehouse-config-svc:
+      jarina-config-svc:
         condition: service_started
-      lakehouse-scheduler-svc:
+      jarina-scheduler-svc:
         condition: service_started
-      lakehouse-state-svc:
+      jarina-state-svc:
         condition: service_started
 
-  lakehouse-task-executor-svc-spark:
-    image: lakehouse:0.11.0
+  jarina-task-executor-svc-spark:
+    image: jarina:0.11.0
     container_name: task-executor-svc-spark
-    hostname: task-executor-svc-spark
     networks:
-      lakehouse_net:
+      jarina_net:
         ipv4_address: 172.20.193.130
     ports:
       - "8092:8092"
     environment:
-      KEYCLOAK_ISSUER_URI: http://keycloak.lakehouse:8085/realms/lakehouse
+      KEYCLOAK_ISSUER_URI: http://keycloak.jarina:8085/realms/jarina
       KEYCLOAK_INTERNAL_CLIENT_SECRET: super-secret-internal-key-987654321
     command: [
       "java",
       "-Dserver.port=8092",
-      "-Dlakehouse.client.rest.config.server.url=http://lakehouse-config-svc:8082",
-      "-Dlakehouse.client.rest.scheduler.server.url=http://lakehouse-scheduler-svc:8083",
-      "-Dlakehouse.client.rest.state.server.url=http://lakehouse-state-svc:8084",
-      "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id=spark-cluster",
-      "-Dlakehouse.task-executor.service.id=spark-exec-1",
-      "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1",
-      "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=broker:9092",
-      "-jar", "/opt/lakehouse-task-executor-svc-0.11.0-jar-with-dependencies.jar"
+      "-Djarina.client.rest.config.server.url=http://jarina-config-svc:8082",
+      "-Djarina.client.rest.scheduler.server.url=http://jarina-scheduler-svc:8083",
+      "-Djarina.client.rest.state.server.url=http://jarina-state-svc:8084",
+      "-Djarina.task-executor.scheduled.task.kafka.consumer.properties.group.id=spark-cluster",
+      "-Djarina.task-executor.service.id=spark-exec-1",
+      "-Djarina.task-executor.scheduled.task.kafka.consumer.concurrency=1",
+      "-Djarina.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=broker:9092",
+      "-jar", "/opt/jarina-task-executor-svc-0.11.0-jar-with-dependencies.jar"
     ]
     depends_on:
       broker:
         condition: service_started
       keycloak:
         condition: service_healthy
-      lakehouse-config-svc:
+      jarina-config-svc:
         condition: service_started
-      lakehouse-scheduler-svc:
+      jarina-scheduler-svc:
         condition: service_started
-      lakehouse-state-svc:
+      jarina-state-svc:
         condition: service_started
 
-  lakehouse-task-executor-svc-state:
-    image: lakehouse:0.11.0
-    container_name: lakehouse-task-executor-svc-state
-    hostname: lakehouse-task-executor-svc-state
+  jarina-task-executor-svc-state:
+    image: jarina:0.11.0
     networks:
-      lakehouse_net:
+      jarina_net:
         ipv4_address: 172.20.193.140
     ports:
       - "8093:8093"
     environment:
-      KEYCLOAK_ISSUER_URI: http://keycloak.lakehouse:8085/realms/lakehouse
+      KEYCLOAK_ISSUER_URI: http://keycloak.jarina:8085/realms/jarina
       KEYCLOAK_INTERNAL_CLIENT_SECRET: super-secret-internal-key-987654321
     command: [
       "java",
       "-Dserver.port=8093",
-      "-Dlakehouse.client.rest.config.server.url=http://lakehouse-config-svc:8082",
-      "-Dlakehouse.client.rest.scheduler.server.url=http://lakehouse-scheduler-svc:8083",
-      "-Dlakehouse.client.rest.state.server.url=http://lakehouse-state-svc:8084",
-      "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.group.id=state-service",
-      "-Dlakehouse.task-executor.service.id=state-service",
-      "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.concurrency=1",
-      "-Dlakehouse.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=broker:9092",
-      "-jar", "/opt/lakehouse-task-executor-svc-0.11.0-jar-with-dependencies.jar"
+      "-Djarina.client.rest.config.server.url=http://jarina-config-svc:8082",
+      "-Djarina.client.rest.scheduler.server.url=http://jarina-scheduler-svc:8083",
+      "-Djarina.client.rest.state.server.url=http://jarina-state-svc:8084",
+      "-Djarina.task-executor.scheduled.task.kafka.consumer.properties.group.id=state-service",
+      "-Djarina.task-executor.service.id=state-service",
+      "-Djarina.task-executor.scheduled.task.kafka.consumer.concurrency=1",
+      "-Djarina.task-executor.scheduled.task.kafka.consumer.properties.bootstrap.servers=broker:9092",
+      "-jar", "/opt/jarina-task-executor-svc-0.11.0-jar-with-dependencies.jar"
     ]
     depends_on:
       broker:
         condition: service_started
       keycloak:
         condition: service_healthy
-      lakehouse-config-svc:
+      jarina-config-svc:
         condition: service_started
-      lakehouse-scheduler-svc:
+      jarina-scheduler-svc:
         condition: service_started
-      lakehouse-state-svc:
+      jarina-state-svc:
         condition: service_started
 
   trino:
@@ -521,7 +513,7 @@ services:
       - ./conf_infra/trino/etc:/etc/trino
       - ./conf_infra/trino/catalog:/etc/trino/catalog
     networks:
-      lakehouse_net:
+      jarina_net:
         ipv4_address: 172.20.193.120
     depends_on:
       hive-metastore:
@@ -532,28 +524,26 @@ services:
         condition: service_started
 
 
-  lakehouse-task-proxy4spark:
-    image: lakehouse-spark-aws:0.11.0
-    container_name: lakehouse-task-proxy4spark
-    hostname: lakehouse-task-task-proxy4spark
+  jarina-task-proxy4spark:
+    image: jarina-spark-aws:0.11.0
     networks:
-      lakehouse_net:
+      jarina_net:
         ipv4_address: 172.20.193.160
     ports:
       - "8086:8086"
     environment:
-      KEYCLOAK_ISSUER_URI: http://keycloak.lakehouse:8085/realms/lakehouse
+      KEYCLOAK_ISSUER_URI: http://keycloak.jarina:8085/realms/jarina
       KEYCLOAK_INTERNAL_CLIENT_SECRET: super-secret-internal-key-987654321
     command: [
       "/opt/java/jdk-23.0.2/bin/java",
       "-Dlogging.level.org.springframework.web.client.RestClient=DEBUG",
       "-Dlogging.level.org.apache.hc.client5.http=DEBUG",
       "-Dserver.port=8086",
-      "-Dlakehouse.task.proxy4spark.adapter=standalone",
-      "-Dlakehouse.task.proxy4spark.spark-master=spark://spark-master:7077",
-      "-Dlakehouse.task.proxy4spark.standalone.rest-url=http://spark-master:6066",
+      "-Djarina.task.proxy4spark.adapter=standalone",
+      "-Djarina.task.proxy4spark.spark-master=spark://spark-master:7077",
+      "-Djarina.task.proxy4spark.standalone.rest-url=http://spark-master:6066",
       "-Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=TaskProxy4Spark",
-      "-jar", "/opt/lakehouse-task-spark-apps/lakehouse-task-proxy-for-spark-0.11.0-jar-with-dependencies.jar"
+      "-jar", "/opt/jarina-task-spark-apps/jarina-task-proxy-for-spark-0.11.0-jar-with-dependencies.jar"
     ]
     volumes:
       - ./conf_infra/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
@@ -562,157 +552,157 @@ services:
         condition: service_started
       keycloak:
         condition: service_healthy
-      lakehouse-config-svc:
+      jarina-config-svc:
         condition: service_started
-      lakehouse-scheduler-svc:
+      jarina-scheduler-svc:
         condition: service_started
-      lakehouse-state-svc:
+      jarina-state-svc:
         condition: service_started
       openbao:
         condition: service_healthy
 
-  lakehouse-ui-svc:
-    image: lakehouse:0.11.0
-    container_name: lakehouse-ui-svc
-    hostname: lakehouse-ui-svc
+  jarina-ui-svc:
+    image: jarina:0.11.0
+    container_name: jarina-ui-svc
+    hostname: jarina-ui-svc
     networks:
-      lakehouse_net:
+      jarina_net:
         ipv4_address: 172.20.193.170
     ports:
       - "8080:8080"
     environment:
-      KEYCLOAK_ISSUER_URI: http://keycloak.lakehouse:8085/realms/lakehouse
+      KEYCLOAK_ISSUER_URI: http://keycloak.jarina:8085/realms/jarina
       KEYCLOAK_UI_CLIENT_SECRET: super-secret-bff-key-1234567890
-      LAKEHOUSE_VCS_PROVIDER: local-git
-      LAKEHOUSE_GIT_URL: git://git-server:9418/platform.git
-      LAKEHOUSE_GIT_BRANCH: main
-      LAKEHOUSE_VCS_AUTH_TYPE: token
-      LAKEHOUSE_VCS_USER: modeller-bot
-      LAKEHOUSE_VCS_TOKEN: dummy
+      JARINA_VCS_PROVIDER: local-git
+      JARINA_GIT_URL: git://git-server:9418/platform.git
+      JARINA_GIT_BRANCH: main
+      JARINA_VCS_AUTH_TYPE: token
+      JARINA_VCS_USER: modeller-bot
+      JARINA_VCS_TOKEN: dummy
     depends_on:
       keycloak:
         condition: service_healthy
       git-server:
         condition: service_healthy
-      lakehouse-config-svc:
+      jarina-config-svc:
         condition: service_started
-      lakehouse-scheduler-svc:
+      jarina-scheduler-svc:
         condition: service_started
-      lakehouse-state-svc:
+      jarina-state-svc:
         condition: service_started
-      lakehouse-task-proxy4spark:
+      jarina-task-proxy4spark:
         condition: service_started
     command: [
       "java",
       "-Dlogging.level.org.springframework.web.client.RestClient=DEBUG",
       "-Dlogging.level.org.apache.hc.client5.http=DEBUG",
       "-Dserver.port=8080",
-      "-Dlakehouse.ui.health-check-timeout-ms=3000",
-      "-Dlakehouse.ui.services[0].name=lakehouse-config-svc",
-      "-Dlakehouse.ui.services[0].url=http://172.20.193.80:8082",
-      "-Dlakehouse.ui.services[0].health-check-url=http://172.20.193.80:8082/healthz",
-      "-Dlakehouse.ui.services[1].name=lakehouse-scheduler-svc",
-      "-Dlakehouse.ui.services[1].url=http://172.20.193.90:8083",
-      "-Dlakehouse.ui.services[1].health-check-url=http://172.20.193.90:8083/healthz",
-      "-Dlakehouse.ui.services[2].name=lakehouse-state-svc",
-      "-Dlakehouse.ui.services[2].url=http://172.20.193.100:8084",
-      "-Dlakehouse.ui.services[2].health-check-url=http://172.20.193.100:8084/healthz",
-      "-Dlakehouse.ui.services[3].name=lakehouse-task-proxy-for-spark",
-      "-Dlakehouse.ui.services[3].url=http://172.20.193.160:8086",
-      "-Dlakehouse.ui.services[3].health-check-url=http://172.20.193.160:8086/healthz",
-      "-Dlakehouse.ui.services[4].name=lakehouse-task-executor-svc-database",
-      "-Dlakehouse.ui.services[4].url=http://172.20.193.110:8090",
-      "-Dlakehouse.ui.services[4].health-check-url=http://172.20.193.110:8090/healthz",
-      "-Dlakehouse.ui.services[5].name=lakehouse-task-executor-svc-spark",
-      "-Dlakehouse.ui.services[5].url=http://172.20.193.130:8092",
-      "-Dlakehouse.ui.services[5].health-check-url=http://172.20.193.130:8092/healthz",
-      "-Dlakehouse.ui.services[6].name=lakehouse-task-executor-svc-state",
-      "-Dlakehouse.ui.services[6].url=http://172.20.193.140:8093",
-      "-Dlakehouse.ui.services[6].health-check-url=http://172.20.193.140:8093/healthz",
-      "-Dlakehouse.ui.services[7].name=lakehouse-trino",
-      "-Dlakehouse.ui.services[7].url=http://172.20.193.120:9090",
-      "-Dlakehouse.ui.services[7].health-check-url=http://172.20.193.120:9090",
-      "-Dlakehouse.ui.services[8].name=lakehouse-spark-master",
-      "-Dlakehouse.ui.services[8].url=http://172.20.193.40:8400",
-      "-Dlakehouse.ui.services[8].health-check-url=http://172.20.193.40:8400",
-      "-Dlakehouse.ui.services[9].name=lakehouse-spark-worker",
-      "-Dlakehouse.ui.services[9].url=http://172.20.193.50:8401",
-      "-Dlakehouse.ui.services[9].health-check-url=http://172.20.193.50:8401",
-      "-Dlakehouse.ui.services[10].name=lakehouse-spark-history",
-      "-Dlakehouse.ui.services[10].url=http://172.20.193.70:18080",
-      "-Dlakehouse.ui.services[10].health-check-url=http://172.20.193.70:18080",
-      "-Dlakehouse.ui.services[11].name=lakehouse-minio",
-      "-Dlakehouse.ui.services[11].url=http://172.20.193.30:9001",
-      "-Dlakehouse.ui.services[11].health-check-url=http://172.20.193.30:9000/minio/health/live",
-      "-Dlakehouse.ui.services[12].name=db-dev",
-      "-Dlakehouse.ui.services[12].url=http://172.20.193.10:5432",
-      "-Dlakehouse.ui.services[12].health-check-url=172.20.193.10:5432",
-      "-Dlakehouse.ui.services[12].check-type=tcp",
-      "-Dlakehouse.ui.services[13].name=kafka-broker",
-      "-Dlakehouse.ui.services[13].url=http://172.20.193.20:9092",
-      "-Dlakehouse.ui.services[13].health-check-url=172.20.193.20:9092",
-      "-Dlakehouse.ui.services[13].check-type=tcp",
-      "-Dlakehouse.ui.services[14].name=openbao",
-      "-Dlakehouse.ui.services[14].url=http://172.20.193.150:8200",
-      "-Dlakehouse.ui.services[14].health-check-url=http://172.20.193.150:8200/v1/sys/health",
-      "-Dlakehouse.ui.services[15].name=git-server",
-      "-Dlakehouse.ui.services[15].url=http://172.20.193.200:9418",
-      "-Dlakehouse.ui.services[15].health-check-url=172.20.193.200:9418",
-      "-Dlakehouse.ui.services[15].check-type=tcp",
-      "-Dlakehouse.client.rest.config.server.url=http://lakehouse-config-svc:8082",
-      "-Dlakehouse.client.rest.state.server.url=http://lakehouse-state-svc:8084",
-      "-Dlakehouse.client.rest.scheduler.server.url=http://lakehouse-scheduler-svc:8083",
-      "-Dlakehouse.client.rest.task-proxy-for-spark.server.url=http://172.20.193.160:8086",
-      "-Dlakehouse.ui.vertices.lakehouse-config-svc=lakehouse-config-svc",
-      "-Dlakehouse.ui.vertices.topic-schedule-conf=kafka-broker",
-      "-Dlakehouse.ui.vertices.topic-tasks=kafka-broker",
-      "-Dlakehouse.ui.vertices.lakehouse-scheduler-svc=lakehouse-scheduler-svc",
-      "-Dlakehouse.ui.vertices.lakehouse-task-executor-svc-database=lakehouse-task-executor-svc-database",
-      "-Dlakehouse.ui.vertices.lakehouse-task-executor-svc-spark=lakehouse-task-executor-svc-spark",
-      "-Dlakehouse.ui.vertices.lakehouse-task-executor-svc-state=lakehouse-task-executor-svc-state",
-      "-Dlakehouse.ui.vertices.lakehouse-state-svc=lakehouse-state-svc",
-      "-Dlakehouse.ui.vertices.lakehouse-task-proxy-for-spark=lakehouse-task-proxy-for-spark",
-      "-Dlakehouse.ui.vertices.processingdb=db-dev",
-      "-Dlakehouse.ui.vertices.confdb=db-dev",
-      "-Dlakehouse.ui.vertices.schedulerdb=db-dev",
-      "-Dlakehouse.ui.vertices.sparkproxydb=db-dev",
-      "-Dlakehouse.ui.vertices.lakehouse-spark-master=lakehouse-spark-master",
-      "-Dlakehouse.ui.vertices.lakehouse-spark-worker=lakehouse-spark-worker",
-      "-Dlakehouse.ui.vertices.lakehouse-minio=lakehouse-minio",
-      "-Dlakehouse.ui.vertices.lakehouse-trino=lakehouse-trino",
-      "-Dlakehouse.ui.vertices.lakehouse-spark-history=lakehouse-spark-history",
-      "-Dlakehouse.ui.vertices.openbao=openbao",
-      "-Dlakehouse.ui.vertices.git-server=git-server",
-      "-Dlakehouse.ui.edges.lakehouse-config-svc[0]=confdb",
-      "-Dlakehouse.ui.edges.lakehouse-config-svc[1]=topic-schedule-conf",
-      "-Dlakehouse.ui.edges.lakehouse-config-svc[2]=lakehouse-scheduler-svc",
-      "-Dlakehouse.ui.edges.lakehouse-config-svc[3]=git-server",
-      "-Dlakehouse.ui.edges.topic-schedule-conf[0]=lakehouse-scheduler-svc",
-      "-Dlakehouse.ui.edges.lakehouse-scheduler-svc[0]=topic-tasks",
-      "-Dlakehouse.ui.edges.lakehouse-scheduler-svc[1]=schedulerdb",
-      "-Dlakehouse.ui.edges.topic-tasks[0]=lakehouse-task-executor-svc-database",
-      "-Dlakehouse.ui.edges.topic-tasks[1]=lakehouse-task-executor-svc-spark",
-      "-Dlakehouse.ui.edges.topic-tasks[2]=lakehouse-task-executor-svc-state",
-      "-Dlakehouse.ui.edges.lakehouse-task-executor-svc-state[0]=lakehouse-state-svc",
-      "-Dlakehouse.ui.edges.lakehouse-task-executor-svc-state[1]=lakehouse-scheduler-svc",
-      "-Dlakehouse.ui.edges.lakehouse-task-executor-svc-spark[0]=lakehouse-task-proxy-for-spark",
-      "-Dlakehouse.ui.edges.lakehouse-task-executor-svc-spark[1]=lakehouse-scheduler-svc",
-      "-Dlakehouse.ui.edges.lakehouse-task-executor-svc-database[0]=processingdb",
-      "-Dlakehouse.ui.edges.lakehouse-task-executor-svc-database[1]=lakehouse-scheduler-svc",
-      "-Dlakehouse.ui.edges.lakehouse-task-proxy-for-spark[0]=sparkproxydb",
-      "-Dlakehouse.ui.edges.lakehouse-task-proxy-for-spark[1]=lakehouse-spark-master",
-      "-Dlakehouse.ui.edges.lakehouse-spark-master[0]=lakehouse-spark-worker",
-      "-Dlakehouse.ui.edges.lakehouse-spark-worker[0]=lakehouse-minio",
-      "-Dlakehouse.ui.edges.lakehouse-minio[0]=lakehouse-trino",
-      "-Dlakehouse.ui.edges.lakehouse-minio[1]=lakehouse-spark-history",
-      "-Dlakehouse.ui.edges.lakehouse-ui-svc[0]=git-server",
-      "-Dlakehouse.modeller.domains.platform.repository-url=git://git-server:9418/platform.git",
-      "-Dlakehouse.modeller.domains.platform.branch-main=main",
-      "-Dlakehouse.modeller.domains.analytics.repository-url=git://git-server:9418/analytics.git",
-      "-Dlakehouse.modeller.domains.analytics.branch-main=main",
-      "-Dlakehouse.modeller.domains.processing.repository-url=git://git-server:9418/processing.git",
-      "-Dlakehouse.modeller.domains.processing.branch-main=main",
-      "-jar", "/opt/lakehouse-ui-svc-0.11.0-jar-with-dependencies.jar"
+      "-Djarina.ui.health-check-timeout-ms=3000",
+      "-Djarina.ui.services[0].name=jarina-config-svc",
+      "-Djarina.ui.services[0].url=http://172.20.193.80:8082",
+      "-Djarina.ui.services[0].health-check-url=http://172.20.193.80:8082/healthz",
+      "-Djarina.ui.services[1].name=jarina-scheduler-svc",
+      "-Djarina.ui.services[1].url=http://172.20.193.90:8083",
+      "-Djarina.ui.services[1].health-check-url=http://172.20.193.90:8083/healthz",
+      "-Djarina.ui.services[2].name=jarina-state-svc",
+      "-Djarina.ui.services[2].url=http://172.20.193.100:8084",
+      "-Djarina.ui.services[2].health-check-url=http://172.20.193.100:8084/healthz",
+      "-Djarina.ui.services[3].name=jarina-task-proxy-for-spark",
+      "-Djarina.ui.services[3].url=http://172.20.193.160:8086",
+      "-Djarina.ui.services[3].health-check-url=http://172.20.193.160:8086/healthz",
+      "-Djarina.ui.services[4].name=jarina-task-executor-svc-database",
+      "-Djarina.ui.services[4].url=http://172.20.193.110:8090",
+      "-Djarina.ui.services[4].health-check-url=http://172.20.193.110:8090/healthz",
+      "-Djarina.ui.services[5].name=jarina-task-executor-svc-spark",
+      "-Djarina.ui.services[5].url=http://172.20.193.130:8092",
+      "-Djarina.ui.services[5].health-check-url=http://172.20.193.130:8092/healthz",
+      "-Djarina.ui.services[6].name=jarina-task-executor-svc-state",
+      "-Djarina.ui.services[6].url=http://172.20.193.140:8093",
+      "-Djarina.ui.services[6].health-check-url=http://172.20.193.140:8093/healthz",
+      "-Djarina.ui.services[7].name=jarina-trino",
+      "-Djarina.ui.services[7].url=http://172.20.193.120:9090",
+      "-Djarina.ui.services[7].health-check-url=http://172.20.193.120:9090",
+      "-Djarina.ui.services[8].name=jarina-spark-master",
+      "-Djarina.ui.services[8].url=http://172.20.193.40:8400",
+      "-Djarina.ui.services[8].health-check-url=http://172.20.193.40:8400",
+      "-Djarina.ui.services[9].name=jarina-spark-worker",
+      "-Djarina.ui.services[9].url=http://172.20.193.50:8401",
+      "-Djarina.ui.services[9].health-check-url=http://172.20.193.50:8401",
+      "-Djarina.ui.services[10].name=jarina-spark-history",
+      "-Djarina.ui.services[10].url=http://172.20.193.70:18080",
+      "-Djarina.ui.services[10].health-check-url=http://172.20.193.70:18080",
+      "-Djarina.ui.services[11].name=jarina-minio",
+      "-Djarina.ui.services[11].url=http://172.20.193.30:9001",
+      "-Djarina.ui.services[11].health-check-url=http://172.20.193.30:9000/minio/health/live",
+      "-Djarina.ui.services[12].name=db-dev",
+      "-Djarina.ui.services[12].url=http://172.20.193.10:5432",
+      "-Djarina.ui.services[12].health-check-url=172.20.193.10:5432",
+      "-Djarina.ui.services[12].check-type=tcp",
+      "-Djarina.ui.services[13].name=kafka-broker",
+      "-Djarina.ui.services[13].url=http://172.20.193.20:9092",
+      "-Djarina.ui.services[13].health-check-url=172.20.193.20:9092",
+      "-Djarina.ui.services[13].check-type=tcp",
+      "-Djarina.ui.services[14].name=openbao",
+      "-Djarina.ui.services[14].url=http://172.20.193.150:8200",
+      "-Djarina.ui.services[14].health-check-url=http://172.20.193.150:8200/v1/sys/health",
+      "-Djarina.ui.services[15].name=git-server",
+      "-Djarina.ui.services[15].url=http://172.20.193.200:9418",
+      "-Djarina.ui.services[15].health-check-url=172.20.193.200:9418",
+      "-Djarina.ui.services[15].check-type=tcp",
+      "-Djarina.client.rest.config.server.url=http://jarina-config-svc:8082",
+      "-Djarina.client.rest.state.server.url=http://jarina-state-svc:8084",
+      "-Djarina.client.rest.scheduler.server.url=http://jarina-scheduler-svc:8083",
+      "-Djarina.client.rest.task-proxy-for-spark.server.url=http://172.20.193.160:8086",
+      "-Djarina.ui.vertices.jarina-config-svc=jarina-config-svc",
+      "-Djarina.ui.vertices.topic-schedule-conf=kafka-broker",
+      "-Djarina.ui.vertices.topic-tasks=kafka-broker",
+      "-Djarina.ui.vertices.jarina-scheduler-svc=jarina-scheduler-svc",
+      "-Djarina.ui.vertices.jarina-task-executor-svc-database=jarina-task-executor-svc-database",
+      "-Djarina.ui.vertices.jarina-task-executor-svc-spark=jarina-task-executor-svc-spark",
+      "-Djarina.ui.vertices.jarina-task-executor-svc-state=jarina-task-executor-svc-state",
+      "-Djarina.ui.vertices.jarina-state-svc=jarina-state-svc",
+      "-Djarina.ui.vertices.jarina-task-proxy-for-spark=jarina-task-proxy-for-spark",
+      "-Djarina.ui.vertices.processingdb=db-dev",
+      "-Djarina.ui.vertices.confdb=db-dev",
+      "-Djarina.ui.vertices.schedulerdb=db-dev",
+      "-Djarina.ui.vertices.sparkproxydb=db-dev",
+      "-Djarina.ui.vertices.jarina-spark-master=jarina-spark-master",
+      "-Djarina.ui.vertices.jarina-spark-worker=jarina-spark-worker",
+      "-Djarina.ui.vertices.jarina-minio=jarina-minio",
+      "-Djarina.ui.vertices.jarina-trino=jarina-trino",
+      "-Djarina.ui.vertices.jarina-spark-history=jarina-spark-history",
+      "-Djarina.ui.vertices.openbao=openbao",
+      "-Djarina.ui.vertices.git-server=git-server",
+      "-Djarina.ui.edges.jarina-config-svc[0]=confdb",
+      "-Djarina.ui.edges.jarina-config-svc[1]=topic-schedule-conf",
+      "-Djarina.ui.edges.jarina-config-svc[2]=jarina-scheduler-svc",
+      "-Djarina.ui.edges.jarina-config-svc[3]=git-server",
+      "-Djarina.ui.edges.topic-schedule-conf[0]=jarina-scheduler-svc",
+      "-Djarina.ui.edges.jarina-scheduler-svc[0]=topic-tasks",
+      "-Djarina.ui.edges.jarina-scheduler-svc[1]=schedulerdb",
+      "-Djarina.ui.edges.topic-tasks[0]=jarina-task-executor-svc-database",
+      "-Djarina.ui.edges.topic-tasks[1]=jarina-task-executor-svc-spark",
+      "-Djarina.ui.edges.topic-tasks[2]=jarina-task-executor-svc-state",
+      "-Djarina.ui.edges.jarina-task-executor-svc-state[0]=jarina-state-svc",
+      "-Djarina.ui.edges.jarina-task-executor-svc-state[1]=jarina-scheduler-svc",
+      "-Djarina.ui.edges.jarina-task-executor-svc-spark[0]=jarina-task-proxy-for-spark",
+      "-Djarina.ui.edges.jarina-task-executor-svc-spark[1]=jarina-scheduler-svc",
+      "-Djarina.ui.edges.jarina-task-executor-svc-database[0]=processingdb",
+      "-Djarina.ui.edges.jarina-task-executor-svc-database[1]=jarina-scheduler-svc",
+      "-Djarina.ui.edges.jarina-task-proxy-for-spark[0]=sparkproxydb",
+      "-Djarina.ui.edges.jarina-task-proxy-for-spark[1]=jarina-spark-master",
+      "-Djarina.ui.edges.jarina-spark-master[0]=jarina-spark-worker",
+      "-Djarina.ui.edges.jarina-spark-worker[0]=jarina-minio",
+      "-Djarina.ui.edges.jarina-minio[0]=jarina-trino",
+      "-Djarina.ui.edges.jarina-minio[1]=jarina-spark-history",
+      "-Djarina.ui.edges.jarina-ui-svc[0]=git-server",
+      "-Djarina.modeller.domains.platform.repository-url=git://git-server:9418/platform.git",
+      "-Djarina.modeller.domains.platform.branch-main=main",
+      "-Djarina.modeller.domains.analytics.repository-url=git://git-server:9418/analytics.git",
+      "-Djarina.modeller.domains.analytics.branch-main=main",
+      "-Djarina.modeller.domains.processing.repository-url=git://git-server:9418/processing.git",
+      "-Djarina.modeller.domains.processing.branch-main=main",
+      "-jar", "/opt/jarina-ui-svc-0.11.0-jar-with-dependencies.jar"
     ]
 
 volumes:
@@ -725,7 +715,7 @@ volumes:
   git_server_storage:
 
 networks:
-  lakehouse_net:
+  jarina_net:
     driver: bridge
     ipam:
       config:

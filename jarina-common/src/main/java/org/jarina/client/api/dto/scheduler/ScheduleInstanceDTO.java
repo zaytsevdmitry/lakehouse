@@ -1,0 +1,95 @@
+/*
+ * "Jarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+ * Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     https://www.apache.org/licenses/LICENSE-2.0.txt
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.jarina.client.api.dto.scheduler;
+
+import org.jarina.client.api.constant.Status;
+
+import java.util.Objects;
+
+public class ScheduleInstanceDTO {
+    private Long id;
+
+    private String configScheduleKeyName;
+
+    private String domainKeyName;
+
+    private String targetExecutionDateTime;
+
+    private Status.Schedule status;
+
+    public ScheduleInstanceDTO() {
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getConfigScheduleKeyName() {
+        return configScheduleKeyName;
+    }
+
+    public void setConfigScheduleKeyName(String configScheduleKeyName) {
+        this.configScheduleKeyName = configScheduleKeyName;
+    }
+
+    public String getDomainKeyName() {
+        return domainKeyName;
+    }
+
+    public void setDomainKeyName(String domainKeyName) {
+        this.domainKeyName = domainKeyName;
+    }
+
+    public String getTargetExecutionDateTime() {
+        return targetExecutionDateTime;
+    }
+
+    public void setTargetExecutionDateTime(String targetExecutionDateTime) {
+        this.targetExecutionDateTime = targetExecutionDateTime;
+    }
+
+    public Status.Schedule getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status.Schedule status) {
+        this.status = status;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        ScheduleInstanceDTO that = (ScheduleInstanceDTO) o;
+        return Objects.equals(getId(), that.getId())
+                && Objects.equals(getConfigScheduleKeyName(), that.getConfigScheduleKeyName())
+                && Objects.equals(getTargetExecutionDateTime(), that.getTargetExecutionDateTime())
+                && Objects.equals(getStatus(), that.getStatus());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId(), getConfigScheduleKeyName(), getTargetExecutionDateTime(), getStatus());
+    }
+}

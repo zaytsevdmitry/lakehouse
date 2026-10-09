@@ -1,0 +1,10 @@
+kind: DataSource
+keyName: jarinastorage
+service:
+  host: hive-metastore
+  port: "9083"
+  urn: jarinastorage
+  properties: {}
+description: Local datastore
+dataSourceType: iceberg
+databaseProtocol: s3

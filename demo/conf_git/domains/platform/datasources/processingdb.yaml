@@ -5,8 +5,8 @@ service:
   port: "5432"
   urn: postgresDB
   properties:
-    secretProvider: org.lakehouse.security.jdbc.BaoJdbcSecretProvider
-    secret-key: "kv/data/lakehouse/database:password"
+    secretProvider: org.jarina.security.jdbc.BaoJdbcSecretProvider
+    secret-key: "kv/data/jarina/database:password"
     vault-url: "http://openbao:8200"
     user: postgresUser
     fetchSize: "10000"

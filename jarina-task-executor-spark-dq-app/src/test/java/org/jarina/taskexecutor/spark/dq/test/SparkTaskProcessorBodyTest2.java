@@ -1,0 +1,209 @@
+/*
+ * "Jarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+ * Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     https://www.apache.org/licenses/LICENSE-2.0.txt
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.jarina.taskexecutor.spark.dq.test;
+
+import org.apache.spark.SparkConf;
+import org.apache.spark.sql.SparkSession;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.jarina.client.api.dto.configs.dq.QualityMetricsConfDTO;
+import org.jarina.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
+import org.jarina.client.api.dto.task.SourceConfDTO;
+import org.jarina.client.api.exception.TaskConfigurationException;
+import org.jarina.client.api.exception.TaskFailedException;
+import org.jarina.client.api.utils.ObjectMapping;
+import org.jarina.client.api.utils.conf.SparkConfUtil;
+import org.jarina.client.rest.config.ConfigRestClientApi;
+import org.jarina.client.rest.exception.ScriptBuildException;
+import org.jarina.jinja.java.JinJavaFactory;
+import org.jarina.taskexecutor.api.datasource.DataSourceManipulator;
+import org.jarina.taskexecutor.api.datasource.DataSourceManipulatorFactory;
+import org.jarina.taskexecutor.api.datasource.exception.CreateException;
+import org.jarina.taskexecutor.api.datasource.exception.DropException;
+import org.jarina.taskexecutor.api.factory.SQLTemplateFactory;
+import org.jarina.taskexecutor.api.processor.body.ProcessorBody;
+import org.jarina.taskexecutor.spark.dataset.datasourcemanipulator.SparkDataSourceManipulatorFactory;
+import org.jarina.taskexecutor.spark.dq.configuration.DqMetricConfigProducerKafkaConfigurationProperties;
+import org.jarina.test.config.api.ConfigRestClientApiTest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.utility.DockerImageName;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.Map;
+
+@SpringBootTest(properties = {
+       "jarina.taskexecutor.body.config.dq.kafka.producer.metric.status.topic=metric_status",
+        "jarina.client.rest.config.server.url=http://192.1.193.80:8080",
+        "jarina.client.rest.scheduler.server.url=http://192.1.193.80:8080",
+        "jarina.taskexecutor.body.config.dq.kafka.producer.metric.value.topic=metric_value",
+        "jarina.taskexecutor.body.config.dq.kafka.producer.testSet.status.topic=metric_test_set_status"
+})
+@ComponentScan(
+        basePackages = {
+                "org.jarina.taskexecutor.spark.dq"
+        })
+public class SparkTaskProcessorBodyTest2 {
+    static String clientDatasetName = "client_processing";
+    static String trnDatasetName = "transaction_processing";
+    static String trnddsDatasetName = "transaction_dds";
+
+    @Configuration
+    @ComponentScan(
+        basePackages = {
+                "org.jarina.taskexecutor.spark.dq",
+                "org.jarina.taskexecutor.api"
+        })
+    @EnableConfigurationProperties(DqMetricConfigProducerKafkaConfigurationProperties.class)
+    static class ContextConfiguration {
+        @Bean
+        @Primary
+        ConfigRestClientApi getConfigRestClientApi3() throws IOException {
+            return new ConfigRestClientApiTest(); //stub
+        }
+        @Bean
+        @Primary
+        SparkSession getSparkSessionTest() throws IOException {
+            ConfigRestClientApi configRestClientApi1 =  new ConfigRestClientApiTest();
+            SparkConf conf = new SparkConf();
+            SourceConfDTO sourceConfDTO = configRestClientApi1.getSourceConfDTO(trnddsDatasetName);
+            ScheduledTaskDTO scheduledTaskDTO = new  TaskConfigTestFactory().loadScheduledTaskLockDTO(trnddsDatasetName,"load").getScheduledTaskEffectiveDTO();
+
+            Map.of(
+                            "spark.sql.catalog.processingdb", "org.apache.spark.sql.execution.datasources.v2.jdbc.JDBCTableCatalog",
+                            "spark.sql.catalog.processingdb.url", postgres.getJdbcUrl(),
+                            "spark.sql.catalog.processingdb.user", postgres.getUsername(),
+                            "spark.sql.catalog.processingdb.password", postgres.getPassword())
+                    .forEach((k,v) ->
+                            sourceConfDTO.getDataSourceDTOByDataSetKeyName(trnDatasetName).getService().getProperties().put(k, v));
+
+            SparkConfUtil.extractSparkConFromTaskConf(sourceConfDTO,scheduledTaskDTO).forEach(conf::set);
+            return SparkSession.builder().master("local").config(conf).getOrCreate();        }
+        @Bean
+        DataSourceManipulatorFactory getDataSourceManipulatorFactory(SparkSession sparkSession){
+            return new SparkDataSourceManipulatorFactory(sparkSession);
+        }
+    }
+    @Autowired
+    ConfigurableApplicationContext applicationContext;
+
+    @Autowired ConfigRestClientApi configRestClientApi;
+    @Autowired
+    SQLTemplateFactory sqlTemplateFactory;
+    @Container
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine").withDatabaseName("test")
+            .withUsername("name").withPassword("password");
+
+    @Container
+    static final KafkaContainer kafka = new KafkaContainer(
+            DockerImageName.parse("confluentinc/cp-kafka:7.6.1")
+    );
+    public SparkTaskProcessorBodyTest2() throws IOException {
+    }
+
+    @BeforeAll
+    static void beforeAllStart() {
+        kafka.start();
+        postgres.start();
+    }
+
+    @AfterAll
+    static void afterAllDown(){
+        kafka.stop();
+        postgres.stop();
+    }
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("jarina.taskexecutor.body.config.dq.kafka.producer.properties.bootstrap.servers",kafka::getBootstrapServers);
+    }
+    @Test
+    void end2end() throws IOException, TaskFailedException, TaskConfigurationException, URISyntaxException, CreateException, DropException {
+        ScheduledTaskDTO scheduledTaskDTO = ObjectMapping
+                .fileToObject(
+                        new File(getClass().getClassLoader().getResource("en2end.json").toURI()),
+                        ScheduledTaskDTO.class);
+        scheduledTaskDTO.setDriverKeyName("spark_iceberg");
+        SparkSession sparkSession = applicationContext.getBean(SparkSession.class);
+        DataSourceManipulator dsm = DataManipulators
+                .getIcebergDataSourceManipulator(
+                        sqlTemplateFactory,
+                        scheduledTaskDTO,
+                        sparkSession,
+                        trnddsDatasetName,
+                        applicationContext.getBean(ConfigRestClientApi.class)
+                        );
+
+        dsm.createTableIfNotExists();
+        String sql = "insert into `jarinastorage`.`default`.`transaction_dds` (" +
+                " id ,amount ,client_id, client_name,commission ,provider_id, reg_date_time  )" +
+                "values(" +
+                "1,   9282.88,1,        'myTestClient', 400.55, 1, timestamp '2025-01-01T00:00:00Z')";
+        sparkSession.sql(sql).show();
+        sql = "select * from `jarinastorage`.`default`.`transaction_dds`";
+        sparkSession.sql(sql).show();
+
+
+        ProcessorBody body = (ProcessorBody) applicationContext.getBean(scheduledTaskDTO.getTaskProcessorBody());
+        body.run(scheduledTaskDTO);
+        dsm.drop();
+    }
+    @Test
+    void getScript() throws ScriptBuildException, DropException, CreateException, TaskConfigurationException, IOException, URISyntaxException {
+        ScheduledTaskDTO scheduledTaskDTO = ObjectMapping
+                .fileToObject(
+                        new File(getClass().getClassLoader().getResource("en2end.json").toURI()),
+                        ScheduledTaskDTO.class);
+        SparkSession sparkSession = applicationContext.getBean(SparkSession.class);
+
+        DataSourceManipulator dsm = DataManipulators
+                .getIcebergDataSourceManipulator(
+                        sqlTemplateFactory,
+                        scheduledTaskDTO,
+                        sparkSession,
+                        trnddsDatasetName,
+                        configRestClientApi
+                );
+
+        dsm.createTableIfNotExists();
+        String sql = "insert into `jarinastorage`.`default`.`transaction_dds` (" +
+                " id ,amount ,client_id, client_name,commission ,provider_id, reg_date_time  )" +
+                "values(" +
+                "1,   9282.88,1,        'myTestClient', 400.55, 1, timestamp '2025-01-01T00:00:00Z')";
+        sparkSession.sql(sql).show();
+        sql = "select * from `jarinastorage`.`default`.`transaction_dds`";
+        sparkSession.sql(sql).show();
+        QualityMetricsConfDTO qualityMetricsConfDTO = configRestClientApi.getQualityMetricsConf("transaction_dds_qm");
+        String s = configRestClientApi.getScriptByListOfReference(qualityMetricsConfDTO.getThresholds().get("non_zero_count_th").getScripts());
+        System.out.println(s);
+        dsm.drop();
+    }
+}

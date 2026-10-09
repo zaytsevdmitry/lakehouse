@@ -32,11 +32,11 @@ minikube start --cpus 4 --memory 10192 --registry-mirror=https://dh-mirror.gitve
 sh install.bash
 ```
 В результате выполнения команды: 
-- образы lakehouse* перегрузятся из локального репозитория в minikube  ~ 3-5 минут в зависимости от локальной системы
+- образы jarina* перегрузятся из локального репозитория в minikube  ~ 3-5 минут в зависимости от локальной системы
 - соберется helm chart
-- создано пространство имен lakehouse-management
+- создано пространство имен jarina-management
 - учетные записи 
-  - lakehouse-app-sa - используется lakehouse-task-proxy4spark для отправки задачи посредством submit
+  - jarina-app-sa - используется jarina-task-proxy4spark для отправки задачи посредством submit
   - spark-driver-sa  - используется spark-driver , создаются экзекуторы
 - запустятся все сервисы
 # После установки
@@ -50,7 +50,7 @@ sh tunnels.bash
 > В примере команда kubectl запускается через xterm. Это нужно, чтобы иметь возможность закрыть проброс порта кликом мыши в интерфейсе рабочего стола, а не искать номера процессов чтобы их завершить.
 > xterm это стандартная утилита linux. В своей операционной системе можно найти аналог.
 
-lakehouse-management-config-service 8080 нужен для загрузки конфигурации метаданных.
+jarina-management-config-service 8080 нужен для загрузки конфигурации метаданных.
 
 ## Загрузка демонстрационной конфигурации метаданных
 ### Rest-api вариант
@@ -67,7 +67,7 @@ sh load.sh
 Если сервис конфигураций еще не доступен, скрипт "подождет" готовности сервиса
 ```
 server is 127.0.0.1:8080/v1_0/configs
-pwd is /home/dm2/IdeaProjects/lakehouse/demo/conf
+pwd is /home/dm2/IdeaProjects/jarina/demo/conf
 Waiting Config-SVC: The request failed. Sleeping...zzZ
 Retry Config-SVC
 Waiting Config-SVC: The request failed. Sleeping...zzZ
@@ -92,32 +92,32 @@ bash ./bootstrap-configs.bash
 Просмотр списка подов
 
 ```shell
-kubectl -n lakehouse-management get pods -o custom-columns="NAME:.metadata.name,STATUS:.status.phase,TASK-NAME:.metadata.annotations.lakehouse-management-task"
+kubectl -n jarina-management get pods -o custom-columns="NAME:.metadata.name,STATUS:.status.phase,TASK-NAME:.metadata.annotations.jarina-management-task"
 
 ```
 Просмотр лога task-executor
 ```shell
-kubectl -n lakehouse-management logs deployment/lakehouse-management-task-executor-service
+kubectl -n jarina-management logs deployment/jarina-management-task-executor-service
 ```
 Просмотр task-proxy4spark
 ```shell
-kubectl -n lakehouse-management logs deployment/lakehouse-task-proxy4spark
+kubectl -n jarina-management logs deployment/jarina-task-proxy4spark
 ```
 
 Просмотр лога драйвера, который упал с ошибкой
 ```shell
-kubectl -n lakehouse-management get pods|grep task| grep Error|awk '{print $1}'|xargs -r kubectl -n lakehouse-management logs
+kubectl -n jarina-management get pods|grep task| grep Error|awk '{print $1}'|xargs -r kubectl -n jarina-management logs
 ```
 
 Удалить контейнеры с ошибкой.
 ```shell
-kubectl -n lakehouse-management get pods | grep task | grep Error | awk '{print $1}' | xargs kubectl -n lakehouse-management delete pod
+kubectl -n jarina-management get pods | grep task | grep Error | awk '{print $1}' | xargs kubectl -n jarina-management delete pod
 
 ```
 Ускоряем работу. 
 >Следите за ресурсами выполняя следующую команду.
 ```shell
-kubectl -n lakehouse-management scale deployment lakehouse-management-task-executor-service --replicas=4
+kubectl -n jarina-management scale deployment jarina-management-task-executor-service --replicas=4
 ````
 ## Keycloak
 Сборка использует Keycloak для аутентификации. Необходимо добавить запись в `/etc/hosts` (или `%SystemRoot%\System32\drivers\etc\hosts` в Windows):
@@ -126,15 +126,15 @@ kubectl -n lakehouse-management scale deployment lakehouse-management-task-execu
 127.0.0.1 keycloak
 ```
 
-> Без этой записи браузер не сможет перейти на страницу входа Keycloak (issuer URI = `http://keycloak:8085/realms/lakehouse`).
+> Без этой записи браузер не сможет перейти на страницу входа Keycloak (issuer URI = `http://keycloak:8085/realms/jarina`).
 
 После проброса портов Keycloak доступен по адресам:
 - Админ-консоль: http://keycloak:8085 (учетные данные: `admin` / `admin_local_password`)
-- OIDC endpoint: http://keycloak:8085/realms/lakehouse
+- OIDC endpoint: http://keycloak:8085/realms/jarina
 
-Вход в Lakehouse UI: http://localhost:8084 — перенаправит на Keycloak.
+Вход в Jarina UI: http://localhost:8084 — перенаправит на Keycloak.
 
-Демонстрационные пользователи (realm `lakehouse`):
+Демонстрационные пользователи (realm `jarina`):
 
 | Логин | Пароль | Роль |
 |:------|:-------|:-----|

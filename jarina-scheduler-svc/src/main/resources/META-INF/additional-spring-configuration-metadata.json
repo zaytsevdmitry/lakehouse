@@ -1,0 +1,74 @@
+{
+  "properties": [
+    {
+      "name": "jarina.api.schedule.registration.delay-ms",
+      "type": "java.lang.Long",
+      "description": "A description for 'jarina.api.schedule.registration.delay-ms'"
+    },
+    {
+      "name": "jarina.api.schedule.build.delay-ms",
+      "type": "java.lang.Long",
+      "description": "A description for 'jarina.api.schedule.build.delay-ms'"
+    },
+    {
+      "name": "jarina.api.schedule.registration.initial-delay-ms",
+      "type": "java.lang.Long",
+      "description": "A description for 'jarina.api.schedule.registration.initial-delay-ms'"
+    },
+    {
+      "name": "jarina.api.schedule.build.initial-delay-ms",
+      "type": "java.lang.Long",
+      "description": "A description for 'jarina.api.schedule.build.initial-delay-ms'"
+    },
+    {
+      "name": "jarina.api.schedule.run.delay-ms",
+      "type": "java.lang.Long",
+      "description": "A description for 'jarina.api.schedule.run.delay-ms'"
+    },
+    {
+      "name": "jarina.api.schedule.task.toqueue.delay-ms",
+      "type": "java.lang.Long",
+      "description": "A description for 'jarina.api.schedule.task.toqueue.delay-ms'"
+    },
+    {
+      "name": "jarina.api.schedule.run.initial-delay-ms",
+      "type": "java.lang.Long",
+      "description": "A description for 'jarina.api.schedule.run.initial-delay-ms'"
+    },
+    {
+      "name": "jarina.api.schedule.task.toqueue.initial-delay-ms",
+      "type": "java.lang.Long",
+      "description": "A description for 'jarina.api.schedule.task.toqueue.initial-delay-ms'"
+    },
+    {
+      "name": "jarina.api.schedule.task.resolvedeps.delay-ms",
+      "type": "java.lang.Long",
+      "description": "A description for 'jarina.api.schedule.task.resolvedeps.delay-ms'"
+    },
+    {
+      "name": "jarina.api.schedule.task.resolvedeps.initial-delay-ms",
+      "type": "java.lang.Long",
+      "description": "A description for 'jarina.api.schedule.task.resolvedeps.initial-delay-ms'"
+    },
+    {
+      "name": "jarina.api.schedule.task.retry.delay-ms",
+      "type": "java.lang.Long",
+      "description": "A description for 'jarina.api.schedule.task.retry.delay-ms'"
+    },
+    {
+      "name": "jarina.api.schedule.task.retry.initial-delay-ms",
+      "type": "java.lang.Long",
+      "description": "A description for 'jarina.api.schedule.task.retry.initial-delay-ms'"
+    },
+    {
+      "name": "jarina.api.schedule.scenarioAct.resolvedeps.delay-ms",
+      "type": "java.lang.Long",
+      "description": "A description for 'jarina.api.schedule.scenarioAct.resolvedeps.delay-ms'"
+    },
+    {
+      "name": "jarina.api.schedule.scenarioAct.resolvedeps.initial-delay-ms",
+      "type": "java.lang.Long",
+      "description": "A description for 'jarina.api.schedule.scenarioAct.resolvedeps.initial-delay-ms'"
+    }
+  ]
+}

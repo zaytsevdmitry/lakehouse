@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# "Lakehouse management tool" - the services set for managing data changes based on a metadata-driven approach
-# Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/lakehouse
+# "Jarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+# Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,25 +16,25 @@
 # limitations under the License.
 
 echo "Waiting for all active pods to be ready..."
-kubectl -n lakehouse-management wait --for=jsonpath='{.status.phase}'=Running pod --all --timeout=60s
+kubectl -n jarina-management wait --for=jsonpath='{.status.phase}'=Running pod --all --timeout=60s
 
 
 for svc in \
   "git-server 9418:9418" \
   "spark-history 18080:18080" \
-  "lakehouse-task-proxy4spark 8086:8086" \
-  "lakehouse-release-trino 9090:8080" \
+  "jarina-task-proxy4spark 8086:8086" \
+  "jarina-release-trino 9090:8080" \
   "minio 9001:9001" \
   "minio 9000:9000" \
-  "lakehouse-config-service 8082:8082" \
-  "lakehouse-state-service 8084:8084" \
+  "jarina-config-service 8082:8082" \
+  "jarina-state-service 8084:8084" \
   "db-dev 5432:5432" \
   "broker 9092:9092" \
-  "lakehouse-ui-svc 8080:8080" \
+  "jarina-ui-svc 8080:8080" \
   "keycloak 8085:8085"
 do
   set -- $svc
   echo $1
-  kubectl port-forward svc/$1 $2 -n lakehouse-management &
+  kubectl port-forward svc/$1 $2 -n jarina-management &
 done
 

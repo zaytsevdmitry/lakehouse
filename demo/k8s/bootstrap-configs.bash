@@ -1,6 +1,6 @@
 #!/bin/bash
-# "Lakehouse management tool" - the services set for managing data changes based on a metadata-driven approach
-# Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/lakehouse
+# "Jarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+# Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,14 +37,14 @@ set -e
 
 # Configuration
 VERSION="0.11.0"
-TMP_DIR="/tmp/lakehouse_k8s_conf_${VERSION}"
+TMP_DIR="/tmp/jarina_k8s_conf_${VERSION}"
 # Resolved from the script location, so it can be run from any working directory.
 # The configuration tree is shared with demo/compose and therefore lives next to
 # the k8s directory; set CONF_GIT_SRC to read it from somewhere else.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOCAL_CONF_SRC="${CONF_GIT_SRC:-${SCRIPT_DIR}/../conf_git}"
 DOMAINS_SRC="${LOCAL_CONF_SRC}/domains"
-NAMESPACE="lakehouse-management"
+NAMESPACE="jarina-management"
 GIT_POD_LABEL="app=git-server"
 # Repository root inside the git-server container, the export root of `git daemon`.
 GIT_REPO_ROOT="/srv/git"
@@ -59,7 +59,7 @@ BRANCH="main"
 APP_RESOURCE_FILES="sparkTemplate.yaml sparkDQTemplate.yaml"
 # Legacy single-repository import: the whole conf_git tree, domains/ prefix included.
 # Kept so that a configuration service still pointed at
-# lakehouse.config.vcs.git.repository-url=.../config-repo.git keeps working; clear it
+# jarina.config.vcs.git.repository-url=.../config-repo.git keeps working; clear it
 # once the chart declares one repository per domain, like demo/compose does.
 LEGACY_REPO="config-repo.git"
 
@@ -101,7 +101,7 @@ REMOTE
 # definitions of the copied work tree, so that the jars mounted into the spark drivers
 # are referenced as local resources instead of being downloaded by the submission
 # service. Takes the work tree as the argument; both layouts are covered, the tasks of
-# a domain repository at <domain>/tasks/ and the same tasks inside the legacy
+# a domain repository at <repo>/tasks/ and the same tasks inside the legacy
 # repository at domains/<domain>/tasks/. Idempotent, therefore a run that changes
 # nothing in the sources still creates no commit.
 rewrite_app_resource() {
@@ -111,13 +111,13 @@ rewrite_app_resource() {
     local replaced
 
     for name in $APP_RESOURCE_FILES; do
-        for file in "$work"/*/tasks/"$name" "$work"/*/*/tasks/"$name"; do
+        for file in "$work"/tasks/"$name" "$work"/*/tasks/"$name" "$work"/*/*/tasks/"$name"; do
             [ -f "$file" ] || continue
             replaced=$(grep -c -F "deploy.appResource: file:" "$file" || true)
             if [ "$replaced" -eq 0 ]; then
                 continue
             fi
-            sed -i 's|^\([[:space:]]*deploy\.appResource:[[:space:]]*\)file:|\1local:|' "$file"
+            sed -i 's|file:///|local:///|g' "$file"
             echo "-->    ${file#"$work"/}: deploy.appResource switched to local: (${replaced})"
         done
     done
@@ -147,7 +147,7 @@ import_repo() {
     rm -rf "$work"
     git init -q -b "$BRANCH" "$work"
     # Set the local repository identity to prevent overriding global git configs
-    git -C "$work" config user.email "bootstrap@lakehouse.local"
+    git -C "$work" config user.email "bootstrap@jarina.local"
     git -C "$work" config user.name "Bootstrap Agent v${VERSION}"
     git -C "$work" remote add origin "$remote"
 

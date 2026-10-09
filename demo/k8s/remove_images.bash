@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# "Lakehouse management tool" - the services set for managing data changes based on a metadata-driven approach
-# Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/lakehouse
+# "Jarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+# Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 # limitations under the License.
 
 
-minikube image rm lakehouse:0.11.0
-minikube image rm lakehouse-s3-check:0.11.0
-minikube image rm lakehouse-hms:0.11.0
-minikube image rm lakehouse-spark-aws:0.11.0
-minikube image rm lakehouse-task-proxy4spark:0.11.0
+minikube image rm jarina:0.11.0
+minikube image rm jarina-s3-check:0.11.0
+minikube image rm jarina-hms:0.11.0
+minikube image rm jarina-spark-aws:0.11.0
+minikube image rm jarina-task-proxy4spark:0.11.0

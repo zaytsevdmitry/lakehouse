@@ -16,7 +16,7 @@ skinparam class {
     ArrowColor #566573
 }
 
-package "Исходные Java DTO (lakehouse-config-svc)" <<Source>> {
+package "Исходные Java DTO (jarina-config-svc)" <<Source>> {
     class NameSpaceDTO {
         +String keyName
         +String description

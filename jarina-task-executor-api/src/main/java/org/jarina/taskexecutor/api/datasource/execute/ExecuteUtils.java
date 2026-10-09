@@ -1,0 +1,67 @@
+/*
+ * "Jarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+ * Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     https://www.apache.org/licenses/LICENSE-2.0.txt
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.jarina.taskexecutor.api.datasource.execute;
+
+import org.jarina.client.api.exception.TaskConfigurationException;
+import org.jarina.taskexecutor.api.datasource.exception.ExecuteException;
+
+import java.util.Map;
+
+public interface ExecuteUtils {
+
+    /**
+     * Render and execute query command without result
+     * @param sql non-rendered query
+     * @param localContext additional context
+     * */
+    void execute(String sql, Map<String,Object> localContext) throws ExecuteException;
+
+    /**
+     * Render and execute query command with empty localContext without result
+     * @param sql non-rendered query
+     * */
+    void execute(String sql) throws ExecuteException;
+
+    /**
+     * @param checkQuery     non-rendered SQL query must return one of  values 0 or 1 where 0 its false, 1 - true
+     * @param executionQuery it's  non-rendered query will be executed if checkQuery returns value 1
+     * @param localContext additional context
+     */
+    void executeIfTrue(String checkQuery, String executionQuery, Map<String,Object> localContext) throws ExecuteException;
+
+    /**
+     * @param checkQuery     SQL query must return one of  values 0 or 1 where 0 its false, 1 - true
+     * @param executionQuery it's  query will be executed if checkQuery returns value 0
+     * @param localContext additional context
+     */
+    void executeIfFalse(String checkQuery, String executionQuery, Map<String,Object> localContext) throws ExecuteException;
+
+    /**
+     * @param sql SQL query. Must contain column with name "result"
+     * @return int value of column result
+     * @param localContext additional context
+     */
+    Integer executeGetResultInt(String sql,Map<String,Object> localContext) throws ExecuteException;
+    Long executeGetResultLong(String sql,Map<String,Object> localContext) throws ExecuteException;
+
+    String getConnectionString() throws TaskConfigurationException;
+
+    Map<String, String> dtoToProps() throws TaskConfigurationException;
+
+}
+

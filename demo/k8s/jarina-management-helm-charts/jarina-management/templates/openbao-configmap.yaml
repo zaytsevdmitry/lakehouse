@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openbao
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "jarina-management.labels" . | nindent 4 }}
+    app.kubernetes.io/component: openbao
+data:
+  seed.sh: |
+    #!/bin/sh
+    set -e
+
+    # Seed-only script: run against an already running OpenBao dev server
+    # (the server binary is PID 1 of the openbao Deployment; seeding is done
+    # once by the openbao-seed Job, which retries until this exits cleanly).
+
+    echo "=== OpenBao: waiting for API readiness ==="
+    until bao status >/dev/null 2>&1; do
+      sleep 1
+    done
+
+    echo "=== OpenBao: enabling KV v2 engine ==="
+    bao secrets enable -version=2 kv || echo "KV v2 engine already enabled"
+
+    # Demo-only default values: the information security administrator of a
+    # production deployment must not rely on them. Override via env
+    # (see openbao.seed.env / valueFrom example in values.yaml); in production
+    # there is no seed script at all.
+    echo "=== OpenBao: writing jarina/database secret ==="
+    bao kv put kv/jarina/database password="${JARINA_DB_PASSWORD:-postgresPW}"
+
+    echo "=== OpenBao: writing infrastructure/minio secret ==="
+    bao kv put kv/infrastructure/minio \
+      access_key="${MINIO_ROOT_USER:-spark_user}" \
+      secret_key="${MINIO_ROOT_PASSWORD:-spark_pwd}"
+
+    echo "=== OpenBao: creating read-only policy for Spark services ==="
+    bao policy write jarina-spark-readonly - <<'EOF'
+    path "kv/data/jarina/database" {
+      capabilities = ["read"]
+    }
+    path "kv/data/infrastructure/minio" {
+      capabilities = ["read"]
+    }
+    EOF
+
+    echo "=== OpenBao: creating scoped static token for Spark (Legacy/Driver fallback) ==="
+    JARINA_SPARK_TOKEN="${JARINA_SPARK_TOKEN:-jarina-spark-token}"
+    if ! bao token lookup "${JARINA_SPARK_TOKEN}" >/dev/null 2>&1; then
+      bao token create \
+        -policy=jarina-spark-readonly \
+        -ttl=8760h \
+        -id="${JARINA_SPARK_TOKEN}" \
+        -field=token
+    else
+      echo "Scoped token ${JARINA_SPARK_TOKEN} already exists, reusing it"
+    fi
+
+    echo "=== OpenBao: verifying scoped token permissions ==="
+    bao token capabilities "${JARINA_SPARK_TOKEN}" kv/data/jarina/database
+    bao token capabilities "${JARINA_SPARK_TOKEN}" kv/data/infrastructure/minio
+
+    # =========================================================================
+    # Spark to openbao Kubernetes auth
+    # =========================================================================
+    echo "=== OpenBao: enabling Kubernetes auth method ==="
+    if ! bao auth list | grep -q "kubernetes/"; then
+      bao auth enable kubernetes
+    else
+      echo "Kubernetes auth method already enabled"
+    fi
+    
+    echo "=== OpenBao: configuring Kubernetes cluster connection ==="
+    bao write auth/kubernetes/config \
+      kubernetes_host="https://kubernetes.default.svc:443"
+    
+    echo "=== OpenBao: creating role bound to spark-driver-sa ==="
+    # Связываем сервисный аккаунт экзекуторов с политикой чтения секретов
+    bao write auth/kubernetes/role/jarina \
+      bound_service_account_names="spark-driver-sa" \
+      bound_service_account_namespaces="{{ .Release.Namespace }}" \
+      policies="jarina-spark-readonly" \
+      ttl="1h"
+
+    echo "=== OpenBao: seeding complete ==="

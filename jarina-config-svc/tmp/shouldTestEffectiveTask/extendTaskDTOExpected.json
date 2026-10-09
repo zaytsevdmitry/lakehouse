@@ -1,0 +1,17 @@
+{
+  "description" : "Not exists in template",
+  "domainKeyName" : null,
+  "driverKeyName" : "spark_iceberg",
+  "importance" : "critical",
+  "maxRetries" : null,
+  "name" : "extend",
+  "sqlTemplate" : null,
+  "taskExecutionServiceGroupName" : "default",
+  "taskProcessor" : "sparkStandAloneClusterTaskProcessor",
+  "taskProcessorArgs" : {
+    "spark.driver.memory" : "2g",
+    "spark.executor.memory" : "5g"
+  },
+  "taskProcessorBody" : "mergeSQLProcessorBody",
+  "template" : null
+}

@@ -1,34 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Encoding">
-    <file url="file://$PROJECT_DIR$/lakehouse-cli/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/lakehouse-common-health/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/lakehouse-common-rest-client/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/lakehouse-common-test/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/lakehouse-common/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/lakehouse-config-rest-client/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/lakehouse-config-svc/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/lakehouse-credential-providers-jdbc/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/lakehouse-credential-providers-spark/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/lakehouse-jinjava/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/lakehouse-job-launcher-for-spark/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/lakehouse-scheduler-rest-client/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/lakehouse-scheduler-svc/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/lakehouse-spark-rest-client/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/lakehouse-state-rest-client/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/lakehouse-state-svc/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/lakehouse-task-executor-api/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/lakehouse-task-executor-rest-client/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/lakehouse-task-executor-spark-api/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/lakehouse-task-executor-spark-dataset-app/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/lakehouse-task-executor-spark-dq-app/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/lakehouse-task-executor-svc/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/lakehouse-task-proxy-for-spark-api/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/lakehouse-task-proxy-for-spark-rest-client/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/lakehouse-task-proxy-for-spark/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/lakehouse-ui-modeller-svc/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/lakehouse-ui-svc/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/lakehouse-validators/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/jarina-cli/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/jarina-common-health/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/jarina-common-rest-client/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/jarina-common-test/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/jarina-common/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/jarina-config-rest-client/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/jarina-config-svc/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/jarina-credential-providers-jdbc/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/jarina-credential-providers-spark/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/jarina-jinjava/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/jarina-job-launcher-for-spark/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/jarina-scheduler-rest-client/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/jarina-scheduler-svc/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/jarina-spark-rest-client/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/jarina-state-rest-client/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/jarina-state-svc/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/jarina-task-executor-api/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/jarina-task-executor-rest-client/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/jarina-task-executor-spark-api/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/jarina-task-executor-spark-dataset-app/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/jarina-task-executor-spark-dq-app/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/jarina-task-executor-svc/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/jarina-task-proxy-for-spark-api/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/jarina-task-proxy-for-spark-rest-client/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/jarina-task-proxy-for-spark/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/jarina-ui-modeller-svc/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/jarina-ui-svc/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/jarina-validators/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/main/resources" charset="UTF-8" />
   </component>

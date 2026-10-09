@@ -1,0 +1,129 @@
+/*
+ * "Jarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+ * Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     https://www.apache.org/licenses/LICENSE-2.0.txt
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.jarina.client.commandline.component.objectactionfacade;
+
+import tools.jackson.core.JacksonException;
+import org.jarina.client.api.utils.ObjectMapping;
+import org.jarina.client.commandline.model.CommandResult;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ObjectActionsHelper {
+
+    private final static String columnSeparator = " | ";
+
+    protected static CommandResult getObjectJSONResult(Object o) {
+        CommandResult result = new CommandResult(new ArrayList<String>());
+        try {
+            result.getResultSrtingList().add(ObjectMapping
+                    .asJsonStringPretty(o));
+        } catch (JacksonException e) {
+            result.getResultSrtingList().add(e.getMessage());
+        }
+        return result;
+    }
+
+    private static List<Integer> getMaxColumnSizes(
+            String[] header,
+            List<String[]> body) {
+        List<Integer> result = new ArrayList<Integer>();
+        for (int i = 0; i < header.length; i++) {
+            int columnLength = header[i].length();
+            for (int j = 0; j < body.size(); j++) {
+                if (body.get(j)[i] != null && body.get(j)[i].length() > columnLength)
+                    columnLength = body.get(j)[i].length();
+            }
+            result.add(columnLength);
+        }
+
+        return result;
+    }
+
+    private static String getRowFormat(
+            List<Integer> maxSizes) {
+        StringBuffer sb = new StringBuffer();
+
+        for (int i = 0; i < maxSizes.size(); i++) {
+            int columnLength = maxSizes.get(i);
+
+            if (i != 0)
+                sb.append(columnSeparator);
+            sb.append("%-").append(columnLength).append("s");
+        }
+        System.out.println(sb);
+        return sb.toString();
+    }
+
+    private static String getFarameSeparator(List<Integer> maxSizes) {
+
+        int rowlenght = columnSeparator.length() * (maxSizes.size() - 1);
+
+        for (int i = 0; i < maxSizes.size(); i++) {
+            rowlenght += maxSizes.get(i);
+        }
+
+        StringBuffer result = new StringBuffer();
+
+        for (int i = 0; i < rowlenght; i++) {
+            result.append("-");
+        }
+        return result.toString();
+    }
+
+    protected static CommandResult table(
+            String[] header,
+            List<String[]> body) {
+
+        List<Integer> maxColumnSizes = getMaxColumnSizes(header, body);
+        String rowFormat = getRowFormat(maxColumnSizes);
+        String separator = getFarameSeparator(maxColumnSizes);
+
+        List<String> strings = new ArrayList<String>();
+        strings.add(separator);
+        strings.add(String.format(rowFormat, header));
+        strings.add(separator);
+        body.forEach(v ->
+                strings.add(String.format(rowFormat,    v))
+        );
+        strings.add(separator);
+
+        return new CommandResult(strings);
+    }
+
+    protected static CommandResult coverHttpCode(int code) {
+        CommandResult result = new CommandResult(new ArrayList<String>());
+        result.getResultSrtingList().add(String.format("http code %d", code));
+        return result;
+    }
+
+    protected static CommandResult save(String filePath, Object o) {
+        CommandResult result = new CommandResult(new ArrayList<String>());
+
+        try {
+            ObjectMapping.objectToFile(filePath, o);
+        } catch (JacksonException e) {
+            result.getResultSrtingList().add(e.getMessage());
+        } catch (IOException e) {
+            result.getResultSrtingList().add(e.getMessage());
+        }
+        result.getResultSrtingList().add(String.format("Saved to file %s", filePath));
+        return result;
+    }
+}

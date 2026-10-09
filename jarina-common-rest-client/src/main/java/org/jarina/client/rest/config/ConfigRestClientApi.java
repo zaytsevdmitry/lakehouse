@@ -1,0 +1,120 @@
+/*
+ * "Jarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+ * Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     https://www.apache.org/licenses/LICENSE-2.0.txt
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.jarina.client.rest.config;
+
+import org.jarina.client.api.dto.configs.ScriptReferenceDTO;
+import org.jarina.client.api.dto.vcs.VcsObjectLogDTO;
+import org.jarina.client.api.dto.vcs.VcsSyncLogDTO;
+import org.jarina.client.api.dto.configs.dataset.DataSetDTO;
+import org.jarina.client.api.dto.configs.dataset.DataSetLineageDTO;
+import org.jarina.client.api.dto.configs.datasource.DataSourceDTO;
+import org.jarina.client.api.dto.configs.schedule.DriverDTO;
+import org.jarina.client.api.dto.configs.dq.QualityMetricsConfDTO;
+import org.jarina.client.api.dto.configs.schedule.*;
+import org.jarina.client.api.dto.task.SourceConfDTO;
+import org.jarina.client.rest.exception.ScriptBuildException;
+
+import java.time.OffsetDateTime;
+import java.util.List;
+
+
+public interface ConfigRestClientApi {
+
+
+    DriverDTO getDriverDTO(String name);
+
+    DataSourceDTO getDataSourceDTO(String name);
+
+    DataSetDTO getDataSetDTO(String name);
+
+    DataSetLineageDTO getDataSetLineageDTO(String name);
+
+    ScenarioActTemplateDTO getScenarioActTemplateDTO(String name);
+
+    ScheduleDTO getScheduleDTO(String name);
+
+    ScheduleEffectiveDTO getScheduleEffectiveDTO(String name);
+
+    TaskDTO getEffectiveTaskDTO(String schedule, String scenarioAct, String task);
+
+    TaskExecutionServiceGroupDTO getTaskExecutionServiceGroupDTO(String name);
+
+    QualityMetricsConfDTO getQualityMetricsConf(String key);
+
+    String getScript(String key);
+
+    String getScriptByListOfReference(List<ScriptReferenceDTO> scriptReferences) throws ScriptBuildException;
+
+    SourceConfDTO getSourceConfDTO(String dataSetKeyName);
+
+    String getDataSetModelScript(String dataSetKeyName);
+
+    List<DriverDTO> getDriverDTOList();
+
+    List<DataSourceDTO> getDataSourceDTOList();
+
+    List<DataSetDTO> getDataSetDTOList();
+
+    List<ScenarioActTemplateDTO> getScenarioActTemplateDTOList();
+
+    List<ScheduleDTO> getScheduleDTOList();
+
+    List<ScheduleHeaderDTO> getScheduleHeaderDTOList();
+
+    List<ScheduleEffectiveDTO> getScheduleEffectiveDTOList(OffsetDateTime dt);
+
+    List<TaskExecutionServiceGroupDTO> getTaskExecutionServiceGroupDTOList();
+
+    List<QualityMetricsConfDTO> getQualityMetricsConfList();
+
+    List<QualityMetricsConfDTO> getQualityMetricsConfListByDataSetKeyName(String dataSetKeyName);
+
+    List<VcsSyncLogDTO> getVcsSyncLogDTOList(
+            OffsetDateTime from, OffsetDateTime to, String status, String commitId, String domainKeyName);
+
+    List<VcsObjectLogDTO> getVcsObjectLogDTOList(
+            String commitId, String kind, OffsetDateTime from, OffsetDateTime to,
+            String filePath, String objectName, String domainKeyName);
+
+    int deleteDriverDTO(String name);
+
+    int deleteDataStoreDTO(String name);
+
+    int deleteDataSetDTO(String name);
+
+    int deleteScenarioActTemplateDTO(String name);
+
+    int deleteScheduleDTO(String name);
+
+    int deleteTaskExecutionServiceGroupDTO(String name);
+
+    int postDriverDTO(DriverDTO o);
+
+    int postDataStoreDTO(DataSourceDTO o);
+
+    int postDataSetDTO(DataSetDTO o);
+
+    int postScenarioActTemplateDTO(ScenarioActTemplateDTO o);
+
+    int postScheduleDTO(ScheduleDTO o);
+
+    int postTaskExecutionServiceGroupDTO(TaskExecutionServiceGroupDTO o);
+
+    int postQualityMetricsConf(QualityMetricsConfDTO o);
+}
+

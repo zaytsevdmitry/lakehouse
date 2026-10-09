@@ -10,10 +10,10 @@ taskProcessorArgs:
   spark.app.name: "{{ id }}-{{tryNum}}-{{name}}"
   spark.kubernetes.submission.waitAppCompletion: false
   spark.kubernetes.executor.deleteOnTermination: true
-  spark.kubernetes.driver.annotation.lakehouse-management-task: "{{ getTaskFullName() }}"
-  deploy.appResource: file:///opt/lakehouse-task-spark-apps/lakehouse-task-executor-spark-dataset-app-0.11.0-jar-with-dependencies.jar
-  deploy.clusterUrl: http://lakehouse-task-proxy4spark:8086/v1/submissions
-  deploy.mainClass: org.lakehouse.taskexecutor.spark.dataset.SparkProcessorApplication
+  spark.kubernetes.driver.annotation.jarina-management-task: "{{ getTaskFullName() }}"
+  deploy.appResource: file:///opt/jarina-task-spark-apps/jarina-task-executor-spark-dataset-app-0.11.0-jar-with-dependencies.jar
+  deploy.clusterUrl: http://jarina-task-proxy4spark:8086/v1/submissions
+  deploy.mainClass: org.jarina.taskexecutor.spark.dataset.SparkProcessorApplication
   spark.driver.cores: 1
   spark.driver.memory: 1g
   spark.executor.cores: 1

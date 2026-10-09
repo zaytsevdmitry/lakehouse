@@ -1,0 +1,33 @@
+dependencies:
+- name: jarina-config-svc
+  repository: file://../jarina-config-svc
+  version: 0.1.0
+- name: jarina-scheduler-svc
+  repository: file://../jarina-scheduler-svc
+  version: 0.1.0
+- name: jarina-state-svc
+  repository: file://../jarina-state-svc
+  version: 0.1.0
+- name: jarina-task-executor-service
+  repository: file://../jarina-task-executor-svc
+  version: 0.1.0
+- name: hive-metastore
+  repository: file://../hive-metastore
+  version: 0.1.0
+- name: trino
+  repository: file://../trino
+  version: 1.0.0
+- name: spark-history
+  repository: file://../spark-history
+  version: 0.1.0
+- name: jarina-task-proxy4spark
+  repository: file://../jarina-task-proxy4spark
+  version: 0.1.0
+- name: jarina-ui-svc
+  repository: file://../jarina-ui-svc
+  version: 0.1.0
+- name: git-server
+  repository: file://../git-server
+  version: 0.1.0
+digest: sha256:55908174ff77ed5cd3805b433aaa0c02210c33844c9e8db5b040a62ce6642193
+generated: "2026-10-09T19:32:53.106067694+03:00"

@@ -1,6 +1,6 @@
 @startuml
 
-class DataSet [[java:org.lakehouse.config.entities.dataset.DataSet]] {
+class DataSet [[java:org.jarina.config.entities.dataset.DataSet]] {
 	-nameSpace: NameSpace
 	-dataSource: DataSource
 	-databaseSchemaName: String
@@ -19,7 +19,7 @@ class DataSet [[java:org.lakehouse.config.entities.dataset.DataSet]] {
 }
 
 
-class SQLTemplate [[java:org.lakehouse.config.entities.SQLTemplate]] {
+class SQLTemplate [[java:org.jarina.config.entities.SQLTemplate]] {
 	-dataSource: DataSource
 	-dataSet: DataSet
 	-driver: Driver
@@ -55,7 +55,7 @@ class KeyValueAbstract {
 }
 
 
-class ScriptReference [[java:org.lakehouse.config.entities.script.ScriptReference]] {
+class ScriptReference [[java:org.jarina.config.entities.script.ScriptReference]] {
 	-id: Long
 	-scriptOrder: Integer
 	+ScriptReference()

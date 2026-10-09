@@ -1,0 +1,87 @@
+logging:
+  level:
+    org:
+      springframework:
+        transaction:
+          interceptor: ERROR
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgresDB?ApplicationName=ConfigSVC
+    username: postgresUser
+    password: postgresPW
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    generate-ddl: true
+    ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+    hibernate:
+      transaction:
+        jta:
+          platform: org.hibernate.service.jta.platform.internal.JBossStandAloneJtaPlatform
+    properties:
+      jakarta:
+        persistence:
+          create-database-schemas: true
+      hibernate:
+        default_schema: jarina_config
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://jarina-auth-svc:8080/realms/jarina}
+      client:
+        registration:
+          keycloak-internal:
+            provider: keycloak
+            client-id: jarina-internal-client
+            client-secret: ${KEYCLOAK_INTERNAL_CLIENT_SECRET:super-secret-internal-key-987654321}
+            authorization-grant-type: client_credentials
+            scope: openid
+        provider:
+          keycloak:
+            authorization-uri: ${KEYCLOAK_ISSUER_URI:http://jarina-auth-svc:8080/realms/jarina}/protocol/openid-connect/auth
+            token-uri: ${KEYCLOAK_ISSUER_URI:http://jarina-auth-svc:8080/realms/jarina}/protocol/openid-connect/token
+
+jarina:
+  security:
+    enabled: true
+  config:
+    produce:
+      delay-ms: 10000
+      initial-delay-ms: 20000
+      limit: 100
+      topic: configuration_changes
+      kafka:
+        producer:
+          properties:
+              bootstrap.servers: localhost:9092
+    vcs:
+      git:
+        repository-url: ${JARINA_CONFIG_GIT_REPOSITORY_URL:}
+        branch: ${JARINA_CONFIG_GIT_BRANCH:main}
+        local-clone-path: ${JARINA_CONFIG_GIT_LOCAL_CLONE_PATH:}
+        private-key-path: ${JARINA_CONFIG_GIT_PRIVATE_KEY_PATH:}
+        sync:
+          enabled: ${JARINA_CONFIG_GIT_SYNC_ENABLED:false}
+          interval-ms: ${JARINA_CONFIG_GIT_SYNC_INTERVAL_MS:30000}
+          initial-delay-ms: ${JARINA_CONFIG_GIT_SYNC_INITIAL_DELAY_MS:10000}
+
+  health:
+
+    liveness-path: /healthz
+    readiness-path: /readyz
+
+---
+# Production profile: completely disable Swagger (api-docs + UI)
+spring:
+  config:
+    activate:
+      on-profile: prod
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+

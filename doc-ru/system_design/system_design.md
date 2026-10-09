@@ -1,16 +1,16 @@
 # System design
 
-Общий системный дизайн lakehouse: набор сервисов, управляющих изменениями данных на основе метаданных (metadata-driven approach).
+Общий системный дизайн jarina: набор сервисов, управляющих изменениями данных на основе метаданных (metadata-driven approach).
 
 ## Сервисы
 
 | Сервис | Порт | Назначение | Документация |
 |:-------|:----:|:-----------|:-------------|
-| lakehouse-config-svc | 8080 | Хранение конфигураций (метаданных): источники данных, датасеты, расписания, сценарии, драйверы. REST API для чтения/записи конфигураций, публикация изменений расписаний в Kafka | [doc](../../lakehouse-config-svc/doc-ru/readme.md) |
-| lakehouse-scheduler-svc | 8081 | Планировщик: получает изменения расписаний из Kafka, формирует экземпляры расписаний/задач, разрешает зависимости, ставит задачи в очередь и передает их исполнителям, управляет блокировками (lock/heartbeat/release) | [doc](../../lakehouse-scheduler-svc/doc-ru/readme.md) |
-| lakehouse-state-svc | 8082 | Хранение состояний интервалов датасетов (LOCKED/SUCCESS), поиск «дыр» (интервалов без SUCCESS) | [doc](../../lakehouse-state-svc/doc-ru/readme.md) |
-| lakehouse-task-executor-svc | 8089 | Исполнитель задач: получает задачи из Kafka, блокирует их в scheduler-svc, выполняет TaskProcessor'ы (JDBC, state, spark), уведомляет о heartbeat и освобождает блокировку с результатом | [doc](../../lakehouse-task-executor-svc/readme.md) |
-| lakehouse-task-proxy-for-spark | 8090 | Прокси для Spark: принимает spark-submit по REST `/v1/submissions`, ведет очередь в PostgreSQL, отправляет задачи в кластеры (Standalone/K8s/YARN) через адаптеры | [doc](../../lakehouse-task-proxy-for-spark/README_ru.md) |
+| jarina-config-svc | 8080 | Хранение конфигураций (метаданных): источники данных, датасеты, расписания, сценарии, драйверы. REST API для чтения/записи конфигураций, публикация изменений расписаний в Kafka | [doc](../../jarina-config-svc/doc-ru/readme.md) |
+| jarina-scheduler-svc | 8081 | Планировщик: получает изменения расписаний из Kafka, формирует экземпляры расписаний/задач, разрешает зависимости, ставит задачи в очередь и передает их исполнителям, управляет блокировками (lock/heartbeat/release) | [doc](../../jarina-scheduler-svc/doc-ru/readme.md) |
+| jarina-state-svc | 8082 | Хранение состояний интервалов датасетов (LOCKED/SUCCESS), поиск «дыр» (интервалов без SUCCESS) | [doc](../../jarina-state-svc/doc-ru/readme.md) |
+| jarina-task-executor-svc | 8089 | Исполнитель задач: получает задачи из Kafka, блокирует их в scheduler-svc, выполняет TaskProcessor'ы (JDBC, state, spark), уведомляет о heartbeat и освобождает блокировку с результатом | [doc](../../jarina-task-executor-svc/readme.md) |
+| jarina-task-proxy-for-spark | 8090 | Прокси для Spark: принимает spark-submit по REST `/v1/submissions`, ведет очередь в PostgreSQL, отправляет задачи в кластеры (Standalone/K8s/YARN) через адаптеры | [doc](../../jarina-task-proxy-for-spark/README_ru.md) |
 
 
 ## Взаимодействие сервисов
@@ -46,8 +46,8 @@ task-executor-svc работает с state-svc через REST:
 
 Подробнее о сервисах и их внутреннем устройстве см. ссылки в таблице «Сервисы», а также:
 
-- конфигурации (метаданные): [content_configuration](../../lakehouse-config-svc/doc-ru/content_configuration/content_configuration.md);
-- работа расписаний и статусные модели: [scheduling](../../lakehouse-scheduler-svc/doc-ru/scheduling/Scheduling.md);
-- процессоры задач: [processors](../../lakehouse-task-executor-svc/doc-ru/processors.md);
-- модель состояний интервалов: [state model](../../lakehouse-state-svc/doc-ru/state_model/state-models.MD);
-- прокси для spark: [README](../../lakehouse-task-proxy-for-spark/README_ru.md).
+- конфигурации (метаданные): [content_configuration](../../jarina-config-svc/doc-ru/content_configuration/content_configuration.md);
+- работа расписаний и статусные модели: [scheduling](../../jarina-scheduler-svc/doc-ru/scheduling/Scheduling.md);
+- процессоры задач: [processors](../../jarina-task-executor-svc/doc-ru/processors.md);
+- модель состояний интервалов: [state model](../../jarina-state-svc/doc-ru/state_model/state-models.MD);
+- прокси для spark: [README](../../jarina-task-proxy-for-spark/README_ru.md).

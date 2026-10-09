@@ -1,6 +1,6 @@
 kind: DataSet
 keyName: aggregation_pay_per_client_total_mart
-dataSourceKeyName: lakehousestorage
+dataSourceKeyName: jarinastorage
 databaseSchemaName: default
 tableName: ggregation_pay_per_client_total_mart
 scripts:

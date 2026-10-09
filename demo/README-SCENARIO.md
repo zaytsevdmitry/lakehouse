@@ -44,17 +44,17 @@
     - [regular](conf/schedules/regular.json) имитирует ежедневное соединение двух
       таблиц [transaction_dds.sql](conf/dataset-sql-model/transaction_dds.sql) из расписаний выше в одну на
       spark [transaction_dds](conf/datasets/transaction_dds.json) сохраняя на s3/minio
-      диск [lakehousestorage](conf/datastores/lakehousestorage.json)
+      диск [jarinastorage](conf/datastores/jarinastorage.json)
         - transaction_dds послужит
           источником [aggregation_pay_per_client_total_mart.sql](conf/dataset-sql-model/aggregation_pay_per_client_total_mart.sql)
           для
           витрины [aggregation_pay_per_client_total_mart.json](conf/datasets/aggregation_pay_per_client_total_mart.json)
-          которая будет сохранена в [lakehousestorage](conf/datastores/lakehousestorage.json)
+          которая будет сохранена в [jarinastorage](conf/datastores/jarinastorage.json)
         - transaction_dds послужит
           источником [aggregation_pay_per_client_daily_mart.sql](conf/dataset-sql-model/aggregation_pay_per_client_daily_mart.sql)
           для
           витрины [aggregation_pay_per_client_daily_mart.json](conf/datasets/aggregation_pay_per_client_daily_mart.json)
-          которая будет сохранена в [lakehousestorage](conf/datastores/lakehousestorage.json)
+          которая будет сохранена в [jarinastorage](conf/datastores/jarinastorage.json)
     - [initial](conf/schedules/initial.json) ежемесячная версия [regular](conf/schedules/regular.json). Будет
       заблокирована сбором generateSource и generateSourceDict до тех пор, пока они не будут собраны за первый месяц
 - проекта (пространства имен, он один [demo](conf/projects/demo.json))

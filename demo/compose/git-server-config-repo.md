@@ -1,6 +1,6 @@
 # Работа с конфигурационными репозиториями git-server (домены)
 
-Демо-стек подсистемы GitOps/CVS: `lakehouse-config-svc` по расписанию подтягивает
+Демо-стек подсистемы GitOps/CVS: `jarina-config-svc` по расписанию подтягивает
 ветку `main` всех доменных репозиториев (`git://git-server:9418/<domain>.git`),
 вычисляет разницу с последним успешно применённым коммитом и применяет изменения
 в базу данных одной транзакцией. Источником истины для git-потока является
@@ -61,14 +61,14 @@ docker compose logs --tail 10 git-server
 Если изменений нет, для домена появится строка
 `Domain 'analytics': no configuration changes, nothing to commit`.
 
-### Шаг 3. Дождитесь синхронизации lakehouse-config-svc
+### Шаг 3. Дождитесь синхронизации jarina-config-svc
 
-Сервис синхронизируется по расписанию `lakehouse.config.vcs.git.sync.interval-ms`
+Сервис синхронизируется по расписанию `jarina.config.vcs.git.sync.interval-ms`
 (по умолчанию `30000` мс, задержка первого цикла `10000` мс). Обычно достаточно
 подождать 30–45 секунд.
 
 ```bash
-docker compose logs --since 1m lakehouse-config-svc | grep "applied successfully"
+docker compose logs --since 1m jarina-config-svc | grep "applied successfully"
 ```
 
 ```text
@@ -79,7 +79,7 @@ o.l.c.vcs.service.GitOpsSynchronizer: Configuration commit <хэш> applied succ
 
 ```bash
 docker compose exec db-dev psql -U postgresUser -d postgresDB \
-  -c "set search_path=lakehouse_config" \
+  -c "set search_path=jarina_config" \
   -c "select key_name, enabled from schedule where key_name='generateSource';"
 ```
 
@@ -93,7 +93,7 @@ docker compose exec db-dev psql -U postgresUser -d postgresDB \
 
 ```bash
 docker compose exec db-dev psql -U postgresUser -d postgresDB \
-  -c "set search_path=lakehouse_config" \
+  -c "set search_path=jarina_config" \
   -c "select id, status, commit_id from cvs_sync_log order by id;" \
   -c "select id, date_time_rec, kind, object_name, file_path, commit_id from cvs_object_log order by id;"
 ```
@@ -134,12 +134,12 @@ docker compose exec db-dev psql -U postgresUser -d postgresDB \
 (замените `platform` на нужный домен):
 
 ```bash
-docker run --rm --network compose_lakehouse_net \
+docker run --rm --network compose_jarina_net \
   -v "$PWD:/work" --entrypoint sh alpine/git:latest -c \
   "git clone git://git-server:9418/platform.git /work/platform"
 ```
 
-Имя сети стека уточните через `docker network ls` (обычно `compose_lakehouse_net`).
+Имя сети стека уточните через `docker network ls` (обычно `compose_jarina_net`).
 
 > Учтите: при следующем перезапуске `git-server` синхронизирует каждый репозиторий
 > со своей доменной директорией в `conf_git`, поэтому правки, внесённые напрямую в

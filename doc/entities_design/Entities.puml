@@ -1,11 +1,11 @@
 @startuml
-class TaskExecutionServiceGroup [[java:org.lakehouse.config.entities.TaskExecutionServiceGroup]] {
+class TaskExecutionServiceGroup [[java:org.jarina.config.entities.TaskExecutionServiceGroup]] {
 	+TaskExecutionServiceGroup()
 }
 class KeyEntityAbstract {
 }
 KeyEntityAbstract <|-- TaskExecutionServiceGroup
-class Schedule [[java:org.lakehouse.config.entities.Schedule]] {
+class Schedule [[java:org.jarina.config.entities.Schedule]] {
 	-intervalExpression: String
 	-startDateTime: OffsetDateTime
 	-endDateTime: OffsetDateTime
@@ -31,7 +31,7 @@ class Schedule [[java:org.lakehouse.config.entities.Schedule]] {
 class KeyEntityAbstract {
 }
 KeyEntityAbstract <|-- Schedule
-abstract class TaskAbstract [[java:org.lakehouse.config.entities.TaskAbstract]] {
+abstract class TaskAbstract [[java:org.jarina.config.entities.TaskAbstract]] {
 	-id: Long
 	-name: String
 	-description: String
@@ -62,7 +62,7 @@ TaskAbstract --> "1" TaskExecutionServiceGroup : taskExecutionServiceGroup
 class TaskExecutionServiceGroup {
 }
 TaskAbstract --> "1" TaskExecutionServiceGroup : getTaskExecutionServiceGroup()
-class ConfigurationProduceMessage [[java:org.lakehouse.config.entities.ConfigurationProduceMessage]] {
+class ConfigurationProduceMessage [[java:org.jarina.config.entities.ConfigurationProduceMessage]] {
 	-id: Long
 	-kind: String
 	-keyName: String
@@ -80,7 +80,7 @@ class ConfigurationProduceMessage [[java:org.lakehouse.config.entities.Configura
 	+equals(o: Object): boolean
 	+hashCode(): int
 }
-abstract class KeyValueAbstract [[java:org.lakehouse.config.entities.KeyValueAbstract]] {
+abstract class KeyValueAbstract [[java:org.jarina.config.entities.KeyValueAbstract]] {
 	-id: Long
 	-key: String
 	-value: String
@@ -96,13 +96,13 @@ abstract class KeyValueAbstract [[java:org.lakehouse.config.entities.KeyValueAbs
 	+equals(o: Object): boolean
 	+hashCode(): int
 }
-class NameSpace [[java:org.lakehouse.config.entities.NameSpace]] {
+class NameSpace [[java:org.jarina.config.entities.NameSpace]] {
 	+NameSpace()
 }
 class KeyEntityAbstract {
 }
 KeyEntityAbstract <|-- NameSpace
-abstract class KeyEntityAbstract [[java:org.lakehouse.config.entities.KeyEntityAbstract]] {
+abstract class KeyEntityAbstract [[java:org.jarina.config.entities.KeyEntityAbstract]] {
 	-keyName: String
 	-description: String
 	+KeyEntityAbstract()
@@ -115,7 +115,7 @@ abstract class KeyEntityAbstract [[java:org.lakehouse.config.entities.KeyEntityA
 	+hashCode(): int
 	+equalsByName(that: KeyEntityAbstract): boolean
 }
-class SQLTemplate [[java:org.lakehouse.config.entities.SQLTemplate]] {
+class SQLTemplate [[java:org.jarina.config.entities.SQLTemplate]] {
 	+SQLTemplate()
 	+setDataSource(dataSource: DataSource): void
 	+setDataSet(dataSet: DataSet): void
@@ -144,7 +144,7 @@ SQLTemplate --> "1" Driver : getDriver()
 class KeyValueAbstract {
 }
 KeyValueAbstract <|-- SQLTemplate
-class DataSet [[java:org.lakehouse.config.entities.dataset.DataSet]] {
+class DataSet [[java:org.jarina.config.entities.dataset.DataSet]] {
 	-databaseSchemaName: String
 	-tableName: String
 	+DataSet()
@@ -172,7 +172,7 @@ DataSet --> "1" DataSource : getDataSource()
 class KeyEntityAbstract {
 }
 KeyEntityAbstract <|-- DataSet
-class DataSetProperty [[java:org.lakehouse.config.entities.dataset.DataSetProperty]] {
+class DataSetProperty [[java:org.jarina.config.entities.dataset.DataSetProperty]] {
 	+DataSetProperty()
 	+setDataSet(dataSet: DataSet): void
 	+equals(o: Object): boolean
@@ -187,7 +187,7 @@ DataSetProperty --> "1" DataSet : getDataSet()
 class KeyValueAbstract {
 }
 KeyValueAbstract <|-- DataSetProperty
-class ForeignKeyReference [[java:org.lakehouse.config.entities.dataset.ForeignKeyReference]] {
+class ForeignKeyReference [[java:org.jarina.config.entities.dataset.ForeignKeyReference]] {
 	-id: Long
 	-onDelete: Types.ReferenceAction
 	-onUpdate: Types.ReferenceAction
@@ -213,7 +213,7 @@ ForeignKeyReference --> "1" DataSetConstraint : getDataSetConstraint()
 class DataSetConstraint {
 }
 ForeignKeyReference --> "1" DataSetConstraint : getRefDataSetConstraint()
-class DataSetConstraint [[java:org.lakehouse.config.entities.dataset.DataSetConstraint]] {
+class DataSetConstraint [[java:org.jarina.config.entities.dataset.DataSetConstraint]] {
 	-id: Long
 	-name: String
 	-type: Types.Constraint
@@ -247,7 +247,7 @@ DataSetConstraint --> "1" DataSet : dataSet
 class DataSet {
 }
 DataSetConstraint --> "1" DataSet : getDataSet()
-class DataSetSourceProperty [[java:org.lakehouse.config.entities.dataset.DataSetSourceProperty]] {
+class DataSetSourceProperty [[java:org.jarina.config.entities.dataset.DataSetSourceProperty]] {
 	+DataSetSourceProperty()
 	+setDataSetSource(dataSetSource: DataSetSource): void
 	+equals(o: Object): boolean
@@ -262,7 +262,7 @@ DataSetSourceProperty --> "1" DataSetSource : getDataSetSource()
 class KeyValueAbstract {
 }
 KeyValueAbstract <|-- DataSetSourceProperty
-class DataSetSource [[java:org.lakehouse.config.entities.dataset.DataSetSource]] {
+class DataSetSource [[java:org.jarina.config.entities.dataset.DataSetSource]] {
 	-id: Long
 	+DataSetSource()
 	+setDataSet(dataSet: DataSet): void
@@ -292,7 +292,7 @@ DataSetSource --> "1" DataSet : getSource()
 class QualityMetricsConf {
 }
 DataSetSource --> "1" QualityMetricsConf : getQualityMetricsConf()
-class DataSetColumn [[java:org.lakehouse.config.entities.dataset.DataSetColumn]] {
+class DataSetColumn [[java:org.jarina.config.entities.dataset.DataSetColumn]] {
 	-id: Long
 	-name: String
 	-dataType: String
@@ -322,7 +322,7 @@ DataSetColumn --> "1" DataSet : dataSet
 class DataSet {
 }
 DataSetColumn --> "1" DataSet : getDataSet()
-class DataSourceSvcItem [[java:org.lakehouse.config.entities.datasource.DataSourceSvcItem]] {
+class DataSourceSvcItem [[java:org.jarina.config.entities.datasource.DataSourceSvcItem]] {
 	-id: Long
 	-host: String
 	-port: String
@@ -346,7 +346,7 @@ DataSourceSvcItem --> "1" DataSource : dataSource
 class DataSource {
 }
 DataSourceSvcItem --> "1" DataSource : getDataSource()
-class DataSourceProperty [[java:org.lakehouse.config.entities.datasource.DataSourceProperty]] {
+class DataSourceProperty [[java:org.jarina.config.entities.datasource.DataSourceProperty]] {
 	+DataSourceProperty()
 	+setDataSource(dataSource: DataSource): void
 	+equals(o: Object): boolean
@@ -361,7 +361,7 @@ DataSourceProperty --> "1" DataSource : getDataSource()
 class KeyValueAbstract {
 }
 KeyValueAbstract <|-- DataSourceProperty
-class Driver [[java:org.lakehouse.config.entities.datasource.Driver]] {
+class Driver [[java:org.jarina.config.entities.datasource.Driver]] {
 	-dataSourceType: Types.DataSourceType
 	+getDataSourceType(): Types.DataSourceType
 	+setDataSourceType(dataSourceType: Types.DataSourceType): void
@@ -371,7 +371,7 @@ class Driver [[java:org.lakehouse.config.entities.datasource.Driver]] {
 class KeyEntityAbstract {
 }
 KeyEntityAbstract <|-- Driver
-class ConnectionTemplate [[java:org.lakehouse.config.entities.datasource.ConnectionTemplate]] {
+class ConnectionTemplate [[java:org.jarina.config.entities.datasource.ConnectionTemplate]] {
 	+setDriver(driver: Driver): void
 	+equals(o: Object): boolean
 	+hashCode(): int
@@ -385,7 +385,7 @@ ConnectionTemplate --> "1" Driver : getDriver()
 class KeyValueAbstract {
 }
 KeyValueAbstract <|-- ConnectionTemplate
-class DataSourceSvcItemProperty [[java:org.lakehouse.config.entities.datasource.DataSourceSvcItemProperty]] {
+class DataSourceSvcItemProperty [[java:org.jarina.config.entities.datasource.DataSourceSvcItemProperty]] {
 	+DataSourceSvcItemProperty()
 	+setDataSourceSvcItem(dataSourceSvcItem: DataSourceSvcItem): void
 	+equals(o: Object): boolean
@@ -400,7 +400,7 @@ DataSourceSvcItemProperty --> "1" DataSourceSvcItem : getDataSourceSvcItem()
 class KeyValueAbstract {
 }
 KeyValueAbstract <|-- DataSourceSvcItemProperty
-class DataSource [[java:org.lakehouse.config.entities.datasource.DataSource]] {
+class DataSource [[java:org.jarina.config.entities.datasource.DataSource]] {
 	-catalogKeyName: String
 	+DataSource()
 	+setDriver(driver: Driver): void
@@ -418,7 +418,7 @@ DataSource --> "1" Driver : getDriver()
 class KeyEntityAbstract {
 }
 KeyEntityAbstract <|-- DataSource
-class QualityMetricsConfTestSetScript [[java:org.lakehouse.config.entities.dq.QualityMetricsConfTestSetScript]] {
+class QualityMetricsConfTestSetScript [[java:org.jarina.config.entities.dq.QualityMetricsConfTestSetScript]] {
 	-id: Long
 	-scriptOrder: Integer
 	+getId(): Long
@@ -442,7 +442,7 @@ QualityMetricsConfTestSetScript --> "1" Script : getScript()
 class QualityMetricsConfTestSet {
 }
 QualityMetricsConfTestSetScript --> "1" QualityMetricsConfTestSet : getQualityMetricsConfTestSet()
-class QualityMetricsConfSourceProperty [[java:org.lakehouse.config.entities.dq.QualityMetricsConfSourceProperty]] {
+class QualityMetricsConfSourceProperty [[java:org.jarina.config.entities.dq.QualityMetricsConfSourceProperty]] {
 	+QualityMetricsConfSourceProperty()
 	+setQualityMetricsConfSource(qualityMetricsConfSource: QualityMetricsConfSource): void
 	+equals(o: Object): boolean
@@ -457,14 +457,14 @@ QualityMetricsConfSourceProperty --> "1" QualityMetricsConfSource : getQualityMe
 class KeyValueAbstract {
 }
 KeyValueAbstract <|-- QualityMetricsConfSourceProperty
-enum ElementType [[java:org.lakehouse.config.entities.dq.ElementType]] {
+enum ElementType [[java:org.jarina.config.entities.dq.ElementType]] {
 	TEST_SET
 	METRIC
 	THRESHOLD
 	value
 	~ElementType(value: int)
 }
-class QualityMetricsConf [[java:org.lakehouse.config.entities.dq.QualityMetricsConf]] {
+class QualityMetricsConf [[java:org.jarina.config.entities.dq.QualityMetricsConf]] {
 	-keyName: String
 	-description: String
 	-dqThresholdViolationLevel: Types.DQThresholdViolationLevel
@@ -494,7 +494,7 @@ QualityMetricsConf --> "1" DataSet : getDataSet()
 class KeyEntityAbstract {
 }
 KeyEntityAbstract <|-- QualityMetricsConf
-class QualityMetricsConfTestSet [[java:org.lakehouse.config.entities.dq.QualityMetricsConfTestSet]] {
+class QualityMetricsConfTestSet [[java:org.jarina.config.entities.dq.QualityMetricsConfTestSet]] {
 	-id: Long
 	-keyName: String
 	-description: String
@@ -528,7 +528,7 @@ QualityMetricsConfTestSet --> "1" QualityMetricsConf : getQualityMetricsConf()
 class ElementType {
 }
 QualityMetricsConfTestSet --> "1" ElementType : getElementType()
-class QualityMetricsConfSource [[java:org.lakehouse.config.entities.dq.QualityMetricsConfSource]] {
+class QualityMetricsConfSource [[java:org.jarina.config.entities.dq.QualityMetricsConfSource]] {
 	-id: Long
 	+QualityMetricsConfSource()
 	+setSource(source: DataSet): void
@@ -550,7 +550,7 @@ QualityMetricsConfSource --> "1" DataSet : getSource()
 class QualityMetricsConf {
 }
 QualityMetricsConfSource --> "1" QualityMetricsConf : getQualityMetricsConf()
-class ScenarioAct [[java:org.lakehouse.config.entities.scenario.ScenarioAct]] {
+class ScenarioAct [[java:org.jarina.config.entities.scenario.ScenarioAct]] {
 	-id: Long
 	-name: String
 	~intervalStart: String
@@ -588,7 +588,7 @@ ScenarioAct --> "1" Schedule : getSchedule()
 class TemplateScenarioAct {
 }
 ScenarioAct --> "1" TemplateScenarioAct : getScenarioActTemplate()
-class ScenarioActEdge [[java:org.lakehouse.config.entities.scenario.ScenarioActEdge]] {
+class ScenarioActEdge [[java:org.jarina.config.entities.scenario.ScenarioActEdge]] {
 	-id: Long
 	+ScenarioActEdge()
 	+getId(): Long
@@ -617,7 +617,7 @@ ScenarioActEdge --> "1" ScenarioAct : getFromScenarioAct()
 class ScenarioAct {
 }
 ScenarioActEdge --> "1" ScenarioAct : getToScenarioAct()
-class ScenarioActTask [[java:org.lakehouse.config.entities.scenario.ScenarioActTask]] {
+class ScenarioActTask [[java:org.jarina.config.entities.scenario.ScenarioActTask]] {
 	+ScenarioActTask()
 	+setScenarioAct(scenarioAct: ScenarioAct): void
 	+equals(o: Object): boolean
@@ -632,7 +632,7 @@ ScenarioActTask --> "1" ScenarioAct : getScenarioAct()
 class TaskAbstract {
 }
 TaskAbstract <|-- ScenarioActTask
-class ScenarioActTaskProcessorArg [[java:org.lakehouse.config.entities.scenario.ScenarioActTaskProcessorArg]] {
+class ScenarioActTaskProcessorArg [[java:org.jarina.config.entities.scenario.ScenarioActTaskProcessorArg]] {
 	+ScenarioActTaskProcessorArg()
 	+setScenarioActTask(taskTemplate: ScenarioActTask): void
 	+equals(o: Object): boolean
@@ -647,7 +647,7 @@ ScenarioActTaskProcessorArg --> "1" ScenarioActTask : getScenarioActTask()
 class KeyValueAbstract {
 }
 KeyValueAbstract <|-- ScenarioActTaskProcessorArg
-class ScenarioActTaskEdge [[java:org.lakehouse.config.entities.scenario.ScenarioActTaskEdge]] {
+class ScenarioActTaskEdge [[java:org.jarina.config.entities.scenario.ScenarioActTaskEdge]] {
 	-id: Long
 	-fromScenarioActTask: String
 	-toScenarioActTask: String
@@ -669,7 +669,7 @@ ScenarioActTaskEdge --> "1" ScenarioAct : scenarioAct
 class ScenarioAct {
 }
 ScenarioActTaskEdge --> "1" ScenarioAct : getScenarioAct()
-class ScriptReference [[java:org.lakehouse.config.entities.script.ScriptReference]] {
+class ScriptReference [[java:org.jarina.config.entities.script.ScriptReference]] {
 	-id: Long
 	-scriptOrder: Integer
 	+ScriptReference()
@@ -701,7 +701,7 @@ ScriptReference --> "1" DataSet : getDataSet()
 class QualityMetricsConfTestSet {
 }
 ScriptReference --> "1" QualityMetricsConfTestSet : getQualityMetricsConfTestSet()
-class Script [[java:org.lakehouse.config.entities.script.Script]] {
+class Script [[java:org.jarina.config.entities.script.Script]] {
 	-key: String
 	-value: String
 	+Script()
@@ -710,7 +710,7 @@ class Script [[java:org.lakehouse.config.entities.script.Script]] {
 	+getValue(): String
 	+setValue(value: String): void
 }
-class TemplateTask [[java:org.lakehouse.config.entities.templates.TemplateTask]] {
+class TemplateTask [[java:org.jarina.config.entities.templates.TemplateTask]] {
 	+TemplateTask()
 	+setScenarioTemplate(templateScenarioAct: TemplateScenarioAct): void
 	+equals(o: Object): boolean
@@ -725,7 +725,7 @@ TemplateTask --> "1" TemplateScenarioAct : getScenarioTemplate()
 class TaskAbstract {
 }
 TaskAbstract <|-- TemplateTask
-class TemplateTaskEdge [[java:org.lakehouse.config.entities.templates.TemplateTaskEdge]] {
+class TemplateTaskEdge [[java:org.jarina.config.entities.templates.TemplateTaskEdge]] {
 	-id: Long
 	+TemplateTaskEdge()
 	+getId(): Long
@@ -754,7 +754,7 @@ TemplateTaskEdge --> "1" TemplateTask : getFromTaskTemplate()
 class TemplateTask {
 }
 TemplateTaskEdge --> "1" TemplateTask : getToTaskTemplate()
-class TemplateTaskProcessorArg [[java:org.lakehouse.config.entities.templates.TemplateTaskProcessorArg]] {
+class TemplateTaskProcessorArg [[java:org.jarina.config.entities.templates.TemplateTaskProcessorArg]] {
 	+TemplateTaskProcessorArg()
 	+setTaskTemplate(templateTask: TemplateTask): void
 	+equals(o: Object): boolean
@@ -769,7 +769,7 @@ TemplateTaskProcessorArg --> "1" TemplateTask : getTaskTemplate()
 class KeyValueAbstract {
 }
 KeyValueAbstract <|-- TemplateTaskProcessorArg
-class TemplateScenarioAct [[java:org.lakehouse.config.entities.templates.TemplateScenarioAct]] {
+class TemplateScenarioAct [[java:org.jarina.config.entities.templates.TemplateScenarioAct]] {
 	+TemplateScenarioAct()
 }
 class KeyEntityAbstract {
