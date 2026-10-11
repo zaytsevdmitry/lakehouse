@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# "Lakehouse management tool" - the services set for managing data changes based on a metadata-driven approach
-# Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/lakehouse
+# "Jarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+# Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ set -e
 kubectl get pods -A
 
 echo build helm dependencies
-helm dependency update ./lakehouse-management-helm-charts/lakehouse-management
+helm dependency update ./jarina-management-helm-charts/jarina-management
 
 # Function to check and load images into Minikube only if they are missing
 load_image_if_missing() {
@@ -36,15 +36,26 @@ load_image_if_missing() {
 }
 
 # Load only missing images
-load_image_if_missing "lakehouse:0.10.0"
-load_image_if_missing "lakehouse-s3-check:0.10.0"
-load_image_if_missing "lakehouse-hms:0.10.0"
-load_image_if_missing "lakehouse-spark-aws:0.10.0"
-load_image_if_missing "lakehouse-task-proxy4spark:0.10.0"
+load_image_if_missing "jarina:0.11.0"
+load_image_if_missing "jarina-s3-check:0.11.0"
+load_image_if_missing "jarina-hms:0.11.0"
+load_image_if_missing "jarina-spark-aws:0.11.0"
 
-echo -e "\e[34mAll lakehouse images processed\e[0m"
+echo -e "\e[34mAll jarina images processed\e[0m"
 
-echo install lakehouse-release
-helm install lakehouse-release ./lakehouse-management-helm-charts/lakehouse-management --create-namespace  --namespace lakehouse-management
+echo install jarina-release
+helm install jarina-release ./jarina-management-helm-charts/jarina-management --create-namespace  --namespace jarina-management
 
-echo -e "\e[37;42m All services installed to namespace lakehouse-management \e[0m"
+kubectl -n jarina-management get pods -o custom-columns="NAME:.metadata.name,STATUS:.status.phase,TASK-NAME:.metadata.annotations.jarina-management-task"
+
+bash ./bootstrap-configs.bash
+
+kubectl -n jarina-management get pods -o custom-columns="NAME:.metadata.name,STATUS:.status.phase,TASK-NAME:.metadata.annotations.jarina-management-task"
+
+bash ./tunnels.bash
+
+kubectl -n jarina-management get pods -o custom-columns="NAME:.metadata.name,STATUS:.status.phase,TASK-NAME:.metadata.annotations.jarina-management-task"
+
+echo -e "\e[37;42m All services installed to namespace jarina-management \e[0m"
+
+

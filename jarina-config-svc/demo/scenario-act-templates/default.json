@@ -1,0 +1,52 @@
+{
+  "keyName": "default",
+  "domainKeyName": "DEMO",
+  "description": "Default scenario",
+  "tasks": [
+    {
+      "name": "begin",
+      "template" : "beginTemplate"
+    },
+    {
+      "name": "check",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "dependencyCheckStateTaskProcessor",
+      "importance": "critical",
+      "description": "Dependency check"
+    },
+    {
+      "name": "load",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "sparkStandAloneClusterTaskProcessor",
+      "taskProcessorBody": "mergeSQLProcessorBody",
+      "importance": "critical",
+      "description": "load from remote datastore",
+      "driverKeyName": "postgres",
+      "taskProcessorArgs": {
+        "spark.executor.memory": "5g",
+        "spark.driver.memory": "2g"
+      }
+    },
+    {
+      "name": "finally",
+      "taskExecutionServiceGroupName": "default",
+      "taskProcessor": "successStateTaskProcessor",
+      "importance": "critical",
+      "description": "DataSet success"
+    }
+  ],
+  "dagEdges": [
+    {
+      "from": "begin",
+      "to": "check"
+    },
+    {
+      "from": "check",
+      "to": "load"
+    },
+    {
+      "from": "load",
+      "to": "finally"
+    }
+  ]
+}

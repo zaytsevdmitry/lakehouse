@@ -1,0 +1,147 @@
+/*
+ * "Jarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+ * Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     https://www.apache.org/licenses/LICENSE-2.0.txt
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.jarina.taskexecutor.spark.dq.service;
+
+
+import tools.jackson.core.JacksonException;
+import org.apache.commons.codec.digest.MurmurHash3;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+import org.jarina.client.api.dto.configs.dq.QualityMetricsConfDTO;
+import org.jarina.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
+import org.jarina.client.api.dto.task.SourceConfDTO;
+import org.jarina.client.api.exception.TaskConfigurationException;
+import org.jarina.client.api.exception.TaskFailedException;
+import org.jarina.client.api.utils.ObjectMapping;
+import org.jarina.client.rest.config.ConfigRestClientApi;
+import org.jarina.jinja.java.JinJavaFactory;
+import org.jarina.jinja.java.JinJavaUtils;
+import org.jarina.taskexecutor.api.processor.body.ProcessorBody;
+import org.jarina.taskexecutor.spark.dq.service.producer.MetricDQProducerService;
+import org.jarina.taskexecutor.spark.dq.service.producer.MetricDQTestSetProducerService;
+import org.jarina.taskexecutor.spark.dq.service.producer.MetricDQValueProducerService;
+import org.jarina.validator.config.ValidationResult;
+import org.jarina.validator.task.ScheduledTaskDTOValidator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Service
+public class SparkTaskProcessorDQBody  implements ProcessorBody {
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final ConfigRestClientApi configRestClientApi;
+    private final ConfigurableApplicationContext applicationContext;
+    private final MetricDQProducerService metricDQProducerService;
+    private final MetricDQTestSetProducerService metricDQTestSetProducerService;
+    private final MetricDQValueProducerService metricDQValueProducerService;
+    private final SparkSession sparkSession;
+    public SparkTaskProcessorDQBody(
+            ConfigRestClientApi configRestClientApi,
+            ConfigurableApplicationContext applicationContext, MetricDQProducerService metricDQProducerService,
+            MetricDQTestSetProducerService metricDQTestSetProducerService, MetricDQValueProducerService metricDQValueProducerService, SparkSession sparkSession) {
+        this.configRestClientApi = configRestClientApi;
+        this.applicationContext = applicationContext;
+        this.metricDQProducerService = metricDQProducerService;
+        this.metricDQTestSetProducerService = metricDQTestSetProducerService;
+        this.metricDQValueProducerService = metricDQValueProducerService;
+        this.sparkSession = sparkSession;
+    }
+
+    private List<QualityMetricsConfDTO> getQualityMetricsConfs(ScheduledTaskDTO scheduledTaskDTO){
+        List<QualityMetricsConfDTO> qualityMetricsConfs = configRestClientApi
+                .getQualityMetricsConfListByDataSetKeyName(scheduledTaskDTO.getDataSetKeyName())
+                .stream()
+                .filter(QualityMetricsConfDTO::isEnabled)
+                .toList();
+        if(qualityMetricsConfs.isEmpty()){
+            logger.warn("Found no QualityMetricsConf for {}", scheduledTaskDTO.getDataSetKeyName());
+        }else {
+            logger.info("Found {} QualityMetricsConf for {}", qualityMetricsConfs.size(), scheduledTaskDTO.getDataSetKeyName());
+        }
+        return qualityMetricsConfs;
+    }
+    public void run(ScheduledTaskDTO scheduledTaskDTO) throws TaskFailedException, TaskConfigurationException {
+
+        ValidationResult validationResult = ScheduledTaskDTOValidator.validate(scheduledTaskDTO);
+
+        if (!validationResult.isValid()){
+
+            throw new TaskConfigurationException(String.join(";", validationResult.getDescriptions()));
+        }
+        SourceConfDTO sourceConfDTO = configRestClientApi.getSourceConfDTO(scheduledTaskDTO.getDataSetKeyName());
+        JinJavaUtils jinJavaUtils = prepareJinJavaUtils(sourceConfDTO,scheduledTaskDTO);
+        Map<String, Dataset<Row>> thresholds = new HashMap<>();
+
+
+        for (QualityMetricsConfDTO  qualityMetricsConfDTO: getQualityMetricsConfs(scheduledTaskDTO)) {
+            long metricId = getMetricId(sourceConfDTO,scheduledTaskDTO,qualityMetricsConfDTO);
+            logger.info("Running QualityMetricsConf {}", qualityMetricsConfDTO.toString());
+            new QualityMetricRunner(
+                    metricId,
+                    sourceConfDTO,
+                    scheduledTaskDTO,
+                    qualityMetricsConfDTO,
+                    jinJavaUtils,
+                    applicationContext,
+                    metricDQProducerService,
+                    metricDQTestSetProducerService,
+                    metricDQValueProducerService,
+                    sparkSession
+            ).run();
+        }
+    }
+    protected JinJavaUtils prepareJinJavaUtils(
+            SourceConfDTO sourceConfDTO,
+            ScheduledTaskDTO scheduledTaskDTO) throws TaskConfigurationException {
+        JinJavaUtils jinJavaUtils = JinJavaFactory.getJinJavaUtils();
+        Map<String,Object> context = new HashMap<>();
+        try {
+            context.putAll(ObjectMapping.asMap(sourceConfDTO));
+            context.putAll(ObjectMapping.asMap(scheduledTaskDTO));
+
+        } catch (JacksonException e) {
+            throw new TaskConfigurationException(e);
+        }
+        jinJavaUtils.injectGlobalContext(context);
+        return jinJavaUtils;
+    }
+
+    private Long getMetricId(
+            SourceConfDTO sourceConfDTO,
+            ScheduledTaskDTO  scheduledTaskDTO,
+            QualityMetricsConfDTO qualityMetricsConfDTO){
+        Long id = MurmurHash3.hash128((
+                sourceConfDTO.getTargetDataSource().getKeyName() +
+                        sourceConfDTO.getTargetDataSet().getDatabaseSchemaName() +
+                        sourceConfDTO.getTargetDataSet().getTableName() +
+                        qualityMetricsConfDTO.getKeyName() +
+                        scheduledTaskDTO.getTargetDateTime() +
+                        scheduledTaskDTO.getIntervalStartDateTime() +
+                        scheduledTaskDTO.getIntervalEndDateTime()
+                ).getBytes())[0];
+        return id;
+    }
+
+
+}

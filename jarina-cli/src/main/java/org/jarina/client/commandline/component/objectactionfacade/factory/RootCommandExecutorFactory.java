@@ -1,0 +1,66 @@
+/*
+ * "Jarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+ * Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     https://www.apache.org/licenses/LICENSE-2.0.txt
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.jarina.client.commandline.component.objectactionfacade.factory;
+
+import org.jarina.client.commandline.component.CommandExecutor;
+import org.jarina.client.commandline.component.CommandExecutorFactory;
+import org.jarina.client.commandline.component.ExitCommandExecutor;
+import org.jarina.client.commandline.component.command.delete.DeleteCommandExecutor;
+import org.jarina.client.commandline.component.command.download.DownloadCommandExecutor;
+import org.jarina.client.commandline.component.command.show.ShowFactory;
+import org.jarina.client.commandline.component.command.upload.UploadCommandExecutor;
+import org.jarina.client.exception.UnknownCommandCombination;
+import org.springframework.stereotype.Component;
+
+@Component
+public class RootCommandExecutorFactory implements CommandExecutorFactory {
+    private final ShowFactory showFactory;
+    private final ExitCommandExecutor exit;
+    private final DeleteCommandExecutor delete;
+    private final UploadCommandExecutor upload;
+    private final DownloadCommandExecutor download;
+    private final LockTaskCommandExecutorFactory lockTaskCommandExecutorFactory;
+
+
+    public RootCommandExecutorFactory(
+            ShowFactory showFactory,
+            ExitCommandExecutor exit,
+            UploadCommandExecutor upload,
+            DownloadCommandExecutor download,
+            DeleteCommandExecutor delete,
+            LockTaskCommandExecutorFactory lockTaskCommandExecutorFactory) {
+        this.showFactory = showFactory;
+        this.exit = exit;
+        this.delete = delete;
+        this.upload = upload;
+        this.download = download;
+        this.lockTaskCommandExecutorFactory = lockTaskCommandExecutorFactory;
+    }
+
+    @Override
+    public CommandExecutor getCommandExecutor(String[] args) throws UnknownCommandCombination {
+        String key = args[0].toLowerCase();
+        if (key.equals("exit")) return exit;
+        else if (key.equals("show")) return showFactory.getCommandExecutor(args);
+        else if (key.equals("upload")) return upload;
+        else if (key.equals("download")) return download;
+        else if (key.equals("delete")) return delete;
+        else if (key.equals("lock")) return lockTaskCommandExecutorFactory.getCommandExecutor(args);
+        else throw new UnknownCommandCombination();
+    }
+}

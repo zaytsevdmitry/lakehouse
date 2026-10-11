@@ -1,0 +1,100 @@
+/*
+ * "Jarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+ * Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     https://www.apache.org/licenses/LICENSE-2.0.txt
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.jarina.config.service;
+
+import org.jarina.client.api.constant.Types;
+import org.jarina.config.entities.script.Script;
+import org.jarina.config.exception.VcsManagedException;
+import org.jarina.config.exception.ScriptNotFoundException;
+import org.jarina.config.produce.ScriptConfigurationResolver;
+import org.jarina.config.repository.ScriptRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@Service
+public class ScriptService {
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final ScriptRepository scriptRepository;
+    private final ConfigurationProduceService configurationProduceService;
+
+    public ScriptService(ScriptRepository scriptRepository, ConfigurationProduceService configurationProduceService) {
+        this.scriptRepository = scriptRepository;
+        this.configurationProduceService = configurationProduceService;
+    }
+
+    public Map<String, String> findAll() {
+        return scriptRepository.findAll().stream().collect(Collectors.toMap(Script::getKey, Script::getValue));
+    }
+
+
+    public String findScriptBodyByKey(String key) {
+        return findScriptByKey(key).getValue();
+    }
+
+    public Script findScriptByKey(String key) {
+        return scriptRepository.findById(key).orElseThrow(() -> {
+            logger.info("Script {} not found", key);
+            scriptRepository.findAll().forEach(script -> logger.info("Found script key={}", script.getKey()));
+            return new ScriptNotFoundException(key);
+        });
+    }
+
+    public String save(String key, String value) {
+        rejectIfVcsManaged(key, "created or updated");
+        return saveInternal(key, value, false);
+    }
+
+    public String saveVcs(String key, String value) {
+        return saveInternal(key, value, true);
+    }
+
+    private String saveInternal(String key, String value, boolean vcsManaged) {
+        Script script = new Script();
+        script.setKey(key);
+        script.setValue(value);
+        script.setVcsManaged(vcsManaged);
+        Script saved = scriptRepository.save(script);
+        configurationProduceService.produce(ScriptConfigurationResolver.KIND, saved.getKey(), Types.configAction.SAVE);
+        return saved.getValue();
+    }
+
+    public void deleteById(String key) {
+        rejectIfVcsManaged(key, "deleted");
+        configurationProduceService.produce(ScriptConfigurationResolver.KIND, key, Types.configAction.DELETE);
+        scriptRepository.deleteById(key);
+    }
+
+    public void unmanage(String key) {
+        scriptRepository.findById(key).ifPresent(script -> {
+            script.setVcsManaged(false);
+            scriptRepository.save(script);
+        });
+    }
+
+    private void rejectIfVcsManaged(String key, String operation) {
+        scriptRepository.findById(key)
+                .filter(Script::isVcsManaged)
+                .ifPresent(script -> {
+                    throw new VcsManagedException(key, operation);
+                });
+    }
+}

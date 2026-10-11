@@ -1,6 +1,0 @@
-kind: Task
-name: beginTemplate
-taskExecutionServiceGroupName: default
-taskProcessor: lockedStateTaskProcessor
-importance: critical
-description: Made interval status RUNNING

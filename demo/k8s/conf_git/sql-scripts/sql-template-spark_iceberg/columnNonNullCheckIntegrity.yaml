@@ -1,4 +1,0 @@
-kind: Script
-key: sql-template-spark_iceberg.columnNonNullCheckIntegrity.sql
-value: |
-  fix me

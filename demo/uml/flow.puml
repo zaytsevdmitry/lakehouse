@@ -5,7 +5,7 @@ queue  t_tasks
 queue  t_dq_metric
 database db_proc
 database trino
-database s3_lakehouse
+database s3_jarina
 
 User --> (conf-svc): 1. dataset, scrits,schedule, etc
 (conf-svc) .> t_schedules: 2. schedule
@@ -19,10 +19,10 @@ t_tasks .> (task-executor): 5. consume
 (task-executor) --> (scheduler-svc): 8. heart beat task
 (task-executor) --> (scheduler-svc): 9. release task
 (spark-cluster) --> (datasetProcess): 7.1 start job
-(datasetProcess) -> s3_lakehouse
-s3_lakehouse ..> (DQProcess)
+(datasetProcess) -> s3_jarina
+s3_jarina ..> (DQProcess)
 (spark-cluster) -> (DQProcess): 7.1 start job
 (DQProcess) .> t_dq_metric
 t_dq_metric .> trino
-s3_lakehouse .> trino
+s3_jarina .> trino
 @enduml

@@ -1,4 +1,0 @@
-kind: Script
-key: sql-template-postgres.primaryKeyCheckIntegrity.sql
-value: |
-  -- Fix me

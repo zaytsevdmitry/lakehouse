@@ -1,9 +1,15 @@
 [EN](README.md)
-#  Lakehouse management tool
+#  Jarina dataset self service
 Реализация подхода, основанного на метаданных (Metadata-Driven Approach), позволяет динамически управлять и автоматизировать ETL/ELT конвейеры и интеграцию данных. Отказ от жесткой, зашитой в код логики в пользу внешних конфигураций (SQL/JSON) превращает обработку данных в масштабируемую, гибкую и полностью автоматизированную экосистему.
 
-Ключевые бизнес-выгоды
-* Быстрее выход на рынок: вместо написания кода под каждый новый источник данных единый универсальный конвейер обрабатывает множество потоков. Это значительно сокращает циклы разработки и сроки проектов.
+# Для чего:
+1. **Бизнес/продукт/data-аналитики (Analytics Engineers)** могут менять логику трансформации данных, просто поправив конфигурацию в UI, без переписывания кода ядра [0.11_ui].
+2. **Бизнес-домены (Domain Teams)** могут владеть своими данными независимо друг от друга, не перегружая основную команду разработки [0.11_ui].
+3. **Дата-инженеры (Data Engineers)** освобождаются от рутины (создания однотипных пайплайнов, ручных правок DDL) и фокусируются на сложных архитектурных и бизнес-задачах [0.11_ui].
+4. **Владельцы продуктов (Product Owners)** экономят бюджет и время на разработке: фичи и аналитика запускаются быстрее (Time-to-Market) [0.11_ui], а дорогой ресурс дата-инженеров не тратится на однотипные задачи из бэклога.
+
+# Ключевые бизнес-выгоды
+* Быстрее выход на рынок(TTM): вместо написания кода под каждый новый источник данных единый универсальный конвейер обрабатывает множество потоков. Это значительно сокращает циклы разработки и сроки проектов.
 * Повышенная гибкость: бизнес-требования меняются быстро. При таком подходе изменения структур данных или правил трансформации выполняются простым изменением метаданных, без дорогостоящих и длительных переписываний кода.
 * Улучшенное управление и соответствие требованиям: централизованные метаданные обеспечивают «единый источник истины» для происхождения данных (lineage), контроля доступа и регуляторных требований, гарантируя полную прозрачность.
 * Экономически эффективная масштабируемость: разделяя логику обработки и трансформацию данных, организации могут эффективно управлять огромными объемами данных без пропорционального роста численности персонала.
@@ -23,7 +29,7 @@ Scheduling
 Custom code
 SQL
 Data engineer tool
-Lakehouse management tool
+Jarina dataset self service
 United namespace
 
 
@@ -33,25 +39,25 @@ United namespace
 
 | Компонент                                                                                | Статус   | Документация                                           |
 |------------------------------------------------------------------------------------------|----------|--------------------------------------------------------|
-| [lakehouse-cli](lakehouse-cli)                                                           | Прототип | [doc](lakehouse-cli/doc-ru/commandline.MD)             |
-| [lakehouse-common-rest-client](lakehouse-common-rest-client)                             | Кандидат |                                                        |
-| [lakehouse-common-test](lakehouse-common-test)                                           | Кандидат |                                                        |
-| [lakehouse-config-rest-client](lakehouse-config-rest-client)                             | Кандидат |                                                        |
-| [lakehouse-config-svc](lakehouse-config-svc)                                             | Кандидат | [doc](lakehouse-config-svc/doc-ru/readme.md)           |
-| [lakehouse-scheduler-rest-client](lakehouse-scheduler-rest-client)                       | Кандидат |                                                        |
-| [lakehouse-scheduler-svc](lakehouse-scheduler-svc)                                       | Кандидат | [doc](lakehouse-scheduler-svc/doc-ru/readme.md)        |
-| [lakehouse-state-rest-client](lakehouse-state-rest-client)                               | Кандидат |                                                        |
-| [lakehouse-state-svc](lakehouse-state-svc)                                               | Кандидат | [doc](lakehouse-state-svc/doc-ru/readme.md)            |
-| [lakehouse-task-executor-api](lakehouse-task-executor-api)                               | Кандидат |                                                        |
-| [lakehouse-task-executor-rest-client](lakehouse-task-executor-rest-client)               | Кандидат |                                                        |
-| [lakehouse-task-executor-svc](lakehouse-task-executor-svc)                               | Кандидат | [doc](lakehouse-task-executor-svc/README_ru.md)        |
-| [lakehouse-task-executor-spark-api](lakehouse-task-executor-spark-api)                   | Кандидат | [doc](lakehouse-task-executor-spark-api/doc/readme.md) |
-| [lakehouse-task-executor-spark-dataset-app](lakehouse-task-executor-spark-dataset-app)   | Кандидат |                                                        |
-| [lakehouse-task-executor-spark-dq-app](lakehouse-task-executor-spark-dq-app)             | Прототип |                                                        |
-| [lakehouse-validators](lakehouse-validators)                                             | Прототип |                                                        |
-| [lakehouse-ui-svc](lakehouse-ui-svc)                                                     | Прототип | [doc](lakehouse-ui-svc/doc-ru/readme.md)               |
-| [lakehouse-task-proxy-for-spark](lakehouse-task-proxy-for-spark)                         | Кандидат | [doc](lakehouse-task-proxy-for-spark/README_ru.md)     |
-| [lakehouse-task-proxy-for-spark-api](lakehouse-task-proxy-for-spark-api)                 | Кандидат |                                                        |
+| [jarina-cli](jarina-cli)                                                           | Прототип | [doc](jarina-cli/doc-ru/commandline.MD)             |
+| [jarina-common-rest-client](jarina-common-rest-client)                             | Кандидат |                                                        |
+| [jarina-common-test](jarina-common-test)                                           | Кандидат |                                                        |
+| [jarina-config-rest-client](jarina-config-rest-client)                             | Кандидат |                                                        |
+| [jarina-config-svc](jarina-config-svc)                                             | Кандидат | [doc](jarina-config-svc/doc-ru/readme.md)           |
+| [jarina-scheduler-rest-client](jarina-scheduler-rest-client)                       | Кандидат |                                                        |
+| [jarina-scheduler-svc](jarina-scheduler-svc)                                       | Кандидат | [doc](jarina-scheduler-svc/doc-ru/readme.md)        |
+| [jarina-state-rest-client](jarina-state-rest-client)                               | Кандидат |                                                        |
+| [jarina-state-svc](jarina-state-svc)                                               | Кандидат | [doc](jarina-state-svc/doc-ru/readme.md)            |
+| [jarina-task-executor-api](jarina-task-executor-api)                               | Кандидат |                                                        |
+| [jarina-task-executor-rest-client](jarina-task-executor-rest-client)               | Кандидат |                                                        |
+| [jarina-task-executor-svc](jarina-task-executor-svc)                               | Кандидат | [doc](jarina-task-executor-svc/README_ru.md)        |
+| [jarina-task-executor-spark-api](jarina-task-executor-spark-api)                   | Кандидат | [doc](jarina-task-executor-spark-api/doc/readme.md) |
+| [jarina-task-executor-spark-dataset-app](jarina-task-executor-spark-dataset-app)   | Кандидат |                                                        |
+| [jarina-task-executor-spark-dq-app](jarina-task-executor-spark-dq-app)             | Прототип |                                                        |
+| [jarina-validators](jarina-validators)                                             | Прототип |                                                        |
+| [jarina-ui-svc](jarina-ui-svc)                                                     | Прототип | [doc](jarina-ui-svc/doc-ru/readme.md)               |
+| [jarina-task-proxy-for-spark](jarina-task-proxy-for-spark)                         | Кандидат | [doc](jarina-task-proxy-for-spark/README_ru.md)     |
+| [jarina-task-proxy-for-spark-api](jarina-task-proxy-for-spark-api)                 | Кандидат |                                                        |
 | Авторизация и безопасность                                                               | Кандидат | [doc](doc-ru/security/security.md)                     |
 | [Docker](docker)                                                                         | Кандидат | [doc](docker/readme.md)                                |
 
@@ -63,17 +69,17 @@ United namespace
 
 [Дизайн сущностей](./doc-ru/entities_design/entities_design.md)
 
-[Планирование](lakehouse-scheduler-svc/doc-ru/scheduling/Scheduling.md)
+[Планирование](jarina-scheduler-svc/doc-ru/scheduling/Scheduling.md)
 
-[Состояния](lakehouse-state-svc/doc-ru/state_model/state-models.MD)
+[Состояния](jarina-state-svc/doc-ru/state_model/state-models.MD)
 
-[Командная строка](./lakehouse-cli/doc-ru/commandline.MD)
+[Командная строка](./jarina-cli/doc-ru/commandline.MD)
 
 
 
 # Авторские права
-"Lakehouse management tool" - набор сервисов для управления изменениями данных на основе подхода, управляемого метаданными
-    Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/lakehouse
+"Jarina dataset self service" - набор сервисов для управления изменениями данных на основе подхода, управляемого метаданными
+    Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.

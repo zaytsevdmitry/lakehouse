@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# "Lakehouse management tool" - the services set for managing data changes based on a metadata-driven approach
-# Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/lakehouse
+# "Jarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+# Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 
 
 pwd
-sudo -u root rm -rf ./storages/minio_storage/.minio.sys
-sudo -u root rm -rf ./storages/minio_storage/data
-sudo -u root rm -rf ./storages/minio_storage/sparklogs
+sudo -u root rm -rf ./storages/minio_storage
+sudo -u root rm -rf ./storages/modeller_workspaces
+mkdir -p ./storages/minio_storage
+echo "Directory for mount to minio storage"  > ./storages/minio_storage/dir-info.md

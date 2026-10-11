@@ -1,0 +1,136 @@
+/*
+ * "Jarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+ * Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     https://www.apache.org/licenses/LICENSE-2.0.txt
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.jarina.taskexecutor.service;
+
+import org.jarina.client.api.dto.scheduler.lock.ScheduledTaskLockDTO;
+import org.jarina.client.api.dto.scheduler.tasks.ScheduledTaskMsgDTO;
+import org.jarina.client.rest.scheduler.SchedulerRestClientApi;
+import org.jarina.taskexecutor.exception.TaskLockTryExcessedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.Acknowledgment;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+
+@Service
+public class ScheduledTaskKafkaConsumerService {
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final ExecuteService executeService;
+    private final SchedulerRestClientApi schedulerRestClientApi;
+    private final String serviceId;
+    private final String groupName;
+    private final Integer maxLockRetries;
+    private final Integer maxLockRetriesDuration;
+
+    public ScheduledTaskKafkaConsumerService(
+            ExecuteService executeService,
+            SchedulerRestClientApi schedulerRestClientApi,
+            @Value("${jarina.task-executor.service.id}") String serviceId,
+            @Value("${jarina.task-executor.scheduled.task.kafka.consumer.properties.group.id}") String groupName,
+            @Value("${jarina.task-executor.service.max-lock-retries}") Integer maxLockRetries,
+            @Value("${jarina.task-executor.service.max-lock-retries-duration-ms}") Integer maxLockRetriesDuration
+    ) {
+        this.executeService = executeService;
+        this.schedulerRestClientApi = schedulerRestClientApi;
+        this.serviceId = serviceId;
+        this.groupName = groupName;
+        this.maxLockRetries = maxLockRetries;
+        this.maxLockRetriesDuration = maxLockRetriesDuration;
+    }
+
+    @KafkaListener(
+            topics = "#{'${jarina.task-executor.scheduled.task.kafka.consumer.topics}'.split(',')}",
+            concurrency = "#{'${jarina.task-executor.scheduled.task.kafka.consumer.concurrency}'}",
+            containerFactory = "containerFactory")
+    public void listen(ScheduledTaskMsgDTO scheduledTaskMsgDTO, Acknowledgment acknowledgment) throws Exception {
+
+
+        logger.info("New task: id={} taskGroup {}",
+                scheduledTaskMsgDTO.getId(),
+                scheduledTaskMsgDTO.getTaskExecutionServiceGroupName());
+
+        ScheduledTaskLockDTO taskInstanceLockDTO = null;
+
+        if (scheduledTaskMsgDTO.getTaskExecutionServiceGroupName().equals(groupName)) {
+            taskInstanceLockDTO = takeLockWithReTries(scheduledTaskMsgDTO, 0);
+        } else {
+            logger.info(
+                    "TaskId={} skipped because taskGroup {} not equals {}",
+                    scheduledTaskMsgDTO.getId(),
+                    scheduledTaskMsgDTO.getTaskExecutionServiceGroupName(),
+                    groupName);
+        }
+        acknowledgment.acknowledge();
+
+        if (taskInstanceLockDTO != null)
+            executeService.takeAndRunTask(taskInstanceLockDTO);
+
+        logger.info("Iteration is done");
+    }
+
+
+    private ScheduledTaskLockDTO takeLockWithReTries(ScheduledTaskMsgDTO scheduledTaskMsgDTO, int tryNum)
+            throws TaskLockTryExcessedException, InterruptedException {
+
+        if (tryNum == maxLockRetries) {
+            throw new TaskLockTryExcessedException(tryNum);
+        }
+
+        ScheduledTaskLockDTO taskInstanceLockDTO = null;
+
+        try {//todo Caused by: java.net.ConnectException: Connection refused
+
+            logger.info("Trying to lock task id={}", scheduledTaskMsgDTO.getId());
+
+            taskInstanceLockDTO = schedulerRestClientApi.lockTaskById(scheduledTaskMsgDTO.getId(), serviceId);
+
+            logger.info("Lock taken lockId={}, task={}, scheduleName={}, scheduleTargetTimestamp={}, scenarioActName={}",
+                    taskInstanceLockDTO.getLockId(),
+                    taskInstanceLockDTO.getScheduledTaskEffectiveDTO().getName(),
+                    taskInstanceLockDTO.getScheduledTaskEffectiveDTO().getScheduleKeyName(),
+                    taskInstanceLockDTO.getScheduledTaskEffectiveDTO().getTargetDateTime(),
+                    taskInstanceLockDTO.getScheduledTaskEffectiveDTO().getScenarioActKeyName());
+
+
+        } catch (HttpClientErrorException.NotFound nfe) {
+            logger.info("Already resolved {}", nfe.getMessage());
+        } catch (HttpServerErrorException e) {
+            logger.warn("Cannot get the lock for task: id={} taskGroup {}, tryNum {}",
+                    scheduledTaskMsgDTO.getId(),
+                    scheduledTaskMsgDTO.getTaskExecutionServiceGroupName(),
+                    tryNum);
+
+            logger.error(e.fillInStackTrace().toString());
+            logger.info("Waiting {} ms", maxLockRetriesDuration);
+            Thread.sleep(maxLockRetriesDuration);
+            tryNum++;
+            logger.info("Retry {} to lock lockId={}, task={}, scheduleName={}, scheduleTargetTimestamp={}, scenarioActName={}",
+                    tryNum,
+                    taskInstanceLockDTO.getLockId(),
+                    taskInstanceLockDTO.getScheduledTaskEffectiveDTO().getName(),
+                    taskInstanceLockDTO.getScheduledTaskEffectiveDTO().getScheduleKeyName(),
+                    taskInstanceLockDTO.getScheduledTaskEffectiveDTO().getTargetDateTime(),
+                    taskInstanceLockDTO.getScheduledTaskEffectiveDTO().getScenarioActKeyName());
+            taskInstanceLockDTO = takeLockWithReTries(scheduledTaskMsgDTO, tryNum);
+        }
+        return taskInstanceLockDTO;
+    }
+}

@@ -6,19 +6,19 @@ database datawarehouses
 database sources
 
 de ---->   [config]
-[config] --> (lakehouse-app)
+[config] --> (jarina-app)
 
-(lakehouse-app) --> sources
-(lakehouse-app) --> datawarehouses: refreshData
-(lakehouse-app) --> datawarehouses: DataQuality
-(lakehouse-app) --> sources: DataQuality
+(jarina-app) --> sources
+(jarina-app) --> datawarehouses: refreshData
+(jarina-app) --> datawarehouses: DataQuality
+(jarina-app) --> sources: DataQuality
 
 
 
 datawarehouses --> (bi)
 sources -> datawarehouses
 
-dataUser ---> (lakehouse-app):what's my data
+dataUser ---> (jarina-app):what's my data
 dataUser ---> datawarehouses:where i see it
 dataUser ---> bi:where i see it
 

@@ -5,6 +5,16 @@ This project incorporates components from the projects listed below.
 The original copyright notices and the licenses under which these 
 components are received are provided below.
 
+Provenance
+----------
+Release 0.11.0: the set of resolved Maven artifacts was compared against tag 0.10.0
+(dependency:list, runtime scope, whole reactor). The only differences are this project's own
+modules renamed 0.10.0 -> 0.11.0; no third-party component was added or removed. In particular
+`org.eclipse.jgit:org.eclipse.jgit`, `org.eclipse.jgit.ssh.apache` and
+`tools.jackson.dataformat:jackson-dataformat-yaml` were already declared at tag 0.10.0 (by
+lakehouse-config-svc) and are only now also consumed by lakehouse-ui-svc, so sections 1-5 below
+are unchanged from 0.10.0.
+
 =======================================================================
 1. Apache License, Version 2.0 Components
 =======================================================================
@@ -106,6 +116,13 @@ The following components are licensed under the MIT License:
   
 * Mockito Core (org.mockito:mockito-core)
   Copyright (c) 2007 Mockito contributors
+
+* Frontend test tooling, added in 0.11.0 (development only - not redistributed in the jars;
+  used to run the Vitest suite of the UI service):
+  - Vitest (vitest) - Copyright (c) Vitest contributors
+  - jsdom (jsdom) - Copyright (c) jsdom contributors
+  - Testing Library for React (@testing-library/react), DOM (@testing-library/jest-dom)
+    - Copyright (c) 2020 Kent C. Dodds and contributors
 
 ---
 [License text MIT]

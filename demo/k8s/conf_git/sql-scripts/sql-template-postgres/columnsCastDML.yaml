@@ -1,4 +1,0 @@
-kind: Script
-key: sql-template-postgres.columnsCastDML.sql
-value: |
-  fix me

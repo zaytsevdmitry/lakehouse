@@ -1,0 +1,3 @@
+2026-08-21 17:37:33.688 - User ID: -, Username: -, Method: GET, URI: /swagger-ui/index.html, HTTP status: 404
+2026-08-21 17:37:33.734 - User ID: -, Username: -, Method: GET, URI: /healthz, HTTP status: 200
+2026-08-21 17:37:33.764 - User ID: user, Username: -, Method: GET, URI: /protected, HTTP status: 200

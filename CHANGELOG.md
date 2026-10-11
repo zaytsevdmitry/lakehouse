@@ -1,16 +1,170 @@
 # Changelog
 
+## [0.11.0] — 2026-10-02
+
+Configuration domains became first-class: **a domain is a Git repository**, and the domain stamp
+(`domainKeyName`) now travels from the repository through config-svc, the scheduler, the UI
+modeller and the task executor. On the UI side this arrived together with the **Modelling
+workbench** — a Git-backed metadata editor with workspaces, branches and reviews.
+
+### Added
+
+#### Domains and per-domain repositories
+
+- **Domain = Git repository** (`jarina-config-svc`): `JarinaVCSProperties` binds
+  `jarina.config.vcs.domains.<name>` — a tree of domains, each with its own
+  `git.repository-url` / `branch` / `local-clone-path` / `private-key-path`, a `priority` and
+  nested `domains`. Each domain is fetched and applied on its own; the apply order is
+  depth-first with parents before children (`orderedDomains()`), `priority` ascending inside one
+  level, `Integer.MAX_VALUE` and last otherwise, ties broken by domain name. A domain without
+  `repository-url` is skipped entirely; a failing domain skips its whole sub-tree until the
+  parent succeeds. Per-domain env vars: `JARINA_CONFIG_GIT_<NAME>_URL|_BRANCH|_CLONE_PATH|_PRIVATE_KEY_PATH`.
+- **Legacy single-repository mode kept**: when `domains` is empty and `git.repository-url` is
+  set, that repository is exposed as one domain named `default` (`rootDomains()`); as soon as
+  `domains` has an entry the legacy block is ignored and does not become an extra `default`.
+  The sync cycle itself stays global: `jarina.config.vcs.git.sync.{enabled,interval-ms,initial-delay-ms}`.
+- **`domainKeyName` stamping and identity rules**: `GitOpsSynchronizer.stampDomainOn(...)` stamps
+  every managed kind except `Script`; `SQLTemplate` rows are content-only and shared between
+  domains, their domain derived from the referencing `Driver`/`Task`
+  (`SQLTemplateEntitySpecifier.domainOf()`). `keyName` stays the global primary key and is **not**
+  part of a composite key with `domainKeyName`. REST-created constructs have `domainKeyName = null`.
+- **Domain isolation rules**: a `Schedule` may only reference data sets of its own domain — a
+  foreign or domain-less data set fails the whole commit with the new
+  `DataSetDomainConflictException` (`GitOpsSynchronizer.checkScheduleDatasetDomains()`); the REST
+  API refuses to overwrite a construct of one domain with a construct of another —
+  `DomainConflictException` → `409 Conflict` via `rejectDomainConflict(...)` in the services of
+  `DataSet`, `DataSource`, `Driver`, `Task`, `ScenarioActTemplate`, `Schedule`,
+  `QualityMetricsConf` and `TaskExecutionServiceGroup`. `domain_key_name` was added to
+  `vcs_sync_log` and `vcs_object_log`, and `domainKeyName` became an optional filter of
+  `GET /v1_0/configs/vcs/logs` and `.../vcs/objectlogs`.
+- **Domain-scoped executor configuration** (`jarina-task-executor-svc`):
+  `DomainDataSourceServiceProperties` binds
+  `jarina.task-executor.domains.<domainKeyName>.<dataSourceKeyName>.service-properties`
+  (free-form map). `ExecuteService.prepareProperties(...)` looks it up per data source and merges
+  it into `DataSourceDTO.getService().getProperties()` (`putAll` — the local value overrides the
+  repository-declared one), so per-domain connection settings and secret-provider options reach
+  `JdbcConnectionFactory` without being committed to Git.
+- **Domain check in the scheduler** (`jarina-scheduler-svc`):
+  `ScheduleTaskInstanceService.checkDomain(...)` compares the schedule domain against
+  `allowedDomains ∪ {domainKeyName}` of the task's `TaskExecutionServiceGroup` (new fields
+  `domainKeyName` and `allowedDomains`, the latter in the `task_execution_service_group_domains`
+  collection table). A mismatch stores the `ScheduleTaskInstance` as `CONF_ERROR`, deletes the
+  pending producer message and publishes nothing; a missing group is only a warning. Since
+  executors are grouped solely by `taskExecutionServiceGroupName` (the Kafka `group.id`), this
+  check is what keeps a foreign domain out of an executor group.
+- **Per-domain repositories in the UI modeller** (`jarina-ui-svc`):
+  `jarina.modeller.domains.<name>.{repository-url,branch-main}` — `GET /api/vcs/branches`
+  returns one `DomainBranchesResponse {domain, branches[], branchMain}` per domain (the branch
+  panel renders a domain tree), `POST /api/vcs/branch` creates a branch inside a named domain,
+  and a workspace is a set of `(domain, branch)` pairs (`POST /api/vcs/workspace`) checked out
+  into per-domain folders `<domain> (<branch>)` with id
+  `md5(username + "|" + sorted "domain=branch")`. Review is submitted **per domain**
+  (`POST /api/vcs/review/{workspaceId}`): files are grouped by their covering folder, each group
+  is committed and pushed to its own domain branch and turned into an MR/PR against that
+  domain's `branch-main`; an empty diff yields `NO_CHANGES`. `domainKeyName` is excluded from
+  every form schema (`SchemaService.DERIVED_PROPERTIES`) — the domain comes from the repository,
+  never from the file content. Resolution falls back to the legacy single repository as the
+  domain `default` (`ModellerProperties.domainNames()/domainRemoteUrl()/domainBranchMain()`).
+- **Tests**: `ScheduleTaskInstanceServiceDomainCheckTest` (foreign domain rejected and the task
+  not published, a domain in `allowedDomains` accepted, the group's own domain accepted) and
+  `DomainDataSourceServicePropertiesTest` (dynamic-map binding through `Environment`, per-entry
+  isolation, same singleton exposed by `ExecuteService`).
+
+#### Modelling workbench in `jarina-ui-svc`
+
+- **Workspaces from a Git branch**: `WorkspaceStorage` SPI — `LocalFsWorkspaceStorage`
+  (`jarina.modeller.storage.root-directory`) and `S3WorkspaceStorage` (S3 with a minimal
+  built-in AWS SigV4 signer); `WorkspaceManager`, `WorkspaceSeeder`, background
+  `WorkspaceCleanupTask` (inactivity TTL, default 4 h) and
+  `jarina.modeller.session.inactivity-minutes`.
+- **VCS provider SPI**: `LocalGitVcsProvider` (JGit), `GitLabApiVcsProvider`,
+  `GitHubAppVcsProvider`, `DisabledVcsProvider` plus a factory; system technical account
+  (`jarina.modeller.vcs-system-account`, auth type `ssh`/`token`/`basic`, GitHub App options);
+  declarative matrix in `jarina.modeller.*` (`vcs-provider`, `auth-strategy`
+  `jwt-rbac`/`token-exchange`).
+- **File CRUD and editors**: `EditorController` (tree/dirs, create by `kind`+`keyName`+`directory`,
+  read, save via `YamlEditorService`, rename/move/delete of files and directories, restore from
+  the VCS state), schema-driven forms (`SchemaController`, `KindSchema`/`FieldSchema`,
+  `EnumOptionsService`) with a form ↔ raw-YAML toggle, and React Flow visual editors —
+  `ErDiagramEditor` (`kind: ERDiagram`), `DataLineageDiagramEditor`
+  (`kind: DataLineageDiagram`) and a generic DAG editor. `ERDiagram`/`DataLineageDiagram` are
+  non-configurational (`isConfig=false`): stored in the repository but not applied by config-svc.
+- **Review, RBAC and observability**: submission to review with a comment
+  (`ReviewService`), restore, modeller roles `VIEWER < EDITOR < ADMIN` with
+  ownership-based edit rights and `readOnly` from `effectiveRole`, admin surface
+  (`AdminController`: all workspaces, force-delete, cleanup TTL, sync-log tail), sync-log
+  capacity (`jarina.modeller.logging.sync-log-capacity`).
+- **New shared kinds** `ER_DIAGRAM` (order 11) and `DATA_LINEAGE_DIAGRAM` (order 13) in
+  `YamlMetadataKind`, with directories `erdiagrams` / `datalineagediagrams`.
+- **Frontend test suite**: Vitest 3 + React Testing Library (jsdom), configured in
+  `vite.config.js` (`test/setup.js` polyfills the React Flow browser APIs) — 41 tests across
+  `DataLineageDiagramEditor` (24), `FormEditor` (7), `EditorView` (5, incl. the multi-domain
+  leave-on-review flow) and `WorkspacePicker` (5, incl. per-domain branch preselection).
+
+#### Documentation and repository housekeeping
+
+- New `jarina-config-svc/doc/content_configuration/domains.md` (+ `doc-ru` mirror): the tree
+  and apply order, ownership and identity rules, isolation rules, the full property table, the
+  legacy single-repository block, observability and object fields.
+- New `jarina-ui-svc/doc/arch/architecture.md` (frontend architecture review with PlantUML
+  sources under `doc/arch/diagrams/`) and `jarina-ui-svc/doc/doc_requirements.md`.
+- Domain chapters and configuration references added to
+  `jarina-ui-svc/doc/readme.md` (+ RU), `jarina-scheduler-svc/doc/readme.md` (+ RU),
+  `jarina-task-executor-svc/doc/readme.md` and `properties.md` (+ RU mirrors) and
+  `jarina-config-svc/doc/readme.md` (+ RU).
+- `taskexecutionservicegroups.md` (EN/RU) documents `domainKeyName` and `allowedDomains`.
+- **License headers**: the Apache-2.0 notice from `NOTICE` was added to every `.java`, `.bash`
+  and `.sh` file that did not carry a copyright notice (via `.utils/autonotice.bash`).
+- Russian VCS docs moved from `doc-ru/cvs/` to `doc-ru/vcs/`, fixing the `cvs`/`vcs` path typo;
+  `content_configuration/namespaces.md` (EN/RU) removed together with the `NameSpace` kind.
+- `SUMMARY_FEATURES.md` extended with a dedicated "Домены и репозитории" section and
+  per-service cross-references.
+
+### Changed
+
+- **`ConfigurationProduceResolver` SPI replaces the `ConfigKind` enum**
+  (`jarina-config-svc`): one `@Component` per kind (`Driver`, `DataSource`, `Task`,
+  `TaskExecutionServiceGroup`, `DataSet`, `Schedule`, `ScenarioActTemplate`, `Script`,
+  `QualityMetricsConf`) each declaring `getKind()` and `resolve(keyName)`, collected by
+  `ConfigurationProduceResolverRegistry.findByKind(...)` (duplicate kinds fail fast). Kinds are
+  resolved through services instead of a hard-coded DTO/order table, which is what the
+  `NameSpace` kind removal and the new domain stamp needed.
+- `GitVcsConfigurationProperties` replaced by `JarinaVCSProperties`; the client factory moved
+  to `GitVcsClientFactory`; `GitOpsChangeSetBuilder`, `GitOpsSynchronizer`,
+  `GitOpsFailureRecorder`, `GitOpsScheduler`, `VcsClient`, `GitVcsClient` and the log
+  services/repositories became domain-aware.
+- `CurrentDomainContext` (`org.jarina.config.vcs`) carries the domain being applied through
+  the stamping and validation path.
+- **`jarina-scheduler-svc`**: `ScheduleConfigConsumerService` → `ConfigurationChangeConsumerService`
+  with `ConfigurationChangeKafkaConfiguration` /
+  `ConfigurationChangeConsumerKafkaConfigurationProperties`, consuming the
+  `configuration_changes` topic; added `TaskExecutionServiceGroupConfigService` as an in-memory
+  cache of executor-group configuration (populated by Kafka change events, fetched on miss over
+  REST).
+- **Demo**: the configuration repository is now laid out per domain
+  (`demo/conf_git/domains/{platform,processing,analytics}`), and the REST-loaded demo
+  configurations moved to `demo/conf/`.
+- Project and module versions bumped `0.10.0` → `0.11.0`.
+
+### New dependencies
+
+None. All libraries required by the Modelling workbench (`org.eclipse.jgit`,
+`org.eclipse.jgit.ssh.apache`, `tools.jackson.dataformat:jackson-dataformat-yaml`,
+`spring-boot-starter-oauth2-resource-server`) were already declared by the project at tag
+`0.10.0` — `jarina-ui-svc` only started consuming them — so `THIRD-PARTY-NOTICES` is
+unchanged.
+
 ## [0.10.0] — 2026-09-01
 
 ### Added
 
-#### VCS — Configuration Versioning System (GitOps) in `lakehouse-config-svc`
+#### VCS — Configuration Versioning System (GitOps) in `jarina-config-svc`
 
 Git repository as the **source of truth** for configuration metadata — the same
 configuration DTOs as the REST API can be written as Kubernetes-style YAML/JSON files and
 are periodically synchronized into the configuration database.
 
-- **`VcsClient` abstraction** (`org.lakehouse.config.vcs`): `init` / `pull` /
+- **`VcsClient` abstraction** (`org.jarina.config.vcs`): `init` / `pull` /
   `getCurrentCommitId` / `getDiff` / `readFileContent`; supporting value types
   `VcsDiffEntry`, `VcsChangeType`, `VcsClientException` (infrastructure failures are
   retried, not marked FAILED).
@@ -18,7 +172,7 @@ are periodically synchronized into the configuration database.
   hard reset, `DiffFormatter` with rename detection (rename reported as delete+create),
   SSH `publickey` auth via `org.eclipse.jgit.ssh.apache`.
 - **`GitOpsScheduler`** — `@Scheduled` orchestrator (guarded by
-  `lakehouse.config.vcs.git.sync.enabled=true`); `sync()` is `synchronized` and
+  `jarina.config.vcs.git.sync.enabled=true`); `sync()` is `synchronized` and
   idempotent; skips already-applied commits, records config errors as `FAILED`, retries
   infrastructure errors.
 - **`GitOpsChangeSetBuilder` + `GitOpsYamlParser` + `ConfigKind`**: only config files
@@ -35,15 +189,15 @@ are periodically synchronized into the configuration database.
   `save(...)` / `saveVcs(...)` / `unmanage(...)`.
 - **Read-only REST endpoints for the UI**: `GET /v1_0/configs/vcs/logs` (sync history
   with status/error/commitId) and `GET /v1_0/configs/vcs/objectlogs` (per-object log).
-- **Configuration properties** `lakehouse.config.vcs.git.*`: `repository-url`, `branch`,
+- **Configuration properties** `jarina.config.vcs.git.*`: `repository-url`, `branch`,
   `local-clone-path`, `private-key-path`, `sync.enabled` / `sync.interval-ms` /
-  `sync.initial-delay-ms` (mapped to `LAKEHOUSE_CONFIG_GIT_*` env vars).
+  `sync.initial-delay-ms` (mapped to `JARINA_CONFIG_GIT_*` env vars).
 - **Tests**: `GitOpsIntegrationTest`, `GitVcsClientTest`, `GitOpsChangeSetBuilderTest`,
   `GitOpsSchedulerUnitTest`, `GitOpsYamlParserTest`, `TestGitRepository` helper.
 
 #### UI — VCSLog panel
 
-- **`lakehouse-ui-svc`**: new "VCS" panel (`VCSLog` / objects search as tabs) showing the
+- **`jarina-ui-svc`**: new "VCS" panel (`VCSLog` / objects search as tabs) showing the
   sync history (`SUCCESS` rows with applied commit id, `FAILED` rows with error message)
   and the per-object log; backed by `VcsLogService` / `VcsLogController`, VCS added to the
   frontend routing and API client.
@@ -62,12 +216,12 @@ are periodically synchronized into the configuration database.
 
 #### Documentation
 
-- `lakehouse-config-svc/doc/vcs/vcs_for_developers.md` + `doc-ru/vcs/vcs_for_developers.md`
+- `jarina-config-svc/doc/vcs/vcs_for_developers.md` + `doc-ru/vcs/vcs_for_developers.md`
   — VCS architecture, sync pipeline, `VcsClient` abstraction, YAML parsing, `isVcsManaged`
   contract, developer parameters, extension guide.
-- `lakehouse-config-svc/doc/vcs/git_extension_user_guide.md` + `doc-ru/vcs/git_extension_user_guide.md`
+- `jarina-config-svc/doc/vcs/git_extension_user_guide.md` + `doc-ru/vcs/git_extension_user_guide.md`
   — repository layout, YAML format, enablement, sync semantics, error messages.
-- `lakehouse-config-svc/doc/readme.md`, `doc-ru/readme.md`, `service_configuration.md`
+- `jarina-config-svc/doc/readme.md`, `doc-ru/readme.md`, `service_configuration.md`
   (EN/RU) — VCS section and links to the new docs.
 - `demo/compose/git-server-config-repo.md` — demo VCS config repo layout.
 
@@ -81,7 +235,7 @@ are periodically synchronized into the configuration database.
 ### Changed
 
 - **Version 0.9.0 → 0.10.0** for all modules, Docker images and Helm chart image tags.
-- **`lakehouse-ui-svc`** `VcsSection.jsx` — redesigned to tabbed layout (VCSLog / object
+- **`jarina-ui-svc`** `VcsSection.jsx` — redesigned to tabbed layout (VCSLog / object
   logs), vertical splitter and error column.
 
 ---
@@ -92,43 +246,43 @@ are periodically synchronized into the configuration database.
 
 #### New modules — credential providers
 
-- **`lakehouse-credential-providers-jdbc`** — shared, Spark-independent secret resolution library (no Spring dependency; Spring Boot artifacts are declared `provided`):
+- **`jarina-credential-providers-jdbc`** — shared, Spark-independent secret resolution library (no Spring dependency; Spring Boot artifacts are declared `provided`):
   - `SecretProvider` SPI and the `SecretResolver` helper (`hasProvider`, `resolvePassword`, `sanitize`, `resolveAndSanitize`)
   - HTTP clients `VaultHttp` (OpenBao/Vault; token via `VAULT_TOKEN` env or Kubernetes Service Account auth) and `LockboxHttp` (Yandex Cloud Lockbox; IAM token via Instance Metadata or authorized key file `YC_AUTH_KEY_PATH`)
   - `SecretCache` — in-memory cache, 5-minute TTL per JVM
   - JDBC providers `BaoJdbcSecretProvider` (KV v2) and `YcLockboxJdbcSecretProvider`
-  - `LakehouseSecurityContext` for resolving secrets inside Spark closures on Executors
-- **`lakehouse-credential-providers-spark`** — Spark-specific credentials, resolved on Driver and Executors:
-  - `LakehouseSecureJDBCTableCatalog` — secure replacement for Spark's `JDBCTableCatalog`: resolves the DB password via `SecretResolver` at Driver + Executors and masks the original exception
+  - `JarinaSecurityContext` for resolving secrets inside Spark closures on Executors
+- **`jarina-credential-providers-spark`** — Spark-specific credentials, resolved on Driver and Executors:
+  - `JarinaSecureJDBCTableCatalog` — secure replacement for Spark's `JDBCTableCatalog`: resolves the DB password via `SecretResolver` at Driver + Executors and masks the original exception
   - S3 providers `BaoS3CredentialsProvider` / `YcLockboxS3CredentialsProvider` for Spark S3A
-- **`lakehouse-spark-credential-providers`** split into the two modules above; the resulting jars (`lakehouse-credential-providers-jdbc-0.9.0.jar`, `lakehouse-credential-providers-spark-0.9.0.jar`) are copied into the Spark image
+- **`jarina-spark-credential-providers`** split into the two modules above; the resulting jars (`jarina-credential-providers-jdbc-0.9.0.jar`, `jarina-credential-providers-spark-0.9.0.jar`) are copied into the Spark image
 
 #### Runtime secret resolution
 
-- **`JdbcConnectionFactory`** (`lakehouse-task-executor-api`) — resolves the DB password through `SecretResolver` when the datasource `service.properties` contains `secretProvider`; the security options are stripped before the map reaches the JDBC driver; unchanged when no provider is configured (backward compatible)
-- **`lakehouse-task-executor-api`** now depends on `lakehouse-credential-providers-jdbc`
+- **`JdbcConnectionFactory`** (`jarina-task-executor-api`) — resolves the DB password through `SecretResolver` when the datasource `service.properties` contains `secretProvider`; the security options are stripped before the map reaches the JDBC driver; unchanged when no provider is configured (backward compatible)
+- **`jarina-task-executor-api`** now depends on `jarina-credential-providers-jdbc`
 
 #### OpenBao / Vault integration in the demo
 
 - **Docker Compose**: `openbao` service (`quay.io/openbao/openbao:2.0`) with the init script `demo/compose/conf_infra/openbao/init.sh`:
-  - dev server, KV v2 secrets engine, seeding `kv/lakehouse/database` and `kv/infrastructure/minio`
-  - read-only policy `lakehouse-spark-readonly`, scoped token `lakehouse-spark-token`
+  - dev server, KV v2 secrets engine, seeding `kv/jarina/database` and `kv/infrastructure/minio`
+  - read-only policy `jarina-spark-readonly`, scoped token `jarina-spark-token`
   - `VAULT_TOKEN` env added to `spark-master`, `spark-worker-1`, `spark-history`, `task-executor-svc-database`; healthcheck + `depends_on` wiring
 - **`demo/compose/conf_infra/spark-defaults.conf`**:
-  - `processingdb` catalog switched to `LakehouseSecureJDBCTableCatalog` + `BaoJdbcSecretProvider` (`secret-key: kv/data/lakehouse/database:password`) — plaintext PostgreSQL password removed
+  - `processingdb` catalog switched to `JarinaSecureJDBCTableCatalog` + `BaoJdbcSecretProvider` (`secret-key: kv/data/jarina/database:password`) — plaintext PostgreSQL password removed
   - S3 credentials moved from hardcoded `spark_user`/`spark_pwd` to `BaoS3CredentialsProvider` reading `kv/data/infrastructure/minio` from OpenBao
 - **Datasource configs** (`demo/compose/conf/datasources/processingdb.json`, `demo/k8s/conf/datasources/processingdb.json`) — `password` replaced by provider options (`secretProvider`, `secret-key`, `vault-url`)
-- **Kubernetes umbrella chart** `lakehouse-management`:
-  - `openbao:` section in `values.yaml` (image, env with `LAKEHOUSE_DB_PASSWORD`, `MINIO_ROOT_PASSWORD`, `BAO_DEV_ROOT_TOKEN_ID`, `BAO_TOKEN`; optional `valueFrom.secretKeyRef` support)
+- **Kubernetes umbrella chart** `jarina-management`:
+  - `openbao:` section in `values.yaml` (image, env with `JARINA_DB_PASSWORD`, `MINIO_ROOT_PASSWORD`, `BAO_DEV_ROOT_TOKEN_ID`, `BAO_TOKEN`; optional `valueFrom.secretKeyRef` support)
   - new templates: `openbao-configmap` (init script placeholder for `init.sh`), `openbao-deployment` (`BAO_ADDR` → `http://<release>-openbao:8200`, exec `bao status` probes), `openbao-service` (ClusterIP:8200)
-- **Spark image** `docker/lakehouse-spark-aws` — provider jars added to `/opt/spark/jars`, version 0.9.0
-- **lakehouse-ui-svc** — OpenBao added to the services topology (health-check `/v1/sys/health`, vertex, edge)
+- **Spark image** `docker/jarina-spark-aws` — provider jars added to `/opt/spark/jars`, version 0.9.0
+- **jarina-ui-svc** — OpenBao added to the services topology (health-check `/v1/sys/health`, vertex, edge)
 
 #### Documentation
 
 - `doc/security/security.md` + `doc-ru/security/security.md` — new section "Secrets for data connections (credential providers)": option contract (`secretProvider`, `secret-key`, `vault-url`, `vault-role`, `vault-k8s-auth-path`, `secret-id`, `secret-version`), where to configure (`spark-defaults.conf` / datasource `service.properties`), OpenBao/Vault and Yandex Cloud Lockbox setup, security guarantees (secrets are never logged, masked errors, 5-minute cache); overview and configuration reference updated
-- `lakehouse-credential-providers-spark` README (EN/RU) — configuration, deploying to Spark (`--jars`), caching / timeouts / troubleshooting
-- `lakehouse-task-executor-svc` docs (EN/RU):
+- `jarina-credential-providers-spark` README (EN/RU) — configuration, deploying to Spark (`--jars`), caching / timeouts / troubleshooting
+- `jarina-task-executor-svc` docs (EN/RU):
   - `processors.md` — Spark processor architecture updated to the actual code (deploy logic inlined, `deploy.clusterUrl` / `deploy.mainClass` / `deploy.appResource`), new "Secrets in Spark tasks" section
   - `properties.md` — spark processor properties (`maxWaitToRunningStateTimeoutMs`, `sparkJobStatusCheckIntervalMs`) and datasource provider options
   - `readme.md` — processor parameters, JDBC secret resolution, `VAULT_TOKEN` / `YC_AUTH_KEY_PATH` required settings
@@ -170,23 +324,23 @@ are periodically synchronized into the configuration database.
 #### Keycloak security — OAuth2 Resource Server / Client
 All backend services now authenticate via Keycloak (OAuth2 Bearer token validation):
 
-- **`lakehouse-common-health`** — shared security infrastructure:
+- **`jarina-common-health`** — shared security infrastructure:
   - `AuditLoggingFilter` — logs incoming request details
   - `BearerTokenClientHttpRequestInterceptor` — attaches OAuth2 access token to outbound REST calls
   - `KeycloakRoleConverter` — maps Keycloak realm roles to Spring Security authorities
   - `RestClientSecurityConfiguration` — configures `RestClient` with token relay
   - `TestSecurityConfiguration` — test-only security config for health controller tests
   - `KeycloakRoleConverterTest`
-- **`SecurityConfig`** added to: `lakehouse-config-svc`, `lakehouse-scheduler-svc`, `lakehouse-state-svc`, `lakehouse-task-executor-svc`, `lakehouse-task-proxy-for-spark`, `lakehouse-ui-svc`
-- **`SecurityConfigTest`** added to: `lakehouse-config-svc`, `lakehouse-scheduler-svc`
+- **`SecurityConfig`** added to: `jarina-config-svc`, `jarina-scheduler-svc`, `jarina-state-svc`, `jarina-task-executor-svc`, `jarina-task-proxy-for-spark`, `jarina-ui-svc`
+- **`SecurityConfigTest`** added to: `jarina-config-svc`, `jarina-scheduler-svc`
 
 #### OpenAPI
-- **`OpenApiConfig`** — Swagger UI endpoints added to `lakehouse-config-svc`, `lakehouse-scheduler-svc`
+- **`OpenApiConfig`** — Swagger UI endpoints added to `jarina-config-svc`, `jarina-scheduler-svc`
 
-#### lakehouse-ui-svc
+#### jarina-ui-svc
 - **`UserController`** — `/api/user` endpoint returning authenticated user info (name, email, roles)
 
-#### lakehouse-config-svc
+#### jarina-config-svc
 - **`SparkRestClientConfiguration`** — REST client config for Spark Proxy communication
 
 #### Logging
@@ -199,7 +353,7 @@ All backend services now authenticate via Keycloak (OAuth2 Bearer token validati
 
 #### Demo & infrastructure
 - **Docker Compose** — Keycloak service added (image `quay.io/keycloak/keycloak:26.0`, import realm, healthcheck)
-- **Keycloak realm** — `demo/compose/conf_infra/security/realms/lakehouse-realm.json` (clients: `lakehouse-ui-client`, `lakehouse-internal-client`; roles: `USER`, `ADMIN`; demo users: `de_view`, `de_editor`)
+- **Keycloak realm** — `demo/compose/conf_infra/security/realms/jarina-realm.json` (clients: `jarina-ui-client`, `jarina-internal-client`; roles: `USER`, `ADMIN`; demo users: `de_view`, `de_editor`)
 - **Keycloak schema init** — `demo/compose/conf_infra/security/init_keycloak_schema.sql`
 - **K8s Helm charts** for Keycloak:
   - `keycloak-deployment` — Keycloak pod with `start-dev --import-realm`
@@ -214,7 +368,7 @@ All backend services now authenticate via Keycloak (OAuth2 Bearer token validati
 - **`README-SCENARIO.md`** — updated with screenshot references
 - **`.utils/kafka/topic-get-messages.bash`** — utility for reading Kafka topic messages
 
-#### lakehouse-task-executor-svc
+#### jarina-task-executor-svc
 - **`SparkStandAloneClusterTaskProcessor`** rewritten — expanded submission handling with improved error recovery and status synchronization
 
 ### Fixed
@@ -227,15 +381,15 @@ All backend services now authenticate via Keycloak (OAuth2 Bearer token validati
 ### Added
 
 #### New modules
-- **`lakehouse-ui-svc`** — web UI service
+- **`jarina-ui-svc`** — web UI service
   - Spring Boot backend (`/api/catalog`, `/api/schedules`, `/api/services`, `/api/spark-proxy`, `/api/states`) aggregating config-svc, scheduler-svc, state-svc and task-proxy-for-spark
   - React frontend served from static resources (Vite build): Catalog tree, dataset lineage, model/DDL scripts, relations (ER) view, schedules + pipeline DAG, services topology, spark submissions, dataset state control
-  - Configurable service graph via `lakehouse.ui.services/edges/vertices` (`UiServiceProperties`)
+  - Configurable service graph via `jarina.ui.services/edges/vertices` (`UiServiceProperties`)
   - `HealthChecker` for services availability, `GlobalExceptionHandler`
-- **`lakehouse-common-health`** — shared liveness/readiness endpoints `/healthz` `/readyz` (paths configurable via `lakehouse.health.liveness-path` / `readiness-path`), applied to all services
-- **`lakehouse-task-proxy-for-spark-rest-client`** — REST client for the spark proxy submission query API
+- **`jarina-common-health`** — shared liveness/readiness endpoints `/healthz` `/readyz` (paths configurable via `jarina.health.liveness-path` / `readiness-path`), applied to all services
+- **`jarina-task-proxy-for-spark-rest-client`** — REST client for the spark proxy submission query API
 
-#### lakehouse-task-proxy-for-spark — submission querying
+#### jarina-task-proxy-for-spark — submission querying
 - **`SparkSubmissionQueryController`** `/api/v1/spark-proxy-submissions` — list submissions filtered by `status`, `dateFrom`/`dateTo`, cursor pagination via `lastId` + `limit` (max 100), plus per-submission spark-properties endpoint
 - **`SparkProxyService`** — `getSubmissions`, `getStatus`, `getSparkProperties`, `kill`, `killAll`, `clear` (locks all rows, kills running, deletes DB records)
 - **DTOs** — `SparkProxySubmissionDTO`, `SparkProxySubmissionPropertiesDTO`, `SparkProxySubmissionsRequest`, `SparkProxySubmissionsMeta`, `SparkProxySubmissionsResponse`
@@ -247,7 +401,7 @@ All backend services now authenticate via Keycloak (OAuth2 Bearer token validati
 - **Task templates** — `TaskTemplateController` CRUD (`/v1_0/configs/tasks`), `TaskTemplate` entity rework
 - **`DatabaseProtocol`** enum added to `DataSourceDTO`/datasource configuration
 - **Schedule headers** — `ScheduleHeaderDTO` support in `ScheduleService`
-- **`TaskDTOValidator`** in `lakehouse-validators`
+- **`TaskDTOValidator`** in `jarina-validators`
 - Docs: `lineage.md`, `metadata_relationships.puml` diagram, updated content_configuration docs
 
 #### Scheduler service
@@ -265,20 +419,20 @@ All backend services now authenticate via Keycloak (OAuth2 Bearer token validati
 - **`DtoMergeUtils`** — field-level merge for config DTOs
 - `DriverDTO` moved to `configs.schedule` package
 - `DataSetStateResponseDTO` renamed to `DataSetWrongStateResponseDTO`
-- `SQLTemplateFactory` moved from `lakehouse-common` to `lakehouse-task-executor-api`
+- `SQLTemplateFactory` moved from `jarina-common` to `jarina-task-executor-api`
 - `Endpoint` constants for lineage, task templates, schedule DAG
 
 #### Demo & infrastructure
-- New Helm chart `lakehouse-management-ui-svc`
+- New Helm chart `jarina-management-ui-svc`
 - Demo task templates: `begin.json` (`lockedStateTaskProcessor`), `check.json` (`dependencyCheckStateTaskProcessor`), `prepare-jdbc.json` (`jdbcTaskProcessor` + `createTableSQLProcessorBody`)
 - Demo configs updated (datasources with `databaseProtocol`, schedules, scenario-act-templates) for compose and k8s
 - Docker: images bumped to 0.7.0, `build.bash` version checks, updated spark-aws image
 - `doc/nexttimedev/openmetadata` — OpenMetadata integration diagrams (classCurrent, omdClass, sendtoomd)
 
 ### Changed
-- `lakehouse-config-svc` — task storage refactored: `TaskAbstract`/`ScenarioActTask` replaced by `Task` + `TaskProcessorArg` entities (`TaskRepository`, `TaskService`, `TaskProcessorArgRepository`, `TaskNotFoundException`); `Driver` entity removed in favor of DTO/driver service
-- `lakehouse-scheduler-svc` — `ScheduleTaskInstanceService` retry semantics driven by `maxRetries`; `ScheduleInstanceController` interval queries
-- All services — health check configuration (`lakehouse.health.*`)
+- `jarina-config-svc` — task storage refactored: `TaskAbstract`/`ScenarioActTask` replaced by `Task` + `TaskProcessorArg` entities (`TaskRepository`, `TaskService`, `TaskProcessorArgRepository`, `TaskNotFoundException`); `Driver` entity removed in favor of DTO/driver service
+- `jarina-scheduler-svc` — `ScheduleTaskInstanceService` retry semantics driven by `maxRetries`; `ScheduleInstanceController` interval queries
+- All services — health check configuration (`jarina.health.*`)
 
 ### Fixed
 - Proxy `getStatus` returns `NOT_FOUND` for missing submissions
@@ -289,7 +443,7 @@ All backend services now authenticate via Keycloak (OAuth2 Bearer token validati
 
 ## [0.6.0] 2026-07-30
 
-### lakehouse-task-proxy-for-spark — major refactoring & new schedulers
+### jarina-task-proxy-for-spark — major refactoring & new schedulers
 
 - **`/clear` endpoint redesigned**: now `claimAllTasks(10000)` locks all non-locked rows, kills running tasks (SUBMITTED/RUNNING), calls `clearCompleted()` for terminal tasks, deletes all from DB, then calls `adapter.postClear()`
 - **Three independent schedulers** added (all `ScheduledExecutorService`-based):
@@ -312,23 +466,23 @@ All backend services now authenticate via Keycloak (OAuth2 Bearer token validati
 - **`SubmissionResponse`** — renamed from `CreateSubmissionResponse`, added `success()` field
 - **`ExternalStatus`** — added `fromInternal()` for cluster status mapping
 - **`GlobalExceptionHandler`** — unified error handling for `CreateErrorException`
-- **Helm chart** `demo/k8s/lakehouse-management-helm-charts/lakehouse-task-proxy4spark/` — new chart for the proxy service
-- **Dockerfile** `docker/lakehouse-task-proxy4spark/` — multi-stage build with `jar-with-dependencies`
+- **Helm chart** `demo/k8s/jarina-management-helm-charts/jarina-task-proxy4spark/` — new chart for the proxy service
+- **Dockerfile** `docker/jarina-task-proxy4spark/` — multi-stage build with `jar-with-dependencies`
 - **README** (EN/RU) — rewritten with scheduler descriptions, architecture updates
 - **PlantUML diagrams** — `sequence-cleanup.puml`, `activity-inspectStatus.puml` added; existing diagrams updated
 
-### lakehouse-task-executor-svc — cleanup & fixes
+### jarina-task-executor-svc — cleanup & fixes
 
 - **Removed `K8sSparkNativeTaskProcessor`** and all k8s-native classes (`K8sClientService`, `K8sConfigService`, `K8sPodStatusWatcher`, `PodPhase`, `PodUtilService`) — not used
-- **Removed `SourceConfUtil`** from lakehouse-jinjava
+- **Removed `SourceConfUtil`** from jarina-jinjava
 - **`ExecuteService`** — fixed NPE on uninitialized `JinJavaUtils`
 - **`processors.md`** — updated to reflect current architecture (removed references to non-existent processors, added `AbstractSparkDeployTaskProcessor` and `SparkRestDeployFactory` descriptions)
 
 ### Demo & infrastructure
 
-- **Helm charts**: all services updated to 0.5.0; `lakehouse-task-proxy4spark` chart added
+- **Helm charts**: all services updated to 0.5.0; `jarina-task-proxy4spark` chart added
 - **Docker Compose**: updated Spark templates, proxy port mappings
-- **Dockerfiles**: `build.bash` for all images; fixed `lakehouse-spark-aws` base image to `spark:3.5.8-scala2.12-java17-ubuntu`
+- **Dockerfiles**: `build.bash` for all images; fixed `jarina-spark-aws` base image to `spark:3.5.8-scala2.12-java17-ubuntu`
 - **K8s scripts**: `install.bash`, `setup-default.bash`, `tunnels.bash`, `remove_images.bash` updated
 
 ---
@@ -336,7 +490,7 @@ All backend services now authenticate via Keycloak (OAuth2 Bearer token validati
 ## [0.5.0] — 2026-06-23
 
 ### Added
-- **`lakehouse-task-proxy-for-spark`** — new module: REST API proxy for Spark Submit with PostgreSQL-backed task queue
+- **`jarina-task-proxy-for-spark`** — new module: REST API proxy for Spark Submit with PostgreSQL-backed task queue
   - Four adapters: Standalone, Kubernetes, YARN, MESOS
   - `SubmissionScheduler` with `ScheduledExecutorService`, `FOR UPDATE SKIP LOCKED`
   - `SparkLauncher`-based spark-submit execution
@@ -353,8 +507,8 @@ All backend services now authenticate via Keycloak (OAuth2 Bearer token validati
 ## [0.4.0] — 2026-06-20
 
 ### Added
-- **Spark DQ module** (`lakehouse-task-executor-spark-dq-app`) — data quality validation as Spark job
-- **Spark Dataset module** (`lakehouse-task-executor-spark-dataset-app`) — dataset processing as Spark job
+- **Spark DQ module** (`jarina-task-executor-spark-dq-app`) — data quality validation as Spark job
+- **Spark Dataset module** (`jarina-task-executor-spark-dataset-app`) — dataset processing as Spark job
 - **`ScenarioActTemplate`** configuration in config-svc
 
 ### Changed
@@ -367,7 +521,7 @@ All backend services now authenticate via Keycloak (OAuth2 Bearer token validati
 
 ### Added
 - **Spark K8s native task processor** — initial (later removed)
-- **Spark REST client** (`lakehouse-spark-rest-client`) — client for Spark Standalone REST API
+- **Spark REST client** (`jarina-spark-rest-client`) — client for Spark Standalone REST API
 - **Demo helm charts** for all services
 
 ### Fixed
@@ -378,9 +532,9 @@ All backend services now authenticate via Keycloak (OAuth2 Bearer token validati
 ## [0.2.0] — 2025-07-13
 
 ### Added
-- **State service** (`lakehouse-state-svc`) — manages dataset increment states (LOCKED, SUCCESS, etc.)
+- **State service** (`jarina-state-svc`) — manages dataset increment states (LOCKED, SUCCESS, etc.)
 - **State processors**: `LockedStateTaskProcessor`, `SuccessStateTaskProcessor`, `DependencyCheckStateTaskProcessor`
-- **State REST client** (`lakehouse-state-rest-client`)
+- **State REST client** (`jarina-state-rest-client`)
 
 ### Changed
 - `AbstractSparkDeployTaskProcessor.deploy()` — waits for RUNNING state with 2-minute timeout, then for final status
@@ -399,16 +553,16 @@ All backend services now authenticate via Keycloak (OAuth2 Bearer token validati
 ### Added
 - Initial project structure
 - **Core modules**:
-  - `lakehouse-common` — shared DTOs, utils (`SparkConfUtil`, `Coalesce`, etc.)
-  - `lakehouse-jinjava` — Jinja template engine integration
-  - `lakehouse-common-rest-client`, `lakehouse-config-rest-client`, `lakehouse-scheduler-rest-client`, `lakehouse-task-executor-rest-client`
-- **Configuration service** (`lakehouse-config-svc`) — manages datasources, datasets, drivers, scenario templates
-- **Scheduler service** (`lakehouse-scheduler-svc`) — manages schedules and task delivery via Kafka
-- **Task executor service** (`lakehouse-task-executor-svc`) — executes tasks with JDBC and Spark processors
-- **Spark API** (`lakehouse-task-executor-spark-api`) — shared Spark session configuration
-- **CLI** (`lakehouse-cli`) — command-line interface for configuration management
-- **UI** (`lakehouse-ui-svc`) — web UI placeholder
-- **Validators** (`lakehouse-validators`) — validation utilities
+  - `jarina-common` — shared DTOs, utils (`SparkConfUtil`, `Coalesce`, etc.)
+  - `jarina-jinjava` — Jinja template engine integration
+  - `jarina-common-rest-client`, `jarina-config-rest-client`, `jarina-scheduler-rest-client`, `jarina-task-executor-rest-client`
+- **Configuration service** (`jarina-config-svc`) — manages datasources, datasets, drivers, scenario templates
+- **Scheduler service** (`jarina-scheduler-svc`) — manages schedules and task delivery via Kafka
+- **Task executor service** (`jarina-task-executor-svc`) — executes tasks with JDBC and Spark processors
+- **Spark API** (`jarina-task-executor-spark-api`) — shared Spark session configuration
+- **CLI** (`jarina-cli`) — command-line interface for configuration management
+- **UI** (`jarina-ui-svc`) — web UI placeholder
+- **Validators** (`jarina-validators`) — validation utilities
 - **Docker Compose** (`demo/compose/`) — development environment with PostgreSQL, MinIO, Hive Metastore
-- **K8s helm charts** (`demo/k8s/lakehouse-management-helm-charts/`) — deployment charts for all services
+- **K8s helm charts** (`demo/k8s/jarina-management-helm-charts/`) — deployment charts for all services
 - **PlantUML diagrams** in each module

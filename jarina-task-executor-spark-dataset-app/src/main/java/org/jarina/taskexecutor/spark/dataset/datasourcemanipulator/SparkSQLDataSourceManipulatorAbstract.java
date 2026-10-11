@@ -1,0 +1,161 @@
+/*
+ * "Jarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+ * Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     https://www.apache.org/licenses/LICENSE-2.0.txt
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.jarina.taskexecutor.spark.dataset.datasourcemanipulator;
+
+import org.apache.spark.sql.SparkSession;
+import org.jarina.client.api.constant.SystemVarKeys;
+import org.jarina.client.api.dto.configs.dataset.DataSetConstraintDTO;
+import org.jarina.client.api.dto.configs.dataset.DataSetDTO;
+import org.jarina.taskexecutor.api.datasource.DataSourceManipulator;
+import org.jarina.taskexecutor.api.datasource.exception.*;
+import org.jarina.taskexecutor.api.facade.SQLTemplateResolver;
+import org.jarina.taskexecutor.spark.dataset.datasourcemanipulator.execute.SparkExecuteUtils;
+import org.jarina.taskexecutor.spark.dataset.datasourcemanipulator.parameter.SparkSQLDataSourceManipulatorParameter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public abstract class SparkSQLDataSourceManipulatorAbstract implements DataSourceManipulator {
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final SparkSQLDataSourceManipulatorParameter sparkSQLDataSourceManipulatorParameter;
+
+
+
+    private final Map<String,Object> classContext = new HashMap<>();
+    public SparkSQLDataSourceManipulatorAbstract(SparkSQLDataSourceManipulatorParameter sparkSQLDataSourceManipulatorParameter) {
+        this.sparkSQLDataSourceManipulatorParameter = sparkSQLDataSourceManipulatorParameter;
+        classContext.put(SystemVarKeys.CURRENT_DATASET_KEY_NAME, dataSetDTO().getKeyName());
+    }
+
+    @Override
+    public void createTableIfNotExists() throws CreateException {
+
+        try {
+            logger.info("Trying to create database schema {}", dataSetDTO().getDatabaseSchemaName());
+            executeUtils().execute(sqlTemplateResolver().getDatabaseSchemaDDLCreate(), classContext);
+            logger.info("Trying to create table {}",dataSetDTO().getTableName());
+            executeUtils().execute(sqlTemplateResolver().getTableDDLCreate(), classContext);
+        }catch (ExecuteException e){
+            throw new CreateException(e);
+        }
+    }
+
+    public SparkSession sparkSession() {
+        return sparkSQLDataSourceManipulatorParameter.sparkSession();
+    }
+    @Override
+    public void drop() throws DropException {
+        try {
+            executeUtils().execute(sqlTemplateResolver().getTableDDLDrop(), classContext);
+        } catch (ExecuteException e) {
+            throw new DropException(e);
+        }
+    }
+
+
+    @Override
+    public void addConstraints(Map<String, DataSetConstraintDTO> constraints) throws ConstraintException {
+        throw new ConstraintException("Unsupported");
+    }
+
+    @Override
+    public void compact() throws CompactException {
+        try {
+            executeUtils().execute(sqlTemplateResolver().getTableDDLCompact());
+        } catch (ExecuteException e) {
+            throw new CompactException(e);
+        }
+    }
+
+    private void partitionOperation(String template,String partition) throws ExecuteException {
+        Map<String, Object> context = new HashMap<>();
+        context.putAll(classContext);
+        context.put(SystemVarKeys.PARTITION_NAME, partition);
+        executeUtils().execute(sqlTemplateResolver().getPartitionDDLDrop(), context);
+    }
+    @Override
+    public void compactPartitions(List<String> partitions) throws CompactException {
+        try {
+            for(String partition:partitions) {
+                partitionOperation(sqlTemplateResolver().getPartitionDDLCompact(),partition);
+            }
+        } catch (ExecuteException e) {
+            throw new CompactException(e);
+        }
+    }
+
+    @Override
+    public void dropPartitions(List<String> partitions) throws DropException {
+        try {
+            for(String partition:partitions) {
+                partitionOperation(sqlTemplateResolver().getPartitionDDLDrop(), partition);
+            }
+        } catch (ExecuteException e) {
+            throw new DropException(e);
+        }
+    }
+
+    @Override
+    public void removeConstraintByName(String constraintName) throws ConstraintException {
+        throw new ConstraintException("Unsupported");
+    }
+
+    @Override
+    public void removeConstraints(Map<String, DataSetConstraintDTO> constraints) throws ConstraintException {
+        throw new ConstraintException("Unsupported");
+    }
+
+    @Override
+    public void truncate() throws TruncateException {
+        try {
+            executeUtils().execute(sqlTemplateResolver().getTableDDLTruncate());
+        } catch (ExecuteException e) {
+            throw new TruncateException(e);
+        }
+    }
+
+    @Override
+    public void truncatePartitions(List<String> partitions) throws TruncateException {
+        try {
+            for(String partition:partitions) {
+                partitionOperation(sqlTemplateResolver().getPartitionDDLTruncate(),partition);
+            }
+        } catch (ExecuteException e) {
+            throw new TruncateException(e);
+        }
+    }
+
+    @Override
+    public DataSetDTO dataSetDTO() {
+        return sparkSQLDataSourceManipulatorParameter.dataSetDTO();
+    }
+
+    @Override
+    public SparkExecuteUtils executeUtils() {
+        return sparkSQLDataSourceManipulatorParameter.executeUtils();
+    }
+
+    @Override
+    public SQLTemplateResolver sqlTemplateResolver() {
+        return sparkSQLDataSourceManipulatorParameter.sqlTemplateResolver();
+    }
+}

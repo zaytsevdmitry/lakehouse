@@ -14,7 +14,7 @@ docker compose up -d
 ### Настройка хост машины
 Требуется строка в файле /etc/hosts хоста 
 ```
-127.0.0.1 keycloak.lakehouse
+127.0.0.1 keycloak.jarina
 
 ```
 ### Совпадения имен
@@ -38,17 +38,18 @@ docker container rm spark-history
 docker container rm spark-master
 docker container rm spark-worker-1
 docker container rm state-svc
-docker container rm task-executor-svc-1
-docker container rm task-executor-svc-2 
-docker container rm task-executor-svc-3 
-docker container rm lakehouse-task-proxy4spark
+docker container rm task-executor-svc-database
+docker container rm task-executor-svc-spark
+docker container rm task-executor-svc-state
+docker container rm jarina-task-proxy4spark
 
 ```
 #### Сеть
-В конфигурации определена сеть
+В конфигурации определена сеть. Для обычной демонстрации это не нужно, но для использования сервисов клиентам хост-машины не всегда достаточно пробросить порт контейнера на localhost. 
+На пример брокер или spark-master/worker ui.   
 ```yaml
 networks:
-  lakehouse_net:
+  jarina_net:
     driver: bridge
     ipam:
       config:
@@ -90,7 +91,7 @@ networks:
 Выполнить удаление контейнеров 
 
 ```shell
-docker compose down
+docker compose down -v
 ```
 
 Очистить данные хранилища minio. Потребуются root привилегии тк сервис работает в контейнере под root  

@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+# "Jarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+# Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     https://www.apache.org/licenses/LICENSE-2.0.txt
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+set -e
+export LH_VERSION=0.11.0
+cp -f ../../jarina-task-executor-spark-dataset-app/target/jarina-task-executor-spark-dataset-app-0.11.0-jar-with-dependencies.jar ./
+cp -f ../../jarina-task-executor-spark-dq-app/target/jarina-task-executor-spark-dq-app-0.11.0-jar-with-dependencies.jar ./
+cp -f ../../jarina-task-proxy-for-spark/target/jarina-task-proxy-for-spark-0.11.0-jar-with-dependencies.jar ./
+cp -f ../../jarina-credential-providers-jdbc/target/jarina-credential-providers-jdbc-0.11.0.jar ./
+cp -f ../../jarina-credential-providers-spark/target/jarina-credential-providers-spark-0.11.0.jar ./
+docker build  -t jarina-spark-aws:$LH_VERSION ./
+rm ./jarina*.jar
+docker images | grep jarina

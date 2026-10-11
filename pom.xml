@@ -8,9 +8,9 @@
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>4.1.1</version>
     </parent>
-    <groupId>lakehouse</groupId>
-    <artifactId>lakehouse-parent</artifactId>
-    <version>0.10.0</version>
+    <groupId>jarina</groupId>
+    <artifactId>jarina-parent</artifactId>
+    <version>0.11.0</version>
     <packaging>pom</packaging>
     <licenses>
         <license>
@@ -21,32 +21,32 @@
     </licenses>
 
     <modules>
-        <module>lakehouse-common</module>
-        <module>lakehouse-config-svc</module>
-        <module>lakehouse-config-rest-client</module>
-        <module>lakehouse-scheduler-rest-client</module>
-        <module>lakehouse-scheduler-svc</module>
-        <module>lakehouse-state-rest-client</module>
-        <module>lakehouse-task-executor-svc</module>
-        <module>lakehouse-ui-svc</module>
-        <module>lakehouse-cli</module>
-        <module>lakehouse-common-test</module>
-        <module>lakehouse-common-rest-client</module>
-        <module>lakehouse-common-health</module>
-        <module>lakehouse-state-svc</module>
-        <module>lakehouse-jinjava</module>
-        <module>lakehouse-task-executor-rest-client</module>
-        <module>lakehouse-spark-rest-client</module>
-        <module>lakehouse-task-executor-api</module>
-        <module>lakehouse-validators</module>
-        <module>lakehouse-task-executor-spark-api</module>
-        <module>lakehouse-task-executor-spark-dataset-app</module>
-        <module>lakehouse-task-executor-spark-dq-app</module>
-        <module>lakehouse-task-proxy-for-spark</module>
-        <module>lakehouse-task-proxy-for-spark-api</module>
-        <module>lakehouse-task-proxy-for-spark-rest-client</module>
-        <module>lakehouse-credential-providers-jdbc</module>
-        <module>lakehouse-credential-providers-spark</module>
+        <module>jarina-common</module>
+        <module>jarina-config-svc</module>
+        <module>jarina-config-rest-client</module>
+        <module>jarina-scheduler-rest-client</module>
+        <module>jarina-scheduler-svc</module>
+        <module>jarina-state-rest-client</module>
+        <module>jarina-task-executor-svc</module>
+        <module>jarina-ui-svc</module>
+        <module>jarina-cli</module>
+        <module>jarina-common-test</module>
+        <module>jarina-common-rest-client</module>
+        <module>jarina-common-health</module>
+        <module>jarina-state-svc</module>
+        <module>jarina-jinjava</module>
+        <module>jarina-task-executor-rest-client</module>
+        <module>jarina-spark-rest-client</module>
+        <module>jarina-task-executor-api</module>
+        <module>jarina-validators</module>
+        <module>jarina-task-executor-spark-api</module>
+        <module>jarina-task-executor-spark-dataset-app</module>
+        <module>jarina-task-executor-spark-dq-app</module>
+        <module>jarina-task-proxy-for-spark</module>
+        <module>jarina-task-proxy-for-spark-api</module>
+        <module>jarina-task-proxy-for-spark-rest-client</module>
+        <module>jarina-credential-providers-jdbc</module>
+        <module>jarina-credential-providers-spark</module>
     </modules>
     <dependencyManagement>
         <dependencies>
@@ -69,6 +69,7 @@
         <junit-jupiter.version>6.1.3</junit-jupiter.version>
         <springdoc.version>3.1.0</springdoc.version>
         <kafka.testcontainers.version>1.19.3</kafka.testcontainers.version>
+        <jgit.version>6.7.0.202309050840-r</jgit.version>
     </properties>
     <dependencies>
         <dependency>

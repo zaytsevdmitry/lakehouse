@@ -4,20 +4,19 @@
   - aws 
   - postgres
 
-- [lakehouse](lakehouse) - Образ с сервисами управления данными 
+- [jarina](jarina) - Образ с сервисами управления данными 
  
-  - lakehouse-scheduler-svc
-  - lakehouse-cli
-  - lakehouse-config-svc
-  - lakehouse-task-executor-svc
-  - lakehouse-state-svc 
+  - jarina-scheduler-svc
+  - jarina-cli
+  - jarina-config-svc
+  - jarina-task-executor-svc
+  - jarina-state-svc 
 
-- [lakehouse-spark-aws](lakehouse-spark-aws) - Образ основанный на официальном apache/spark. В образ добавлены библиотеки 
+- [jarina-spark-aws](jarina-spark-aws) - Образ основанный на официальном apache/spark. В образ добавлены библиотеки 
   - aws
   - postgres
-  - [lakehouse-task-executor-spark-dataset-app](../lakehouse-task-executor-spark-dataset-app) с кодом обработки данных на spark
-  - [lakehouse-task-executor-spark-dq-app](../lakehouse-task-executor-spark-dq-app) с кодом операций Data Quality на Spark
-  
-- [lakehouse-task-proxy4spark](lakehouse-task-proxy4spark) -  образ основанный на  lakehouse-spark-aws
-  - jdk 23
+  - [jarina-task-executor-spark-dataset-app](../jarina-task-executor-spark-dataset-app) с кодом обработки данных на spark
+  - [jarina-task-executor-spark-dq-app](../jarina-task-executor-spark-dq-app) с кодом операций Data Quality на Spark
+  - [jarina-task-proxy4spark](jarina-task-proxy4spark) -  прокси сервис для запуска spark-job
+    - jdk 23
   

@@ -1,5 +1,5 @@
 @startuml interservice-security
-title Lakehouse - service-to-service security
+title Jarina - service-to-service security
 
 skinparam sequence {
     ArrowColor #444444
@@ -10,7 +10,7 @@ skinparam sequence {
 }
 
 participant "Caller service\n(config-svc / state-svc /\ntask-executor-svc /\nscheduler-svc / task-proxy)" as Caller
-participant "Keycloak\n(realm: lakehouse)" as KC
+participant "Keycloak\n(realm: jarina)" as KC
 participant "Resource service\n(backend REST API)" as RS
 
 == Background processing (Kafka consumer, scheduler, task processor) ==
@@ -20,7 +20,7 @@ note over Caller
     -> fallback to client_credentials
 end note
 
-Caller -> KC : POST /protocol/openid-connect/token\ngrant_type=client_credentials\nclient_id=lakehouse-internal-client
+Caller -> KC : POST /protocol/openid-connect/token\ngrant_type=client_credentials\nclient_id=jarina-internal-client
 KC --> Caller : access_token (JWT, cached by\nOAuth2AuthorizedClientManager)
 
 Caller -> RS : REST request\nAuthorization: Bearer <service-account JWT>
@@ -49,7 +49,7 @@ RS -> RS : Same validation + audit\n(user ID / username from JWT claims)
 RS --> Caller : 200 OK
 
 legend right
-    lakehouse.security.enabled = true/false : master switch
+    jarina.security.enabled = true/false : master switch
     CSRF disabled (stateless services)
     Secrets via env vars only
 end legend

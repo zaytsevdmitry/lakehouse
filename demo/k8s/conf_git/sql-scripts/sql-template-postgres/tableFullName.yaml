@@ -1,4 +1,0 @@
-kind: Script
-key: sql-template-postgres.tableFullName.sql
-value: |
-  fix me
