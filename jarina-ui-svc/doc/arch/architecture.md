@@ -137,8 +137,8 @@ src/main/resources/frontend
         ├── ModelTab.jsx           # model scripts w/ syntax highlighting
         ├── RelationsTab.jsx       # ER-diagram view (React Flow)
         └── __tests__/             # Vitest unit tests for the modeller
-                                   #   (DataLineageDiagramEditor 24, EditorView 4,
-                                   #   WorkspacePicker 5) — see §7
+                                   #   (DataLineageDiagramEditor 24, EditorView 5,
+                                   #   FormEditor 7, WorkspacePicker 5) — see §7
 ```
 
 Purpose of each folder/file:
@@ -519,7 +519,7 @@ readers/viewers get a read-only editor (`readOnly`).
 | Module format / target | ESM (`"type": "module"`), Vite default targets |
 | Language | **JavaScript (JSX)** — no TypeScript |
 | Linting / formatting | **None configured** (no ESLint, no Prettier, no `lint` script) |
-| Tests | **Vitest 3 + React Testing Library** (jsdom): `npm test` runs `vitest run`; configured in the `test` block of `vite.config.js` (`globals`, `environment: 'jsdom'`, `setupFiles: ['./test/setup.js']`, `include: src/**/*.test.{js,jsx}`). The current suite covers `DataLineageDiagramEditor` (24 tests: graph translation, position persistence, drag, Add/Edit/Remove + modal flows, full-screen toggle), `EditorView` (4 tests, incl. the multi-domain workspace leave-on-review flow) and `WorkspacePicker` (5 tests, incl. per-domain branch preselection). `test/setup.js` polyfills the browser APIs React Flow needs in jsdom (ResizeObserver, `DOMMatrixReadOnly`, pointer capture, `getBoundingClientRect`, `offsetWidth/Height`). |
+| Tests | **Vitest 3 + React Testing Library** (jsdom): `npm test` runs `vitest run`; configured in the `test` block of `vite.config.js` (`globals`, `environment: 'jsdom'`, `setupFiles: ['./test/setup.js']`, `include: src/**/*.test.{js,jsx}`). The current suite (41 tests) covers `DataLineageDiagramEditor` (24 tests: graph translation, position persistence, drag, Add/Edit/Remove + modal flows, full-screen toggle), `FormEditor` (7 tests: source-map key selection across document switches, stale-key guards, remove/edit enablement, per-instance tab reset), `EditorView` (5 tests, incl. folder creation at the domain root, file move-to-domain-root and the multi-domain workspace leave-on-review flow) and `WorkspacePicker` (5 tests, incl. per-domain branch preselection). `test/setup.js` polyfills the browser APIs React Flow needs in jsdom (ResizeObserver, `DOMMatrixReadOnly`, pointer capture, `getBoundingClientRect`, `offsetWidth/Height`). |
 | Package manager | npm (`package.json` + `package-lock.json`) |
 
 Scripts: `dev` (`vite`), `build` (`vite build`), `preview` (`vite preview`),
@@ -554,16 +554,17 @@ Priorities for refactoring before the application scales:
    round-trip arbitrary documents. The backend re-validates everything, so the
    risk is bounded, but a real `js-yaml` (or a backend round-trip endpoint)
    would make the editor lossless and future-proof.
-2. **Automated verification covers one editor well.** A Vitest + React Testing
-   Library suite guards `DataLineageDiagramEditor` (graph↔doc translation, drag
-   persistence, Add/Edit/Remove modal flows), and there is initial coverage of
-   `EditorView` and `WorkspacePicker`, which is where the multi-domain workspace
-   logic lives. The rest of the app — `FormEditor`, `ErDiagramEditor`, the
-   section switcher, the review flow — still has no lint, no type check and no
-   tests; the regression net for those surfaces is a manual browser session.
-   Minimum viable step: add ESLint + extend the RTL suite to the remaining
-   modeller editors and save/restore flow; later a Playwright suite for the
-   section switcher and the full editor workflow.
+2. **Automated verification is concentrated in the modeller.** A Vitest + React
+   Testing Library suite guards `DataLineageDiagramEditor` (graph↔doc
+   translation, drag persistence, Add/Edit/Remove modal flows), `FormEditor`
+   (source-map key selection and stale-key guards) and `WorkspacePicker`
+   (per-domain branch preselection), plus initial coverage of `EditorView`, which
+   is where the multi-domain workspace logic lives. The rest of the app —
+   `ErDiagramEditor`, `DagEditor`, the section switcher, the review flow — still
+   has no lint, no type check and no tests; the regression net for those surfaces
+   is a manual browser session. Minimum viable step: add ESLint + extend the RTL
+   suite to the remaining modeller editors and save/restore flow; later a
+   Playwright suite for the section switcher and the full editor workflow.
 3. **No TypeScript.** All state flows through dynamic JS objects and props
    (`doc` from `parseYaml`, `KindSchema.fields`, `profile`, `WorkspaceResponse`)
    whose shapes are only documented implicitly. Typing `api.js` responses,
@@ -612,6 +613,92 @@ Priorities for refactoring before the application scales:
     and the modeller's drag-and-drop tree rely mainly on color/outline; add
     `aria-*`/keyboard support, semantic `nav`/`tablist`, and focus management
     for the switcher and editor.
+
+---
+
+## 9. Data Access Model (RBAC)
+
+### 9.1 Roles and where permissions come from
+
+The frontend has **no permission model of its own**. Authorization is decided
+server-side in the BFF (`jarina-ui-svc`), Keycloak is the identity provider, and
+the SPA only *reflects* the decision it is handed.
+
+- **Keycloak realm roles.** The user is authenticated through the Keycloak
+  realm `jarina`. The modelling roles are `VIEWER`, `EDITOR` and `ADMIN`, with
+  the hierarchy **`ADMIN > EDITOR > VIEWER`**. Roles reach the BFF in the JWT /
+  OIDC claims (`realm_access.roles`, with `roles` and
+  `resource_access.<client>.roles` fallbacks) and are mapped to Spring
+  authorities (`SecurityConfig.toAuthorities`), while the hierarchy itself is
+  declared by the `RoleHierarchy` bean
+  (`SecurityConfig.roleHierarchy`).
+- **The `/api/user` endpoint.** The SPA never parses the JWT. It calls
+  `GET /api/user` (`UserController`) and receives the profile
+  `{username, name, email, roles[], effectiveRole}`. `effectiveRole` is the
+  single relevant fact for the UI: `UserContext.effectiveRole()` delegates to
+  `ModellerRoleSupport.effectiveRole(roles)`, which collapses the raw role set
+  to the highest of `ADMIN`/`EDITOR`/`VIEWER` (case-insensitive, with the legacy
+  aliases `JARINA_CONFIG_VIEWER`, `JARINA_CONFIG_EDITOR`,
+  `JARINA_MODELLER_ADMIN` accepted for backward compatibility).
+- **The session cookie.** Every `/api/**` call is same-origin and rides on the
+  `JSESSIONID` session established by the OAuth2 authorization-code login; the
+  SPA never sends a `Bearer` token (see §4).
+
+Inside the modeller the frontend adds one more dimension on top of the role:
+**ownership**. `WorkspaceResponse.own` tells whether the current user owns the
+opened workspace, which is what makes the editor read-only for a workspace the
+user does not own (§9.3).
+
+### 9.2 Role capability matrix
+
+| Role | Backend (enforced) | Frontend (reflected) |
+|---|---|---|
+| No role / anonymous | `/api/**` (except the whitelist) → `401`, browser navigation → Keycloak login | No SPA access; `api()` redirects to `/oauth2/authorization/keycloak` on `401` |
+| `VIEWER` | Read workspaces/branches/schema; delete own workspace | Open Modelling, list branches, open a workspace — **editor is read-only**, no "New branch", no save/delete |
+| `EDITOR` | + create branches, create/edit/save/delete/move files & dirs, submit review, restore | + "New branch", file/folder CRUD, drag-and-drop, **Submit review** |
+| `ADMIN` | + everything under `/api/admin/**` | + the **Admin** tab (`AdminView`): all workspaces, force-delete, cleanup TTL, sync logs |
+
+The monitoring sections (Services, Catalog, Schedules, SparkJobs, VCS) have **no
+RBAC** beyond "authenticated": any logged-in user sees them; only the modeller
+carries role gating.
+
+### 9.3 Where access decisions are made in the code
+
+There is **no client-side router and therefore no route guard** (§6); access is
+enforced at the API boundary and merely *mirrored* by conditional rendering.
+
+- **API-level enforcement (authoritative).** `SecurityConfig.securityFilterChain`
+  applies `hasRole(...)` per path: `/api/admin/**` → `ADMIN`;
+  `/api/workspaces/**` GET → `VIEWER`, POST/PUT/DELETE → `EDITOR`;
+  `/api/vcs/workspace/*/restore`, `/api/vcs/branch`, `/api/vcs/review/*` →
+  `EDITOR`; `/api/vcs/workspaces`, `/api/vcs/workspace`, `/api/vcs/branches`,
+  `/api/schema` → `VIEWER`; everything else → `authenticated()`.
+  `UserContext`/`ModellerRole` then enforce workspace ownership on top of the
+  role. The frontend cannot bypass these rules — its gating is cosmetic.
+- **401 handoff.** `api()` in `api.js` turns any `401` into
+  `redirectToLogin()` → `/oauth2/authorization/keycloak`; this is the only
+  "guard"-like redirect in the SPA.
+- **Conditional rendering.** The profile drives which controls exist:
+  - `ModellerSection` — `isAdmin = profile.effectiveRole === 'ADMIN'` gates the
+    `My workspaces / Admin` tab header and renders `AdminView` only for admins
+    (`ModellerSection.jsx:73`).
+  - `WorkspacePicker` — `canEdit = effectiveRole === 'EDITOR' || 'ADMIN'`
+    shows/hides the **New branch** button (`WorkspacePicker.jsx:13`).
+  - `EditorView` — `canEdit = effectiveRole === 'EDITOR' || 'ADMIN'` and
+    `readOnly = !canEdit || !workspace.own` disable create/save/rename/move/
+    delete/drag, hide the submit-review action and show the `read-only` badge
+    (`EditorView.jsx:21`).
+  - `FormEditor`, `CodeEditor`, `ErDiagramEditor`, `DataLineageDiagramEditor`
+    and `DagEditor` receive the derived `readOnly` prop and hide their editing
+    affordances (on-canvas `Add/Edit/Remove` toolbar, inputs, drag)
+    accordingly.
+- **Error surfacing.** A `403` from an ownership/role check surfaces through
+  `api()` as an `Error` (rendered in a `.banner`/`.error-box`), not as a hidden
+  control.
+
+In short: the JWT carries the roles, `/api/user` exposes the collapsed
+`effectiveRole`, `SecurityConfig` is the single enforcement point, and the React
+components only decide **what to show**, never **what is allowed**.
 
 ---
 
