@@ -20,7 +20,7 @@ set -e
 set -v
 cd  ../
 pwd
-#mvn clean package install
+mvn clean package install
 cd ./docker/jarina
 bash ./build.bash
 cd ../jarina-spark-aws

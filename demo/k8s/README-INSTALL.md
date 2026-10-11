@@ -1,10 +1,10 @@
-do# Сборка
+# Сборка
 
 [Описание сборки образов](../../docker/readme.md)
 
 # Подготовка
 - Установить minikube 
-- обновить или просто скачать kubectl v1.36.0
+- обновить или просто скачать kubectl версии v1.36.0 или выше.
 
 ```shell
  curl -LO https://dl.k8s.io/release/v1.36.0/bin/linux/amd64/kubectl
@@ -16,7 +16,7 @@ do# Сборка
 ```shell
 mv kubectl $HOME/bin/
 ```
-- установить helm
+- установить пакеты операционной системы helm
   - для удобства можно добавить helm-bash-completion или другой удобный
 - Запустить minikube
 
