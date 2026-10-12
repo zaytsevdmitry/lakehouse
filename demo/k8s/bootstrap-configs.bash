@@ -36,7 +36,7 @@
 set -e
 
 # Configuration
-VERSION="0.11.0"
+VERSION="0.12.0"
 TMP_DIR="/tmp/jarina_k8s_conf_${VERSION}"
 # Resolved from the script location, so it can be run from any working directory.
 # The configuration tree is shared with demo/compose and therefore lives next to

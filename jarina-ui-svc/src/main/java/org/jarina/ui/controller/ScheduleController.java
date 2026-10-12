@@ -21,6 +21,7 @@ import org.jarina.client.api.dto.scheduler.ScheduleInstanceDAGDTO;
 import org.jarina.client.api.dto.scheduler.ScheduleInstanceDTO;
 import org.jarina.ui.dto.ScheduleRequestDTO;
 import org.jarina.ui.service.ScheduleService;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -41,8 +42,9 @@ public class ScheduleController {
     }
 
     @PostMapping
-    public List<ScheduleInstanceDTO> getSchedules(@RequestBody ScheduleRequestDTO request) {
-        return scheduleService.getSchedules(request);
+    public List<ScheduleInstanceDTO> getSchedules(@RequestBody ScheduleRequestDTO request,
+                                                  Authentication authentication) {
+        return scheduleService.getSchedules(request, authentication);
     }
 
     @GetMapping("/headers")

@@ -27,7 +27,7 @@ export default function App() {
   const [catalogError, setCatalogError] = useState('');
   const [servicesError, setServicesError] = useState('');
   const [theme, setTheme] = useState(getInitialTheme);
-  const [username, setUsername] = useState('');
+  const [userProfile, setUserProfile] = useState(null);
   const [activeSection, setActiveSection] = useState(INITIAL_SECTION || 'services');
   const [createdSections, setCreatedSections] = useState(
     () => new Set([INITIAL_SECTION || 'services'])
@@ -52,9 +52,11 @@ export default function App() {
       .catch((e) => setCatalogError(e.message));
     reloadServices();
     fetchCurrentUser()
-      .then((user) => setUsername(user.username))
-      .catch(() => setUsername(''));
+      .then(setUserProfile)
+      .catch(() => setUserProfile(null));
   }, [reloadServices]);
+
+  const username = userProfile?.username || '';
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);

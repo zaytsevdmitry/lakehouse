@@ -10,7 +10,9 @@ export default function WorkspacePicker({ profile, onOpen, onNotice, defaultView
   const [branchModal, setBranchModal] = useState(false);
   const [working, setWorking] = useState(false);
 
-  const canEdit = profile.effectiveRole === 'EDITOR' || profile.effectiveRole === 'ADMIN';
+  const canCreateBranch = Object.values(profile.domains || {}).some(
+    (role) => String(role || '').includes('EDITOR')
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -118,7 +120,7 @@ export default function WorkspacePicker({ profile, onOpen, onNotice, defaultView
       <div className="picker-column">
         <div className="picker-head">
           <h2>Open repositories</h2>
-          {canEdit && <button onClick={() => setBranchModal(true)}>New branch</button>}
+          <button disabled={!canCreateBranch} onClick={() => setBranchModal(true)}>New branch</button>
         </div>
         <div className="repository-tree">
           {domains.length === 0 && <p className="muted">No repositories found.</p>}
@@ -185,10 +187,6 @@ export default function WorkspacePicker({ profile, onOpen, onNotice, defaultView
           ))}
         </div>
       </div>
-
-      {defaultView === 'admin' && (
-        <p className="muted">Note: enable the Admin tab via your role profile.</p>
-      )}
 
       {branchModal && (
         <BranchModal

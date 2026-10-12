@@ -18,6 +18,7 @@
 package org.jarina.ui.modeller.service;
 
 import org.jarina.client.api.constant.YamlMetadataKind;
+import org.jarina.ui.modeller.auth.DomainRole;
 import org.jarina.ui.modeller.auth.ForbiddenException;
 import org.jarina.ui.modeller.auth.NotFoundException;
 import org.jarina.ui.modeller.auth.UserContext;
@@ -97,6 +98,7 @@ public class EditorService {
             dir = defaultDirectory(workspace, kind);
         String path = (dir.isEmpty() ? kind.directory() : dir) + "/" + fileName + ".yaml";
         requireSelectionPath(workspace, path);
+        requireEditor(user, domainOf(workspace, path));
         String content = yaml.defaultYaml(kind, request.keyName());
         storage.writeFile(workspaceId, path, content);
         logs.log("INFO", user.username(), "CREATE_FILE", path + " (" + kind.yamlValue() + ")", workspaceId);
@@ -136,6 +138,7 @@ public class EditorService {
         UserContext user = UserContext.from(authentication);
         Workspace workspace = requireOwnWorkspace(workspaceId, user);
         String safePath = requireSelectionPath(workspace, safeFilePath(path));
+        requireEditor(user, selectionForPath(workspace, safePath).domain());
         ObjectNode node = yaml.parse(request.yaml());
         YamlMetadataKind kind = yaml.knownKindOf(node).orElse(null);
         String identifierField = kind == null ? "keyName" : kind.identifierField();
@@ -155,6 +158,7 @@ public class EditorService {
         UserContext user = UserContext.from(authentication);
         Workspace workspace = requireOwnWorkspace(workspaceId, user);
         String safePath = requireSelectionPath(workspace, safeFilePath(request.path()));
+        requireEditor(user, selectionForPath(workspace, safePath).domain());
         String name = request.newName() == null ? "" : request.newName().trim();
         if (!name.toLowerCase(Locale.ROOT).endsWith(".yaml"))
             name = name + ".yaml";
@@ -183,6 +187,7 @@ public class EditorService {
         UserContext user = UserContext.from(authentication);
         Workspace workspace = requireOwnWorkspace(workspaceId, user);
         String safePath = requireSelectionPath(workspace, safeFilePath(path));
+        requireEditor(user, selectionForPath(workspace, safePath).domain());
         storage.deleteFile(workspaceId, safePath);
         logs.log("INFO", user.username(), "DELETE_FILE", safePath, workspaceId);
     }
@@ -193,6 +198,7 @@ public class EditorService {
         Workspace workspace = requireOwnWorkspace(workspaceId, user);
         String source = requireSelectionPath(workspace, safeFilePath(request.source()));
         BranchSelection sourceSelection = selectionForPath(workspace, source);
+        requireEditor(user, sourceSelection.domain());
         String targetDir = safeDirectory(request.targetDirectory());
         if (targetDir.isEmpty())
             targetDir = sourceSelection.folder();
@@ -230,6 +236,7 @@ public class EditorService {
             throw new IllegalArgumentException("Cannot move the workspace root");
         requireSelectionPath(workspace, source);
         BranchSelection sourceSelection = selectionForPath(workspace, source);
+        requireEditor(user, sourceSelection.domain());
         String targetDir = safeDirectory(request.targetDirectory());
         if (targetDir.isEmpty())
             targetDir = sourceSelection.folder();
@@ -259,6 +266,7 @@ public class EditorService {
             dir = workspace.selections().get(0).folder();
         }
         requireSelectionPath(workspace, dir);
+        requireEditor(user, domainOf(workspace, dir));
         storage.createDirectory(workspaceId, dir);
         logs.log("INFO", user.username(), "CREATE_DIR", dir, workspaceId);
     }
@@ -270,6 +278,7 @@ public class EditorService {
         if (dir.isEmpty())
             throw new IllegalArgumentException("Cannot delete the workspace root");
         requireSelectionPath(workspace, dir);
+        requireEditor(user, domainOf(workspace, dir));
         storage.deleteDirectory(workspaceId, dir);
         logs.log("INFO", user.username(), "DELETE_DIR", dir, workspaceId);
     }
@@ -298,9 +307,28 @@ public class EditorService {
 
     private Workspace requireOwnWorkspace(String workspaceId, UserContext user) {
         Workspace workspace = manager.workspace(workspaceId);
-        if (!workspace.isOwner(user.username()) && user.effectiveRole() != org.jarina.ui.modeller.auth.ModellerRole.ADMIN)
+        if (!workspace.isOwner(user.username()))
             throw new ForbiddenException("Workspace " + workspaceId + " belongs to " + workspace.owner());
         return workspace;
+    }
+
+    /**
+     * The domain that owns the given folder/path of a workspace — the domain of the
+     * selection covering it, or the first selection when the path is not scoped.
+     */
+    private static String domainOf(Workspace workspace, String path) {
+        BranchSelection selection = selectionForPath(workspace, path);
+        if (selection != null)
+            return selection.domain();
+        if (!workspace.selections().isEmpty())
+            return workspace.selections().get(0).domain();
+        throw new IllegalArgumentException("Workspace has no selected domain folders");
+    }
+
+    private static UserContext requireEditor(UserContext user, String domain) {
+        if (!user.hasDomainRole(domain, DomainRole.EDITOR))
+            throw new ForbiddenException("Access denied: EDITOR role required for domain '" + domain + "'");
+        return user;
     }
 
     private static String safeFilePath(String path) {

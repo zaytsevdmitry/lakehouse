@@ -70,8 +70,6 @@ export default function ModellerSection({ initialWorkspaceId }) {
     );
   }
 
-  const isAdmin = profile.effectiveRole === 'ADMIN';
-
   return (
     <div className="modeller">
       {notice && <div className={`banner ${notice.kind} fixed-notice`}>{notice.message}</div>}
@@ -83,7 +81,7 @@ export default function ModellerSection({ initialWorkspaceId }) {
             onBack={() => setOpenWorkspace(null)}
             onNotice={showNotice}
           />
-        ) : isAdmin ? (
+        ) : (
           <div className="tabbed">
             <div className="tabs">
               <button
@@ -110,13 +108,6 @@ export default function ModellerSection({ initialWorkspaceId }) {
               <AdminView profile={profile} onNotice={showNotice} />
             )}
           </div>
-        ) : (
-          <WorkspacePicker
-            profile={profile}
-            defaultView="workspaces"
-            onOpen={(ws) => setOpenWorkspace(ws)}
-            onNotice={showNotice}
-          />
         )}
       </main>
     </div>

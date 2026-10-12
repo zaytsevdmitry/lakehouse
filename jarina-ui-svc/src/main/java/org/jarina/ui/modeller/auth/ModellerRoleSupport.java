@@ -1,13 +1,13 @@
 /*
  * "Jarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
  * Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     https://www.apache.org/licenses/LICENSE-2.0.txt
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,54 +17,70 @@
 
 package org.jarina.ui.modeller.auth;
 
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 /**
- * Role normalization and RBAC matrix for Keycloak realm/client roles.
+ * Domain role normalization and RBAC matrix for Keycloak realm/client roles.
  * <p>
- * Canonical roles: {@code VIEWER}, {@code EDITOR},
- * {@code ADMIN}. Legacy aliases {@code JARINA_CONFIG_VIEWER} /
- * {@code JARINA_CONFIG_EDITOR} / {@code JARINA_MODELLER_ADMIN} are accepted for
- * backward compatibility (spec 6.2). Matching is case-insensitive and ignores
- * surrounding whitespace.
+ * Domain-specific access is carried by realm roles of the form
+ * {@code <domain>:<ROLE>} (for example {@code finance:EDITOR},
+ * {@code marketing:CONTROL}, {@code hr:VIEWER}). The domain is lowercased, the
+ * role part is matched case-insensitively with surrounding whitespace ignored.
+ * <p>
+ * Global (non-domain) roles such as {@code WORKSPACE_ADMIN} carry no colon and
+ * are not part of the domain map; they are handled separately through the Spring
+ * Security authorities ({@code hasRole(...)}).
  */
 public final class ModellerRoleSupport {
 
-    private static final String VIEWER = "VIEWER";
-    private static final String EDITOR = "EDITOR";
-    private static final String ADMIN = "ADMIN";
-
-    private static final String VIEWER_LEGACY = "JARINA_CONFIG_VIEWER";
-    private static final String EDITOR_LEGACY = "JARINA_CONFIG_EDITOR";
-    private static final String ADMIN_LEGACY = "JARINA_MODELLER_ADMIN";
+    public static final String WORKSPACE_ADMIN = "WORKSPACE_ADMIN";
 
     private ModellerRoleSupport() {
     }
 
-    public static ModellerRole effectiveRole(Set<String> roles) {
+    /**
+     * Splits the given raw role set into a map of domain to the full set of
+     * {@link DomainRole roles} granted for that domain. Roles without the
+     * {@code domain:} prefix (including {@code WORKSPACE_ADMIN}) are ignored and
+     * never appear in the result.
+     */
+    public static Map<String, Set<DomainRole>> domains(Set<String> roles) {
+        Map<String, Set<DomainRole>> result = new LinkedHashMap<>();
         if (roles == null || roles.isEmpty())
-            return null;
-        boolean hasViewer = has(roles, VIEWER, VIEWER_LEGACY);
-        boolean hasEditor = has(roles, EDITOR, EDITOR_LEGACY);
-        boolean hasAdmin = has(roles, ADMIN, ADMIN_LEGACY);
-        if (hasAdmin)
-            return ModellerRole.ADMIN;
-        if (hasEditor)
-            return ModellerRole.EDITOR;
-        if (hasViewer)
-            return ModellerRole.VIEWER;
-        return null;
+            return result;
+        for (String role : roles) {
+            if (role == null || role.isBlank())
+                continue;
+            String normalized = role.trim();
+            int colon = normalized.lastIndexOf(':');
+            if (colon <= 0 || colon == normalized.length() - 1)
+                continue;
+            String domain = normalized.substring(0, colon).trim().toLowerCase(Locale.ROOT);
+            if (domain.isEmpty())
+                continue;
+            DomainRole level = DomainRole.parse(normalized.substring(colon + 1));
+            if (level == null)
+                continue;
+            result.computeIfAbsent(domain, ignored -> new LinkedHashSet<>()).add(level);
+        }
+        return result;
     }
 
-    private static boolean has(Set<String> roles, String... candidates) {
-        for (String candidate : candidates) {
-            for (String role : roles) {
-                if (role != null && role.trim().toLowerCase(Locale.ROOT)
-                        .equals(candidate.toLowerCase(Locale.ROOT)))
-                    return true;
-            }
-        }
-        return false;
+    /**
+     * Collapses the roles of a single domain to the label shown by the UI, with
+     * precedence {@code CONTROL > EDITOR > VIEWER}.
+     */
+    public static String displayLabel(Set<DomainRole> domainRoles) {
+        if (domainRoles == null || domainRoles.isEmpty())
+            return null;
+        if (domainRoles.contains(DomainRole.CONTROL))
+            return DomainRole.CONTROL.name();
+        if (domainRoles.contains(DomainRole.EDITOR))
+            return DomainRole.EDITOR.name();
+        return DomainRole.VIEWER.name();
     }
 }

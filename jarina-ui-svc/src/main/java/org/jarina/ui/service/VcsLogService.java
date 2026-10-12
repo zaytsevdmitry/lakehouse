@@ -19,32 +19,68 @@ package org.jarina.ui.service;
 import org.jarina.client.api.dto.vcs.VcsObjectLogDTO;
 import org.jarina.client.api.dto.vcs.VcsSyncLogDTO;
 import org.jarina.client.rest.config.ConfigRestClientApi;
+import org.jarina.ui.modeller.auth.DomainAccess;
+import org.jarina.ui.modeller.auth.UserContext;
+import org.jarina.ui.modeller.config.ModellerProperties;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 @Service
 public class VcsLogService {
 
     private final ConfigRestClientApi configRestClientApi;
+    private final ModellerProperties modellerProperties;
 
-    public VcsLogService(ConfigRestClientApi configRestClientApi) {
+    public VcsLogService(ConfigRestClientApi configRestClientApi, ModellerProperties modellerProperties) {
         this.configRestClientApi = configRestClientApi;
+        this.modellerProperties = modellerProperties;
     }
 
     public List<VcsSyncLogDTO> syncLogs(
-            OffsetDateTime from, OffsetDateTime to, String status, String commitId, String domainKeyName) {
-        return configRestClientApi.getVcsSyncLogDTOList(from, to, status, commitId, domainKeyName);
+            OffsetDateTime from, OffsetDateTime to, String status, String commitId, String domainKeyName,
+            Authentication authentication) {
+        return filterByAllowed(
+                configRestClientApi.getVcsSyncLogDTOList(from, to, status, commitId, domainKeyName),
+                allowedDomains(authentication, "GET /api/vcs/logs"));
     }
 
-    public List<VcsObjectLogDTO> objectLogs(String commitId, String domainKeyName) {
-        return configRestClientApi.getVcsObjectLogDTOList(commitId, null, null, null, null, null, domainKeyName);
+    public List<VcsObjectLogDTO> objectLogs(String commitId, String domainKeyName, Authentication authentication) {
+        return filterObjectByAllowed(
+                configRestClientApi.getVcsObjectLogDTOList(commitId, null, null, null, null, null, domainKeyName),
+                allowedDomains(authentication, "GET /api/vcs/objects"));
     }
 
     public List<VcsObjectLogDTO> objectLogs(
             String kind, OffsetDateTime from, OffsetDateTime to, String filePath, String objectName,
-            String domainKeyName) {
-        return configRestClientApi.getVcsObjectLogDTOList(null, kind, from, to, filePath, objectName, domainKeyName);
+            String domainKeyName, Authentication authentication) {
+        return filterObjectByAllowed(
+                configRestClientApi.getVcsObjectLogDTOList(null, kind, from, to, filePath, objectName, domainKeyName),
+                allowedDomains(authentication, "GET /api/vcs/objects"));
+    }
+
+    private Set<String> allowedDomains(Authentication authentication, String endpoint) {
+        return DomainAccess.allowedDomains(
+                UserContext.from(authentication), modellerProperties.domainNames(), endpoint);
+    }
+
+    private static List<VcsSyncLogDTO> filterByAllowed(List<VcsSyncLogDTO> rows, Set<String> allowed) {
+        return rows == null ? List.of() : rows.stream()
+                .filter(row -> allowed.contains(normalizeDomain(row.getDomainKeyName())))
+                .toList();
+    }
+
+    private static List<VcsObjectLogDTO> filterObjectByAllowed(List<VcsObjectLogDTO> rows, Set<String> allowed) {
+        return rows == null ? List.of() : rows.stream()
+                .filter(row -> allowed.contains(normalizeDomain(row.getDomainKeyName())))
+                .toList();
+    }
+
+    private static String normalizeDomain(String domain) {
+        return domain == null ? null : domain.trim().toLowerCase(Locale.ROOT);
     }
 }

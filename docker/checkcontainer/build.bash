@@ -17,7 +17,7 @@
 
 
 set -e
-export LH_VERSION=0.11.0
+export LH_VERSION=0.12.0
 
 docker build -t jarina-s3-check:$LH_VERSION ./
 docker images

@@ -18,8 +18,6 @@ const folderOf = (selection) => `${selection.domain} (${selection.branch})`;
 
 export default function EditorView({ profile, workspace, onBack, onNotice }) {
   const wsId = workspace.id;
-  const canEdit = profile.effectiveRole === 'EDITOR' || profile.effectiveRole === 'ADMIN';
-  const readOnly = !canEdit || !workspace.own;
 
   const [schemas, setSchemas] = useState([]);
   const [tree, setTree] = useState([]);
@@ -46,6 +44,15 @@ export default function EditorView({ profile, workspace, onBack, onNotice }) {
   const schemaMap = useMemo(() => Object.fromEntries(schemas.map((s) => [s.kind, s])), [schemas]);
 
   const selections = useMemo(() => workspace.branches || [], [workspace]);
+
+  // readOnly is a UX hint derived from the domain of the currently selected
+  // file/folder: without an EDITOR role for that domain the editors stay in
+  // read-only mode. The backend independently rejects every mutation (403).
+  const domainOfPath = (path) => String(path || '').split(' (')[0];
+  const selectedPath = selected
+    ? selected.path
+    : selectedFolder || (selections[0] ? folderOf(selections[0]) : '');
+  const readOnly = !String((profile.domains || {})[domainOfPath(selectedPath)] || '').includes('EDITOR');
 
   // The server resolves an empty target directory to the domain root that owns the
   // moved path (or the first selected domain for new folders), so mirror that here

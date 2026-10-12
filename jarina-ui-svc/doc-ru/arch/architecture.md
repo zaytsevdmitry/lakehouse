@@ -127,7 +127,7 @@ src/main/resources/frontend
         │                          #   через workspaceUrl()
         ├── EditorView.jsx         # дерево файлов пространства + панель редактора
         │                          #   (самый крупный компонент, ~1k строк)
-        ├── AdminView.jsx          # только для админов: все пространства, TTL, логи
+        ├── AdminView.jsx          # содержимое админа: все пространства, TTL, логи
         ├── FormEditor.jsx         # рендерер форм по схеме для конф. документов
         ├── ErDiagramEditor.jsx    # визуальное редактирование ER-диаграмм (React Flow)
         ├── DataLineageDiagramEditor.jsx  # редактирование диаграмм линковки данных
@@ -204,8 +204,9 @@ Toolkit, Zustand, MobX или React Context. Всё состояние лока�
   - `EditorView` — `schemas`, `tree`, `dirs`, `selected`, `selectedFolder`,
     `filter`, `yaml`, `doc`, `keyNameEditable`, `mode` (`form`|`yaml`),
     `dirty`, `busy`, флаги модалок, `pendingOpen` (защита от несохранённых
-    изменений); `readOnly` выводится из `profile.effectiveRole` +
-    `workspace.own`.
+    изменений); `readOnly` — UX-подсказка, выводимая из `profile.domains` для
+    домена выбранного файла/каталога (редактирование доступно только с ролью
+    `EDITOR` в этом домене).
 - **Уровень под-представлений / вкладок** — `LineageTab`, `RelationsTab`,
   `ModelTab`, `PipelineSection`, `FormEditor`, `ErDiagramEditor`,
   `DataLineageDiagramEditor`, `DagEditor` (схемы по видам из `SchemaService`
@@ -261,10 +262,15 @@ Query). Все вызовы централизованы в `src/api.js`, кот
   same-origin и учётные данные отправляются неявно.
 - **CSRF**: Spring отдаёт токен в cookie `XSRF-TOKEN`. Обе обёртки добавляют
   заголовок `X-XSRF-TOKEN` для небезопасных методов.
-- **RBAC**: эндпоинты модделирования дополнительно защищены ролями realm
-  Keycloak `VIEWER / _EDITOR / _ADMIN` (с иерархией `ADMIN > EDITOR > VIEWER`).
-  Фронтенд также получает `effectiveRole` из `GET /api/user` и скрывает вкладку
-  Admin / отключает редактор для пользователей без нужного уровня.
+- **RBAC**: доступ построен по доменам. Realm-роли Keycloak несут префикс
+  домена — `<domain>:<ROLE>`, где `ROLE` ∈ `VIEWER / EDITOR / CONTROL`
+  (`VIEWER` неявно входит в две другие; `EDITOR` не даёт останавливать задачи,
+  `CONTROL` не даёт редактировать). Глобальная роль `WORKSPACE_ADMIN` (без
+  домена) управляет админскими эндпоинтами. `GET /api/user` возвращает карту по
+  доменам `domains: {<domain>: <LABEL>}`; фронтенд использует её только для
+  отражения прав (например, подсказки read-only в Modelling), тогда как бэкенд
+  остаётся единственной точкой принятия решения и отвечает `403` на любую
+  запрещённую мутацию.
 
 **Deep-ссылки.** `workspaceUrl(workspaceId)` в `api.js` строит
 `?section=modeller&workspace=<id>` на текущем пути. Workspace picker использует
@@ -320,7 +326,7 @@ production.
 | Spark | `fetchSparkSubmissions`, `createSparkSubmission`, `fetchSparkStatus`, `killSparkSubmission`, `killAllSparkSubmissions`, `clearSparkCompleted`, `fetchSparkProperties` | `/api/spark-proxy/*` |
 | VCS | `fetchVcsSyncLogs`, `fetchVcsObjectLogs` | `/api/vcs/logs`, `/api/vcs/objects` (оба фильтруются по `domainKeyName`) |
 | Пользователь | `fetchCurrentUser`, `logout` | `GET /api/user`, `POST /logout` |
-| Модделирование | вызовы `api()` в `WorkspacePicker` / `EditorView` / `AdminView` | `GET /api/vcs/workspaces`, `/api/vcs/branches`, `GET/POST/DELETE /api/vcs/workspace[/{id}]`, `POST /api/vcs/branch`, `POST /api/vcs/review/{id}`, `POST /api/vcs/workspace/{id}/restore`, `GET /api/schema[/{kind}]`, `/api/workspaces/{id}/tree|dirs|files`, `POST /api/workspaces/{id}/files(rename|move)`, `POST /api/workspaces/{id}/dirs(move)`, `/api/admin/workspaces`, `/api/admin/settings/cleanup-ttl-hours`, `/api/admin/sync-logs` |
+| Модделирование | вызовы `api()` в `WorkspacePicker` / `EditorView` / `AdminView` | `GET /api/vcs/workspaces`, `/api/vcs/branches`, `GET/POST/DELETE /api/vcs/workspace[/{id}]`, `POST /api/vcs/branch`, `POST /api/vcs/review/{id}`, `POST /api/vcs/workspace/{id}/restore`, `GET /api/schema[/{kind}]`, `/api/workspaces/{id}/tree|dirs|files`, `POST /api/workspaces/{id}/files(rename|move)`, `POST /api/workspaces/{id}/dirs(move)`, `/api/workspace/admin/workspaces`, `/api/workspace/admin/settings/cleanup-ttl-hours`, `/api/workspace/admin/sync-logs` |
 
 ---
 
@@ -508,9 +514,10 @@ const activateSection = (section) => {
   `activeTab` в `'dataset'`.
 - **ModelTab** — вертикальная лента вкладок переключает Scripts / Complete.
 - **VcsSection** — вкладки VCSLog / VCSObjectsSearch.
-- **ModellerSection** — для админов `tabbed`-заголовок предлагает My
-  workspaces / Admin; оба рендерят `WorkspacePicker` и `AdminView`
-  соответственно.
+- **ModellerSection** — `tabbed`-заголовок всегда предлагает My
+  workspaces / Admin; они рендерят `WorkspacePicker` и `AdminView`
+  соответственно. Вкладка Admin открывается всем, а пользователь без глобальной
+  роли `WORKSPACE_ADMIN` видит баннер с `403` от бэкенда.
 - **WorkspacePicker → EditorView** — поток модделирования *управляется
   состоянием* (`openWorkspace` в `ModellerSection`): действие «Open» в picker
   переходит в редактор для выбранного набора `(domain, branch)` (либо в той же
@@ -525,11 +532,13 @@ const activateSection = (section) => {
 (Spring Security): неаутентифицированные запросы перенаправляются на логин
 Keycloak, а сессионная cookie охраняет каждый `/api`-вызов. Фронтенд лишь
 отображает то состояние аутентификации, которое видит (метка имени
-пользователя, `logout` → `POST /logout` + перезагрузка). Мутации
-модделирования требуют как минимум роли `VIEWER/EDITOR/ADMIN` в зависимости от
-эндпоинта; модделирование также контролирует владение пространством
-пользователем (`workspace.own`), а читатели/просмотрщики получают редактор
-только для чтения (`readOnly`).
+пользователя, `logout` → `POST /logout` + перезагрузка). BFF применяет
+domain-driven RBAC: мутации требуют `EDITOR` (правка конфигов/репозитория) или
+`CONTROL` (остановка задач) для домена сущности, а `/api/workspace/admin/**`
+требует глобальной роли `WORKSPACE_ADMIN`; модделирование дополнительно
+контролирует владение пространством пользователем (`workspace.own`). Подсказка
+`readOnly` редактора определяется доменом выбранного файла, а не глобальной
+ролью.
 
 ---
 
@@ -545,7 +554,7 @@ Keycloak, а сессионная cookie охраняет каждый `/api`-в
 | Формат модулей / цель | ESM (`"type": "module"`), цели Vite по умолчанию |
 | Язык | **JavaScript (JSX)** — без TypeScript |
 | Линтинг / форматирование | **Ничего не настроено** (нет ESLint, нет Prettier, нет скрипта `lint`) |
-| Тесты | **Vitest 3 + React Testing Library** (jsdom): `npm test` запускает `vitest run`; настраивается в блоке `test` файла `vite.config.js` (`globals`, `environment: 'jsdom'`, `setupFiles: ['./test/setup.js']`, `include: src/**/*.test.{js,jsx}`). Текущий набор (41 тест) покрывает `DataLineageDiagramEditor` (24 теста: трансляция графа, сохранение позиций, перетаскивание, потоки Add/Edit/Remove + модалки, полноэкранный режим), `FormEditor` (7 тестов: выбор ключа source-map при переключении документов, защита от устаревших ключей, доступность remove/edit, сброс вкладки на экземпляр), `EditorView` (5 тестов, вкл. создание папки в корне домена, перемещение файла в корень домена и сценарий выхода из мультидоменного пространства после ревью) и `WorkspacePicker` (5 тестов, вкл. предвыбор ветки по домену). `test/setup.js` добавляет полифиллы для браузерных API, нужных React Flow в jsdom (ResizeObserver, `DOMMatrixReadOnly`, pointer capture, `getBoundingClientRect`, `offsetWidth/Height`). |
+| Тесты | **Vitest 3 + React Testing Library** (jsdom): `npm test` запускает `vitest run`; настраивается в блоке `test` файла `vite.config.js` (`globals`, `environment: 'jsdom'`, `setupFiles: ['./test/setup.js']`, `include: src/**/*.test.{js,jsx}`). Текущий набор (44 теста) покрывает `DataLineageDiagramEditor` (24 теста: трансляция графа, сохранение позиций, перетаскивание, потоки Add/Edit/Remove + модалки, полноэкранный режим), `FormEditor` (7 тестов: выбор ключа source-map при переключении документов, защита от устаревших ключей, доступность remove/edit, сброс вкладки на экземпляр), `EditorView` (6 тестов, вкл. создание папки в корне домена, перемещение файла в корень домена, сценарий выхода из мультидоменного пространства после ревью и переключение `readOnly` по домену) и `WorkspacePicker` (7 тестов, вкл. предвыбор ветки по домену и включение/выключение `New branch` по роли `EDITOR`). `test/setup.js` добавляет полифиллы для браузерных API, нужных React Flow в jsdom (ResizeObserver, `DOMMatrixReadOnly`, pointer capture, `getBoundingClientRect`, `offsetWidth/Height`). |
 | Менеджер пакетов | npm (`package.json` + `package-lock.json`) |
 
 Скрипты: `dev` (`vite`), `build` (`vite build`), `preview` (`vite preview`),
@@ -635,10 +644,12 @@ TypeScript или линтеры отсутствуют.
    ошибки модделирования, но остальные разделы повторяют проверки
    `response.ok` + рендер `.error-box`. Централизовать маппинг ошибок в `api.js`
    и рендерить через небольшой паттерн `FetchState`/error-boundary.
-10. **Логика RBAC живёт в двух местах.** `SecurityConfig` закрывает HTTP-маршруты
-    (`hasRole`), а `UserContext`/`UserController` вычисляют `effectiveRole` для
-    фронтенда. Оба должны синхронно меняться по мере эволюции правил;
-    рассмотрите единый `ModellerRole`/хелпер авторизации, общий для обоих.
+10. **RBAC всё ещё частично грубый.** `SecurityConfig` закрывает админскую
+    поверхность глобальной ролью `WORKSPACE_ADMIN`, а доменные проверки
+    (`EDITOR`/`CONTROL`) живут в сервисах; ручка остановки Spark использует
+    грубую проверку — принимает `CONTROL` в *любом* домене, так как у
+    submission пока нет домена (см. §9.4). Пробросьте домен через Spark
+    submission, чтобы проверка стала по домену задачи.
 11. **Пробелы в доступности.** Кнопки вкладок только с иконками, значки
     статусов только по цвету и перетаскиваемое дерево модделирования опираются
     в основном на цвет/контур; добавьте поддержку `aria-*`/клавиатуры,
@@ -655,82 +666,132 @@ TypeScript или линтеры отсутствуют.
 сервера в BFF (`jarina-ui-svc`), Keycloak — поставщик идентичности, а SPA лишь
 *отражает* полученное решение.
 
-- **Роли realm Keycloak.** Пользователь аутентифицируется в realm `jarina`
-  Keycloak. Роли модделирования — `VIEWER`, `EDITOR` и `ADMIN` с иерархией
-  **`ADMIN > EDITOR > VIEWER`**. Роли попадают в BFF в JWT / OIDC-claims
+- **Роли realm Keycloak (domain-driven).** Доступ несётся realm-ролями вида
+  **`<domain>:<ROLE>`** (например, `finance:EDITOR`, `marketing:CONTROL`,
+  `hr:VIEWER`). Домен приводится к нижнему регистру; `ROLE` — одна из
+  `VIEWER`, `EDITOR`, `CONTROL`, сравнение без учёта регистра. `VIEWER`
+  **неявно входит** в две другие, а `EDITOR`/`CONTROL` ортогональны: `EDITOR`
+  позволяет менять конфиги/репозиторий, но **не** останавливать задачи;
+  `CONTROL` позволяет останавливать задачи, но **не** редактировать. Глобальная
+  роль `WORKSPACE_ADMIN` (без двоеточия) не попадает в карту доменов и управляет
+  только админскими эндпоинтами.
+- **Маппинг claims.** Роли попадают в BFF в JWT / OIDC-claims
   (`realm_access.roles`, с фолбэками `roles` и
-  `resource_access.<client>.roles`) и преобразуются в authority Spring
-  (`SecurityConfig.toAuthorities`), а сама иерархия объявляется бином
-  `RoleHierarchy` (`SecurityConfig.roleHierarchy`).
+  `resource_access.<client>.roles`) и преобразуются в authority Spring, а
+  (legacy) иерархия объявляется бином `RoleHierarchy`
+  (`SecurityConfig.roleHierarchy`).
 - **Эндпоинт `/api/user`.** SPA никогда не разбирает JWT. Он вызывает
   `GET /api/user` (`UserController`) и получает профиль
-  `{username, name, email, roles[], effectiveRole}`. `effectiveRole` — единственный
-  значимый для UI факт: `UserContext.effectiveRole()` делегирует в
-  `ModellerRoleSupport.effectiveRole(roles)`, который сворачивает исходный набор
-  ролей до наибольшей из `ADMIN`/`EDITOR`/`VIEWER` (без учёта регистра, с
-  legacy-алиасами `JARINA_CONFIG_VIEWER`, `JARINA_CONFIG_EDITOR`,
-  `JARINA_MODELLER_ADMIN`, принимаемыми для обратной совместимости).
+  `{username, name, email, roles[], domains:{<domain>: <LABEL>}}`. Карта
+  `domains` сворачивает набор ролей каждого домена в одну метку с приоритетом
+  **`CONTROL > EDITOR > VIEWER`** (`ModellerRoleSupport.domains` /
+  `displayLabel`, `DomainRole`). Пользователь с `finance:EDITOR` и
+  `finance:CONTROL` сохраняет **оба** внутренних набора ролей; UI видит только
+  метку `CONTROL`. SPA использует `domains` **только для отражения прав**
+  (например, подсказки read-only), но не для решения о доступе.
 - **Сессионная cookie.** Каждый вызов `/api/**` same-origin и едет на сессии
   `JSESSIONID`, установленной OAuth2 authorization-code логином; SPA никогда не
   отправляет `Bearer`-токен (см. §4).
 
 Внутри модделирования фронтенд добавляет поверх роли ещё одно измерение:
 **владение**. `WorkspaceResponse.own` сообщает, владеет ли текущий пользователь
-открытым пространством, и именно это делает редактор доступным только для
-чтения для чужого пространства (§9.3).
+открытым пространством; владение принуждается бэкендом (не-владелец получает
+`403`) и больше не определяет `readOnly` редактора — тот выводится по домену из
+роли `EDITOR` (см. §9.3).
 
 ### 9.2 Матрица возможностей ролей
+
+Роли заданы **по домену** (`<domain>:<ROLE>`), плюс глобальная `WORKSPACE_ADMIN`.
 
 | Роль | Бэкенд (принудительно) | Фронтенд (отражение) |
 |---|---|---|
 | Нет роли / аноним | `/api/**` (кроме белого списка) → `401`, навигация браузера → логин Keycloak | Доступа к SPA нет; `api()` перенаправляет на `/oauth2/authorization/keycloak` при `401` |
-| `VIEWER` | Чтение пространств/веток/схем; удаление своего пространства | Открыть Modelling, список веток, открыть пространство — **редактор только для чтения**, нет «New branch», нет save/delete |
-| `EDITOR` | + создание веток, создание/правка/сохранение/удаление/перемещение файлов и каталогов, отправка на ревью, restore | + «New branch», CRUD файлов/папок, drag-and-drop, **Submit review** |
-| `ADMIN` | + всё под `/api/admin/**` | + вкладка **Admin** (`AdminView`): все пространства, принудительное удаление, TTL очистки, журналы синхронизации |
+| `VIEWER` в домене | Чтение датасетов/расписаний/VCS-логов этого домена (BFF фильтрует по домену); открыть пространство для чтения; удалить своё пространство | Вкладки мониторинга показывают только разрешённые домены (иначе пусто); редактор Modelling доступен только для чтения по этому домену |
+| `EDITOR` в домене | + создание/правка/переименование/перемещение/удаление файлов и каталогов, создание ветки, отправка на ревью, restore — для этого домена | + «New branch», CRUD файлов/папок, drag-and-drop, **Submit review** (редактор редактируемый для этого домена) |
+| `CONTROL` в домене | + остановка/убийство Spark-submissions | Кнопки Stop/kill показываются всегда; отсутствие `CONTROL` всплывает как ошибка `403` от бэкенда |
+| `WORKSPACE_ADMIN` (глобальная, не доменная) | + всё под `/api/workspace/admin/**` | Содержимое вкладки Admin (`AdminView`): все пространства, принудительное удаление, TTL очистки, журналы синхронизации |
 
-У разделов мониторинга (Services, Catalog, Schedules, SparkJobs, VCS) **нет
-RBAC** сверх «аутентифицирован»: их видит любой вошедший пользователь; ролевое
-ограничение несёт только модделирование.
+Разделы мониторинга (Services, Catalog, Schedules, SparkJobs, VCS)
+**фильтруются по домену на бэкенде**: BFF пересекает домены пользователя с
+настроенными (`DomainAccess.allowedDomains`) и отбрасывает строки, чей
+`domainKeyName` не разрешён; если ничего не остаётся — возвращается валидный
+пустой массив (`[]`). UI рендерит пустые таблицы и никогда не фильтрует сам.
+
+**Аудит.** Мутации (остановка Spark-задач, создание/удаление пространств,
+синхронизация VCS, review/save конфигов) логируются в системе аудита **строго
+под реальным `username`** аутентифицированного пользователя из Keycloak.
+Запись аудита под техническим именем `system` для действий пользователей
+**запрещена**.
 
 ### 9.3 Где в коде принимаются решения о доступе
 
 Клиентского роутера, а значит и route guard'а, **нет** (§6); доступ
-принуждается на границе API и лишь *отзеркаливается* условным рендерингом.
+принуждается на границе API/сервисов и лишь *отзеркаливается* условным
+рендерингом.
 
-- **Принуждение на уровне API (авторитетное).**
-  `SecurityConfig.securityFilterChain` применяет `hasRole(...)` по путям:
-  `/api/admin/**` → `ADMIN`; `/api/workspaces/**` GET → `VIEWER`,
-  POST/PUT/DELETE → `EDITOR`; `/api/vcs/workspace/*/restore`, `/api/vcs/branch`,
-  `/api/vcs/review/*` → `EDITOR`; `/api/vcs/workspaces`, `/api/vcs/workspace`,
-  `/api/vcs/branches`, `/api/schema` → `VIEWER`; всё остальное →
-  `authenticated()`. Затем `UserContext`/`ModellerRole` принуждают владение
-  пространством поверх роли. Фронтенд не может обойти эти правила — его
-  ограничения косметические.
+- **Принуждение на уровне API.** `SecurityConfig.securityFilterChain` держит
+  публичным только белый список и закрывает административную поверхность:
+  `/api/workspace/admin/**` → `hasRole('WORKSPACE_ADMIN')`; всё остальное →
+  `authenticated()`.
+- **Принуждение домена / владения (авторитетное).** Доменные проверки живут в
+  сервисах и бросают `ForbiddenException` (маппится в `403` глобальным
+  обработчиком исключений):
+  - `EditorService.requireEditor(...)` на каждой мутации файла/каталога;
+  - `VcsService.requireDomainRole(...)` на `openWorkspace`
+    (`VIEWER`/`EDITOR`/`CONTROL`), `restore` и `createBranch` (`EDITOR`);
+  - `ReviewService.submit(...)` требует `EDITOR` для **каждого** выбранного
+    домена;
+  - `SparkProxyController.requireControl(...)` на `kill`/`killall`;
+  - `AdminWorkspaceService.requireWorkspaceAdmin(...)` на методах
+    админ-сервиса (защита в глубину поверх `SecurityConfig`);
+  - **владение** пространством перепроверяется на каждом вызове
+    модделирования (`workspace.own`).
+  Фронтенд не может обойти эти правила — его рендеринг косметический.
+- **Серверная фильтрация.** `CatalogService`, `ScheduleService` и
+  `VcsLogService` вызывают `DomainAccess.allowedDomains(...)` (логирует `WARN`
+  для не настроенного домена пользователя и игнорирует его) и фильтруют
+  нижележащие списки по `domainKeyName`; полностью отфильтрованный результат
+  становится `[]`.
 - **Передача 401.** `api()` в `api.js` превращает любой `401` в
   `redirectToLogin()` → `/oauth2/authorization/keycloak`; это единственный
   «guard-подобный» редирект в SPA.
-- **Условный рендеринг.** Профиль определяет, какие элементы управления
-  существуют:
-  - `ModellerSection` — `isAdmin = profile.effectiveRole === 'ADMIN'` закрывает
-    заголовок вкладок `My workspaces / Admin` и рендерит `AdminView` только для
-    админов (`ModellerSection.jsx:73`).
-  - `WorkspacePicker` — `canEdit = effectiveRole === 'EDITOR' || 'ADMIN'`
-    показывает/скрывает кнопку **New branch** (`WorkspacePicker.jsx:13`).
-  - `EditorView` — `canEdit = effectiveRole === 'EDITOR' || 'ADMIN'` и
-    `readOnly = !canEdit || !workspace.own` отключают create/save/rename/move/
-    delete/drag, скрывают действие отправки на ревью и показывают бейдж
-    `read-only` (`EditorView.jsx:21`).
-  - `FormEditor`, `CodeEditor`, `ErDiagramEditor`, `DataLineageDiagramEditor` и
-    `DagEditor` получают производный prop `readOnly` и соответствующим образом
-    скрывают возможности редактирования (панель `Add/Edit/Remove` на холсте,
-    поля ввода, перетаскивание).
+- **Условный рендеринг (только отражение).** Профиль управляет лишь
+  *подсказками*, но не доступом:
+  - `ModellerSection` всегда рендерит заголовок вкладок `My workspaces /
+    Admin`; пользователь без `WORKSPACE_ADMIN`, открыв **Admin**, получает
+    `403` от бэкенда как баннер (`ModellerSection.jsx`).
+  - `WorkspacePicker` дизейблит кнопку **New branch** для пользователя без
+    роли `EDITOR` ни в одном домене (`WorkspacePicker.jsx`).
+  - `EditorView` выводит `readOnly` из домена выбранного файла/каталога
+    (`profile.domains[<domain>]` должен содержать `EDITOR`); он больше не
+    зависит от `workspace.own` (`EditorView.jsx`). `FormEditor`, `CodeEditor`,
+    `ErDiagramEditor`, `DataLineageDiagramEditor` и `DagEditor` получают эту
+    подсказку, но кнопки save/review остаются видимыми — на запрещённую мутацию
+    приходит ошибка бэкенда.
 - **Показ ошибок.** `403` от проверки владения/роли всплывает через `api()` как
   `Error` (рендерится в `.banner`/`.error-box`), а не как скрытый элемент
   управления.
 
-Коротко: JWT несёт роли, `/api/user` отдаёт свёрнутый `effectiveRole`,
-`SecurityConfig` — единственная точка принуждения, а React-компоненты решают
-только **что показать**, но никогда — **что разрешено**.
+Коротко: JWT несёт роли `<domain>:<ROLE>` и глобальную `WORKSPACE_ADMIN`;
+`/api/user` отдаёт карту `domains` по доменам; `SecurityConfig` (админская
+поверхность) и доменные проверки в сервисах — единственная точка принуждения, а
+React-компоненты решают только **что показать**, но никогда — **что разрешено**.
+
+### 9.4 Известные ограничения (технический долг)
+
+- **Грубая проверка остановки Spark.** У Spark-submissions пока нет домена,
+  поэтому `requireControl(...)` принимает `CONTROL` в *любом* домене. Проброс
+  домена через submission — отдельная задача, после которой проверка должна
+  стать по домену задачи.
+- **Нефильтруемые Services / Spark submissions.** У `ServiceNodeDTO` и DTO
+  Spark-submissions нет домена, поэтому эти вкладки не фильтруются по домену;
+  добавление атрибута в DTO — отдельная задача.
+- **Нефильтруемые эндпоинты script/datasource.**
+  `GET /api/catalog/script/{key}` и `GET /api/catalog/datasource/{key}` не имеют
+  привязки к домену датасета и закрыты только «аутентифицирован».
+- **Нет модалки истечения TTL.** Удаление пространства по истечении TTL пока не
+  показывает модальное подтверждение (модалку использует только явное закрытие
+  через `window.confirm`); отдельная модалка — отдельная задача.
 
 ---
 

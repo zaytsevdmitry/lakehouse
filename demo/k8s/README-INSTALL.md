@@ -136,10 +136,11 @@ kubectl -n jarina-management scale deployment jarina-management-task-executor-se
 
 Демонстрационные пользователи (realm `jarina`):
 
-| Логин | Пароль | Роль |
+| Логин | Пароль | Роли |
 |:------|:-------|:-----|
-| `de_view` | `de_view` | USER |
-| `de_editor` | `de_editor` | ADMIN |
+| `de_view` | `de_view` | `platform:VIEWER`, `analytics:VIEWER`, `processing:VIEWER` |
+| `de_editor` | `de_editor` | `platform:EDITOR`, `platform:CONTROL`, `analytics:EDITOR`, `processing:EDITOR` |
+| `de_admin` | `de_admin` | `WORKSPACE_ADMIN`, `platform:EDITOR`, `analytics:EDITOR`, `processing:EDITOR` |
 
 > Секреты клиентов по умолчанию в файлах values.yaml предназначены только для демонстрации.
 > В production используйте переменные окружения `KEYCLOAK_INTERNAL_CLIENT_SECRET` и `KEYCLOAK_UI_CLIENT_SECRET`.

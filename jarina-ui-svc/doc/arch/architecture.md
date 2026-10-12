@@ -122,7 +122,7 @@ src/main/resources/frontend
         │                          #   via workspaceUrl()
         ├── EditorView.jsx         # per-workspace file tree + editor pane
         │                          #   (the largest single component, ~1k lines)
-        ├── AdminView.jsx          # admin-only: all workspaces, cleanup TTL, logs
+        ├── AdminView.jsx          # admin content: all workspaces, cleanup TTL, logs
         ├── FormEditor.jsx         # schema-driven form renderer for config docs
         ├── ErDiagramEditor.jsx    # ER-diagram visual editing (React Flow)
         ├── DataLineageDiagramEditor.jsx  # data-lineage diagram editing
@@ -196,7 +196,8 @@ Scopes and responsibilities:
   - `EditorView` — `schemas`, `tree`, `dirs`, `selected`, `selectedFolder`,
     `filter`, `yaml`, `doc`, `keyNameEditable`, `mode` (`form`|`yaml`),
     `dirty`, `busy`, modal flags, `pendingOpen` (unsaved-changes guard);
-    `readOnly` is derived from `profile.effectiveRole` + `workspace.own`.
+    `readOnly` is a UX hint derived from `profile.domains` for the domain of the
+    currently selected file/folder (editable only with `EDITOR` on that domain).
 - **Sub-view / tab-level** — `LineageTab`, `RelationsTab`, `ModelTab`,
   `PipelineSection`, `FormEditor`, `ErDiagramEditor`, `DataLineageDiagramEditor`,
   `DagEditor`
@@ -249,11 +250,14 @@ directly. Authentication is handled server-side by the Spring Boot **BFF**
   with credentials sent implicitly.
 - **CSRF**: Spring exposes the token in the `XSRF-TOKEN` cookie. Both
   wrappers add the `X-XSRF-TOKEN` header for non-safe verbs.
-- **RBAC**: the modeller endpoints are additionally gated by the Keycloak
-  realm roles `VIEWER / _EDITOR / _ADMIN` (with a
-  hierarchy `ADMIN > EDITOR > VIEWER`). The frontend also receives
-  `effectiveRole` from `GET /api/user` and hides the Admin tab / disables the
-  editor for users without the right level.
+- **RBAC**: access is **domain-driven**. Keycloak realm roles carry a domain
+  prefix — `<domain>:<ROLE>` with `ROLE` in `VIEWER / EDITOR / CONTROL`
+  (`VIEWER` is implied by the other two; `EDITOR` does not allow stopping tasks,
+  `CONTROL` does not allow editing). A global, non-domain `WORKSPACE_ADMIN` role
+  governs the workspace-admin endpoints. `GET /api/user` returns the per-domain
+  map `domains: {<domain>: <LABEL>}`; the frontend uses it only to reflect rights
+  (e.g. the Modeller read-only hint), while the backend stays the single
+  enforcement point and answers `403` on any denied mutation.
 
 **Deep linking.** `workspaceUrl(workspaceId)` in `api.js` builds
 `?section=modeller&workspace=<id>` on the current path. Workspace picker uses
@@ -304,7 +308,7 @@ Backend endpoints consumed (all relative, proxied by the BFF):
 | Spark | `fetchSparkSubmissions`, `createSparkSubmission`, `fetchSparkStatus`, `killSparkSubmission`, `killAllSparkSubmissions`, `clearSparkCompleted`, `fetchSparkProperties` | `/api/spark-proxy/*` |
 | VCS | `fetchVcsSyncLogs`, `fetchVcsObjectLogs` | `/api/vcs/logs`, `/api/vcs/objects` (both filterable by `domainKeyName`) |
 | User | `fetchCurrentUser`, `logout` | `GET /api/user`, `POST /logout` |
-| Modeller | `api()` calls in `WorkspacePicker` / `EditorView` / `AdminView` | `GET /api/vcs/workspaces`, `/api/vcs/branches`, `GET/POST/DELETE /api/vcs/workspace[/{id}]`, `POST /api/vcs/branch`, `POST /api/vcs/review/{id}`, `POST /api/vcs/workspace/{id}/restore`, `GET /api/schema[/{kind}]`, `/api/workspaces/{id}/tree|dirs|files`, `POST /api/workspaces/{id}/files(rename|move)`, `POST /api/workspaces/{id}/dirs(move)`, `/api/admin/workspaces`, `/api/admin/settings/cleanup-ttl-hours`, `/api/admin/sync-logs` |
+| Modeller | `api()` calls in `WorkspacePicker` / `EditorView` / `AdminView` | `GET /api/vcs/workspaces`, `/api/vcs/branches`, `GET/POST/DELETE /api/vcs/workspace[/{id}]`, `POST /api/vcs/branch`, `POST /api/vcs/review/{id}`, `POST /api/vcs/workspace/{id}/restore`, `GET /api/schema[/{kind}]`, `/api/workspaces/{id}/tree|dirs|files`, `POST /api/workspaces/{id}/files(rename|move)`, `POST /api/workspaces/{id}/dirs(move)`, `/api/workspace/admin/workspaces`, `/api/workspace/admin/settings/cleanup-ttl-hours`, `/api/workspace/admin/sync-logs` |
 
 ---
 
@@ -485,8 +489,10 @@ with `props`/state instead of `hidden`:
   `activeTab` to `'dataset'`.
 - **ModelTab** — vertical tab rail toggles Scripts / Complete.
 - **VcsSection** — VCSLog / VCSObjectsSearch tabs.
-- **ModellerSection** — for admins a `tabbed` header offers My workspaces /
-  Admin; both render `WorkspacePicker` and `AdminView` respectively.
+- **ModellerSection** — a `tabbed` header always offers My workspaces /
+  Admin; they render `WorkspacePicker` and `AdminView` respectively. The Admin
+  tab opens for everyone and surfaces the backend `403` as a banner for users
+  without the global `WORKSPACE_ADMIN` role.
 - **WorkspacePicker → EditorView** — the modifier flow is *state driven*
   (`openWorkspace` in `ModellerSection`): the workspace picker "Open" action
   navigates into the editor for the selected `(domain, branch)` set (either in the same tab via
@@ -500,10 +506,12 @@ There are no client-side guards. Access protection is entirely **server-side
 in the BFF** (Spring Security): unauthenticated requests are redirected to
 the Keycloak login and the session cookie gates every `/api` call. The
 frontend just renders the auth state it sees (username label, `logout` →
-`POST /logout` + reload). Modeller mutations require at minimum the
-`VIEWER/EDITOR/ADMIN` role depending on the endpoint; the
-modeller also enforces per-user workspace ownership (`workspace.own`), and
-readers/viewers get a read-only editor (`readOnly`).
+`POST /logout` + reload). The BFF enforces domain-driven RBAC: mutations
+require `EDITOR` (config/repo changes) or `CONTROL` (task stop) for the domain
+of the entity, and `/api/workspace/admin/**` requires the global
+`WORKSPACE_ADMIN` role; the modeller additionally enforces per-user workspace
+ownership (`workspace.own`). The editor's `readOnly` hint is driven by the
+domain of the selected file, not by a global role.
 
 ---
 
@@ -519,7 +527,7 @@ readers/viewers get a read-only editor (`readOnly`).
 | Module format / target | ESM (`"type": "module"`), Vite default targets |
 | Language | **JavaScript (JSX)** — no TypeScript |
 | Linting / formatting | **None configured** (no ESLint, no Prettier, no `lint` script) |
-| Tests | **Vitest 3 + React Testing Library** (jsdom): `npm test` runs `vitest run`; configured in the `test` block of `vite.config.js` (`globals`, `environment: 'jsdom'`, `setupFiles: ['./test/setup.js']`, `include: src/**/*.test.{js,jsx}`). The current suite (41 tests) covers `DataLineageDiagramEditor` (24 tests: graph translation, position persistence, drag, Add/Edit/Remove + modal flows, full-screen toggle), `FormEditor` (7 tests: source-map key selection across document switches, stale-key guards, remove/edit enablement, per-instance tab reset), `EditorView` (5 tests, incl. folder creation at the domain root, file move-to-domain-root and the multi-domain workspace leave-on-review flow) and `WorkspacePicker` (5 tests, incl. per-domain branch preselection). `test/setup.js` polyfills the browser APIs React Flow needs in jsdom (ResizeObserver, `DOMMatrixReadOnly`, pointer capture, `getBoundingClientRect`, `offsetWidth/Height`). |
+| Tests | **Vitest 3 + React Testing Library** (jsdom): `npm test` runs `vitest run`; configured in the `test` block of `vite.config.js` (`globals`, `environment: 'jsdom'`, `setupFiles: ['./test/setup.js']`, `include: src/**/*.test.{js,jsx}`). The current suite (44 tests) covers `DataLineageDiagramEditor` (24 tests: graph translation, position persistence, drag, Add/Edit/Remove + modal flows, full-screen toggle), `FormEditor` (7 tests: source-map key selection across document switches, stale-key guards, remove/edit enablement, per-instance tab reset), `EditorView` (6 tests, incl. folder creation at the domain root, file move-to-domain-root, the multi-domain leave-on-review flow and the per-domain `readOnly` switch) and `WorkspacePicker` (7 tests, incl. per-domain branch preselection and the `New branch` enable/disable by `EDITOR`). `test/setup.js` polyfills the browser APIs React Flow needs in jsdom (ResizeObserver, `DOMMatrixReadOnly`, pointer capture, `getBoundingClientRect`, `offsetWidth/Height`). |
 | Package manager | npm (`package.json` + `package-lock.json`) |
 
 Scripts: `dev` (`vite`), `build` (`vite build`), `preview` (`vite preview`),
@@ -605,10 +613,12 @@ Priorities for refactoring before the application scales:
    modeller errors, but the other sections repeat `response.ok` checks +
    `.error-box` rendering. Centralize error mapping in `api.js` and render via
    a small `FetchState`/error-boundary pattern.
-10. **RBAC logic lives in two places.** `SecurityConfig` gates HTTP routes
-    (`hasRole`) while `UserContext`/`UserController` compute `effectiveRole`
-    for the frontend. The two must stay in sync as rules evolve; consider a
-    single `ModellerRole`/authorization helper shared by both.
+10. **RBAC is still partly coarse.** `SecurityConfig` gates the admin surface by
+    the global `WORKSPACE_ADMIN` role while the domain checks (`EDITOR`/
+    `CONTROL`) live in the services; the Spark kill gate is coarse — it accepts
+    `CONTROL` in *any* domain because submissions carry no domain yet (see
+    §9.4). Thread the domain through Spark submissions so the check becomes
+    per-task-domain.
 11. **Accessibility gaps.** Icon-only tab buttons, color-only status badges
     and the modeller's drag-and-drop tree rely mainly on color/outline; add
     `aria-*`/keyboard support, semantic `nav`/`tablist`, and focus management
@@ -624,81 +634,126 @@ The frontend has **no permission model of its own**. Authorization is decided
 server-side in the BFF (`jarina-ui-svc`), Keycloak is the identity provider, and
 the SPA only *reflects* the decision it is handed.
 
-- **Keycloak realm roles.** The user is authenticated through the Keycloak
-  realm `jarina`. The modelling roles are `VIEWER`, `EDITOR` and `ADMIN`, with
-  the hierarchy **`ADMIN > EDITOR > VIEWER`**. Roles reach the BFF in the JWT /
-  OIDC claims (`realm_access.roles`, with `roles` and
-  `resource_access.<client>.roles` fallbacks) and are mapped to Spring
-  authorities (`SecurityConfig.toAuthorities`), while the hierarchy itself is
-  declared by the `RoleHierarchy` bean
-  (`SecurityConfig.roleHierarchy`).
+- **Keycloak realm roles (domain-driven).** Access is carried by realm roles of
+  the form **`<domain>:<ROLE>`** (e.g. `finance:EDITOR`, `marketing:CONTROL`,
+  `hr:VIEWER`). The domain is lowercased; `ROLE` is one of `VIEWER`, `EDITOR`,
+  `CONTROL` and is matched case-insensitively. `VIEWER` is **implied** by the
+  other two, and `EDITOR`/`CONTROL` are orthogonal: `EDITOR` allows config/repo
+  changes but **not** stopping tasks, `CONTROL` allows stopping tasks but **not**
+  editing. A global, non-domain role `WORKSPACE_ADMIN` (no colon) is kept out of
+  the domain map and governs the workspace-admin endpoints only.
+- **Claim mapping.** Roles reach the BFF in the JWT / OIDC claims
+  (`realm_access.roles`, with `roles` and `resource_access.<client>.roles`
+  fallbacks) and are mapped to Spring authorities, while the (legacy) hierarchy
+  is declared by the `RoleHierarchy` bean (`SecurityConfig.roleHierarchy`).
 - **The `/api/user` endpoint.** The SPA never parses the JWT. It calls
   `GET /api/user` (`UserController`) and receives the profile
-  `{username, name, email, roles[], effectiveRole}`. `effectiveRole` is the
-  single relevant fact for the UI: `UserContext.effectiveRole()` delegates to
-  `ModellerRoleSupport.effectiveRole(roles)`, which collapses the raw role set
-  to the highest of `ADMIN`/`EDITOR`/`VIEWER` (case-insensitive, with the legacy
-  aliases `JARINA_CONFIG_VIEWER`, `JARINA_CONFIG_EDITOR`,
-  `JARINA_MODELLER_ADMIN` accepted for backward compatibility).
+  `{username, name, email, roles[], domains:{<domain>: <LABEL>}}`. The `domains`
+  map collapses each domain's role set to a single label with precedence
+  **`CONTROL > EDITOR > VIEWER`** (`ModellerRoleSupport.domains` /
+  `displayLabel`, `DomainRole`). A user holding both `finance:EDITOR` and
+  `finance:CONTROL` keeps **both** internal role sets; the UI only sees the
+  `CONTROL` label. The SPA uses `domains` **only to reflect rights** (e.g. the
+  Modeller read-only hint) — never to decide access.
 - **The session cookie.** Every `/api/**` call is same-origin and rides on the
   `JSESSIONID` session established by the OAuth2 authorization-code login; the
   SPA never sends a `Bearer` token (see §4).
 
 Inside the modeller the frontend adds one more dimension on top of the role:
 **ownership**. `WorkspaceResponse.own` tells whether the current user owns the
-opened workspace, which is what makes the editor read-only for a workspace the
-user does not own (§9.3).
+opened workspace; ownership is enforced by the backend (a non-owner gets `403`),
+and it no longer drives the editor's `readOnly` — that is derived per-domain from
+the `EDITOR` role (see §9.3).
 
 ### 9.2 Role capability matrix
+
+Roles are per **domain** (`<domain>:<ROLE>`), plus the global `WORKSPACE_ADMIN`.
 
 | Role | Backend (enforced) | Frontend (reflected) |
 |---|---|---|
 | No role / anonymous | `/api/**` (except the whitelist) → `401`, browser navigation → Keycloak login | No SPA access; `api()` redirects to `/oauth2/authorization/keycloak` on `401` |
-| `VIEWER` | Read workspaces/branches/schema; delete own workspace | Open Modelling, list branches, open a workspace — **editor is read-only**, no "New branch", no save/delete |
-| `EDITOR` | + create branches, create/edit/save/delete/move files & dirs, submit review, restore | + "New branch", file/folder CRUD, drag-and-drop, **Submit review** |
-| `ADMIN` | + everything under `/api/admin/**` | + the **Admin** tab (`AdminView`): all workspaces, force-delete, cleanup TTL, sync logs |
+| `VIEWER` on a domain | Read that domain's datasets/schedules/VCS logs (BFF filters by domain); open a workspace for reading; delete own workspace | Monitoring tabs show only the allowed domains (empty list otherwise); Modeller editor is read-only for that domain |
+| `EDITOR` on a domain | + create/edit/rename/move/delete files & dirs, create branch, submit review, restore — for that domain | + "New branch", file/folder CRUD, drag-and-drop, **Submit review** (editor is editable for that domain) |
+| `CONTROL` on a domain | + stop/kill Spark submissions | Stop/kill buttons are always shown; a missing `CONTROL` surfaces the backend `403` as an error |
+| `WORKSPACE_ADMIN` (global, non-domain) | + everything under `/api/workspace/admin/**` | Admin tab content (`AdminView`): all workspaces, force-delete, cleanup TTL, sync logs |
 
-The monitoring sections (Services, Catalog, Schedules, SparkJobs, VCS) have **no
-RBAC** beyond "authenticated": any logged-in user sees them; only the modeller
-carries role gating.
+The monitoring sections (Services, Catalog, Schedules, SparkJobs, VCS) are
+**filtered by domain on the backend**: the BFF intersects the user's domains with
+the configured ones (`DomainAccess.allowedDomains`) and drops rows whose
+`domainKeyName` is not allowed; when nothing remains the response is a valid
+empty array (`[]`). The UI renders the empty tables and never filters by itself.
+
+**Audit.** Mutations (Spark task stop, workspace creation/deletion, VCS
+synchronisation, config review/save) are logged in the audit system **under the
+real Keycloak `username`** of the authenticated user. Writing audit records under
+the technical name `system` for user-initiated actions is **forbidden**.
 
 ### 9.3 Where access decisions are made in the code
 
 There is **no client-side router and therefore no route guard** (§6); access is
-enforced at the API boundary and merely *mirrored* by conditional rendering.
+enforced at the API/service boundary and merely *reflected* by conditional
+rendering.
 
-- **API-level enforcement (authoritative).** `SecurityConfig.securityFilterChain`
-  applies `hasRole(...)` per path: `/api/admin/**` → `ADMIN`;
-  `/api/workspaces/**` GET → `VIEWER`, POST/PUT/DELETE → `EDITOR`;
-  `/api/vcs/workspace/*/restore`, `/api/vcs/branch`, `/api/vcs/review/*` →
-  `EDITOR`; `/api/vcs/workspaces`, `/api/vcs/workspace`, `/api/vcs/branches`,
-  `/api/schema` → `VIEWER`; everything else → `authenticated()`.
-  `UserContext`/`ModellerRole` then enforce workspace ownership on top of the
-  role. The frontend cannot bypass these rules — its gating is cosmetic.
+- **API-level enforcement.** `SecurityConfig.securityFilterChain` keeps only the
+  whitelist public and gates the administrative surface: `/api/workspace/admin/**`
+  → `hasRole('WORKSPACE_ADMIN')`; everything else → `authenticated()`.
+- **Domain / ownership enforcement (authoritative).** The domain checks live in
+  the services and throw `ForbiddenException` (mapped to `403` by the global
+  exception handler):
+  - `EditorService.requireEditor(...)` on every file/dir mutation;
+  - `VcsService.requireDomainRole(...)` on `openWorkspace` (`VIEWER`/`EDITOR`/
+    `CONTROL`), `restore` and `createBranch` (`EDITOR`);
+  - `ReviewService.submit(...)` requires `EDITOR` for **every** selected domain;
+  - `SparkProxyController.requireControl(...)` on `kill`/`killall`;
+  - `AdminWorkspaceService.requireWorkspaceAdmin(...)` on the admin service
+    methods (defence in depth on top of `SecurityConfig`);
+  - workspace **ownership** is re-checked on every modeller call (`workspace.own`).
+  The frontend cannot bypass these rules — its rendering is cosmetic.
+- **Server-side filtering.** `CatalogService`, `ScheduleService` and
+  `VcsLogService` call `DomainAccess.allowedDomains(...)` (which logs a `WARN`
+  for a user domain that is not configured and ignores it) and filter the
+  downstream lists by `domainKeyName`; an all-filtered result becomes `[]`.
 - **401 handoff.** `api()` in `api.js` turns any `401` into
   `redirectToLogin()` → `/oauth2/authorization/keycloak`; this is the only
   "guard"-like redirect in the SPA.
-- **Conditional rendering.** The profile drives which controls exist:
-  - `ModellerSection` — `isAdmin = profile.effectiveRole === 'ADMIN'` gates the
-    `My workspaces / Admin` tab header and renders `AdminView` only for admins
-    (`ModellerSection.jsx:73`).
-  - `WorkspacePicker` — `canEdit = effectiveRole === 'EDITOR' || 'ADMIN'`
-    shows/hides the **New branch** button (`WorkspacePicker.jsx:13`).
-  - `EditorView` — `canEdit = effectiveRole === 'EDITOR' || 'ADMIN'` and
-    `readOnly = !canEdit || !workspace.own` disable create/save/rename/move/
-    delete/drag, hide the submit-review action and show the `read-only` badge
-    (`EditorView.jsx:21`).
-  - `FormEditor`, `CodeEditor`, `ErDiagramEditor`, `DataLineageDiagramEditor`
-    and `DagEditor` receive the derived `readOnly` prop and hide their editing
-    affordances (on-canvas `Add/Edit/Remove` toolbar, inputs, drag)
-    accordingly.
+- **Conditional rendering (reflection only).** The profile drives a few
+  *hints*, never access:
+  - `ModellerSection` always renders the `My workspaces / Admin` tab header; a
+    non-`WORKSPACE_ADMIN` user opening **Admin** gets the backend `403` as a
+    banner (`ModellerSection.jsx`).
+  - `WorkspacePicker` disables the **New branch** button for a user with no
+    `EDITOR` role in any domain (`WorkspacePicker.jsx`).
+  - `EditorView` derives `readOnly` from the domain of the currently selected
+    file/folder (`profile.domains[<domain>]` must include `EDITOR`); it no longer
+    depends on `workspace.own` (`EditorView.jsx`). `FormEditor`, `CodeEditor`,
+    `ErDiagramEditor`, `DataLineageDiagramEditor` and `DagEditor` receive that
+    hint, but the save/review actions stay visible — a denied mutation returns
+    the backend error.
 - **Error surfacing.** A `403` from an ownership/role check surfaces through
   `api()` as an `Error` (rendered in a `.banner`/`.error-box`), not as a hidden
   control.
 
-In short: the JWT carries the roles, `/api/user` exposes the collapsed
-`effectiveRole`, `SecurityConfig` is the single enforcement point, and the React
-components only decide **what to show**, never **what is allowed**.
+In short: the JWT carries `<domain>:<ROLE>` roles plus the global
+`WORKSPACE_ADMIN`; `/api/user` exposes the per-domain `domains` map;
+`SecurityConfig` (admin surface) and the domain checks in the services are the
+single enforcement point; the React components only decide **what to show**,
+never **what is allowed**.
+
+### 9.4 Known limitations (technical debt)
+
+- **Coarse Spark kill gate.** Spark submissions carry no domain yet, so
+  `requireControl(...)` accepts `CONTROL` in *any* domain. Threading the domain
+  through the submission is a separate task, after which the check must become
+  per-task-domain.
+- **Unfiltered Services / Spark submissions.** `ServiceNodeDTO` and the Spark
+  submission DTOs have no domain attribute, so those tabs are not filtered by
+  domain; adding the attribute to the DTO is a separate task.
+- **Unfiltered script/data-source endpoints.** `GET /api/catalog/script/{key}`
+  and `GET /api/catalog/datasource/{key}` have no dataset-domain mapping and are
+  left gated only by "authenticated".
+- **No TTL-expiry modal.** Workspace deletion on TTL expiry does not yet show a
+  confirmation modal (only the explicit user-close path uses `window.confirm`);
+  a dedicated modal is a separate task.
 
 ---
 

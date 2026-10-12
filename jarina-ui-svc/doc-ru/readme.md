@@ -52,7 +52,7 @@ UserController      /api/user        — профиль текущего пол�
 VcsController    /api/vcs          — жизненный цикл рабочих пространств, ветки, ревью, restore
 EditorController /api/workspaces/{workspaceId} — CRUD файлов внутри рабочего пространства
 SchemaController /api/schema       — схемы форм по видам (KindSchema) для редакторов
-AdminController  /api/admin        — только для админов: все пространства, TTL очистки, журналы
+AdminController  /api/workspace/admin — только для WORKSPACE_ADMIN: все пространства, TTL очистки, журналы
 ```
 
 Статусы сервисов вычисляются `HealthChecker`: HTTP-проверкой по `healthCheckUrl` (тип `http`) либо проверкой открытого TCP-порта (тип `tcp`). Состав сервисов, рёбра и вершины графа задаются конфигурацией `jarina.ui.services/edges/vertices`.
@@ -147,7 +147,8 @@ jarina:
   `NO_CHANGES`, если не изменилось ничего;
 - **рабочее пространство удаляется только при успехе** - неудачная отправка оставляет его
   открытым;
-- пользователь должен владеть пространством (или быть `ADMIN`), и вся отправка выполняется
+- пользователь должен владеть пространством, иметь роль `EDITOR` для каждого выбранного
+  домена, и вся отправка выполняется
   под блокировкой пространства.
 
 ### Домен как фильтр журналов VCS
@@ -194,7 +195,7 @@ jarina:
   - сервисы (`service`): `VcsService`, `ReviewService`, `SchemaService`, `EditorService`, `YamlEditorService`, `EnumOptionsService`, `SyncLogService`, `AdminWorkspaceService`;
   - интеграция с VCS (`vcs`): SPI `VcsProvider` с реализациями `LocalGitVcsProvider`, `GitLabApiVcsProvider`, `GitHubAppVcsProvider`, `DisabledVcsProvider` и фабрикой провайдеров;
   - хранилище рабочих пространств (`storage`): SPI `WorkspaceStorage` с `LocalFsWorkspaceStorage` и S3 (`S3WorkspaceStorage` + минимальная подпись AWS SigV4), а также `WorkspaceManager`, `WorkspaceSeeder` и задача очистки (`WorkspaceCleanupTask`);
-  - авторизация (`auth`): `ModellerRole` (`VIEWER < EDITOR < ADMIN`), `UserContext`, `ForbiddenException`/`NotFoundException`;
+  - авторизация (`auth`): `DomainRole` (`VIEWER`/`EDITOR`/`CONTROL`), `ModellerRoleSupport` (разбор доменных ролей), `UserContext`, `DomainAccess`, `ForbiddenException`/`NotFoundException`;
   - DTO (`dto`): `KindSchema`, `FieldSchema`, `TreeResponse`, `FileContentResponse`, `WorkspaceResponse`, DTO ревью/restore и др.;
 - `SecurityConfig` — OAuth2-логин BFF + RBAC модделирования (см. Безопасность);
 - `GlobalExceptionHandler` — единая обработка ошибок;
@@ -229,7 +230,7 @@ jarina:
 | POST | `/api/states` | Состояния интервалов датасета (`dataSetKeyName`, `fromDate`, `toDate`) |
 | GET | `/api/vcs/logs` | Журнал синхронизации GitOps (коммиты), фильтры `status`, `commitId`, `domainKeyName` |
 | GET | `/api/vcs/objects` | Журнал объектов GitOps (изменённые конфигурационные объекты), фильтры `commitId`, `kind`, `from`, `to`, `filePath`, `objectName`, `domainKeyName` |
-| GET | `/api/user` | Профиль текущего пользователя (`username`, `roles`, `effectiveRole`) |
+| GET | `/api/user` | Профиль текущего пользователя (`username`, `name`, `email`, `roles`, `domains`) |
 | GET | `/api/vcs/workspaces` | Рабочие пространства текущего пользователя |
 | POST | `/api/vcs/workspace` | Открыть рабочее пространство для списка выборов `{domain, branch}` (создание рабочей копии) |
 | DELETE | `/api/vcs/workspace/{workspaceId}` | Удалить рабочее пространство пользователя |
@@ -250,11 +251,11 @@ jarina:
 | POST | `/api/workspaces/{workspaceId}/files/rename` | Переименовать файл |
 | POST | `/api/workspaces/{workspaceId}/files/move` | Переместить файл |
 | DELETE | `/api/workspaces/{workspaceId}/files/{path}` | Удалить файл |
-| GET | `/api/admin/workspaces` | Все рабочие пространства (админ) |
-| DELETE | `/api/admin/workspaces/{workspaceId}` | Принудительное удаление пространства (админ) |
-| GET | `/api/admin/settings/cleanup-ttl-hours` | TTL жизни неактивного пространства (админ) |
-| PUT | `/api/admin/settings/cleanup-ttl-hours` | Установить TTL очистки (админ) |
-| GET | `/api/admin/sync-logs` | Хвост журнала синхронизации VCS (админ) |
+| GET | `/api/workspace/admin/workspaces` | Все рабочие пространства (WORKSPACE_ADMIN) |
+| DELETE | `/api/workspace/admin/workspaces/{workspaceId}` | Принудительное удаление пространства (WORKSPACE_ADMIN) |
+| GET | `/api/workspace/admin/settings/cleanup-ttl-hours` | TTL жизни неактивного пространства (WORKSPACE_ADMIN) |
+| PUT | `/api/workspace/admin/settings/cleanup-ttl-hours` | Установить TTL очистки (WORKSPACE_ADMIN) |
+| GET | `/api/workspace/admin/sync-logs` | Хвост журнала синхронизации VCS (WORKSPACE_ADMIN) |
 
 ## Конфигурация
 
@@ -366,19 +367,16 @@ UI BFF аутентифицирует пользователей через Keyc
 
 ### Роли модделирования (RBAC)
 
-Доступ к эндпоинтам модделирования предоставляется по ролям realm ниже. Настроена **иерархия ролей**, так что `ADMIN` подразумевает `EDITOR`, который подразумевает `VIEWER`:
-
-```
-ADMIN > EDITOR > VIEWER
-```
+Доступ построен **по доменам**. Роли realm несут префикс домена — `<domain>:<ROLE>`, где `ROLE` ∈ `VIEWER` / `EDITOR` / `CONTROL` (например, `platform:EDITOR`, `analytics:CONTROL`). `VIEWER` неявно входит в две другие; `EDITOR` и `CONTROL` ортогональны — `EDITOR` позволяет менять конфиги/репозиторий, но не останавливать задачи, `CONTROL` позволяет останавливать задачи, но не редактировать. Глобальная роль `WORKSPACE_ADMIN` (без домена) управляет админской поверхностью.
 
 | Роль realm | Доступ |
 |---|---|
-| `VIEWER` | Чтение рабочих пространств, редактор схем (только чтение), список веток |
-| `EDITOR` | Всё, что у просмотрщика + создание веток, открытие/правка/сохранение/удаление файлов, отправка на ревью, restore |
-| `ADMIN` | Всё, что у редактора + админ-поверхность: все пространства, принудительное удаление, TTL очистки, журналы |
+| `<domain>:VIEWER` | Чтение датасетов/расписаний/VCS-логов этого домена (BFF фильтрует по домену), открытие пространства для чтения, удаление своего пространства |
+| `<domain>:EDITOR` | + создание веток, открытие/правка/сохранение/удаление/перемещение файлов, отправка на ревью, restore — для этого домена |
+| `<domain>:CONTROL` | + остановка/убийство Spark-submissions |
+| `WORKSPACE_ADMIN` (глобальная, без домена) | Всё под `/api/workspace/admin/**`: все пространства, принудительное удаление, TTL очистки, журналы |
 
-Правила применяются в `SecurityConfig` (`/api/admin/**` → ADMIN; `/api/workspaces/**` чтение → VIEWER, запись → EDITOR; `/api/vcs/*` по операции). Внутри модделирования `UserContext`/`ModellerRole` дополнительно контролируют владение рабочим пространством (править может только владелец), а фронтенд вычисляет `readOnly` из `effectiveRole` (`GET /api/user`).
+`SecurityConfig` закрывает админскую поверхность (`/api/workspace/admin/**` → `hasRole('WORKSPACE_ADMIN')`), всё остальное — `authenticated()`. Доменные проверки и проверки владения живут в сервисах (`EditorService`/`VcsService`/`ReviewService`/`SparkProxyController`/`AdminWorkspaceService`) и бросают `ForbiddenException` (→ `403`); `CatalogService`/`ScheduleService`/`VcsLogService` фильтруют по разрешённым доменам пользователя (`DomainAccess`). Фронтенд лишь *отражает* права: подсказка `readOnly` в модделировании выводится по домену из `domains` в `GET /api/user` (редактирование доступно только с ролью `EDITOR` для домена выбранного файла) и больше не зависит от владения пространством (`workspace.own`), которое бэкенд принуждает отдельно.
 
 ### Необходимые настройки
 
@@ -400,18 +398,19 @@ ADMIN > EDITOR > VIEWER
 ### Настройка учетных записей и ролей в Keycloak
 
 1. **Разверните Keycloak.** В demo-окружении compose поднимает Keycloak 26.0 с админ-консолью на `http://localhost:8085` (учетные данные из `KEYCLOAK_ADMIN`/`KEYCLOAK_ADMIN_PASSWORD`, по умолчанию `admin`/`admin_local_password`) и импортирует эталонный realm из `demo/compose/conf_infra/security/realms/jarina-realm.json`. В production используйте постоянную БД и смените все пароли/секреты по умолчанию.
-2. **Роли realm'а.** В realm `jarina` определены общие роли `USER` и `ADMIN`, а также роли модделирования:
-   - `VIEWER` — модделирование только для чтения;
-   - `EDITOR` — редактирование конфигурационных документов;
-   - `ADMIN` — админ-поверхность модделирования.
+2. **Роли realm'а.** В realm `jarina` определены доменные роли модделирования и глобальная админ-роль:
+   - `<domain>:VIEWER` — модделирование только для чтения в этом домене;
+   - `<domain>:EDITOR` — редактирование конфигурационных документов этого домена;
+   - `<domain>:CONTROL` — остановка Spark-submissions;
+   - `WORKSPACE_ADMIN` — админ-поверхность модделирования.
 
-   Роли попадают к сервисам в claim JWT `realm_access.roles` и преобразуются в authorities `ROLE_…` (`SecurityConfig` читает `realm_access.roles`, `roles`, `resource_access.*.roles`).
+   В demo-realm заведены роли для настроенных доменов `platform`, `analytics` и `processing`. Роли попадают к сервисам в claim JWT `realm_access.roles` и преобразуются в authorities (`SecurityConfig` читает `realm_access.roles`, `roles`, `resource_access.*.roles`); роль без префикса `<domain>:` (кроме `WORKSPACE_ADMIN`) игнорируется.
 3. **Клиент `jarina-ui-client`.** Confidential-клиент (*Standard Flow Enabled*, *Direct Access Grants* выключен), используемый данным BFF. Проверьте, что:
    - *Valid redirect URIs* содержат внешне видимый адрес UI: по умолчанию `http://localhost:8080/*` и `http://localhost:8080/login/oauth2/code/keycloak`;
    - *Web Origins* содержит origin UI (`http://localhost:8080`);
    - при развертывании на другом хосте/порту добавьте соответствующие redirect URI и web origin и задайте `JARINA_UI_REDIRECT_URI`.
 4. **Создание пользователей.** Админ-консоль → realm `jarina` → *Users* → *Add user*: заполните username/email/имя, затем *Credentials* → задайте пароль (выключите *Temporary*, чтобы пароль был постоянным).
-5. **Назначение ролей.** *Users* → выберите пользователя → *Role mapping* → фильтр *Filter by realm roles* → назначьте `USER` и/или `ADMIN` и нужную роль `*` кнопкой *Assign*. Иерархия ролей автоматически покрывает `ADMIN` → `EDITOR`/`VIEWER`.
+5. **Назначение ролей.** *Users* → выберите пользователя → *Role mapping* → фильтр *Filter by realm roles* → назначьте нужные доменные роли (`<domain>:VIEWER`/`EDITOR`/`CONTROL`) и, для администраторов воркспейсов, глобальную роль `WORKSPACE_ADMIN`.
 6. **Service account.** Confidential-клиент `jarina-internal-client` (*Service Accounts Enabled*) используется backend-сервисами для межсервисных вызовов; его секрет должен совпадать со значением `KEYCLOAK_INTERNAL_CLIENT_SECRET` на каждом сервисе.
 
 После настройки откройте UI - первый запрос перенаправит на страницу входа Keycloak; войти смогут только пользователи с учетной записью в realm `jarina`.

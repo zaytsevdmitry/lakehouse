@@ -18,7 +18,6 @@ package org.jarina.ui.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -78,26 +77,14 @@ public class SecurityConfig {
             "/favicon.ico"
     };
 
-    private static final String MODELLER_ADMIN = "ADMIN";
-    private static final String MODELLER_EDITOR = "EDITOR";
-    private static final String MODELLER_VIEWER = "VIEWER";
+    private static final String WORKSPACE_ADMIN = "WORKSPACE_ADMIN";
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(WHITELISTED_PATHS).permitAll()
-                        .requestMatchers("/api/admin/**").hasRole(MODELLER_ADMIN)
-                        .requestMatchers(HttpMethod.GET, "/api/workspaces/**").hasRole(MODELLER_VIEWER)
-                        .requestMatchers(HttpMethod.POST, "/api/workspaces/**").hasRole(MODELLER_EDITOR)
-                        .requestMatchers(HttpMethod.PUT, "/api/workspaces/**").hasRole(MODELLER_EDITOR)
-                        .requestMatchers(HttpMethod.DELETE, "/api/workspaces/**").hasRole(MODELLER_EDITOR)
-                        .requestMatchers("/api/vcs/workspaces", "/api/vcs/workspace").hasRole(MODELLER_VIEWER)
-                        .requestMatchers("/api/vcs/workspace/*/restore").hasRole(MODELLER_EDITOR)
-                        .requestMatchers(HttpMethod.DELETE, "/api/vcs/workspace/*").hasRole(MODELLER_VIEWER)
-                        .requestMatchers("/api/vcs/branch").hasRole(MODELLER_EDITOR)
-                        .requestMatchers("/api/vcs/review/*").hasRole(MODELLER_EDITOR)
-                        .requestMatchers("/api/vcs/branches", "/api/schema").hasRole(MODELLER_VIEWER)
+                        .requestMatchers("/api/workspace/admin/**").hasRole(WORKSPACE_ADMIN)
                         .anyRequest().authenticated())
                 .oauth2Login(oauth2 -> oauth2
                         .defaultSuccessUrl("/", true)

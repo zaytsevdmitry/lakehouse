@@ -13,16 +13,16 @@ export default function AdminView({ profile, onNotice }) {
   const [busy, setBusy] = useState(false);
 
   const loadWorkspaces = useCallback(async () => {
-    const data = await api('/api/admin/workspaces');
+    const data = await api('/api/workspace/admin/workspaces');
     setWorkspaces(Array.isArray(data) ? data : []);
   }, []);
 
   const loadTtl = useCallback(async () => {
-    setTtl(await api('/api/admin/settings/cleanup-ttl-hours'));
+    setTtl(await api('/api/workspace/admin/settings/cleanup-ttl-hours'));
   }, []);
 
   const loadLogs = useCallback(async () => {
-    const data = await api('/api/admin/sync-logs?limit=200');
+    const data = await api('/api/workspace/admin/sync-logs?limit=200');
     setLogs(Array.isArray(data) ? data : []);
   }, []);
 
@@ -36,7 +36,7 @@ export default function AdminView({ profile, onNotice }) {
     if (!window.confirm(`Force-delete workspace for "${labelOf(ws)}" (${ws.owner})?`)) return;
     setBusy(true);
     try {
-      await api(`/api/admin/workspaces/${encodeURIComponent(ws.id)}`, { method: 'DELETE' });
+      await api(`/api/workspace/admin/workspaces/${encodeURIComponent(ws.id)}`, { method: 'DELETE' });
       onNotice('success', `Deleted workspace ${ws.id}.`);
       await loadWorkspaces();
     } catch (e) {
@@ -49,7 +49,7 @@ export default function AdminView({ profile, onNotice }) {
   const saveTtl = async (hours) => {
     setBusy(true);
     try {
-      const next = await api('/api/admin/settings/cleanup-ttl-hours', {
+      const next = await api('/api/workspace/admin/settings/cleanup-ttl-hours', {
         method: 'PUT',
         body: { hours },
       });

@@ -7,7 +7,7 @@
     <parent>
         <groupId>jarina</groupId>
         <artifactId>jarina-parent</artifactId>
-        <version>0.11.0</version>
+        <version>0.12.0</version>
     </parent>
 
     <artifactId>jarina-common</artifactId>

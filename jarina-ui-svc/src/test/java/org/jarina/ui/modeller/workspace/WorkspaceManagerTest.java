@@ -59,12 +59,12 @@ class WorkspaceManagerTest {
                 ttlHours, Clock.fixed(now, ZoneOffset.UTC));
     }
 
-    private static UsernamePasswordAuthenticationToken authentication(String username) {
-        Jwt jwt = Jwt.withTokenValue("test-token")
-                .header("alg", "none")
-                .claim("preferred_username", username)
-                .build();
-        return new UsernamePasswordAuthenticationToken(jwt, null, List.of());
+    private static UsernamePasswordAuthenticationToken authentication(String username, String... realmRoles) {
+        Jwt.Builder builder = Jwt.withTokenValue("test-token").header("alg", "none")
+                .claim("preferred_username", username);
+        if (realmRoles.length > 0)
+            builder.claim("realm_access", Map.of("roles", List.of(realmRoles)));
+        return new UsernamePasswordAuthenticationToken(builder.build(), null, List.of());
     }
 
     @Test
@@ -119,7 +119,7 @@ class WorkspaceManagerTest {
         Workspace workspace = manager.openWorkspace("alice", selections("analytics", "main"));
         EditorService editor = new EditorService(manager, storage, new YamlEditorService(),
                 new SyncLogService(10));
-        UsernamePasswordAuthenticationToken authentication = authentication("alice");
+        UsernamePasswordAuthenticationToken authentication = authentication("alice", "analytics:EDITOR");
 
         editor.createDirectory(workspace.id(), new DirectoryRequest("analytics (main)/dsda"), authentication);
         editor.createFile(workspace.id(), new CreateFileRequest("DataSet", "orders", "analytics (main)"),

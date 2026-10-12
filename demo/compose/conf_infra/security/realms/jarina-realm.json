@@ -4,10 +4,16 @@
   "enabled": true,
   "roles": {
     "realm": [
-      { "name": "USER", "description": "Обычный пользователь экосистемы" },
-      { "name": "ADMIN", "description": "Администратор с полным доступом к Spark, конфигурациям и jarina-ui-modeller (воркспейсы, TTL, журнал)" },
-      { "name": "VIEWER", "description": "Просмотр воркспейсов и конфигураций в jarina-ui-modeller" },
-      { "name": "EDITOR", "description": "Редактирование конфигураций и отправка на review в jarina-ui-modeller" }
+      { "name": "WORKSPACE_ADMIN", "description": "Глобальный администратор jarina-ui-modeller: все воркспейсы, TTL, журнал" },
+      { "name": "platform:VIEWER", "description": "Просмотр воркспейсов и конфигураций домена platform" },
+      { "name": "platform:EDITOR", "description": "Редактирование конфигураций домена platform и отправка на review" },
+      { "name": "platform:CONTROL", "description": "Остановка Spark-задач домена platform" },
+      { "name": "analytics:VIEWER", "description": "Просмотр воркспейсов и конфигураций домена analytics" },
+      { "name": "analytics:EDITOR", "description": "Редактирование конфигураций домена analytics и отправка на review" },
+      { "name": "analytics:CONTROL", "description": "Остановка Spark-задач домена analytics" },
+      { "name": "processing:VIEWER", "description": "Просмотр воркспейсов и конфигураций домена processing" },
+      { "name": "processing:EDITOR", "description": "Редактирование конфигураций домена processing и отправка на review" },
+      { "name": "processing:CONTROL", "description": "Остановка Spark-задач домена processing" }
     ]
   },
   "users": [
@@ -20,7 +26,7 @@
       "emailVerified": true,
       "requiredActions": [],
       "credentials": [{ "type": "password", "value": "de_view", "temporary": false }],
-      "realmRoles": ["USER", "VIEWER"]
+      "realmRoles": ["platform:VIEWER", "analytics:VIEWER", "processing:VIEWER"]
     },
     {
       "username": "de_editor",
@@ -31,7 +37,7 @@
       "emailVerified": true,
       "requiredActions": [],
       "credentials": [{ "type": "password", "value": "de_editor", "temporary": false }],
-      "realmRoles": ["ADMIN", "EDITOR"]
+      "realmRoles": ["platform:EDITOR", "platform:CONTROL", "analytics:EDITOR", "processing:EDITOR"]
     },
     {
       "username": "de_admin",
@@ -42,7 +48,7 @@
       "emailVerified": true,
       "requiredActions": [],
       "credentials": [{ "type": "password", "value": "de_admin", "temporary": false }],
-      "realmRoles": ["ADMIN"]
+      "realmRoles": ["WORKSPACE_ADMIN", "platform:EDITOR", "analytics:EDITOR", "processing:EDITOR"]
     }
   ],
   "clients": [

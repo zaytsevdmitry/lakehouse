@@ -36,10 +36,10 @@ load_image_if_missing() {
 }
 
 # Load only missing images
-load_image_if_missing "jarina:0.11.0"
-load_image_if_missing "jarina-s3-check:0.11.0"
-load_image_if_missing "jarina-hms:0.11.0"
-load_image_if_missing "jarina-spark-aws:0.11.0"
+load_image_if_missing "jarina:0.12.0"
+load_image_if_missing "jarina-s3-check:0.12.0"
+load_image_if_missing "jarina-hms:0.12.0"
+load_image_if_missing "jarina-spark-aws:0.12.0"
 
 echo -e "\e[34mAll jarina images processed\e[0m"
 

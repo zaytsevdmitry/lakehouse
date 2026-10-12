@@ -237,9 +237,9 @@
 - **Форма по схеме вида**: `SchemaController` отдаёт `KindSchema`/`FieldSchema` для всех видов (`/api/schema`), `EnumOptionsService`; `FormEditor` рендерит форму по схеме, переключатель форма ↔ «сырой» YAML (jackson-dataformat-yaml) с подсветкой синтаксиса (`CodeEditor`).
 - **Визуальные редакторы (React Flow)**: ER-диаграммы (`kind: ERDiagram`, каталог `erdiagrams`), диаграмма lineage (`kind: DataLineageDiagram`, каталог `datalineagediagrams` — узлы DataSet, рёбра из `sources`, отсутствующие узлы пунктиром) и универсальный DAG-редактор; на канвасе диаграмм — тулбар Add/Edit/Remove, модалка добавления узла через picker, подтверждение удаления, встроенное редактирование (форма/YAML) по кнопке Edit, переключатель fullscreen. Виды `ERDiagram`/`DataLineageDiagram` — не конфигурационные (`isConfig=false`): хранятся в репозитории, но не применяются config-svc.
 - **Ревью и восстановление**: сабмит workspace'а на ревью (коммит + комментарий, `POST /api/vcs/review/{workspaceId}`), restore файла/каталога из состояния VCS.
-- **RBAC модделирования**: роли Keycloak realm `VIEWER < EDITOR < ADMIN` с иерархией (ADMIN ⇒ EDITOR ⇒ VIEWER); владение workspace'ом (редактировать может только владелец); `readOnly` из `effectiveRole` (`GET /api/user`); стратегии `jwt-rbac` / `token-exchange`; admin-поверхность (`AdminController`) — все workspace'ы, force-delete, TTL очистки, «хвост» sync-логов.
+- **RBAC модделирования (domain-driven)**: роли Keycloak realm `<domain>:<ROLE>` (`VIEWER`/`EDITOR`/`CONTROL`; `VIEWER` неявно входит в две другие, `EDITOR`/`CONTROL` ортогональны) плюс глобальная `WORKSPACE_ADMIN`; владение workspace'ом (правит только владелец); `readOnly` выводится по домену из `domains` (`GET /api/user`), а не из глобальной роли; admin-поверхность (`AdminController`, `/api/workspace/admin/**`) — все workspace'ы, force-delete, TTL очистки, «хвост» sync-логов.
 - **Kinds в shared enum `YamlMetadataKind`**: `ER_DIAGRAM` (order 11) и `DATA_LINEAGE_DIAGRAM` (order 13), идентификатор `keyName`, директории `erdiagrams`/`datalineagediagrams`.
-- **Тесты фронтенда**: Vitest 3 + React Testing Library (jsdom), настроены в `vite.config.js` (`test/setup.js` — полифиллы React Flow); 41 тест: `DataLineageDiagramEditor` (24 — граф↔документ, позиции узлов, drag, Add/Edit/Remove + модалки, fullscreen), `FormEditor` (7), `EditorView` (5, вкл. multi-domain workspace leave-on-review), `WorkspacePicker` (5, вкл. preselect ветки домена).
+- **Тесты фронтенда**: Vitest 3 + React Testing Library (jsdom), настроены в `vite.config.js` (`test/setup.js` — полифиллы React Flow); 44 теста: `DataLineageDiagramEditor` (24 — граф↔документ, позиции узлов, drag, Add/Edit/Remove + модалки, fullscreen), `FormEditor` (7), `EditorView` (6, вкл. multi-domain workspace leave-on-review и переключение `readOnly` по домену), `WorkspacePicker` (7, вкл. preselect ветки домена и включение/выключение New branch по `EDITOR`).
 
 ---
 
@@ -247,12 +247,12 @@
 *Путь к исходному файлу: `./doc/security/security.md`*
 
 ### Реализованные фичи:
-- **Единый IdP (Keycloak)**: единый realm `jarina`, OAuth2/OIDC, JWT; роли `USER`/`ADMIN`; два клиента — ui (интерактивный) и internal (сервисные аккаунты).
+- **Единый IdP (Keycloak)**: единый realm `jarina`, OAuth2/OIDC, JWT; доменные роли `<domain>:VIEWER`/`EDITOR`/`CONTROL` и глобальная `WORKSPACE_ADMIN`; два клиента — ui (интерактивный) и internal (сервисные аккаунты).
 - **Безопасность сервис-к-сервису**: 5 бэкенд-сервисов как OAuth2 Resource Server (проверка JWT по JWKS); ретрансляция JWT пользователя или `client_credentials` для фоновых обработок; whitelist для health/actuator/OpenAPI; возможность отключения безопасности.
 - **UI/BFF**: authorization code flow, HTTP-сессия (JSESSIONID), CSRF (XSRF-TOKEN).
 - **Авторизация Spark-приложений**: драйверы аутентифицируются по `client_credentials` для обратных вызовов; секреты/токены не передаются аргументами задач; маскирование секретов в логах Spark (redaction).
 - **Секреты подключений**: пароли БД и ключи S3 не хранятся в конфигурации — резолвинг в рантайме из OpenBao/Vault или Yandex Cloud Lockbox; безопасный `JDBCTableCatalog`; кэш TTL 5 мин; обратная совместимость.
-- **Аудит**: `AuditLoggingFilter` — структурированная JSON-запись на каждый входящий запрос (User ID, Username, Method, URI, статус); сервисные аккаунты логируются как `system`.
+- **Аудит**: `AuditLoggingFilter` — структурированная JSON-запись на каждый входящий запрос (User ID, Username, Method, URI, статус); сервисные аккаунты логируются как `system`, но инициированные пользователем действия BFF пишет под реальным Keycloak-username (запись действий человека как `system` запрещена).
 
 ---
 
