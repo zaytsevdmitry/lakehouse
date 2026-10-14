@@ -106,6 +106,36 @@ class RbacEnforcementTest {
     }
 
     @Test
+    void sparkClearIsRejectedWithoutControlRole() {
+        SparkProxyService proxy = mock(SparkProxyService.class);
+        SparkProxyController controller = new SparkProxyController(proxy);
+
+        assertThatThrownBy(() -> controller.clearCompleted(authOf("finance:EDITOR")))
+                .isInstanceOf(ForbiddenException.class);
+        assertThatThrownBy(() -> controller.clearCompleted(authOf("hr:VIEWER")))
+                .isInstanceOf(ForbiddenException.class);
+        assertThatThrownBy(() -> controller.clearCompleted(authOf()))
+                .isInstanceOf(ForbiddenException.class);
+
+        verify(proxy, never()).clearCompleted();
+    }
+
+    @Test
+    void sparkClearIsAllowedWithControlInAnyDomain() {
+        SparkProxyService proxy = mock(SparkProxyService.class);
+        SparkProxyController controller = new SparkProxyController(proxy);
+        SubmissionResponse response = new SubmissionResponse("clear", "ok", null, null, true);
+        when(proxy.clearCompleted()).thenReturn(response);
+
+        assertThatCode(() -> controller.clearCompleted(authOf("finance:CONTROL")))
+                .doesNotThrowAnyException();
+        assertThatCode(() -> controller.clearCompleted(authOf("marketing:CONTROL")))
+                .doesNotThrowAnyException();
+
+        verify(proxy, org.mockito.Mockito.times(2)).clearCompleted();
+    }
+
+    @Test
     void saveFileIsRejectedForAViewerOfTheDomain() {
         WorkspaceManager manager = mock(WorkspaceManager.class);
         WorkspaceStorage storage = mock(WorkspaceStorage.class);

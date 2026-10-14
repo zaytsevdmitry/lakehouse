@@ -41,14 +41,14 @@ public final class DomainAccess {
      * in the user's roles but unknown to the BFF are logged as a WARN and ignored.
      *
      * @param user         the authenticated user
-     * @param knownDomains domains configured/known to the BFF (case-insensitive match)
+     * @param knownDomains domains configured/known to the BFF (case-sensitive match)
      * @param endpoint     the endpoint performing the filtering (used in the WARN log)
      */
     public static Set<String> allowedDomains(UserContext user, Collection<String> knownDomains, String endpoint) {
         Set<String> known = new LinkedHashSet<>();
         for (String domain : knownDomains)
             if (domain != null)
-                known.add(domain.toLowerCase());
+                known.add(domain);
         Set<String> allowed = new LinkedHashSet<>();
         for (String domain : user.sortedDomains()) {
             if (known.contains(domain)) {

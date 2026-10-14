@@ -117,16 +117,20 @@ produceScheduledTasks()  (ScheduleTaskInstanceService)
 
 ### Известные ограничения
 
-- `ScheduleInstance.domainKeyName` - nullable-колонка таблицы `schedule_instance`, но её
-  сеттер нигде не вызывается: `ScheduleInstanceFactory.newScheduleInstance(...)` получает
-  `ScheduleEffectiveDTO` и не копирует домен. Колонка всегда `null`, и `ScheduleInstanceDTO`
-  домен тоже не выставляет. Домен всегда читается заново из сервиса конфигурации - поэтому
-  проверка выше и работает.
-- `ScheduledTaskMsgDTO.domainKeyName` - поле, которое должно было бы нести домен
-  опубликованной задачи, - тоже не заполняется. Сообщение о задаче, приходящее к исполнителю,
-  поэтому сегодня несёт `domainKeyName = null`. Ничто в этом сервисе от этого не зависит, а
-  `jarina-task-executor-svc` в любом случае резолвит источники данных через сервис
-  конфигурации (см. [task-executor-svc: Домены](../../jarina-task-executor-svc/doc-ru/readme.md#домены)).
+- `ScheduleInstance.domainKeyName` - nullable-колонка таблицы `schedule_instance`, которая
+  проставляется из `ScheduleEffectiveDTO` на этапе сборки:
+  `ScheduleInstanceFactory.newScheduleInstance(...)` копирует домен, и то же самое делается для
+  `ScheduleInstanceLastBuild.domainKeyName`. `ScheduleInstanceDTO` снова выставляет домен,
+  поэтому потребители (например, UI) могут фильтровать экземпляры расписаний по домену-владельцу.
+  Расписания, настроенные без домена, сохраняют `domainKeyName = null`. Проверка домена, описанная
+  выше, по-прежнему читает домен заново из сервиса конфигурации.
+- `ScheduledTaskMsgDTO.domainKeyName` несёт домен `ScheduleInstance`, которому принадлежит
+  опубликованная задача. При публикации задачи `ScheduleTaskInstanceService` копирует
+  `scheduleInstance.getDomainKeyName()` в сообщение, поэтому исполнитель получает домен
+  расписания, к которому относится задача. Расписания без домена публикуют
+  `domainKeyName = null`. `jarina-task-executor-svc` в любом случае резолвит источники данных
+  через сервис конфигурации (см.
+  [task-executor-svc: Домены](../../jarina-task-executor-svc/doc-ru/readme.md#домены)).
 - Доменных настроек в этом сервисе нет: свойства `jarina.scheduler.*.domains.*`
   не существуют, и ни один REST-эндпоинт не принимает параметр домена. Все параметры
   приложения перечислены в [appconf/service_configuration.md](appconf/service_configuration.md).

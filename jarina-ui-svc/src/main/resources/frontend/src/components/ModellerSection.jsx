@@ -9,7 +9,9 @@ import AdminView from './AdminView.jsx';
  *
  * Rendered inside the existing app shell, it reuses the shared Spring Security
  * session, CSRF handling and the /api/user identity profile, so it does not
- * manage login/logout or its own theme.
+ * manage login/logout or its own theme. The Admin tab is only shown to
+ * users carrying the global WORKSPACE_ADMIN role; everyone else gets the plain
+ * workspace picker.
  */
 export default function ModellerSection({ initialWorkspaceId }) {
   const [profile, setProfile] = useState(null);
@@ -70,6 +72,9 @@ export default function ModellerSection({ initialWorkspaceId }) {
     );
   }
 
+  const isWorkspaceAdmin =
+    Array.isArray(profile.roles) && profile.roles.includes('WORKSPACE_ADMIN');
+
   return (
     <div className="modeller">
       {notice && <div className={`banner ${notice.kind} fixed-notice`}>{notice.message}</div>}
@@ -81,7 +86,7 @@ export default function ModellerSection({ initialWorkspaceId }) {
             onBack={() => setOpenWorkspace(null)}
             onNotice={showNotice}
           />
-        ) : (
+        ) : isWorkspaceAdmin ? (
           <div className="tabbed">
             <div className="tabs">
               <button
@@ -108,6 +113,13 @@ export default function ModellerSection({ initialWorkspaceId }) {
               <AdminView profile={profile} onNotice={showNotice} />
             )}
           </div>
+        ) : (
+          <WorkspacePicker
+            profile={profile}
+            defaultView="workspaces"
+            onOpen={(ws) => setOpenWorkspace(ws)}
+            onNotice={showNotice}
+          />
         )}
       </main>
     </div>

@@ -408,9 +408,17 @@ UI BFF аутентифицирует пользователей через Keyc
 3. **Клиент `jarina-ui-client`.** Confidential-клиент (*Standard Flow Enabled*, *Direct Access Grants* выключен), используемый данным BFF. Проверьте, что:
    - *Valid redirect URIs* содержат внешне видимый адрес UI: по умолчанию `http://localhost:8080/*` и `http://localhost:8080/login/oauth2/code/keycloak`;
    - *Web Origins* содержит origin UI (`http://localhost:8080`);
-   - при развертывании на другом хосте/порту добавьте соответствующие redirect URI и web origin и задайте `JARINA_UI_REDIRECT_URI`.
+   - *Post Logout Redirect URIs* содержат `http://localhost:8080/*` — сюда браузер возвращается после `end_session` Keycloak при кнопке «Switch user» (см. ниже);
+   - при развертывании на другом хосте/порту добавьте соответствующие redirect URI, post-logout redirect URI и web origin и задайте `JARINA_UI_REDIRECT_URI`.
 4. **Создание пользователей.** Админ-консоль → realm `jarina` → *Users* → *Add user*: заполните username/email/имя, затем *Credentials* → задайте пароль (выключите *Temporary*, чтобы пароль был постоянным).
 5. **Назначение ролей.** *Users* → выберите пользователя → *Role mapping* → фильтр *Filter by realm roles* → назначьте нужные доменные роли (`<domain>:VIEWER`/`EDITOR`/`CONTROL`) и, для администраторов воркспейсов, глобальную роль `WORKSPACE_ADMIN`.
 6. **Service account.** Confidential-клиент `jarina-internal-client` (*Service Accounts Enabled*) используется backend-сервисами для межсервисных вызовов; его секрет должен совпадать со значением `KEYCLOAK_INTERNAL_CLIENT_SECRET` на каждом сервисе.
 
 После настройки откройте UI - первый запрос перенаправит на страницу входа Keycloak; войти смогут только пользователи с учетной записью в realm `jarina`.
+
+**Выход/смена пользователя.** Кнопка «Switch user» отправляет полностраничную форму
+`POST /logout`: Spring Security инвалидирует сессию BFF и редиректит браузер на
+`end_session_endpoint` Keycloak realm `jarina` (адрес задаётся свойством
+`jarina.security.keycloak.end-session-uri`, по умолчанию выводится из
+`KEYCLOAK_ISSUER_URI`) с `id_token_hint` и `post_logout_redirect_uri`, после
+чего браузер падает на страницу входа Keycloak.

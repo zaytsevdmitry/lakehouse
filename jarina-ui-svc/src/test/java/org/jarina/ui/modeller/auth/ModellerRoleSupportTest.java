@@ -44,11 +44,11 @@ class ModellerRoleSupportTest {
     }
 
     @Test
-    void domainIsNormalizedToLowerCaseAndRolesMatchCaseInsensitively() {
+    void domainIsKeptVerbatimAndRolesMatchCaseInsensitively() {
         assertThat(ModellerRoleSupport.domains(Set.of("FINANCE:editor")))
-                .isEqualTo(Map.of("finance", Set.of(DomainRole.EDITOR)));
+                .isEqualTo(Map.of("FINANCE", Set.of(DomainRole.EDITOR)));
         assertThat(ModellerRoleSupport.domains(Set.of("  Finance :  Control  ")))
-                .containsEntry("finance", Set.of(DomainRole.CONTROL));
+                .containsEntry("Finance", Set.of(DomainRole.CONTROL));
     }
 
     @Test

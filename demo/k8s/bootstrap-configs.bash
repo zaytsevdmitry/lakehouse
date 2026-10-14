@@ -175,8 +175,26 @@ import_repo() {
     git -C "$work" push -q --force origin "HEAD:refs/heads/${BRANCH}"
 }
 
+# Waits until the tunnelled git daemon actually accepts TCP connections. The port
+# forward can be up while the daemon inside the pod is still starting, which used to
+# make the first push fail with "Connection refused" and abort the whole import.
+wait_for_git_daemon() {
+    local attempt
+    for attempt in $(seq 1 60); do
+        # The subshell exits once the connection is established, closing the fd again.
+        if (exec 3<>"/dev/tcp/127.0.0.1/${GIT_PORT}") 2>/dev/null; then
+            return 0
+        fi
+        sleep 1
+    done
+    echo "Error: git daemon on 127.0.0.1:${GIT_PORT} is not reachable after 60s" >&2
+    return 1
+}
+
 echo "--> 1. Ensuring git-server pod is ready..."
-kubectl wait -n "$NAMESPACE" --for=condition=ready pod -l "$GIT_POD_LABEL" --timeout=60s
+# The git-server installs git-daemon at container start, which can take a while on a
+# cold image cache; give it enough time for the readiness probe to pass.
+kubectl wait -n "$NAMESPACE" --for=condition=ready pod -l "$GIT_POD_LABEL" --timeout=180s
 GIT_POD=$(kubectl -n "$NAMESPACE" get pod -l "$GIT_POD_LABEL" -o jsonpath='{.items[0].metadata.name}')
 
 echo "--> 2. Refreshing port-forward tunnel for git-server to avoid dead sessions..."
@@ -193,7 +211,8 @@ PID_PF=$!
 # Ensure this specific temporary tunnel is closed when script ends
 trap cleanup EXIT
 
-sleep 2
+# Wait until the forwarded port is actually served before importing anything
+wait_for_git_daemon
 
 echo "--> 3. Discovering configuration domains in '${DOMAINS_SRC}'..."
 if [ ! -d "$DOMAINS_SRC" ]; then

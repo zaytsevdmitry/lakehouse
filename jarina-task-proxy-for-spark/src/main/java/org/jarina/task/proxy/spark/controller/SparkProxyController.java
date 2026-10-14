@@ -19,10 +19,16 @@ package org.jarina.task.proxy.spark.controller;
 import org.jarina.task.proxy.spark.dto.CreateSubmissionRequest;
 import org.jarina.task.proxy.spark.dto.SubmissionResponse;
 import org.jarina.task.proxy.spark.dto.SubmissionStatusResponse;
+import org.jarina.task.proxy.spark.exception.ForbiddenException;
 import org.jarina.task.proxy.spark.service.SparkProxyService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Locale;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/v1/submissions")
@@ -62,8 +68,30 @@ public class SparkProxyController {
     }
 
     @PostMapping("/clear")
-    public SubmissionResponse clearCompleted() {
+    public SubmissionResponse clearCompleted(Authentication authentication) {
+        requireControl(authentication);
         log.info("Received HTTP POST /clear");
         return proxyService.clear();
+    }
+
+    /**
+     * Coarse CONTROL gate: Spark submissions do not carry a domain yet, so any
+     * {@code <domain>:CONTROL} authority of the caller is accepted. Without it the
+     * operation is rejected with HTTP 403 (see {@link GlobalExceptionHandler}).
+     */
+    private static void requireControl(Authentication authentication) {
+        if (!hasControlRole(authentication)) {
+            throw new ForbiddenException("Access denied: CONTROL role required for at least one domain");
+        }
+    }
+
+    private static boolean hasControlRole(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated())
+            return false;
+        return authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .filter(Objects::nonNull)
+                .map(authority -> authority.startsWith("ROLE_") ? authority.substring("ROLE_".length()) : authority)
+                .anyMatch(authority -> authority.toUpperCase(Locale.ROOT).endsWith(":CONTROL"));
     }
 }

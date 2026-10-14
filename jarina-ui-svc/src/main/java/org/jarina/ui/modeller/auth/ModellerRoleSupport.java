@@ -19,7 +19,6 @@ package org.jarina.ui.modeller.auth;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -28,8 +27,9 @@ import java.util.Set;
  * <p>
  * Domain-specific access is carried by realm roles of the form
  * {@code <domain>:<ROLE>} (for example {@code finance:EDITOR},
- * {@code marketing:CONTROL}, {@code hr:VIEWER}). The domain is lowercased, the
- * role part is matched case-insensitively with surrounding whitespace ignored.
+ * {@code marketing:CONTROL}, {@code hr:VIEWER}). The domain is kept verbatim
+ * (only surrounding whitespace is trimmed and matching is case-sensitive), the
+ * role part is matched case-insensitively.
  * <p>
  * Global (non-domain) roles such as {@code WORKSPACE_ADMIN} carry no colon and
  * are not part of the domain map; they are handled separately through the Spring
@@ -59,7 +59,7 @@ public final class ModellerRoleSupport {
             int colon = normalized.lastIndexOf(':');
             if (colon <= 0 || colon == normalized.length() - 1)
                 continue;
-            String domain = normalized.substring(0, colon).trim().toLowerCase(Locale.ROOT);
+            String domain = normalized.substring(0, colon).trim();
             if (domain.isEmpty())
                 continue;
             DomainRole level = DomainRole.parse(normalized.substring(colon + 1));

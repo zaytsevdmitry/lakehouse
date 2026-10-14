@@ -73,7 +73,7 @@ public record UserContext(
     }
 
     public boolean isAllowedDomain(String domain) {
-        return domain != null && domainRoles().containsKey(domain.toLowerCase());
+        return domain != null && domainRoles().containsKey(domain);
     }
 
     /**
@@ -82,7 +82,7 @@ public record UserContext(
     public boolean hasDomainRole(String domain, DomainRole... accepted) {
         if (domain == null || accepted == null || accepted.length == 0)
             return false;
-        Set<DomainRole> levels = domainRoles().get(domain.toLowerCase());
+        Set<DomainRole> levels = domainRoles().get(domain);
         if (levels == null || levels.isEmpty())
             return false;
         for (DomainRole level : levels)

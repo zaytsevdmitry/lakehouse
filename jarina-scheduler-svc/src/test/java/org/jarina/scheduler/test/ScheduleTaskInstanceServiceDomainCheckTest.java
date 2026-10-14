@@ -23,6 +23,7 @@ import org.jarina.client.api.constant.Status;
 import org.jarina.client.api.dto.configs.schedule.ScheduleEffectiveDTO;
 import org.jarina.client.api.dto.configs.schedule.TaskDTO;
 import org.jarina.client.api.dto.configs.schedule.TaskExecutionServiceGroupDTO;
+import org.jarina.client.api.dto.scheduler.tasks.ScheduledTaskMsgDTO;
 import org.jarina.client.api.exception.TaskConfigurationException;
 import org.jarina.client.rest.config.ConfigRestClientApi;
 import org.jarina.scheduler.configuration.SchedulerTaskRetryProperties;
@@ -39,10 +40,12 @@ import org.jarina.scheduler.service.ScheduleEffectiveService;
 import org.jarina.scheduler.service.ScheduleTaskInstanceService;
 import org.jarina.scheduler.service.ScheduledTaskDTOProducerService;
 import org.jarina.scheduler.service.TaskExecutionServiceGroupConfigService;
+import org.mockito.ArgumentCaptor;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -67,6 +70,7 @@ class ScheduleTaskInstanceServiceDomainCheckTest {
 
     private ScheduleTaskInstance taskInstance;
     private ScheduledTaskForProducerMessage message;
+    private ScheduleInstance scheduleInstance;
 
     @BeforeEach
     void setUp() throws TaskConfigurationException {
@@ -88,7 +92,7 @@ class ScheduleTaskInstanceServiceDomainCheckTest {
                 scheduleEffectiveService,
                 taskGroupConfigService);
 
-        ScheduleInstance scheduleInstance = new ScheduleInstance();
+        scheduleInstance = new ScheduleInstance();
         scheduleInstance.setConfigScheduleKeyName(SCHEDULE_KEY);
         ScheduleScenarioActInstance actInstance = new ScheduleScenarioActInstance();
         actInstance.setName(ACT_NAME);
@@ -111,6 +115,7 @@ class ScheduleTaskInstanceServiceDomainCheckTest {
         schedule.setKeyName(SCHEDULE_KEY);
         schedule.setDomainKeyName(domainKeyName);
         when(scheduleEffectiveService.getScheduleEffectiveDTO(SCHEDULE_KEY)).thenReturn(schedule);
+        scheduleInstance.setDomainKeyName(domainKeyName);
     }
 
     private void taskGroupOwnedBy(String domainKeyName, List<String> allowedDomains) {
@@ -153,5 +158,29 @@ class ScheduleTaskInstanceServiceDomainCheckTest {
         assertEquals(1, service.produceScheduledTasks());
 
         verify(producerService, times(1)).send(any());
+    }
+
+    @Test
+    void publishedMessageCarriesDomainOfTheScheduleInstance() throws TaskConfigurationException {
+        scheduleDomainIs("analytics");
+        taskGroupOwnedBy("platform", List.of("platform", "analytics"));
+
+        assertEquals(1, service.produceScheduledTasks());
+
+        ArgumentCaptor<ScheduledTaskMsgDTO> captor = ArgumentCaptor.forClass(ScheduledTaskMsgDTO.class);
+        verify(producerService).send(captor.capture());
+        assertEquals("analytics", captor.getValue().getDomainKeyName());
+    }
+
+    @Test
+    void publishedMessageCarriesNullDomainWhenTheScheduleInstanceHasNone() throws TaskConfigurationException {
+        scheduleDomainIs(null);
+        taskGroupOwnedBy(null, List.of());
+
+        assertEquals(1, service.produceScheduledTasks());
+
+        ArgumentCaptor<ScheduledTaskMsgDTO> captor = ArgumentCaptor.forClass(ScheduledTaskMsgDTO.class);
+        verify(producerService).send(captor.capture());
+        assertNull(captor.getValue().getDomainKeyName());
     }
 }

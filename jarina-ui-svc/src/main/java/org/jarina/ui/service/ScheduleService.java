@@ -30,7 +30,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -79,6 +78,6 @@ public class ScheduleService {
     }
 
     private static String normalizeDomain(String domain) {
-        return domain == null ? null : domain.trim().toLowerCase(Locale.ROOT);
+        return domain == null ? null : domain.trim();
     }
 }

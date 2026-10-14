@@ -309,8 +309,28 @@ export function workspaceUrl(workspaceId) {
   return `${window.location.pathname}?${params.toString()}`;
 }
 
-export async function logout() {
-  await apiFetch('/logout', { method: 'POST' });
-  window.location.href = '/';
+/**
+ * Logs the current user out and switches to the Keycloak login screen.
+ *
+ * Uses a full-page POST form instead of {@code fetch}: the backend reply is a
+ * redirect chain to the Keycloak {@code end_session_endpoint} and back to the
+ * app, and only a real navigation lets the browser follow it across origins.
+ * The CSRF token is carried as the {@code _csrf} form field required by Spring
+ * Security logout.
+ */
+export function logout() {
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = '/logout';
+  const csrf = getCsrfToken();
+  if (csrf !== null) {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = '_csrf';
+    input.value = csrf;
+    form.appendChild(input);
+  }
+  document.body.appendChild(form);
+  form.submit();
 }
 

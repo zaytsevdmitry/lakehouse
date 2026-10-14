@@ -52,6 +52,17 @@ spec:
             - containerPort: 9418
               name: git-port
               protocol: TCP
+          # The container installs git-daemon via apk and only then starts it, so the
+          # pod must not be considered ready before the daemon actually listens.
+          # Otherwise bootstrap-configs.bash pushes before the port accepts connections
+          # and fails with "Connection refused".
+          readinessProbe:
+            tcpSocket:
+              port: git-port
+            initialDelaySeconds: 3
+            periodSeconds: 3
+            timeoutSeconds: 2
+            failureThreshold: 40
           volumeMounts:
             - name: git-storage
               mountPath: /srv/git

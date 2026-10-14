@@ -39,21 +39,35 @@ sh install.bash
   - jarina-app-sa - используется jarina-task-proxy4spark для отправки задачи посредством submit
   - spark-driver-sa  - используется spark-driver , создаются экзекуторы
 - запустятся все сервисы
-# После установки
+
+# После установки (Необязательная часть)
+
+> install.bash уже содержит эти вызовы. То есть сервисы запущены, порты проброшены на localhost, демо-конфигурация уже прогружена. 
+> Отдельно эти скрипты нужно использовать для тестов с частичным запуском функционала, отладки.
 
 
 ## Проброс портов из контейнеров
 Для наблюдения за сервисами можно прокинуть порты контейнеров на localhost
+
+>install.bash уже содержит этот вызов
+
+
 ```shell
 sh tunnels.bash
 ```
+
 > В примере команда kubectl запускается через xterm. Это нужно, чтобы иметь возможность закрыть проброс порта кликом мыши в интерфейсе рабочего стола, а не искать номера процессов чтобы их завершить.
 > xterm это стандартная утилита linux. В своей операционной системе можно найти аналог.
 
 jarina-management-config-service 8080 нужен для загрузки конфигурации метаданных.
 
 ## Загрузка демонстрационной конфигурации метаданных
-### Rest-api вариант
+
+
+### Rest-api (Неприоритетный вариант)
+
+> Этот вариант не является текущим приоритетным вариантом, используется git 
+
 Перейти в терминале в корне проекта в каталог demo/k8s/conf.
 Выполнить файл load.bash
 Он загрузит демонстрационные данные в сервис конфигурации. Через несколько секунд после этого сервис исполнитель начнет
@@ -77,12 +91,15 @@ Waiting Config-SVC: The request failed. Sleeping...zzZ
 ```
 All configurations loaded
 ```
-### CVS-git вариант 
+### CVS-git вариант (приоритетный вариант)
+
 Выполните файл  bootstrap-configs.bash. Он сам прокинет порт к pod на localhost. Создаст папку в /tmp и запишет в мейнветку git-server файлы  из каталога `demo/conf_git` (общего с `demo/compose`, путь разрешается от расположения скрипта, поэтому его можно запускать из любого каталога; переопределяется переменной `CONF_GIT_SRC`).
 Каждый подкаталог `conf_git/domains` обслуживается собственным репозиторием с тем же именем: `conf_git/domains/platform` -> `git://git-server:9418/platform.git`. Сейчас это три домена: `analytics`, `platform`, `processing`.
 Скрипт сам создаёт недостающие репозитории в pod-е, поэтому список доменов можно менять, не трогая chart. Имя репозитория важно: домен проставляется объектам по имени синхронизируемого репозитория, в YAML его указывать не нужно.
 Для обратной совместимости дополнительно наполняется прежний единый репозиторий `config-repo.git` (всё дерево `conf_git`); когда chart перейдёт на доменные репозитории, эту импортацию можно отключить, задав `LEGACY_REPO=""` в начале скрипта.
 > После наполнения через git каждый загруженный объект будет помечен как git-managed и его нельзя будет переписать через rest-api
+
+
 
 ```shell
 bash ./bootstrap-configs.bash
@@ -132,17 +149,8 @@ kubectl -n jarina-management scale deployment jarina-management-task-executor-se
 - Админ-консоль: http://keycloak:8085 (учетные данные: `admin` / `admin_local_password`)
 - OIDC endpoint: http://keycloak:8085/realms/jarina
 
-Вход в Jarina UI: http://localhost:8084 — перенаправит на Keycloak.
+Вход в Jarina UI: http://localhost:8080 — перенаправит на Keycloak.
 
-Демонстрационные пользователи (realm `jarina`):
-
-| Логин | Пароль | Роли |
-|:------|:-------|:-----|
-| `de_view` | `de_view` | `platform:VIEWER`, `analytics:VIEWER`, `processing:VIEWER` |
-| `de_editor` | `de_editor` | `platform:EDITOR`, `platform:CONTROL`, `analytics:EDITOR`, `processing:EDITOR` |
-| `de_admin` | `de_admin` | `WORKSPACE_ADMIN`, `platform:EDITOR`, `analytics:EDITOR`, `processing:EDITOR` |
-
-> Секреты клиентов по умолчанию в файлах values.yaml предназначены только для демонстрации.
 > В production используйте переменные окружения `KEYCLOAK_INTERNAL_CLIENT_SECRET` и `KEYCLOAK_UI_CLIENT_SECRET`.
 
 # Де-инсталляция

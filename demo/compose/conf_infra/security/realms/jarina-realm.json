@@ -87,6 +87,9 @@
         "http://localhost:8080",
         "http://172.20.193.170:8080"
       ],
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:8080/*##http://172.20.193.170:8080/*"
+      },
       "defaultClientScopes": [
         "web-origins",
         "acr",

@@ -13,18 +13,30 @@ export default function AdminView({ profile, onNotice }) {
   const [busy, setBusy] = useState(false);
 
   const loadWorkspaces = useCallback(async () => {
-    const data = await api('/api/workspace/admin/workspaces');
-    setWorkspaces(Array.isArray(data) ? data : []);
-  }, []);
+    try {
+      const data = await api('/api/workspace/admin/workspaces');
+      setWorkspaces(Array.isArray(data) ? data : []);
+    } catch (e) {
+      onNotice('error', e.message);
+    }
+  }, [onNotice]);
 
   const loadTtl = useCallback(async () => {
-    setTtl(await api('/api/workspace/admin/settings/cleanup-ttl-hours'));
-  }, []);
+    try {
+      setTtl(await api('/api/workspace/admin/settings/cleanup-ttl-hours'));
+    } catch (e) {
+      onNotice('error', e.message);
+    }
+  }, [onNotice]);
 
   const loadLogs = useCallback(async () => {
-    const data = await api('/api/workspace/admin/sync-logs?limit=200');
-    setLogs(Array.isArray(data) ? data : []);
-  }, []);
+    try {
+      const data = await api('/api/workspace/admin/sync-logs?limit=200');
+      setLogs(Array.isArray(data) ? data : []);
+    } catch (e) {
+      onNotice('error', e.message);
+    }
+  }, [onNotice]);
 
   useEffect(() => {
     loadWorkspaces();

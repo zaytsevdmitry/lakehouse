@@ -39,6 +39,9 @@ public class ScheduleInstanceLastBuild {
     @Column(nullable = false)
     private String configScheduleKeyName;
 
+    @Column(nullable = true)
+    private String domainKeyName;
+
     @OneToOne
     @OnDelete(action = OnDeleteAction.SET_NULL)
     private ScheduleInstance scheduleInstance;
@@ -72,6 +75,14 @@ public class ScheduleInstanceLastBuild {
 
     public void setConfigScheduleKeyName(String configScheduleKeyName) {
         this.configScheduleKeyName = configScheduleKeyName;
+    }
+
+    public String getDomainKeyName() {
+        return domainKeyName;
+    }
+
+    public void setDomainKeyName(String domainKeyName) {
+        this.domainKeyName = domainKeyName;
     }
 
     public ScheduleInstance getScheduleInstance() {

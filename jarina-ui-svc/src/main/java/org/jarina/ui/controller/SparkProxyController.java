@@ -85,7 +85,8 @@ public class SparkProxyController {
     }
 
     @PostMapping("/submissions/clear")
-    public SubmissionResponse clearCompleted() {
+    public SubmissionResponse clearCompleted(Authentication authentication) {
+        requireControl(authentication);
         return sparkProxyService.clearCompleted();
     }
 

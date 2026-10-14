@@ -35,7 +35,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -195,7 +194,7 @@ public class CatalogService {
     }
 
     private static String normalizeDomain(String domain) {
-        return domain == null ? null : domain.trim().toLowerCase(Locale.ROOT);
+        return domain == null ? null : domain.trim();
     }
 
     private static void requireAllowed(UserContext user, DataSetDTO dataSet, String endpoint) {

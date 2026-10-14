@@ -49,6 +49,8 @@ helm install jarina-release ./jarina-management-helm-charts/jarina-management --
 kubectl -n jarina-management get pods -o custom-columns="NAME:.metadata.name,STATUS:.status.phase,TASK-NAME:.metadata.annotations.jarina-management-task"
 
 bash ./bootstrap-configs.bash
+/etc/profile.d via Read/Glob.
+
 
 kubectl -n jarina-management get pods -o custom-columns="NAME:.metadata.name,STATUS:.status.phase,TASK-NAME:.metadata.annotations.jarina-management-task"
 

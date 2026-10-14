@@ -325,7 +325,7 @@ production.
 | Сервисы | `fetchServices`, `fetchServiceEdges`, `fetchServiceVertices` | `/api/services*` |
 | Spark | `fetchSparkSubmissions`, `createSparkSubmission`, `fetchSparkStatus`, `killSparkSubmission`, `killAllSparkSubmissions`, `clearSparkCompleted`, `fetchSparkProperties` | `/api/spark-proxy/*` |
 | VCS | `fetchVcsSyncLogs`, `fetchVcsObjectLogs` | `/api/vcs/logs`, `/api/vcs/objects` (оба фильтруются по `domainKeyName`) |
-| Пользователь | `fetchCurrentUser`, `logout` | `GET /api/user`, `POST /logout` |
+| Пользователь | `fetchCurrentUser`, `logout` | `GET /api/user`, `POST /logout` (полностраничная форма → `end_session` Keycloak) |
 | Модделирование | вызовы `api()` в `WorkspacePicker` / `EditorView` / `AdminView` | `GET /api/vcs/workspaces`, `/api/vcs/branches`, `GET/POST/DELETE /api/vcs/workspace[/{id}]`, `POST /api/vcs/branch`, `POST /api/vcs/review/{id}`, `POST /api/vcs/workspace/{id}/restore`, `GET /api/schema[/{kind}]`, `/api/workspaces/{id}/tree|dirs|files`, `POST /api/workspaces/{id}/files(rename|move)`, `POST /api/workspaces/{id}/dirs(move)`, `/api/workspace/admin/workspaces`, `/api/workspace/admin/settings/cleanup-ttl-hours`, `/api/workspace/admin/sync-logs` |
 
 ---
@@ -514,10 +514,11 @@ const activateSection = (section) => {
   `activeTab` в `'dataset'`.
 - **ModelTab** — вертикальная лента вкладок переключает Scripts / Complete.
 - **VcsSection** — вкладки VCSLog / VCSObjectsSearch.
-- **ModellerSection** — `tabbed`-заголовок всегда предлагает My
-  workspaces / Admin; они рендерят `WorkspacePicker` и `AdminView`
-  соответственно. Вкладка Admin открывается всем, а пользователь без глобальной
-  роли `WORKSPACE_ADMIN` видит баннер с `403` от бэкенда.
+- **ModellerSection** — `tabbed`-заголовок `My workspaces / Admin`
+  показывается только пользователям с глобальной ролью `WORKSPACE_ADMIN`
+  (гейт по `profile.roles`), рендеря `WorkspacePicker` и `AdminView`
+  соответственно; у остальных пользователей вкладок нет — они сразу видят
+  `WorkspacePicker`.
 - **WorkspacePicker → EditorView** — поток модделирования *управляется
   состоянием* (`openWorkspace` в `ModellerSection`): действие «Open» в picker
   переходит в редактор для выбранного набора `(domain, branch)` (либо в той же
@@ -531,8 +532,15 @@ const activateSection = (section) => {
 Клиентских guard'ов нет. Защита доступа целиком **на стороне сервера в BFF**
 (Spring Security): неаутентифицированные запросы перенаправляются на логин
 Keycloak, а сессионная cookie охраняет каждый `/api`-вызов. Фронтенд лишь
-отображает то состояние аутентификации, которое видит (метка имени
-пользователя, `logout` → `POST /logout` + перезагрузка). BFF применяет
+отображает то состояние аутентификации, которое видит (метка имени пользователя, `logout`). Выход —
+полностраничная форма `POST /logout`: Spring Security инвалидирует локальную
+BFF-сессию и редиректит браузер (через `LogoutSuccessHandler` в
+`SecurityConfig`) на `end_session_endpoint` Keycloak с `id_token_hint` и
+зарегистрированным `post_logout_redirect_uri`, после чего браузер попадает на
+страницу входа Keycloak (кнопка «Switch user»). Адрес endpoint задаётся
+свойством `jarina.security.keycloak.end-session-uri` (по умолчанию выводится
+из `KEYCLOAK_ISSUER_URI`); если оно пустое (тесты), выполняется локальный
+выход. BFF применяет
 domain-driven RBAC: мутации требуют `EDITOR` (правка конфигов/репозитория) или
 `CONTROL` (остановка задач) для домена сущности, а `/api/workspace/admin/**`
 требует глобальной роли `WORKSPACE_ADMIN`; модделирование дополнительно
@@ -757,9 +765,9 @@ TypeScript или линтеры отсутствуют.
   «guard-подобный» редирект в SPA.
 - **Условный рендеринг (только отражение).** Профиль управляет лишь
   *подсказками*, но не доступом:
-  - `ModellerSection` всегда рендерит заголовок вкладок `My workspaces /
-    Admin`; пользователь без `WORKSPACE_ADMIN`, открыв **Admin**, получает
-    `403` от бэкенда как баннер (`ModellerSection.jsx`).
+  - `ModellerSection` рендерит заголовок вкладок `My workspaces / Admin`
+    только при наличии `WORKSPACE_ADMIN` в `profile.roles`; для остальных
+    вкладок нет — они сразу видят `WorkspacePicker` (`ModellerSection.jsx`).
   - `WorkspacePicker` дизейблит кнопку **New branch** для пользователя без
     роли `EDITOR` ни в одном домене (`WorkspacePicker.jsx`).
   - `EditorView` выводит `readOnly` из домена выбранного файла/каталога
