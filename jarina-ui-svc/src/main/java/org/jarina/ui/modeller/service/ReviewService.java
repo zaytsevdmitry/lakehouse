@@ -17,8 +17,8 @@
 
 package org.jarina.ui.modeller.service;
 
+import org.jarina.ui.modeller.auth.DomainRole;
 import org.jarina.ui.modeller.auth.ForbiddenException;
-import org.jarina.ui.modeller.auth.ModellerRole;
 import org.jarina.ui.modeller.auth.UserContext;
 import org.jarina.ui.modeller.config.ModellerProperties;
 import org.jarina.ui.modeller.dto.ReviewRequest;
@@ -64,8 +64,12 @@ public class ReviewService {
     public ReviewResponse submit(String workspaceId, ReviewRequest request, Authentication authentication) {
         UserContext user = UserContext.from(authentication);
         Workspace workspace = manager.workspace(workspaceId);
-        if (!workspace.isOwner(user.username()) && user.effectiveRole() != ModellerRole.ADMIN)
+        if (!workspace.isOwner(user.username()))
             throw new ForbiddenException("Workspace " + workspaceId + " belongs to " + workspace.owner());
+        for (BranchSelection selection : workspace.selections())
+            if (!user.hasDomainRole(selection.domain(), DomainRole.EDITOR))
+                throw new ForbiddenException("Access denied: EDITOR role required for domain '"
+                        + selection.domain() + "'");
         return manager.synchronizedOn(workspaceId, () -> doSubmit(workspace, request, user));
     }
 

@@ -153,3 +153,40 @@ regular тоже начнет работать в феврале, но он су
 Синхронизация через Git
 
 ![vcs.png](img/vcs.png)
+
+## Доступ пользователей (RBAC)
+
+Демо-стенд использует ролевую модель Keycloak. Доменные права выдаются realm-ролями
+вида `<домен>:<УРОВЕНЬ>`, где `<домен>` — один из `analytics`, `platform`, `processing`,
+а `<УРОВЕНЬ>` — `VIEWER` (просмотр), `EDITOR` (редактирование и отправка на review) или
+`CONTROL` (остановка Spark-задач). Уровень `EDITOR`/`CONTROL` подразумевает просмотр
+своего домена. Глобальная роль `WORKSPACE_ADMIN` даёт доступ к административным функциям
+UI Modeller по всем воркспейсам.
+
+Пользователи описываются в
+[`compose/conf_infra/security/realms/jarina-realm.json`](compose/conf_infra/security/realms/jarina-realm.json)
+и создаются при подъёме Keycloak. Пароль каждого демо-пользователя совпадает с его логином.
+
+| Пользователь | Пароль | analytics | platform | processing | Глобально |
+|---|---|---|---|---|---|
+| `analytics_user` | `analytics_user` | `EDITOR` | `VIEWER` | `VIEWER` | — |
+| `platform_user` | `platform_user` | `VIEWER` | `EDITOR` | `VIEWER` | — |
+| `processing_user` | `processing_user` | `VIEWER` | `VIEWER` | `EDITOR` | — |
+| `DUTY` | `DUTY` | `CONTROL` | `CONTROL` | `CONTROL` | `WORKSPACE_ADMIN` |
+
+
+
+### Как использовать в демо
+
+1. Войти в UI Modeller (порт `8081`) под `analytics_user`, `platform_user` или
+   `processing_user`: пользователь видит все три домена, но редактировать и отправлять на
+   review может только «свой» — в остальных доступен лишь просмотр.
+2. Войти под `DUTY`, чтобы продемонстрировать роль дежурного: доступ к остановке
+   Spark-задач (`CONTROL`) во всех доменах и к административным функциям воркспейсов
+   (`WORKSPACE_ADMIN`) — в модделировании ему доступны вкладки `My workspaces / Admin`
+   (все воркспейсы, TTL очистки, журналы синхронизации), у остальных пользователей
+   вкладок нет. Для сценариев с глобальными правами.
+3. Переключение пользователя: кнопка «Switch user» завершает и BFF-сессию, и SSO-сессию
+   Keycloak — отправляется `POST /logout`, браузер проходит `end_session` Keycloak
+   (с `id_token_hint` и `post_logout_redirect_uri`) и попадает на страницу входа Keycloak,
+   а не «тихо перелогинивается» прежним пользователем.

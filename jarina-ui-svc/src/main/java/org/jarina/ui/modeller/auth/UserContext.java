@@ -1,13 +1,13 @@
 /*
  * "Jarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
  * Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     https://www.apache.org/licenses/LICENSE-2.0.txt
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,8 +21,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.OAuth2AuthenticatedPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -35,9 +38,78 @@ public record UserContext(
         String email,
         Set<String> roles) {
 
-    /** Effective access level, never null for an authenticated user. */
-    public ModellerRole effectiveRole() {
-        return ModellerRoleSupport.effectiveRole(roles);
+    public UserContext {
+        roles = roles == null ? Collections.emptySet() : Set.copyOf(roles);
+    }
+
+    private Map<String, Set<DomainRole>> domainRoles() {
+        return ModellerRoleSupport.domains(roles);
+    }
+
+    /**
+     * Full set of {@link DomainRole roles} granted for every domain the user has
+     * access to. A user holding both {@code finance:EDITOR} and
+     * {@code finance:CONTROL} gets both entries for that domain.
+     */
+    public Map<String, Set<DomainRole>> domainRolesOf() {
+        return domainRoles();
+    }
+
+    /**
+     * One display label per domain ({@code CONTROL > EDITOR > VIEWER}), as exposed
+     * to the UI by {@code GET /api/user}.
+     */
+    public Map<String, String> domains() {
+        Map<String, String> result = new LinkedHashMap<>();
+        domainRoles().forEach((domain, levels) -> result.put(domain, ModellerRoleSupport.displayLabel(levels)));
+        return result;
+    }
+
+    /** All domain keys the user has any role for, sorted for stable output. */
+    public List<String> sortedDomains() {
+        List<String> sorted = new ArrayList<>(domainRoles().keySet());
+        Collections.sort(sorted);
+        return sorted;
+    }
+
+    public boolean isAllowedDomain(String domain) {
+        return domain != null && domainRoles().containsKey(domain);
+    }
+
+    /**
+     * Whether the user holds at least one of the given roles for the domain.
+     */
+    public boolean hasDomainRole(String domain, DomainRole... accepted) {
+        if (domain == null || accepted == null || accepted.length == 0)
+            return false;
+        Set<DomainRole> levels = domainRoles().get(domain);
+        if (levels == null || levels.isEmpty())
+            return false;
+        for (DomainRole level : levels)
+            for (DomainRole candidate : accepted)
+                if (level == candidate)
+                    return true;
+        return false;
+    }
+
+    /**
+     * Whether the user holds the given role in at least one domain.
+     */
+    public boolean hasAnyDomainRole(DomainRole accepted) {
+        if (accepted == null)
+            return false;
+        for (Set<DomainRole> levels : domainRoles().values())
+            if (levels.contains(accepted))
+                return true;
+        return false;
+    }
+
+    /**
+     * Whether the user holds the global {@code WORKSPACE_ADMIN} realm role.
+     */
+    public boolean hasWorkspaceAdmin() {
+        return roles.stream().anyMatch(role -> role != null
+                && role.trim().equalsIgnoreCase(ModellerRoleSupport.WORKSPACE_ADMIN));
     }
 
     /**
@@ -96,7 +168,7 @@ public record UserContext(
                 }
             }
         }
-        return roles.isEmpty() ? Collections.emptySet() : roles;
+        return roles;
     }
 
     private static String text(Map<String, Object> claims, String key, String fallback) {

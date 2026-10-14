@@ -23,8 +23,13 @@ import org.jarina.client.api.dto.scheduler.ScheduleInstanceDTO;
 import org.jarina.client.rest.config.ConfigRestClientApi;
 import org.jarina.client.rest.scheduler.SchedulerRestClientApi;
 import org.jarina.ui.dto.ScheduleRequestDTO;
+import org.jarina.ui.modeller.config.ModellerProperties;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -36,10 +41,31 @@ import static org.mockito.Mockito.when;
 
 class ScheduleServiceTest {
 
+    private static final String DOMAIN = "demo";
+
+    private static Authentication auth() {
+        Jwt jwt = Jwt.withTokenValue("jwt")
+                .header("alg", "none")
+                .claim("preferred_username", "u")
+                .claim("realm_access", Map.of("roles", List.of(DOMAIN + ":VIEWER")))
+                .build();
+        return new UsernamePasswordAuthenticationToken(jwt, null, List.of());
+    }
+
+    private static ModellerProperties properties() {
+        ModellerProperties properties = new ModellerProperties();
+        properties.setDomains(Map.of(DOMAIN, new ModellerProperties.DomainVcs()));
+        return properties;
+    }
+
+    private static ScheduleService service(SchedulerRestClientApi api) {
+        return new ScheduleService(api, mock(ConfigRestClientApi.class), properties());
+    }
+
     @Test
     void getSchedulesLoopsSelectedNamesAndAggregatesResults() {
         SchedulerRestClientApi api = mock(SchedulerRestClientApi.class);
-        ScheduleService service = new ScheduleService(api, mock(ConfigRestClientApi.class));
+        ScheduleService service = service(api);
 
         ScheduleRequestDTO request = new ScheduleRequestDTO();
         request.setFromDate("2024-01-01T00:00:00+00:00");
@@ -51,7 +77,7 @@ class ScheduleServiceTest {
         when(api.getAllByInterval(eq("daily"), any())).thenReturn(List.of(daily));
         when(api.getAllByInterval(eq("hourly"), any())).thenReturn(List.of(hourly));
 
-        List<ScheduleInstanceDTO> result = service.getSchedules(request);
+        List<ScheduleInstanceDTO> result = service.getSchedules(request, auth());
 
         assertThat(result).containsExactly(daily, hourly);
         verify(api).getAllByInterval(eq("daily"), any());
@@ -61,7 +87,7 @@ class ScheduleServiceTest {
     @Test
     void getSchedulesFetchesAllWhenNoNamesSelected() {
         SchedulerRestClientApi api = mock(SchedulerRestClientApi.class);
-        ScheduleService service = new ScheduleService(api, mock(ConfigRestClientApi.class));
+        ScheduleService service = service(api);
 
         ScheduleRequestDTO request = new ScheduleRequestDTO();
         request.setFromDate("2024-01-01T00:00:00+00:00");
@@ -70,7 +96,7 @@ class ScheduleServiceTest {
         ScheduleInstanceDTO expected = instance(1L, "daily");
         when(api.getAllByInterval(any())).thenReturn(List.of(expected));
 
-        List<ScheduleInstanceDTO> result = service.getSchedules(request);
+        List<ScheduleInstanceDTO> result = service.getSchedules(request, auth());
 
         assertThat(result).containsExactly(expected);
         verify(api).getAllByInterval(any());
@@ -78,9 +104,28 @@ class ScheduleServiceTest {
     }
 
     @Test
+    void getSchedulesFiltersOutInstancesOfDomainsTheUserCannotSee() {
+        SchedulerRestClientApi api = mock(SchedulerRestClientApi.class);
+        ScheduleService service = service(api);
+
+        ScheduleRequestDTO request = new ScheduleRequestDTO();
+        request.setFromDate("2024-01-01T00:00:00+00:00");
+        request.setToDate("2024-12-31T23:59:59+00:00");
+
+        ScheduleInstanceDTO visible = instance(1L, "daily");
+        ScheduleInstanceDTO hidden = instance(2L, "nightly");
+        hidden.setDomainKeyName("finance");
+        when(api.getAllByInterval(any())).thenReturn(List.of(visible, hidden));
+
+        List<ScheduleInstanceDTO> result = service.getSchedules(request, auth());
+
+        assertThat(result).containsExactly(visible);
+    }
+
+    @Test
     void getScheduleInstanceDAGDelegatesById() {
         SchedulerRestClientApi api = mock(SchedulerRestClientApi.class);
-        ScheduleService service = new ScheduleService(api, mock(ConfigRestClientApi.class));
+        ScheduleService service = service(api);
 
         ScheduleInstanceDAGDTO expected = new ScheduleInstanceDAGDTO();
         expected.setId(7L);
@@ -99,6 +144,7 @@ class ScheduleServiceTest {
         ScheduleInstanceDTO dto = new ScheduleInstanceDTO();
         dto.setId(id);
         dto.setConfigScheduleKeyName(name);
+        dto.setDomainKeyName(DOMAIN);
         dto.setTargetExecutionDateTime("2024-06-01T10:00:00+00:00");
         dto.setStatus(Status.Schedule.SUCCESS);
         return dto;

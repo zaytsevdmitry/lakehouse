@@ -82,14 +82,15 @@ Keycloak issues and validates all identities in one realm `jarina`:
 | Realm | `jarina` | Imported at startup in the demo compose |
 | Client | `jarina-ui-client` | Confidential client for the UI BFF, standard flow only |
 | Client | `jarina-internal-client` | Confidential client with enabled **service accounts**, used by all services and Spark drivers for `client_credentials` |
-| Realm roles | `USER`, `ADMIN` | Mapped to `ROLE_USER`, `ROLE_ADMIN` |
+| Realm roles | `<domain>:VIEWER`, `<domain>:EDITOR`, `<domain>:CONTROL`, `WORKSPACE_ADMIN` | Domain-driven; `VIEWER` implied by `EDITOR`/`CONTROL`, `EDITOR`/`CONTROL` orthogonal; `WORKSPACE_ADMIN` is global (no domain) |
 
 Demo users (for local environment only - change passwords/secrets via environment variables in real deployments):
 
 | User | Password | Roles |
 |:-----|:---------|:------|
-| `de_view` | `de_view` | USER |
-| `de_editor` | `de_editor` | ADMIN |
+| `de_view` | `de_view` | `platform:VIEWER`, `analytics:VIEWER`, `processing:VIEWER` |
+| `de_editor` | `de_editor` | `platform:EDITOR`, `platform:CONTROL`, `analytics:EDITOR`, `processing:EDITOR` |
+| `de_admin` | `de_admin` | `WORKSPACE_ADMIN`, `platform:EDITOR`, `analytics:EDITOR`, `processing:EDITOR` |
 
 > Warning: the default client secrets shown in `application.yml` files (`super-secret-bff-key-*`,
 > `super-secret-internal-key-*`) are for development only. Always override them through
@@ -180,15 +181,24 @@ calls as the internal technical client, not as the human user.
 
 - Single entry point for interactive login (standard flow of the confidential client `jarina-ui-client`);
 - Issues ID/access/refresh tokens during the authorization code flow;
-- Stores users, roles (`USER`/`ADMIN`) and their attributes;
+- Stores users and their attributes; **access is domain-driven**: the realm roles are
+  `<domain>:<ROLE>` with `ROLE` in `VIEWER`/`EDITOR`/`CONTROL` (e.g. `finance:EDITOR`), plus the
+  global, non-domain `WORKSPACE_ADMIN` role that governs the workspace-admin surface;
 - Also issues service account tokens used by the BFF for backend calls.
 
 ### Audit
 
-The BFF itself does not write audit records. All user operations that reach backend services are audited
-there by `AuditLoggingFilter` (section 1); since the BFF uses the service account token,
-such records show the configured system username (`system`) rather than the human login.
-Requests served entirely by the BFF (static resources, login pages) are covered by ordinary application logs.
+Human-initiated mutations that the BFF performs on the user's behalf (workspace create/delete,
+file create/save/rename/move/delete, review submit, VCS restore/branch, admin workspace/TTL
+operations) are audited by the BFF **under the real Keycloak `username`** of the authenticated
+user - the same `username` returned by `GET /api/user` and enforced by the domain/ownership checks.
+
+Actions that reach backend services through the BFF's `client_credentials` token of
+`jarina-internal-client` are seen by the backend `AuditLoggingFilter` (section 1) as the internal
+technical client, so those records cannot be attributed to a human. **Writing user-initiated
+actions to the audit log under the technical name `system` is forbidden**: any operation triggered
+by a logged-in user must carry that user's real Keycloak `username`. Requests served entirely by
+the BFF (static resources, login pages) are covered by ordinary application logs only.
 
 ### Diagram
 

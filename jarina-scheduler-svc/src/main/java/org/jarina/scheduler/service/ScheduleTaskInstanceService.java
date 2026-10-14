@@ -33,6 +33,7 @@ import org.jarina.client.api.utils.Coalesce;
 import org.jarina.client.api.utils.DateTimeUtils;
 import org.jarina.client.rest.config.ConfigRestClientApi;
 import org.jarina.scheduler.configuration.SchedulerTaskRetryProperties;
+import org.jarina.scheduler.entities.ScheduleInstance;
 import org.jarina.scheduler.entities.ScheduleTaskInstance;
 import org.jarina.scheduler.entities.ScheduleTaskInstanceDependency;
 import org.jarina.scheduler.entities.ScheduleTaskInstanceExecutionLock;
@@ -151,10 +152,11 @@ public class ScheduleTaskInstanceService {
                     message.getScheduleTaskInstance().getName());
             TaskDTO t = null;
             ScheduleTaskInstance scheduleTaskInstance = message.getScheduleTaskInstance();
-            String scheduleKeyName = scheduleTaskInstance.getScheduleScenarioActInstance().getScheduleInstance()
-                    .getConfigScheduleKeyName();
+            ScheduleInstance scheduleInstance = scheduleTaskInstance.getScheduleScenarioActInstance().getScheduleInstance();
+            String scheduleKeyName = scheduleInstance.getConfigScheduleKeyName();
             String actName = scheduleTaskInstance.getScheduleScenarioActInstance().getName();
             String taskName = scheduleTaskInstance.getName();
+            scheduledTaskMsgDTO.setDomainKeyName(scheduleInstance.getDomainKeyName());
 
             logger.info("Getting effective taskDTO for schedule={} scenarioAct={} task={}",
                     scheduleKeyName, actName, taskName);

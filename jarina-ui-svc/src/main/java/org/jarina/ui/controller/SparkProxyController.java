@@ -22,7 +22,11 @@ import org.jarina.task.proxy.spark.dto.SparkProxySubmissionsRequest;
 import org.jarina.task.proxy.spark.dto.SparkProxySubmissionsResponse;
 import org.jarina.task.proxy.spark.dto.SubmissionResponse;
 import org.jarina.task.proxy.spark.dto.SubmissionStatusResponse;
+import org.jarina.ui.modeller.auth.DomainRole;
+import org.jarina.ui.modeller.auth.ForbiddenException;
+import org.jarina.ui.modeller.auth.UserContext;
 import org.jarina.ui.service.SparkProxyService;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -69,17 +73,31 @@ public class SparkProxyController {
     }
 
     @PostMapping("/submissions/kill/{submissionId}")
-    public SubmissionResponse killSubmission(@PathVariable Long submissionId) {
+    public SubmissionResponse killSubmission(@PathVariable Long submissionId, Authentication authentication) {
+        requireControl(authentication);
         return sparkProxyService.killSubmission(submissionId);
     }
 
     @PostMapping("/submissions/killall")
-    public SubmissionResponse killAllSubmissions() {
+    public SubmissionResponse killAllSubmissions(Authentication authentication) {
+        requireControl(authentication);
         return sparkProxyService.killAllSubmissions();
     }
 
     @PostMapping("/submissions/clear")
-    public SubmissionResponse clearCompleted() {
+    public SubmissionResponse clearCompleted(Authentication authentication) {
+        requireControl(authentication);
         return sparkProxyService.clearCompleted();
+    }
+
+    /**
+     * Coarse CONTROL gate (tech debt): Spark submissions do not carry a domain yet,
+     * so the check is against the mere presence of a {@code CONTROL} role in any
+     * domain. Once domain-threading is added this must be validated per task domain.
+     */
+    private static void requireControl(Authentication authentication) {
+        UserContext user = UserContext.from(authentication);
+        if (!user.hasAnyDomainRole(DomainRole.CONTROL))
+            throw new ForbiddenException("Access denied: CONTROL role required for at least one domain");
     }
 }

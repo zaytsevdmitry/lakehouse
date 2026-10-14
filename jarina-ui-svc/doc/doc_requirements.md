@@ -35,3 +35,6 @@ Please analyze your source code in the specified directory and provide a detaile
 
 ### 8. Architectural Recommendations (Technical Debt)
 - Identify any current bottlenecks or weak spots that require refactoring before the application scales further.
+
+### 9. Data Access Model (RBAC)
+- Describe the role-based access control (RBAC) model: which roles exist, what each role can see and do, where the frontend obtains permissions from (JWT claims, /me endpoint), and where access decisions are made in the code (route guards, conditional rendering, API-level checks).

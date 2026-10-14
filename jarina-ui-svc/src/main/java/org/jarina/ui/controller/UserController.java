@@ -16,7 +16,6 @@
  */
 package org.jarina.ui.controller;
 
-import org.jarina.ui.modeller.auth.ModellerRole;
 import org.jarina.ui.modeller.auth.UserContext;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -46,8 +45,7 @@ public class UserController {
         List<String> roles = new ArrayList<>(user.roles() == null ? List.of() : user.roles());
         roles.sort(Comparator.naturalOrder());
         profile.put("roles", roles);
-        ModellerRole role = user.effectiveRole();
-        profile.put("effectiveRole", role == null ? null : role.name());
+        profile.put("domains", user.domains());
         return profile;
     }
 }

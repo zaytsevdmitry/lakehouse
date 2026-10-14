@@ -16,9 +16,9 @@
  */
 package org.jarina.ui.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -30,16 +30,21 @@ import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
+import org.springframework.security.web.authentication.logout.SimpleUrlLogoutSuccessHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
@@ -78,26 +83,15 @@ public class SecurityConfig {
             "/favicon.ico"
     };
 
-    private static final String MODELLER_ADMIN = "ADMIN";
-    private static final String MODELLER_EDITOR = "EDITOR";
-    private static final String MODELLER_VIEWER = "VIEWER";
+    private static final String WORKSPACE_ADMIN = "WORKSPACE_ADMIN";
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+            @Value("${jarina.security.keycloak.end-session-uri:}") String endSessionUri) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(WHITELISTED_PATHS).permitAll()
-                        .requestMatchers("/api/admin/**").hasRole(MODELLER_ADMIN)
-                        .requestMatchers(HttpMethod.GET, "/api/workspaces/**").hasRole(MODELLER_VIEWER)
-                        .requestMatchers(HttpMethod.POST, "/api/workspaces/**").hasRole(MODELLER_EDITOR)
-                        .requestMatchers(HttpMethod.PUT, "/api/workspaces/**").hasRole(MODELLER_EDITOR)
-                        .requestMatchers(HttpMethod.DELETE, "/api/workspaces/**").hasRole(MODELLER_EDITOR)
-                        .requestMatchers("/api/vcs/workspaces", "/api/vcs/workspace").hasRole(MODELLER_VIEWER)
-                        .requestMatchers("/api/vcs/workspace/*/restore").hasRole(MODELLER_EDITOR)
-                        .requestMatchers(HttpMethod.DELETE, "/api/vcs/workspace/*").hasRole(MODELLER_VIEWER)
-                        .requestMatchers("/api/vcs/branch").hasRole(MODELLER_EDITOR)
-                        .requestMatchers("/api/vcs/review/*").hasRole(MODELLER_EDITOR)
-                        .requestMatchers("/api/vcs/branches", "/api/schema").hasRole(MODELLER_VIEWER)
+                        .requestMatchers("/api/workspace/admin/**").hasRole(WORKSPACE_ADMIN)
                         .anyRequest().authenticated())
                 .oauth2Login(oauth2 -> oauth2
                         .defaultSuccessUrl("/", true)
@@ -107,12 +101,46 @@ public class SecurityConfig {
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(authenticationEntryPoint()))
+                .logout(logout -> logout
+                        .invalidateHttpSession(true)
+                        .clearAuthentication(true)
+                        .deleteCookies("JSESSIONID")
+                        .logoutSuccessHandler(oidcLogoutSuccessHandler(endSessionUri)))
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()));
         return http.build();
+    }
+
+    /**
+     * Logout that ends both the local BFF session and the Keycloak SSO session, so
+     * the {@code Switch user} button genuinely returns the browser to the Keycloak
+     * login screen. The browser is handed a redirect chain to the Keycloak
+     * {@code end_session_endpoint} with the {@code id_token_hint} and a registered
+     * {@code post_logout_redirect_uri} that points back to the app. If no
+     * end-session endpoint is configured (e.g. in tests) a plain local logout is
+     * performed instead.
+     */
+    public static LogoutSuccessHandler oidcLogoutSuccessHandler(String endSessionUri) {
+        if (!StringUtils.hasText(endSessionUri))
+            return new SimpleUrlLogoutSuccessHandler();
+        return (request, response, authentication) -> {
+            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(endSessionUri)
+                    .queryParam("post_logout_redirect_uri", appBaseUrl(request));
+            if (authentication != null && authentication.getPrincipal() instanceof OidcUser oidc) {
+                OidcIdToken idToken = oidc.getIdToken();
+                if (idToken != null)
+                    builder.queryParam("id_token_hint", idToken.getTokenValue());
+            }
+            response.sendRedirect(builder.build().toUriString());
+        };
+    }
+
+    private static String appBaseUrl(HttpServletRequest request) {
+        return UriComponentsBuilder.fromUriString(request.getRequestURL().toString())
+                .replacePath("/").replaceQuery(null).build().toUriString();
     }
 
     /**

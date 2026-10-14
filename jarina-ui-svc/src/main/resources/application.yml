@@ -59,6 +59,11 @@ logging:
         web: INFO
 
 jarina:
+  security:
+    keycloak:
+      # Keycloak realm "jarina" end_session_endpoint. Used for RP-initiated
+      # logout so the "Switch user" button lands on the Keycloak login screen.
+      end-session-uri: ${KEYCLOAK_END_SESSION_URI:${KEYCLOAK_ISSUER_URI:http://keycloak.jarina:8085/realms/jarina}/protocol/openid-connect/logout}
   client:
     rest:
       config:

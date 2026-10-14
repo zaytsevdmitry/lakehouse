@@ -38,7 +38,7 @@ import java.util.List;
  * Admin-only management surface (spec section 7).
  */
 @RestController
-@RequestMapping("/api/admin")
+@RequestMapping("/api/workspace/admin")
 public class AdminController {
 
     private final AdminWorkspaceService admin;

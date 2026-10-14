@@ -4,45 +4,67 @@
   "enabled": true,
   "roles": {
     "realm": [
-      { "name": "USER", "description": "Обычный пользователь экосистемы" },
-      { "name": "ADMIN", "description": "Администратор с полным доступом к Spark, конфигурациям и jarina-ui-modeller (воркспейсы, TTL, журнал)" },
-      { "name": "VIEWER", "description": "Просмотр воркспейсов и конфигураций в jarina-ui-modeller" },
-      { "name": "EDITOR", "description": "Редактирование конфигураций и отправка на review в jarina-ui-modeller" }
+      { "name": "WORKSPACE_ADMIN", "description": "Глобальный администратор jarina-ui-modeller: все воркспейсы, TTL, журнал" },
+      { "name": "platform:VIEWER", "description": "Просмотр воркспейсов и конфигураций домена platform" },
+      { "name": "platform:EDITOR", "description": "Редактирование конфигураций домена platform и отправка на review" },
+      { "name": "platform:CONTROL", "description": "Остановка Spark-задач домена platform" },
+      { "name": "analytics:VIEWER", "description": "Просмотр воркспейсов и конфигураций домена analytics" },
+      { "name": "analytics:EDITOR", "description": "Редактирование конфигураций домена analytics и отправка на review" },
+      { "name": "analytics:CONTROL", "description": "Остановка Spark-задач домена analytics" },
+      { "name": "processing:VIEWER", "description": "Просмотр воркспейсов и конфигураций домена processing" },
+      { "name": "processing:EDITOR", "description": "Редактирование конфигураций домена processing и отправка на review" },
+      { "name": "processing:CONTROL", "description": "Остановка Spark-задач домена processing" }
     ]
   },
   "users": [
     {
-      "username": "de_view",
-      "firstName": "Data",
-      "lastName": "Viewer",
-      "email": "de_view@jarina.local",
+      "username": "analytics_user",
+      "firstName": "Analytics",
+      "lastName": "User",
+      "email": "analytics_user@jarina.local",
       "enabled": true,
       "emailVerified": true,
       "requiredActions": [],
-      "credentials": [{ "type": "password", "value": "de_view", "temporary": false }],
-      "realmRoles": ["USER", "VIEWER"]
+      "credentials": [{ "type": "password", "value": "analytics_user", "temporary": false }],
+      "realmRoles": ["analytics:EDITOR", "platform:VIEWER", "processing:VIEWER"]
     },
     {
-      "username": "de_editor",
-      "firstName": "Data",
-      "lastName": "Editor",
-      "email": "de_editor@jarina.local",
+      "username": "platform_user",
+      "firstName": "Platform",
+      "lastName": "User",
+      "email": "platform_user@jarina.local",
       "enabled": true,
       "emailVerified": true,
       "requiredActions": [],
-      "credentials": [{ "type": "password", "value": "de_editor", "temporary": false }],
-      "realmRoles": ["ADMIN", "EDITOR"]
+      "credentials": [{ "type": "password", "value": "platform_user", "temporary": false }],
+      "realmRoles": ["platform:EDITOR", "analytics:VIEWER", "processing:VIEWER"]
     },
     {
-      "username": "de_admin",
-      "firstName": "Data",
-      "lastName": "Administrator",
-      "email": "de_admin@jarina.local",
+      "username": "processing_user",
+      "firstName": "Processing",
+      "lastName": "User",
+      "email": "processing_user@jarina.local",
       "enabled": true,
       "emailVerified": true,
       "requiredActions": [],
-      "credentials": [{ "type": "password", "value": "de_admin", "temporary": false }],
-      "realmRoles": ["ADMIN"]
+      "credentials": [{ "type": "password", "value": "processing_user", "temporary": false }],
+      "realmRoles": ["processing:EDITOR", "analytics:VIEWER", "platform:VIEWER"]
+    },
+    {
+      "username": "DUTY",
+      "firstName": "Duty",
+      "lastName": "Operator",
+      "email": "duty@jarina.local",
+      "enabled": true,
+      "emailVerified": true,
+      "requiredActions": [],
+      "credentials": [{ "type": "password", "value": "DUTY", "temporary": false }],
+      "realmRoles": [
+        "WORKSPACE_ADMIN",
+        "analytics:CONTROL",
+        "platform:CONTROL",
+        "processing:CONTROL"
+      ]
     }
   ],
   "clients": [
@@ -65,6 +87,9 @@
         "http://localhost:8080",
         "http://172.20.193.170:8080"
       ],
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:8080/*##http://172.20.193.170:8080/*"
+      },
       "defaultClientScopes": [
         "web-origins",
         "acr",

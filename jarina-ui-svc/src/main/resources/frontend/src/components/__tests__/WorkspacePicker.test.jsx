@@ -9,7 +9,7 @@ vi.mock('../../api.js', () => ({
   workspaceUrl: (id) => `/ui?section=modeller&workspace=${id}`,
 }));
 
-const profile = { effectiveRole: 'EDITOR' };
+const profile = { username: 'tester', domains: { platform: 'EDITOR', analytics: 'EDITOR' } };
 
 const PLATFORM = { domain: 'platform', branchMain: 'main', branches: ['main', 'feature'] };
 const ANALYTICS = { domain: 'analytics', branchMain: 'main', branches: ['main'] };
@@ -101,5 +101,28 @@ describe('WorkspacePicker domain and branch selection', () => {
       { domain: 'platform', branch: 'feature' },
       { domain: 'analytics', branch: 'main' },
     ]);
+  });
+
+  it('enables New branch for an EDITOR on at least one domain', async () => {
+    domains = [PLATFORM, ANALYTICS];
+    await renderPicker();
+
+    expect(screen.getByRole('button', { name: 'New branch' })).toBeEnabled();
+  });
+
+  it('disables New branch for a user without any EDITOR role', async () => {
+    domains = [PLATFORM];
+    const onOpen = vi.fn();
+    const onNotice = vi.fn();
+    render(
+      <WorkspacePicker
+        profile={{ username: 'viewer', domains: { platform: 'VIEWER' } }}
+        onOpen={onOpen}
+        onNotice={onNotice}
+      />
+    );
+    await waitFor(() => expect(screen.queryByText(/Loading/)).not.toBeInTheDocument());
+
+    expect(screen.getByRole('button', { name: 'New branch' })).toBeDisabled();
   });
 });

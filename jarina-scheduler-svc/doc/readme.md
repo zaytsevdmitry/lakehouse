@@ -116,16 +116,20 @@ keeps a foreign domain out of an executor group.
 
 ### Known limitations
 
-- `ScheduleInstance.domainKeyName` is a nullable column of the `schedule_instance` table, but
-  its setter is never called: `ScheduleInstanceFactory.newScheduleInstance(...)` receives the
-  `ScheduleEffectiveDTO` and does not copy the domain. The column is therefore always `null`,
-  and `ScheduleInstanceDTO` does not expose the domain either. The domain is always read live
-  from the configuration service instead, which is why the check above works.
-- `ScheduledTaskMsgDTO.domainKeyName` - the field that would carry the domain of a published
-  task - is not populated either. A task message that arrives at an executor therefore carries
-  `domainKeyName = null` today. Nothing in this service depends on it, and
-  `jarina-task-executor-svc` resolves its data sources through the configuration service
-  regardless (see [task-executor-svc: Domains](../../jarina-task-executor-svc/doc/readme.md#domains)).
+- `ScheduleInstance.domainKeyName` is a nullable column of the `schedule_instance` table and is
+  stamped from the `ScheduleEffectiveDTO` at build time:
+  `ScheduleInstanceFactory.newScheduleInstance(...)` copies the domain, and the same is done for
+  `ScheduleInstanceLastBuild.domainKeyName`. `ScheduleInstanceDTO` exposes the domain again, so
+  consumers (for example the UI) can filter schedule instances by their owning domain. Schedules
+  configured without a domain keep `domainKeyName = null`. The domain check described above still
+  reads the domain live from the configuration service.
+- `ScheduledTaskMsgDTO.domainKeyName` carries the domain of the published task's owning
+  `ScheduleInstance`. When `ScheduleTaskInstanceService` publishes a task it copies
+  `scheduleInstance.getDomainKeyName()` into the message, so an executor receives the domain of the
+  schedule the task belongs to. Schedules configured without a domain publish
+  `domainKeyName = null`. `jarina-task-executor-svc` resolves its data sources through the
+  configuration service regardless (see
+  [task-executor-svc: Domains](../../jarina-task-executor-svc/doc/readme.md#domains)).
 - There are no domain-scoped settings in this service: no `jarina.scheduler.*.domains.*`
   property exists, and no REST endpoint takes a domain parameter. All application parameters
   are listed in [appconf/service_configuration.md](appconf/service_configuration.md).

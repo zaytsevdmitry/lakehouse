@@ -48,4 +48,13 @@ BE -> BE : AuditLoggingFilter -> AUDIT_LOG (JSON)\nusername = "system" (service 
 BE --> BFF : JSON response
 BFF --> U : JSON response
 
+note over BFF #E8F5E9
+    Human-initiated mutations (workspace,
+    files, review, VCS, admin) are audited
+    by the BFF under the real Keycloak
+    username - never under "system".
+    "system" is only for technical
+    service-account calls.
+end note
+
 @enduml

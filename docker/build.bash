@@ -31,4 +31,4 @@ cd ../checkcontainer
 bash ./build.bash
 
 
-docker images | grep jarina | grep '0.11.0'
+docker images | grep jarina | grep '0.12.0'

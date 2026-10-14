@@ -214,6 +214,7 @@ public class SchedulesTest {
         assert (sibList.get(0).getScheduleInstance() == null);
         assert (Objects.equals(sibList.get(0).getLastChangeNumber(), sef.getLastChangeNumber()));
         assert (sibList.get(0).getConfigScheduleKeyName().equals(sef.getKeyName()));
+        assert (Objects.equals(sibList.get(0).getDomainKeyName(), sef.getDomainKeyName()));
         assert (sibList.get(0).getLastChangedDateTime() != null);
         assert (sibList.get(0).getLastUpdateDateTime() != null);
 
@@ -226,8 +227,26 @@ public class SchedulesTest {
         buildService.buildAll();
         List<ScheduleInstance> siList = scheduleInstanceRepository.findAll();
         assert (siList.size() == 1);
+        assert (Objects.equals(siList.get(0).getDomainKeyName(), "DEMO"));
         List<ScheduleTaskInstance> stiList = scheduleTaskInstanceRepository.findByStatus(Status.Task.NEW);
         assert (stiList.size() == 31);
+    }
+
+    @Test
+    @Order(7)
+    public void scheduleWithoutDomainKeepsNullDomain() throws IOException {
+        ScheduleEffectiveDTO sef = fileLoader.loadScheduleEffectiveDTO();
+        sef.setKeyName("scheduleWithoutDomain");
+        sef.setDomainKeyName(null);
+        sef.setStartDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(DateTimeUtils.now().minusDays(2L)));
+        sef.setIntervalExpression("0 0 0 * * *");
+        buildService.registration(sef);
+        buildService.buildAll();
+
+        assert (scheduleInstanceLastBuildRepository.findAll().size() == 1);
+        assert (scheduleInstanceLastBuildRepository.findAll().get(0).getDomainKeyName() == null);
+        assert (scheduleInstanceRepository.findAll().size() == 1);
+        assert (scheduleInstanceRepository.findAll().get(0).getDomainKeyName() == null);
     }
 
     private void run() {

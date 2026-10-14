@@ -40,6 +40,7 @@ public class ScheduleInstanceFactory {
 
         ScheduleInstance scheduleInstance = new ScheduleInstance();
         scheduleInstance.setConfigScheduleKeyName(scheduleInstanceLast.getConfigScheduleKeyName());
+        scheduleInstance.setDomainKeyName(scheduleEffectiveDTO.getDomainKeyName());
         OffsetDateTime lastTargetExecutionDate;
 
         if (scheduleInstanceLast.getScheduleInstance() == null) {
@@ -67,6 +68,7 @@ public class ScheduleInstanceFactory {
         result.setId(scheduleInstance.getId());
         result.setStatus(scheduleInstance.getStatus());
         result.setConfigScheduleKeyName(scheduleInstance.getConfigScheduleKeyName());
+        result.setDomainKeyName(scheduleInstance.getDomainKeyName());
         result.setTargetExecutionDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(scheduleInstance.getTargetExecutionDateTime()));
         return result;
     }

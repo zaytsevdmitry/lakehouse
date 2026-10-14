@@ -24,6 +24,10 @@ import org.jarina.client.api.dto.configs.dataset.ForeignKeyReferenceDTO;
 import org.jarina.client.rest.config.ConfigRestClientApi;
 import org.jarina.ui.dto.CatalogTreeNodeDTO;
 import org.jarina.ui.dto.ConstraintDTO;
+import org.jarina.ui.modeller.config.ModellerProperties;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -35,6 +39,27 @@ import static org.mockito.Mockito.when;
 
 class CatalogServiceTest {
 
+    private static final String DOMAIN = "demo";
+
+    private static Authentication auth() {
+        Jwt jwt = Jwt.withTokenValue("jwt")
+                .header("alg", "none")
+                .claim("preferred_username", "u")
+                .claim("realm_access", Map.of("roles", List.of(DOMAIN + ":EDITOR")))
+                .build();
+        return new UsernamePasswordAuthenticationToken(jwt, null, List.of());
+    }
+
+    private static ModellerProperties properties() {
+        ModellerProperties properties = new ModellerProperties();
+        properties.setDomains(Map.of(DOMAIN, new ModellerProperties.DomainVcs()));
+        return properties;
+    }
+
+    private static CatalogService service(ConfigRestClientApi api) {
+        return new CatalogService(api, properties());
+    }
+
     @Test
     void buildsCatalogTreeGroupingByDataSourceSchemaAndTable() {
         ConfigRestClientApi api = mock(ConfigRestClientApi.class);
@@ -44,7 +69,7 @@ class CatalogServiceTest {
         DataSetDTO item = dataSet("item_processing", "demo", "internal", "item_t");
         when(api.getDataSetDTOList()).thenReturn(List.of(order, item, transaction));
 
-        List<CatalogTreeNodeDTO> tree = new CatalogService(api).getCatalogTree();
+        List<CatalogTreeNodeDTO> tree = service(api).getCatalogTree(auth());
 
         assertThat(tree).hasSize(1);
         CatalogTreeNodeDTO demoDataSource = tree.get(0);
@@ -70,7 +95,7 @@ class CatalogServiceTest {
         ConfigRestClientApi api = mock(ConfigRestClientApi.class);
         when(api.getDataSetDTOList()).thenReturn(List.of());
 
-        List<CatalogTreeNodeDTO> tree = new CatalogService(api).getCatalogTree();
+        List<CatalogTreeNodeDTO> tree = service(api).getCatalogTree(auth());
 
         assertThat(tree).isEmpty();
     }
@@ -105,7 +130,7 @@ class CatalogServiceTest {
         when(api.getDataSetDTO("order_processing")).thenReturn(order);
         when(api.getDataSetDTO("customer_processing")).thenReturn(customer);
 
-        List<ConstraintDTO> rows = new CatalogService(api).getConstraints("order_processing");
+        List<ConstraintDTO> rows = service(api).getConstraints("order_processing", auth());
 
         assertThat(rows).hasSize(2);
         ConstraintDTO pkRow = rows.get(0);
@@ -131,7 +156,7 @@ class CatalogServiceTest {
         ConfigRestClientApi api = mock(ConfigRestClientApi.class);
         when(api.getDataSetDTO("order_processing")).thenReturn(dataSet("order_processing", "demo", "public", "order_t"));
 
-        List<ConstraintDTO> rows = new CatalogService(api).getConstraints("order_processing");
+        List<ConstraintDTO> rows = service(api).getConstraints("order_processing", auth());
 
         assertThat(rows).isEmpty();
     }
@@ -142,6 +167,7 @@ class CatalogServiceTest {
         dto.setDataSourceKeyName(dataSourceKeyName);
         dto.setDatabaseSchemaName(schema);
         dto.setTableName(table);
+        dto.setDomainKeyName(DOMAIN);
         return dto;
     }
 }

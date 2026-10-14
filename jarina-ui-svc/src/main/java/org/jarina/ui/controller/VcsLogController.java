@@ -20,6 +20,7 @@ import org.jarina.client.api.dto.vcs.VcsObjectLogDTO;
 import org.jarina.client.api.dto.vcs.VcsSyncLogDTO;
 import org.jarina.ui.service.VcsLogService;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -44,8 +45,9 @@ public class VcsLogController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String commitId,
-            @RequestParam(required = false) String domainKeyName) {
-        return vcsLogService.syncLogs(from, to, status, commitId, domainKeyName);
+            @RequestParam(required = false) String domainKeyName,
+            Authentication authentication) {
+        return vcsLogService.syncLogs(from, to, status, commitId, domainKeyName, authentication);
     }
 
     @GetMapping("/objects")
@@ -56,10 +58,11 @@ public class VcsLogController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
             @RequestParam(required = false) String filePath,
             @RequestParam(required = false) String objectName,
-            @RequestParam(required = false) String domainKeyName) {
+            @RequestParam(required = false) String domainKeyName,
+            Authentication authentication) {
         if (commitId != null && !commitId.isBlank()) {
-            return vcsLogService.objectLogs(commitId, domainKeyName);
+            return vcsLogService.objectLogs(commitId, domainKeyName, authentication);
         }
-        return vcsLogService.objectLogs(kind, from, to, filePath, objectName, domainKeyName);
+        return vcsLogService.objectLogs(kind, from, to, filePath, objectName, domainKeyName, authentication);
     }
 }

@@ -1,5 +1,53 @@
 # Changelog
 
+## [0.12.0] — 2026-10-13
+
+Modelling access control moved from **global Keycloak roles to domain-driven RBAC**. Roles now
+carry a domain prefix — `<domain>:<ROLE>` with `ROLE` in `VIEWER` / `EDITOR` / `CONTROL` — plus
+a single global, non-domain `WORKSPACE_ADMIN` role.
+
+### Changed
+
+#### Domain-driven RBAC in `jarina-ui-svc`
+
+- **Role model** (`org.jarina.ui.modeller.auth`): `ModellerRole` replaced by `DomainRole`
+  (`VIEWER`/`EDITOR`/`CONTROL`; `VIEWER` implied by the other two, `EDITOR`/`CONTROL`
+  orthogonal — `EDITOR` edits configs/repos but cannot stop tasks, `CONTROL` stops Spark tasks
+  but cannot edit) and `ModellerRoleSupport` (parses `<domain>:<ROLE>`; the global
+  `WORKSPACE_ADMIN` role is ignored by the domain map); `UserContext` exposes `domains` and
+  `hasDomainRole`/`hasAnyDomainRole`/`hasWorkspaceAdmin`; new `DomainAccess` (allowed-domain
+  resolution).
+- **`GET /api/user` contract**: returns `{username, name, email, roles, domains}`; the
+  `effectiveRole` string is gone. `domains` maps each domain to one display label with
+  precedence `CONTROL > EDITOR > VIEWER`.
+- **Server-side enforcement** stays authoritative and answers `403`: `EditorService`,
+  `VcsService`, `ReviewService`, `SparkProxyController` (kill/killall → `CONTROL`),
+  `AdminWorkspaceService`; `SSecurityConfig` keeps everything else `authenticated()` and gates
+  the admin surface at `/api/workspace/admin/**` (`hasRole('WORKSPACE_ADMIN')`).
+- **Domain filtering** of the monitoring data: `CatalogService`, `ScheduleService` and
+  `VcsLogService` intersect the user's domains with the configured ones (`DomainAccess`) and
+  drop rows outside them (empty result → `[]`).
+- **Admin endpoints moved** from `/api/admin/**` to `/api/workspace/admin/**`
+  (`AdminController`, frontend `AdminView`).
+- **Frontend**: `ModellerSection` always shows the `My workspaces / Admin` tabs (a non-admin
+  sees the backend `403` as a banner); `WorkspacePicker` disables **New branch** without an
+  `EDITOR` role; `EditorView` derives `readOnly` per domain from `domains` (no longer from
+  `effectiveRole` or `workspace.own`); the `effectiveRole`/`isAdmin`/`canEdit` helpers are gone.
+- **Demo Keycloak realm** (`demo/compose/conf_infra/security/realms/jarina-realm.json` and the
+  K8s configmap): realm roles are now domain roles for the configured domains
+  (`platform`/`analytics`/`processing`) plus `WORKSPACE_ADMIN`; demo users `de_view` (viewer),
+  `de_editor` (editor + control) and `de_admin` (workspace admin) updated accordingly. Colons in
+  role names are supported by Keycloak.
+- **Docs**: `jarina-ui-svc/doc/arch/architecture.md` (§9 rewritten, + `doc-ru` mirror),
+  `jarina-ui-svc/doc/readme.md` (+ RU), `doc/security/security.md` (+ RU) and
+  `SUMMARY_FEATURES.md` describe the domain model; the audit section states that
+  user-initiated mutations are logged under the real Keycloak `username` and that writing them
+  as `system` is forbidden.
+- **Tests**: new `RbacEnforcementTest` (Spark kill / editor / review / admin 403s);
+  `ModellerRoleSupportTest` and `SecurityContextBootTest` updated for domain roles. Frontend
+  suite updated to `domains` fixtures (44 tests: `EditorView` per-domain `readOnly`,
+  `WorkspacePicker` `New branch` enable/disable). Backend totals 107 tests.
+
 ## [0.11.0] — 2026-10-02
 
 Configuration domains became first-class: **a domain is a Git repository**, and the domain stamp

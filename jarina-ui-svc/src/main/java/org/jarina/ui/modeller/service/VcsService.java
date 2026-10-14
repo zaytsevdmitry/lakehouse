@@ -17,8 +17,8 @@
 
 package org.jarina.ui.modeller.service;
 
+import org.jarina.ui.modeller.auth.DomainRole;
 import org.jarina.ui.modeller.auth.ForbiddenException;
-import org.jarina.ui.modeller.auth.ModellerRole;
 import org.jarina.ui.modeller.auth.UserContext;
 import org.jarina.ui.modeller.config.ModellerProperties;
 import org.jarina.ui.modeller.dto.CreateBranchRequest;
@@ -71,6 +71,7 @@ public class VcsService {
         String base = normalizeBase(request.path());
         Workspace workspace = requireOwnWorkspace(workspaceId, user);
         BranchSelection selection = selectionFor(workspace, base);
+        requireDomainRole(user, selection.domain(), "EDITOR");
         Map<String, String> scoped = WorkspaceManager.scopeDomain(selection.domain(),
                 vcs.readBranchFiles(selection.domain(), selection.branch()));
         boolean isFile = base.endsWith(".yaml") || base.endsWith(".yml");
@@ -122,6 +123,8 @@ public class VcsService {
     public WorkspaceResponse openWorkspace(WorkspaceOpenRequest request, Authentication authentication) {
         UserContext user = UserContext.from(authentication);
         List<BranchSelection> selections = normalizeSelections(request);
+        for (BranchSelection selection : selections)
+            requireDomainRole(user, selection.domain(), "VIEWER", "EDITOR", "CONTROL");
         Workspace workspace = manager.openWorkspace(user.username(), selections);
         return toResponse(workspace, user.username(), true);
     }
@@ -179,6 +182,7 @@ public class VcsService {
             throw new IllegalArgumentException("branch is required");
         if (request.domain() == null || request.domain().isBlank())
             throw new IllegalArgumentException("domain is required");
+        requireDomainRole(user, request.domain(), "EDITOR");
         vcs.createBranch(request.domain(), request.branch(), request.baseBranch());
         logs.log("INFO", user.username(), "CREATE_BRANCH", request.domain() + "/" + request.branch(), null);
         return request.branch();
@@ -191,8 +195,17 @@ public class VcsService {
 
     private Workspace requireOwnWorkspace(String workspaceId, UserContext user) {
         Workspace workspace = manager.workspace(workspaceId);
-        if (!workspace.isOwner(user.username()) && user.effectiveRole() != ModellerRole.ADMIN)
+        if (!workspace.isOwner(user.username()))
             throw new ForbiddenException("Workspace " + workspaceId + " belongs to " + workspace.owner());
         return workspace;
+    }
+
+    private static void requireDomainRole(UserContext user, String domain, String... roles) {
+        DomainRole[] accepted = new DomainRole[roles.length];
+        for (int i = 0; i < roles.length; i++)
+            accepted[i] = DomainRole.valueOf(roles[i]);
+        if (!user.hasDomainRole(domain, accepted))
+            throw new ForbiddenException("Access denied: no " + String.join("/", roles)
+                    + " role for domain '" + domain + "'");
     }
 }

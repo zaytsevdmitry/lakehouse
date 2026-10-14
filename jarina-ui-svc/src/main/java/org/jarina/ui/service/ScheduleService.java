@@ -23,9 +23,14 @@ import org.jarina.client.api.dto.configs.schedule.ScheduleHeaderDTO;
 import org.jarina.client.rest.config.ConfigRestClientApi;
 import org.jarina.client.rest.scheduler.SchedulerRestClientApi;
 import org.jarina.ui.dto.ScheduleRequestDTO;
+import org.jarina.ui.modeller.auth.DomainAccess;
+import org.jarina.ui.modeller.auth.UserContext;
+import org.jarina.ui.modeller.config.ModellerProperties;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 @Service
@@ -33,27 +38,35 @@ public class ScheduleService {
 
     private final SchedulerRestClientApi schedulerRestClientApi;
     private final ConfigRestClientApi configRestClientApi;
+    private final ModellerProperties modellerProperties;
 
     public ScheduleService(
             SchedulerRestClientApi schedulerRestClientApi,
-            ConfigRestClientApi configRestClientApi) {
+            ConfigRestClientApi configRestClientApi,
+            ModellerProperties modellerProperties) {
         this.schedulerRestClientApi = schedulerRestClientApi;
         this.configRestClientApi = configRestClientApi;
+        this.modellerProperties = modellerProperties;
     }
 
-    public List<ScheduleInstanceDTO> getSchedules(ScheduleRequestDTO request) {
+    public List<ScheduleInstanceDTO> getSchedules(ScheduleRequestDTO request, Authentication authentication) {
         IntervalDTO interval = new IntervalDTO();
         interval.setIntervalStartDateTime(request.getFromDate());
         interval.setIntervalEndDateTime(request.getToDate());
 
+        Set<String> allowed = DomainAccess.allowedDomains(
+                UserContext.from(authentication), modellerProperties.domainNames(), "POST /api/schedules");
+        Stream<ScheduleInstanceDTO> instances;
         List<String> names = request.getNames();
         if (names == null || names.isEmpty()) {
-            return schedulerRestClientApi.getAllByInterval(interval);
+            instances = schedulerRestClientApi.getAllByInterval(interval).stream();
+        } else {
+            instances = names.stream()
+                    .flatMap(name -> schedulerRestClientApi.getAllByInterval(name, interval).stream());
         }
-        return names.stream()
-                .flatMap(name -> schedulerRestClientApi.getAllByInterval(name, interval).stream())
+        return instances
+                .filter(instance -> allowed.contains(normalizeDomain(instance.getDomainKeyName())))
                 .toList();
-
     }
 
     public List<ScheduleHeaderDTO> getScheduleHeaders() {
@@ -62,5 +75,9 @@ public class ScheduleService {
 
     public ScheduleInstanceDAGDTO getScheduleInstanceDAG(Long id) {
         return schedulerRestClientApi.getScheduleInstanceDAGDTOById(id);
+    }
+
+    private static String normalizeDomain(String domain) {
+        return domain == null ? null : domain.trim();
     }
 }

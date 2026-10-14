@@ -73,15 +73,15 @@ class EditorServiceSelectionScopeTest {
         workspace = manager.openWorkspace("alice",
                 List.of(new BranchSelection("platform", "main"), new BranchSelection("analytics", "dev")));
         editor = new EditorService(manager, storage, new YamlEditorService(), new SyncLogService(10));
-        authentication = authentication("alice");
+        authentication = authentication("alice", "platform:EDITOR", "analytics:EDITOR");
     }
 
-    private static UsernamePasswordAuthenticationToken authentication(String username) {
-        Jwt jwt = Jwt.withTokenValue("test-token")
-                .header("alg", "none")
-                .claim("preferred_username", username)
-                .build();
-        return new UsernamePasswordAuthenticationToken(jwt, null, List.of());
+    private static UsernamePasswordAuthenticationToken authentication(String username, String... realmRoles) {
+        Jwt.Builder builder = Jwt.withTokenValue("test-token").header("alg", "none")
+                .claim("preferred_username", username);
+        if (realmRoles.length > 0)
+            builder.claim("realm_access", Map.of("roles", List.of(realmRoles)));
+        return new UsernamePasswordAuthenticationToken(builder.build(), null, List.of());
     }
 
     @Test

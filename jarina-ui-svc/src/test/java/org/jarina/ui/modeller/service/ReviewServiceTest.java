@@ -86,12 +86,12 @@ class ReviewServiceTest {
         }
     };
 
-    private static UsernamePasswordAuthenticationToken authentication(String username) {
-        Jwt jwt = Jwt.withTokenValue("test-token")
-                .header("alg", "none")
-                .claim("preferred_username", username)
-                .build();
-        return new UsernamePasswordAuthenticationToken(jwt, null, List.of());
+    private static UsernamePasswordAuthenticationToken authentication(String username, String... realmRoles) {
+        Jwt.Builder builder = Jwt.withTokenValue("test-token").header("alg", "none")
+                .claim("preferred_username", username);
+        if (realmRoles.length > 0)
+            builder.claim("realm_access", Map.of("roles", List.of(realmRoles)));
+        return new UsernamePasswordAuthenticationToken(builder.build(), null, List.of());
     }
 
     private WorkspaceManager manager(LocalFsWorkspaceStorage storage, Map<String, Map<String, String>> seed) {
@@ -115,7 +115,7 @@ class ReviewServiceTest {
                 new SyncLogService(10));
 
         assertThatThrownBy(() -> service.submit(workspace.id(),
-                new ReviewRequest("commit", "comment"), authentication("alice")))
+                new ReviewRequest("commit", "comment"), authentication("alice", "platform:EDITOR", "analytics:EDITOR")))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("stray/config/dataset/evil.yaml");
         assertThat(submissions).isEmpty();
@@ -123,7 +123,7 @@ class ReviewServiceTest {
 
         storage.deleteFile(workspace.id(), "stray/config/dataset/evil.yaml");
         ReviewResponse response = service.submit(workspace.id(),
-                new ReviewRequest("commit", "comment"), authentication("alice"));
+                new ReviewRequest("commit", "comment"), authentication("alice", "platform:EDITOR", "analytics:EDITOR"));
 
         assertThat(response.status()).isEqualTo("OK");
         assertThat(response.submittedFiles()).containsOnlyKeys(
@@ -146,7 +146,7 @@ class ReviewServiceTest {
                 new SyncLogService(10));
 
         ReviewResponse response = service.submit(workspace.id(),
-                new ReviewRequest(null, null), authentication("alice"));
+                new ReviewRequest(null, null), authentication("alice", "platform:EDITOR", "analytics:EDITOR"));
 
         assertThat(response.status()).isEqualTo("NO_CHANGES");
         assertThat(response.url()).isNull();
@@ -168,7 +168,7 @@ class ReviewServiceTest {
                 new SyncLogService(10));
 
         ReviewResponse response = service.submit(workspace.id(),
-                new ReviewRequest("commit", null), authentication("alice"));
+                new ReviewRequest("commit", null), authentication("alice", "platform:EDITOR", "analytics:EDITOR"));
 
         assertThat(response.status()).isEqualTo("OK");
         assertThat(response.submittedFiles()).containsOnlyKeys("config/namespace/ns.yaml");

@@ -18,7 +18,7 @@ const workspace = {
   ],
 };
 
-const profile = { effectiveRole: 'EDITOR' };
+const profile = { username: 'tester', domains: { platform: 'EDITOR', analytics: 'EDITOR' } };
 
 const ORDERS = 'platform (main)/orders.yaml';
 const REPORT = 'analytics (dev)/report.yaml';
@@ -158,6 +158,33 @@ describe('EditorView multi-domain workspace', () => {
     expect(moved.targetDirectory).toBe('');
     await waitFor(() =>
       expect(onNotice).toHaveBeenCalledWith('success', 'Moved report.yaml to analytics (dev).'));
+  });
+
+  it('keeps files of a VIEWER-only domain read-only while other domains stay editable', async () => {
+    render(
+      <EditorView
+        profile={{ username: 'viewer', domains: { platform: 'EDITOR', analytics: 'VIEWER' } }}
+        workspace={workspace}
+        onBack={vi.fn()}
+        onNotice={vi.fn()}
+      />
+    );
+    await waitFor(() => expect(screen.getByText('ws-1')).toBeInTheDocument());
+
+    fireEvent.click(await screen.findByRole('button', { name: /analytics/ }));
+    const report = await screen.findByRole('button', { name: /report/ });
+    fireEvent.click(report);
+
+    await waitFor(() => expect(screen.getByText('read-only')).toBeInTheDocument());
+    expect(screen.queryByRole('button', { name: 'Submit review' })).not.toBeInTheDocument();
+    expect(screen.queryByTitle('New folder')).not.toBeInTheDocument();
+
+    fireEvent.click(await screen.findByRole('button', { name: /platform/ }));
+    const orders = await screen.findByRole('button', { name: /orders/ });
+    fireEvent.click(orders);
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Submit review' })).toBeInTheDocument());
+    expect(screen.queryByText('read-only')).not.toBeInTheDocument();
   });
 
   it('keeps the workspace open when a review has no changes', async () => {

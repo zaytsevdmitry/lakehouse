@@ -52,7 +52,7 @@ Controllers of the modeller (`org.jarina.ui.modeller.controller`):
 VcsController    /api/vcs          — workspaces lifecycle, branches, review, restore
 EditorController /api/workspaces/{workspaceId} — file-level CRUD inside a workspace
 SchemaController /api/schema       — per-kind form schemas (KindSchema) for the editors
-AdminController  /api/admin        — admin-only: all workspaces, cleanup TTL, sync logs
+AdminController  /api/workspace/admin — WORKSPACE_ADMIN-only: all workspaces, cleanup TTL, sync logs
 ```
 
 Service statuses are computed by `HealthChecker`: either an HTTP request to `healthCheckUrl` (type `http`) or a TCP port probe (type `tcp`). The set of services, graph edges and vertices are defined by the `jarina.ui.services/edges/vertices` configuration.
@@ -145,8 +145,8 @@ derived server-side:
 - the aggregate answer is `OK` (with the MR/PR URLs, comma-joined when there are several) or
   `NO_CHANGES` when nothing changed at all;
 - **the workspace is deleted only on success** — a failed submission leaves it open;
-- a user must own the workspace (or be `ADMIN`), and the whole submission runs under a
-  per-workspace lock.
+- a user must own the workspace, hold `EDITOR` for every selected domain, and the whole
+  submission runs under a per-workspace lock.
 
 ### Domain as a filter of the VCS logs
 
@@ -193,7 +193,7 @@ The service itself. Contains:
   - VCS integration (`vcs`): `VcsProvider` SPI with `LocalGitVcsProvider`, `GitLabApiVcsProvider`, `GitHubAppVcsProvider`, `DisabledVcsProvider` and a provider factory;
   - workspace storage (`storage`): `WorkspaceStorage` SPI with `LocalFsWorkspaceStorage` and S3 (`S3WorkspaceStorage` + a minimal AWS SigV4 signer), plus `WorkspaceManager`,
     `WorkspaceSeeder` and the cleanup task (`WorkspaceCleanupTask`);
-  - auth (`auth`): `ModellerRole` (`VIEWER < EDITOR < ADMIN`), `UserContext`, `ForbiddenException`/`NotFoundException`;
+  - auth (`auth`): `DomainRole` (`VIEWER`/`EDITOR`/`CONTROL`), `ModellerRoleSupport` (domain role parsing), `UserContext`, `DomainAccess`, `ForbiddenException`/`NotFoundException`;
   - DTOs (`dto`): `KindSchema`, `FieldSchema`, `TreeResponse`, `FileContentResponse`, `WorkspaceResponse`, review/restore DTOs, etc.;
 - `SecurityConfig` — BFF OAuth2 login + modeller RBAC (see Security);
 - `GlobalExceptionHandler` — unified error handling;
@@ -228,7 +228,7 @@ Depends on: `jarina-common` (shared constants and config DTOs used by the editor
 | POST | `/api/states` | Dataset interval states (`dataSetKeyName`, `fromDate`, `toDate`) |
 | GET | `/api/vcs/logs` | GitOps sync log (commits), filters `status`, `commitId`, `domainKeyName` |
 | GET | `/api/vcs/objects` | GitOps object log (changed configuration objects), filters `commitId`, `kind`, `from`, `to`, `filePath`, `objectName`, `domainKeyName` |
-| GET | `/api/user` | Current user profile (`username`, `roles`, `effectiveRole`) |
+| GET | `/api/user` | Current user profile (`username`, `name`, `email`, `roles`, `domains`) |
 | GET | `/api/vcs/workspaces` | Workspaces of the current user |
 | POST | `/api/vcs/workspace` | Open a workspace for a list of `{domain, branch}` selections (creates a working copy) |
 | DELETE | `/api/vcs/workspace/{workspaceId}` | Delete the user's workspace |
@@ -249,11 +249,11 @@ Depends on: `jarina-common` (shared constants and config DTOs used by the editor
 | POST | `/api/workspaces/{workspaceId}/files/rename` | Rename a file |
 | POST | `/api/workspaces/{workspaceId}/files/move` | Move a file |
 | DELETE | `/api/workspaces/{workspaceId}/files/{path}` | Delete a file |
-| GET | `/api/admin/workspaces` | All workspaces (admin) |
-| DELETE | `/api/admin/workspaces/{workspaceId}` | Force-delete a workspace (admin) |
-| GET | `/api/admin/settings/cleanup-ttl-hours` | Inactive-workspace lifetime TTL (admin) |
-| PUT | `/api/admin/settings/cleanup-ttl-hours` | Set the cleanup TTL (admin) |
-| GET | `/api/admin/sync-logs` | VCS sync log tail (admin) |
+| GET | `/api/workspace/admin/workspaces` | All workspaces (WORKSPACE_ADMIN) |
+| DELETE | `/api/workspace/admin/workspaces/{workspaceId}` | Force-delete a workspace (WORKSPACE_ADMIN) |
+| GET | `/api/workspace/admin/settings/cleanup-ttl-hours` | Inactive-workspace lifetime TTL (WORKSPACE_ADMIN) |
+| PUT | `/api/workspace/admin/settings/cleanup-ttl-hours` | Set the cleanup TTL (WORKSPACE_ADMIN) |
+| GET | `/api/workspace/admin/sync-logs` | VCS sync log tail (WORKSPACE_ADMIN) |
 
 ## Configuration
 
@@ -365,19 +365,16 @@ Whitelisted paths (no login required): `/healthz`, `/readyz`, `/actuator/**`, `/
 
 ### Modeller roles (RBAC)
 
-Access to the modelling endpoints is granted by the Keycloak realm roles below. A **role hierarchy** is configured so `ADMIN` implies `EDITOR` implies `VIEWER` out of the box:
-
-```
-ADMIN > EDITOR > VIEWER
-```
+Access is **domain-driven**. Realm roles carry a domain prefix, `<domain>:<ROLE>`, with `ROLE` in `VIEWER` / `EDITOR` / `CONTROL` (for example `platform:EDITOR`, `analytics:CONTROL`). `VIEWER` is implied by the other two; `EDITOR` and `CONTROL` are orthogonal — `EDITOR` allows config/repo changes but not stopping tasks, `CONTROL` allows stopping tasks but not editing. The global, non-domain `WORKSPACE_ADMIN` role governs the admin surface.
 
 | Realm role | Access |
 |---|---|
-| `VIEWER` | Read workspaces, schema editor (read-only), list branches |
-| `EDITOR` | Everything the viewer can do + create branches, open/edit/save/delete workspace files, submit reviews, restore |
-| `ADMIN` | Everything the editor can do + Admin surface: all workspaces, force delete, cleanup TTL, sync logs |
+| `<domain>:VIEWER` | Read that domain's datasets/schedules/VCS logs (BFF filters by domain), open a workspace for reading, delete own workspace |
+| `<domain>:EDITOR` | + create branches, open/edit/save/delete/move workspace files, submit reviews, restore — for that domain |
+| `<domain>:CONTROL` | + stop/kill Spark submissions |
+| `WORKSPACE_ADMIN` (global, no domain) | Everything under `/api/workspace/admin/**`: all workspaces, force delete, cleanup TTL, sync logs |
 
-Rules are applied in `SecurityConfig` (`/api/admin/**` → ADMIN; `/api/workspaces/**` read → VIEWER, write → EDITOR; `/api/vcs/*` per operation). Inside the modeller, `UserContext`/`ModellerRole` additionally enforce workspace ownership (only the owner can edit their workspace) and the frontend derives `readOnly` from `effectiveRole` (`GET /api/user`).
+`SecurityConfig` gates the admin surface (`/api/workspace/admin/**` → `hasRole('WORKSPACE_ADMIN')`) and keeps everything else `authenticated()`. The domain and ownership checks live in the services (`EditorService`/`VcsService`/`ReviewService`/`SparkProxyController`/`AdminWorkspaceService`) and throw `ForbiddenException` (→ `403`); `CatalogService`/`ScheduleService`/`VcsLogService` filter by the user's allowed domains (`DomainAccess`). The frontend only *reflects* the rights: the modeller `readOnly` hint is derived per-domain from `domains` in `GET /api/user` (editable only with `EDITOR` for the domain of the selected file), and it no longer depends on workspace ownership (`workspace.own`), which the backend enforces separately.
 
 ### Required settings
 
@@ -399,18 +396,19 @@ Rules are applied in `SecurityConfig` (`/api/admin/**` → ADMIN; `/api/workspac
 ### Configuring accounts and roles in Keycloak
 
 1. **Deploy Keycloak.** The demo compose runs Keycloak 26.0 with the admin console at `http://localhost:8085` (credentials from `KEYCLOAK_ADMIN`/`KEYCLOAK_ADMIN_PASSWORD`, by default `admin`/`admin_local_password`) and imports the reference realm from `demo/compose/conf_infra/security/realms/jarina-realm.json`. In production use a persistent database and change all default passwords/secrets.
-2. **Realm roles.** The `jarina` realm defines general roles `USER` and `ADMIN`, plus the modeller roles:
-   - `VIEWER` — read-only modelling;
-   - `EDITOR` — edit configuration documents;
-   - `ADMIN` — admin surface of the modeller.
+2. **Realm roles.** The `jarina` realm defines the domain-driven modeller roles and the global admin role:
+   - `<domain>:VIEWER` — read-only modelling for that domain;
+   - `<domain>:EDITOR` — edit configuration documents of that domain;
+   - `<domain>:CONTROL` — stop Spark submissions;
+   - `WORKSPACE_ADMIN` — admin surface of the modeller.
 
-   Roles are delivered to services in the JWT `realm_access.roles` claim and mapped to `ROLE_…` authorities (`SecurityConfig` reads `realm_access.roles`, `roles`, `resource_access.*.roles`).
+   The demo realm ships `platform:*`, `analytics:*` and `processing:*` for the configured domains. Roles are delivered to services in the JWT `realm_access.roles` claim and mapped to authorities (`SecurityConfig` reads `realm_access.roles`, `roles`, `resource_access.*.roles`); a role without a `<domain>:` prefix (other than `WORKSPACE_ADMIN`) is ignored.
 3. **Client `jarina-ui-client`.** Confidential client (*Standard Flow Enabled*, *Direct Access Grants* off) used by this BFF. Check that:
    - *Valid redirect URIs* contain the externally visible UI address: by default `http://localhost:8080/*` and `http://localhost:8080/login/oauth2/code/keycloak`;
    - *Web Origins* contains the UI origin (`http://localhost:8080`);
    - When deploying on another host/port, add the corresponding redirect URI and web origin and set `JARINA_UI_REDIRECT_URI` accordingly.
 4. **Create users.** Admin Console → realm `jarina` → *Users* → *Add user*: fill in username/email/names, then *Credentials* → set password (turn off *Temporary* for a permanent password).
-5. **Assign roles.** *Users* → select the user → *Role mapping* → filter *Filter by realm roles* → assign `USER` and/or `ADMIN` and the needed `*` role by clicking *Assign*. The role hierarchy makes `ADMIN` cover `EDITOR`/`VIEWER` automatically.
+5. **Assign roles.** *Users* → select the user → *Role mapping* → filter *Filter by realm roles* → assign the appropriate domain roles (`<domain>:VIEWER`/`EDITOR`/`CONTROL`) and, for workspace administrators, the global `WORKSPACE_ADMIN` role.
 6. **Service account.** The confidential client `jarina-internal-client` (*Service Accounts Enabled*) is used by backend services for service-to-service calls; its secret must match `KEYCLOAK_INTERNAL_CLIENT_SECRET` on every service.
 
 After configuration open the UI - the first request redirects to the Keycloak login page; only users with an account in the `jarina` realm can log in.

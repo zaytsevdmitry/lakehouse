@@ -24,6 +24,11 @@ import org.jarina.client.api.dto.configs.datasource.DataSourceDTO;
 import org.jarina.client.rest.config.ConfigRestClientApi;
 import org.jarina.ui.dto.CatalogTreeNodeDTO;
 import org.jarina.ui.dto.ConstraintDTO;
+import org.jarina.ui.modeller.auth.DomainAccess;
+import org.jarina.ui.modeller.auth.ForbiddenException;
+import org.jarina.ui.modeller.auth.UserContext;
+import org.jarina.ui.modeller.config.ModellerProperties;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -32,18 +37,26 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 @Service
 public class CatalogService {
 
     private final ConfigRestClientApi configRestClientApi;
+    private final ModellerProperties modellerProperties;
 
-    public CatalogService(ConfigRestClientApi configRestClientApi) {
+    public CatalogService(ConfigRestClientApi configRestClientApi, ModellerProperties modellerProperties) {
         this.configRestClientApi = configRestClientApi;
+        this.modellerProperties = modellerProperties;
     }
 
-    public List<CatalogTreeNodeDTO> getCatalogTree() {
-        List<DataSetDTO> dataSets = configRestClientApi.getDataSetDTOList();
+    public List<CatalogTreeNodeDTO> getCatalogTree(Authentication authentication) {
+        UserContext user = UserContext.from(authentication);
+        Set<String> allowed = DomainAccess.allowedDomains(
+                user, modellerProperties.domainNames(), "GET /api/catalog/tree");
+        List<DataSetDTO> dataSets = configRestClientApi.getDataSetDTOList().stream()
+                .filter(dataSet -> allowed.contains(normalizeDomain(dataSet.getDomainKeyName())))
+                .toList();
 
         Map<String, CatalogTreeNodeDTO> dataSourceByKeyName = new LinkedHashMap<>();
         for (DataSetDTO dataSet : dataSets) {
@@ -95,11 +108,15 @@ public class CatalogService {
         return result;
     }
 
-    public DataSetDTO getDataSet(String keyName) {
-        return configRestClientApi.getDataSetDTO(keyName);
+    public DataSetDTO getDataSet(String keyName, Authentication authentication) {
+        DataSetDTO dataSet = configRestClientApi.getDataSetDTO(keyName);
+        requireAllowed(UserContext.from(authentication), dataSet, "GET /api/catalog/dataset/{keyName}");
+        return dataSet;
     }
 
-    public DataSetLineageDTO getLineage(String keyName) {
+    public DataSetLineageDTO getLineage(String keyName, Authentication authentication) {
+        requireAllowed(UserContext.from(authentication), configRestClientApi.getDataSetDTO(keyName),
+                "GET /api/catalog/dataset/{keyName}/lineage");
         return configRestClientApi.getDataSetLineageDTO(keyName);
     }
 
@@ -107,7 +124,9 @@ public class CatalogService {
         return configRestClientApi.getScript(key);
     }
 
-    public String getDataSetModelScript(String keyName) {
+    public String getDataSetModelScript(String keyName, Authentication authentication) {
+        requireAllowed(UserContext.from(authentication), configRestClientApi.getDataSetDTO(keyName),
+                "GET /api/catalog/dataset/{keyName}/model-script");
         return configRestClientApi.getDataSetModelScript(keyName);
     }
 
@@ -115,8 +134,9 @@ public class CatalogService {
         return configRestClientApi.getDataSourceDTO(keyName);
     }
 
-    public List<ConstraintDTO> getConstraints(String keyName) {
+    public List<ConstraintDTO> getConstraints(String keyName, Authentication authentication) {
         DataSetDTO dataSet = configRestClientApi.getDataSetDTO(keyName);
+        requireAllowed(UserContext.from(authentication), dataSet, "GET /api/catalog/dataset/{keyName}/constraints");
         if (dataSet == null || dataSet.getConstraints() == null) {
             return List.of();
         }
@@ -171,5 +191,17 @@ public class CatalogService {
             sb.append(part);
         }
         return sb.toString();
+    }
+
+    private static String normalizeDomain(String domain) {
+        return domain == null ? null : domain.trim();
+    }
+
+    private static void requireAllowed(UserContext user, DataSetDTO dataSet, String endpoint) {
+        if (dataSet == null)
+            return;
+        String domain = normalizeDomain(dataSet.getDomainKeyName());
+        if (domain == null || !user.isAllowedDomain(domain))
+            throw new ForbiddenException("Access denied: no VIEWER role for domain '" + domain + "'");
     }
 }

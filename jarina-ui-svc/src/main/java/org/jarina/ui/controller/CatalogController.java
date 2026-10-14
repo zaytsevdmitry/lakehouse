@@ -22,6 +22,7 @@ import org.jarina.client.api.dto.configs.datasource.DataSourceDTO;
 import org.jarina.ui.dto.CatalogTreeNodeDTO;
 import org.jarina.ui.dto.ConstraintDTO;
 import org.jarina.ui.service.CatalogService;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,23 +41,23 @@ public class CatalogController {
     }
 
     @GetMapping("/tree")
-    public List<CatalogTreeNodeDTO> getCatalogTree() {
-        return catalogService.getCatalogTree();
+    public List<CatalogTreeNodeDTO> getCatalogTree(Authentication authentication) {
+        return catalogService.getCatalogTree(authentication);
     }
 
     @GetMapping("/dataset/{keyName}")
-    public DataSetDTO getDataSet(@PathVariable String keyName) {
-        return catalogService.getDataSet(keyName);
+    public DataSetDTO getDataSet(@PathVariable String keyName, Authentication authentication) {
+        return catalogService.getDataSet(keyName, authentication);
     }
 
     @GetMapping("/dataset/{keyName}/lineage")
-    public DataSetLineageDTO getLineage(@PathVariable String keyName) {
-        return catalogService.getLineage(keyName);
+    public DataSetLineageDTO getLineage(@PathVariable String keyName, Authentication authentication) {
+        return catalogService.getLineage(keyName, authentication);
     }
 
     @GetMapping("/dataset/{keyName}/constraints")
-    public List<ConstraintDTO> getConstraints(@PathVariable String keyName) {
-        return catalogService.getConstraints(keyName);
+    public List<ConstraintDTO> getConstraints(@PathVariable String keyName, Authentication authentication) {
+        return catalogService.getConstraints(keyName, authentication);
     }
 
     @GetMapping("/script/{key}")
@@ -65,8 +66,8 @@ public class CatalogController {
     }
 
     @GetMapping("/dataset/{keyName}/model-script")
-    public String getDataSetModelScript(@PathVariable String keyName) {
-        return catalogService.getDataSetModelScript(keyName);
+    public String getDataSetModelScript(@PathVariable String keyName, Authentication authentication) {
+        return catalogService.getDataSetModelScript(keyName, authentication);
     }
 
     @GetMapping("/datasource/{keyName}")

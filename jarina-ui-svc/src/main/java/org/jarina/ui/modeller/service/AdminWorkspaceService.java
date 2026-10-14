@@ -17,6 +17,7 @@
 
 package org.jarina.ui.modeller.service;
 
+import org.jarina.ui.modeller.auth.ModellerRoleSupport;
 import org.jarina.ui.modeller.auth.UserContext;
 import org.jarina.ui.modeller.dto.SyncLogResponse;
 import org.jarina.ui.modeller.dto.WorkspaceResponse;
@@ -41,30 +42,41 @@ public class AdminWorkspaceService {
     }
 
     public List<WorkspaceResponse> listAll(Authentication authentication) {
+        requireWorkspaceAdmin(authentication);
         return manager.allWorkspaces().stream()
                 .map(w -> new WorkspaceResponse(w.id(), w.selections(), w.owner(), w.createdAt(), w.lastAccessedAt(), false))
                 .toList();
     }
 
     public void delete(String workspaceId, Authentication authentication) {
-        UserContext user = UserContext.from(authentication);
+        UserContext user = requireWorkspaceAdmin(authentication);
         Workspace workspace = manager.workspace(workspaceId);
         manager.deleteWorkspace(workspaceId);
         logs.log("INFO", user.username(), "ADMIN_DELETE_WORKSPACE", workspace.id() + " (" + workspace.owner() + ")", workspace.id());
     }
 
     public int setCleanupTtlHours(int hours, Authentication authentication) {
-        UserContext user = UserContext.from(authentication);
+        UserContext user = requireWorkspaceAdmin(authentication);
         manager.setCleanupTtlHours(hours);
         logs.log("INFO", user.username(), "ADMIN_SET_CLEANUP_TTL", hours + "h", null);
         return hours;
     }
 
     public int cleanupTtlHours(Authentication authentication) {
+        requireWorkspaceAdmin(authentication);
         return manager.getCleanupTtlHours();
     }
 
     public List<SyncLogResponse> syncLogs(int limit, Authentication authentication) {
+        requireWorkspaceAdmin(authentication);
         return logs.latest(limit);
+    }
+
+    private static UserContext requireWorkspaceAdmin(Authentication authentication) {
+        UserContext user = UserContext.from(authentication);
+        if (!user.hasWorkspaceAdmin())
+            throw new org.jarina.ui.modeller.auth.ForbiddenException(
+                    "Access denied: " + ModellerRoleSupport.WORKSPACE_ADMIN + " role required");
+        return user;
     }
 }

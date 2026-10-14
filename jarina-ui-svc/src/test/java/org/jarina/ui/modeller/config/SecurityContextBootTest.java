@@ -18,7 +18,7 @@
 package org.jarina.ui.modeller.config;
 
 import org.junit.jupiter.api.Test;
-import org.jarina.ui.modeller.auth.ModellerRole;
+import org.jarina.ui.modeller.auth.DomainRole;
 import org.jarina.ui.modeller.auth.UserContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -49,21 +49,21 @@ class SecurityContextBootTest {
     }
 
     @Test
-    void jwtAuthenticationConverterMapsRealmAccessRoles() {
+    void jwtAuthenticationConverterMapsRealmAndResourceAccessRoles() {
         Jwt jwt = Jwt.withTokenValue("jwt-value")
                 .header("alg", "none")
                 .claim("preferred_username", "de_admin")
-                .claim("realm_access", Map.of("roles", List.of("ADMIN")))
+                .claim("realm_access", Map.of("roles", List.of("WORKSPACE_ADMIN", "finance:EDITOR")))
                 .claim("resource_access", Map.of("jarina-ui-client",
-                        Map.of("roles", List.of("VIEWER"))))
+                        Map.of("roles", List.of("viewer"))))
                 .build();
 
         var authentication = jwtAuthenticationConverter.convert(jwt);
 
         assertThat(authentication.getAuthorities())
                 .extracting("authority")
-                .contains("ROLE_ADMIN", "ADMIN",
-                        "ROLE_VIEWER");
+                .contains("ROLE_WORKSPACE_ADMIN", "WORKSPACE_ADMIN", "finance:EDITOR",
+                        "ROLE_finance:EDITOR", "ROLE_viewer", "viewer");
     }
 
     @Test
@@ -76,13 +76,14 @@ class SecurityContextBootTest {
     }
 
     @Test
-    void userContextResolvesIdentityFromBearerJwt() {
+    void userContextResolvesIdentityAndDomainsFromBearerJwt() {
         Jwt jwt = Jwt.withTokenValue("jwt-value")
                 .header("alg", "none")
                 .claim("preferred_username", "de_editor")
                 .claim("name", "Demo Editor")
                 .claim("email", "editor@jarina.test")
-                .claim("realm_access", Map.of("roles", List.of("EDITOR")))
+                .claim("realm_access", Map.of("roles", List.of(
+                        "finance:EDITOR", "marketing:CONTROL", "hr:VIEWER", "WORKSPACE_ADMIN")))
                 .build();
         Authentication authentication = jwtAuthenticationConverter.convert(jwt);
 
@@ -91,7 +92,20 @@ class SecurityContextBootTest {
         assertThat(user.username()).isEqualTo("de_editor");
         assertThat(user.name()).isEqualTo("Demo Editor");
         assertThat(user.email()).isEqualTo("editor@jarina.test");
-        assertThat(user.roles()).contains("EDITOR");
-        assertThat(user.effectiveRole()).isEqualTo(ModellerRole.EDITOR);
+        assertThat(user.roles()).contains("finance:EDITOR", "marketing:CONTROL", "hr:VIEWER", "WORKSPACE_ADMIN");
+        assertThat(user.domainRolesOf()).containsEntry("finance", java.util.Set.of(DomainRole.EDITOR));
+        assertThat(user.domainRolesOf()).containsEntry("marketing", java.util.Set.of(DomainRole.CONTROL));
+        assertThat(user.domainRolesOf()).containsEntry("hr", java.util.Set.of(DomainRole.VIEWER));
+        assertThat(user.domains())
+                .containsEntry("finance", "EDITOR")
+                .containsEntry("marketing", "CONTROL")
+                .containsEntry("hr", "VIEWER");
+        assertThat(user.hasDomainRole("finance", DomainRole.EDITOR)).isTrue();
+        assertThat(user.hasDomainRole("finance", DomainRole.CONTROL)).isFalse();
+        assertThat(user.hasDomainRole("marketing", DomainRole.CONTROL)).isTrue();
+        assertThat(user.hasAnyDomainRole(DomainRole.CONTROL)).isTrue();
+        assertThat(user.hasWorkspaceAdmin()).isTrue();
+        assertThat(user.isAllowedDomain("finance")).isTrue();
+        assertThat(user.isAllowedDomain("security")).isFalse();
     }
 }

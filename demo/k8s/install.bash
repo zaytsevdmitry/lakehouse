@@ -36,10 +36,10 @@ load_image_if_missing() {
 }
 
 # Load only missing images
-load_image_if_missing "jarina:0.11.0"
-load_image_if_missing "jarina-s3-check:0.11.0"
-load_image_if_missing "jarina-hms:0.11.0"
-load_image_if_missing "jarina-spark-aws:0.11.0"
+load_image_if_missing "jarina:0.12.0"
+load_image_if_missing "jarina-s3-check:0.12.0"
+load_image_if_missing "jarina-hms:0.12.0"
+load_image_if_missing "jarina-spark-aws:0.12.0"
 
 echo -e "\e[34mAll jarina images processed\e[0m"
 
@@ -49,6 +49,8 @@ helm install jarina-release ./jarina-management-helm-charts/jarina-management --
 kubectl -n jarina-management get pods -o custom-columns="NAME:.metadata.name,STATUS:.status.phase,TASK-NAME:.metadata.annotations.jarina-management-task"
 
 bash ./bootstrap-configs.bash
+/etc/profile.d via Read/Glob.
+
 
 kubectl -n jarina-management get pods -o custom-columns="NAME:.metadata.name,STATUS:.status.phase,TASK-NAME:.metadata.annotations.jarina-management-task"
 

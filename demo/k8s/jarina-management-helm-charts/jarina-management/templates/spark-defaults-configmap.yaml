@@ -77,7 +77,7 @@ data:
     spark.driver.host=$(POD_IP)
     spark.kubernetes.authenticate.driver.serviceAccountName=spark-driver-sa
     spark.kubernetes.authenticate.executor.serviceAccountName=spark-driver-sa
-    spark.kubernetes.container.image=jarina-spark-aws:0.11.0
+    spark.kubernetes.container.image=jarina-spark-aws:0.12.0
     spark.kubernetes.executor.deleteOnTermination=true
     spark.kubernetes.namespace={{ .Release.Namespace }}
     spark.kubernetes.file.upload.path=file:///tmp
