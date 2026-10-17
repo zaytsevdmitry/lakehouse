@@ -44,11 +44,25 @@ class ModellerRoleSupportTest {
     }
 
     @Test
-    void domainIsKeptVerbatimAndRolesMatchCaseInsensitively() {
+    void domainIsCanonicalizedToLowerCaseAndRolesMatchCaseInsensitively() {
         assertThat(ModellerRoleSupport.domains(Set.of("FINANCE:editor")))
-                .isEqualTo(Map.of("FINANCE", Set.of(DomainRole.EDITOR)));
+                .isEqualTo(Map.of("finance", Set.of(DomainRole.EDITOR)));
         assertThat(ModellerRoleSupport.domains(Set.of("  Finance :  Control  ")))
-                .containsEntry("Finance", Set.of(DomainRole.CONTROL));
+                .containsEntry("finance", Set.of(DomainRole.CONTROL));
+    }
+
+    @Test
+    void differentCasingOfTheSameDomainIsMerged() {
+        assertThat(ModellerRoleSupport.domains(Set.of("Analytics:CONTROL", "analytics:EDITOR")))
+                .isEqualTo(Map.of("analytics", Set.of(DomainRole.EDITOR, DomainRole.CONTROL)));
+    }
+
+    @Test
+    void canonicalDomainTrimsAndLowerCases() {
+        assertThat(ModellerRoleSupport.canonicalDomain("  Finance  ")).isEqualTo("finance");
+        assertThat(ModellerRoleSupport.canonicalDomain("")).isNull();
+        assertThat(ModellerRoleSupport.canonicalDomain("   ")).isNull();
+        assertThat(ModellerRoleSupport.canonicalDomain(null)).isNull();
     }
 
     @Test
@@ -69,16 +83,6 @@ class ModellerRoleSupportTest {
     void malformedDomainRolesAreIgnored() {
         assertThat(ModellerRoleSupport.domains(Set.of("", "   ", ":EDITOR", "finance:", "finance:BOSS")))
                 .isEmpty();
-    }
-
-    @Test
-    void displayLabelPrecedenceIsControlOverEditorOverViewer() {
-        assertThat(ModellerRoleSupport.displayLabel(null)).isNull();
-        assertThat(ModellerRoleSupport.displayLabel(Set.of())).isNull();
-        assertThat(ModellerRoleSupport.displayLabel(Set.of(DomainRole.VIEWER))).isEqualTo("VIEWER");
-        assertThat(ModellerRoleSupport.displayLabel(Set.of(DomainRole.VIEWER, DomainRole.EDITOR))).isEqualTo("EDITOR");
-        assertThat(ModellerRoleSupport.displayLabel(
-                Set.of(DomainRole.VIEWER, DomainRole.EDITOR, DomainRole.CONTROL))).isEqualTo("CONTROL");
     }
 
     @Test

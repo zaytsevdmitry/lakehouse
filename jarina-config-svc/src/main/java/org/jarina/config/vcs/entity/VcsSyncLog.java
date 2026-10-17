@@ -79,7 +79,7 @@ public class VcsSyncLog {
         this.syncDateTime = syncDateTime;
         this.status = status;
         this.domainKeyName = domainKeyName == null || domainKeyName.isBlank() ? DEFAULT_DOMAIN : domainKeyName;
-        this.errorMessage = errorMessage;
+        setErrorMessage(errorMessage);
     }
 
     public String getDomainKeyName() {
@@ -127,8 +127,18 @@ public class VcsSyncLog {
     }
 
     public void setErrorMessage(String errorMessage) {
-        this.errorMessage = errorMessage;
+        if (errorMessage == null) {
+            this.errorMessage = null;
+            return;
+        }
+
+        // Safety 4000  Unicode-symbols (code points)
+        this.errorMessage = errorMessage.codePoints()
+                .limit(4000)
+                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+                .toString();
     }
+
 
     @Override
     public boolean equals(Object o) {

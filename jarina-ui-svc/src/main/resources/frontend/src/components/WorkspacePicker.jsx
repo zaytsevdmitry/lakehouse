@@ -11,7 +11,7 @@ export default function WorkspacePicker({ profile, onOpen, onNotice, defaultView
   const [working, setWorking] = useState(false);
 
   const canCreateBranch = Object.values(profile.domains || {}).some(
-    (role) => String(role || '').includes('EDITOR')
+    (capabilities) => Boolean(capabilities && capabilities.editor)
   );
 
   const load = useCallback(async () => {

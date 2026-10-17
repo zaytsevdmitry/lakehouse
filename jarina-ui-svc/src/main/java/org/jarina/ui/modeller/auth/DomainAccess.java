@@ -46,9 +46,11 @@ public final class DomainAccess {
      */
     public static Set<String> allowedDomains(UserContext user, Collection<String> knownDomains, String endpoint) {
         Set<String> known = new LinkedHashSet<>();
-        for (String domain : knownDomains)
-            if (domain != null)
-                known.add(domain);
+        for (String domain : knownDomains) {
+            String canonical = ModellerRoleSupport.canonicalDomain(domain);
+            if (canonical != null)
+                known.add(canonical);
+        }
         Set<String> allowed = new LinkedHashSet<>();
         for (String domain : user.sortedDomains()) {
             if (known.contains(domain)) {

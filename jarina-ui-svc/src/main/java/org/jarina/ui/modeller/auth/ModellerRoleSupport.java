@@ -19,6 +19,7 @@ package org.jarina.ui.modeller.auth;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -27,9 +28,11 @@ import java.util.Set;
  * <p>
  * Domain-specific access is carried by realm roles of the form
  * {@code <domain>:<ROLE>} (for example {@code finance:EDITOR},
- * {@code marketing:CONTROL}, {@code hr:VIEWER}). The domain is kept verbatim
- * (only surrounding whitespace is trimmed and matching is case-sensitive), the
- * role part is matched case-insensitively.
+ * {@code marketing:CONTROL}, {@code hr:VIEWER}). The role part is matched
+ * case-insensitively. The domain is a case-insensitive identifier: it is
+ * canonicalized to lower case at every boundary (role parsing and configuration
+ * keys) so that {@code Analytics:EDITOR} and {@code analytics:EDITOR} refer to
+ * the same domain.
  * <p>
  * Global (non-domain) roles such as {@code WORKSPACE_ADMIN} carry no colon and
  * are not part of the domain map; they are handled separately through the Spring
@@ -43,8 +46,20 @@ public final class ModellerRoleSupport {
     }
 
     /**
-     * Splits the given raw role set into a map of domain to the full set of
-     * {@link DomainRole roles} granted for that domain. Roles without the
+     * Canonical form of a domain name used as an identifier everywhere: trimmed
+     * and lower-cased with the root locale. {@code null} and blank inputs map to
+     * {@code null}.
+     */
+    public static String canonicalDomain(String domain) {
+        if (domain == null)
+            return null;
+        String trimmed = domain.trim();
+        return trimmed.isEmpty() ? null : trimmed.toLowerCase(Locale.ROOT);
+    }
+
+    /**
+     * Splits the given raw role set into a map of canonical domain to the full set
+     * of {@link DomainRole roles} granted for that domain. Roles without the
      * {@code domain:} prefix (including {@code WORKSPACE_ADMIN}) are ignored and
      * never appear in the result.
      */
@@ -59,8 +74,8 @@ public final class ModellerRoleSupport {
             int colon = normalized.lastIndexOf(':');
             if (colon <= 0 || colon == normalized.length() - 1)
                 continue;
-            String domain = normalized.substring(0, colon).trim();
-            if (domain.isEmpty())
+            String domain = canonicalDomain(normalized.substring(0, colon));
+            if (domain == null)
                 continue;
             DomainRole level = DomainRole.parse(normalized.substring(colon + 1));
             if (level == null)
@@ -68,19 +83,5 @@ public final class ModellerRoleSupport {
             result.computeIfAbsent(domain, ignored -> new LinkedHashSet<>()).add(level);
         }
         return result;
-    }
-
-    /**
-     * Collapses the roles of a single domain to the label shown by the UI, with
-     * precedence {@code CONTROL > EDITOR > VIEWER}.
-     */
-    public static String displayLabel(Set<DomainRole> domainRoles) {
-        if (domainRoles == null || domainRoles.isEmpty())
-            return null;
-        if (domainRoles.contains(DomainRole.CONTROL))
-            return DomainRole.CONTROL.name();
-        if (domainRoles.contains(DomainRole.EDITOR))
-            return DomainRole.EDITOR.name();
-        return DomainRole.VIEWER.name();
     }
 }

@@ -17,6 +17,8 @@
 
 package org.jarina.ui.modeller.config;
 
+import jakarta.annotation.PostConstruct;
+import org.jarina.ui.modeller.auth.ModellerRoleSupport;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.ArrayList;
@@ -77,6 +79,32 @@ public class ModellerProperties {
     public void setVcsSystemAccount(SystemAccount vcsSystemAccount) { this.vcsSystemAccount = vcsSystemAccount; }
     public Logging getLogging() { return logging; }
     public void setLogging(Logging logging) { this.logging = logging; }
+
+    /**
+     * Canonicalizes the configured domain keys to lower case (the same canonical
+     * form used for the domain part of {@code <domain>:<ROLE>} realm roles) and
+     * fails fast when two configured domains collide case-insensitively.
+     */
+    @PostConstruct
+    void normalizeDomains() {
+        if (domains == null || domains.isEmpty())
+            return;
+        Map<String, DomainVcs> normalized = new LinkedHashMap<>();
+        Map<String, String> originalKeys = new LinkedHashMap<>();
+        for (Map.Entry<String, DomainVcs> entry : domains.entrySet()) {
+            String canonical = ModellerRoleSupport.canonicalDomain(entry.getKey());
+            if (canonical == null)
+                throw new IllegalStateException(
+                        "Invalid domain name '" + entry.getKey() + "' in jarina.modeller.domains");
+            String previous = originalKeys.putIfAbsent(canonical, entry.getKey());
+            if (previous != null)
+                throw new IllegalStateException("Duplicate domain after case-insensitive normalization: '"
+                        + previous + "' and '" + entry.getKey() + "' both map to '" + canonical
+                        + "' (jarina.modeller.domains)");
+            normalized.put(canonical, entry.getValue());
+        }
+        domains = normalized;
+    }
 
     public static class Storage {
         private String type = "local";
@@ -153,7 +181,7 @@ public class ModellerProperties {
      * configured, otherwise the legacy global {@code git.remote-url}.
      */
     public String domainRemoteUrl(String domain) {
-        DomainVcs domainVcs = domain == null ? null : domains == null ? null : domains.get(domain);
+        DomainVcs domainVcs = domains == null ? null : domains.get(ModellerRoleSupport.canonicalDomain(domain));
         if (domainVcs != null && domainVcs.getRepositoryUrl() != null && !domainVcs.getRepositoryUrl().isBlank())
             return domainVcs.getRepositoryUrl();
         return git == null ? null : git.getRemoteUrl();
@@ -164,7 +192,7 @@ public class ModellerProperties {
      * configured, otherwise the legacy global {@code git.branch-main}.
      */
     public String domainBranchMain(String domain) {
-        DomainVcs domainVcs = domain == null ? null : domains == null ? null : domains.get(domain);
+        DomainVcs domainVcs = domains == null ? null : domains.get(ModellerRoleSupport.canonicalDomain(domain));
         if (domainVcs != null && domainVcs.getBranchMain() != null && !domainVcs.getBranchMain().isBlank())
             return domainVcs.getBranchMain();
         return git == null || git.getBranchMain() == null ? "main" : git.getBranchMain();

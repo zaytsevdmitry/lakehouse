@@ -52,7 +52,7 @@ export default function EditorView({ profile, workspace, onBack, onNotice }) {
   const selectedPath = selected
     ? selected.path
     : selectedFolder || (selections[0] ? folderOf(selections[0]) : '');
-  const readOnly = !String((profile.domains || {})[domainOfPath(selectedPath)] || '').includes('EDITOR');
+  const readOnly = !((profile.domains || {})[domainOfPath(selectedPath)] || {}).editor;
 
   // The server resolves an empty target directory to the domain root that owns the
   // moved path (or the first selected domain for new folders), so mirror that here

@@ -45,7 +45,7 @@ public class UserController {
         List<String> roles = new ArrayList<>(user.roles() == null ? List.of() : user.roles());
         roles.sort(Comparator.naturalOrder());
         profile.put("roles", roles);
-        profile.put("domains", user.domains());
+        profile.put("domains", user.domainCapabilities());
         return profile;
     }
 }

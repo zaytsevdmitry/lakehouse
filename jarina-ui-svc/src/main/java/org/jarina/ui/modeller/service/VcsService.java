@@ -19,6 +19,7 @@ package org.jarina.ui.modeller.service;
 
 import org.jarina.ui.modeller.auth.DomainRole;
 import org.jarina.ui.modeller.auth.ForbiddenException;
+import org.jarina.ui.modeller.auth.ModellerRoleSupport;
 import org.jarina.ui.modeller.auth.UserContext;
 import org.jarina.ui.modeller.config.ModellerProperties;
 import org.jarina.ui.modeller.dto.CreateBranchRequest;
@@ -180,11 +181,12 @@ public class VcsService {
         UserContext user = UserContext.from(authentication);
         if (request == null || request.branch() == null || request.branch().isBlank())
             throw new IllegalArgumentException("branch is required");
-        if (request.domain() == null || request.domain().isBlank())
+        String domain = ModellerRoleSupport.canonicalDomain(request.domain());
+        if (domain == null)
             throw new IllegalArgumentException("domain is required");
-        requireDomainRole(user, request.domain(), "EDITOR");
-        vcs.createBranch(request.domain(), request.branch(), request.baseBranch());
-        logs.log("INFO", user.username(), "CREATE_BRANCH", request.domain() + "/" + request.branch(), null);
+        requireDomainRole(user, domain, "EDITOR");
+        vcs.createBranch(domain, request.branch(), request.baseBranch());
+        logs.log("INFO", user.username(), "CREATE_BRANCH", domain + "/" + request.branch(), null);
         return request.branch();
     }
 

@@ -26,7 +26,7 @@
       "emailVerified": true,
       "requiredActions": [],
       "credentials": [{ "type": "password", "value": "analytics_user", "temporary": false }],
-      "realmRoles": ["analytics:EDITOR", "platform:VIEWER", "processing:VIEWER"]
+      "realmRoles": ["analytics:CONTROL","analytics:EDITOR", "platform:VIEWER", "processing:VIEWER"]
     },
     {
       "username": "platform_user",

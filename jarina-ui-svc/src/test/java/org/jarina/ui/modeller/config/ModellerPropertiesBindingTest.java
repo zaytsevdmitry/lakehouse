@@ -25,9 +25,12 @@ import org.springframework.core.env.PropertySource;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.ClassPathResource;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ModellerPropertiesBindingTest {
 
@@ -77,5 +80,37 @@ class ModellerPropertiesBindingTest {
         // unknown domains fall back to the legacy single-repository settings
         assertThat(properties.domainRemoteUrl("unknown")).isEqualTo("git://legacy.git");
         assertThat(properties.domainBranchMain("unknown")).isEqualTo("legacy");
+    }
+
+    @Test
+    void configuredDomainsAreCanonicalizedToLowerCase() {
+        ModellerProperties properties = new ModellerProperties();
+        ModellerProperties.DomainVcs vcs = new ModellerProperties.DomainVcs();
+        vcs.setRepositoryUrl("git://analytics.git");
+        vcs.setBranchMain("main");
+        Map<String, ModellerProperties.DomainVcs> domains = new LinkedHashMap<>();
+        domains.put("Analytics", vcs);
+        properties.setDomains(domains);
+
+        properties.normalizeDomains();
+
+        assertThat(properties.getDomains()).containsOnlyKeys("analytics");
+        assertThat(properties.domainNames()).containsExactly("analytics");
+        // lookups are canonicalized too
+        assertThat(properties.domainRemoteUrl("ANALYTICS")).isEqualTo("git://analytics.git");
+        assertThat(properties.domainBranchMain(" analytics ")).isEqualTo("main");
+    }
+
+    @Test
+    void collidingDomainsAfterNormalizationFailFast() {
+        ModellerProperties properties = new ModellerProperties();
+        Map<String, ModellerProperties.DomainVcs> domains = new LinkedHashMap<>();
+        domains.put("analytics", new ModellerProperties.DomainVcs());
+        domains.put("Analytics", new ModellerProperties.DomainVcs());
+        properties.setDomains(domains);
+
+        assertThatThrownBy(properties::normalizeDomains)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Duplicate domain");
     }
 }
