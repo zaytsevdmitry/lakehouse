@@ -31,6 +31,7 @@ import org.jarina.client.rest.exception.ScriptBuildException;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 
 
 public interface ConfigRestClientApi {
@@ -63,6 +64,21 @@ public interface ConfigRestClientApi {
     SourceConfDTO getSourceConfDTO(String dataSetKeyName);
 
     String getDataSetModelScript(String dataSetKeyName);
+
+    /**
+     * Get all global variables of the complex.
+     *
+     * @return map of global variable names to their values
+     */
+    Map<String, String> getGlobalVars();
+
+    /**
+     * Get the value of a single global variable by its key.
+     *
+     * @param key name of the global variable
+     * @return value of the global variable
+     */
+    String getGlobalVar(String key);
 
     List<DriverDTO> getDriverDTOList();
 

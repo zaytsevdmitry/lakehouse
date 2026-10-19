@@ -251,6 +251,20 @@ describe('EditorView multi-domain workspace', () => {
     await new Promise((resolve) => { setTimeout(resolve, 1300); });
     expect(onBack).toHaveBeenCalled();
   });
+
+  it('reports the domains skipped for a missing EDITOR role', async () => {
+    reviewResult = { status: 'OK', url: 'https://git/merge/1', skippedDomains: ['analytics'] };
+    const { onNotice } = await renderEditor();
+
+    fireEvent.click(await screen.findByRole('button', { name: /platform/ }));
+    await openFile('orders');
+    fireEvent.click(screen.getByRole('button', { name: 'Submit review' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Submit' }));
+
+    await waitFor(() =>
+      expect(onNotice).toHaveBeenCalledWith('success',
+        expect.stringContaining('Skipped (no EDITOR role): analytics')));
+  });
 });
 
 describe('EditorView document switch', () => {

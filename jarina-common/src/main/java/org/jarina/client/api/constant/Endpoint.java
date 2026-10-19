@@ -28,6 +28,9 @@ public class Endpoint {
     public final static String SCRIPTS = CONFIGS + "/scripts";
     public final static String SCRIPT_BY_KEY = CONFIGS + "/scripts/{key}";
 
+    public final static String GLOBAL_VARS = CONFIGS + "/gvars";
+    public final static String GLOBAL_VARS_NAME = GLOBAL_VARS + "/{key}";
+
     public final static String DATA_SETS = CONFIGS + "/datasets";
     public final static String DATA_SETS_NAME = DATA_SETS + "/{keyName}";
     public final static String DATA_LINEAGE_DATASET = CONFIGS + "/lineage/datasets/{keyName}";

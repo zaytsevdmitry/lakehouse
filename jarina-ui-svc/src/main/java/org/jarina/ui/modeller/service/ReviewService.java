@@ -66,23 +66,34 @@ public class ReviewService {
         Workspace workspace = manager.workspace(workspaceId);
         if (!workspace.isOwner(user.username()))
             throw new ForbiddenException("Workspace " + workspaceId + " belongs to " + workspace.owner());
-        for (BranchSelection selection : workspace.selections())
-            if (!user.hasDomainRole(selection.domain(), DomainRole.EDITOR))
-                throw new ForbiddenException("Access denied: EDITOR role required for domain '"
-                        + selection.domain() + "'");
-        return manager.synchronizedOn(workspaceId, () -> doSubmit(workspace, request, user));
+        List<BranchSelection> editable = new ArrayList<>();
+        List<String> skipped = new ArrayList<>();
+        for (BranchSelection selection : workspace.selections()) {
+            if (user.hasDomainRole(selection.domain(), DomainRole.EDITOR))
+                editable.add(selection);
+            else if (!skipped.contains(selection.domain()))
+                skipped.add(selection.domain());
+        }
+        if (editable.isEmpty())
+            throw new ForbiddenException("Access denied: EDITOR role required for domains: "
+                    + String.join(", ", skipped));
+        return manager.synchronizedOn(workspaceId, () -> doSubmit(workspace, request, user, editable, skipped));
     }
 
-    private ReviewResponse doSubmit(Workspace workspace, ReviewRequest request, UserContext user) {
+    private ReviewResponse doSubmit(Workspace workspace, ReviewRequest request, UserContext user,
+                                    List<BranchSelection> editable, List<String> skipped) {
         if (request == null)
             throw new IllegalArgumentException("Review request is required");
+        if (!skipped.isEmpty())
+            logs.log("INFO", user.username(), "REVIEW",
+                    "skipped domains without EDITOR role: " + String.join(", ", skipped), workspace.id());
         Map<String, String> allFiles = reconcile(storage.readAll(workspace.id()));
         validateSelectionPaths(workspace, allFiles.keySet());
         List<String> pushed = new ArrayList<>();
         List<String> urls = new ArrayList<>();
         int changedDomains = 0;
         try {
-            for (BranchSelection selection : workspace.selections()) {
+            for (BranchSelection selection : editable) {
                 Map<String, String> domainFiles = filesOfSelection(selection, allFiles);
                 String defaultMessage = "Modeller review: " + selection.folder();
                 VcsReviewSubmission submission = new VcsReviewSubmission(
@@ -109,9 +120,10 @@ public class ReviewService {
                                 ? "" : " -> " + result.url()), workspace.id());
             }
             if (changedDomains == 0)
-                return new ReviewResponse("NO_CHANGES", null, pushed);
+                return new ReviewResponse("NO_CHANGES", null, pushed, skipped);
             manager.deleteWorkspace(workspace.id());
-            return new ReviewResponse("OK", urls.size() == 1 ? urls.get(0) : String.join(", ", urls), pushed);
+            return new ReviewResponse("OK", urls.size() == 1 ? urls.get(0) : String.join(", ", urls),
+                    pushed, skipped);
         } catch (VcsProviderException e) {
             logs.log("ERROR", user.username(), "REVIEW", e.getMessage(), workspace.id());
             throw e;

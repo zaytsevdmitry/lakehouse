@@ -9,8 +9,19 @@
         </encoder>
     </appender>
 
+    <springProperty scope="context" name="auditLogFile" source="jarina.security.audit.log-file" defaultValue="logs/audit.log"/>
+
+    <appender name="AUDIT_FILE" class="ch.qos.logback.core.FileAppender">
+        <file>${auditLogFile}</file>
+        <append>true</append>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %msg%n</pattern>
+        </encoder>
+    </appender>
+
     <logger name="AUDIT_LOG" level="INFO" additivity="false">
         <appender-ref ref="AUDIT_CONSOLE_JSON"/>
+        <appender-ref ref="AUDIT_FILE"/>
     </logger>
 
     <root level="INFO">

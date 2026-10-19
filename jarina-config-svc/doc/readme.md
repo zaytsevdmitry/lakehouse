@@ -348,7 +348,7 @@ Application parameters (datasource, JPA, Kafka schedule publishing settings, hea
 
 ### Audit logging
 
-`AuditLoggingFilter` writes one line per request to the `AUDIT_LOG` logger (file `logs/audit.log`):
+`AuditLoggingFilter` writes one line per request to the `AUDIT_LOG` logger (file `logs/audit.log`, override with `jarina.security.audit.log-file`):
 
 ```
 User ID: <subject>, Username: <preferred_username>, Method: <method>, URI: <uri>, HTTP status: <status>
@@ -364,6 +364,7 @@ Tokens obtained with the service account are logged with the configured `jarina.
 | `KEYCLOAK_INTERNAL_CLIENT_SECRET` | `super-secret-internal-key-987654321` | Secret of `jarina-internal-client` |
 | `jarina.security.enabled` | `true` | Set `false` to disable security completely |
 | `jarina.security.audit.service-account-name` | `system` | Username logged for service account tokens |
+| `jarina.security.audit.log-file` | `logs/audit.log` | Audit log file path (created on start-up, relative paths are resolved against the working directory) |
 | `jarina.security.oauth2.internal-client-id` | `jarina-internal-client` | Client identifying service account tokens (`azp` claim) |
 | `jarina.security.oauth2.client-registration-id` | `keycloak-internal` | OAuth2 client registration used by the interceptor |
 

@@ -240,12 +240,15 @@ export default function EditorView({ profile, workspace, onBack, onNotice }) {
         body: { comment, commitMessage },
       });
       setReviewModal(false);
+      const skipped = (resp.skippedDomains || []).length
+        ? ` Skipped (no EDITOR role): ${resp.skippedDomains.join(', ')}.`
+        : '';
       if (resp.status === 'NO_CHANGES') {
-        onNotice('success', 'No changes to submit — the workspace stays open.');
+        onNotice('success', `No changes to submit — the workspace stays open.${skipped}`);
         return;
       }
       setDirty(false);
-      onNotice('success', `Review submitted: ${resp.status}${resp.url ? ` — ${resp.url}` : ''}`);
+      onNotice('success', `Review submitted: ${resp.status}${resp.url ? ` — ${resp.url}` : ''}${skipped}`);
       window.setTimeout(onBack, 1200);
     } catch (e) {
       const gone = workspaceGone(e.message);

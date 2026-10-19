@@ -173,6 +173,16 @@ public class ConfigRestClientApiTest extends ConfigRestClientApiAbstract {
                 .collect(Collectors.joining(SystemVarKeys.SCRIPT_DELIMITER));
     }
 
+    @Override
+    public Map<String, String> getGlobalVars() {
+        return Map.of();
+    }
+
+    @Override
+    public String getGlobalVar(String key) {
+        return getGlobalVars().get(key);
+    }
+
 
     @Override
     public List<DriverDTO> getDriverDTOList() {

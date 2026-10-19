@@ -47,6 +47,10 @@ jarina:
   security:
     enabled: true
   config:
+    # Global variables of the complex: a flat key-value space served by GET /v1_0/configs/gvars.
+    # Declared either here (jarina.config.gvars.<key>: <value>) or through the environment
+    # (JARINA_CONFIG_GVARS_<KEY>=<value>); bound once at start-up and cached in memory.
+    gvars: {}
     produce:
       delay-ms: 10000
       initial-delay-ms: 20000

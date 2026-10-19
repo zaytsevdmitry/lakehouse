@@ -34,6 +34,8 @@ import org.jarina.task.executor.spark.api.service.CatalogActivatorService;
 import org.jarina.taskexecutor.api.datasource.DataSourceManipulator;
 import org.jarina.taskexecutor.spark.dataset.datasourcemanipulator.SparkDataSourceManipulatorFactory;
 
+import java.util.HashMap;
+
 public class DataManipulators {
     public static DataSourceManipulator getIcebergDataSourceManipulator(
             SQLTemplateFactory sqlTemplateFactory,
@@ -42,7 +44,7 @@ public class DataManipulators {
             String dataSetKeyName,
             ConfigRestClientApi configRestClientApi) throws TaskConfigurationException, JacksonException {
         SourceConfDTO sourceConfDTO = configRestClientApi.getSourceConfDTO(scheduledTaskDTO.getDataSetKeyName());
-        JinJavaUtils jinJavaUtils = JinJavaFactory.getJinJavaUtils(sourceConfDTO,scheduledTaskDTO);
+        JinJavaUtils jinJavaUtils = JinJavaFactory.getJinJavaUtils(new HashMap<>(),sourceConfDTO,scheduledTaskDTO);
         SparkDataSourceManipulatorFactory manipulatorFactory =
                 new SparkDataSourceManipulatorFactory(sparkSession);
         DataSetDTO dataSetDTO = sourceConfDTO.getDataSets().get(dataSetKeyName);

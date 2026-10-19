@@ -346,7 +346,7 @@ Java-клиент (`ConfigRestClientApi`/`ConfigRestClientApiImpl`) для до�
 
 ### Аудит
 
-`AuditLoggingFilter` пишет одну строку на каждый запрос в логгер `AUDIT_LOG` (файл `logs/audit.log`):
+`AuditLoggingFilter` пишет одну строку на каждый запрос в логгер `AUDIT_LOG` (файл `logs/audit.log`, переопределяется свойством `jarina.security.audit.log-file`):
 
 ```
 User ID: <subject>, Username: <preferred_username>, Method: <method>, URI: <uri>, HTTP status: <status>
@@ -362,6 +362,7 @@ User ID: <subject>, Username: <preferred_username>, Method: <method>, URI: <uri>
 | `KEYCLOAK_INTERNAL_CLIENT_SECRET` | `super-secret-internal-key-987654321` | Секрет клиента `jarina-internal-client` |
 | `jarina.security.enabled` | `true` | `false` полностью отключает безопасность |
 | `jarina.security.audit.service-account-name` | `system` | Имя пользователя в аудите для service account токенов |
+| `jarina.security.audit.log-file` | `logs/audit.log` | Путь к файлу журнала аудита (создаётся при старте, относительные пути разрешаются относительно рабочей директории) |
 | `jarina.security.oauth2.internal-client-id` | `jarina-internal-client` | Клиент, идентифицирующий service account токены (claim `azp`) |
 | `jarina.security.oauth2.client-registration-id` | `keycloak-internal` | OAuth2-регистрация, используемая интерцептором |
 
