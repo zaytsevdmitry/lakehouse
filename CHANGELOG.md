@@ -1,5 +1,92 @@
 # Changelog
 
+## [1.0.0] — 2026-10-21
+
+Configuration domains were **extracted into a dedicated functionality** and Git support was
+**simplified** to a single implementation shared by `jarina-config-svc` and `jarina-ui-svc`.
+All domain parsing, canonicalization, ordering and validation now live in one place — the
+`jarina-domain-api` module — while the services only transport the raw properties.
+
+### Added
+
+#### Domains as a standalone functionality in `jarina-domain-api`
+
+- **Shared domain model** (`org.jarina.domain.settings`): `DomainSettings`
+  (`@ConfigurationProperties`, namespace `jarina.domains.<name>`), `GitProperties` and
+  `GitCredentialsSettings`. `DomainSettings` owns the whole domain tree: `rootDomains()`,
+  `nestedDomains(parent)`, `orderedDomains()` (depth-first, parents before children,
+  `priority` ascending, absent priority last, ties by name), `domainSettings(name)` (searches
+  the whole tree, so nested domains resolve by their leaf name), `hasRepository`, `branch` and
+  `buildSpec(domain, requireClonePath)` → `DomainVcsSpec`. `afterPropertiesSet()` canonicalizes
+  the domain keys and fails fast on case-insensitive collisions.
+- **New domain parameters**: the domain tree moved to the neutral `jarina.domains.<name>.*`
+  namespace, shared by every service:
+  - `jarina.domains.<name>.priority` — apply order within one level (ascending, absent = last);
+  - `jarina.domains.<name>.git.repository-url` — repository of the domain (a domain is active
+    iff this is set);
+  - `jarina.domains.<name>.git.branch` — tracked branch (default `main`);
+  - `jarina.domains.<name>.git.local-clone-path` — local clone owned by the service;
+  - `jarina.domains.<name>.git.credentials.auth-type` — `ssh` | `token` | `basic` (inferred:
+    `ssh` when a private key path is set, `token` when any credential is set, otherwise
+    anonymous access);
+  - `jarina.domains.<name>.git.credentials.ssh-private-key-path` / `.username` / `.token` /
+    `.password` — **per-domain credentials, no global account and no merge**;
+  - `jarina.domains.<name>.domains` — nested sub-domains.
+- **Scheduler cadence split out of the domain model**: the VCS sync cycle in
+  `jarina-config-svc` is parameterized by the Spring scheduler, not by a domain, and moved from
+  `jarina.config.vcs.git.sync.*` to `jarina.config.vcs.sync.{enabled, interval-ms,
+  initial-delay-ms}`.
+- **Canonical documentation**: new `jarina-domain-api/doc/readme.md` (+ `doc-ru/readme.md`)
+  describing the shared domain model; the `jarina-config-svc` and `jarina-ui-svc` documents now
+  summarize the service-specific concerns and link to it.
+
+### Changed
+
+#### Simplified Git support
+
+- **Single Git integration**: the transport-agnostic `VcsClient` SPI with one JGit
+  implementation (`GitVcsClient`) is the only VCS path; the previous `VcsProvider` abstraction
+  and the alternative API clients were removed, and `VcsException` is the single exception type.
+- **Host-key handling made headless-safe**: SSH transport now accepts every host key without any
+  interactive prompt (trust on first use, still persisted into `known_hosts` via
+  `OpenSshServerKeyDatabase`). Headless services no longer fail with
+  `TransportException: Server key did not validate` or block on the
+  `Accept and store this key?` prompt. The SSH session factory is now built with an explicit
+  `~/.ssh` directory and a `JGitKeyCache` (previously a `null` directory crashed the factory).
+
+#### Service changes
+
+- **`jarina-config-svc`**: `JarinaVCSProperties` is reduced to the sync settings;
+  `GitVcsClientFactory.create(domainName)` and `GitOpsScheduler` resolve domains through the
+  shared `DomainSettings`; `@EnableConfigurationProperties(DomainSettings.class)` registers the
+  bean.
+- **`jarina-ui-svc`**: `ModellerProperties` keeps only storage/auth/session/logging; the
+  modeller resolves repositories through `DomainSettings` (`ModellerVcsCatalog`), and all
+  consumers (`VcsService`, `ReviewService`, `CatalogService`, `ScheduleService`,
+  `VcsLogService`, `ModellerConfiguration`) use it.
+- **Compose demo**: `demo/compose/docker-compose.yaml` migrated to `jarina.domains.*` and
+  `jarina.config.vcs.sync.*`; the removed `system-account` / provider / legacy arguments dropped.
+- **Active catch logging**: every `catch` block in the VCS paths of `jarina-config-svc` and
+  `jarina-domain-api` now logs the error message **and** the full stack trace through SLF4J.
+- **Tests**: `GitOpsSchedulerUnitTest`, `GitVcsClientFactoryTest` and
+  `JarinaVCSPropertiesCredentialsTest` retargeted to `DomainSettings`; ui-svc tests
+  (`ModellerVcsCatalogTest`, `CatalogServiceTest`, `ScheduleServiceTest`, `ReviewServiceTest`,
+  `RbacEnforcementTest`, `ModellerPropertiesBindingTest`) updated; the legacy
+  `JarinaVCSPropertiesLegacyTest` removed. Backend totals remain 20 / 101 / 107 for
+  `jarina-domain-api` / `jarina-config-svc` / `jarina-ui-svc`.
+
+### Removed
+
+- **Global `system-account` credentials** (`jarina.config.vcs.system-account` and
+  `jarina.modeller.vcs-system-account`): credentials are declared per domain under
+  `jarina.domains.<name>.git.credentials.*`; an empty credential block means anonymous access.
+- **Legacy single-repository fallback**: the pre-domains `jarina.config.vcs.git.repository-url`
+  / `jarina.modeller.domains.*` / `jarina.modeller.git.remote-url` single-repository mode (and
+  the synthetic `default` domain) is gone — a domain exists only when declared with
+  `jarina.domains.<name>.git.repository-url`.
+- The `provider` selection property (`jarina.config.vcs.provider`,
+  `JARINA_VCS_PROVIDER`) and the obsolete `git.sync.*` / `domains.*` config-svc aliases.
+
 ## [0.12.0] — 2026-10-13
 
 Modelling access control moved from **global Keycloak roles to domain-driven RBAC**. Roles now
