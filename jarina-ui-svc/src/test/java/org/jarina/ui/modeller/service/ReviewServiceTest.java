@@ -19,14 +19,14 @@ package org.jarina.ui.modeller.service;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.jarina.ui.modeller.auth.UserContext;
-import org.jarina.ui.modeller.config.ModellerProperties;
+import org.jarina.domain.vcs.VcsClient;
+import org.jarina.domain.vcs.VcsReviewResult;
+import org.jarina.domain.vcs.VcsReviewSubmission;
+import org.jarina.domain.settings.DomainSettings;
+import org.jarina.ui.modeller.config.ModellerVcsCatalog;
 import org.jarina.ui.modeller.dto.ReviewRequest;
 import org.jarina.ui.modeller.dto.ReviewResponse;
 import org.jarina.ui.modeller.storage.LocalFsWorkspaceStorage;
-import org.jarina.ui.modeller.vcs.VcsProvider;
-import org.jarina.ui.modeller.vcs.VcsReviewResult;
-import org.jarina.ui.modeller.vcs.VcsReviewSubmission;
 import org.jarina.ui.modeller.workspace.BranchSelection;
 import org.jarina.ui.modeller.workspace.Workspace;
 import org.jarina.ui.modeller.workspace.WorkspaceManager;
@@ -58,31 +58,58 @@ class ReviewServiceTest {
     private final Map<String, VcsReviewResult> results = new LinkedHashMap<>();
 
     /** Records the submissions and answers with the status registered per domain/branch key. */
-    private final VcsProvider vcs = new VcsProvider() {
+    private final VcsClient vcs = new VcsClient() {
         @Override
-        public String name() {
-            return "local-git";
+        public void init() {
         }
 
         @Override
-        public Map<String, String> readBranchFiles(String domain, String branch) {
-            return Map.of();
+        public void pull() {
         }
 
         @Override
-        public List<String> listBranches(String domain) {
+        public String getCurrentCommitId() {
+            return null;
+        }
+
+        @Override
+        public List<org.jarina.domain.vcs.VcsDiffEntry> getDiff(String baseCommitId) {
             return List.of();
         }
 
         @Override
-        public void createBranch(String domain, String branch, String baseBranch) {
+        public java.util.Optional<String> readFileContent(String commitId, String path) {
+            return java.util.Optional.empty();
         }
 
         @Override
-        public VcsReviewResult submitReview(VcsReviewSubmission submission, UserContext user) {
+        public Map<String, String> readBranchFiles(String branch) {
+            return Map.of();
+        }
+
+        @Override
+        public List<String> listBranches() {
+            return List.of();
+        }
+
+        @Override
+        public void createBranch(String branch, String baseBranch) {
+        }
+
+        @Override
+        public VcsReviewResult submitReview(VcsReviewSubmission submission, String authorName,
+                                            String authorEmail) {
             submissions.add(submission);
             return results.getOrDefault(submission.domain() + "@" + submission.branch(),
                     VcsReviewResult.plainPushed("https://vcs/" + submission.domain() + "/merge/1"));
+        }
+    };
+
+    /** Every domain resolves to the recording client above. */
+    private final ModellerVcsCatalog catalog = new ModellerVcsCatalog(new DomainSettings()) {
+        @Override
+        public VcsClient clientFor(String domain) {
+            return vcs;
         }
     };
 
@@ -111,7 +138,7 @@ class ReviewServiceTest {
 
         // a file that escaped the generated selection folders must block the whole review
         storage.writeFile(workspace.id(), "stray/config/dataset/evil.yaml", "kind: DataSet\n");
-        ReviewService service = new ReviewService(manager, storage, vcs, new ModellerProperties(),
+        ReviewService service = new ReviewService(manager, storage, catalog, new DomainSettings(),
                 new SyncLogService(10));
 
         assertThatThrownBy(() -> service.submit(workspace.id(),
@@ -142,7 +169,7 @@ class ReviewServiceTest {
         WorkspaceManager manager = manager(storage, Map.of("platform", Map.of("config/namespace/ns.yaml", "kind: NameSpace\n")));
         Workspace workspace = manager.openWorkspace("alice", List.of(new BranchSelection("platform", "main")));
         results.put("platform@main", VcsReviewResult.noChanges());
-        ReviewService service = new ReviewService(manager, storage, vcs, new ModellerProperties(),
+        ReviewService service = new ReviewService(manager, storage, catalog, new DomainSettings(),
                 new SyncLogService(10));
 
         ReviewResponse response = service.submit(workspace.id(),
@@ -164,7 +191,7 @@ class ReviewServiceTest {
         Workspace workspace = manager.openWorkspace("alice",
                 List.of(new BranchSelection("platform", "main"), new BranchSelection("analytics", "dev")));
         results.put("analytics@dev", VcsReviewResult.noChanges());
-        ReviewService service = new ReviewService(manager, storage, vcs, new ModellerProperties(),
+        ReviewService service = new ReviewService(manager, storage, catalog, new DomainSettings(),
                 new SyncLogService(10));
 
         ReviewResponse response = service.submit(workspace.id(),
@@ -173,5 +200,50 @@ class ReviewServiceTest {
         assertThat(response.status()).isEqualTo("OK");
         assertThat(response.submittedFiles()).containsOnlyKeys("config/namespace/ns.yaml");
         assertThat(manager.exists(workspace.id())).isFalse();
+    }
+
+    @Test
+    void skipsDomainsWithoutEditorRoleAndSubmitsTheRest() {
+        LocalFsWorkspaceStorage storage = new LocalFsWorkspaceStorage(temp.toString());
+        Map<String, Map<String, String>> seed = Map.of(
+                "platform", Map.of("config/namespace/ns.yaml", "kind: NameSpace\n"),
+                "analytics", Map.of("config/dataset/ds.yaml", "kind: DataSet\n"));
+        WorkspaceManager manager = manager(storage, seed);
+        Workspace workspace = manager.openWorkspace("alice",
+                List.of(new BranchSelection("platform", "main"), new BranchSelection("analytics", "dev")));
+        ReviewService service = new ReviewService(manager, storage, catalog, new DomainSettings(),
+                new SyncLogService(10));
+
+        ReviewResponse response = service.submit(workspace.id(),
+                new ReviewRequest("commit", "comment"), authentication("alice", "platform:EDITOR", "analytics:VIEWER"));
+
+        assertThat(response.status()).isEqualTo("OK");
+        assertThat(response.skippedDomains()).containsExactly("analytics");
+        assertThat(response.submittedFiles()).containsOnlyKeys("config/namespace/ns.yaml");
+        assertThat(submissions).hasSize(1);
+        assertThat(submissions.get(0).domain()).isEqualTo("platform");
+        assertThat(submissions.get(0).files()).containsOnlyKeys("config/namespace/ns.yaml");
+        assertThat(manager.exists(workspace.id())).isFalse();
+    }
+
+    @Test
+    void rejectsTheReviewWhenNoSelectedDomainIsEditable() {
+        LocalFsWorkspaceStorage storage = new LocalFsWorkspaceStorage(temp.toString());
+        Map<String, Map<String, String>> seed = Map.of(
+                "platform", Map.of("config/namespace/ns.yaml", "kind: NameSpace\n"),
+                "analytics", Map.of("config/dataset/ds.yaml", "kind: DataSet\n"));
+        WorkspaceManager manager = manager(storage, seed);
+        Workspace workspace = manager.openWorkspace("alice",
+                List.of(new BranchSelection("platform", "main"), new BranchSelection("analytics", "dev")));
+        ReviewService service = new ReviewService(manager, storage, catalog, new DomainSettings(),
+                new SyncLogService(10));
+
+        assertThatThrownBy(() -> service.submit(workspace.id(),
+                new ReviewRequest("commit", "comment"), authentication("alice", "platform:VIEWER", "analytics:VIEWER")))
+                .isInstanceOf(org.jarina.ui.modeller.auth.ForbiddenException.class)
+                .hasMessageContaining("platform")
+                .hasMessageContaining("analytics");
+        assertThat(submissions).isEmpty();
+        assertThat(manager.exists(workspace.id())).isTrue();
     }
 }

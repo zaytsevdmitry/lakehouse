@@ -28,7 +28,7 @@ import org.jarina.ui.modeller.service.ReviewService;
 import org.jarina.ui.modeller.service.SyncLogService;
 import org.jarina.ui.modeller.service.YamlEditorService;
 import org.jarina.ui.modeller.storage.WorkspaceStorage;
-import org.jarina.ui.modeller.vcs.VcsProvider;
+import org.jarina.ui.modeller.config.ModellerVcsCatalog;
 import org.jarina.ui.modeller.workspace.BranchSelection;
 import org.jarina.ui.modeller.workspace.Workspace;
 import org.jarina.ui.modeller.workspace.WorkspaceManager;
@@ -154,20 +154,40 @@ class RbacEnforcementTest {
     }
 
     @Test
-    void reviewSubmitRequiresEditorOnEverySelectedDomain() {
+    void reviewSubmitSkipsSelectedDomainsWithoutEditorRole() {
         WorkspaceManager manager = mock(WorkspaceManager.class);
         Workspace workspace = workspaceOwnedBy("ws-1", "u",
                 new BranchSelection("finance", "main"), new BranchSelection("marketing", "main"));
         when(manager.workspace("ws-1")).thenReturn(workspace);
         ReviewService review = new ReviewService(manager, mock(WorkspaceStorage.class),
-                mock(VcsProvider.class), mock(org.jarina.ui.modeller.config.ModellerProperties.class),
+                mock(ModellerVcsCatalog.class), mock(org.jarina.domain.settings.DomainSettings.class),
                 mock(SyncLogService.class));
 
-        // EDITOR only for finance: the marketing selection must be rejected too
-        assertThatThrownBy(() -> review.submit("ws-1",
+        // EDITOR only for finance: the marketing selection is skipped, the review still proceeds
+        assertThatCode(() -> review.submit("ws-1",
                 new ReviewRequest("comment", "message"), authOf("finance:EDITOR")))
+                .doesNotThrowAnyException();
+
+        verify(manager).synchronizedOn(org.mockito.ArgumentMatchers.eq("ws-1"), any());
+    }
+
+    @Test
+    void reviewSubmitIsRejectedWhenNoSelectedDomainIsEditable() {
+        WorkspaceManager manager = mock(WorkspaceManager.class);
+        Workspace workspace = workspaceOwnedBy("ws-1", "u",
+                new BranchSelection("finance", "main"), new BranchSelection("marketing", "main"));
+        when(manager.workspace("ws-1")).thenReturn(workspace);
+        ReviewService review = new ReviewService(manager, mock(WorkspaceStorage.class),
+                mock(ModellerVcsCatalog.class), mock(org.jarina.domain.settings.DomainSettings.class),
+                mock(SyncLogService.class));
+
+        // VIEWER only: nothing to submit, the whole request is rejected
+        assertThatThrownBy(() -> review.submit("ws-1",
+                new ReviewRequest("comment", "message"), authOf("finance:VIEWER", "marketing:VIEWER")))
                 .isInstanceOf(ForbiddenException.class)
                 .hasMessageContaining("marketing");
+
+        verify(manager, never()).synchronizedOn(any(), any());
     }
 
     @Test
@@ -176,7 +196,7 @@ class RbacEnforcementTest {
         Workspace workspace = workspaceOwnedBy("ws-1", "someone-else", new BranchSelection("finance", "main"));
         when(manager.workspace("ws-1")).thenReturn(workspace);
         ReviewService review = new ReviewService(manager, mock(WorkspaceStorage.class),
-                mock(VcsProvider.class), mock(org.jarina.ui.modeller.config.ModellerProperties.class),
+                mock(ModellerVcsCatalog.class), mock(org.jarina.domain.settings.DomainSettings.class),
                 mock(SyncLogService.class));
 
         assertThatThrownBy(() -> review.submit("ws-1",

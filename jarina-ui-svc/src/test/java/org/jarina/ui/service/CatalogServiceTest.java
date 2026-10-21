@@ -24,7 +24,7 @@ import org.jarina.client.api.dto.configs.dataset.ForeignKeyReferenceDTO;
 import org.jarina.client.rest.config.ConfigRestClientApi;
 import org.jarina.ui.dto.CatalogTreeNodeDTO;
 import org.jarina.ui.dto.ConstraintDTO;
-import org.jarina.ui.modeller.config.ModellerProperties;
+import org.jarina.domain.settings.DomainSettings;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -50,10 +50,11 @@ class CatalogServiceTest {
         return new UsernamePasswordAuthenticationToken(jwt, null, List.of());
     }
 
-    private static ModellerProperties properties() {
-        ModellerProperties properties = new ModellerProperties();
-        properties.setDomains(Map.of(DOMAIN, new ModellerProperties.DomainVcs()));
-        return properties;
+    private static DomainSettings properties() {
+        DomainSettings settings = new DomainSettings();
+        settings.setDomains(Map.of(DOMAIN, new DomainSettings.DomainProperties()));
+        settings.canonicalize();
+        return settings;
     }
 
     private static CatalogService service(ConfigRestClientApi api) {

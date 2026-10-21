@@ -18,7 +18,13 @@ const workspace = {
   ],
 };
 
-const profile = { username: 'tester', domains: { platform: 'EDITOR', analytics: 'EDITOR' } };
+const profile = {
+  username: 'tester',
+  domains: {
+    platform: { viewer: true, editor: true, control: false },
+    analytics: { viewer: true, editor: true, control: false },
+  },
+};
 
 const ORDERS = 'platform (main)/orders.yaml';
 const REPORT = 'analytics (dev)/report.yaml';
@@ -163,7 +169,13 @@ describe('EditorView multi-domain workspace', () => {
   it('keeps files of a VIEWER-only domain read-only while other domains stay editable', async () => {
     render(
       <EditorView
-        profile={{ username: 'viewer', domains: { platform: 'EDITOR', analytics: 'VIEWER' } }}
+        profile={{
+          username: 'viewer',
+          domains: {
+            platform: { viewer: true, editor: true, control: false },
+            analytics: { viewer: true, editor: false, control: false },
+          },
+        }}
         workspace={workspace}
         onBack={vi.fn()}
         onNotice={vi.fn()}
@@ -182,6 +194,31 @@ describe('EditorView multi-domain workspace', () => {
     fireEvent.click(await screen.findByRole('button', { name: /platform/ }));
     const orders = await screen.findByRole('button', { name: /orders/ });
     fireEvent.click(orders);
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Submit review' })).toBeInTheDocument());
+    expect(screen.queryByText('read-only')).not.toBeInTheDocument();
+  });
+
+  it('stays editable for a domain holding both CONTROL and EDITOR', async () => {
+    render(
+      <EditorView
+        profile={{
+          username: 'analytics_user',
+          domains: {
+            platform: { viewer: true, editor: false, control: false },
+            analytics: { viewer: true, editor: true, control: true },
+          },
+        }}
+        workspace={workspace}
+        onBack={vi.fn()}
+        onNotice={vi.fn()}
+      />
+    );
+    await waitFor(() => expect(screen.getByText('ws-1')).toBeInTheDocument());
+
+    fireEvent.click(await screen.findByRole('button', { name: /analytics/ }));
+    const report = await screen.findByRole('button', { name: /report/ });
+    fireEvent.click(report);
 
     await waitFor(() => expect(screen.getByRole('button', { name: 'Submit review' })).toBeInTheDocument());
     expect(screen.queryByText('read-only')).not.toBeInTheDocument();
@@ -213,6 +250,20 @@ describe('EditorView multi-domain workspace', () => {
       expect(onNotice).toHaveBeenCalledWith('success', expect.stringContaining('https://git/merge/1')));
     await new Promise((resolve) => { setTimeout(resolve, 1300); });
     expect(onBack).toHaveBeenCalled();
+  });
+
+  it('reports the domains skipped for a missing EDITOR role', async () => {
+    reviewResult = { status: 'OK', url: 'https://git/merge/1', skippedDomains: ['analytics'] };
+    const { onNotice } = await renderEditor();
+
+    fireEvent.click(await screen.findByRole('button', { name: /platform/ }));
+    await openFile('orders');
+    fireEvent.click(screen.getByRole('button', { name: 'Submit review' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Submit' }));
+
+    await waitFor(() =>
+      expect(onNotice).toHaveBeenCalledWith('success',
+        expect.stringContaining('Skipped (no EDITOR role): analytics')));
   });
 });
 

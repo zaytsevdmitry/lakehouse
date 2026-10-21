@@ -22,15 +22,21 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Result of a review request submission.
+ * Result of a review request submission. Domains of the workspace where the user has no
+ * EDITOR role are not submitted and are reported in {@code skippedDomains}.
  */
 public record ReviewResponse(
         String status,
         String url,
-        Map<String, String> submittedFiles) {
+        Map<String, String> submittedFiles,
+        List<String> skippedDomains) {
 
-    public ReviewResponse(String status, String url, List<String> files) {
-        this(status, url, fileMap(files));
+    public ReviewResponse {
+        skippedDomains = skippedDomains == null ? List.of() : List.copyOf(skippedDomains);
+    }
+
+    public ReviewResponse(String status, String url, List<String> files, List<String> skippedDomains) {
+        this(status, url, fileMap(files), skippedDomains);
     }
 
     private static Map<String, String> fileMap(List<String> files) {

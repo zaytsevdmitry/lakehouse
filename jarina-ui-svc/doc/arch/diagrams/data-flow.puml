@@ -40,7 +40,7 @@ group State-changing request (e.g. POST /api/schedules or PUT /api/workspaces/{i
 end
 
 group Modeller session (BFF-internal)
-  bff -> bff : workspace storage\n(local fs or S3)\n+ Git integration\n(local-git / gitlab / github)
+  bff -> bff : workspace storage\n(local fs or S3)\n+ Git integration\n(JGit over http(s)/ssh)
   note right
     The modeller endpoints
     (/api/vcs, /api/workspaces/*

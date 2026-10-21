@@ -23,9 +23,9 @@ import org.jarina.client.api.dto.configs.schedule.ScheduleHeaderDTO;
 import org.jarina.client.rest.config.ConfigRestClientApi;
 import org.jarina.client.rest.scheduler.SchedulerRestClientApi;
 import org.jarina.ui.dto.ScheduleRequestDTO;
+import org.jarina.domain.settings.DomainSettings;
 import org.jarina.ui.modeller.auth.DomainAccess;
 import org.jarina.ui.modeller.auth.UserContext;
-import org.jarina.ui.modeller.config.ModellerProperties;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
@@ -38,15 +38,15 @@ public class ScheduleService {
 
     private final SchedulerRestClientApi schedulerRestClientApi;
     private final ConfigRestClientApi configRestClientApi;
-    private final ModellerProperties modellerProperties;
+    private final DomainSettings domainSettings;
 
     public ScheduleService(
             SchedulerRestClientApi schedulerRestClientApi,
             ConfigRestClientApi configRestClientApi,
-            ModellerProperties modellerProperties) {
+            DomainSettings domainSettings) {
         this.schedulerRestClientApi = schedulerRestClientApi;
         this.configRestClientApi = configRestClientApi;
-        this.modellerProperties = modellerProperties;
+        this.domainSettings = domainSettings;
     }
 
     public List<ScheduleInstanceDTO> getSchedules(ScheduleRequestDTO request, Authentication authentication) {
@@ -55,7 +55,7 @@ public class ScheduleService {
         interval.setIntervalEndDateTime(request.getToDate());
 
         Set<String> allowed = DomainAccess.allowedDomains(
-                UserContext.from(authentication), modellerProperties.domainNames(), "POST /api/schedules");
+                UserContext.from(authentication), domainSettings.domainNames(), "POST /api/schedules");
         Stream<ScheduleInstanceDTO> instances;
         List<String> names = request.getNames();
         if (names == null || names.isEmpty()) {

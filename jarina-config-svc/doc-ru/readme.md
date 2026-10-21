@@ -49,7 +49,7 @@
 - **Service** - бизнес-логика: валидация, приведение DTO к сущностям и обратно, объединение шаблонных и частных конфигураций через `DtoMergeUtils`.
 - **Repository (JPA/Hibernate)** - персистентность в PostgreSQL.
 - **InternalScheduler** - периодическая отправка изменений расписаний в Kafka.
-- Метаданные связаны иерархически (домен → datasource → dataset → ...); иерархия доменов задается в `jarina.config.vcs.domains` (см. раздел GitOps), схема зависимостей описана в [content_configuration](content_configuration/content_configuration.md).
+- Метаданные связаны иерархически (домен → datasource → dataset → ...); иерархия доменов задается в `jarina.domains.*` общим `DomainSettings` из `jarina-domain-api` (см. [Домены](#домены)), схема зависимостей описана в [content_configuration](content_configuration/content_configuration.md).
 
 ## GitOps: декларативная конфигурация из Git-репозиториев (VCS)
 
@@ -57,8 +57,13 @@
 
 Конфигурация организована в виде **доменов**. Каждый домен обеспечен собственным Git-репозиторием и синхронизируется независимо. Домен может содержать **вложенные домены** (например, `platform` ⊃ `processing` ⊃ `analytics`); домены применяются в порядке приоритета (по возрастанию, родители перед вложенными). Каждый конструкт, загруженный из репозитория домена, помечается именем домена (`domainKeyName`), что разграничивает объекты по доменам и позволяет проверять ссылки между доменами.
 
-Сама модель доменов (дерево, принадлежность, правила изоляции, настройка) описана в
-[Домены](#домены) и в [content_configuration/domains.md](content_configuration/domains.md).
+Сама модель доменов (дерево, порядок, принадлежность, правила изоляции, пространство имён
+`jarina.domains.*` и по-доменные учётные данные) **принадлежит `jarina-domain-api`** и
+описана канонически в
+[jarina-domain-api/doc-ru/readme.md](../../jarina-domain-api/doc-ru/readme.md); этот readme
+только кратко пересказывает её, а
+[content_configuration/domains.md](content_configuration/domains.md) описывает сами объекты
+конфигурации.
 
 Подробная документация: [Подсистема VCS для разработчиков платформы](vcs/cvs_for_developers.md) (внутреннее устройство, абстракция `VcsClient`, точки расширения, параметры разработчика) и [Руководство пользователя git-расширения](vcs/git_extension_user_guide.md) (формат YAML, `isVcsManaged`, настройка и сообщения об ошибках).
 
@@ -169,23 +174,42 @@ Kinds `ERDiagram` (`erdiagrams/`) и `DataLineageDiagram` (`datalineagediagrams/
 
 ### Конфигурация
 
-Все параметры живут под префиксом `jarina.config.vcs.*` (см. также [appconf/service_configuration.md](appconf/service_configuration.md)):
+Задействованы два независимых префикса: **такт синхронизации** этого сервиса остаётся под
+`jarina.config.vcs.sync.*`, а **сами домены** объявляются в `jarina.domains.*` и
+обрабатываются общим `DomainSettings` из `jarina-domain-api` (см.
+[jarina-domain-api/doc-ru/readme.md](../../jarina-domain-api/doc-ru/readme.md); также
+[appconf/service_configuration.md](appconf/service_configuration.md)).
+
+Доступ к репозиториям доменов выполняется единой git-интеграцией: локальный клон
+ведётся для каждого домена через JGit и синхронизируется на каждом цикле. Учётные данные
+задаются **по доменам** в `jarina.domains.<name>.git.credentials.*` — глобального аккаунта
+нет, слияния нет: домен либо несёт собственные учётные данные, либо обращается к своему
+репозиторию анонимно, поэтому разные домены могут аутентифицироваться разными аккаунтами.
+URL репозитория принимает любую git-форму (`git://`, `ssh://`, `http(s)://` или локальный
+путь). Настройка подробно:
+[Руководство пользователя git-расширения](vcs/git_extension_user_guide.md).
 
 | Свойство | Переменная окружения | По умолчанию | Описание |
 |---|---|---|---|
-| `jarina.config.vcs.git.sync.enabled` | `JARINA_CONFIG_GIT_SYNC_ENABLED` | `false` | Включает бин планировщика VCS |
-| `jarina.config.vcs.git.sync.interval-ms` | `JARINA_CONFIG_GIT_SYNC_INTERVAL_MS` | `30000` | Период цикла |
-| `jarina.config.vcs.git.sync.initial-delay-ms` | `JARINA_CONFIG_GIT_SYNC_INITIAL_DELAY_MS` | `10000` | Задержка первого цикла после старта |
-| `jarina.config.vcs.domains.<name>.git.repository-url` | `JARINA_CONFIG_GIT_<NAME>_URL` | - | URL репозитория домена (поддерживаются `git://`, `ssh://` и `http(s)://`) |
-| `jarina.config.vcs.domains.<name>.git.branch` | `JARINA_CONFIG_GIT_<NAME>_BRANCH` | `main` | Синхронизируемая ветка |
-| `jarina.config.vcs.domains.<name>.git.local-clone-path` | `JARINA_CONFIG_GIT_<NAME>_CLONE_PATH` | - | Локальный путь, где сервис хранит клон домена |
-| `jarina.config.vcs.domains.<name>.git.private-key-path` | `JARINA_CONFIG_GIT_<NAME>_PRIVATE_KEY_PATH` | - | Путь к SSH-ключу (только для URL вида `ssh://`) |
-| `jarina.config.vcs.domains.<name>.priority` | - | наименьший | Позиция домена в порядке применения (по возрастанию, родители перед вложенными) |
-| `jarina.config.vcs.domains.<name>.domains` | - | - | Вложенные поддомены |
+| `jarina.config.vcs.sync.enabled` | `JARINA_CONFIG_GIT_SYNC_ENABLED` | `false` | Включает бин планировщика VCS |
+| `jarina.config.vcs.sync.interval-ms` | `JARINA_CONFIG_GIT_SYNC_INTERVAL_MS` | `30000` | Период цикла |
+| `jarina.config.vcs.sync.initial-delay-ms` | `JARINA_CONFIG_GIT_SYNC_INITIAL_DELAY_MS` | `10000` | Задержка первого цикла после старта |
+| `jarina.domains.<name>.git.repository-url` | `JARINA_DOMAINS_<NAME>_GIT_REPOSITORY_URL` | - | URL репозитория домена (любой Git URL: `git://`, `ssh://`, `http(s)://` или локальный путь); **обязателен**, чтобы домен был активен |
+| `jarina.domains.<name>.git.branch` | `JARINA_DOMAINS_<NAME>_GIT_BRANCH` | `main` | Синхронизируемая ветка |
+| `jarina.domains.<name>.git.local-clone-path` | `JARINA_DOMAINS_<NAME>_GIT_LOCAL_CLONE_PATH` | - | Локальный путь, где сервис хранит клон домена (должен быть уникален для каждого домена) |
+| `jarina.domains.<name>.git.credentials.auth-type` | - | выводится | `ssh` (если задан `ssh-private-key-path`), `token` (если задано любое учётное поле) или `basic`; пустые учётные данные означают анонимный доступ |
+| `jarina.domains.<name>.git.credentials.ssh-private-key-path` | `JARINA_DOMAINS_<NAME>_GIT_CREDENTIALS_SSH_PRIVATE_KEY_PATH` | - | Путь к приватному SSH-ключу (только для URL вида `ssh://`) |
+| `jarina.domains.<name>.git.credentials.username` / `.token` / `.password` | - | - | По-доменные учётные данные для `basic` / `token` |
+| `jarina.domains.<name>.priority` | - | наименьший | Позиция домена в порядке применения (по возрастанию, родители перед вложенными) |
+| `jarina.domains.<name>.domains` | - | - | Вложенные поддомены |
 
-Для домена с именем, например, `platform` переменные окружения — `JARINA_CONFIG_GIT_PLATFORM_URL`, `JARINA_CONFIG_GIT_PLATFORM_BRANCH`, `JARINA_CONFIG_GIT_PLATFORM_CLONE_PATH` и `JARINA_CONFIG_GIT_PLATFORM_PRIVATE_KEY_PATH`.
+По-доменные переменные окружения строятся по relaxed binding из того же пространства имён:
+для домена, например, `platform` это `JARINA_DOMAINS_PLATFORM_GIT_REPOSITORY_URL`,
+`JARINA_DOMAINS_PLATFORM_GIT_BRANCH` и `JARINA_DOMAINS_PLATFORM_GIT_LOCAL_CLONE_PATH`.
 
-Поставляемый `application.yml` объявляет только legacy-блок `jarina.config.vcs.git.*`, поэтому дерево доменов задаётся развёртыванием - см. [Домены](#домены).
+Поставляемый `application.yml` объявляет пустую карту `jarina.domains` и блок
+`jarina.config.vcs.sync.*`, поэтому дерево доменов задаётся развёртыванием - см.
+[Домены](#домены).
 
 ### Демо
 
@@ -196,13 +220,13 @@ Kinds `ERDiagram` (`erdiagrams/`) и `DataLineageDiagram` (`datalineagediagrams/
 а не ограничение хранения:
 
 ```
--Djarina.config.vcs.git.sync.enabled=true
--Djarina.config.vcs.domains.platform.priority=0
--Djarina.config.vcs.domains.platform.git.repository-url=git://git-server:9418/platform.git
--Djarina.config.vcs.domains.platform.domains.processing.priority=0
--Djarina.config.vcs.domains.platform.domains.processing.git.repository-url=git://git-server:9418/processing.git
--Djarina.config.vcs.domains.platform.domains.processing.domains.analytics.priority=0
--Djarina.config.vcs.domains.platform.domains.processing.domains.analytics.git.repository-url=git://git-server:9418/analytics.git
+-Djarina.config.vcs.sync.enabled=true
+-Djarina.domains.platform.priority=0
+-Djarina.domains.platform.git.repository-url=git://git-server:9418/platform.git
+-Djarina.domains.platform.domains.processing.priority=0
+-Djarina.domains.platform.domains.processing.git.repository-url=git://git-server:9418/processing.git
+-Djarina.domains.platform.domains.processing.domains.analytics.priority=0
+-Djarina.domains.platform.domains.processing.domains.analytics.git.repository-url=git://git-server:9418/analytics.git
 ```
 
 ## Домены
@@ -214,8 +238,12 @@ Kinds `ERDiagram` (`erdiagrams/`) и `DataLineageDiagram` (`datalineagediagrams/
 репозиторием, из которого пришёл файл, поэтому один и тот же файл означает разное в разных
 доменах.
 
+Каноническое описание общей модели - пространство имён, порядок, учётные данные -
+[jarina-domain-api/doc-ru/readme.md](../../jarina-domain-api/doc-ru/readme.md); этот раздел
+только пересказывает, что делает с ней этот сервис.
+
 ```
-jarina.config.vcs.domains  ──▶  orderedDomains()  ──▶  для каждого домена
+jarina.domains  ──▶  DomainSettings.orderedDomains()  ──▶  для каждого домена
                                                              fetch + diff
                                                              apply в одной транзакции
                                                              простановка domainKeyName
@@ -224,20 +252,21 @@ jarina.config.vcs.domains  ──▶  orderedDomains()  ──▶  для каж
                                           DataSet / DataSource / Driver / Task /
                                           ScenarioActTemplate / Schedule /
                                           QualityMetricsConf / TaskExecutionServiceGroup
-                                          (идентичность = domainKeyName + keyName)
+                                          (идентичность = keyName, владение = domainKeyName)
 ```
 
 ### Дерево, порядок и принадлежность
 
-Домены образуют дерево: `jarina.config.vcs.domains.<name>.domains` объявляет вложенные
-поддомены. `JarinaVCSProperties.orderedDomains()` обходит дерево в глубину, поэтому родитель
+Домены образуют дерево: `jarina.domains.<name>.domains` объявляет вложенные
+поддомены. `DomainSettings.orderedDomains()` (общий `jarina-domain-api`) обходит дерево в глубину, поэтому родитель
 всегда применяется раньше детей; в пределах одного уровня порядок задаёт `priority` по
 возрастанию, домены без `priority` идут последними, а равные приоритеты разрешаются по имени.
 Вложенность - **конфигурационная** связь, а не складская: одни и те же репозитории можно
 объявить соседними или цепочкой. Её единственное поведенческое следствие - распространение
 ошибок: если домен не синхронизировался, всё его поддерево пропускается до успеха родителя,
 поскольку дочерний домен может ссылаться на конструкты родителя. Домен без
-`git.repository-url` пропускается целиком.
+`git.repository-url` неактивен: этот сервис пропускает его целиком, а `jarina-ui-svc`
+падает при попытке использовать такой домен.
 
 Домен - это атрибут владения, а не часть идентичности объекта: `keyName` остаётся
 единственным первичным ключом и сквозным, поэтому один и тот же `keyName` не может
@@ -258,40 +287,38 @@ jarina.config.vcs.domains  ──▶  orderedDomains()  ──▶  для каж
 
 ### Как настраиваются домены
 
-Всё связывается `JarinaVCSProperties` под префиксом `jarina.config.vcs`:
+Сами домены связываются общим `DomainSettings` из `jarina-domain-api` в пространстве имён
+`jarina.domains`; этот сервис только доставляет сырые свойства:
 
 ```yaml
 jarina:
-  config:
-    vcs:
-      domains:
-        platform:
+  domains:
+    platform:
+      priority: 0
+      git:
+        repository-url: git://git-server:9418/platform.git
+        branch: main
+        local-clone-path: /tmp/platform
+        credentials:                        # по-доменные, никогда не сливаются
+          auth-type: ssh
+          ssh-private-key-path: /keys/platform_ed25519
+      domains:                              # вложенные поддомены
+        processing:
           priority: 0
           git:
-            repository-url: git://git-server:9418/platform.git
+            repository-url: git://git-server:9418/processing.git
             branch: main
-            local-clone-path: /tmp/platform
-            private-key-path:            # только для ssh://
-          domains:                        # вложенные поддомены
-            processing:
-              priority: 0
-              git:
-                repository-url: git://git-server:9418/processing.git
-                branch: main
-                local-clone-path: /tmp/processing
+            local-clone-path: /tmp/processing
 ```
 
 `local-clone-path` должен быть уникален для каждого домена, поскольку каждый домен держит там
 свой клон. Таблица доменных свойств и шаблон переменных окружения
-(`JARINA_CONFIG_GIT_<NAME>_URL`, `..._<NAME>_BRANCH`, `..._<NAME>_CLONE_PATH`,
-`..._<NAME>_PRIVATE_KEY_PATH`) приведены в разделе [Конфигурация](#конфигурация) выше.
-
-**Legacy-конфигурация с одним репозиторием.** Свойства, существовавшие до доменов,
-`jarina.config.vcs.git.repository-url` / `.branch` / `.local-clone-path` /
-`.private-key-path`, продолжают работать: если `domains` **пуст** и `git.repository-url` не
-пуст, этот единственный репозиторий публикуется как один домен с именем `default`. Как только
-в `domains` есть хотя бы одна запись, legacy-блок игнорируется - дополнительного домена
-`default` не возникает. Сам планировщик (`git.sync.*`) глобален и посегментно не объявляется.
+(`JARINA_DOMAINS_<NAME>_GIT_REPOSITORY_URL`, `..._GIT_BRANCH`, `..._GIT_LOCAL_CLONE_PATH`,
+`..._GIT_CREDENTIALS_SSH_PRIVATE_KEY_PATH`) приведены в разделе [Конфигурация](#конфигурация) выше.
+Свойства, существовавшие до доменов (`jarina.config.vcs.git.*`), и синтезированный домен
+`default` удалены - см.
+[jarina-domain-api/doc-ru/readme.md](../../jarina-domain-api/doc-ru/readme.md#3-домен-активен-тогда-и-только-тогда-когда-задан-gitrepository-url).
+Сам планировщик (`jarina.config.vcs.sync.*`) глобален и посегментно не объявляется.
 
 ### Наблюдаемость: из какого домена пришло изменение
 
@@ -346,7 +373,7 @@ Java-клиент (`ConfigRestClientApi`/`ConfigRestClientApiImpl`) для до�
 
 ### Аудит
 
-`AuditLoggingFilter` пишет одну строку на каждый запрос в логгер `AUDIT_LOG` (файл `logs/audit.log`):
+`AuditLoggingFilter` пишет одну строку на каждый запрос в логгер `AUDIT_LOG` (файл `logs/audit.log`, переопределяется свойством `jarina.security.audit.log-file`):
 
 ```
 User ID: <subject>, Username: <preferred_username>, Method: <method>, URI: <uri>, HTTP status: <status>
@@ -362,6 +389,7 @@ User ID: <subject>, Username: <preferred_username>, Method: <method>, URI: <uri>
 | `KEYCLOAK_INTERNAL_CLIENT_SECRET` | `super-secret-internal-key-987654321` | Секрет клиента `jarina-internal-client` |
 | `jarina.security.enabled` | `true` | `false` полностью отключает безопасность |
 | `jarina.security.audit.service-account-name` | `system` | Имя пользователя в аудите для service account токенов |
+| `jarina.security.audit.log-file` | `logs/audit.log` | Путь к файлу журнала аудита (создаётся при старте, относительные пути разрешаются относительно рабочей директории) |
 | `jarina.security.oauth2.internal-client-id` | `jarina-internal-client` | Клиент, идентифицирующий service account токены (claim `azp`) |
 | `jarina.security.oauth2.client-registration-id` | `keycloak-internal` | OAuth2-регистрация, используемая интерцептором |
 

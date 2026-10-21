@@ -11,7 +11,7 @@ taskProcessorArgs:
   spark.kubernetes.submission.waitAppCompletion: false
   spark.kubernetes.executor.deleteOnTermination: true
   spark.kubernetes.driver.annotation.jarina-management-task: "{{ getTaskFullName() }}"
-  deploy.appResource: file:///opt/jarina-task-spark-apps/jarina-task-executor-spark-dataset-app-0.12.0-jar-with-dependencies.jar
+  deploy.appResource: file:///opt/jarina-task-spark-apps/jarina-task-executor-spark-dataset-app-1.0.0-jar-with-dependencies.jar
   deploy.clusterUrl: http://jarina-task-proxy4spark:8086/v1/submissions
   deploy.mainClass: org.jarina.taskexecutor.spark.dataset.SparkProcessorApplication
   spark.driver.cores: 1

@@ -135,7 +135,8 @@ jarina:
           - git-server
 
   # ------------------------------------------------------------------
-  # Modelling (workspace storage, central Git integration, system account).
+  # Modelling (workspace storage, auth, session). Configuration domains
+  # live under jarina.domains.* and are processed in jarina-domain-api.
   # Every runtime strategy is switched declaratively here and overridable
   # via JARINA_* environment variables.
   # ------------------------------------------------------------------
@@ -151,40 +152,29 @@ jarina:
         region: ${JARINA_S3_REGION:us-east-1}
       cleanup-ttl-hours: ${JARINA_WORKSPACE_TTL_HOURS:4}  # lifetime of an inactive workspace
 
-    vcs-provider: ${JARINA_VCS_PROVIDER:local-git}     # [local-git, gitlab-api, github-app, gerrit-ssh]
-    git:
-      remote-url: ${JARINA_GIT_URL:}                  # legacy single-repository fallback
-      branch-main: ${JARINA_GIT_BRANCH:main}
-    # Domain-aware VCS model: one repository (optionally several branches) per domain.
-    # When no domains are configured the branch panel falls back to the legacy repository above.
-    # domains:
-    #   platform:
-    #     repository-url: git://git-server:9418/config-repo.git   # or ${DOMAIN_PLATFORM_URL:}
-    #     branch-main: main
-    #   analytics:
-    #     repository-url: ${DOMAIN_ANALYTICS_URL:}
-    #     branch-main: ${DOMAIN_ANALYTICS_BRANCH:main}
-
     auth-strategy: ${JARINA_AUTH_STRATEGY:jwt-rbac}    # [jwt-rbac, token-exchange]
 
     session:
       inactivity-minutes: ${JARINA_SESSION_INACTIVITY_MINUTES:30}
 
-    vcs-system-account:
-      auth-type: ${JARINA_VCS_AUTH_TYPE:token}           # [ssh, token, basic]
-      ssh-private-key-path: ${JARINA_VCS_SSH_KEY_PATH:}
-      username: ${JARINA_VCS_USER:}
-      token: ${JARINA_VCS_TOKEN:}                        # GitLab/GitHub API token (auth-type: token)
-      password: ${JARINA_VCS_PASSWORD:}                  # HTTPS password (auth-type: basic)
-
-    # GitHub App settings (used when vcs-provider == github-app and no token is set)
-    github:
-      app-id: ${JARINA_GITHUB_APP_ID:}
-      app-private-key-path: ${JARINA_GITHUB_APP_KEY_PATH:}
-      installation-id: ${JARINA_GITHUB_INSTALLATION_ID:}
-
     logging:
       sync-log-capacity: ${JARINA_SYNC_LOG_CAPACITY:500}
+
+  # Configuration domains (jarina.domains.<name>.git.*). A domain is active iff its
+  # repository-url is set; credentials are declared per domain under git.credentials.
+  # domains:
+  #   platform:
+  #     git:
+  #       repository-url: git://git-server:9418/config-repo.git   # or ${DOMAIN_PLATFORM_URL:}
+  #       branch: main
+  #       credentials:
+  #         auth-type: ssh
+  #         ssh-private-key-path: /keys/platform_ed25519
+  #   analytics:
+  #     git:
+  #       repository-url: ${DOMAIN_ANALYTICS_URL:}
+  #       branch: ${DOMAIN_ANALYTICS_BRANCH:main}
+  domains: {}
 
 ---
 # Production profile: enforce HTTPS-only session cookie for the BFF

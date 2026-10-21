@@ -17,8 +17,10 @@
 
 package org.jarina.config;
 
+import org.jarina.domain.settings.DomainSettings;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -26,6 +28,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @SpringBootApplication
 @EnableTransactionManagement
+@EnableConfigurationProperties(DomainSettings.class)
 @EnableJpaRepositories(basePackages = {
         "org.jarina.config.repository",
         "org.jarina.config.vcs.repository"},

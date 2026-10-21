@@ -20,6 +20,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.jarina.domain.settings.DomainSettings;
 import org.jarina.ui.config.UiServiceProperties;
 import org.jarina.ui.modeller.config.ModellerProperties;
 
@@ -30,7 +31,7 @@ import org.jarina.ui.modeller.config.ModellerProperties;
         "org.jarina.client.rest.state",
         "org.jarina.client.rest.scheduler",
         "org.jarina.client.rest.taskproxy"})
-@EnableConfigurationProperties({UiServiceProperties.class, ModellerProperties.class})
+@EnableConfigurationProperties({UiServiceProperties.class, ModellerProperties.class, DomainSettings.class})
 @EnableScheduling
 public class JarinaUiApplication {
 

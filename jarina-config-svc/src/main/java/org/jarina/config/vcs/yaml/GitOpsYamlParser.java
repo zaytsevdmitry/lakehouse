@@ -27,6 +27,8 @@ import org.jarina.client.api.dto.configs.schedule.ScheduleDTO;
 import org.jarina.client.api.dto.configs.schedule.TaskDTO;
 import org.jarina.client.api.dto.configs.schedule.TaskExecutionServiceGroupDTO;
 import org.jarina.client.api.dto.configs.script.ScriptDTO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.dataformat.yaml.YAMLFactory;
@@ -48,7 +50,7 @@ import java.util.Map;
  */
 @Component
 public class GitOpsYamlParser {
-
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
     static final String KIND_FIELD = "kind";
 
     private final YAMLMapper yamlMapper;
@@ -77,19 +79,22 @@ public class GitOpsYamlParser {
             root = yamlMapper.readValue(requireContent(content), new TypeReference<Map<String, Object>>() {
             });
         } catch (VcsConfigParseException e) {
+            logger.error("Configuration parsing failed: {}", e.getMessage(), e);
             throw e;
         } catch (Exception e) {
-            throw new VcsConfigParseException("YAML document cannot be parsed as a configuration map", e);
+            logger.error("YAML document cannot be parsed as a configuration map: {}", e.getMessage(), e);
+            throw new VcsConfigParseException("YAML document cannot be parsed as a configuration map: " + content, e);
         }
         if (root == null)
             throw new VcsConfigParseException("YAML document is empty");
 
         Object kindValue = root.remove(KIND_FIELD);
         if (kindValue == null)
-            throw new VcsConfigParseException("Missing required field '" + KIND_FIELD + "'");
+            throw new VcsConfigParseException("Missing required field '" + KIND_FIELD + "' in content " + content);
         try {
             return new PreliminaryConfig(YamlMetadataKind.fromYamlValue(String.valueOf(kindValue)), root);
         } catch (IllegalArgumentException e) {
+            logger.error("Unknown configuration kind '{}': {}", kindValue, e.getMessage(), e);
             throw new VcsConfigParseException(e.getMessage(), e);
         }
     }
@@ -106,7 +111,8 @@ public class GitOpsYamlParser {
             Object dto = yamlMapper.convertValue(preliminary.body(), kind.dtoClass());
             return new ParsedConfig(kind, dto);
         } catch (Exception e) {
-            throw new VcsConfigParseException("Cannot bind YAML document to " + kind, e);
+            logger.error("Cannot bind YAML document to {}: {}", kind, e.getMessage(), e);
+            throw new VcsConfigParseException("Cannot bind YAML document to " + kind + "\n" + preliminary.body().toString() + e.getMessage(), e);
         }
     }
 

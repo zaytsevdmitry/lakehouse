@@ -17,6 +17,8 @@
 
 package org.jarina.config.vcs;
 
+import org.jarina.domain.vcs.client.GitVcsClient;
+import org.jarina.domain.vcs.TestGitRepository;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer;
@@ -127,13 +129,13 @@ class GitOpsIntegrationTest {
         registry.add("spring.datasource.password", postgres::getPassword);
 
         repository = TestGitRepository.create(tempDir());
-        registry.add("jarina.config.vcs.domains.platform.priority", () -> "0");
-        registry.add("jarina.config.vcs.domains.platform.git.repository-url", repository::bareUri);
-        registry.add("jarina.config.vcs.domains.platform.git.branch", () -> "main");
-        registry.add("jarina.config.vcs.domains.platform.git.local-clone-path", () -> repository.clonePath().toString());
-        registry.add("jarina.config.vcs.git.sync.enabled", () -> "true");
-        registry.add("jarina.config.vcs.git.sync.interval-ms", () -> "36000000");
-        registry.add("jarina.config.vcs.git.sync.initial-delay-ms", () -> "36000000");
+        registry.add("jarina.domains.platform.priority", () -> "0");
+        registry.add("jarina.domains.platform.git.repository-url", repository::bareUri);
+        registry.add("jarina.domains.platform.git.branch", () -> "main");
+        registry.add("jarina.domains.platform.git.local-clone-path", () -> repository.clonePath().toString());
+        registry.add("jarina.config.vcs.sync.enabled", () -> "true");
+        registry.add("jarina.config.vcs.sync.interval-ms", () -> "36000000");
+        registry.add("jarina.config.vcs.sync.initial-delay-ms", () -> "36000000");
     }
 
     private static Path tempDir() {

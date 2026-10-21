@@ -17,12 +17,12 @@
 
 
 set -e
-export LH_VERSION=0.12.0
-cp -f ../../jarina-task-executor-spark-dataset-app/target/jarina-task-executor-spark-dataset-app-0.12.0-jar-with-dependencies.jar ./
-cp -f ../../jarina-task-executor-spark-dq-app/target/jarina-task-executor-spark-dq-app-0.12.0-jar-with-dependencies.jar ./
-cp -f ../../jarina-task-proxy-for-spark/target/jarina-task-proxy-for-spark-0.12.0-jar-with-dependencies.jar ./
-cp -f ../../jarina-credential-providers-jdbc/target/jarina-credential-providers-jdbc-0.12.0.jar ./
-cp -f ../../jarina-credential-providers-spark/target/jarina-credential-providers-spark-0.12.0.jar ./
+export LH_VERSION=1.0.0
+cp -f ../../jarina-task-executor-spark-dataset-app/target/jarina-task-executor-spark-dataset-app-1.0.0-jar-with-dependencies.jar ./
+cp -f ../../jarina-task-executor-spark-dq-app/target/jarina-task-executor-spark-dq-app-1.0.0-jar-with-dependencies.jar ./
+cp -f ../../jarina-task-proxy-for-spark/target/jarina-task-proxy-for-spark-1.0.0-jar-with-dependencies.jar ./
+cp -f ../../jarina-credential-providers-jdbc/target/jarina-credential-providers-jdbc-1.0.0.jar ./
+cp -f ../../jarina-credential-providers-spark/target/jarina-credential-providers-spark-1.0.0.jar ./
 docker build  -t jarina-spark-aws:$LH_VERSION ./
 rm ./jarina*.jar
 docker images | grep jarina

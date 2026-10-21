@@ -3,7 +3,7 @@ name: jarina-management
 description: Umbrella chart.
 type: application
 version: 0.1.0
-appVersion: "0.12.0"
+appVersion: "1.0.0"
 dependencies:
   - name: jarina-config-svc
     version: "0.1.0"

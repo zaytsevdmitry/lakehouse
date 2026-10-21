@@ -17,6 +17,8 @@
 
 package org.jarina.ui.modeller.config;
 
+import org.jarina.domain.layout.DomainLayout;
+import org.jarina.domain.settings.DomainSettings;
 import org.jarina.ui.modeller.service.AdminWorkspaceService;
 import org.jarina.ui.modeller.service.EditorService;
 import org.jarina.ui.modeller.service.ReviewService;
@@ -28,9 +30,6 @@ import org.jarina.ui.modeller.storage.LocalFsWorkspaceStorage;
 import org.jarina.ui.modeller.storage.WorkspaceStorage;
 import org.jarina.ui.modeller.storage.s3.S3ObjectStorageClient;
 import org.jarina.ui.modeller.storage.s3.S3WorkspaceStorage;
-import org.jarina.ui.modeller.vcs.GitCredentials;
-import org.jarina.ui.modeller.vcs.VcsProvider;
-import org.jarina.ui.modeller.vcs.VcsProviderFactory;
 import org.jarina.ui.modeller.workspace.WorkspaceCleanupTask;
 import org.jarina.ui.modeller.workspace.WorkspaceManager;
 import org.springframework.context.annotation.Bean;
@@ -66,13 +65,12 @@ public class ModellerConfiguration {
     }
 
     // ------------------------------------------------------------------
-    // VCS provider
+    // VCS
     // ------------------------------------------------------------------
 
     @Bean
-    public VcsProvider vcsProvider(ModellerProperties properties) {
-        var credentials = GitCredentials.forSystemAccount(properties.getVcsSystemAccount());
-        return VcsProviderFactory.create(properties.getVcsProvider(), properties, credentials);
+    public ModellerVcsCatalog vcsCatalog(DomainSettings domainSettings) {
+        return new ModellerVcsCatalog(domainSettings);
     }
 
     // ------------------------------------------------------------------
@@ -80,12 +78,13 @@ public class ModellerConfiguration {
     // ------------------------------------------------------------------
 
     @Bean
-    public WorkspaceManager workspaceManager(WorkspaceStorage storage, VcsProvider vcs,
+    public WorkspaceManager workspaceManager(WorkspaceStorage storage, ModellerVcsCatalog vcs,
                                              ModellerProperties properties) {
         int ttlHours = (int) Math.min(Integer.MAX_VALUE,
                 Math.max(1, properties.getStorage().getCleanupTtlHours()));
         WorkspaceManager manager = new WorkspaceManager(storage,
-                (domain, branch) -> WorkspaceManager.scopeDomain(domain, vcs.readBranchFiles(domain, branch)),
+                (domain, branch) -> DomainLayout.scopeDomain(domain,
+                        vcs.clientFor(domain).readBranchFiles(branch)),
                 ttlHours);
         return manager;
     }
@@ -121,15 +120,15 @@ public class ModellerConfiguration {
     }
 
     @Bean
-    public VcsService vcsService(WorkspaceManager manager, VcsProvider vcs, WorkspaceStorage storage,
-                                 SyncLogService logs, ModellerProperties properties) {
-        return new VcsService(manager, vcs, storage, logs, properties);
+    public VcsService vcsService(WorkspaceManager manager, ModellerVcsCatalog vcs, WorkspaceStorage storage,
+                                 SyncLogService logs, DomainSettings domainSettings) {
+        return new VcsService(manager, vcs, storage, logs, domainSettings);
     }
 
     @Bean
-    public ReviewService reviewService(WorkspaceManager manager, WorkspaceStorage storage, VcsProvider vcs,
-                                       ModellerProperties properties, SyncLogService logs) {
-        return new ReviewService(manager, storage, vcs, properties, logs);
+    public ReviewService reviewService(WorkspaceManager manager, WorkspaceStorage storage, ModellerVcsCatalog vcs,
+                                       DomainSettings domainSettings, SyncLogService logs) {
+        return new ReviewService(manager, storage, vcs, domainSettings, logs);
     }
 
     @Bean

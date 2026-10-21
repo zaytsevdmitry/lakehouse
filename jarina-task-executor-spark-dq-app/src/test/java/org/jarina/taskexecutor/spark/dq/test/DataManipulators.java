@@ -33,6 +33,8 @@ import org.jarina.taskexecutor.api.datasource.DataSourceManipulator;
 import org.jarina.taskexecutor.api.factory.SQLTemplateFactory;
 import org.jarina.taskexecutor.spark.dataset.datasourcemanipulator.SparkDataSourceManipulatorFactory;
 
+import java.util.HashMap;
+
 public class DataManipulators {
     public static DataSourceManipulator getIcebergDataSourceManipulator(
             SQLTemplateFactory sqlTemplateFactory,
@@ -42,7 +44,7 @@ public class DataManipulators {
             ConfigRestClientApi configRestClientApi) throws TaskConfigurationException, JacksonException {
 
         SourceConfDTO sourceConfDTO = configRestClientApi.getSourceConfDTO(dataSetKeyName);
-        JinJavaUtils jinJavaUtils = JinJavaFactory.getJinJavaUtils(sourceConfDTO,scheduledTaskDTO);
+        JinJavaUtils jinJavaUtils = JinJavaFactory.getJinJavaUtils(new HashMap<>(), sourceConfDTO,scheduledTaskDTO);
 
         SparkDataSourceManipulatorFactory manipulatorFactory =
                 new SparkDataSourceManipulatorFactory(sparkSession);
@@ -54,40 +56,4 @@ public class DataManipulators {
                 .activate(sourceConfDTO);
         return manipulatorFactory.buildDataSourceManipulator(dataSourceDTO, dataSetDTO,sqlTemplateDTO,jinJavaUtils,configRestClientApi);
     }
-
-   /*     public static DataSourceManipulator getSparkSQLDataSourceManipulatorPg(
-            JinJavaUtils jinJavaUtils,
-            PostgreSQLContainer<?> postgres,
-            SparkSession sparkSession,
-            String dataSetKeyName,
-            SourceConfDTO sourceConfDTO,
-            ConfigRestClientApi configRestClientApi) throws TaskConfigurationException {
-        SparkDataSourceManipulatorFactory manipulatorFactory =
-                new SparkDataSourceManipulatorFactory(sparkSession);
-
-        DataSetDTO dataSetDTO = sourceConfDTO.getDataSets().get(dataSetKeyName);
-        DataSourceDTO dataSourceDTO = sourceConfDTO.getDataSources().get(dataSetDTO.getDataSourceKeyName());
-        DriverDTO driverDTO = sourceConfDTO.getDrivers().get(dataSourceDTO.getDriverKeyName());
-        // pg dynamic test properties
-        Map<String,String> props = new HashMap<>();
-        props.putAll(Map.of(
-                "spark.sql.catalog.processing", "org.apache.spark.sql.execution.datasources.v2.jdbc.JDBCTableCatalog",
-                "spark.sql.catalog.processing.url", postgres.getJdbcUrl(),
-                "spark.sql.catalog.processing.user", postgres.getUsername(),
-                "spark.sql.catalog.processing.password", postgres.getPassword()
-        ));
-        props.forEach((k, v) -> sparkSession.conf().set(k,v));
-
-        dataSourceDTO.getService().setProperties(props);
-        dataSourceDTO.getService().setHost(postgres.getHost());
-        dataSourceDTO.getService().setPort(postgres.getMappedPort(5432).toString());
-        dataSourceDTO.getService().setUrn(postgres.getDatabaseName());
-        dataSourceDTO.getService().getProperties().put("user", postgres.getUsername());
-        dataSourceDTO.getService().getProperties().put("password", postgres.getPassword());
-
-        new CatalogActivatorService(
-                sparkSession)
-                .activate(sourceConfDTO);
-        return manipulatorFactory.buildDataSourceManipulator(driverDTO,dataSourceDTO,dataSetDTO,jinJavaUtils,configRestClientApi);
-    }*/
 }

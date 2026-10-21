@@ -17,6 +17,7 @@
 
 package org.jarina.ui.modeller.workspace;
 
+import org.jarina.domain.layout.DomainLayout;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.jarina.ui.modeller.auth.NotFoundException;
@@ -196,13 +197,13 @@ class WorkspaceManagerTest {
                 "domains/platform/datasets/a.yaml", "kind: DataSet\n",
                 "domains/platform/schedules/s.yaml", "kind: Schedule\n",
                 "domains/analytics/datasets/b.yaml", "kind: DataSet\n");
-        assertThat(WorkspaceManager.scopeDomain("platform", nested))
+        assertThat(DomainLayout.scopeDomain("platform", nested))
                 .containsOnly(
                         Map.entry("datasets/a.yaml", "kind: DataSet\n"),
                         Map.entry("schedules/s.yaml", "kind: Schedule\n"));
 
         Map<String, String> flat = Map.of("datasets/a.yaml", "kind: DataSet\n");
-        assertThat(WorkspaceManager.scopeDomain("platform", flat))
+        assertThat(DomainLayout.scopeDomain("platform", flat))
                 .containsOnly(Map.entry("datasets/a.yaml", "kind: DataSet\n"));
     }
 }

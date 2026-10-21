@@ -4,7 +4,7 @@ template: sparkTemplate
 taskProcessorBody: sparkTaskProcessorDQBody
 description: Quality check
 taskProcessorArgs:
-  deploy.appResource: file:///opt/jarina-task-spark-apps/jarina-task-executor-spark-dq-app-0.12.0-jar-with-dependencies.jar
+  deploy.appResource: file:///opt/jarina-task-spark-apps/jarina-task-executor-spark-dq-app-1.0.0-jar-with-dependencies.jar
   deploy.mainClass: org.jarina.taskexecutor.spark.dq.SparkProcessorApplicationDQ
   jarina.taskexecutor.body.config.dq.kafka.producer.metric.status.topic: metric_status
   jarina.taskexecutor.body.config.dq.kafka.producer.metric.value.topic: metric_value

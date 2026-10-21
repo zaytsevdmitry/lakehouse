@@ -18,9 +18,9 @@
 package org.jarina.config.vcs.component;
 
 import org.jarina.config.vcs.CurrentDomainContext;
-import org.jarina.config.vcs.JarinaVCSProperties;
-import org.jarina.config.vcs.VcsClient;
-import org.jarina.config.vcs.VcsClientException;
+import org.jarina.domain.settings.DomainSettings;
+import org.jarina.domain.vcs.VcsClient;
+import org.jarina.domain.vcs.VcsException;
 import org.jarina.config.vcs.configuration.GitVcsClientFactory;
 import org.jarina.config.vcs.entity.VcsSyncLog;
 import org.jarina.config.vcs.entity.VcsSyncStatus;
@@ -51,11 +51,11 @@ import java.util.Optional;
  * of a domain fails, its whole sub-tree is skipped until the parent succeeds again.
  */
 @Component
-@ConditionalOnProperty(prefix = "jarina.config.vcs.git.sync", name = "enabled", havingValue = "true")
+@ConditionalOnProperty(prefix = "jarina.config.vcs.sync", name = "enabled", havingValue = "true")
 public class GitOpsScheduler {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final JarinaVCSProperties jarinaVCSProperties;
+    private final DomainSettings domainSettings;
     private final GitVcsClientFactory vcsClientFactory;
     private final CurrentDomainContext domainContext;
     private final GitOpsChangeSetBuilder changeSetBuilder;
@@ -64,14 +64,14 @@ public class GitOpsScheduler {
     private final VcsSyncLogRepository vcsSyncLogRepository;
 
     public GitOpsScheduler(
-            JarinaVCSProperties jarinaVCSProperties,
+            DomainSettings domainSettings,
             GitVcsClientFactory vcsClientFactory,
             CurrentDomainContext domainContext,
             GitOpsChangeSetBuilder changeSetBuilder,
             GitOpsSynchronizer synchronizer,
             GitOpsFailureRecorder failureRecorder,
             VcsSyncLogRepository vcsSyncLogRepository) {
-        this.jarinaVCSProperties = jarinaVCSProperties;
+        this.domainSettings = domainSettings;
         this.vcsClientFactory = vcsClientFactory;
         this.domainContext = domainContext;
         this.changeSetBuilder = changeSetBuilder;
@@ -86,10 +86,10 @@ public class GitOpsScheduler {
      * repeatedly.
      */
     @Scheduled(
-            fixedDelayString = "${jarina.config.vcs.git.sync.interval-ms}",
-            initialDelayString = "${jarina.config.vcs.git.sync.initial-delay-ms}")
+            fixedDelayString = "${jarina.config.vcs.sync.interval-ms}",
+            initialDelayString = "${jarina.config.vcs.sync.initial-delay-ms}")
     public synchronized void sync() {
-        for (JarinaVCSProperties.DomainRef domain : jarinaVCSProperties.rootDomains())
+        for (DomainSettings.DomainRef domain : domainSettings.rootDomains())
             syncDomainTree(domain);
     }
 
@@ -99,10 +99,10 @@ public class GitOpsScheduler {
      * hierarchical dependency on the parent domain and are unreliable on top of a parent
      * that did not apply.
      */
-    private void syncDomainTree(JarinaVCSProperties.DomainRef domain) {
+    private void syncDomainTree(DomainSettings.DomainRef domain) {
         if (!syncDomain(domain))
             return;
-        for (JarinaVCSProperties.DomainRef nested : jarinaVCSProperties.nestedDomains(domain.properties()))
+        for (DomainSettings.DomainRef nested : domainSettings.nestedDomains(domain.properties()))
             syncDomainTree(nested);
     }
 
@@ -111,14 +111,13 @@ public class GitOpsScheduler {
      * nothing to do); {@code false} when processing of the domain failed, in which case
      * its sub-domains must not be processed.
      */
-    private boolean syncDomain(JarinaVCSProperties.DomainRef domain) {
+    private boolean syncDomain(DomainSettings.DomainRef domain) {
         String domainName = domain.name();
-        JarinaVCSProperties.DomainProperties properties = domain.properties();
-        if (!properties.isRepositoryConfigured()) {
+        if (!domainSettings.hasRepository(domainName)) {
             logger.warn("Domain {} has no VCS repository configured, skipping", domainName);
             return true;
         }
-        try (VcsClient vcsClient = vcsClientFactory.create(domainName, properties)) {
+        try (VcsClient vcsClient = vcsClientFactory.create(domainName)) {
             vcsClient.init();
             vcsClient.pull();
             String head = vcsClient.getCurrentCommitId();
@@ -143,14 +142,15 @@ public class GitOpsScheduler {
                 GitSyncChangeSet changeSet = changeSetBuilder.build(vcsClient, head, base);
                 synchronizer.sync(changeSet, head);
             } catch (Exception e) {
+                logger.error("Synchronization of domain {} (commit {}) failed: {}", domainName, head, errorMessage(e), e);
                 failureRecorder.recordFailure(domainName, head, errorMessage(e));
                 return false;
             } finally {
                 domainContext.clear();
             }
             return true;
-        } catch (VcsClientException e) {
-            logger.warn("VCS infrastructure failure for domain {}, will retry: {}", domainName, e.getMessage());
+        } catch (VcsException e) {
+            logger.warn("VCS infrastructure failure for domain {}, will retry: {}", domainName, e.getMessage(), e);
             return false;
         } catch (Exception e) {
             logger.error("Unexpected failure for domain {} during configuration synchronization", domainName, e);

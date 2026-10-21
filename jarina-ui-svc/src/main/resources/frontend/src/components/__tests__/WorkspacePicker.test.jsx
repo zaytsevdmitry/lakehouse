@@ -9,7 +9,13 @@ vi.mock('../../api.js', () => ({
   workspaceUrl: (id) => `/ui?section=modeller&workspace=${id}`,
 }));
 
-const profile = { username: 'tester', domains: { platform: 'EDITOR', analytics: 'EDITOR' } };
+const profile = {
+  username: 'tester',
+  domains: {
+    platform: { viewer: true, editor: true, control: false },
+    analytics: { viewer: true, editor: true, control: false },
+  },
+};
 
 const PLATFORM = { domain: 'platform', branchMain: 'main', branches: ['main', 'feature'] };
 const ANALYTICS = { domain: 'analytics', branchMain: 'main', branches: ['main'] };
@@ -116,7 +122,7 @@ describe('WorkspacePicker domain and branch selection', () => {
     const onNotice = vi.fn();
     render(
       <WorkspacePicker
-        profile={{ username: 'viewer', domains: { platform: 'VIEWER' } }}
+        profile={{ username: 'viewer', domains: { platform: { viewer: true, editor: false, control: false } } }}
         onOpen={onOpen}
         onNotice={onNotice}
       />
@@ -124,5 +130,24 @@ describe('WorkspacePicker domain and branch selection', () => {
     await waitFor(() => expect(screen.queryByText(/Loading/)).not.toBeInTheDocument());
 
     expect(screen.getByRole('button', { name: 'New branch' })).toBeDisabled();
+  });
+
+  it('enables New branch when a domain holds both CONTROL and EDITOR', async () => {
+    domains = [PLATFORM];
+    const onOpen = vi.fn();
+    const onNotice = vi.fn();
+    render(
+      <WorkspacePicker
+        profile={{
+          username: 'analytics_user',
+          domains: { analytics: { viewer: true, editor: true, control: true } },
+        }}
+        onOpen={onOpen}
+        onNotice={onNotice}
+      />
+    );
+    await waitFor(() => expect(screen.queryByText(/Loading/)).not.toBeInTheDocument());
+
+    expect(screen.getByRole('button', { name: 'New branch' })).toBeEnabled();
   });
 });

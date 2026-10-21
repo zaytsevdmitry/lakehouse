@@ -56,6 +56,7 @@ public enum DatabaseProtocol {
     HIVE2("hive2", true, 10000),           // Apache Hive, Spark Thrift Server, Cloudera Impala
     CLICKHOUSE("clickhouse", true, 8123),
     GREENPLUM("greenplum", true, 5432),
+    VERTICA("vertica", true, 5433),
     TRINO("trino", true, 8080),            // Current Presto fork
     PRESTO("presto", true, 8080),
     SNOWFLAKE("snowflake", true, 443),

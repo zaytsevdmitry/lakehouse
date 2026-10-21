@@ -96,10 +96,10 @@ class SecurityContextBootTest {
         assertThat(user.domainRolesOf()).containsEntry("finance", java.util.Set.of(DomainRole.EDITOR));
         assertThat(user.domainRolesOf()).containsEntry("marketing", java.util.Set.of(DomainRole.CONTROL));
         assertThat(user.domainRolesOf()).containsEntry("hr", java.util.Set.of(DomainRole.VIEWER));
-        assertThat(user.domains())
-                .containsEntry("finance", "EDITOR")
-                .containsEntry("marketing", "CONTROL")
-                .containsEntry("hr", "VIEWER");
+        assertThat(user.domainCapabilities())
+                .containsEntry("finance", Map.of("viewer", true, "editor", true, "control", false))
+                .containsEntry("marketing", Map.of("viewer", true, "editor", false, "control", true))
+                .containsEntry("hr", Map.of("viewer", true, "editor", false, "control", false));
         assertThat(user.hasDomainRole("finance", DomainRole.EDITOR)).isTrue();
         assertThat(user.hasDomainRole("finance", DomainRole.CONTROL)).isFalse();
         assertThat(user.hasDomainRole("marketing", DomainRole.CONTROL)).isTrue();
@@ -107,5 +107,25 @@ class SecurityContextBootTest {
         assertThat(user.hasWorkspaceAdmin()).isTrue();
         assertThat(user.isAllowedDomain("finance")).isTrue();
         assertThat(user.isAllowedDomain("security")).isFalse();
+    }
+
+    @Test
+    void userContextKeepsEditorAndControlOnTheSameDomain() {
+        Jwt jwt = Jwt.withTokenValue("jwt-value")
+                .header("alg", "none")
+                .claim("preferred_username", "analytics_user")
+                .claim("realm_access", Map.of("roles", List.of(
+                        "Analytics:CONTROL", "analytics:EDITOR", "platform:VIEWER")))
+                .build();
+        Authentication authentication = jwtAuthenticationConverter.convert(jwt);
+
+        UserContext user = UserContext.from(authentication);
+
+        assertThat(user.domainRolesOf()).containsEntry("analytics",
+                java.util.Set.of(DomainRole.CONTROL, DomainRole.EDITOR));
+        assertThat(user.domainCapabilities())
+                .containsEntry("analytics", Map.of("viewer", true, "editor", true, "control", true));
+        assertThat(user.hasDomainRole("analytics", DomainRole.EDITOR)).isTrue();
+        assertThat(user.hasDomainRole("analytics", DomainRole.CONTROL)).isTrue();
     }
 }

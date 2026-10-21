@@ -24,7 +24,7 @@ UI sections:
 
 For the read-only/monitoring sections the service is a thin aggregation layer: each UI section is served by its own controller that delegates to the REST client of the corresponding jarina service. The service makes no direct database calls for those sections.
 
-The **Modelling** surface is implemented by the UI service itself: it reads and writes configuration documents in workspaces (local FS or S3 object storage), interacts with the configuration domain repositories for that purpose (via jgit or the GitLab/GitHub API), and exposes schema-driven editing metadata. Workspace contents are user-specific working copies that are opened, edited and finally submitted for review; the authoritative store is the Git repository consumed by `jarina-config-svc` (GitOps). A domain repository may be dedicated to a single domain (flat files at the repository root) or host several domains under `domains/<name>/` — both layouts are supported.
+The **Modelling** surface is implemented by the UI service itself: it reads and writes configuration documents in workspaces (local FS or S3 object storage), interacts with the configuration domain repositories for that purpose (via JGit), and exposes schema-driven editing metadata. Workspace contents are user-specific working copies that are opened, edited and finally submitted for review; the authoritative store is the Git repository consumed by `jarina-config-svc` (GitOps). A domain repository may be dedicated to a single domain (flat files at the repository root) or host several domains under `domains/<name>/` — both layouts are supported.
 
 External interactions:
 
@@ -32,7 +32,7 @@ External interactions:
 - **jarina-scheduler-svc** — schedule instance runs for an interval, the run DAG.
 - **jarina-state-svc** — dataset interval states.
 - **jarina-task-proxy-for-spark** — Spark submissions (create, status, kill, clear).
-- **Git repositories (GitOps)** — one repository per configuration domain (`jarina.modeller.domains.<name>.repository-url`, with `jarina.modeller.git.remote-url` as the legacy single-repository fallback); the modeller clones the selected `(domain, branch)` pair per workspace, creates branches and submits changes for review.
+- **Git repositories (GitOps)** — one repository per configuration domain (`jarina.domains.<name>.git.repository-url`, declared in the shared `DomainSettings` of `jarina-domain-api`); the modeller clones the selected `(domain, branch)` pair per workspace, creates branches and submits changes for review.
 
 Controllers (top-level `controller`):
 
@@ -73,43 +73,48 @@ repositories. See
 
 ### One repository (and one branch) per domain
 
-`ModellerProperties` (prefix `jarina.modeller`) declares a `domains` map:
+Domains are declared under `jarina.domains` and bound by the shared `DomainSettings` of
+`jarina-domain-api` (canonical reference:
+[jarina-domain-api/doc/readme.md](../../jarina-domain-api/doc/readme.md)); `jarina.modeller`
+no longer holds domains — it is workspace storage / auth / session only:
 
 ```yaml
 jarina:
-  modeller:
-    domains:                        # <domainKeyName>:
-      platform:                     #   repository-url: ...
+  domains:                        # <domainKeyName>:
+    platform:                     #   git.repository-url: ...
+      git:
         repository-url: git://git-server:9418/platform.git
-        branch-main: main
-      analytics:
+        branch: main
+        credentials:              # per-domain, never merged
+          auth-type: ssh
+          ssh-private-key-path: /keys/platform_ed25519
+    analytics:
+      git:
         repository-url: git://git-server:9418/analytics.git
-        branch-main: main
-    git:                            # legacy single-repository fallback
-      remote-url: ${JARINA_GIT_URL:}
-      branch-main: main
 ```
 
 Resolution rules:
 
 | Rule | Behaviour |
 |---|---|
-| Domain list | `domainNames()` is the `domains` keys **sorted alphabetically**; the modeller has no domain tree and no `priority` |
-| No `domains` | falls back to the single domain `default` if `git.remote-url` is set; an empty list otherwise |
-| Repository URL | per-domain `repository-url`, else legacy `git.remote-url`, else the domain is unusable |
-| Main branch | per-domain `branch-main`, else legacy `git.branch-main`, else `main` |
-| Unavailable repository | the domain is listed with an **empty** branch list (the branch panel still shows the root), it is not an error |
-| Missing repository URL | a hard error: `No repository URL configured for domain <name> (jarina.modeller.domains.<name>.repository-url)` |
+| Domain list | `domainNames()` is the configured domain names **sorted alphabetically**; the modeller presents a flat list of domains and ignores `priority` and the domain tree |
+| Repository URL | `jarina.domains.<name>.git.repository-url`; there is **no legacy single-repository fallback** any more |
+| Main branch | `jarina.domains.<name>.git.branch`, default `main` |
+| Unavailable repository | the domain is listed with an **empty** branch list (`VcsException` is caught per domain; the branch panel still shows the root), it is not an error |
+| Missing repository URL | a hard error on use (`IllegalStateException` → HTTP 400): `Domain '<name>': no repository URL configured (property: jarina.domains.<name>.git.repository-url)` |
+| Invalid credentials | reported at startup: `ModellerVcsCatalog` warms up the client of every configured domain that has a repository, so a bad `auth-type` or an unreadable key fails fast |
 
-`branch-main` is also the **target branch of a review**: a submission is merged back into
-`domainBranchMain(domain)` of its own domain.
+`git.branch` is also the **target branch of a review**: a submission is merged back into
+`domainSettings.branch(domain)` of its own domain.
 
-### The branch panel is a domain tree
+### The branch panel is a flat list of domains
 
 `GET /api/vcs/branches` returns one `DomainBranchesResponse` per configured domain -
 `{domain, branches[], branchMain}` - and the frontend renders it as a tree with the domains at
-the root and their branches hanging off them. `POST /api/vcs/branch` takes
-`{domain, branch, baseBranch}`, so a branch is always created in a named domain repository.
+the root and their branches hanging off them; the configured domain *tree* is not reflected
+here, because `domainNames()` is a flat, alphabetically sorted list. `POST /api/vcs/branch`
+takes `{domain, branch, baseBranch}`, so a branch is always created in a named domain
+repository.
 
 ### A workspace is a set of `(domain, branch)` pairs
 
@@ -139,11 +144,10 @@ derived server-side:
 - the workspace files are grouped by the `<domain> (<branch>)` folder that covers them; a file
   outside every selected domain folder is rejected;
 - each group is committed to its own `(domain, branch)` with the user as author and the
-  technical service account as committer, pushed to the domain branch and — for
-  GitLab/GitHub — turned into an MR/PR against `branch-main` of that domain;
+  technical service account as committer and pushed to the domain branch;
 - a domain whose diff is empty is skipped (`NO_CHANGES`);
-- the aggregate answer is `OK` (with the MR/PR URLs, comma-joined when there are several) or
-  `NO_CHANGES` when nothing changed at all;
+- the aggregate answer is `OK` (with the resulting commit URLs, comma-joined when there are
+  several) or `NO_CHANGES` when nothing changed at all;
 - **the workspace is deleted only on success** — a failed submission leaves it open;
 - a user must own the workspace, hold `EDITOR` for every selected domain, and the whole
   submission runs under a per-workspace lock.
@@ -166,15 +170,20 @@ what the configuration service recorded for a given domain.
 
 | Property | Description |
 |---|---|
-| `jarina.modeller.domains.<name>.repository-url` | Repository of the domain; required for the domain to appear in the branch panel |
-| `jarina.modeller.domains.<name>.branch-main` | Main branch of the domain (default `main`), also the review target |
-| `jarina.modeller.git.remote-url` | Legacy fallback, used when `domains` is empty; the domain is named `default` |
-| `jarina.modeller.git.branch-main` | Legacy fallback main branch (default `main`) |
+| `jarina.domains.<name>.git.repository-url` | Repository of the domain; required for the domain to be usable in the branch panel |
+| `jarina.domains.<name>.git.branch` | Main branch of the domain (default `main`), also the review target |
+| `jarina.domains.<name>.git.credentials.auth-type` | `ssh` / `token` / `basic`, inferred from the declared credentials when omitted |
+| `jarina.domains.<name>.git.credentials.ssh-private-key-path` / `.username` / `.token` / `.password` | Per-domain git credentials; an empty block means anonymous access |
+| `jarina.modeller.storage.*` | Workspace storage (see [Configuration](#configuration)) |
 
-Per-domain environment variables are not declared in the shipped `application.yml`; a
-deployment supplies them, e.g. as system properties
-(`-Djarina.modeller.domains.platform.repository-url=...`, as `demo/compose` does) or via
-relaxed-binding environment variables.
+This service does not need `git.local-clone-path`: it clones into transient work directories,
+unlike `jarina-config-svc`, which keeps a persistent clone per domain.
+
+Per-domain settings are not declared in the shipped `application.yml`; a deployment
+supplies them, e.g. as system properties
+(`-Djarina.domains.platform.git.repository-url=...`, as `demo/compose` does) or via
+relaxed-binding environment variables
+(`JARINA_DOMAINS_PLATFORM_GIT_REPOSITORY_URL`, `JARINA_DOMAINS_PLATFORM_GIT_BRANCH`).
 
 ## Modules
 
@@ -190,7 +199,7 @@ The service itself. Contains:
 - the modeller **package `org.jarina.ui.modeller`**:
   - controllers (`controller`): `VcsController`, `EditorController`, `SchemaController`, `AdminController`;
   - services (`service`): `VcsService`, `ReviewService`, `SchemaService`, `EditorService`, `YamlEditorService`, `EnumOptionsService`, `SyncLogService`, `AdminWorkspaceService`;
-  - VCS integration (`vcs`): `VcsProvider` SPI with `LocalGitVcsProvider`, `GitLabApiVcsProvider`, `GitHubAppVcsProvider`, `DisabledVcsProvider` and a provider factory;
+  - VCS integration (`config`): `ModellerProperties` (workspace storage, auth strategy, session, logging — domains and git credentials live in the shared `DomainSettings` of `jarina-domain-api`) and `ModellerVcsCatalog`, which builds one `GitVcsClient` per domain through `DomainVcsFactory` from the shared `jarina-domain-api` module;
   - workspace storage (`storage`): `WorkspaceStorage` SPI with `LocalFsWorkspaceStorage` and S3 (`S3WorkspaceStorage` + a minimal AWS SigV4 signer), plus `WorkspaceManager`,
     `WorkspaceSeeder` and the cleanup task (`WorkspaceCleanupTask`);
   - auth (`auth`): `DomainRole` (`VIEWER`/`EDITOR`/`CONTROL`), `ModellerRoleSupport` (domain role parsing), `UserContext`, `DomainAccess`, `ForbiddenException`/`NotFoundException`;
@@ -199,7 +208,7 @@ The service itself. Contains:
 - `GlobalExceptionHandler` — unified error handling;
 - the frontend (`src/main/resources/frontend`): React + Vite, including the modeller's visual editors (`ErDiagramEditor`, `DataLineageDiagramEditor`, `DagEditor` — React Flow) and a Vitest unit-test suite.
 
-Depends on: `jarina-common` (shared constants and config DTOs used by the editors — e.g. the `YamlMetadataKind` enum covering the `ERDiagram` and `DataLineageDiagram` kinds, plus the corresponding `ERDiagramDTO` / `DataLineageDiagramDTO`), `jarina-config-rest-client`, `jarina-scheduler-rest-client`, `jarina-state-rest-client`, `jarina-task-proxy-for-spark-rest-client`, `jackson-dataformat-yaml`, `org.eclipse.jgit` (+ SSH), Spring Boot OAuth2 client and resource server.
+Depends on: `jarina-domain-api` (shared VCS library: `VcsClient`, its JGit implementation, credentials and per-domain spec/factory), `jarina-common` (shared constants and config DTOs used by the editors — e.g. the `YamlMetadataKind` enum covering the `ERDiagram` and `DataLineageDiagram` kinds, plus the corresponding `ERDiagramDTO` / `DataLineageDiagramDTO`), `jarina-config-rest-client`, `jarina-scheduler-rest-client`, `jarina-state-rest-client`, `jarina-task-proxy-for-spark-rest-client`, `jackson-dataformat-yaml`, `org.eclipse.jgit` (+ SSH), Spring Boot OAuth2 client and resource server.
 
 ## API Endpoints
 
@@ -300,34 +309,26 @@ jarina:
         secret-key: ...
         region: us-east-1
       cleanup-ttl-hours: 4
-    vcs-provider: local-git      # [local-git, gitlab-api, github-app, gerrit-ssh]
-    # One repository per configuration domain. When `domains` is empty the legacy
-    # `git.*` block below is used as the single domain `default`.
-    domains:
-      platform:
-        repository-url: git://git-server:9418/platform.git
-        branch-main: main
-      analytics:
-        repository-url: git://git-server:9418/analytics.git
-        branch-main: main
-    git:                        # legacy single-repository fallback
-      remote-url: ${JARINA_GIT_URL:}
-      branch-main: main
     auth-strategy: jwt-rbac      # [jwt-rbac, token-exchange]
     session:
       inactivity-minutes: 30
-    vcs-system-account:          # credentials for git operations
-      auth-type: token           # [ssh, token, basic]
-      ssh-private-key-path: ...
-      username: ...
-      token: ...
-      password: ...
-    github:                      # used when vcs-provider == github-app
-      app-id: ...
-      app-private-key-path: ...
-      installation-id: ...
     logging:
       sync-log-capacity: 500
+  # Configuration domains (jarina.domains.<name>.git.*), bound by the shared
+  # DomainSettings of jarina-domain-api. A domain is active iff its
+  # repository-url is set; credentials are per-domain and never merged.
+  domains:
+    platform:
+      git:
+        repository-url: git://git-server:9418/platform.git
+        branch: main
+        credentials:             # per-domain credentials
+          auth-type: ssh
+          ssh-private-key-path: /keys/platform_ed25519
+    analytics:
+      git:
+        repository-url: git://git-server:9418/analytics.git
+        branch: main
 ```
 
 | Parameter | Description |
@@ -344,15 +345,11 @@ jarina:
 | `jarina.modeller.storage.root-directory` | Local workspace root (default `/tmp/jarina-workspaces`) |
 | `jarina.modeller.storage.s3.*` | S3 endpoint/bucket/credentials (S3 type) |
 | `jarina.modeller.storage.cleanup-ttl-hours` | Lifetime of an inactive workspace (default 4 h) |
-| `jarina.modeller.vcs-provider` | Git integration: `local-git`, `gitlab-api`, `github-app`, `gerrit-ssh` or `disabled` |
-| `jarina.modeller.domains.<name>.repository-url` | Repository URL of the domain (required for a domain to be listed in the branch panel) |
-| `jarina.modeller.domains.<name>.branch-main` | Main branch of the domain (default `main`); also the review target branch |
-| `jarina.modeller.git.remote-url` | Legacy fallback repository URL, used when `domains` is empty; the domain is then named `default` |
-| `jarina.modeller.git.branch-main` | Legacy fallback main branch (default `main`) |
+| `jarina.domains.<name>.git.repository-url` | Repository URL of the domain (required for a domain to be usable in the branch panel) |
+| `jarina.domains.<name>.git.branch` | Main branch of the domain (default `main`); also the review target branch |
+| `jarina.domains.<name>.git.credentials.*` | Per-domain git credentials (`auth-type`, `ssh-private-key-path`, `username`, `token`, `password`); no global account, no merge |
 | `jarina.modeller.auth-strategy` | `jwt-rbac` (default) or `token-exchange` |
 | `jarina.modeller.session.inactivity-minutes` | Workspace session inactivity timeout |
-| `jarina.modeller.vcs-system-account.*` | Credentials used for git operations (`ssh`/`token`/`basic`) |
-| `jarina.modeller.github.*` | GitHub App settings (`github-app` provider) |
 | `jarina.modeller.logging.sync-log-capacity` | In-memory sync log capacity |
 
 ## Security
@@ -384,10 +381,9 @@ Access is **domain-driven**. Realm roles carry a domain prefix, `<domain>:<ROLE>
 | `KEYCLOAK_UI_CLIENT_SECRET` | `super-secret-bff-key-1234567890` | Secret of the `jarina-ui-client` client |
 | `JARINA_UI_REDIRECT_URI` | `{baseUrl}/login/oauth2/code/{registrationId}` | OAuth2 redirect URI of the BFF |
 | `KEYCLOAK_INTERNAL_CLIENT_SECRET` | `super-secret-internal-key-987654321` | Secret of the `jarina-internal-client` (service-to-service calls) |
-| `JARINA_VCS_PROVIDER` | `local-git` | Git provider for the modeller |
-| `JARINA_GIT_URL` | — | Legacy fallback config repository URL (used when no domain is configured) |
-| `JARINA_GIT_BRANCH` | `main` | Legacy fallback main branch |
-| `JARINA_VCS_AUTH_TYPE` / `JARINA_VCS_USER` / `JARINA_VCS_TOKEN` / `JARINA_VCS_PASSWORD` / `JARINA_VCS_SSH_KEY_PATH` | — | Git system-account credentials |
+| `JARINA_DOMAINS_<NAME>_GIT_REPOSITORY_URL` | — | Repository URL of a configuration domain (relaxed binding of `jarina.domains.<name>.git.repository-url`) |
+| `JARINA_DOMAINS_<NAME>_GIT_BRANCH` | `main` | Branch of a configuration domain |
+| `JARINA_DOMAINS_<NAME>_GIT_CREDENTIALS_SSH_PRIVATE_KEY_PATH` | — | SSH key of a configuration domain |
 | `JARINA_WORKSPACE_STORAGE` / `JARINA_WORKSPACE_ROOT` | `local` / `/tmp/jarina-workspaces` | Workspace storage backend |
 | `JARINA_WORKSPACE_TTL_HOURS` | `4` | Inactive-workspace cleanup TTL |
 | `server.servlet.session.cookie.name` / `.http-only` | `JSESSIONID` / `true` | Session cookie name and HttpOnly flag |

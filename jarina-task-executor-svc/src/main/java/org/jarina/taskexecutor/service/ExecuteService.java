@@ -129,7 +129,7 @@ public class ExecuteService {
     ) throws TaskConfigurationException {
         // made task globalContext based on task and source information
         JinJavaUtils jinJavaUtils = JinJavaFactory.getJinJavaUtils();
-
+        jinJavaUtils.injectGlobalContext(new HashMap<String,Object>(configRestClientApi.getGlobalVars()));
         Map<String,Object> localContext = new HashMap<>();
 
         // resolve sources first

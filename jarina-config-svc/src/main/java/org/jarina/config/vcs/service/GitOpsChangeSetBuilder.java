@@ -17,9 +17,9 @@
 
 package org.jarina.config.vcs.service;
 
-import org.jarina.config.vcs.VcsChangeType;
-import org.jarina.config.vcs.VcsClient;
-import org.jarina.config.vcs.VcsDiffEntry;
+import org.jarina.domain.vcs.VcsChangeType;
+import org.jarina.domain.vcs.VcsClient;
+import org.jarina.domain.vcs.VcsDiffEntry;
 import org.jarina.config.vcs.yaml.GitOpsYamlParser;
 import org.jarina.config.vcs.yaml.PreliminaryConfig;
 import org.slf4j.Logger;

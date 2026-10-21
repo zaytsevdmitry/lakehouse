@@ -66,6 +66,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 @SpringBootTest
@@ -239,7 +240,7 @@ public class SparkTaskProcessorBodyTest {
         ScheduledTaskDTO scheduledTaskDTO = new  TaskConfigTestFactory().loadScheduledTaskLockDTO(trnddsDatasetName,"load").getScheduledTaskEffectiveDTO();
         SparkSession sparkSession = applicationContext.getBean(SparkSession.class);
 
-        JinJavaUtils jinJavaUtils = JinJavaFactory.getJinJavaUtils(sourceConfDTO,scheduledTaskDTO);
+        JinJavaUtils jinJavaUtils = JinJavaFactory.getJinJavaUtils(new HashMap<>(),sourceConfDTO,scheduledTaskDTO);
 
         ScheduledTaskDTO pgPrepareTask = ObjectMapping.stringToObject(ObjectMapping.asJsonString(scheduledTaskDTO),ScheduledTaskDTO.class);
         pgPrepareTask.setDriverKeyName("postgres");

@@ -78,7 +78,7 @@ public class InternalScheduler {
         logger.info("queueTasks {}", rows);
 
         rows = scheduleTaskInstanceService.produceScheduledTasks();
-        logger.info("produceScheduledTasks {}", rows);
+        logger.info("produceScheduledTasks {}",      rows);
 
         rows = manageStateService.successSchedules();
         logger.info("Success schedules {}", rows);

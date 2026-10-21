@@ -19,9 +19,9 @@ package org.jarina.ui.service;
 import org.jarina.client.api.dto.vcs.VcsObjectLogDTO;
 import org.jarina.client.api.dto.vcs.VcsSyncLogDTO;
 import org.jarina.client.rest.config.ConfigRestClientApi;
+import org.jarina.domain.settings.DomainSettings;
 import org.jarina.ui.modeller.auth.DomainAccess;
 import org.jarina.ui.modeller.auth.UserContext;
-import org.jarina.ui.modeller.config.ModellerProperties;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
@@ -33,11 +33,11 @@ import java.util.Set;
 public class VcsLogService {
 
     private final ConfigRestClientApi configRestClientApi;
-    private final ModellerProperties modellerProperties;
+    private final DomainSettings domainSettings;
 
-    public VcsLogService(ConfigRestClientApi configRestClientApi, ModellerProperties modellerProperties) {
+    public VcsLogService(ConfigRestClientApi configRestClientApi, DomainSettings domainSettings) {
         this.configRestClientApi = configRestClientApi;
-        this.modellerProperties = modellerProperties;
+        this.domainSettings = domainSettings;
     }
 
     public List<VcsSyncLogDTO> syncLogs(
@@ -64,7 +64,7 @@ public class VcsLogService {
 
     private Set<String> allowedDomains(Authentication authentication, String endpoint) {
         return DomainAccess.allowedDomains(
-                UserContext.from(authentication), modellerProperties.domainNames(), endpoint);
+                UserContext.from(authentication), domainSettings.domainNames(), endpoint);
     }
 
     private static List<VcsSyncLogDTO> filterByAllowed(List<VcsSyncLogDTO> rows, Set<String> allowed) {

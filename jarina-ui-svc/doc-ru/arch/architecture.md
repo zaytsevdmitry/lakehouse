@@ -142,8 +142,8 @@ src/main/resources/frontend
         ├── ModelTab.jsx           # скрипты моделей с подсветкой синтаксиса
         ├── RelationsTab.jsx       # представление ER-диаграммы (React Flow)
         └── __tests__/             # unit-тесты Vitest для модделирования
-                                   #   (DataLineageDiagramEditor 24, EditorView 5,
-                                   #   FormEditor 7, WorkspacePicker 5) — см. §7
+                                   #   (DataLineageDiagramEditor 24, EditorView 7,
+                                   #   FormEditor 7, WorkspacePicker 8) — см. §7
 ```
 
 Назначение каждой папки/файла:
@@ -204,9 +204,9 @@ Toolkit, Zustand, MobX или React Context. Всё состояние лока�
   - `EditorView` — `schemas`, `tree`, `dirs`, `selected`, `selectedFolder`,
     `filter`, `yaml`, `doc`, `keyNameEditable`, `mode` (`form`|`yaml`),
     `dirty`, `busy`, флаги модалок, `pendingOpen` (защита от несохранённых
-    изменений); `readOnly` — UX-подсказка, выводимая из `profile.domains` для
-    домена выбранного файла/каталога (редактирование доступно только с ролью
-    `EDITOR` в этом домене).
+    изменений); `readOnly` — UX-подсказка, выводимая из
+    `profile.domains[<domain>].editor` для домена выбранного файла/каталога
+    (редактирование доступно только с возможностью `editor` в этом домене).
 - **Уровень под-представлений / вкладок** — `LineageTab`, `RelationsTab`,
   `ModelTab`, `PipelineSection`, `FormEditor`, `ErDiagramEditor`,
   `DataLineageDiagramEditor`, `DagEditor` (схемы по видам из `SchemaService`
@@ -264,13 +264,18 @@ Query). Все вызовы централизованы в `src/api.js`, кот
   заголовок `X-XSRF-TOKEN` для небезопасных методов.
 - **RBAC**: доступ построен по доменам. Realm-роли Keycloak несут префикс
   домена — `<domain>:<ROLE>`, где `ROLE` ∈ `VIEWER / EDITOR / CONTROL`
-  (`VIEWER` неявно входит в две другие; `EDITOR` не даёт останавливать задачи,
-  `CONTROL` не даёт редактировать). Глобальная роль `WORKSPACE_ADMIN` (без
-  домена) управляет админскими эндпоинтами. `GET /api/user` возвращает карту по
-  доменам `domains: {<domain>: <LABEL>}`; фронтенд использует её только для
-  отражения прав (например, подсказки read-only в Modelling), тогда как бэкенд
-  остаётся единственной точкой принятия решения и отвечает `403` на любую
-  запрещённую мутацию.
+  (`VIEWER` неявно входит в две другие; `EDITOR` и `CONTROL` ортогональны:
+  `EDITOR` не даёт останавливать задачи, `CONTROL` не даёт редактировать).
+  Домен — регистронезависимый идентификатор, канонизируемый к нижнему регистру
+  на обеих сторонах (парсинг ролей и ключи конфигурации). Глобальная роль
+  `WORKSPACE_ADMIN` (без домена) управляет админскими эндпоинтами.
+  `GET /api/user` возвращает карту **возможностей** по доменам
+  `domains: {<domain>: {viewer, editor, control}}`; фронтенд использует её
+  только для отражения прав (например, подсказки read-only в Modelling), тогда
+  как бэкенд остаётся единственной точкой принятия решения и отвечает `403` на
+  любую запрещённую мутацию. Так как возможности — явные флаги, одновременные
+  `<domain>:CONTROL` и `<domain>:EDITOR` сохраняют оба права: роли открывают
+  возможности и не перекрывают друг друга.
 
 **Deep-ссылки.** `workspaceUrl(workspaceId)` в `api.js` строит
 `?section=modeller&workspace=<id>` на текущем пути. Workspace picker использует
@@ -562,7 +567,7 @@ domain-driven RBAC: мутации требуют `EDITOR` (правка кон�
 | Формат модулей / цель | ESM (`"type": "module"`), цели Vite по умолчанию |
 | Язык | **JavaScript (JSX)** — без TypeScript |
 | Линтинг / форматирование | **Ничего не настроено** (нет ESLint, нет Prettier, нет скрипта `lint`) |
-| Тесты | **Vitest 3 + React Testing Library** (jsdom): `npm test` запускает `vitest run`; настраивается в блоке `test` файла `vite.config.js` (`globals`, `environment: 'jsdom'`, `setupFiles: ['./test/setup.js']`, `include: src/**/*.test.{js,jsx}`). Текущий набор (44 теста) покрывает `DataLineageDiagramEditor` (24 теста: трансляция графа, сохранение позиций, перетаскивание, потоки Add/Edit/Remove + модалки, полноэкранный режим), `FormEditor` (7 тестов: выбор ключа source-map при переключении документов, защита от устаревших ключей, доступность remove/edit, сброс вкладки на экземпляр), `EditorView` (6 тестов, вкл. создание папки в корне домена, перемещение файла в корень домена, сценарий выхода из мультидоменного пространства после ревью и переключение `readOnly` по домену) и `WorkspacePicker` (7 тестов, вкл. предвыбор ветки по домену и включение/выключение `New branch` по роли `EDITOR`). `test/setup.js` добавляет полифиллы для браузерных API, нужных React Flow в jsdom (ResizeObserver, `DOMMatrixReadOnly`, pointer capture, `getBoundingClientRect`, `offsetWidth/Height`). |
+| Тесты | **Vitest 3 + React Testing Library** (jsdom): `npm test` запускает `vitest run`; настраивается в блоке `test` файла `vite.config.js` (`globals`, `environment: 'jsdom'`, `setupFiles: ['./test/setup.js']`, `include: src/**/*.test.{js,jsx}`). Текущий набор (46 тестов) покрывает `DataLineageDiagramEditor` (24 теста: трансляция графа, сохранение позиций, перетаскивание, потоки Add/Edit/Remove + модалки, полноэкранный режим), `FormEditor` (7 тестов: выбор ключа source-map при переключении документов, защита от устаревших ключей, доступность remove/edit, сброс вкладки на экземпляр), `EditorView` (7 тестов, вкл. создание папки в корне домена, перемещение файла в корень домена, сценарий выхода из мультидоменного пространства после ревью, переключение `readOnly` по домену и сохранение редактируемости при одновременных `CONTROL`+`EDITOR`) и `WorkspacePicker` (8 тестов, вкл. предвыбор ветки по домену и включение/выключение `New branch` по возможности `editor`, в том числе при одновременных `CONTROL`+`EDITOR`). `test/setup.js` добавляет полифиллы для браузерных API, нужных React Flow в jsdom (ResizeObserver, `DOMMatrixReadOnly`, pointer capture, `getBoundingClientRect`, `offsetWidth/Height`). |
 | Менеджер пакетов | npm (`package.json` + `package-lock.json`) |
 
 Скрипты: `dev` (`vite`), `build` (`vite build`), `preview` (`vite preview`),
@@ -676,7 +681,11 @@ TypeScript или линтеры отсутствуют.
 
 - **Роли realm Keycloak (domain-driven).** Доступ несётся realm-ролями вида
   **`<domain>:<ROLE>`** (например, `finance:EDITOR`, `marketing:CONTROL`,
-  `hr:VIEWER`). Домен приводится к нижнему регистру; `ROLE` — одна из
+  `hr:VIEWER`). Домен — регистронезависимый идентификатор, канонизируемый к
+  нижнему регистру на каждой границе (`ModellerRoleSupport.canonicalDomain`):
+  `Analytics:EDITOR` и `analytics:EDITOR` — один и тот же домен, а ключи
+  конфигурации доменов нормализуются так же (два домена, совпадающих без учёта
+  регистра, приводят к быстрому падению при старте). `ROLE` — одна из
   `VIEWER`, `EDITOR`, `CONTROL`, сравнение без учёта регистра. `VIEWER`
   **неявно входит** в две другие, а `EDITOR`/`CONTROL` ортогональны: `EDITOR`
   позволяет менять конфиги/репозиторий, но **не** останавливать задачи;
@@ -690,13 +699,14 @@ TypeScript или линтеры отсутствуют.
   (`SecurityConfig.roleHierarchy`).
 - **Эндпоинт `/api/user`.** SPA никогда не разбирает JWT. Он вызывает
   `GET /api/user` (`UserController`) и получает профиль
-  `{username, name, email, roles[], domains:{<domain>: <LABEL>}}`. Карта
-  `domains` сворачивает набор ролей каждого домена в одну метку с приоритетом
-  **`CONTROL > EDITOR > VIEWER`** (`ModellerRoleSupport.domains` /
-  `displayLabel`, `DomainRole`). Пользователь с `finance:EDITOR` и
-  `finance:CONTROL` сохраняет **оба** внутренних набора ролей; UI видит только
-  метку `CONTROL`. SPA использует `domains` **только для отражения прав**
-  (например, подсказки read-only), но не для решения о доступе.
+  `{username, name, email, roles[], domains:{<domain>:{viewer, editor, control}}}`.
+  Карта `domains` отдаёт ортогональные возможности набора ролей каждого домена
+  явными булевыми флагами (`UserContext.domainCapabilities`) — вместо потери
+  данных при сворачивании в одну метку. Пользователь с `finance:EDITOR` и
+  `finance:CONTROL` получает `{viewer:true, editor:true, control:true}` для этого
+  домена, поэтому роли **открывают** возможности и не перекрывают друг друга.
+  SPA использует `domains` **только для отражения прав** (например, подсказки
+  read-only), но не для решения о доступе.
 - **Сессионная cookie.** Каждый вызов `/api/**` same-origin и едет на сессии
   `JSESSIONID`, установленной OAuth2 authorization-code логином; SPA никогда не
   отправляет `Bearer`-токен (см. §4).
@@ -768,10 +778,10 @@ TypeScript или линтеры отсутствуют.
   - `ModellerSection` рендерит заголовок вкладок `My workspaces / Admin`
     только при наличии `WORKSPACE_ADMIN` в `profile.roles`; для остальных
     вкладок нет — они сразу видят `WorkspacePicker` (`ModellerSection.jsx`).
-  - `WorkspacePicker` дизейблит кнопку **New branch** для пользователя без
-    роли `EDITOR` ни в одном домене (`WorkspacePicker.jsx`).
+  - `WorkspacePicker` дизейблит кнопку **New branch**, пока у пользователя нет
+    возможности `editor` хотя бы в одном домене (`WorkspacePicker.jsx`).
   - `EditorView` выводит `readOnly` из домена выбранного файла/каталога
-    (`profile.domains[<domain>]` должен содержать `EDITOR`); он больше не
+    (`profile.domains[<domain>].editor`); он больше не
     зависит от `workspace.own` (`EditorView.jsx`). `FormEditor`, `CodeEditor`,
     `ErDiagramEditor`, `DataLineageDiagramEditor` и `DagEditor` получают эту
     подсказку, но кнопки save/review остаются видимыми — на запрещённую мутацию
@@ -781,7 +791,7 @@ TypeScript или линтеры отсутствуют.
   управления.
 
 Коротко: JWT несёт роли `<domain>:<ROLE>` и глобальную `WORKSPACE_ADMIN`;
-`/api/user` отдаёт карту `domains` по доменам; `SecurityConfig` (админская
+`/api/user` отдаёт карту возможностей `domains` по доменам; `SecurityConfig` (админская
 поверхность) и доменные проверки в сервисах — единственная точка принуждения, а
 React-компоненты решают только **что показать**, но никогда — **что разрешено**.
 

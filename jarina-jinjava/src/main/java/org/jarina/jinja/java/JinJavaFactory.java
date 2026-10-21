@@ -26,6 +26,7 @@ import org.jarina.client.api.utils.ObjectMapping;
 import org.jarina.jinja.java.functions.JinjavaDateTimeFunctions;
 import org.jarina.jinja.java.functions.TaskProcessConfigExtractor;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -112,8 +113,9 @@ public class JinJavaFactory {
 
         return new JinJavaUtils(jinjava);
     }
-    public static JinJavaUtils getJinJavaUtils(SourceConfDTO sourceConfDTO, ScheduledTaskDTO scheduledTaskDTO) throws JacksonException {
+    public static JinJavaUtils getJinJavaUtils(Map<String,String> gVars, SourceConfDTO sourceConfDTO, ScheduledTaskDTO scheduledTaskDTO) throws JacksonException {
        return getJinJavaUtils()
+               .injectGlobalContext(new HashMap<String,Object>(gVars))
                .injectGlobalContext(ObjectMapping.asMap(sourceConfDTO))
                .injectGlobalContext(ObjectMapping.asMap(scheduledTaskDTO));
 

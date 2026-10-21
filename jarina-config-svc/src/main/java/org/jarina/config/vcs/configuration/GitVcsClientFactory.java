@@ -17,27 +17,31 @@
 
 package org.jarina.config.vcs.configuration;
 
-import org.jarina.config.vcs.JarinaVCSProperties;
-import org.jarina.config.vcs.VcsClient;
-import org.jarina.config.vcs.client.GitVcsClient;
+import org.jarina.domain.settings.DomainSettings;
+import org.jarina.domain.vcs.DomainVcsFactory;
+import org.jarina.domain.vcs.DomainVcsSpec;
+import org.jarina.domain.vcs.VcsClient;
 import org.springframework.stereotype.Component;
 
 /**
- * Builds a {@link VcsClient} for a single configuration domain from the Git settings
- * declared for that domain in {@link JarinaVCSProperties}.
+ * Builds the {@link VcsClient} of a single configuration domain. The domain parameters are
+ * processed in {@link DomainSettings} ({@code jarina.domains.*}): this factory only
+ * delegates transport and calls the shared domain-api factory.
  */
 @Component
 public class GitVcsClientFactory {
 
+    private final DomainSettings domainSettings;
+
+    public GitVcsClientFactory(DomainSettings domainSettings) {
+        this.domainSettings = domainSettings;
+    }
+
     /**
-     * @return a Git client bound to the repository declared for the given domain
+     * @return a Git client for the repository declared for the given domain
      */
-    public VcsClient create(String domainName, JarinaVCSProperties.DomainProperties domain) {
-        JarinaVCSProperties.GitProperties git = domain.getGit();
-        return new GitVcsClient(
-                git.getRepositoryUrl(),
-                git.getBranch(),
-                git.getLocalClonePath(),
-                git.getPrivateKeyPath());
+    public VcsClient create(String domainName) {
+        DomainVcsSpec spec = domainSettings.buildSpec(domainName, true);
+        return DomainVcsFactory.clientFor(spec);
     }
 }

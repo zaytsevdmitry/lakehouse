@@ -17,11 +17,20 @@
 
 package org.jarina.ui.modeller.workspace;
 
+import org.jarina.ui.modeller.auth.ModellerRoleSupport;
+
 /**
  * A single branch picked for one configuration domain in a workspace.
  * A workspace is a set of such selections — one branch per domain repository.
+ * <p>
+ * The domain is canonicalized to lower case on construction so workspaces,
+ * domain-role checks and configuration lookups all agree on the same identifier.
  */
 public record BranchSelection(String domain, String branch) {
+
+    public BranchSelection {
+        domain = ModellerRoleSupport.canonicalDomain(domain);
+    }
 
     public String key() {
         return domain + "=" + branch;

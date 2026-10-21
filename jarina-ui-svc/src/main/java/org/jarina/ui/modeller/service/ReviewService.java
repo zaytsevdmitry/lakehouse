@@ -17,17 +17,17 @@
 
 package org.jarina.ui.modeller.service;
 
+import org.jarina.domain.settings.DomainSettings;
+import org.jarina.domain.vcs.VcsException;
+import org.jarina.domain.vcs.VcsReviewResult;
+import org.jarina.domain.vcs.VcsReviewSubmission;
 import org.jarina.ui.modeller.auth.DomainRole;
 import org.jarina.ui.modeller.auth.ForbiddenException;
 import org.jarina.ui.modeller.auth.UserContext;
-import org.jarina.ui.modeller.config.ModellerProperties;
+import org.jarina.ui.modeller.config.ModellerVcsCatalog;
 import org.jarina.ui.modeller.dto.ReviewRequest;
 import org.jarina.ui.modeller.dto.ReviewResponse;
 import org.jarina.ui.modeller.storage.WorkspaceStorage;
-import org.jarina.ui.modeller.vcs.VcsProvider;
-import org.jarina.ui.modeller.vcs.VcsProviderException;
-import org.jarina.ui.modeller.vcs.VcsReviewResult;
-import org.jarina.ui.modeller.vcs.VcsReviewSubmission;
 import org.jarina.ui.modeller.workspace.BranchSelection;
 import org.jarina.ui.modeller.workspace.Workspace;
 import org.jarina.ui.modeller.workspace.WorkspaceManager;
@@ -41,23 +41,24 @@ import java.util.Map;
 /**
  * Review workflow (spec section 7): locks the workspace, splits its YAML files per selected
  * (domain, branch), commits each part with the user as author and the technical service
- * account as committer, pushes to the respective branch and — for GitLab/GitHub — opens an
- * MR/PR. On success the workspace is deleted; failures leave it untouched and are logged.
+ * account as committer and pushes it to the respective branch. Every domain is pushed
+ * through its own client from the {@link ModellerVcsCatalog}.
+ * On success the workspace is deleted; failures leave it untouched and are logged.
  */
 public class ReviewService {
 
     private final WorkspaceManager manager;
     private final WorkspaceStorage storage;
-    private final VcsProvider vcs;
-    private final ModellerProperties properties;
+    private final ModellerVcsCatalog vcs;
+    private final DomainSettings domainSettings;
     private final SyncLogService logs;
 
-    public ReviewService(WorkspaceManager manager, WorkspaceStorage storage, VcsProvider vcs,
-                         ModellerProperties properties, SyncLogService logs) {
+    public ReviewService(WorkspaceManager manager, WorkspaceStorage storage, ModellerVcsCatalog vcs,
+                         DomainSettings domainSettings, SyncLogService logs) {
         this.manager = manager;
         this.storage = storage;
         this.vcs = vcs;
-        this.properties = properties;
+        this.domainSettings = domainSettings;
         this.logs = logs;
     }
 
@@ -66,34 +67,46 @@ public class ReviewService {
         Workspace workspace = manager.workspace(workspaceId);
         if (!workspace.isOwner(user.username()))
             throw new ForbiddenException("Workspace " + workspaceId + " belongs to " + workspace.owner());
-        for (BranchSelection selection : workspace.selections())
-            if (!user.hasDomainRole(selection.domain(), DomainRole.EDITOR))
-                throw new ForbiddenException("Access denied: EDITOR role required for domain '"
-                        + selection.domain() + "'");
-        return manager.synchronizedOn(workspaceId, () -> doSubmit(workspace, request, user));
+        List<BranchSelection> editable = new ArrayList<>();
+        List<String> skipped = new ArrayList<>();
+        for (BranchSelection selection : workspace.selections()) {
+            if (user.hasDomainRole(selection.domain(), DomainRole.EDITOR))
+                editable.add(selection);
+            else if (!skipped.contains(selection.domain()))
+                skipped.add(selection.domain());
+        }
+        if (editable.isEmpty())
+            throw new ForbiddenException("Access denied: EDITOR role required for domains: "
+                    + String.join(", ", skipped));
+        return manager.synchronizedOn(workspaceId, () -> doSubmit(workspace, request, user, editable, skipped));
     }
 
-    private ReviewResponse doSubmit(Workspace workspace, ReviewRequest request, UserContext user) {
+    private ReviewResponse doSubmit(Workspace workspace, ReviewRequest request, UserContext user,
+                                    List<BranchSelection> editable, List<String> skipped) {
         if (request == null)
             throw new IllegalArgumentException("Review request is required");
+        if (!skipped.isEmpty())
+            logs.log("INFO", user.username(), "REVIEW",
+                    "skipped domains without EDITOR role: " + String.join(", ", skipped), workspace.id());
         Map<String, String> allFiles = reconcile(storage.readAll(workspace.id()));
         validateSelectionPaths(workspace, allFiles.keySet());
         List<String> pushed = new ArrayList<>();
         List<String> urls = new ArrayList<>();
         int changedDomains = 0;
         try {
-            for (BranchSelection selection : workspace.selections()) {
+            for (BranchSelection selection : editable) {
                 Map<String, String> domainFiles = filesOfSelection(selection, allFiles);
                 String defaultMessage = "Modeller review: " + selection.folder();
                 VcsReviewSubmission submission = new VcsReviewSubmission(
                         selection.domain(),
                         selection.branch(),
-                        properties.domainBranchMain(selection.domain()),
+                        domainSettings.branch(selection.domain()),
                         request.commitMessage() == null || request.commitMessage().isBlank()
                                 ? defaultMessage : request.commitMessage(),
                         request.comment(),
                         domainFiles);
-                VcsReviewResult result = vcs.submitReview(submission, user);
+                VcsReviewResult result = vcs.clientFor(selection.domain())
+                        .submitReview(submission, authorName(user), authorEmail(user));
                 if ("NO_CHANGES".equals(result.status())) {
                     logs.log("INFO", user.username(), "REVIEW",
                             "no changes for " + selection.folder(), workspace.id());
@@ -109,13 +122,26 @@ public class ReviewService {
                                 ? "" : " -> " + result.url()), workspace.id());
             }
             if (changedDomains == 0)
-                return new ReviewResponse("NO_CHANGES", null, pushed);
+                return new ReviewResponse("NO_CHANGES", null, pushed, skipped);
             manager.deleteWorkspace(workspace.id());
-            return new ReviewResponse("OK", urls.size() == 1 ? urls.get(0) : String.join(", ", urls), pushed);
-        } catch (VcsProviderException e) {
+            return new ReviewResponse("OK", urls.size() == 1 ? urls.get(0) : String.join(", ", urls),
+                    pushed, skipped);
+        } catch (VcsException e) {
             logs.log("ERROR", user.username(), "REVIEW", e.getMessage(), workspace.id());
             throw e;
         }
+    }
+
+    /** Commit author: the user's display name, falling back to the username. */
+    private static String authorName(UserContext user) {
+        if (user.name() != null && !user.name().isBlank())
+            return user.name();
+        return user.username() == null || user.username().isBlank() ? "anonymous" : user.username();
+    }
+
+    /** Commit author e-mail: the user's e-mail, falling back to an anonymous local address. */
+    private static String authorEmail(UserContext user) {
+        return user.email() == null || user.email().isBlank() ? "anonymous@jarina.local" : user.email();
     }
 
     private static void validateSelectionPaths(Workspace workspace, Iterable<String> paths) {

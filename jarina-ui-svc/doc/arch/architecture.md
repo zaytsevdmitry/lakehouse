@@ -189,15 +189,16 @@ Scopes and responsibilities:
   - `CatalogsSection` (`selectedNode`, `dataSet`, `activeTab`, …);
   - `SchedulesSection`, `SparkJobsSection`, `VcsSection` (listed in
     `state-management.puml`);
-  - `ModellerSection` — `profile` (from `/api/user`), `openWorkspace`,
+  - `ModellerSection` —   `profile` (from `/api/user`), `openWorkspace`,
     `adminTab`, `notice` (auto-expiring banner), `autoOpenResolved`;
   - `WorkspacePicker` — `domains`, `workspaces`, `loading`, `working`,
     `branchModal`;
   - `EditorView` — `schemas`, `tree`, `dirs`, `selected`, `selectedFolder`,
     `filter`, `yaml`, `doc`, `keyNameEditable`, `mode` (`form`|`yaml`),
     `dirty`, `busy`, modal flags, `pendingOpen` (unsaved-changes guard);
-    `readOnly` is a UX hint derived from `profile.domains` for the domain of the
-    currently selected file/folder (editable only with `EDITOR` on that domain).
+    `readOnly` is a UX hint derived from `profile.domains[<domain>].editor` for
+    the domain of the currently selected file/folder (editable only with the
+    `editor` capability on that domain).
 - **Sub-view / tab-level** — `LineageTab`, `RelationsTab`, `ModelTab`,
   `PipelineSection`, `FormEditor`, `ErDiagramEditor`, `DataLineageDiagramEditor`,
   `DagEditor`
@@ -252,12 +253,18 @@ directly. Authentication is handled server-side by the Spring Boot **BFF**
   wrappers add the `X-XSRF-TOKEN` header for non-safe verbs.
 - **RBAC**: access is **domain-driven**. Keycloak realm roles carry a domain
   prefix — `<domain>:<ROLE>` with `ROLE` in `VIEWER / EDITOR / CONTROL`
-  (`VIEWER` is implied by the other two; `EDITOR` does not allow stopping tasks,
-  `CONTROL` does not allow editing). A global, non-domain `WORKSPACE_ADMIN` role
-  governs the workspace-admin endpoints. `GET /api/user` returns the per-domain
-  map `domains: {<domain>: <LABEL>}`; the frontend uses it only to reflect rights
-  (e.g. the Modeller read-only hint), while the backend stays the single
-  enforcement point and answers `403` on any denied mutation.
+  (`VIEWER` is implied by the other two; `EDITOR` and `CONTROL` are orthogonal:
+  `EDITOR` does not allow stopping tasks, `CONTROL` does not allow editing). The
+  domain is a case-insensitive identifier canonicalized to lower case on both
+  sides (role parsing and configuration keys). A global, non-domain
+  `WORKSPACE_ADMIN` role governs the workspace-admin endpoints. `GET /api/user`
+  returns the per-domain **capabilities** map
+  `domains: {<domain>: {viewer, editor, control}}`; the frontend uses it only to
+  reflect rights (e.g. the Modeller read-only hint), while the backend stays the
+  single enforcement point and answers `403` on any denied mutation. Because
+  capabilities are explicit flags, holding both `<domain>:CONTROL` and
+  `<domain>:EDITOR` keeps both rights — roles open capabilities and never mask
+  each other.
 
 **Deep linking.** `workspaceUrl(workspaceId)` in `api.js` builds
 `?section=modeller&workspace=<id>` on the current path. Workspace picker uses
@@ -527,7 +534,7 @@ domain of the selected file, not by a global role.
 | Module format / target | ESM (`"type": "module"`), Vite default targets |
 | Language | **JavaScript (JSX)** — no TypeScript |
 | Linting / formatting | **None configured** (no ESLint, no Prettier, no `lint` script) |
-| Tests | **Vitest 3 + React Testing Library** (jsdom): `npm test` runs `vitest run`; configured in the `test` block of `vite.config.js` (`globals`, `environment: 'jsdom'`, `setupFiles: ['./test/setup.js']`, `include: src/**/*.test.{js,jsx}`). The current suite (44 tests) covers `DataLineageDiagramEditor` (24 tests: graph translation, position persistence, drag, Add/Edit/Remove + modal flows, full-screen toggle), `FormEditor` (7 tests: source-map key selection across document switches, stale-key guards, remove/edit enablement, per-instance tab reset), `EditorView` (6 tests, incl. folder creation at the domain root, file move-to-domain-root, the multi-domain leave-on-review flow and the per-domain `readOnly` switch) and `WorkspacePicker` (7 tests, incl. per-domain branch preselection and the `New branch` enable/disable by `EDITOR`). `test/setup.js` polyfills the browser APIs React Flow needs in jsdom (ResizeObserver, `DOMMatrixReadOnly`, pointer capture, `getBoundingClientRect`, `offsetWidth/Height`). |
+| Tests | **Vitest 3 + React Testing Library** (jsdom): `npm test` runs `vitest run`; configured in the `test` block of `vite.config.js` (`globals`, `environment: 'jsdom'`, `setupFiles: ['./test/setup.js']`, `include: src/**/*.test.{js,jsx}`). The current suite (46 tests) covers `DataLineageDiagramEditor` (24 tests: graph translation, position persistence, drag, Add/Edit/Remove + modal flows, full-screen toggle), `FormEditor` (7 tests: source-map key selection across document switches, stale-key guards, remove/edit enablement, per-instance tab reset), `EditorView` (7 tests, incl. folder creation at the domain root, file move-to-domain-root, the multi-domain leave-on-review flow, the per-domain `readOnly` switch and dual `CONTROL`+`EDITOR` staying editable) and `WorkspacePicker` (8 tests, incl. per-domain branch preselection and the `New branch` enable/disable by the `editor` capability, including dual `CONTROL`+`EDITOR`). `test/setup.js` polyfills the browser APIs React Flow needs in jsdom (ResizeObserver, `DOMMatrixReadOnly`, pointer capture, `getBoundingClientRect`, `offsetWidth/Height`). |
 | Package manager | npm (`package.json` + `package-lock.json`) |
 
 Scripts: `dev` (`vite`), `build` (`vite build`), `preview` (`vite preview`),
@@ -636,7 +643,11 @@ the SPA only *reflects* the decision it is handed.
 
 - **Keycloak realm roles (domain-driven).** Access is carried by realm roles of
   the form **`<domain>:<ROLE>`** (e.g. `finance:EDITOR`, `marketing:CONTROL`,
-  `hr:VIEWER`). The domain is lowercased; `ROLE` is one of `VIEWER`, `EDITOR`,
+  `hr:VIEWER`). The domain is a case-insensitive identifier canonicalized to
+  lower case at every boundary (`ModellerRoleSupport.canonicalDomain`) — so
+  `Analytics:EDITOR` and `analytics:EDITOR` mean the same domain, and configured
+  domain keys are normalized the same way (two configured domains colliding
+  case-insensitively fail the startup fast). `ROLE` is one of `VIEWER`, `EDITOR`,
   `CONTROL` and is matched case-insensitively. `VIEWER` is **implied** by the
   other two, and `EDITOR`/`CONTROL` are orthogonal: `EDITOR` allows config/repo
   changes but **not** stopping tasks, `CONTROL` allows stopping tasks but **not**
@@ -648,13 +659,13 @@ the SPA only *reflects* the decision it is handed.
   is declared by the `RoleHierarchy` bean (`SecurityConfig.roleHierarchy`).
 - **The `/api/user` endpoint.** The SPA never parses the JWT. It calls
   `GET /api/user` (`UserController`) and receives the profile
-  `{username, name, email, roles[], domains:{<domain>: <LABEL>}}`. The `domains`
-  map collapses each domain's role set to a single label with precedence
-  **`CONTROL > EDITOR > VIEWER`** (`ModellerRoleSupport.domains` /
-  `displayLabel`, `DomainRole`). A user holding both `finance:EDITOR` and
-  `finance:CONTROL` keeps **both** internal role sets; the UI only sees the
-  `CONTROL` label. The SPA uses `domains` **only to reflect rights** (e.g. the
-  Modeller read-only hint) — never to decide access.
+  `{username, name, email, roles[], domains:{<domain>:{viewer, editor, control}}}`.
+  The `domains` map exposes the orthogonal capabilities of each domain's role
+  set as explicit booleans (`UserContext.domainCapabilities`) — never a lossy
+  single label. A user holding both `finance:EDITOR` and `finance:CONTROL` gets
+  `{viewer:true, editor:true, control:true}` for that domain, so roles **open**
+  capabilities and never mask each other. The SPA uses `domains` **only to
+  reflect rights** (e.g. the Modeller read-only hint) — never to decide access.
 - **The session cookie.** Every `/api/**` call is same-origin and rides on the
   `JSESSIONID` session established by the OAuth2 authorization-code login; the
   SPA never sends a `Bearer` token (see §4).
@@ -721,10 +732,10 @@ rendering.
   - `ModellerSection` always renders the `My workspaces / Admin` tab header; a
     non-`WORKSPACE_ADMIN` user opening **Admin** gets the backend `403` as a
     banner (`ModellerSection.jsx`).
-  - `WorkspacePicker` disables the **New branch** button for a user with no
-    `EDITOR` role in any domain (`WorkspacePicker.jsx`).
+  - `WorkspacePicker` disables the **New branch** button unless the user has the
+    `editor` capability in at least one domain (`WorkspacePicker.jsx`).
   - `EditorView` derives `readOnly` from the domain of the currently selected
-    file/folder (`profile.domains[<domain>]` must include `EDITOR`); it no longer
+    file/folder (`profile.domains[<domain>].editor`); it no longer
     depends on `workspace.own` (`EditorView.jsx`). `FormEditor`, `CodeEditor`,
     `ErDiagramEditor`, `DataLineageDiagramEditor` and `DagEditor` receive that
     hint, but the save/review actions stay visible — a denied mutation returns
@@ -734,7 +745,7 @@ rendering.
   control.
 
 In short: the JWT carries `<domain>:<ROLE>` roles plus the global
-`WORKSPACE_ADMIN`; `/api/user` exposes the per-domain `domains` map;
+`WORKSPACE_ADMIN`; `/api/user` exposes the per-domain `domains` capabilities map;
 `SecurityConfig` (admin surface) and the domain checks in the services are the
 single enforcement point; the React components only decide **what to show**,
 never **what is allowed**.

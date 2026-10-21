@@ -23,7 +23,7 @@ import org.jarina.client.api.dto.scheduler.ScheduleInstanceDTO;
 import org.jarina.client.rest.config.ConfigRestClientApi;
 import org.jarina.client.rest.scheduler.SchedulerRestClientApi;
 import org.jarina.ui.dto.ScheduleRequestDTO;
-import org.jarina.ui.modeller.config.ModellerProperties;
+import org.jarina.domain.settings.DomainSettings;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -52,10 +52,11 @@ class ScheduleServiceTest {
         return new UsernamePasswordAuthenticationToken(jwt, null, List.of());
     }
 
-    private static ModellerProperties properties() {
-        ModellerProperties properties = new ModellerProperties();
-        properties.setDomains(Map.of(DOMAIN, new ModellerProperties.DomainVcs()));
-        return properties;
+    private static DomainSettings properties() {
+        DomainSettings settings = new DomainSettings();
+        settings.setDomains(Map.of(DOMAIN, new DomainSettings.DomainProperties()));
+        settings.canonicalize();
+        return settings;
     }
 
     private static ScheduleService service(SchedulerRestClientApi api) {

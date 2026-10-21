@@ -31,10 +31,12 @@ import org.jarina.client.api.dto.scheduler.tasks.ScheduledTaskMsgDTO;
 import org.jarina.client.api.dto.task.SourceConfDTO;
 import org.jarina.client.api.utils.DateTimeUtils;
 import org.jarina.client.rest.RestClientHelper;
+import org.springframework.core.ParameterizedTypeReference;
 
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 
 public class ConfigRestClientApiImpl extends ConfigRestClientApiAbstract {
@@ -113,6 +115,21 @@ public class ConfigRestClientApiImpl extends ConfigRestClientApiAbstract {
     public String getDataSetModelScript(String dataSetKeyName) {
         return restClientHelper.getDtoOne(dataSetKeyName, Endpoint.DATASET_MODEL_SCRIPT_BY_DATASET_KEY_NAME, String.class);
 
+    }
+
+    @Override
+    public Map<String, String> getGlobalVars() {
+        return restClientHelper.getRestClient()
+                .get()
+                .uri(Endpoint.GLOBAL_VARS)
+                .retrieve()
+                .body(new ParameterizedTypeReference<Map<String, String>>() {
+                });
+    }
+
+    @Override
+    public String getGlobalVar(String key) {
+        return restClientHelper.getDtoOne(key, Endpoint.GLOBAL_VARS_NAME, String.class);
     }
 
     @Override

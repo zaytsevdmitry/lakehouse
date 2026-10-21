@@ -56,12 +56,22 @@ public record UserContext(
     }
 
     /**
-     * One display label per domain ({@code CONTROL > EDITOR > VIEWER}), as exposed
-     * to the UI by {@code GET /api/user}.
+     * Explicit per-domain capabilities exposed to the UI by {@code GET /api/user}.
+     * Each domain maps to the orthogonal flags {@code viewer}, {@code editor} and
+     * {@code control} derived from the full role set: holding both
+     * {@code finance:EDITOR} and {@code finance:CONTROL} yields
+     * {@code {viewer:true, editor:true, control:true}} — roles open capabilities
+     * and never mask each other.
      */
-    public Map<String, String> domains() {
-        Map<String, String> result = new LinkedHashMap<>();
-        domainRoles().forEach((domain, levels) -> result.put(domain, ModellerRoleSupport.displayLabel(levels)));
+    public Map<String, Map<String, Boolean>> domainCapabilities() {
+        Map<String, Map<String, Boolean>> result = new LinkedHashMap<>();
+        domainRoles().forEach((domain, levels) -> {
+            Map<String, Boolean> capabilities = new LinkedHashMap<>();
+            capabilities.put("viewer", true);
+            capabilities.put("editor", levels.contains(DomainRole.EDITOR));
+            capabilities.put("control", levels.contains(DomainRole.CONTROL));
+            result.put(domain, capabilities);
+        });
         return result;
     }
 
@@ -73,16 +83,18 @@ public record UserContext(
     }
 
     public boolean isAllowedDomain(String domain) {
-        return domain != null && domainRoles().containsKey(domain);
+        String canonical = ModellerRoleSupport.canonicalDomain(domain);
+        return canonical != null && domainRoles().containsKey(canonical);
     }
 
     /**
      * Whether the user holds at least one of the given roles for the domain.
      */
     public boolean hasDomainRole(String domain, DomainRole... accepted) {
-        if (domain == null || accepted == null || accepted.length == 0)
+        String canonical = ModellerRoleSupport.canonicalDomain(domain);
+        if (canonical == null || accepted == null || accepted.length == 0)
             return false;
-        Set<DomainRole> levels = domainRoles().get(domain);
+        Set<DomainRole> levels = domainRoles().get(canonical);
         if (levels == null || levels.isEmpty())
             return false;
         for (DomainRole level : levels)
