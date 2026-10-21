@@ -61,15 +61,30 @@ jarina:
           properties:
               bootstrap.servers: localhost:9092
     vcs:
-      git:
-        repository-url: ${JARINA_CONFIG_GIT_REPOSITORY_URL:}
-        branch: ${JARINA_CONFIG_GIT_BRANCH:main}
-        local-clone-path: ${JARINA_CONFIG_GIT_LOCAL_CLONE_PATH:}
-        private-key-path: ${JARINA_CONFIG_GIT_PRIVATE_KEY_PATH:}
-        sync:
-          enabled: ${JARINA_CONFIG_GIT_SYNC_ENABLED:false}
-          interval-ms: ${JARINA_CONFIG_GIT_SYNC_INTERVAL_MS:30000}
-          initial-delay-ms: ${JARINA_CONFIG_GIT_SYNC_INITIAL_DELAY_MS:10000}
+      # Synchronization loop settings; independent of the VCS backend, hence its own
+      # vcs.sync block rather than a git.sync one.
+      sync:
+        enabled: ${JARINA_CONFIG_GIT_SYNC_ENABLED:false}
+        interval-ms: ${JARINA_CONFIG_GIT_SYNC_INTERVAL_MS:30000}
+        initial-delay-ms: ${JARINA_CONFIG_GIT_SYNC_INITIAL_DELAY_MS:10000}
+
+  # Configuration domains (jarina.domains.<name>.git.*). A domain is active iff its
+  # repository-url is set; credentials are declared per domain under git.credentials.
+  # domains:
+  #   platform:
+  #     priority: 0
+  #     git:
+  #       repository-url: ${JARINA_DOMAINS_PLATFORM_GIT_REPOSITORY_URL:}
+  #       branch: ${JARINA_DOMAINS_PLATFORM_GIT_BRANCH:main}
+  #       local-clone-path: ${JARINA_DOMAINS_PLATFORM_GIT_LOCAL_CLONE_PATH:}
+  #       credentials:
+  #         auth-type: ssh
+  #         ssh-private-key-path: ${JARINA_DOMAINS_PLATFORM_GIT_CREDENTIALS_SSH_PRIVATE_KEY_PATH:}
+  #     domains:
+  #       processing:
+  #         priority: 1
+  #         git: { ... }
+  domains: {}
 
   health:
 

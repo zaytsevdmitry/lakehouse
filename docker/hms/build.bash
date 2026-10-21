@@ -17,7 +17,7 @@
 
 
 set -e
-export LH_VERSION=0.12.0
+export LH_VERSION=1.0.0
 
 docker build -t jarina-hms:$LH_VERSION ./
 docker images

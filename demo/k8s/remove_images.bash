@@ -16,7 +16,7 @@
 # limitations under the License.
 
 
-minikube image rm jarina:0.12.0
-minikube image rm jarina-s3-check:0.12.0
-minikube image rm jarina-hms:0.12.0
-minikube image rm jarina-spark-aws:0.12.0
+minikube image rm jarina:1.0.0
+minikube image rm jarina-s3-check:1.0.0
+minikube image rm jarina-hms:1.0.0
+minikube image rm jarina-spark-aws:1.0.0

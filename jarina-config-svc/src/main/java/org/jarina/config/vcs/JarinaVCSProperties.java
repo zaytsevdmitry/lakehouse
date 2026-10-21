@@ -20,211 +20,64 @@ package org.jarina.config.vcs;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-
 /**
- * Hierarchy of configuration domains. Every domain owns a Git repository with the
- * declarative configuration files; the domain name is stamped into every construct
- * loaded from that repository as {@code domainKeyName}.
- * <p>
- * Prefix: {@code jarina.config.vcs}
+ * VCS synchronization settings of {@code jarina-config-svc}. The synchronization loop is
+ * independent of the VCS backend, so it lives in its own {@code vcs.sync} block rather than
+ * under the Git implementation. The domain parameters themselves are processed by
+ * {@link org.jarina.domain.settings.DomainSettings} ({@code jarina.domains.*}).
  *
  * <pre>
  * jarina:
  *   config:
  *     vcs:
- *       domains:
- *         platform:
- *           priority: 0
- *           git:
- *             repository-url: ${JARINA_CONFIG_GIT_PLATFORM_URL:}
- *             branch: ${JARINA_CONFIG_GIT_PLATFORM_BRANCH:main}
- *             local-clone-path: ${JARINA_CONFIG_GIT_PLATFORM_CLONE_PATH:}
- *             private-key-path: ${JARINA_CONFIG_GIT_PLATFORM_PRIVATE_KEY_PATH:}
- *           domains:
- *             pocessing:
- *               priority: 1
- *               git:
- *                 repository-url: ${JARINA_CONFIG_GIT_POCESSING_URL:}
- *                 branch: ${JARINA_CONFIG_GIT_POCESSING_BRANCH:main}
- *                 local-clone-path: ${JARINA_CONFIG_GIT_POCESSING_CLONE_PATH:}
- *                 private-key-path: ${JARINA_CONFIG_GIT_POCESSING_PRIVATE_KEY_PATH:}
- *               domains:
- *                 analytics:
- *                   priority: 2
- *                   git:
- *                     repository-url: ${JARINA_CONFIG_GIT_ANALYTICS_URL:}
- *                     branch: ${JARINA_CONFIG_GIT_ANALYTICS_BRANCH:main}
- *                     local-clone-path: ${JARINA_CONFIG_GIT_ANALYTICS_CLONE_PATH:}
- *                     private-key-path: ${JARINA_CONFIG_GIT_ANALYTICS_PRIVATE_KEY_PATH:}
+ *       sync:
+ *         enabled: false
+ *         interval-ms: 30000
+ *         initial-delay-ms: 10000
  * </pre>
- *
- * Domains are traversed depth-first, each level sorted by {@code priority} ascending
- * (absent priority is treated as the lowest one and sorted after configured values).
  */
 @Component
 @ConfigurationProperties(prefix = "jarina.config.vcs")
 public class JarinaVCSProperties {
 
-    private static final Comparator<Map.Entry<String, DomainProperties>> DOMAIN_ORDER =
-            Comparator.comparingInt((Map.Entry<String, DomainProperties> entry) -> priority(entry.getValue()))
-                    .thenComparing(Map.Entry::getKey);
+    private SyncProperties sync = new SyncProperties();
 
-    private Map<String, DomainProperties> domains;
-
-    private GitProperties git = new GitProperties();
-
-    public Map<String, DomainProperties> getDomains() {
-        return domains;
+    public SyncProperties getSync() {
+        return sync;
     }
 
-    public void setDomains(Map<String, DomainProperties> domains) {
-        this.domains = domains;
+    public void setSync(SyncProperties sync) {
+        this.sync = sync;
     }
 
-    public GitProperties getGit() {
-        return git;
-    }
+    public static class SyncProperties {
 
-    public void setGit(GitProperties git) {
-        this.git = git;
-    }
+        private boolean enabled;
+        private long intervalMs = 30000;
+        private long initialDelayMs = 10000;
 
-    /**
-     * Flat, dependency ordered list of all domains: parent domains before their nested
-     * ones, same-level domains sorted by {@link DomainProperties#getPriority()} ascending.
-     */
-    public List<DomainRef> orderedDomains() {
-        List<DomainRef> result = new ArrayList<>();
-        for (DomainRef root : rootDomains())
-            collect(root, result);
-        return result;
-    }
-
-    /**
-     * Top-level domains sorted by {@link DomainProperties#getPriority()} ascending.
-     */
-    public List<DomainRef> rootDomains() {
-        List<DomainRef> configured = ordered(domains);
-        if (!configured.isEmpty())
-            return configured;
-        if (git == null || git.getRepositoryUrl() == null || git.getRepositoryUrl().isBlank())
-            return List.of();
-        DomainProperties legacy = new DomainProperties();
-        legacy.setPriority(0);
-        legacy.setGit(git);
-        return List.of(new DomainRef("default", legacy));
-    }
-
-    /**
-     * The nested sub-domains of a domain, sorted by {@link DomainProperties#getPriority()}
-     * ascending.
-     */
-    public List<DomainRef> nestedDomains(DomainProperties parent) {
-        return ordered(parent == null ? null : parent.getDomains());
-    }
-
-    private void collect(DomainRef domain, List<DomainRef> result) {
-        result.add(domain);
-        for (DomainRef nested : nestedDomains(domain.properties()))
-            collect(nested, result);
-    }
-
-    private List<DomainRef> ordered(Map<String, DomainProperties> domains) {
-        List<DomainRef> result = new ArrayList<>();
-        if (domains == null)
-            return result;
-        domains.entrySet().stream()
-                .sorted(DOMAIN_ORDER)
-                .forEach(entry -> result.add(new DomainRef(entry.getKey(), entry.getValue())));
-        return result;
-    }
-
-    private static int priority(DomainProperties domain) {
-        return domain.getPriority() == null ? Integer.MAX_VALUE : domain.getPriority();
-    }
-
-    /**
-     * A single domain together with its configuration tree position.
-     */
-    public record DomainRef(String name, DomainProperties properties) {
-    }
-
-    public static class DomainProperties {
-
-        private Integer priority;
-        private GitProperties git;
-        private Map<String, DomainProperties> domains;
-
-        public Integer getPriority() {
-            return priority;
+        public boolean isEnabled() {
+            return enabled;
         }
 
-        public void setPriority(Integer priority) {
-            this.priority = priority;
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
         }
 
-        public GitProperties getGit() {
-            return git;
+        public long getIntervalMs() {
+            return intervalMs;
         }
 
-        public void setGit(GitProperties git) {
-            this.git = git;
+        public void setIntervalMs(long intervalMs) {
+            this.intervalMs = intervalMs;
         }
 
-        public Map<String, DomainProperties> getDomains() {
-            return domains;
+        public long getInitialDelayMs() {
+            return initialDelayMs;
         }
 
-        public void setDomains(Map<String, DomainProperties> domains) {
-            this.domains = domains;
-        }
-
-        public boolean isRepositoryConfigured() {
-            return git != null && git.getRepositoryUrl() != null && !git.getRepositoryUrl().isBlank();
-        }
-    }
-
-    public static class GitProperties {
-
-        private String repositoryUrl;
-        private String branch = "main";
-        private String localClonePath;
-        private String privateKeyPath;
-
-        public String getRepositoryUrl() {
-            return repositoryUrl;
-        }
-
-        public void setRepositoryUrl(String repositoryUrl) {
-            this.repositoryUrl = repositoryUrl;
-        }
-
-        public String getBranch() {
-            return branch;
-        }
-
-        public void setBranch(String branch) {
-            this.branch = branch;
-        }
-
-        public String getLocalClonePath() {
-            return localClonePath;
-        }
-
-        public void setLocalClonePath(String localClonePath) {
-            this.localClonePath = localClonePath;
-        }
-
-        public String getPrivateKeyPath() {
-            return privateKeyPath;
-        }
-
-        public void setPrivateKeyPath(String privateKeyPath) {
-            this.privateKeyPath = privateKeyPath;
+        public void setInitialDelayMs(long initialDelayMs) {
+            this.initialDelayMs = initialDelayMs;
         }
     }
 }

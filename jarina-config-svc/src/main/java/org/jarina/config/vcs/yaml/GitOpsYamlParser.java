@@ -79,10 +79,10 @@ public class GitOpsYamlParser {
             root = yamlMapper.readValue(requireContent(content), new TypeReference<Map<String, Object>>() {
             });
         } catch (VcsConfigParseException e) {
-            logger.error(e.fillInStackTrace().toString());
+            logger.error("Configuration parsing failed: {}", e.getMessage(), e);
             throw e;
         } catch (Exception e) {
-            logger.error(e.fillInStackTrace().toString());
+            logger.error("YAML document cannot be parsed as a configuration map: {}", e.getMessage(), e);
             throw new VcsConfigParseException("YAML document cannot be parsed as a configuration map: " + content, e);
         }
         if (root == null)
@@ -94,7 +94,7 @@ public class GitOpsYamlParser {
         try {
             return new PreliminaryConfig(YamlMetadataKind.fromYamlValue(String.valueOf(kindValue)), root);
         } catch (IllegalArgumentException e) {
-            logger.error(e.fillInStackTrace().toString());
+            logger.error("Unknown configuration kind '{}': {}", kindValue, e.getMessage(), e);
             throw new VcsConfigParseException(e.getMessage(), e);
         }
     }
@@ -111,7 +111,7 @@ public class GitOpsYamlParser {
             Object dto = yamlMapper.convertValue(preliminary.body(), kind.dtoClass());
             return new ParsedConfig(kind, dto);
         } catch (Exception e) {
-            logger.error(e.fillInStackTrace().toString());
+            logger.error("Cannot bind YAML document to {}: {}", kind, e.getMessage(), e);
             throw new VcsConfigParseException("Cannot bind YAML document to " + kind + "\n" + preliminary.body().toString() + e.getMessage(), e);
         }
     }

@@ -27,7 +27,7 @@ import org.jarina.ui.dto.ConstraintDTO;
 import org.jarina.ui.modeller.auth.DomainAccess;
 import org.jarina.ui.modeller.auth.ForbiddenException;
 import org.jarina.ui.modeller.auth.UserContext;
-import org.jarina.ui.modeller.config.ModellerProperties;
+import org.jarina.domain.settings.DomainSettings;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
@@ -43,17 +43,17 @@ import java.util.Set;
 public class CatalogService {
 
     private final ConfigRestClientApi configRestClientApi;
-    private final ModellerProperties modellerProperties;
+    private final DomainSettings domainSettings;
 
-    public CatalogService(ConfigRestClientApi configRestClientApi, ModellerProperties modellerProperties) {
+    public CatalogService(ConfigRestClientApi configRestClientApi, DomainSettings domainSettings) {
         this.configRestClientApi = configRestClientApi;
-        this.modellerProperties = modellerProperties;
+        this.domainSettings = domainSettings;
     }
 
     public List<CatalogTreeNodeDTO> getCatalogTree(Authentication authentication) {
         UserContext user = UserContext.from(authentication);
         Set<String> allowed = DomainAccess.allowedDomains(
-                user, modellerProperties.domainNames(), "GET /api/catalog/tree");
+                user, domainSettings.domainNames(), "GET /api/catalog/tree");
         List<DataSetDTO> dataSets = configRestClientApi.getDataSetDTOList().stream()
                 .filter(dataSet -> allowed.contains(normalizeDomain(dataSet.getDomainKeyName())))
                 .toList();

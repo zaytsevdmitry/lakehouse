@@ -33,28 +33,33 @@ jarina:
           properties: # https://kafka.apache.org/41/configuration/producer-configs/
             bootstrap.servers: localhost:9092
 
-    vcs: # GitOps (VCS) subsystem: declarative configuration from per-domain Git repositories
+    vcs: # GitOps (VCS) subsystem: the synchronization loop itself (global, not per domain)
+      sync: # independent of the VCS backend, hence its own vcs.sync block
+        enabled: ${JARINA_CONFIG_GIT_SYNC_ENABLED:false} # enables the scheduler bean
+        interval-ms: ${JARINA_CONFIG_GIT_SYNC_INTERVAL_MS:30000} # cycle period
+        initial-delay-ms: ${JARINA_CONFIG_GIT_SYNC_INITIAL_DELAY_MS:10000} # delay of the first cycle
+
+  domains: # one repository per domain; the domain list and names are user-defined
+    # bound by the shared DomainSettings of jarina-domain-api (namespace jarina.domains.*)
+    <domain>: # any name; a domain can contain nested domains
+      priority: 0 # apply order: ascending, parents before nested domains
       git:
-        sync:
-          enabled: ${JARINA_CONFIG_GIT_SYNC_ENABLED:false} # enables the scheduler bean
-          interval-ms: ${JARINA_CONFIG_GIT_SYNC_INTERVAL_MS:30000} # cycle period
-          initial-delay-ms: ${JARINA_CONFIG_GIT_SYNC_INITIAL_DELAY_MS:10000} # delay of the first cycle
-      domains: # one repository per domain; the domain list and names are user-defined
-        <domain>: # any name; a domain can contain nested domains
-          priority: 0 # apply order: ascending, parents before nested domains
+        repository-url: ${JARINA_DOMAINS_<DOMAIN>_GIT_REPOSITORY_URL:} # e.g. git://git-server:9418/<domain>.git
+        branch: ${JARINA_DOMAINS_<DOMAIN>_GIT_BRANCH:main} # branch to synchronize
+        local-clone-path: ${JARINA_DOMAINS_<DOMAIN>_GIT_LOCAL_CLONE_PATH:} # where the service keeps the clone
+        credentials: # per-domain, never merged; an empty block means anonymous access
+          auth-type: ssh # optional: ssh | token | basic; inferred from the declared credentials
+          ssh-private-key-path: /keys/<domain>_ed25519 # for auth-type == ssh
+      domains:
+        <nested-domain>: # a nested sub-domain of the parent domain
+          priority: 1
           git:
-            repository-url: ${JARINA_CONFIG_GIT_<DOMAIN>_URL:} # e.g. git://git-server:9418/<domain>.git
-            branch: ${JARINA_CONFIG_GIT_<DOMAIN>_BRANCH:main} # branch to synchronize
-            local-clone-path: ${JARINA_CONFIG_GIT_<DOMAIN>_CLONE_PATH:} # where the service keeps the clone
-            private-key-path: ${JARINA_CONFIG_GIT_<DOMAIN>_PRIVATE_KEY_PATH:} # SSH key, only for ssh:// URLs
-          domains:
-            <nested-domain>: # a nested sub-domain of the parent domain
-              priority: 1
-              git:
-                repository-url: ${JARINA_CONFIG_GIT_<NESTED_DOMAIN>_URL:}
-                branch: ${JARINA_CONFIG_GIT_<NESTED_DOMAIN>_BRANCH:main}
-                local-clone-path: ${JARINA_CONFIG_GIT_<NESTED_DOMAIN>_CLONE_PATH:}
-                private-key-path: ${JARINA_CONFIG_GIT_<NESTED_DOMAIN>_PRIVATE_KEY_PATH:}
+            repository-url: ${JARINA_DOMAINS_<NESTED_DOMAIN>_GIT_REPOSITORY_URL:}
+            branch: ${JARINA_DOMAINS_<NESTED_DOMAIN>_GIT_BRANCH:main}
+            local-clone-path: ${JARINA_DOMAINS_<NESTED_DOMAIN>_GIT_LOCAL_CLONE_PATH:}
+            credentials: # credentials may differ within one tree
+              auth-type: token
+              token: ${<NESTED_DOMAIN>_GIT_TOKEN:} # for auth-type == token
 
   health: # Service health check endpoints
     liveness-path: /healthz # Liveness probe
@@ -63,16 +68,29 @@ jarina:
 
 ## Domains
 
-`jarina.config.vcs` is bound by `JarinaVCSProperties`; the `domains` map above is the only
-place where repositories are declared. Each domain is one Git repository, is fetched and applied
-on its own, and every construct loaded from it is stamped with `domainKeyName`. `local-clone-path`
-must be unique per domain, and a domain without `git.repository-url` is skipped entirely.
+`jarina.domains` is bound by the shared `DomainSettings` of `jarina-domain-api`
+(namespace `jarina.domains.<name>.*`; canonical reference:
+[jarina-domain-api/doc/readme.md](../../../jarina-domain-api/doc/readme.md)); the `domains`
+map above is the only place where repositories are declared. Each domain is one Git
+repository, is fetched and applied on its own, and every construct loaded from it is
+stamped with `domainKeyName`. `local-clone-path` must be unique per domain, and a domain
+without `git.repository-url` is not active: this service skips it entirely, while
+`jarina-ui-svc` fails when such a domain is used.
 
-When `domains` is empty and the legacy `jarina.config.vcs.git.repository-url` is set, that
-single repository is exposed as one domain named `default`; as soon as `domains` has at least one
-entry, the legacy block is ignored and does **not** become an additional `default` domain.
-
-The synchronisation cycle itself is global, not per domain: `jarina.config.vcs.git.sync.*`
+The synchronisation cycle itself is global, not per domain: `jarina.config.vcs.sync.*`
 (enabled / interval-ms / initial-delay-ms). Full description of the tree, the apply order
-(`priority`, parents before children), the isolation rules and the legacy block:
-[Domains](../content_configuration/domains.md).
+(`priority`, parents before children), the isolation rules and the observation of which
+domain a change came from: [Domains](../content_configuration/domains.md).
+
+## Git access
+
+Every domain repository is accessed through a single Git integration: a local clone per
+domain maintained via JGit, synchronized on every cycle. The `repository-url` accepts any
+Git form - `git://`, `ssh://`, `http(s)://` or a local path.
+
+Authentication is declared **per domain** in `jarina.domains.<name>.git.credentials`:
+`token` sends the token as the HTTP password, `basic` sends HTTP Basic credentials, `ssh`
+uses the domain's `ssh-private-key-path`. There is no global/system account and no merge:
+a domain without credentials is reached anonymously, and different domains may
+authenticate with different accounts. Full setup:
+[Git extension user guide](../vcs/git_extension_user_guide.md).

@@ -45,6 +45,7 @@ United namespace
 | [jarina-common-test](jarina-common-test)                                         | Candidate    |                                                                                                 |
 | [jarina-config-rest-client](jarina-config-rest-client)                           | Candidate    |                                                                                                 |
 | [jarina-config-svc](jarina-config-svc)                                           | Candidate    | [doc](jarina-config-svc/doc/readme.md)                                                       |
+| [jarina-domain-api](jarina-domain-api)                                           | Candidate    | [doc](jarina-domain-api/doc/readme.md)                                                         |
 | [jarina-scheduler-rest-client](jarina-scheduler-rest-client)                     | Candidate    |                                                                                                 |
 | [jarina-scheduler-svc](jarina-scheduler-svc)                                     | Candidate    | [doc](jarina-scheduler-svc/doc/readme.md)                                                    |
 | [jarina-state-rest-client](jarina-state-rest-client)                             | Candidate    |                                                                                                 |

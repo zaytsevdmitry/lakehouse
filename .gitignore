@@ -31,3 +31,4 @@ jarina-task-executor-spark-dataset-app/dependency-reduced-pom.xml
 jarina-task-executor-spark-dq-app/dependency-reduced-pom.xml
 spark-warehouse
 target
+.flattened-pom.xml

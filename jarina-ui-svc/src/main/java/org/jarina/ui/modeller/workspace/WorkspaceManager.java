@@ -247,51 +247,6 @@ public class WorkspaceManager {
         }
     }
 
-    /**
-     * Scopes repository branch files to a single domain: when the repository hosts several
-     * domains under {@code domains/<domain>/,} only that subtree is kept and its prefix is
-     * stripped; flat repositories (per-domain repos, no {@code domains/} prefix) are kept whole.
-     */
-    public static Map<String, String> scopeDomain(String domain, Map<String, String> branchFiles) {
-        if (!usesDomainLayout(branchFiles))
-            return new LinkedHashMap<>(branchFiles);
-        String prefix = domainPrefix(domain);
-        Map<String, String> scoped = new LinkedHashMap<>();
-        for (Map.Entry<String, String> entry : branchFiles.entrySet())
-            if (entry.getKey().startsWith(prefix))
-                scoped.put(entry.getKey().substring(prefix.length()), entry.getValue());
-        return scoped;
-    }
-
-    public static boolean usesDomainLayout(Map<String, String> branchFiles) {
-        return branchFiles.keySet().stream().anyMatch(WorkspaceManager::isDomainLayoutPath);
-    }
-
-    public static Map<String, String> expandDomain(String domain, Map<String, String> scopedFiles,
-                                                    boolean domainLayout) {
-        Map<String, String> expanded = new LinkedHashMap<>();
-        String prefix = domainLayout ? domainPrefix(domain) : "";
-        for (Map.Entry<String, String> entry : scopedFiles.entrySet()) {
-            String path = entry.getKey().startsWith(prefix)
-                    ? entry.getKey().substring(prefix.length()) : entry.getKey();
-            expanded.put(prefix + path, entry.getValue());
-        }
-        return expanded;
-    }
-
-    private static String domainPrefix(String domain) {
-        if (domain == null || !domain.matches("[A-Za-z0-9._-]+"))
-            throw new IllegalArgumentException("Invalid domain name: " + domain);
-        return "domains/" + domain + "/";
-    }
-
-    private static boolean isDomainLayoutPath(String path) {
-        if (path == null || !path.startsWith("domains/"))
-            return false;
-        int slash = path.indexOf('/', "domains/".length());
-        return slash > "domains/".length();
-    }
-
     private static String display(List<BranchSelection> selections) {
         return selections.stream().map(BranchSelection::folder).reduce((a, b) -> a + ", " + b).orElse("");
     }

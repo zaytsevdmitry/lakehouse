@@ -19,7 +19,7 @@ package org.jarina.ui.exception;
 import org.jarina.ui.modeller.auth.ForbiddenException;
 import org.jarina.ui.modeller.auth.NotFoundException;
 import org.jarina.ui.modeller.storage.WorkspaceStorageException;
-import org.jarina.ui.modeller.vcs.VcsProviderException;
+import org.jarina.domain.vcs.VcsException;
 import org.jarina.ui.modeller.workspace.WorkspaceLockedException;
 import org.jarina.ui.modeller.yaml.VcsConfigParseException;
 import org.slf4j.Logger;
@@ -65,7 +65,7 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.BAD_REQUEST, e.getMessage());
     }
 
-    @ExceptionHandler({VcsProviderException.class, WorkspaceStorageException.class})
+    @ExceptionHandler({VcsException.class, WorkspaceStorageException.class})
     public ResponseEntity<Map<String, String>> handleBadGateway(RuntimeException e) {
         return error(HttpStatus.BAD_GATEWAY, e.getMessage());
     }

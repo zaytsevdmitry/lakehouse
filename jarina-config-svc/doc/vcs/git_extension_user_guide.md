@@ -25,65 +25,97 @@ that domain.
 
 ## 2. How to enable and configure
 
-All settings are under the `jarina.config.vcs.*` prefix. Set them in `application.yml`
-or via environment variables. The domain list and names are **user-defined**: declare every
-domain that owns a repository (here shown generically; nesting is optional):
+Two settings groups are involved:
+
+- `jarina.config.vcs.sync.*` — whether and how often this service synchronizes
+  (set them in `application.yml` or via environment variables);
+- `jarina.domains.<name>.*` — the domain list and names, which are **user-defined**: declare
+  every domain that owns a repository. The tree is bound by the shared `DomainSettings` of
+  `jarina-domain-api`, whose canonical reference is
+  [jarina-domain-api/doc/readme.md](../../../jarina-domain-api/doc/readme.md) (here shown
+  generically; nesting is optional):
 
 ```yaml
 jarina:
   config:
     vcs:
+      sync:
+        enabled: ${JARINA_CONFIG_GIT_SYNC_ENABLED:false}
+        interval-ms: ${JARINA_CONFIG_GIT_SYNC_INTERVAL_MS:30000}
+        initial-delay-ms: ${JARINA_CONFIG_GIT_SYNC_INITIAL_DELAY_MS:10000}
+  domains:
+    <domain>:
+      priority: 0
       git:
-        sync:
-          enabled: ${JARINA_CONFIG_GIT_SYNC_ENABLED:false}
-          interval-ms: ${JARINA_CONFIG_GIT_SYNC_INTERVAL_MS:30000}
-          initial-delay-ms: ${JARINA_CONFIG_GIT_SYNC_INITIAL_DELAY_MS:10000}
-      domains:
-        <domain>:
-          priority: 0
+        repository-url: ${JARINA_DOMAINS_<DOMAIN>_GIT_REPOSITORY_URL:}
+        branch: ${JARINA_DOMAINS_<DOMAIN>_GIT_BRANCH:main}
+        local-clone-path: ${JARINA_DOMAINS_<DOMAIN>_GIT_LOCAL_CLONE_PATH:}
+        credentials:                                  # per-domain, never merged;
+          auth-type: ssh                              # may be omitted and is then inferred
+          ssh-private-key-path: /keys/<domain>_ed25519
+      domains:                                        # nested sub-domains
+        <nested-domain>:
+          priority: 1
           git:
-            repository-url: ${JARINA_CONFIG_GIT_<DOMAIN>_URL:}
-            branch: ${JARINA_CONFIG_GIT_<DOMAIN>_BRANCH:main}
-            local-clone-path: ${JARINA_CONFIG_GIT_<DOMAIN>_CLONE_PATH:}
-            private-key-path: ${JARINA_CONFIG_GIT_<DOMAIN>_PRIVATE_KEY_PATH:}
-          domains:
-            <nested-domain>:
-              priority: 1
-              git:
-                repository-url: ${JARINA_CONFIG_GIT_<NESTED_DOMAIN>_URL:}
-                branch: ${JARINA_CONFIG_GIT_<NESTED_DOMAIN>_BRANCH:main}
-                local-clone-path: ${JARINA_CONFIG_GIT_<NESTED_DOMAIN>_CLONE_PATH:}
-                private-key-path: ${JARINA_CONFIG_GIT_<NESTED_DOMAIN>_PRIVATE_KEY_PATH:}
+            repository-url: ${JARINA_DOMAINS_<NESTED_DOMAIN>_GIT_REPOSITORY_URL:}
+            branch: ${JARINA_DOMAINS_<NESTED_DOMAIN>_GIT_BRANCH:main}
+            local-clone-path: ${JARINA_DOMAINS_<NESTED_DOMAIN>_GIT_LOCAL_CLONE_PATH:}
+            credentials:                              # per-domain credentials may differ
+              auth-type: token                        # within one tree
+              token: ${<NESTED_DOMAIN>_GIT_TOKEN:}
 ```
+
+### Git access
+
+Every domain repository is reached through a single Git integration: a local clone per
+domain kept via JGit. The `repository-url` accepts any Git form - `git://`, `ssh://`,
+`http(s)://` or a local path - so one and the same service can read repositories from
+different Git servers in one deployment.
+
+| How it works | `repository-url` expects | Extra settings |
+|---|---|---|
+| A local clone per domain kept via JGit | Any Git URL (`git://`, `ssh://`, `http(s)://`) or a local path | `local-clone-path` (required, unique per domain), `git.credentials.ssh-private-key-path` for `ssh://` |
+
+Authentication is declared **per domain** in `jarina.domains.<name>.git.credentials`:
+`token` sends the token as the HTTP password, `basic` sends HTTP Basic credentials, `ssh`
+uses the SSH key of the domain. There is **no global/system account** and credentials are
+**never merged** - a domain either carries its own credentials or reaches its repository
+anonymously, so different domains can authenticate with different accounts. `auth-type` may
+be omitted: it is then inferred as `ssh` when a key path is set, `token` when any other
+credential is set, and nothing (anonymous) when the block is empty. A domain without a
+configured repository is not active and is skipped on every cycle (the UI refuses to use
+such a domain). Transport problems are logged and retried on the next cycle.
 
 ### Parameters
 
 | Property | Environment variable | Default | Description |
 |---|---|---|---|
-| `jarina.config.vcs.git.sync.enabled` | `JARINA_CONFIG_GIT_SYNC_ENABLED` | `false` | Set `true` to enable the Git extension. |
-| `jarina.config.vcs.git.sync.interval-ms` | `JARINA_CONFIG_GIT_SYNC_INTERVAL_MS` | `30000` | Period of the synchronization cycle (ms). |
-| `jarina.config.vcs.git.sync.initial-delay-ms` | `JARINA_CONFIG_GIT_SYNC_INITIAL_DELAY_MS` | `10000` | Delay of the first cycle after startup (ms). |
-| `jarina.config.vcs.domains.<name>.git.repository-url` | `JARINA_CONFIG_GIT_<NAME>_URL` | *(empty)* | URL of the domain repository (`git://`, `ssh://`, `http(s)://` or local path). **Required** for the domain to be synchronized. |
-| `jarina.config.vcs.domains.<name>.git.branch` | `JARINA_CONFIG_GIT_<NAME>_BRANCH` | `main` | Branch to synchronize. |
-| `jarina.config.vcs.domains.<name>.git.local-clone-path` | `JARINA_CONFIG_GIT_<NAME>_CLONE_PATH` | *(empty)* | Local directory where the service keeps the domain clone. |
-| `jarina.config.vcs.domains.<name>.git.private-key-path` | `JARINA_CONFIG_GIT_<NAME>_PRIVATE_KEY_PATH` | *(empty)* | Path to an SSH private key; only needed for `ssh://` URLs. Leave empty for anonymous access. |
-| `jarina.config.vcs.domains.<name>.priority` | - | lowest | Apply order of the domain: parents before nested domains, same-level domains ascending by this value. |
-| `jarina.config.vcs.domains.<name>.domains` | - | - | Nested sub-domains. |
+| `jarina.config.vcs.sync.enabled` | `JARINA_CONFIG_GIT_SYNC_ENABLED` | `false` | Set `true` to enable the Git extension. |
+| `jarina.config.vcs.sync.interval-ms` | `JARINA_CONFIG_GIT_SYNC_INTERVAL_MS` | `30000` | Period of the synchronization cycle (ms). |
+| `jarina.config.vcs.sync.initial-delay-ms` | `JARINA_CONFIG_GIT_SYNC_INITIAL_DELAY_MS` | `10000` | Delay of the first cycle after startup (ms). |
+| `jarina.domains.<name>.git.repository-url` | `JARINA_DOMAINS_<NAME>_GIT_REPOSITORY_URL` | *(empty)* | URL of the domain repository (any Git URL: `git://`, `ssh://`, `http(s)://` or local path). **Required** for the domain to be active and synchronized. |
+| `jarina.domains.<name>.git.branch` | `JARINA_DOMAINS_<NAME>_GIT_BRANCH` | `main` | Branch to synchronize. |
+| `jarina.domains.<name>.git.local-clone-path` | `JARINA_DOMAINS_<NAME>_GIT_LOCAL_CLONE_PATH` | *(empty)* | Local directory where the service keeps the domain clone; must be unique per domain. |
+| `jarina.domains.<name>.git.credentials.auth-type` | - | inferred | `ssh`, `token` or `basic`. Omit it to let the service infer it from the declared credentials. |
+| `jarina.domains.<name>.git.credentials.ssh-private-key-path` | `JARINA_DOMAINS_<NAME>_GIT_CREDENTIALS_SSH_PRIVATE_KEY_PATH` | *(empty)* | Path to an SSH private key; only needed for `ssh://` URLs. Leave the whole credentials block empty for anonymous access. |
+| `jarina.domains.<name>.git.credentials.username` / `.token` / `.password` | - | *(empty)* | Per-domain credentials for `basic` / `token` auth; declare them in `application.yml` (or as system properties). |
+| `jarina.domains.<name>.priority` | - | lowest | Apply order of the domain: parents before nested domains, same-level domains ascending by this value. |
+| `jarina.domains.<name>.domains` | - | - | Nested sub-domains. |
 
 The environment variable name embeds the **upper-cased** domain name: for the domain
-`<domain>` they are `JARINA_CONFIG_GIT_<DOMAIN>_URL`, `JARINA_CONFIG_GIT_<DOMAIN>_BRANCH`,
-`JARINA_CONFIG_GIT_<DOMAIN>_CLONE_PATH` and `JARINA_CONFIG_GIT_<DOMAIN>_PRIVATE_KEY_PATH`.
+`mydata` they are `JARINA_DOMAINS_MYDATA_GIT_REPOSITORY_URL`,
+`JARINA_DOMAINS_MYDATA_GIT_BRANCH` and `JARINA_DOMAINS_MYDATA_GIT_LOCAL_CLONE_PATH`.
 
 ### Example (environment variables)
 
 ```bash
 JARINA_CONFIG_GIT_SYNC_ENABLED=true
-JARINA_CONFIG_GIT_MYDATA_URL=git://git-server:9418/mydata.git
-JARINA_CONFIG_GIT_MYDATA_CLONE_PATH=/tmp/config-mydata
+JARINA_DOMAINS_MYDATA_GIT_REPOSITORY_URL=git://git-server:9418/mydata.git
+JARINA_DOMAINS_MYDATA_GIT_LOCAL_CLONE_PATH=/tmp/config-mydata
 JARINA_CONFIG_GIT_SYNC_INTERVAL_MS=30000
 ```
 
-A domain whose `repository-url` is blank is simply skipped (a warning is logged).
+A domain whose `repository-url` is blank is not active: it is skipped (a warning is logged).
 
 ## 3. Domains and repository layout
 

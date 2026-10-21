@@ -21,7 +21,8 @@ import java.util.Map;
 
 /**
  * Seeds a freshly created workspace with the metadata files of one selected branch
- * (of one domain repository). Implemented by the active {@code VcsProvider} in production
+ * (of one domain repository). Implemented by the client of the
+ * {@code ModellerVcsCatalog} in production
  * wiring. The returned paths are the paths within the domain repository (scoped to the
  * domain subtree when the repository hosts several domains).
  */

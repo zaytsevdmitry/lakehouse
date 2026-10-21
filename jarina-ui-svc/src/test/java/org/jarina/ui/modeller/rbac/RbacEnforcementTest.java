@@ -28,7 +28,7 @@ import org.jarina.ui.modeller.service.ReviewService;
 import org.jarina.ui.modeller.service.SyncLogService;
 import org.jarina.ui.modeller.service.YamlEditorService;
 import org.jarina.ui.modeller.storage.WorkspaceStorage;
-import org.jarina.ui.modeller.vcs.VcsProvider;
+import org.jarina.ui.modeller.config.ModellerVcsCatalog;
 import org.jarina.ui.modeller.workspace.BranchSelection;
 import org.jarina.ui.modeller.workspace.Workspace;
 import org.jarina.ui.modeller.workspace.WorkspaceManager;
@@ -160,7 +160,7 @@ class RbacEnforcementTest {
                 new BranchSelection("finance", "main"), new BranchSelection("marketing", "main"));
         when(manager.workspace("ws-1")).thenReturn(workspace);
         ReviewService review = new ReviewService(manager, mock(WorkspaceStorage.class),
-                mock(VcsProvider.class), mock(org.jarina.ui.modeller.config.ModellerProperties.class),
+                mock(ModellerVcsCatalog.class), mock(org.jarina.domain.settings.DomainSettings.class),
                 mock(SyncLogService.class));
 
         // EDITOR only for finance: the marketing selection is skipped, the review still proceeds
@@ -178,7 +178,7 @@ class RbacEnforcementTest {
                 new BranchSelection("finance", "main"), new BranchSelection("marketing", "main"));
         when(manager.workspace("ws-1")).thenReturn(workspace);
         ReviewService review = new ReviewService(manager, mock(WorkspaceStorage.class),
-                mock(VcsProvider.class), mock(org.jarina.ui.modeller.config.ModellerProperties.class),
+                mock(ModellerVcsCatalog.class), mock(org.jarina.domain.settings.DomainSettings.class),
                 mock(SyncLogService.class));
 
         // VIEWER only: nothing to submit, the whole request is rejected
@@ -196,7 +196,7 @@ class RbacEnforcementTest {
         Workspace workspace = workspaceOwnedBy("ws-1", "someone-else", new BranchSelection("finance", "main"));
         when(manager.workspace("ws-1")).thenReturn(workspace);
         ReviewService review = new ReviewService(manager, mock(WorkspaceStorage.class),
-                mock(VcsProvider.class), mock(org.jarina.ui.modeller.config.ModellerProperties.class),
+                mock(ModellerVcsCatalog.class), mock(org.jarina.domain.settings.DomainSettings.class),
                 mock(SyncLogService.class));
 
         assertThatThrownBy(() -> review.submit("ws-1",

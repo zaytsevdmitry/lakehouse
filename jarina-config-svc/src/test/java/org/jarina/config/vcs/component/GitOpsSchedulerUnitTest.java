@@ -17,12 +17,13 @@
 
 package org.jarina.config.vcs.component;
 
+import org.jarina.domain.settings.DomainSettings;
+import org.jarina.domain.settings.GitProperties;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.jarina.config.vcs.CurrentDomainContext;
-import org.jarina.config.vcs.JarinaVCSProperties;
-import org.jarina.config.vcs.VcsClient;
-import org.jarina.config.vcs.VcsClientException;
+import org.jarina.domain.vcs.VcsClient;
+import org.jarina.domain.vcs.VcsException;
 import org.jarina.config.vcs.configuration.GitVcsClientFactory;
 import org.jarina.config.vcs.entity.VcsSyncLog;
 import org.jarina.config.vcs.entity.VcsSyncStatus;
@@ -37,10 +38,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.OffsetDateTime;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -76,18 +75,18 @@ class GitOpsSchedulerUnitTest {
 
     @Test
     void traversesDomainsInPriorityOrderWithinHierarchy() {
-        JarinaVCSProperties.DomainProperties platform = d(0, git());
-        JarinaVCSProperties.DomainProperties pocessing = d(1, git());
-        JarinaVCSProperties.DomainProperties analytics = d(2, git());
+        DomainSettings.DomainProperties platform = d(0, git());
+        DomainSettings.DomainProperties pocessing = d(1, git());
+        DomainSettings.DomainProperties analytics = d(2, git());
         pocessing.setDomains(orderedNamed("analytics", analytics));
         platform.setDomains(orderedNamed("pocessing", pocessing));
         scheduler = schedulerWith(props(orderedNamed("platform", platform)));
-        when(vcsClientFactory.create(any(), any())).thenReturn(vcsClient);
+        when(vcsClientFactory.create(any())).thenReturn(vcsClient);
 
         scheduler.sync();
 
         ArgumentCaptor<String> domainNames = ArgumentCaptor.forClass(String.class);
-        verify(vcsClientFactory, org.mockito.Mockito.times(3)).create(domainNames.capture(), any());
+        verify(vcsClientFactory, org.mockito.Mockito.times(3)).create(domainNames.capture());
         assertThat(domainNames.getAllValues()).containsExactly("platform", "pocessing", "analytics");
     }
 
@@ -97,15 +96,18 @@ class GitOpsSchedulerUnitTest {
                 "platform", d(0, null),
                 "analytics", d(1, git()))));
 
+        when(vcsClientFactory.create(any())).thenReturn(vcsClient);
+        when(vcsClient.getCurrentCommitId()).thenReturn(null);
+
         scheduler.sync();
 
-        verify(vcsClientFactory).create(eq("analytics"), any());
-        verify(vcsClientFactory, org.mockito.Mockito.never()).create(eq("platform"), any());
+        verify(vcsClientFactory).create(eq("analytics"));
+        verify(vcsClientFactory, never()).create(eq("platform"));
     }
 
     @Test
     void skipsCommitAlreadyProcessedForDomain() {
-        when(vcsClientFactory.create(any(), any())).thenReturn(vcsClient);
+        when(vcsClientFactory.create(any())).thenReturn(vcsClient);
         when(vcsClient.getCurrentCommitId()).thenReturn(HEAD);
         when(vcsSyncLogRepository.existsByCommitIdAndDomainKeyName(HEAD, "platform")).thenReturn(true);
         scheduler = schedulerWith(props(orderedNamed("platform", d(0, git()))));
@@ -119,11 +121,11 @@ class GitOpsSchedulerUnitTest {
 
     @Test
     void skipsWhenHeadEqualsLastSuccessForDomain() {
-        when(vcsClientFactory.create(any(), any())).thenReturn(vcsClient);
+        when(vcsClientFactory.create(any())).thenReturn(vcsClient);
         when(vcsClient.getCurrentCommitId()).thenReturn(HEAD);
         when(vcsSyncLogRepository.existsByCommitIdAndDomainKeyName(HEAD, "platform")).thenReturn(false);
         when(vcsSyncLogRepository.findFirstByStatusAndDomainKeyNameOrderBySyncDateTimeDesc(VcsSyncStatus.SUCCESS, "platform"))
-                .thenReturn(Optional.of(log(HEAD)));
+                .thenReturn(java.util.Optional.of(log(HEAD)));
         scheduler = schedulerWith(props(orderedNamed(
                 "platform", d(0, git()))));
 
@@ -135,11 +137,11 @@ class GitOpsSchedulerUnitTest {
 
     @Test
     void appliesChangeSetAgainstLastSuccessBaseForDomain() {
-        when(vcsClientFactory.create(any(), any())).thenReturn(vcsClient);
+        when(vcsClientFactory.create(any())).thenReturn(vcsClient);
         when(vcsClient.getCurrentCommitId()).thenReturn(HEAD);
         when(vcsSyncLogRepository.existsByCommitIdAndDomainKeyName(HEAD, "platform")).thenReturn(false);
         when(vcsSyncLogRepository.findFirstByStatusAndDomainKeyNameOrderBySyncDateTimeDesc(VcsSyncStatus.SUCCESS, "platform"))
-                .thenReturn(Optional.of(log(BASE)));
+                .thenReturn(java.util.Optional.of(log(BASE)));
         GitSyncChangeSet changeSet = changeSet();
         when(changeSetBuilder.build(vcsClient, HEAD, BASE)).thenReturn(changeSet);
         scheduler = schedulerWith(props(orderedNamed(
@@ -153,11 +155,11 @@ class GitOpsSchedulerUnitTest {
 
     @Test
     void appliesChangeSetAgainstNullBaseWhenNeverSucceededForDomain() {
-        when(vcsClientFactory.create(any(), any())).thenReturn(vcsClient);
+        when(vcsClientFactory.create(any())).thenReturn(vcsClient);
         when(vcsClient.getCurrentCommitId()).thenReturn(HEAD);
         when(vcsSyncLogRepository.existsByCommitIdAndDomainKeyName(HEAD, "platform")).thenReturn(false);
         when(vcsSyncLogRepository.findFirstByStatusAndDomainKeyNameOrderBySyncDateTimeDesc(VcsSyncStatus.SUCCESS, "platform"))
-                .thenReturn(Optional.empty());
+                .thenReturn(java.util.Optional.empty());
         GitSyncChangeSet changeSet = changeSet();
         when(changeSetBuilder.build(vcsClient, HEAD, null)).thenReturn(changeSet);
         scheduler = schedulerWith(props(orderedNamed(
@@ -170,11 +172,11 @@ class GitOpsSchedulerUnitTest {
 
     @Test
     void recordsFailureWhenApplyingFailsForDomain() {
-        when(vcsClientFactory.create(any(), any())).thenReturn(vcsClient);
+        when(vcsClientFactory.create(any())).thenReturn(vcsClient);
         when(vcsClient.getCurrentCommitId()).thenReturn(HEAD);
         when(vcsSyncLogRepository.existsByCommitIdAndDomainKeyName(HEAD, "platform")).thenReturn(false);
         when(vcsSyncLogRepository.findFirstByStatusAndDomainKeyNameOrderBySyncDateTimeDesc(VcsSyncStatus.SUCCESS, "platform"))
-                .thenReturn(Optional.empty());
+                .thenReturn(java.util.Optional.empty());
         GitSyncChangeSet changeSet = changeSet();
         when(changeSetBuilder.build(vcsClient, HEAD, null)).thenReturn(changeSet);
         doThrow(new RuntimeException("commit rejected")).when(synchronizer).sync(changeSet, HEAD);
@@ -188,11 +190,11 @@ class GitOpsSchedulerUnitTest {
 
     @Test
     void recordsFailureWhenBuildingChangeSetFailsForDomain() {
-        when(vcsClientFactory.create(any(), any())).thenReturn(vcsClient);
+        when(vcsClientFactory.create(any())).thenReturn(vcsClient);
         when(vcsClient.getCurrentCommitId()).thenReturn(HEAD);
         when(vcsSyncLogRepository.existsByCommitIdAndDomainKeyName(HEAD, "platform")).thenReturn(false);
         when(vcsSyncLogRepository.findFirstByStatusAndDomainKeyNameOrderBySyncDateTimeDesc(VcsSyncStatus.SUCCESS, "platform"))
-                .thenReturn(Optional.empty());
+                .thenReturn(java.util.Optional.empty());
         when(changeSetBuilder.build(any(), any(), any()))
                 .thenThrow(new VcsConfigParseException("cannot parse config file"));
         scheduler = schedulerWith(props(orderedNamed(
@@ -206,8 +208,8 @@ class GitOpsSchedulerUnitTest {
 
     @Test
     void infrastructureFailureIsRetriedWithoutRecord() {
-        when(vcsClientFactory.create(any(), any())).thenReturn(vcsClient);
-        doThrow(new VcsClientException("origin unreachable")).when(vcsClient).pull();
+        when(vcsClientFactory.create(any())).thenReturn(vcsClient);
+        doThrow(new VcsException("origin unreachable")).when(vcsClient).pull();
         scheduler = schedulerWith(props(orderedNamed(
                 "platform", d(0, git()))));
 
@@ -219,63 +221,63 @@ class GitOpsSchedulerUnitTest {
 
     @Test
     void skipsNestedDomainsWhenParentInfrastructureFails() {
-        JarinaVCSProperties.DomainProperties platform = d(0, git());
-        JarinaVCSProperties.DomainProperties pocessing = d(1, git());
+        DomainSettings.DomainProperties platform = d(0, git());
+        DomainSettings.DomainProperties pocessing = d(1, git());
         platform.setDomains(orderedNamed("pocessing", pocessing));
         scheduler = schedulerWith(props(orderedNamed("platform", platform)));
-        when(vcsClientFactory.create(any(), any())).thenReturn(vcsClient);
-        doThrow(new VcsClientException("origin unreachable")).when(vcsClient).pull();
+        when(vcsClientFactory.create(any())).thenReturn(vcsClient);
+        doThrow(new VcsException("origin unreachable")).when(vcsClient).pull();
 
         scheduler.sync();
 
-        verify(vcsClientFactory).create(eq("platform"), any());
-        verify(vcsClientFactory, never()).create(eq("pocessing"), any());
+        verify(vcsClientFactory).create(eq("platform"));
+        verify(vcsClientFactory, never()).create(eq("pocessing"));
     }
 
     @Test
     void skipsNestedDomainsWhenParentApplyFails() {
-        JarinaVCSProperties.DomainProperties platform = d(0, git());
-        JarinaVCSProperties.DomainProperties pocessing = d(1, git());
+        DomainSettings.DomainProperties platform = d(0, git());
+        DomainSettings.DomainProperties pocessing = d(1, git());
         platform.setDomains(orderedNamed("pocessing", pocessing));
         scheduler = schedulerWith(props(orderedNamed("platform", platform)));
-        when(vcsClientFactory.create(any(), any())).thenReturn(vcsClient);
+        when(vcsClientFactory.create(any())).thenReturn(vcsClient);
         when(vcsClient.getCurrentCommitId()).thenReturn(HEAD);
         when(vcsSyncLogRepository.existsByCommitIdAndDomainKeyName(HEAD, "platform")).thenReturn(false);
         when(vcsSyncLogRepository.findFirstByStatusAndDomainKeyNameOrderBySyncDateTimeDesc(VcsSyncStatus.SUCCESS, "platform"))
-                .thenReturn(Optional.empty());
+                .thenReturn(java.util.Optional.empty());
         when(changeSetBuilder.build(vcsClient, HEAD, null)).thenReturn(changeSet());
         doThrow(new RuntimeException("commit rejected")).when(synchronizer).sync(any(), any());
 
         scheduler.sync();
 
         verify(failureRecorder).recordFailure("platform", HEAD, "commit rejected");
-        verify(vcsClientFactory, never()).create(eq("pocessing"), any());
+        verify(vcsClientFactory, never()).create(eq("pocessing"));
     }
 
     @Test
     void processesNestedDomainsWhenParentHasNothingToSync() {
-        JarinaVCSProperties.DomainProperties platform = d(0, git());
-        JarinaVCSProperties.DomainProperties pocessing = d(1, git());
+        DomainSettings.DomainProperties platform = d(0, git());
+        DomainSettings.DomainProperties pocessing = d(1, git());
         platform.setDomains(orderedNamed("pocessing", pocessing));
         scheduler = schedulerWith(props(orderedNamed("platform", platform)));
-        when(vcsClientFactory.create(any(), any())).thenReturn(vcsClient);
+        when(vcsClientFactory.create(any())).thenReturn(vcsClient);
         when(vcsClient.getCurrentCommitId()).thenReturn(HEAD);
         when(vcsSyncLogRepository.existsByCommitIdAndDomainKeyName(HEAD, "platform")).thenReturn(true);
 
         scheduler.sync();
 
         ArgumentCaptor<String> domainNames = ArgumentCaptor.forClass(String.class);
-        verify(vcsClientFactory, org.mockito.Mockito.times(2)).create(domainNames.capture(), any());
+        verify(vcsClientFactory, org.mockito.Mockito.times(2)).create(domainNames.capture());
         assertThat(domainNames.getAllValues()).containsExactly("platform", "pocessing");
     }
 
     @Test
     void domainContextIsSetDuringSyncAndClearedAfterwards() {
-        when(vcsClientFactory.create(any(), any())).thenReturn(vcsClient);
+        when(vcsClientFactory.create(any())).thenReturn(vcsClient);
         when(vcsClient.getCurrentCommitId()).thenReturn(HEAD);
         when(vcsSyncLogRepository.existsByCommitIdAndDomainKeyName(HEAD, "platform")).thenReturn(false);
         when(vcsSyncLogRepository.findFirstByStatusAndDomainKeyNameOrderBySyncDateTimeDesc(VcsSyncStatus.SUCCESS, "platform"))
-                .thenReturn(Optional.empty());
+                .thenReturn(java.util.Optional.empty());
         when(changeSetBuilder.build(vcsClient, HEAD, null)).thenReturn(changeSet());
         org.mockito.Mockito.doAnswer(invocation -> {
             assertThat(domainContext.get()).isEqualTo("platform");
@@ -292,11 +294,11 @@ class GitOpsSchedulerUnitTest {
 
     @Test
     void closesTheClientOfEveryProcessedDomain() {
-        JarinaVCSProperties.DomainProperties platform = d(0, git());
-        JarinaVCSProperties.DomainProperties pocessing = d(1, git());
+        DomainSettings.DomainProperties platform = d(0, git());
+        DomainSettings.DomainProperties pocessing = d(1, git());
         platform.setDomains(orderedNamed("pocessing", pocessing));
         scheduler = schedulerWith(props(orderedNamed("platform", platform)));
-        when(vcsClientFactory.create(any(), any())).thenReturn(vcsClient);
+        when(vcsClientFactory.create(any())).thenReturn(vcsClient);
         when(vcsClient.getCurrentCommitId()).thenReturn(HEAD);
         when(vcsSyncLogRepository.existsByCommitIdAndDomainKeyName(any(), any())).thenReturn(true);
 
@@ -307,8 +309,8 @@ class GitOpsSchedulerUnitTest {
 
     @Test
     void closesTheClientWhenTheDomainFails() {
-        when(vcsClientFactory.create(any(), any())).thenReturn(vcsClient);
-        doThrow(new VcsClientException("origin unreachable")).when(vcsClient).pull();
+        when(vcsClientFactory.create(any())).thenReturn(vcsClient);
+        doThrow(new VcsException("origin unreachable")).when(vcsClient).pull();
         scheduler = schedulerWith(props(orderedNamed("platform", d(0, git()))));
 
         scheduler.sync();
@@ -317,25 +319,7 @@ class GitOpsSchedulerUnitTest {
         verify(failureRecorder, never()).recordFailure(any(), any(), any());
     }
 
-    @Test
-    void syncsTheLegacyRepositoryAsTheDefaultDomain() {
-        JarinaVCSProperties properties = new JarinaVCSProperties();
-        properties.getGit().setRepositoryUrl("https://git.example/conf.git");
-        scheduler = schedulerWith(properties);
-        when(vcsClientFactory.create(any(), any())).thenReturn(vcsClient);
-        when(vcsClient.getCurrentCommitId()).thenReturn(HEAD);
-        when(vcsSyncLogRepository.existsByCommitIdAndDomainKeyName(HEAD, "default")).thenReturn(false);
-        when(vcsSyncLogRepository.findFirstByStatusAndDomainKeyNameOrderBySyncDateTimeDesc(VcsSyncStatus.SUCCESS, "default"))
-                .thenReturn(Optional.empty());
-        when(changeSetBuilder.build(vcsClient, HEAD, null)).thenReturn(changeSet());
-
-        scheduler.sync();
-
-        verify(vcsClientFactory).create(eq("default"), any());
-        verify(synchronizer).sync(any(), eq(HEAD));
-    }
-
-    private GitOpsScheduler schedulerWith(JarinaVCSProperties properties) {
+    private GitOpsScheduler schedulerWith(DomainSettings properties) {
         return new GitOpsScheduler(
                 properties,
                 vcsClientFactory,
@@ -346,39 +330,40 @@ class GitOpsSchedulerUnitTest {
                 vcsSyncLogRepository);
     }
 
-    private JarinaVCSProperties props(Map<String, JarinaVCSProperties.DomainProperties> domains) {
-        JarinaVCSProperties properties = new JarinaVCSProperties();
+    private DomainSettings props(Map<String, DomainSettings.DomainProperties> domains) {
+        DomainSettings properties = new DomainSettings();
         properties.setDomains(domains);
+        properties.canonicalize();
         return properties;
     }
 
-    private java.util.LinkedHashMap<String, JarinaVCSProperties.DomainProperties> orderedNamed(Object... nameAndValue) {
-        java.util.LinkedHashMap<String, JarinaVCSProperties.DomainProperties> map = new java.util.LinkedHashMap<>();
+    private LinkedHashMap<String, DomainSettings.DomainProperties> orderedNamed(Object... nameAndValue) {
+        LinkedHashMap<String, DomainSettings.DomainProperties> map = new LinkedHashMap<>();
         for (int i = 0; i < nameAndValue.length; i += 2) {
             if (nameAndValue[i + 1] != null)
-                map.put((String) nameAndValue[i], (JarinaVCSProperties.DomainProperties) nameAndValue[i + 1]);
+                map.put((String) nameAndValue[i], (DomainSettings.DomainProperties) nameAndValue[i + 1]);
         }
         return map;
     }
 
-    private JarinaVCSProperties.DomainProperties d(int priority, JarinaVCSProperties.GitProperties git) {
-        JarinaVCSProperties.DomainProperties d = new JarinaVCSProperties.DomainProperties();
+    private DomainSettings.DomainProperties d(int priority, GitProperties git) {
+        DomainSettings.DomainProperties d = new DomainSettings.DomainProperties();
         d.setPriority(priority);
         d.setGit(git);
         return d;
     }
 
-    private JarinaVCSProperties.GitProperties git() {
-        JarinaVCSProperties.GitProperties git = new JarinaVCSProperties.GitProperties();
+    private GitProperties git() {
+        GitProperties git = new GitProperties();
         git.setRepositoryUrl("https://git.example/conf.git");
         return git;
     }
 
     private GitSyncChangeSet changeSet() {
-        return new GitSyncChangeSet(List.of(), List.of());
+        return new GitSyncChangeSet(java.util.List.of(), java.util.List.of());
     }
 
     private VcsSyncLog log(String commitId) {
-        return new VcsSyncLog(commitId, OffsetDateTime.now(), VcsSyncStatus.SUCCESS, null);
+        return new VcsSyncLog(commitId, java.time.OffsetDateTime.now(), VcsSyncStatus.SUCCESS, null);
     }
 }

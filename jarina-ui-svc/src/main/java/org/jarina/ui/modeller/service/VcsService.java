@@ -17,18 +17,20 @@
 
 package org.jarina.ui.modeller.service;
 
+import org.jarina.domain.layout.DomainLayout;
+import org.jarina.domain.settings.DomainSettings;
+import org.jarina.domain.vcs.VcsException;
 import org.jarina.ui.modeller.auth.DomainRole;
 import org.jarina.ui.modeller.auth.ForbiddenException;
 import org.jarina.ui.modeller.auth.ModellerRoleSupport;
 import org.jarina.ui.modeller.auth.UserContext;
-import org.jarina.ui.modeller.config.ModellerProperties;
+import org.jarina.ui.modeller.config.ModellerVcsCatalog;
 import org.jarina.ui.modeller.dto.CreateBranchRequest;
 import org.jarina.ui.modeller.dto.DomainBranchesResponse;
 import org.jarina.ui.modeller.dto.RestoreRequest;
 import org.jarina.ui.modeller.dto.WorkspaceOpenRequest;
 import org.jarina.ui.modeller.dto.WorkspaceResponse;
 import org.jarina.ui.modeller.storage.WorkspaceStorage;
-import org.jarina.ui.modeller.vcs.VcsProvider;
 import org.jarina.ui.modeller.workspace.BranchSelection;
 import org.jarina.ui.modeller.workspace.Workspace;
 import org.jarina.ui.modeller.workspace.WorkspaceManager;
@@ -41,23 +43,24 @@ import java.util.Map;
 /**
  * Workspace and branch coordination: opens the user's workspace on a set of branches
  * (one per domain repository), manages VCS branches (listing by domains + creation by
- * editors) plus restore-from-VCS of workspace files.
+ * editors) plus restore-from-VCS of workspace files. Every operation resolves the
+ * domain's own repository client from the {@link ModellerVcsCatalog}.
  */
 public class VcsService {
 
     private final WorkspaceManager manager;
-    private final VcsProvider vcs;
+    private final ModellerVcsCatalog vcs;
     private final WorkspaceStorage storage;
     private final SyncLogService logs;
-    private final ModellerProperties properties;
+    private final DomainSettings domainSettings;
 
-    public VcsService(WorkspaceManager manager, VcsProvider vcs, WorkspaceStorage storage,
-                      SyncLogService logs, ModellerProperties properties) {
+    public VcsService(WorkspaceManager manager, ModellerVcsCatalog vcs, WorkspaceStorage storage,
+                      SyncLogService logs, DomainSettings domainSettings) {
         this.manager = manager;
         this.vcs = vcs;
         this.storage = storage;
         this.logs = logs;
-        this.properties = properties;
+        this.domainSettings = domainSettings;
     }
 
     /**
@@ -73,8 +76,8 @@ public class VcsService {
         Workspace workspace = requireOwnWorkspace(workspaceId, user);
         BranchSelection selection = selectionFor(workspace, base);
         requireDomainRole(user, selection.domain(), "EDITOR");
-        Map<String, String> scoped = WorkspaceManager.scopeDomain(selection.domain(),
-                vcs.readBranchFiles(selection.domain(), selection.branch()));
+        Map<String, String> scoped = DomainLayout.scopeDomain(selection.domain(),
+                vcs.clientFor(selection.domain()).readBranchFiles(selection.branch()));
         boolean isFile = base.endsWith(".yaml") || base.endsWith(".yml");
         String relative = base.startsWith(selection.folder() + "/")
                 ? base.substring(selection.folder().length() + 1) : base;
@@ -166,11 +169,11 @@ public class VcsService {
      */
     public List<DomainBranchesResponse> branches() {
         List<DomainBranchesResponse> result = new java.util.ArrayList<>();
-        for (String domain : properties.domainNames()) {
-            String branchMain = properties.domainBranchMain(domain);
+        for (String domain : domainSettings.domainNames()) {
+            String branchMain = domainSettings.branch(domain);
             try {
-                result.add(new DomainBranchesResponse(domain, vcs.listBranches(domain), branchMain));
-            } catch (org.jarina.ui.modeller.vcs.VcsProviderException e) {
+                result.add(new DomainBranchesResponse(domain, vcs.clientFor(domain).listBranches(), branchMain));
+            } catch (VcsException e) {
                 result.add(new DomainBranchesResponse(domain, java.util.List.of(), branchMain));
             }
         }
@@ -185,7 +188,7 @@ public class VcsService {
         if (domain == null)
             throw new IllegalArgumentException("domain is required");
         requireDomainRole(user, domain, "EDITOR");
-        vcs.createBranch(domain, request.branch(), request.baseBranch());
+        vcs.clientFor(domain).createBranch(request.branch(), request.baseBranch());
         logs.log("INFO", user.username(), "CREATE_BRANCH", domain + "/" + request.branch(), null);
         return request.branch();
     }

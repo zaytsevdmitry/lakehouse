@@ -25,12 +25,9 @@ import org.springframework.core.env.PropertySource;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.ClassPathResource;
 
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ModellerPropertiesBindingTest {
 
@@ -48,69 +45,11 @@ class ModellerPropertiesBindingTest {
 
         // The custom jarina.modeller.security.oauth2 switchboard was removed in
         // favour of the standard spring.security.oauth2.* config; only the platform
-        // strategies remain bound here.
-        assertThat(properties.getVcsProvider()).isEqualTo("local-git");
+        // strategies remain bound here. Domains live under jarina.domains.*.
         assertThat(properties.getAuthStrategy()).isEqualTo("jwt-rbac");
         assertThat(properties.getStorage().getType()).isEqualTo("local");
         assertThat(properties.getStorage().getCleanupTtlHours()).isEqualTo(4L);
         assertThat(properties.getSession().getInactivityMinutes()).isEqualTo(30);
         assertThat(properties.getLogging().getSyncLogCapacity()).isEqualTo(500);
-    }
-
-    @Test
-    void domainRepositoriesBindFromCommandLineProperties() {
-        StandardEnvironment environment = new StandardEnvironment();
-        environment.getPropertySources().addFirst(new org.springframework.core.env.MapPropertySource("cli", java.util.Map.of(
-                "jarina.modeller.domains.platform.repository-url", "git://git-server:9418/config-repo.git",
-                "jarina.modeller.domains.platform.branch-main", "main",
-                "jarina.modeller.domains.analytics.repository-url", "git://other.git",
-                "jarina.modeller.domains.analytics.branch-main", "dev",
-                "jarina.modeller.git.remote-url", "git://legacy.git",
-                "jarina.modeller.git.branch-main", "legacy")));
-
-        ModellerProperties properties = Binder.get(environment)
-                .bind("jarina.modeller", Bindable.of(ModellerProperties.class))
-                .orElseThrow(() -> new IllegalStateException("failed to bind jarina.modeller"));
-
-        assertThat(properties.domainNames()).containsExactly("analytics", "platform");
-        assertThat(properties.domainRemoteUrl("platform")).isEqualTo("git://git-server:9418/config-repo.git");
-        assertThat(properties.domainBranchMain("platform")).isEqualTo("main");
-        assertThat(properties.domainRemoteUrl("analytics")).isEqualTo("git://other.git");
-        assertThat(properties.domainBranchMain("analytics")).isEqualTo("dev");
-        // unknown domains fall back to the legacy single-repository settings
-        assertThat(properties.domainRemoteUrl("unknown")).isEqualTo("git://legacy.git");
-        assertThat(properties.domainBranchMain("unknown")).isEqualTo("legacy");
-    }
-
-    @Test
-    void configuredDomainsAreCanonicalizedToLowerCase() {
-        ModellerProperties properties = new ModellerProperties();
-        ModellerProperties.DomainVcs vcs = new ModellerProperties.DomainVcs();
-        vcs.setRepositoryUrl("git://analytics.git");
-        vcs.setBranchMain("main");
-        Map<String, ModellerProperties.DomainVcs> domains = new LinkedHashMap<>();
-        domains.put("Analytics", vcs);
-        properties.setDomains(domains);
-
-        properties.normalizeDomains();
-
-        assertThat(properties.getDomains()).containsOnlyKeys("analytics");
-        assertThat(properties.domainNames()).containsExactly("analytics");
-        // lookups are canonicalized too
-        assertThat(properties.domainRemoteUrl("ANALYTICS")).isEqualTo("git://analytics.git");
-        assertThat(properties.domainBranchMain(" analytics ")).isEqualTo("main");
-    }
-
-    @Test
-    void collidingDomainsAfterNormalizationFailFast() {
-        ModellerProperties properties = new ModellerProperties();
-        Map<String, ModellerProperties.DomainVcs> domains = new LinkedHashMap<>();
-        domains.put("analytics", new ModellerProperties.DomainVcs());
-        domains.put("Analytics", new ModellerProperties.DomainVcs());
-        properties.setDomains(domains);
-
-        assertThatThrownBy(properties::normalizeDomains)
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Duplicate domain");
     }
 }

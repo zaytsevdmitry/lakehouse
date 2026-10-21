@@ -7,7 +7,7 @@
     <parent>
         <groupId>jarina</groupId>
         <artifactId>jarina-parent</artifactId>
-        <version>0.12.0</version>
+        <version>${revision}</version>
     </parent>
     <artifactId>jarina-state-rest-client</artifactId>
 
@@ -19,7 +19,7 @@
         <dependency>
             <groupId>jarina</groupId>
             <artifactId>jarina-common-rest-client</artifactId>
-            <version>0.12.0</version>
+            <version>${project.version}</version>
         </dependency>
 
         <!--Test-->
@@ -55,7 +55,7 @@
         <dependency>
             <groupId>jarina</groupId>
             <artifactId>jarina-common-test</artifactId>
-            <version>0.12.0</version>
+            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

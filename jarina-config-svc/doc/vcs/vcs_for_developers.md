@@ -14,7 +14,8 @@ files, and the subsystem periodically synchronizes them into the configuration d
 
 Configuration is organized into **domains**. A domain owns its own Git repository and is
 synchronized independently; a domain may contain nested domains. The hierarchy is declared
-in `jarina.config.vcs.domains` (see section 6). Every construct applied from a domain
+in `jarina.domains.*` and resolved by `DomainSettings` of the shared `jarina-domain-api`
+module (see section 6). Every construct applied from a domain
 repository is stamped with the domain name (`domainKeyName`), which scopes constructs by
 domain and allows a `Schedule` to reference only data sets of the same domain.
 
@@ -26,10 +27,14 @@ In contrast to the REST API, VCS gives:
 - automatic protection of VCS-managed constructs from accidental REST edits (see the
   `isVcsManaged` flag).
 
-All VCS-specific code lives in the package `org.jarina.config.vcs` (plus the two
-read-only controllers `VcsSyncLogController`/`VcsObjectLogController` in
+All VCS-specific code of the service lives in the package `org.jarina.config.vcs` (plus
+the two read-only controllers `VcsSyncLogController`/`VcsObjectLogController` in
 `org.jarina.config.controller` and `VcsManagedException`/`DomainConflictException`/
-`DataSetDomainConflictException` in `org.jarina.config.exception`).
+`DataSetDomainConflictException` in `org.jarina.config.exception`). The transport-agnostic
+part - the `VcsClient` interface, its JGit implementation, credentials and spec/factory
+(`DomainVcsSpec`, `DomainVcsFactory`) - lives in the shared module **`jarina-domain-api`**
+(package `org.jarina.domain.vcs`), which is consumed by `jarina-config-svc` (read path,
+this subsystem) and `jarina-ui-svc` (branch panel and review pipeline).
 
 ## 2. How the sync works
 
@@ -62,12 +67,13 @@ read-only controllers `VcsSyncLogController`/`VcsObjectLogController` in
 ```
 
 The orchestrator is `GitOpsScheduler` (`org.jarina.config.vcs.component`). It is
-registered only when `jarina.config.vcs.git.sync.enabled=true` and is driven by
+registered only when `jarina.config.vcs.sync.enabled=true` and is driven by
 `@Scheduled` with `fixedDelayString` / `initialDelayString` from the same property block.
 The method `sync()` is `synchronized` and idempotent and can also be called directly,
 for example from integration tests.
 
-Per cycle the scheduler iterates `JarinaVCSProperties.orderedDomains()`: domains are
+Per cycle the scheduler iterates `DomainSettings.orderedDomains()` (shared
+`jarina-domain-api`): domains are
 traversed **depth-first, parents before their nested domains, same-level domains sorted by
 `priority` ascending** (an absent priority is the lowest and is sorted last). Each domain
 is synchronized sequentially, inside its own transaction:
@@ -89,7 +95,7 @@ is synchronized sequentially, inside its own transaction:
    **single transaction**. Exceptions become a `FAILED` sync-log row for the domain (the
    row is recorded via `GitOpsFailureRecorder` in a separate `REQUIRES_NEW` transaction
    so the failure survives the rollback).
-10. Infrastructure failures (`VcsClientException`: repository unreachable, SSH failure,
+10. Infrastructure failures (`VcsException`: repository unreachable, SSH failure,
     unreadable clone) are only logged and retried on the next cycle.
 11. Sub-domains have a hierarchical dependency on their parent: when step 3, 9 or the
     infrastructure step fails for a domain, its whole sub-tree is skipped this cycle. The
@@ -124,7 +130,8 @@ is synchronized sequentially, inside its own transaction:
 
 ## 3. The VCS abstraction
 
-The core abstraction is the interface `VcsClient` (`org.jarina.config.vcs.VcsClient`):
+The core abstraction is the interface `VcsClient` (`org.jarina.domain.vcs.VcsClient`, module
+`jarina-domain-api`):
 
 | Method | Description |
 |---|---|
@@ -134,21 +141,31 @@ The core abstraction is the interface `VcsClient` (`org.jarina.config.vcs.VcsCli
 | `List<VcsDiffEntry> getDiff(String baseCommitId)` | Files changed between `baseCommitId` and HEAD. |
 | `Optional<String> readFileContent(String commitId, String path)` | File content at a given commit. |
 
-Supporting value types in the same package:
+Supporting value types in the same package (`org.jarina.domain.vcs`):
 
 - `VcsDiffEntry` — `record VcsDiffEntry(String path, VcsChangeType type)`.
 - `VcsChangeType` — `enum { CREATED, UPDATED, DELETED }`.
-- `VcsClientException` — runtime exception for **infrastructure** failures; it is not
+- `VcsException` — runtime exception for **infrastructure** failures; it is not
   treated as a failed sync, so the cycle is retried later.
 
 ### The bundled Git implementation
 
-`GitVcsClient` (`org.jarina.config.vcs.client`) is the only bundled implementation
-and is built on **JGit**. A client is created **per domain** by `GitVcsClientFactory`
-(`org.jarina.config.vcs.configuration`) with the domain name and its `git.*` settings.
+`GitVcsClient` (`org.jarina.domain.vcs.client`) is built on **JGit** and is the only
+bundled implementation. A client is created **per domain** through the shared
+`DomainVcsFactory` (`jarina-domain-api`), driven here by `GitVcsClientFactory`
+(`org.jarina.config.vcs.configuration`), which asks `DomainSettings.buildSpec(domain, true)`
+for the resolved spec of the domain - so this service always requires a
+`git.local-clone-path`:
 
-- `init()` applies SSH settings (only when `privateKeyPath` is set) and clones the
-  remote if there is no local `.git`, otherwise it opens the local repository.
+- `DomainVcsFactory.clientFor(spec)` — the read pipeline used by this subsystem: a
+  **persistent local clone**, so it demands `local-clone-path` in addition to the
+  repository URL. `init()` applies SSH settings (only when `ssh-private-key-path` is set)
+  and clones the remote if there is no local `.git`, otherwise it opens the local
+  repository.
+- `DomainVcsFactory.repositoryFor(spec)` — transient clones for branch/review operations
+  (used by `jarina-ui-svc`), which authenticate with the per-domain `GitCredentials`
+  (`ssh` / `token` / `basic`, anonymous when the credential block is empty).
+
 - `pull()` fetches `+refs/heads/*:refs/remotes/origin/*` and resets the local checkout
   to the fetched branch ref.
 - `getDiff()` uses `DiffFormatter` with rename detection enabled. **A rename is reported
@@ -156,7 +173,7 @@ and is built on **JGit**. A client is created **per domain** by `GitVcsClientFac
   not by their file path.
 - When `baseCommitId` is blank the whole tree is reported as CREATED.
 - SSH transport supports `publickey` authentication with a single private key; the key
-  is only consulted when `privateKeyPath` is configured.
+  is only consulted when `ssh-private-key-path` is configured.
 
 Because the whole pipeline above the client only consumes the `VcsClient` abstraction,
 exchanging the transport (SVN, Mercurial, a REST service, ...) needs no changes to the
@@ -241,45 +258,59 @@ against accidental REST API modifications.
 
 ## 6. Developer parameters
 
-The configuration hierarchy is bound by `JarinaVCSProperties`
-(`org.jarina.config.vcs.JarinaVCSProperties`, prefix `jarina.config.vcs`).
+Two prefixes are involved. The **configuration hierarchy** is bound by the shared
+`DomainSettings` (`org.jarina.domain.settings`, module `jarina-domain-api`, namespace
+`jarina.domains.<name>.*`) - this service only transports the raw properties; the canonical
+table of the namespace is in
+[jarina-domain-api/doc/readme.md](../../../jarina-domain-api/doc/readme.md).
 `orderedDomains()` returns the flat, dependency-ordered list of domains: parents first,
 same-level domains by `priority` ascending (absent priority treated as the lowest).
-`DomainProperties.isRepositoryConfigured()` tells whether a domain has a
-`repository-url`; per-domain `VcsClient` beans are created on demand by
-`GitVcsClientFactory`.
+`DomainSettings.hasRepository(domain)` tells whether a domain has a `repository-url`;
+per-domain `VcsClient` instances are created on demand by
+`GitVcsClientFactory.create(domainName)`, which resolves
+`DomainSettings.buildSpec(domain, true)` - the `true` demands a `git.local-clone-path`.
+A domain without a repository never gets a client and is skipped by `GitOpsScheduler` on
+every cycle.
+
+The **sync cadence** of this service stays under its own prefix `jarina.config.vcs` (class
+`JarinaVCSProperties`). Credentials are declared per domain in
+`jarina.domains.<name>.git.credentials.*`: there is no global account any more, the
+property `jarina.config.vcs.system-account` and its per-domain merge are gone.
 
 | Property | Environment variable | Default | Meaning |
 |---|---|---|---|
-| `jarina.config.vcs.git.sync.enabled` | `JARINA_CONFIG_GIT_SYNC_ENABLED` | `false` | Master switch of the VCS scheduler |
-| `jarina.config.vcs.git.sync.interval-ms` | `JARINA_CONFIG_GIT_SYNC_INTERVAL_MS` | `30000` | Scheduler fixed delay between cycles |
-| `jarina.config.vcs.git.sync.initial-delay-ms` | `JARINA_CONFIG_GIT_SYNC_INITIAL_DELAY_MS` | `10000` | Delay of the first cycle after startup |
-| `jarina.config.vcs.domains.<name>.priority` | - | lowest | Position in the apply order (ascending, parents before children) |
-| `jarina.config.vcs.domains.<name>.git.repository-url` | `JARINA_CONFIG_GIT_<NAME>_URL` | *(empty)* | Remote repository URL (`git://`, `ssh://`, `http(s)://`, local) |
-| `jarina.config.vcs.domains.<name>.git.branch` | `JARINA_CONFIG_GIT_<NAME>_BRANCH` | `main` | Branch to track |
-| `jarina.config.vcs.domains.<name>.git.local-clone-path` | `JARINA_CONFIG_GIT_<NAME>_CLONE_PATH` | *(empty)* | Local directory owned by the service for the domain clone |
-| `jarina.config.vcs.domains.<name>.git.private-key-path` | `JARINA_CONFIG_GIT_<NAME>_PRIVATE_KEY_PATH` | *(empty)* | SSH private key path, used only for `ssh://` |
-| `jarina.config.vcs.domains.<name>.domains` | - | - | Nested sub-domains of the domain |
+| `jarina.config.vcs.sync.enabled` | `JARINA_CONFIG_GIT_SYNC_ENABLED` | `false` | Master switch of the VCS scheduler |
+| `jarina.config.vcs.sync.interval-ms` | `JARINA_CONFIG_GIT_SYNC_INTERVAL_MS` | `30000` | Scheduler fixed delay between cycles |
+| `jarina.config.vcs.sync.initial-delay-ms` | `JARINA_CONFIG_GIT_SYNC_INITIAL_DELAY_MS` | `10000` | Delay of the first cycle after startup |
+| `jarina.domains.<name>.priority` | - | lowest | Position in the apply order (ascending, parents before children) |
+| `jarina.domains.<name>.git.repository-url` | `JARINA_DOMAINS_<NAME>_GIT_REPOSITORY_URL` | *(empty)* | Repository URL (any Git URL: `git://`, `ssh://`, `http(s)://` or local path); empty = domain inactive |
+| `jarina.domains.<name>.git.branch` | `JARINA_DOMAINS_<NAME>_GIT_BRANCH` | `main` | Branch to track |
+| `jarina.domains.<name>.git.local-clone-path` | `JARINA_DOMAINS_<NAME>_GIT_LOCAL_CLONE_PATH` | *(empty)* | Local directory for the domain clone (required by this service, unique per domain) |
+| `jarina.domains.<name>.git.credentials.auth-type` | - | inferred | `ssh` / `token` / `basic`; empty credentials mean anonymous access |
+| `jarina.domains.<name>.git.credentials.ssh-private-key-path` | `JARINA_DOMAINS_<NAME>_GIT_CREDENTIALS_SSH_PRIVATE_KEY_PATH` | *(empty)* | SSH private key path, used only for `ssh://` |
+| `jarina.domains.<name>.git.credentials.username` / `.token` / `.password` | - | *(empty)* | Per-domain credentials for `basic` / `token` auth |
+| `jarina.domains.<name>.domains` | - | - | Nested sub-domains of the domain |
 
-Environment variables for a domain `platform`: `JARINA_CONFIG_GIT_PLATFORM_URL`,
-`JARINA_CONFIG_GIT_PLATFORM_BRANCH`, `JARINA_CONFIG_GIT_PLATFORM_CLONE_PATH`,
-`JARINA_CONFIG_GIT_PLATFORM_PRIVATE_KEY_PATH`.
+Environment variables for a domain `platform`: `JARINA_DOMAINS_PLATFORM_GIT_REPOSITORY_URL`,
+`JARINA_DOMAINS_PLATFORM_GIT_BRANCH`, `JARINA_DOMAINS_PLATFORM_GIT_LOCAL_CLONE_PATH`,
+`JARINA_DOMAINS_PLATFORM_GIT_CREDENTIALS_SSH_PRIVATE_KEY_PATH`.
 
-The shipped `src/main/resources/application.yml` declares only the **legacy** single
-`jarina.config.vcs.git.*` block, so out of the box the service has no domain
-configured and a non-blank `git.repository-url` is exposed as the single domain `default`.
+The shipped `src/main/resources/application.yml` declares an empty `jarina.domains` map and
+the `jarina.config.vcs.sync.*` block with its defaults, so out of the box the service has no
+domain configured; the pre-domains `jarina.config.vcs.git.*` block and the synthesized
+`default` domain are gone.
 The `demo/compose` stack therefore wires the domain tree explicitly as system properties
 (`docker-compose.yaml`), nesting `platform` (`priority: 0`) with a child `processing`
 (`priority: 0`) which in turn nests `analytics` (`priority: 0`):
 
 ```
--Djarina.config.vcs.git.sync.enabled=true
--Djarina.config.vcs.domains.platform.priority=0
--Djarina.config.vcs.domains.platform.git.repository-url=git://git-server:9418/platform.git
--Djarina.config.vcs.domains.platform.git.branch=main
--Djarina.config.vcs.domains.platform.git.local-clone-path=/tmp/platform
--Djarina.config.vcs.domains.platform.domains.processing.priority=0
--Djarina.config.vcs.domains.platform.domains.processing.git.repository-url=git://git-server:9418/processing.git
+-Djarina.config.vcs.sync.enabled=true
+-Djarina.domains.platform.priority=0
+-Djarina.domains.platform.git.repository-url=git://git-server:9418/platform.git
+-Djarina.domains.platform.git.branch=main
+-Djarina.domains.platform.git.local-clone-path=/tmp/platform
+-Djarina.domains.platform.domains.processing.priority=0
+-Djarina.domains.platform.domains.processing.git.repository-url=git://git-server:9418/processing.git
 ...
 ```
 
@@ -296,7 +327,7 @@ All three repositories are served by a lightweight `git-server`
 - skips `(commit_id, domain_key_name)` pairs that already have a `vcs_sync_log` row;
 - records configuration/validation errors as `FAILED` for the failing domain (so the
   offending commit is not retried forever);
-- leaves infrastructure `VcsClientException` errors to be retried on the next cycle.
+- leaves infrastructure `VcsException` errors to be retried on the next cycle.
 
 ## 8. How to extend the VCS abstraction
 
@@ -304,10 +335,10 @@ All three repositories are served by a lightweight `git-server`
 
 Implement the five `VcsClient` methods (`init`, `pull`, `getCurrentCommitId`,
 `getDiff`, `readFileContent`), reuse `VcsDiffEntry`/`VcsChangeType`, and throw
-`VcsClientException` for transient infrastructure failures. Register the client per
-domain in `GitVcsClientFactory` (or expose a `VcsClient` `@Bean` in a `@Configuration`
-guarded by `@ConditionalOnProperty`). The rest of the pipeline (change-set builder,
-synchronizer, scheduler, persistence) is transport-agnostic.
+`VcsException` for transient infrastructure failures. `GitVcsClientFactory` (config-svc)
+and `DomainVcsFactory` (`jarina-domain-api`, used by `jarina-ui-svc`) build the bundled
+`GitVcsClient`. If you add a new backend, return it from those factories. The rest of the
+pipeline (change-set builder, synchronizer, scheduler, persistence) is transport-agnostic.
 
 ### 8.2 Add a new configuration construct kind
 

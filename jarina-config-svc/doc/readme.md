@@ -49,7 +49,7 @@ Configurations are defined as DTOs, stored in PostgreSQL and exposed via REST AP
 - **Service** - business logic: validation, DTO/entity mapping, merging of template and concrete configurations via `DtoMergeUtils`.
 - **Repository (JPA/Hibernate)** - persistence in PostgreSQL.
 - **InternalScheduler** - periodic publishing of schedule changes to Kafka.
-- Metadata is organized hierarchically (domain → datasource → dataset → ...); the domain hierarchy is defined in `jarina.config.vcs.domains` (see the GitOps section) and the dependency scheme is described in [content_configuration](content_configuration/content_configuration.md).
+- Metadata is organized hierarchically (domain → datasource → dataset → ...); the domain hierarchy is defined in `jarina.domains.*` by the shared `DomainSettings` of `jarina-domain-api` (see [Domains](#domains)) and the dependency scheme is described in [content_configuration](content_configuration/content_configuration.md).
 
 ## GitOps: declarative configuration from Git repositories (VCS)
 
@@ -57,8 +57,12 @@ In addition to the REST API, `jarina-config-svc` can manage configuration declar
 
 Configuration is organized into **domains**. Every domain owns its own Git repository and is synchronized independently. A domain may contain **nested domains** (e.g. `platform` ⊃ `processing` ⊃ `analytics`); domains are applied in the priority order (ascending, parents before children). Every construct loaded from a domain repository is stamped with the domain name (`domainKeyName`), which scopes it and makes cross-domain references verifiable.
 
-The domain model itself (tree, ownership, isolation rules, configuration) is described in
-[Domains](#domains) and in [content_configuration/domains.md](content_configuration/domains.md).
+The domain model itself (tree, ordering, ownership, isolation rules, the
+`jarina.domains.*` namespace and per-domain credentials) is **owned by
+`jarina-domain-api`** and described canonically in
+[jarina-domain-api/doc/readme.md](../../jarina-domain-api/doc/readme.md); this readme only
+summarizes it, and [content_configuration/domains.md](content_configuration/domains.md)
+describes the reference of the configuration objects themselves.
 
 Detailed documentation: [VCS subsystem for platform developers](vcs/vcs_for_developers.md) (internals, the `VcsClient` abstraction, extension points, developer parameters) and [Git extension user guide](vcs/git_extension_user_guide.md) (YAML format, `isVcsManaged`, configuration and error messages).
 
@@ -170,23 +174,41 @@ Every construct loaded from a repository gets `isVcsManaged=true`; it stays fals
 
 ### Configuration
 
-All settings live under the `jarina.config.vcs.*` prefix (see also [appconf/service_configuration.md](appconf/service_configuration.md)):
+Two independent prefixes are involved: the **sync cadence** of this service stays under
+`jarina.config.vcs.sync.*`, while the **domains themselves** are declared under
+`jarina.domains.*` and processed by the shared `DomainSettings` of `jarina-domain-api`
+(see [jarina-domain-api/doc/readme.md](../../jarina-domain-api/doc/readme.md); also
+[appconf/service_configuration.md](appconf/service_configuration.md)).
+
+The service accesses every domain repository through a single Git integration: a local
+clone is kept per domain via JGit and synchronized on every cycle. Credentials are
+declared **per domain** in `jarina.domains.<name>.git.credentials.*` — there is no global
+account and no merge: a domain either carries its own credentials or speaks to its
+repository anonymously, so different domains can authenticate with different accounts. The
+repository URL accepts any Git form (`git://`, `ssh://`, `http(s)://` or a local path).
+Setup in detail: [Git extension user guide](vcs/git_extension_user_guide.md).
 
 | Property | Environment variable | Default | Description |
 |---|---|---|---|
-| `jarina.config.vcs.git.sync.enabled` | `JARINA_CONFIG_GIT_SYNC_ENABLED` | `false` | Enables the VCS scheduler bean |
-| `jarina.config.vcs.git.sync.interval-ms` | `JARINA_CONFIG_GIT_SYNC_INTERVAL_MS` | `30000` | Cycle period |
-| `jarina.config.vcs.git.sync.initial-delay-ms` | `JARINA_CONFIG_GIT_SYNC_INITIAL_DELAY_MS` | `10000` | Delay of the first cycle after startup |
-| `jarina.config.vcs.domains.<name>.git.repository-url` | `JARINA_CONFIG_GIT_<NAME>_URL` | - | URL of the domain repository (supports `git://`, `ssh://` and `http(s)://`) |
-| `jarina.config.vcs.domains.<name>.git.branch` | `JARINA_CONFIG_GIT_<NAME>_BRANCH` | `main` | Branch to synchronize |
-| `jarina.config.vcs.domains.<name>.git.local-clone-path` | `JARINA_CONFIG_GIT_<NAME>_CLONE_PATH` | - | Local path where the service keeps the domain clone |
-| `jarina.config.vcs.domains.<name>.git.private-key-path` | `JARINA_CONFIG_GIT_<NAME>_PRIVATE_KEY_PATH` | - | Path to an SSH private key (only for `ssh://` URLs) |
-| `jarina.config.vcs.domains.<name>.priority` | - | lowest | Position of the domain in the apply order (ascending, parents before children) |
-| `jarina.config.vcs.domains.<name>.domains` | - | - | Nested sub-domains |
+| `jarina.config.vcs.sync.enabled` | `JARINA_CONFIG_GIT_SYNC_ENABLED` | `false` | Enables the VCS scheduler bean |
+| `jarina.config.vcs.sync.interval-ms` | `JARINA_CONFIG_GIT_SYNC_INTERVAL_MS` | `30000` | Cycle period |
+| `jarina.config.vcs.sync.initial-delay-ms` | `JARINA_CONFIG_GIT_SYNC_INITIAL_DELAY_MS` | `10000` | Delay of the first cycle after startup |
+| `jarina.domains.<name>.git.repository-url` | `JARINA_DOMAINS_<NAME>_GIT_REPOSITORY_URL` | - | URL of the domain repository (any Git URL: `git://`, `ssh://`, `http(s)://` or local path); **required** for the domain to be active |
+| `jarina.domains.<name>.git.branch` | `JARINA_DOMAINS_<NAME>_GIT_BRANCH` | `main` | Branch to synchronize |
+| `jarina.domains.<name>.git.local-clone-path` | `JARINA_DOMAINS_<NAME>_GIT_LOCAL_CLONE_PATH` | - | Local path where the service keeps the domain clone (must be unique per domain) |
+| `jarina.domains.<name>.git.credentials.auth-type` | - | inferred | `ssh` (when `ssh-private-key-path` is set), `token` (when any credential is set) or `basic`; empty credentials mean anonymous access |
+| `jarina.domains.<name>.git.credentials.ssh-private-key-path` | `JARINA_DOMAINS_<NAME>_GIT_CREDENTIALS_SSH_PRIVATE_KEY_PATH` | - | Path to an SSH private key (only for `ssh://` URLs) |
+| `jarina.domains.<name>.git.credentials.username` / `.token` / `.password` | - | - | Per-domain credentials for `basic` / `token` auth |
+| `jarina.domains.<name>.priority` | - | lowest | Position of the domain in the apply order (ascending, parents before children) |
+| `jarina.domains.<name>.domains` | - | - | Nested sub-domains |
 
-For a domain named e.g. `platform` the environment variables are `JARINA_CONFIG_GIT_PLATFORM_URL`, `JARINA_CONFIG_GIT_PLATFORM_BRANCH`, `JARINA_CONFIG_GIT_PLATFORM_CLONE_PATH` and `JARINA_CONFIG_GIT_PLATFORM_PRIVATE_KEY_PATH`.
+Per-domain environment variables follow Spring relaxed binding of the same namespace: for a
+domain named e.g. `platform` they are `JARINA_DOMAINS_PLATFORM_GIT_REPOSITORY_URL`,
+`JARINA_DOMAINS_PLATFORM_GIT_BRANCH` and `JARINA_DOMAINS_PLATFORM_GIT_LOCAL_CLONE_PATH`.
 
-The shipped `application.yml` declares only the legacy `jarina.config.vcs.git.*` block, so the domain tree is supplied by the deployment - see [Domains](#domains).
+The shipped `application.yml` declares an empty `jarina.domains` map and the
+`jarina.config.vcs.sync.*` block, so the domain tree is supplied by the deployment - see
+[Domains](#domains).
 
 ### Demo
 
@@ -197,13 +219,13 @@ though the three repositories are siblings from Git's point of view, which demon
 nesting is a configuration choice, not a storage constraint:
 
 ```
--Djarina.config.vcs.git.sync.enabled=true
--Djarina.config.vcs.domains.platform.priority=0
--Djarina.config.vcs.domains.platform.git.repository-url=git://git-server:9418/platform.git
--Djarina.config.vcs.domains.platform.domains.processing.priority=0
--Djarina.config.vcs.domains.platform.domains.processing.git.repository-url=git://git-server:9418/processing.git
--Djarina.config.vcs.domains.platform.domains.processing.domains.analytics.priority=0
--Djarina.config.vcs.domains.platform.domains.processing.domains.analytics.git.repository-url=git://git-server:9418/analytics.git
+-Djarina.config.vcs.sync.enabled=true
+-Djarina.domains.platform.priority=0
+-Djarina.domains.platform.git.repository-url=git://git-server:9418/platform.git
+-Djarina.domains.platform.domains.processing.priority=0
+-Djarina.domains.platform.domains.processing.git.repository-url=git://git-server:9418/processing.git
+-Djarina.domains.platform.domains.processing.domains.analytics.priority=0
+-Djarina.domains.platform.domains.processing.domains.analytics.git.repository-url=git://git-server:9418/analytics.git
 ```
 
 ## Domains
@@ -215,8 +237,12 @@ cycle per repository, and the domain name stamped onto every construct loaded fr
 repository the file comes from, so the same file means different things in different
 domains.
 
+The canonical description of the shared model - namespace, ordering, credentials - is
+[jarina-domain-api/doc/readme.md](../../jarina-domain-api/doc/readme.md); this section only
+summarizes what this service does with it.
+
 ```
-jarina.config.vcs.domains  ──▶  orderedDomains()  ──▶  for each domain
+jarina.domains  ──▶  DomainSettings.orderedDomains()  ──▶  for each domain
                                                              fetch + diff
                                                              apply in one txn
                                                              stamp domainKeyName
@@ -225,20 +251,20 @@ jarina.config.vcs.domains  ──▶  orderedDomains()  ──▶  for each doma
                                           DataSet / DataSource / Driver / Task /
                                           ScenarioActTemplate / Schedule /
                                           QualityMetricsConf / TaskExecutionServiceGroup
-                                          (identity = domainKeyName + keyName)
+                                          (identity = keyName, ownership = domainKeyName)
 ```
 
 ### Tree, order and ownership
 
-Domains form a tree: `jarina.config.vcs.domains.<name>.domains` declares nested
-sub-domains. `JarinaVCSProperties.orderedDomains()` walks the tree depth-first, so a
-parent is always applied before its children; within one level the order is `priority`
-ascending, domains without a `priority` go last, and equal priorities are broken by name.
-Nesting is a **configuration** relation, not a storage one - the same repositories may be
-declared as siblings or as a chain. Its only behavioural consequence is failure
-propagation: when a domain fails, its whole sub-tree is skipped until the parent succeeds
-again, because a child may reference constructs of its parent. A domain without
-`git.repository-url` is skipped entirely.
+Domains form a tree: `jarina.domains.<name>.domains` declares nested sub-domains.
+`DomainSettings.orderedDomains()` walks the tree depth-first, so a parent is always applied
+before its children; within one level the order is `priority` ascending, domains without a
+`priority` go last, and equal priorities are broken by name. Nesting is a **configuration**
+relation, not a storage one - the same repositories may be declared as siblings or as a
+chain. Its only behavioural consequence is failure propagation: when a domain fails, its
+whole sub-tree is skipped until the parent succeeds again, because a child may reference
+constructs of its parent. A domain without `git.repository-url` is inactive: this service
+skips it entirely, while `jarina-ui-svc` fails when such a domain is used.
 
 The domain is an ownership attribute, not a part of the object identity: `keyName` is the
 sole primary key and stays global, so the same `keyName` cannot exist in two domains. Scripts
@@ -259,41 +285,37 @@ them.
 
 ### How domains are configured
 
-Everything is bound by `JarinaVCSProperties` under the `jarina.config.vcs` prefix:
+The domains themselves are bound by the shared `DomainSettings` of `jarina-domain-api` under
+the `jarina.domains` prefix; this service only delivers the raw properties:
 
 ```yaml
 jarina:
-  config:
-    vcs:
-      domains:
-        platform:
+  domains:
+    platform:
+      priority: 0
+      git:
+        repository-url: git://git-server:9418/platform.git
+        branch: main
+        local-clone-path: /tmp/platform
+        credentials:                      # per-domain, never merged
+          auth-type: ssh
+          ssh-private-key-path: /keys/platform_ed25519
+      domains:                            # nested sub-domains
+        processing:
           priority: 0
           git:
-            repository-url: git://git-server:9418/platform.git
+            repository-url: git://git-server:9418/processing.git
             branch: main
-            local-clone-path: /tmp/platform
-            private-key-path:            # only for ssh:// URLs
-          domains:                        # nested sub-domains
-            processing:
-              priority: 0
-              git:
-                repository-url: git://git-server:9418/processing.git
-                branch: main
-                local-clone-path: /tmp/processing
+            local-clone-path: /tmp/processing
 ```
 
 `local-clone-path` must be unique per domain, since each domain keeps its own clone there.
 The per-domain property table and the environment-variable pattern
-(`JARINA_CONFIG_GIT_<NAME>_URL`, `..._<NAME>_BRANCH`, `..._<NAME>_CLONE_PATH`,
-`..._<NAME>_PRIVATE_KEY_PATH`) are in [Configuration](#configuration) above.
-
-**Legacy single-repository configuration.** The pre-domains properties
-`jarina.config.vcs.git.repository-url` / `.branch` / `.local-clone-path` /
-`.private-key-path` are still honoured: when `domains` is **empty** and
-`git.repository-url` is not blank, that single repository is exposed as one domain named
-`default`. As soon as `domains` contains at least one entry the legacy block is ignored - it
-does not become an additional `default` domain. The scheduler itself (`git.sync.*`) is
-global and is not declared per domain.
+(`JARINA_DOMAINS_<NAME>_GIT_REPOSITORY_URL`, `..._GIT_BRANCH`, `..._GIT_LOCAL_CLONE_PATH`,
+`..._GIT_CREDENTIALS_SSH_PRIVATE_KEY_PATH`) are in [Configuration](#configuration) above.
+The pre-domains properties `jarina.config.vcs.git.*` and the synthesized `default` domain
+are gone - see [jarina-domain-api/doc/readme.md](../../jarina-domain-api/doc/readme.md#3-a-domain-is-active-iff-gitrepository-url-is-set).
+The scheduler itself (`jarina.config.vcs.sync.*`) is global and is not declared per domain.
 
 ### Observability: which domain a change came from
 

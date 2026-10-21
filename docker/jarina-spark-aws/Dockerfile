@@ -57,22 +57,22 @@ RUN curl -Z -sSLfO https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/$
          -O https://repo1.maven.org/maven2/com/google/guava/guava/${GUAVA_VERSION}/guava-${GUAVA_VERSION}.jar \
          -O https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-annotations/${JACKSON_ANNOTATIONS_VERSION}/jackson-annotations-${JACKSON_ANNOTATIONS_VERSION}.jar
 
-ADD jarina-credential-providers-jdbc-0.12.0.jar ./
-ADD jarina-credential-providers-spark-0.12.0.jar ./
+ADD jarina-credential-providers-jdbc-1.0.0.jar ./
+ADD jarina-credential-providers-spark-1.0.0.jar ./
 
 WORKDIR /tmp
 
 ADD log4j2.properties /opt/spark/conf/
 
 LABEL type="jarina=spark" \
-      version="jarina-0.12.0_spark-3.5.8" \
+      version="jarina-1.0.0_spark-3.5.8" \
       features="spark, aws-s3a, postgres-jdbc, aws-cli"
 
 
 # Add application
-ADD jarina-task-executor-spark-dataset-app-0.12.0-jar-with-dependencies.jar ${APP_HOME}/
-ADD jarina-task-executor-spark-dq-app-0.12.0-jar-with-dependencies.jar ${APP_HOME}/
-ADD jarina-task-proxy-for-spark-0.12.0-jar-with-dependencies.jar ${APP_HOME}/
+ADD jarina-task-executor-spark-dataset-app-1.0.0-jar-with-dependencies.jar ${APP_HOME}/
+ADD jarina-task-executor-spark-dq-app-1.0.0-jar-with-dependencies.jar ${APP_HOME}/
+ADD jarina-task-proxy-for-spark-1.0.0-jar-with-dependencies.jar ${APP_HOME}/
 
 EXPOSE 4040 9083
 

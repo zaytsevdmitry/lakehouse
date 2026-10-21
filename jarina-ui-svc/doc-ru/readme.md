@@ -24,7 +24,7 @@
 
 Для разделов мониторинга/чтения сервис является тонким слоем агрегации: каждый раздел интерфейса обслуживается своим контроллером, который делегирует работу REST-клиенту соответствующего сервиса jarina. Прямых обращений к базам данных для этих разделов сервис не выполняет.
 
-Поверхность **Modelling** реализована самим UI-сервисом: он читает и записывает конфигурационные документы в рабочих пространствах (локальная ФС или S3-хранилище), взаимодействует с Git-репозиториями доменов конфигурации для этих целей (через jgit или API GitLab/GitHub) и отдаёт метаданные редактирования по схеме. Рабочее пространство — это персональная рабочая копия пользователя, которую открывают, редактируют и, наконец, отправляют на ревью; авторитетным хранилищем является Git-репозиторий, потребляемый `jarina-config-svc` (GitOps). Репозиторий домена может быть выделен одному домену (плоские файлы в корне репозитория) или содержать несколько доменов под `domains/<имя>/` — поддерживаются обе раскладки.
+Поверхность **Modelling** реализована самим UI-сервисом: он читает и записывает конфигурационные документы в рабочих пространствах (локальная ФС или S3-хранилище), взаимодействует с Git-репозиториями доменов конфигурации для этих целей (через JGit) и отдаёт метаданные редактирования по схеме. Рабочее пространство — это персональная рабочая копия пользователя, которую открывают, редактируют и, наконец, отправляют на ревью; авторитетным хранилищем является Git-репозиторий, потребляемый `jarina-config-svc` (GitOps). Репозиторий домена может быть выделен одному домену (плоские файлы в корне репозитория) или содержать несколько доменов под `domains/<имя>/` — поддерживаются обе раскладки.
 
 Внешние взаимодействия:
 
@@ -32,7 +32,7 @@
 - **jarina-scheduler-svc** — запуски расписаний за интервал, DAG запуска.
 - **jarina-state-svc** — состояния интервалов датасетов.
 - **jarina-task-proxy-for-spark** — Spark-подписки (создание, статус, kill, clear).
-- **Git-репозитории (GitOps)** — по одному репозиторию на домен конфигурации (`jarina.modeller.domains.<имя>.repository-url`, с `jarina.modeller.git.remote-url` как legacy-фолбэком на один репозиторий); моделирование клонирует выбранную пару `(домен, ветка)` в рабочее пространство, создаёт ветки и отправляет изменения на ревью.
+- **Git-репозитории (GitOps)** — по одному репозиторию на домен конфигурации (`jarina.domains.<имя>.git.repository-url`, объявляется в общем `DomainSettings` из `jarina-domain-api`); моделирование клонирует выбранную пару `(домен, ветка)` в рабочее пространство, создаёт ветки и отправляет изменения на ревью.
 
 Контроллеры (верхний пакет `controller`):
 
@@ -72,44 +72,49 @@ AdminController  /api/workspace/admin — только для WORKSPACE_ADMIN: �
 
 ### По одному репозиторию (и ветке) на домен
 
-`ModellerProperties` (префикс `jarina.modeller`) объявляет карту `domains`:
+Домены объявляются в `jarina.domains` и связываются общим `DomainSettings` из
+`jarina-domain-api` (каноническая справка:
+[jarina-domain-api/doc-ru/readme.md](../../jarina-domain-api/doc-ru/readme.md));
+`jarina.modeller` больше не хранит домены — это только хранилище пространств / аутентификация /
+сессия:
 
 ```yaml
 jarina:
-  modeller:
-    domains:                        # <domainKeyName>:
-      platform:                     #   repository-url: ...
+  domains:                        # <domainKeyName>:
+    platform:                     #   git.repository-url: ...
+      git:
         repository-url: git://git-server:9418/platform.git
-        branch-main: main
-      analytics:
+        branch: main
+        credentials:              # по-доменные, никогда не сливаются
+          auth-type: ssh
+          ssh-private-key-path: /keys/platform_ed25519
+    analytics:
+      git:
         repository-url: git://git-server:9418/analytics.git
-        branch-main: main
-    git:                            # legacy-фолбэк на один репозиторий
-      remote-url: ${JARINA_GIT_URL:}
-      branch-main: main
 ```
 
 Правила разрешения:
 
 | Правило | Поведение |
 |---|---|
-| Список доменов | `domainNames()` - ключи `domains`, отсортированные **по алфавиту**; у моделирования нет дерева доменов и `priority` |
-| Нет `domains` | используется единственный домен `default`, если задан `git.remote-url`; иначе список пуст |
-| URL репозитория | `repository-url` домена, иначе legacy `git.remote-url`, иначе домен непригоден |
-| Основная ветка | `branch-main` домена, иначе legacy `git.branch-main`, иначе `main` |
-| Недоступный репозиторий | домен показывается с **пустым** списком веток (корень панели остаётся), это не ошибка |
-| Отсутствующий URL репозитория | жёсткая ошибка: `No repository URL configured for domain <имя> (jarina.modeller.domains.<имя>.repository-url)` |
+| Список доменов | `domainNames()` - имена сконфигурированных доменов, отсортированные **по алфавиту**; моделирование показывает плоский список доменов и игнорирует `priority` и дерево доменов |
+| URL репозитория | `jarina.domains.<имя>.git.repository-url`; **legacy-фолбэка на один репозиторий больше нет** |
+| Основная ветка | `jarina.domains.<имя>.git.branch`, по умолчанию `main` |
+| Недоступный репозиторий | домен показывается с **пустым** списком веток (`VcsException` ловится по каждому домену; корень панели остаётся), это не ошибка |
+| Отсутствующий URL репозитория | жёсткая ошибка при использовании (`IllegalStateException` → HTTP 400): `Domain '<имя>': no repository URL configured (property: jarina.domains.<имя>.git.repository-url)` |
+| Некорректные учётные данные | ошибка на старте: `ModellerVcsCatalog` сразу строит клиент каждого сконфигурированного домена с репозиторием, поэтому неверный `auth-type` или нечитаемый ключ приводят к падению при старте |
 
-`branch-main` - это также **целевая ветка ревью**: отправка сливается обратно в
-`domainBranchMain(domain)` своего домена.
+`git.branch` - это также **целевая ветка ревью**: отправка сливается обратно в
+`domainSettings.branch(domain)` своего домена.
 
-### Панель веток - это дерево доменов
+### Панель веток - это плоский список доменов
 
 `GET /api/vcs/branches` возвращает по одной `DomainBranchesResponse` на каждый
 сконфигурированный домен - `{domain, branches[], branchMain}` - и фронтенд рисует это как
-дерево с доменами в корне и ветками, отходящими от них. `POST /api/vcs/branch` принимает
-`{domain, branch, baseBranch}`, поэтому ветка всегда создаётся в названном репозитории
-домена.
+дерево с доменами в корне и ветками, отходящими от них; настроенное *дерево* доменов здесь не
+отражается, потому что `domainNames()` - плоский список по алфавиту. `POST /api/vcs/branch`
+принимает `{domain, branch, baseBranch}`, поэтому ветка всегда создаётся в названном
+репозитории домена.
 
 ### Рабочее пространство - это набор пар `(домен, ветка)`
 
@@ -140,11 +145,10 @@ jarina:
 - файлы пространства группируются по покрывающей их папке `<домен> (<ветка>)`; файл вне
   всех выбранных доменных папок отклоняется;
 - каждая группа коммитится в свою пару `(домен, ветка)` пользователем как автором и
-  техническим сервисным аккаунтом как коммитером, пушится в доменную ветку и - для
-  GitLab/GitHub - превращается в MR/PR против `branch-main` этого домена;
+  техническим сервисным аккаунтом как коммитером и пушится в доменную ветку;
 - домен с пустым диффом пропускается (`NO_CHANGES`);
-- сводный ответ - `OK` (с URL MR/PR, склеенными через запятую, если их несколько) или
-  `NO_CHANGES`, если не изменилось ничего;
+- сводный ответ - `OK` (с URL получившихся коммитов, склеенными через запятую, если их
+  несколько) или `NO_CHANGES`, если не изменилось ничего;
 - **рабочее пространство удаляется только при успехе** - неудачная отправка оставляет его
   открытым;
 - пользователь должен владеть пространством, иметь роль `EDITOR` для каждого выбранного
@@ -169,15 +173,20 @@ jarina:
 
 | Свойство | Назначение |
 |---|---|
-| `jarina.modeller.domains.<имя>.repository-url` | Репозиторий домена; обязателен, чтобы домен появился в панели веток |
-| `jarina.modeller.domains.<имя>.branch-main` | Основная ветка домена (по умолчанию `main`), также цель ревью |
-| `jarina.modeller.git.remote-url` | Legacy-фолбэк, используется когда `domains` пуст; домен называется `default` |
-| `jarina.modeller.git.branch-main` | Legacy-фолбэк основной ветки (по умолчанию `main`) |
+| `jarina.domains.<имя>.git.repository-url` | Репозиторий домена; обязателен, чтобы домен был пригоден в панели веток |
+| `jarina.domains.<имя>.git.branch` | Основная ветка домена (по умолчанию `main`), также цель ревью |
+| `jarina.domains.<имя>.git.credentials.auth-type` | `ssh` / `token` / `basic`; если не указано, выводится из объявленных учётных данных |
+| `jarina.domains.<имя>.git.credentials.ssh-private-key-path` / `.username` / `.token` / `.password` | По-доменные git-учётные данные; пустой блок означает анонимный доступ |
+| `jarina.modeller.storage.*` | Хранилище пространств (см. [Конфигурация](#конфигурация)) |
 
-Доменные переменные окружения в поставляемом `application.yml` не объявлены; их задаёт
+Этому сервису не нужен `git.local-clone-path`: он клонирует во временные рабочие каталоги,
+в отличие от `jarina-config-svc`, который держит постоянный клон каждого домена.
+
+По-доменные настройки в поставляемом `application.yml` не объявлены; их задаёт
 развёртывание, например системными свойствами
-(`-Djarina.modeller.domains.platform.repository-url=...`, как делает `demo/compose`) или
-через переменные окружения relaxed binding.
+(`-Djarina.domains.platform.git.repository-url=...`, как делает `demo/compose`) или через
+переменные окружения relaxed binding
+(`JARINA_DOMAINS_PLATFORM_GIT_REPOSITORY_URL`, `JARINA_DOMAINS_PLATFORM_GIT_BRANCH`).
 
 ## Модули
 
@@ -193,7 +202,7 @@ jarina:
 - пакет модделирования **`org.jarina.ui.modeller`**:
   - контроллеры (`controller`): `VcsController`, `EditorController`, `SchemaController`, `AdminController`;
   - сервисы (`service`): `VcsService`, `ReviewService`, `SchemaService`, `EditorService`, `YamlEditorService`, `EnumOptionsService`, `SyncLogService`, `AdminWorkspaceService`;
-  - интеграция с VCS (`vcs`): SPI `VcsProvider` с реализациями `LocalGitVcsProvider`, `GitLabApiVcsProvider`, `GitHubAppVcsProvider`, `DisabledVcsProvider` и фабрикой провайдеров;
+  - интеграция с VCS (`config`): `ModellerProperties` (хранилище пространств, аутентификация, сессия, логирование — домены и git-учётные данные лежат в общем `DomainSettings` из `jarina-domain-api`) и `ModellerVcsCatalog`, который через `DomainVcsFactory` строит по одному `GitVcsClient` на домен из общего модуля `jarina-domain-api`;
   - хранилище рабочих пространств (`storage`): SPI `WorkspaceStorage` с `LocalFsWorkspaceStorage` и S3 (`S3WorkspaceStorage` + минимальная подпись AWS SigV4), а также `WorkspaceManager`, `WorkspaceSeeder` и задача очистки (`WorkspaceCleanupTask`);
   - авторизация (`auth`): `DomainRole` (`VIEWER`/`EDITOR`/`CONTROL`), `ModellerRoleSupport` (разбор доменных ролей), `UserContext`, `DomainAccess`, `ForbiddenException`/`NotFoundException`;
   - DTO (`dto`): `KindSchema`, `FieldSchema`, `TreeResponse`, `FileContentResponse`, `WorkspaceResponse`, DTO ревью/restore и др.;
@@ -201,7 +210,7 @@ jarina:
 - `GlobalExceptionHandler` — единая обработка ошибок;
 - фронтенд (`src/main/resources/frontend`): React + Vite, включая визуальные редакторы модделирования (`ErDiagramEditor`, `DataLineageDiagramEditor`, `DagEditor` — на React Flow) и набор unit-тестов на Vitest.
 
-Зависимости: `jarina-common` (общие константы и DTO конфигурации, используемые редакторами — например enum `YamlMetadataKind`, покрывающий виды `ERDiagram` и `DataLineageDiagram`, а также соответствующие `ERDiagramDTO` / `DataLineageDiagramDTO`), `jarina-config-rest-client`, `jarina-scheduler-rest-client`, `jarina-state-rest-client`, `jarina-task-proxy-for-spark-rest-client`, `jackson-dataformat-yaml`, `org.eclipse.jgit` (+ SSH), Spring Boot OAuth2 client и resource server.
+Зависимости: `jarina-domain-api` (общая VCS-библиотека: `VcsClient`, его реализация на JGit, учётные данные и спецификация с фабрикой по домену), `jarina-common` (общие константы и DTO конфигурации, используемые редакторами — например enum `YamlMetadataKind`, покрывающий виды `ERDiagram` и `DataLineageDiagram`, а также соответствующие `ERDiagramDTO` / `DataLineageDiagramDTO`), `jarina-config-rest-client`, `jarina-scheduler-rest-client`, `jarina-state-rest-client`, `jarina-task-proxy-for-spark-rest-client`, `jackson-dataformat-yaml`, `org.eclipse.jgit` (+ SSH), Spring Boot OAuth2 client и resource server.
 
 ## API Endpoints
 
@@ -302,34 +311,26 @@ jarina:
         secret-key: ...
         region: us-east-1
       cleanup-ttl-hours: 4
-    vcs-provider: local-git      # [local-git, gitlab-api, github-app, gerrit-ssh]
-    # По одному репозиторию на домен конфигурации. Когда `domains` пуст, используется
-    # legacy-блок `git.*` ниже как единственный домен `default`.
-    domains:
-      platform:
-        repository-url: git://git-server:9418/platform.git
-        branch-main: main
-      analytics:
-        repository-url: git://git-server:9418/analytics.git
-        branch-main: main
-    git:                        # legacy-фолбэк на один репозиторий
-      remote-url: ${JARINA_GIT_URL:}
-      branch-main: main
     auth-strategy: jwt-rbac      # [jwt-rbac, token-exchange]
     session:
       inactivity-minutes: 30
-    vcs-system-account:          # учётные данные для git-операций
-      auth-type: token           # [ssh, token, basic]
-      ssh-private-key-path: ...
-      username: ...
-      token: ...
-      password: ...
-    github:                      # используется при vcs-provider == github-app
-      app-id: ...
-      app-private-key-path: ...
-      installation-id: ...
     logging:
       sync-log-capacity: 500
+  # Домены конфигурации (jarina.domains.<имя>.git.*), связываются общим
+  # DomainSettings из jarina-domain-api. Домен активен, только если задан
+  # repository-url; учётные данные по-доменные и никогда не сливаются.
+  domains:
+    platform:
+      git:
+        repository-url: git://git-server:9418/platform.git
+        branch: main
+        credentials:             # по-доменные учётные данные
+          auth-type: ssh
+          ssh-private-key-path: /keys/platform_ed25519
+    analytics:
+      git:
+        repository-url: git://git-server:9418/analytics.git
+        branch: main
 ```
 
 | Параметр | Описание |
@@ -346,15 +347,11 @@ jarina:
 | `jarina.modeller.storage.root-directory` | Локальный корень пространств (по умолчанию `/tmp/jarina-workspaces`) |
 | `jarina.modeller.storage.s3.*` | S3 endpoint/bucket/ключи (тип S3) |
 | `jarina.modeller.storage.cleanup-ttl-hours` | Время жизни неактивного пространства (по умолчанию 4 ч) |
-| `jarina.modeller.vcs-provider` | Интеграция с Git: `local-git`, `gitlab-api`, `github-app`, `gerrit-ssh` или `disabled` |
-| `jarina.modeller.domains.<имя>.repository-url` | URL репозитория домена (обязателен, чтобы домен появился в панели веток) |
-| `jarina.modeller.domains.<имя>.branch-main` | Основная ветка домена (по умолчанию `main`); также цель ревью |
-| `jarina.modeller.git.remote-url` | Legacy-фолбэк, используется когда `domains` пуст; домен называется `default` |
-| `jarina.modeller.git.branch-main` | Legacy-фолбэк основной ветки (по умолчанию `main`) |
+| `jarina.domains.<имя>.git.repository-url` | URL репозитория домена (обязателен, чтобы домен был пригоден в панели веток) |
+| `jarina.domains.<имя>.git.branch` | Основная ветка домена (по умолчанию `main`); также цель ревью |
+| `jarina.domains.<имя>.git.credentials.*` | По-доменные git-учётные данные (`auth-type`, `ssh-private-key-path`, `username`, `token`, `password`); глобального аккаунта и слияния нет |
 | `jarina.modeller.auth-strategy` | `jwt-rbac` (по умолчанию) или `token-exchange` |
 | `jarina.modeller.session.inactivity-minutes` | Таймаут бездействия сессии пространства |
-| `jarina.modeller.vcs-system-account.*` | Учётные данные для git-операций (`ssh`/`token`/`basic`) |
-| `jarina.modeller.github.*` | Настройки GitHub App (`github-app` провайдер) |
 | `jarina.modeller.logging.sync-log-capacity` | Ёмкость журнала синхронизации в памяти |
 
 ## Безопасность
@@ -386,10 +383,9 @@ UI BFF аутентифицирует пользователей через Keyc
 | `KEYCLOAK_UI_CLIENT_SECRET` | `super-secret-bff-key-1234567890` | Секрет клиента `jarina-ui-client` |
 | `JARINA_UI_REDIRECT_URI` | `{baseUrl}/login/oauth2/code/{registrationId}` | OAuth2 redirect URI BFF |
 | `KEYCLOAK_INTERNAL_CLIENT_SECRET` | `super-secret-internal-key-987654321` | Секрет `jarina-internal-client` (межсервисные вызовы) |
-| `JARINA_VCS_PROVIDER` | `local-git` | Git-провайдер модделирования |
-| `JARINA_GIT_URL` | — | Legacy-фолбэк URL репозитория конфигурации (используется, если домены не сконфигурированы) |
-| `JARINA_GIT_BRANCH` | `main` | Основная ветка |
-| `JARINA_VCS_AUTH_TYPE` / `JARINA_VCS_USER` / `JARINA_VCS_TOKEN` / `JARINA_VCS_PASSWORD` / `JARINA_VCS_SSH_KEY_PATH` | — | Учётные данные системного аккаунта Git |
+| `JARINA_DOMAINS_<ИМЯ>_GIT_REPOSITORY_URL` | — | URL репозитория домена конфигурации (relaxed binding `jarina.domains.<имя>.git.repository-url`) |
+| `JARINA_DOMAINS_<ИМЯ>_GIT_BRANCH` | `main` | Ветка домена конфигурации |
+| `JARINA_DOMAINS_<ИМЯ>_GIT_CREDENTIALS_SSH_PRIVATE_KEY_PATH` | — | SSH-ключ домена конфигурации |
 | `JARINA_WORKSPACE_STORAGE` / `JARINA_WORKSPACE_ROOT` | `local` / `/tmp/jarina-workspaces` | Бэкенд хранилища пространств |
 | `JARINA_WORKSPACE_TTL_HOURS` | `4` | TTL очистки неактивных пространств |
 | `server.servlet.session.cookie.name` / `.http-only` | `JSESSIONID` / `true` | Имя сессионной cookie и флаг HttpOnly |

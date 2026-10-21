@@ -17,38 +17,18 @@
 
 package org.jarina.ui.modeller.config;
 
-import jakarta.annotation.PostConstruct;
-import org.jarina.ui.modeller.auth.ModellerRoleSupport;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Declarative configuration matrix of the Modeller ({@code jarina.modeller.*}).
- * All workspace/storage/VCS/auth strategies are switched here.
+ * Workspace/storage/auth/session strategies are switched here; the configuration domains
+ * themselves are declared under {@code jarina.domains.*} and processed by
+ * {@link org.jarina.domain.settings.DomainSettings}.
  */
 @ConfigurationProperties(prefix = "jarina.modeller")
 public class ModellerProperties {
 
     private Storage storage = new Storage();
-
-    /**
-     * Git provider integration strategy: local-git | gitlab-api | github-app | gerrit-ssh
-     */
-    private String vcsProvider = "local-git";
-
-    private Git git = new Git();
-
-    /**
-     * Per-domain repositories ({@code jarina.modeller.domains.<name>.*}). Each domain
-     * owns a repository with its branches; the branch panel is built from these domains.
-     */
-    private Map<String, DomainVcs> domains = new LinkedHashMap<>();
-
-    private Github github = new Github();
 
     /**
      * Authorization mode: jwt-rbac | token-exchange
@@ -57,54 +37,16 @@ public class ModellerProperties {
 
     private Session session = new Session();
 
-    private SystemAccount vcsSystemAccount = new SystemAccount();
-
     private Logging logging = new Logging();
 
     public Storage getStorage() { return storage; }
     public void setStorage(Storage storage) { this.storage = storage; }
-    public String getVcsProvider() { return vcsProvider; }
-    public void setVcsProvider(String vcsProvider) { this.vcsProvider = vcsProvider; }
-    public Git getGit() { return git; }
-    public void setGit(Git git) { this.git = git; }
-    public Map<String, DomainVcs> getDomains() { return domains; }
-    public void setDomains(Map<String, DomainVcs> domains) { this.domains = domains; }
-    public Github getGithub() { return github; }
-    public void setGithub(Github github) { this.github = github; }
     public String getAuthStrategy() { return authStrategy; }
     public void setAuthStrategy(String authStrategy) { this.authStrategy = authStrategy; }
     public Session getSession() { return session; }
     public void setSession(Session session) { this.session = session; }
-    public SystemAccount getVcsSystemAccount() { return vcsSystemAccount; }
-    public void setVcsSystemAccount(SystemAccount vcsSystemAccount) { this.vcsSystemAccount = vcsSystemAccount; }
     public Logging getLogging() { return logging; }
     public void setLogging(Logging logging) { this.logging = logging; }
-
-    /**
-     * Canonicalizes the configured domain keys to lower case (the same canonical
-     * form used for the domain part of {@code <domain>:<ROLE>} realm roles) and
-     * fails fast when two configured domains collide case-insensitively.
-     */
-    @PostConstruct
-    void normalizeDomains() {
-        if (domains == null || domains.isEmpty())
-            return;
-        Map<String, DomainVcs> normalized = new LinkedHashMap<>();
-        Map<String, String> originalKeys = new LinkedHashMap<>();
-        for (Map.Entry<String, DomainVcs> entry : domains.entrySet()) {
-            String canonical = ModellerRoleSupport.canonicalDomain(entry.getKey());
-            if (canonical == null)
-                throw new IllegalStateException(
-                        "Invalid domain name '" + entry.getKey() + "' in jarina.modeller.domains");
-            String previous = originalKeys.putIfAbsent(canonical, entry.getKey());
-            if (previous != null)
-                throw new IllegalStateException("Duplicate domain after case-insensitive normalization: '"
-                        + previous + "' and '" + entry.getKey() + "' both map to '" + canonical
-                        + "' (jarina.modeller.domains)");
-            normalized.put(canonical, entry.getValue());
-        }
-        domains = normalized;
-    }
 
     public static class Storage {
         private String type = "local";
@@ -139,133 +81,6 @@ public class ModellerProperties {
         public void setSecretKey(String secretKey) { this.secretKey = secretKey; }
         public String getRegion() { return region; }
         public void setRegion(String region) { this.region = region; }
-    }
-
-    public static class Git {
-        private String remoteUrl;
-        private String branchMain = "main";
-
-        public String getRemoteUrl() { return remoteUrl; }
-        public void setRemoteUrl(String remoteUrl) { this.remoteUrl = remoteUrl; }
-        public String getBranchMain() { return branchMain; }
-        public void setBranchMain(String branchMain) { this.branchMain = branchMain; }
-    }
-
-    /**
-     * Repository settings of a single configuration domain ({@code jarina.modeller.domains.<name>}).
-     */
-    public static class DomainVcs {
-        private String repositoryUrl;
-        private String branchMain = "main";
-
-        public String getRepositoryUrl() { return repositoryUrl; }
-        public void setRepositoryUrl(String repositoryUrl) { this.repositoryUrl = repositoryUrl; }
-        public String getBranchMain() { return branchMain; }
-        public void setBranchMain(String branchMain) { this.branchMain = branchMain; }
-    }
-
-    // ------------------------------------------------------------------
-    // domain-aware VCS resolution
-    // ------------------------------------------------------------------
-
-    public List<String> domainNames() {
-        if (domains != null && !domains.isEmpty())
-            return domains.keySet().stream().sorted().toList();
-        if (git != null && git.getRemoteUrl() != null && !git.getRemoteUrl().isBlank())
-            return List.of("default");
-        return List.of();
-    }
-
-    /**
-     * Resolves the repository URL of a domain: the per-domain {@code repository-url} when
-     * configured, otherwise the legacy global {@code git.remote-url}.
-     */
-    public String domainRemoteUrl(String domain) {
-        DomainVcs domainVcs = domains == null ? null : domains.get(ModellerRoleSupport.canonicalDomain(domain));
-        if (domainVcs != null && domainVcs.getRepositoryUrl() != null && !domainVcs.getRepositoryUrl().isBlank())
-            return domainVcs.getRepositoryUrl();
-        return git == null ? null : git.getRemoteUrl();
-    }
-
-    /**
-     * Resolves the default (main) branch of a domain: the per-domain {@code branch-main} when
-     * configured, otherwise the legacy global {@code git.branch-main}.
-     */
-    public String domainBranchMain(String domain) {
-        DomainVcs domainVcs = domains == null ? null : domains.get(ModellerRoleSupport.canonicalDomain(domain));
-        if (domainVcs != null && domainVcs.getBranchMain() != null && !domainVcs.getBranchMain().isBlank())
-            return domainVcs.getBranchMain();
-        return git == null || git.getBranchMain() == null ? "main" : git.getBranchMain();
-    }
-
-    public static class Github {
-        private String appId;
-        private String appPrivateKeyPath;
-        private String installationId;
-
-        public String getAppId() { return appId; }
-        public void setAppId(String appId) { this.appId = appId; }
-        public String getAppPrivateKeyPath() { return appPrivateKeyPath; }
-        public void setAppPrivateKeyPath(String appPrivateKeyPath) { this.appPrivateKeyPath = appPrivateKeyPath; }
-        public String getInstallationId() { return installationId; }
-        public void setInstallationId(String installationId) { this.installationId = installationId; }
-    }
-
-    /**
-     * System technical account speaking to the central Git under one identity.
-     * {@code auth-type}: ssh | token | basic.
-     */
-    public static class SystemAccount {
-        private String authType = "token";
-        private String sshPrivateKeyPath;
-        private String username;
-        private String token;
-        private String password;
-
-        public String getAuthType() { return authType; }
-        public void setAuthType(String authType) { this.authType = authType; }
-        public String getSshPrivateKeyPath() { return sshPrivateKeyPath; }
-        public void setSshPrivateKeyPath(String sshPrivateKeyPath) { this.sshPrivateKeyPath = sshPrivateKeyPath; }
-        public String getUsername() { return username; }
-        public void setUsername(String username) { this.username = username; }
-        public String getToken() { return token; }
-        public void setToken(String token) { this.token = token; }
-        public String getPassword() { return password; }
-        public void setPassword(String password) { this.password = password; }
-
-        public boolean isSsh() { return "ssh".equalsIgnoreCase(authType); }
-        public boolean isToken() { return "token".equalsIgnoreCase(authType); }
-        public boolean isBasic() { return "basic".equalsIgnoreCase(authType); }
-
-        /** Effectively configured request credentials for HTTP(S) transports. */
-        public String bearerOrBasic() {
-            if (isToken())
-                return token;
-            if (isBasic())
-                return username;
-            return null;
-        }
-
-        public boolean hasCredentials() {
-            return isSsh()
-                    ? sshPrivateKeyPath != null && !sshPrivateKeyPath.isBlank()
-                    : (token != null && !token.isBlank()) || (username != null && !username.isBlank());
-        }
-
-        public List<String> validate() {
-            List<String> problems = new ArrayList<>();
-            if (isSsh() && (sshPrivateKeyPath == null || sshPrivateKeyPath.isBlank()))
-                problems.add("vcs-system-account.auth-type=ssh requires vcs-system-account.ssh-private-key-path");
-            if (isToken() && (token == null || token.isBlank()))
-                problems.add("vcs-system-account.auth-type=token requires vcs-system-account.token");
-            if (isBasic()) {
-                if (username == null || username.isBlank())
-                    problems.add("vcs-system-account.auth-type=basic requires vcs-system-account.username");
-                if (password == null || password.isBlank())
-                    problems.add("vcs-system-account.auth-type=basic requires vcs-system-account.password");
-            }
-            return problems;
-        }
     }
 
     /**

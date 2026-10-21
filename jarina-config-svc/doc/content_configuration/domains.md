@@ -13,8 +13,8 @@ over anything stored in the parsed DTO.
 ## Tree and apply order
 
 Domains form a tree - a domain may declare nested domains via
-`jarina.config.vcs.domains.<name>.domains`, for example `platform` ⊃ `processing` ⊃
-`analytics`. The tree is traversed depth-first (`JarinaVCSProperties.orderedDomains()`),
+`jarina.domains.<name>.domains`, for example `platform` ⊃ `processing` ⊃ `analytics`. The
+tree is traversed depth-first (`DomainSettings.orderedDomains()` of `jarina-domain-api`),
 so a parent is always applied before its children. Within one level the domains are
 sorted by `priority` ascending; domains without a `priority` are treated as
 `Integer.MAX_VALUE` and therefore go last, and equal priorities are broken by domain name.
@@ -63,51 +63,51 @@ not synchronized).
 
 ## Configuration
 
-Everything is bound under the `jarina.config.vcs` prefix by `JarinaVCSProperties`:
+The domain tree itself is bound by the shared `DomainSettings` of `jarina-domain-api` under
+the `jarina.domains` prefix (canonical description:
+[jarina-domain-api/doc/readme.md](../../../jarina-domain-api/doc/readme.md)):
 
 ```yaml
 jarina:
-  config:
-    vcs:
-      domains:
-        platform:
+  domains:
+    platform:
+      priority: 0
+      git:
+        repository-url: git://git-server:9418/platform.git
+        branch: main
+        local-clone-path: /tmp/platform
+        credentials:                  # per-domain, never merged
+          auth-type: ssh
+          ssh-private-key-path: /keys/platform_ed25519
+      domains:                        # nested sub-domains
+        processing:
           priority: 0
           git:
-            repository-url: git://git-server:9418/platform.git
+            repository-url: git://git-server:9418/processing.git
             branch: main
-            local-clone-path: /tmp/platform
-          domains:                    # nested sub-domains
-            processing:
-              priority: 0
-              git:
-                repository-url: git://git-server:9418/processing.git
-                branch: main
-                local-clone-path: /tmp/processing
+            local-clone-path: /tmp/processing
 ```
 
 | Property | Default | Meaning |
 |---|---|---|
-| `jarina.config.vcs.domains.<name>.git.repository-url` | *(empty)* | Repository of the domain; `git://`, `ssh://`, `http(s)://` or a local path. Empty means the domain is skipped |
-| `jarina.config.vcs.domains.<name>.git.branch` | `main` | Branch to track |
-| `jarina.config.vcs.domains.<name>.git.local-clone-path` | *(empty)* | Local clone owned by the service for this domain. Must be unique per domain |
-| `jarina.config.vcs.domains.<name>.git.private-key-path` | *(empty)* | SSH private key, used only for `ssh://` URLs |
-| `jarina.config.vcs.domains.<name>.priority` | `Integer.MAX_VALUE` | Position within one level of the tree (ascending) |
-| `jarina.config.vcs.domains.<name>.domains` | - | Nested sub-domains |
+| `jarina.domains.<name>.git.repository-url` | *(empty)* | Repository of the domain; `git://`, `ssh://`, `http(s)://` or a local path. Empty means the domain is inactive |
+| `jarina.domains.<name>.git.branch` | `main` | Branch to track |
+| `jarina.domains.<name>.git.local-clone-path` | *(empty)* | Local clone owned by the service for this domain. Must be unique per domain (required by this service) |
+| `jarina.domains.<name>.git.credentials.auth-type` | *inferred* | `ssh`, `token` or `basic`; empty credentials mean anonymous access |
+| `jarina.domains.<name>.git.credentials.ssh-private-key-path` / `.username` / `.token` / `.password` | *(empty)* | Per-domain credentials |
+| `jarina.domains.<name>.priority` | `Integer.MAX_VALUE` | Position within one level of the tree (ascending) |
+| `jarina.domains.<name>.domains` | - | Nested sub-domains |
 
-The scheduler itself is global, not per domain: `jarina.config.vcs.git.sync.enabled`,
+The scheduler itself is global, not per domain: `jarina.config.vcs.sync.enabled`,
 `...sync.interval-ms` and `...sync.initial-delay-ms` (see
 [appconf/service_configuration.md](../appconf/service_configuration.md)). Per-domain
-environment variables follow the pattern `JARINA_CONFIG_GIT_<NAME>_URL`,
-`..._<NAME>_BRANCH`, `..._<NAME>_CLONE_PATH`, `..._<NAME>_PRIVATE_KEY_PATH`.
+environment variables follow the pattern `JARINA_DOMAINS_<NAME>_GIT_REPOSITORY_URL`,
+`..._GIT_BRANCH`, `..._GIT_LOCAL_CLONE_PATH`,
+`..._GIT_CREDENTIALS_SSH_PRIVATE_KEY_PATH`.
 
-### Legacy single-repository configuration
-
-The pre-domains properties `jarina.config.vcs.git.repository-url` / `.branch` /
-`.local-clone-path` / `.private-key-path` are still honoured. When `domains` is **empty**
-and `git.repository-url` is not blank, that single repository is exposed as one domain
-named `default` (`JarinaVCSProperties.rootDomains()`). As soon as at least one entry is
-present in `domains`, the legacy block is ignored - it does not become an additional
-`default` domain.
+There is no legacy single-repository fallback any more: the pre-domains properties
+`jarina.config.vcs.git.*` and the synthesized `default` domain are gone, every repository
+must be declared explicitly under `jarina.domains.<name>.git.repository-url`.
 
 ## Observability
 
