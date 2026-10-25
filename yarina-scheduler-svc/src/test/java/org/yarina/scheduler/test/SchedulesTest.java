@@ -1,0 +1,448 @@
+/*
+ * "Yarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+ * Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/yarina
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     https://www.apache.org/licenses/LICENSE-2.0.txt
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.yarina.scheduler.test;
+
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.serialization.StringSerializer;
+import org.junit.jupiter.api.*;
+import org.yarina.client.api.constant.Status;
+import org.yarina.client.api.dto.configs.schedule.ScheduleEffectiveDTO;
+import org.yarina.client.api.serialization.schedule.ScheduleEffectiveKafkaSerializer;
+import org.yarina.client.api.utils.DateTimeUtils;
+import org.yarina.client.rest.config.ConfigRestClientApi;
+import org.yarina.jinja.java.JinJavaUtils;
+import org.yarina.jinja.java.configuration.JinJavaConfiguration;
+import org.yarina.scheduler.configuration.ConfigurationChangeConsumerKafkaConfigurationProperties;
+import org.yarina.scheduler.entities.*;
+import org.yarina.scheduler.repository.*;
+import org.yarina.scheduler.service.BuildService;
+import org.yarina.scheduler.service.ManageStateService;
+import org.yarina.scheduler.service.ScheduleTaskInstanceService;
+import org.yarina.test.config.api.ConfigRestClientApiTest;
+import org.yarina.test.config.util.FileLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.kafka.core.DefaultKafkaProducerFactory;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.utility.DockerImageName;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+@SpringBootTest(
+        properties = {
+                "spring.main.allow-bean-definition-overriding=true",
+                "yarina.scheduler.config.change.kafka.consumer.properties.group.id=getTestScheduleConfGroup",
+                "yarina.scheduler.config.change.kafka.consumer.properties.auto.offset.reset=earliest",
+                "yarina.scheduler.schedule.task.kafka.producer.topic=test_send_scheduled_task_topic",
+                "scheduling.enabled: false"
+        })
+@EnableConfigurationProperties(value = ConfigurationChangeConsumerKafkaConfigurationProperties.class)
+@ComponentScan(basePackages = {
+        "org.yarina.scheduler"
+},
+        basePackageClasses = {JinJavaConfiguration.class}
+)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@ActiveProfiles("test")
+public class SchedulesTest {
+    private static final Logger staticLogger = LoggerFactory.getLogger(SchedulesTest.class);
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    // override bean
+    @Configuration
+    static class ContextConfiguration {
+        @Bean
+        @Primary
+            //may omit this if this is the only SomeBean defined/visible
+        ConfigRestClientApi getConfigRestClientApi() throws IOException {
+            return new ConfigRestClientApiTest();
+        }
+    }
+
+    @Autowired
+    JinJavaUtils jinJavaUtils;
+    @Autowired
+    ConfigRestClientApi configRestClientApi;
+
+    //services
+    @Autowired
+    BuildService buildService;
+
+    @Autowired
+    ScheduleTaskInstanceService scheduleTaskInstanceService;
+
+    FileLoader fileLoader = new FileLoader();
+
+    //repository
+
+    @Autowired
+    ScheduleInstanceLastBuildRepository scheduleInstanceLastBuildRepository;
+
+    @Autowired
+    ScheduleTaskInstanceRepository scheduleTaskInstanceRepository;
+    @Autowired
+    ScheduleTaskInstanceExecutionLockRepository scheduleTaskInstanceExecutionLockRepository;
+    @Autowired
+    ScheduleScenarioActInstanceRepository scheduleScenarioActInstanceRepository;
+    @Autowired
+    ScheduleInstanceRepository scheduleInstanceRepository;
+
+    @Autowired
+    ScheduleTaskInstanceDependencyRepository scheduleTaskInstanceDependencyRepository;
+
+    @Autowired
+    ManageStateService manageStateService;
+
+    @Autowired
+    ScheduleInstanceRunningRepository scheduleInstanceRunningRepository;
+
+    @Autowired
+    ScheduleScenarioActInstanceDependencyRepository scenarioActInstanceDependencyRepository;
+    @Container
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine").withDatabaseName("test")
+            .withUsername("name").withPassword("password");
+
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+        registry.add("spring.kafka.bootstrap-servers", kafka::getBootstrapServers);
+        registry.add("yarina.scheduler.config.change.kafka.consumer.properties.bootstrap.servers", kafka::getBootstrapServers);
+        registry.add("yarina.scheduler.schedule.task.kafka.producer.properties.bootstrap.servers", kafka::getBootstrapServers);
+    }
+
+    @Container
+    static final KafkaContainer kafka = new KafkaContainer(
+            DockerImageName.parse("confluentinc/cp-kafka:7.6.1")
+    );
+
+    @BeforeAll
+    static void beforeAll() {
+        kafka.start();
+        postgres.start();
+
+    }
+
+    @AfterAll
+    static void afterAll() {
+        kafka.stop();
+        postgres.stop();
+    }
+
+    @BeforeEach
+    public void removeAll() {
+        scheduleTaskInstanceDependencyRepository.deleteAll();
+        scheduleTaskInstanceExecutionLockRepository.deleteAll();
+
+        scheduleTaskInstanceRepository.deleteAll();
+
+        scenarioActInstanceDependencyRepository.deleteAll();
+        scheduleScenarioActInstanceRepository.deleteAll();
+
+        scheduleInstanceLastBuildRepository.deleteAll();
+        scheduleInstanceRunningRepository.deleteAll();
+        scheduleInstanceRepository.deleteAll();
+
+    }
+
+    private Producer<String, ScheduleEffectiveDTO> getKafkaProducer() {
+
+        Map<String, Object> props = new HashMap<>();
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getBootstrapServers());
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ScheduleEffectiveKafkaSerializer.class);
+        // more standard configuration
+        return new DefaultKafkaProducerFactory<String, ScheduleEffectiveDTO>(props).createProducer();
+    }
+
+
+    @Test
+    @Order(1)
+    public void registration() throws IOException {
+        assert (scheduleInstanceLastBuildRepository.findAll().isEmpty());
+        // check uncleaned state
+        List<ScheduleInstanceLastBuild> sibList = scheduleInstanceLastBuildRepository.findAll();
+        assert (sibList.isEmpty());
+        // Rise config
+        ScheduleEffectiveDTO sef = fileLoader.loadScheduleEffectiveDTO();
+        Producer<String, ScheduleEffectiveDTO> producer = getKafkaProducer();
+        producer.send(new ProducerRecord<String, ScheduleEffectiveDTO>("testtopic", sef.getKeyName(), sef));
+        producer.flush();
+
+        // registration
+        buildService.registration(sef);
+
+        // check duplicates
+        sibList = scheduleInstanceLastBuildRepository.findAll();
+        assert (sibList.size() == 1);
+
+
+        assert (sibList.get(0).getScheduleInstance() == null);
+        assert (Objects.equals(sibList.get(0).getLastChangeNumber(), sef.getLastChangeNumber()));
+        assert (sibList.get(0).getConfigScheduleKeyName().equals(sef.getKeyName()));
+        assert (Objects.equals(sibList.get(0).getDomainKeyName(), sef.getDomainKeyName()));
+        assert (sibList.get(0).getLastChangedDateTime() != null);
+        assert (sibList.get(0).getLastUpdateDateTime() != null);
+
+    }
+
+    @Test
+    @Order(2)
+    public void buildTasks() throws IOException {
+        registration();
+        buildService.buildAll();
+        List<ScheduleInstance> siList = scheduleInstanceRepository.findAll();
+        assert (siList.size() == 1);
+        assert (Objects.equals(siList.get(0).getDomainKeyName(), "DEMO"));
+        List<ScheduleTaskInstance> stiList = scheduleTaskInstanceRepository.findByStatus(Status.Task.NEW);
+        assert (stiList.size() == 31);
+    }
+
+    @Test
+    @Order(7)
+    public void scheduleWithoutDomainKeepsNullDomain() throws IOException {
+        ScheduleEffectiveDTO sef = fileLoader.loadScheduleEffectiveDTO();
+        sef.setKeyName("scheduleWithoutDomain");
+        sef.setDomainKeyName(null);
+        sef.setStartDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(DateTimeUtils.now().minusDays(2L)));
+        sef.setIntervalExpression("0 0 0 * * *");
+        buildService.registration(sef);
+        buildService.buildAll();
+
+        assert (scheduleInstanceLastBuildRepository.findAll().size() == 1);
+        assert (scheduleInstanceLastBuildRepository.findAll().get(0).getDomainKeyName() == null);
+        assert (scheduleInstanceRepository.findAll().size() == 1);
+        assert (scheduleInstanceRepository.findAll().get(0).getDomainKeyName() == null);
+    }
+
+    private void run() {
+        int rows;
+
+        rows = manageStateService.runAll();
+        logger.info("Run schedules {}", rows);
+
+        rows = manageStateService.runNewScenariosActs();
+        logger.info("runNewScenariosActs {}", rows);
+
+        rows = scheduleTaskInstanceService.addTaskToQueue();
+        logger.info("queueTasks {}", rows);
+
+        rows = scheduleTaskInstanceService.produceScheduledTasks();
+        logger.info("produceScheduledTasks {}", rows);
+
+
+        rows = manageStateService.successSchedules();
+        logger.info("Success schedules {}", rows);
+    }
+
+    @Test
+    @Order(3)
+    public void lockUnLock() throws IOException {
+
+
+        // 1)  load schedule config
+        ScheduleEffectiveDTO sef = fileLoader.loadScheduleEffectiveDTO();
+        sef.setStartDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(DateTimeUtils.now().minusDays(2L)));
+        sef.setIntervalExpression("0 0 0 * * *"); // every day
+        // 2) registration schedule
+        buildService.registration(sef);
+
+        // 3) Build schedule
+
+        buildService.buildAll(); // create schedule
+        buildService.buildAll(); // expect ignore
+        buildService.buildAll(); // expect ignore
+        assert (scheduleInstanceLastBuildRepository.findAll().size() == 1);
+
+        run(); // expect run
+        run(); // expect ignore
+        run(); // expect ignore
+        scheduleInstanceRepository.findAll().forEach(a -> System.out.println(a.getConfigScheduleKeyName() + " --> " + a.getTargetExecutionDateTime() + " --> " + a.getStatus()));
+
+        scheduleScenarioActInstanceRepository.findAll().forEach(a -> System.out.println(a.getName() + " --> " + a.getStatus()));
+        scheduleTaskInstanceRepository.findAll().forEach(t -> System.out.println(t.getName() + " --> " + t.getStatus()));
+        assert (scheduleInstanceRunningRepository.findAll().size() == 1);
+        List<ScheduleInstanceRunning> list = scheduleInstanceRunningRepository.findAll();
+        List<ScheduleTaskInstance> stilq = scheduleTaskInstanceRepository.findByStatus(Status.Task.QUEUED);
+        assert (stilq.size() == 2);
+        scheduleTaskInstanceService.lockTaskById(stilq.get(0).getId(), "test0");
+        scheduleTaskInstanceService.lockTaskById(stilq.get(1).getId(), "test1");
+        assert (scheduleTaskInstanceExecutionLockRepository.findAll().size() == 2);
+        //todo release task/ fail task / reset lock
+    }
+
+    @Test
+    @Order(4)
+    public void runByStepsShouldBeOk() throws IOException {
+        // 1)  load schedule config
+        ScheduleEffectiveDTO sef = fileLoader.loadScheduleEffectiveDTO();
+        sef.setStartDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(DateTimeUtils.now().minusDays(3L)));
+        sef.setStopDateTime(DateTimeUtils.formatDateTimeFormatWithTZ(DateTimeUtils.now().minusDays(2L)));
+        sef.setIntervalExpression("0 0 0 * * *"); // every day
+        // 2) registration schedule
+        buildService.registration(sef);
+
+        // 3) Build schedule
+
+        buildService.buildAll(); // create schedule
+        assert (scheduleInstanceLastBuildRepository.findAll().size() == 1);
+        scheduleScenarioActInstanceRepository.findAll().forEach(a -> System.out.println(a.getName() + " --> " + a.getStatus()));
+        scheduleTaskInstanceRepository.findAll().forEach(t -> System.out.println(t.getName() + " --> " + t.getStatus()));
+
+
+        int rows;
+
+        rows = manageStateService.runAll();
+        logger.info("Run schedules {}", rows);
+        scheduleInstanceRepository.findAll().forEach(a -> System.out.println(a.getConfigScheduleKeyName() + " --> " + a.getStatus()));
+        assert (rows == 1);
+        assert (scheduleInstanceRepository.findByScheduleName(sef.getKeyName()).get(0).getStatus().equals(Status.Schedule.RUNNING));
+
+        rows = manageStateService.runNewScenariosActs();
+        logger.info("runNewScenariosActs {}", rows);
+        List<ScheduleScenarioActInstance> ssail = scheduleScenarioActInstanceRepository
+                .findAll()
+                .stream()
+                .filter(instance -> instance
+                        .getStatus()
+                        .equals(Status.ScenarioAct.RUNNING))
+                .toList();
+        assert (rows == ssail.size());
+        assert (rows == 2);
+
+        rows = scheduleTaskInstanceService.addTaskToQueue();
+        logger.info("queueTasks {}", rows);
+        List<ScheduleTaskInstance> sti = scheduleTaskInstanceRepository
+                .findAll()
+                .stream()
+                .filter(instance -> instance
+                        .getStatus()
+                        .equals(Status.Task.QUEUED))
+                .toList();
+        assert (rows == sti.size());
+        assert (rows == 2);
+
+
+        rows = scheduleTaskInstanceService.produceScheduledTasks();
+        logger.info("produceScheduledTasks {}", rows);
+        assert (rows == 2);
+
+
+        rows = manageStateService.successSchedules();
+        logger.info("Success schedules {}", rows);
+    }
+
+    @Test
+    @Order(5)
+    void scheduleEndDateTest() throws IOException {
+        scheduleInstanceRepository.deleteAll();
+        scheduleInstanceRunningRepository.deleteAll();
+        scheduleInstanceLastBuildRepository.deleteAll();
+        ScheduleEffectiveDTO sef = fileLoader.loadScheduleEffectiveDTO();
+        sef.setStartDateTime("2025-05-05T00:00:00z");
+        sef.setStopDateTime("2025-05-06T00:00:01z"); // 1 day and 1 second
+        sef.setIntervalExpression("0 0 0 * * *"); // every day
+        sef.setKeyName("scheduleEndDateTest");
+        // schedule registration
+        buildService.registration(sef);
+        buildService.buildAll(); // create schedule
+        manageStateService.runAll();
+
+        assert (scheduleInstanceRepository.findAll().get(0).getStatus().equals(Status.Schedule.RUNNING));
+        assert (scheduleInstanceRepository.findAll().size() == 1);
+        scheduleTaskInstanceRepository
+                .findAll()
+                .forEach(t -> {
+                    t.setStatus(Status.Task.SUCCESS);
+                    scheduleTaskInstanceRepository.save(t);
+                });
+        // first wave
+        manageStateService.runNewScenariosActs();
+        manageStateService.setScenariosActsStatusToSuccess();
+        // second wave
+        manageStateService.runNewScenariosActs();
+        manageStateService.setScenariosActsStatusToSuccess();
+        // last wave
+        manageStateService.runNewScenariosActs();
+        manageStateService.setScenariosActsStatusToSuccess();
+
+        assert (manageStateService.successSchedules() == 1);
+        assert (scheduleInstanceRepository.findAll().get(0).getStatus().equals(Status.Schedule.SUCCESS));
+        assert (scheduleInstanceRepository.findAll().size() == 1);
+        buildService.buildAll();
+        assert (scheduleInstanceRepository.findAll().size() == 1);
+
+    }
+
+    @Test
+    @Order(6)
+    public void retryLimitedByMaxRetries() throws IOException {
+        ScheduleEffectiveDTO sef = fileLoader.loadScheduleEffectiveDTO();
+        buildService.registration(sef);
+        buildService.buildAll();
+
+        List<ScheduleTaskInstance> tasks = scheduleTaskInstanceRepository.findByStatus(Status.Task.NEW);
+        assert (tasks.size() == 31);
+
+        ScheduleTaskInstance exhausted = tasks.get(0);
+        exhausted.setStatus(Status.Task.FAILED);
+        exhausted.setMaxRetries(2);
+        exhausted.setReTryNum(2);
+        exhausted.setEndDateTime(DateTimeUtils.now().minusSeconds(60));
+        scheduleTaskInstanceRepository.save(exhausted);
+
+        ScheduleTaskInstance unlimited = tasks.get(1);
+        unlimited.setStatus(Status.Task.FAILED);
+        unlimited.setMaxRetries(-1);
+        unlimited.setEndDateTime(DateTimeUtils.now().minusSeconds(60));
+        scheduleTaskInstanceRepository.save(unlimited);
+
+        ScheduleTaskInstance stillAllowed = tasks.get(2);
+        stillAllowed.setStatus(Status.Task.FAILED);
+        stillAllowed.setMaxRetries(5);
+        stillAllowed.setReTryNum(2);
+        stillAllowed.setEndDateTime(DateTimeUtils.now().minusSeconds(60));
+        scheduleTaskInstanceRepository.save(stillAllowed);
+
+        int retried = scheduleTaskInstanceService.reTryFailedTasks();
+        assert (retried == 2);
+        assert (scheduleTaskInstanceRepository.findById(exhausted.getId()).get().getStatus().equals(Status.Task.FAILED));
+        assert (scheduleTaskInstanceRepository.findById(unlimited.getId()).get().getStatus().equals(Status.Task.NEW));
+        assert (scheduleTaskInstanceRepository.findById(stillAllowed.getId()).get().getStatus().equals(Status.Task.NEW));
+    }
+
+}

@@ -1,6 +1,6 @@
 kind: DataSet
 keyName: transaction_dds
-dataSourceKeyName: jarinastorage
+dataSourceKeyName: yarinastorage
 databaseSchemaName: default
 tableName: transaction_dds
 scripts:

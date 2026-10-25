@@ -1,0 +1,171 @@
+dbDev:
+  image:
+    repository: postgres
+    tag: "latest"
+  env:
+    POSTGRES_USER: postgresUser
+    POSTGRES_PASSWORD: postgresPW
+    POSTGRES_DB: postgresDB
+
+broker:
+  image:
+    repository: apache/kafka
+    tag: "latest"
+
+nameOverride: ""
+fullnameOverride: ""
+
+# ============================================================================
+# Task executor — renders one Deployment + Service per entry of `instances`
+# (see the subchart values for the groupId / serviceId contract). The subchart
+# default already matches demo/conf_git and demo/compose, so nothing has to be
+# repeated here; the block below only exists to show the override keys.
+#
+# Lists are replaced by Helm, never merged: an override of `instances` must
+# therefore repeat every instance it wants to keep.
+# yarina-task-executor-service:
+#   image:
+#     tag: "1.0.1"
+#   instances:
+#     - name: database
+#       groupId: "database"
+#       serviceId: "database"
+#       concurrency: 1
+#     - name: spark
+#       groupId: "spark-cluster"
+#       serviceId: "spark-exec-1"
+#       concurrency: 1
+#     - name: state
+#       groupId: "state-service"
+#       serviceId: "state-service"
+#       concurrency: 1
+
+# ============================================================================
+# MinIO — object storage (feeds sparklogs/eventlog, hive-metastore, trino).
+# Consumed by templates/minio-dev.yaml.
+minio:
+  image:
+    # The Bitnami catalog no longer publishes versioned tags (they moved to
+    # bitnamilegacy after the August 2025 catalog cleanup), so the legacy
+    # repository is referenced here. Swap to quay.io/minio/minio to go back.
+    registry: docker.io
+    repository: bitnamilegacy/minio
+    tag: 2025.7.23
+    pullPolicy: IfNotPresent
+
+  # Image of the minio-bucket-init hook Job that creates the buckets and the
+  # .keep markers (see templates/minio-bucket-init-job.yaml)
+  clientImage:
+    registry: docker.io
+    repository: bitnamilegacy/minio-client
+    tag: 2025.7.21
+    pullPolicy: IfNotPresent
+
+  auth:
+    rootUser: "spark_user"
+    rootPassword: "spark_pwd"
+
+  # Buckets created by the minio-bucket-init hook Job. Each entry is either a
+  # plain bucket name ("sparklogs") or "bucket:prefix" when a directory with a
+  # .keep marker has to exist in it ("data:warehouse" keeps Spark from losing
+  # the prefix when the first job writes).
+  defaultBuckets: "data:warehouse,sparklogs:eventlog"
+
+  service:
+    type: ClusterIP
+    ports:
+      api: 9000
+      console: 9001
+
+  persistence:
+    enabled: true
+    size: 5Gi
+    mountPath: /data
+
+  tls:
+    enabled: false
+
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 5
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 5
+
+# ============================================================================
+# Keycloak — OIDC IdP (realm + client secrets are templated into
+# templates/keycloak-realm-configmap.yaml).
+keycloak:
+  issuerUri: "http://keycloak:8085/realms/yarina"
+  uiClientSecret: "super-secret-bff-key-1234567890"
+  internalClientSecret: "super-secret-internal-key-987654321"
+  service:
+    port: 8085
+  image:
+    repository: quay.io/keycloak/keycloak
+    tag: "26.0"
+    pullPolicy: IfNotPresent
+  env:
+    KC_DB: postgres
+    KC_DB_URL: jdbc:postgresql://db-dev:5432/postgresDB?currentSchema=keycloak&ApplicationName=Keycloak
+    KC_DB_USERNAME: postgresUser
+    KC_DB_PASSWORD: postgresPW
+    KEYCLOAK_ADMIN: admin
+    KEYCLOAK_ADMIN_PASSWORD: admin_local_password
+    KC_HOSTNAME: keycloak
+    KC_HOSTNAME_STRICT: "false"
+    KC_HTTP_PORT: "8085"
+    KC_HEALTH_ENABLED: "true"
+    KC_METRICS_ENABLED: "true"
+
+# ============================================================================
+# OpenBao — development/demo secrets engine (KV v2).
+#
+# The official `bao server -dev` binary is the container PID 1; seeding is done
+# once by the `openbao-seed` Job (backoffLimit keeps retrying, the seed script
+# is idempotent). Demo default credentials (postgresPW / spark_user /
+# spark_pwd) come from the `openbao` ConfigMap seed script and match the demo
+# `dbDev` and `minio` sections, so nothing is stored in this file.
+#
+# Production: there is no seed script — the information security administrator
+# provisions the credentials in a Kubernetes Secret, e.g.:
+#   kubectl -n yarina-management create secret generic openbao \
+#     --from-literal=YARINA_DB_PASSWORD=... \
+#     --from-literal=MINIO_ROOT_USER=... \
+#     --from-literal=MINIO_ROOT_PASSWORD=...
+# and references it via valueFrom (nothing is stored in this file):
+#   seed:
+#     enabled: false      # or keep it, if seeding is still required
+#     env:
+#       - name: YARINA_DB_PASSWORD
+#         valueFrom:
+#           secretKeyRef:
+#             name: openbao
+#             key: YARINA_DB_PASSWORD
+#       - name: MINIO_ROOT_USER
+#         valueFrom:
+#           secretKeyRef:
+#             name: openbao
+#             key: MINIO_ROOT_USER
+#       - name: MINIO_ROOT_PASSWORD
+#         valueFrom:
+#           secretKeyRef:
+#             name: openbao
+#             key: MINIO_ROOT_PASSWORD
+openbao:
+  image:
+    repository: quay.io/openbao/openbao
+    tag: "2.0"
+    pullPolicy: IfNotPresent
+  # Optional env passed to the dev-server Deployment (rarely needed; the dev
+  # root token id is fixed by the server command line).
+  serverEnv: []
+  # One-shot seeding Job (KV v2 engine, demo secrets, read-only policy,
+  # scoped token). Disable it and rely on external provisioning in production.
+  seed:
+    enabled: true
+    env: []   # optional overrides (see the valueFrom example above)

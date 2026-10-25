@@ -44,17 +44,17 @@
     - [regular](conf/schedules/regular.json) имитирует ежедневное соединение двух
       таблиц [transaction_dds.sql](conf/dataset-sql-model/transaction_dds.sql) из расписаний выше в одну на
       spark [transaction_dds](conf/datasets/transaction_dds.json) сохраняя на s3/minio
-      диск [jarinastorage](conf/datastores/jarinastorage.json)
+      диск [yarinastorage](conf/datastores/yarinastorage.json)
         - transaction_dds послужит
           источником [aggregation_pay_per_client_total_mart.sql](conf/dataset-sql-model/aggregation_pay_per_client_total_mart.sql)
           для
           витрины [aggregation_pay_per_client_total_mart.json](conf/datasets/aggregation_pay_per_client_total_mart.json)
-          которая будет сохранена в [jarinastorage](conf/datastores/jarinastorage.json)
+          которая будет сохранена в [yarinastorage](conf/datastores/yarinastorage.json)
         - transaction_dds послужит
           источником [aggregation_pay_per_client_daily_mart.sql](conf/dataset-sql-model/aggregation_pay_per_client_daily_mart.sql)
           для
           витрины [aggregation_pay_per_client_daily_mart.json](conf/datasets/aggregation_pay_per_client_daily_mart.json)
-          которая будет сохранена в [jarinastorage](conf/datastores/jarinastorage.json)
+          которая будет сохранена в [yarinastorage](conf/datastores/yarinastorage.json)
     - [initial](conf/schedules/initial.json) ежемесячная версия [regular](conf/schedules/regular.json). Будет
       заблокирована сбором generateSource и generateSourceDict до тех пор, пока они не будут собраны за первый месяц
 - проекта (пространства имен, он один [demo](conf/projects/demo.json))
@@ -164,7 +164,7 @@ regular тоже начнет работать в феврале, но он су
 UI Modeller по всем воркспейсам.
 
 Пользователи описываются в
-[`compose/conf_infra/security/realms/jarina-realm.json`](compose/conf_infra/security/realms/jarina-realm.json)
+[`compose/conf_infra/security/realms/yarina-realm.json`](compose/conf_infra/security/realms/yarina-realm.json)
 и создаются при подъёме Keycloak. Пароль каждого демо-пользователя совпадает с его логином.
 
 | Пользователь | Пароль | analytics | platform | processing | Глобально |

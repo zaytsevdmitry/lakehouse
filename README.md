@@ -1,5 +1,5 @@
 [RU](README_ru.md)
-#  Jarina dataset self service
+#  Yarina dataset self service
 Implementing a Metadata-Driven Approach allows for the dynamic management and automation of ETL/ELT pipelines and data integration. By moving away from rigid, hard-coded logic to external configurations (SQL/JSON), we transform data processing into a scalable, flexible, and fully automated ecosystem.
 
 ## Target Audience & Purpose:
@@ -30,7 +30,7 @@ Data governance
 Scheduling
 Custom code
 SQL
-Jarina dataset self service
+Yarina dataset self service
 United namespace
 
 
@@ -40,26 +40,26 @@ United namespace
 
 | Component                                                                              | Status       | Documentation                                                                                   |   
 |----------------------------------------------------------------------------------------|--------------|-------------------------------------------------------------------------------------------------|
-| [jarina-cli](jarina-cli)                                                         | Prototype    | [doc](jarina-cli/doc/commandline.MD)                                                         |
-| [jarina-common-rest-client](jarina-common-rest-client)                           | Candidate    |                                                                                                 |
-| [jarina-common-test](jarina-common-test)                                         | Candidate    |                                                                                                 |
-| [jarina-config-rest-client](jarina-config-rest-client)                           | Candidate    |                                                                                                 |
-| [jarina-config-svc](jarina-config-svc)                                           | Candidate    | [doc](jarina-config-svc/doc/readme.md)                                                       |
-| [jarina-domain-api](jarina-domain-api)                                           | Candidate    | [doc](jarina-domain-api/doc/readme.md)                                                         |
-| [jarina-scheduler-rest-client](jarina-scheduler-rest-client)                     | Candidate    |                                                                                                 |
-| [jarina-scheduler-svc](jarina-scheduler-svc)                                     | Candidate    | [doc](jarina-scheduler-svc/doc/readme.md)                                                    |
-| [jarina-state-rest-client](jarina-state-rest-client)                             | Candidate    |                                                                                                 |
-| [jarina-state-svc](jarina-state-svc)                                             | Candidate    | [doc](jarina-state-svc/doc/readme.md)                                                        |
-| [jarina-task-executor-api](jarina-task-executor-api)                             | Candidate    |                                                                                                 |
-| [jarina-task-executor-rest-client](jarina-task-executor-rest-client)             | Candidate    |                                                                                                 |
-| [jarina-task-executor-svc](jarina-task-executor-svc)                             | Candidate    | [doc](jarina-task-executor-svc/README.md)  |
-| [jarina-task-executor-spark-api](jarina-task-executor-spark-api)                 | Candidate    | [doc](jarina-task-executor-spark-api/doc/readme.md)                                          |
-| [jarina-task-executor-spark-dataset-app](jarina-task-executor-spark-dataset-app) | Candidate    |                                                                                                 |
-| [jarina-task-executor-spark-dq-app](jarina-task-executor-spark-dq-app)           | Prototype    |                                                                                                 |
-| [jarina-validators](jarina-validators)                                           | Prototype    |                                                                                                 |
-| [jarina-ui-svc](jarina-ui-svc)                                                   | Prototype| [doc](jarina-ui-svc/doc/readme.md)                                                           |
-| [jarina-task-proxy-for-spark](jarina-task-proxy-for-spark)                       | Candidate| [doc](jarina-task-proxy-for-spark/README.md)                                                 |
-| [jarina-task-proxy-for-spark-api](jarina-task-proxy-for-spark-api)               | Candidate|                                                                                                 |
+| [yarina-cli](yarina-cli)                                                         | Prototype    | [doc](yarina-cli/doc/commandline.MD)                                                         |
+| [yarina-common-rest-client](yarina-common-rest-client)                           | Candidate    |                                                                                                 |
+| [yarina-common-test](yarina-common-test)                                         | Candidate    |                                                                                                 |
+| [yarina-config-rest-client](yarina-config-rest-client)                           | Candidate    |                                                                                                 |
+| [yarina-config-svc](yarina-config-svc)                                           | Candidate    | [doc](yarina-config-svc/doc/readme.md)                                                       |
+| [yarina-domain-api](yarina-domain-api)                                           | Candidate    | [doc](yarina-domain-api/doc/readme.md)                                                         |
+| [yarina-scheduler-rest-client](yarina-scheduler-rest-client)                     | Candidate    |                                                                                                 |
+| [yarina-scheduler-svc](yarina-scheduler-svc)                                     | Candidate    | [doc](yarina-scheduler-svc/doc/readme.md)                                                    |
+| [yarina-state-rest-client](yarina-state-rest-client)                             | Candidate    |                                                                                                 |
+| [yarina-state-svc](yarina-state-svc)                                             | Candidate    | [doc](yarina-state-svc/doc/readme.md)                                                        |
+| [yarina-task-executor-api](yarina-task-executor-api)                             | Candidate    |                                                                                                 |
+| [yarina-task-executor-rest-client](yarina-task-executor-rest-client)             | Candidate    |                                                                                                 |
+| [yarina-task-executor-svc](yarina-task-executor-svc)                             | Candidate    | [doc](yarina-task-executor-svc/README.md)  |
+| [yarina-task-executor-spark-api](yarina-task-executor-spark-api)                 | Candidate    | [doc](yarina-task-executor-spark-api/doc/readme.md)                                          |
+| [yarina-task-executor-spark-dataset-app](yarina-task-executor-spark-dataset-app) | Candidate    |                                                                                                 |
+| [yarina-task-executor-spark-dq-app](yarina-task-executor-spark-dq-app)           | Prototype    |                                                                                                 |
+| [yarina-validators](yarina-validators)                                           | Prototype    |                                                                                                 |
+| [yarina-ui-svc](yarina-ui-svc)                                                   | Prototype| [doc](yarina-ui-svc/doc/readme.md)                                                           |
+| [yarina-task-proxy-for-spark](yarina-task-proxy-for-spark)                       | Candidate| [doc](yarina-task-proxy-for-spark/README.md)                                                 |
+| [yarina-task-proxy-for-spark-api](yarina-task-proxy-for-spark-api)               | Candidate|                                                                                                 |
 | Authorization & security                                                               | Candidate | [doc](doc/security/security.md)                                                                 |
 | [Docker](docker)                                                                       | Candidate | [doc](docker/readme.md)                                                                         |
 
@@ -71,17 +71,17 @@ United namespace
 
 [Entities design](./doc/entities_design/entities_design.md)
 
-[Scheduling](jarina-scheduler-svc/doc/scheduling/Scheduling.md)
+[Scheduling](yarina-scheduler-svc/doc/scheduling/Scheduling.md)
 
-[States](jarina-state-svc/doc/state_model/state-models.MD)
+[States](yarina-state-svc/doc/state_model/state-models.MD)
 
-[Command line](./jarina-cli/doc/commandline.MD)
+[Command line](./yarina-cli/doc/commandline.MD)
 
 
 
 # Copyright
-"Jarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
-    Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
+"Yarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+    Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/yarina
     
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.

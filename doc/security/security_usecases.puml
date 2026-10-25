@@ -8,7 +8,7 @@ title Security Model
 actor "Human User\n(USER / ADMIN)" as Act_User
 
 rectangle "Core Systems" #line:gray;line.dashed {
-    actor "jarina-ui-svc (BFF)" as Act_BFF << System >>
+    actor "yarina-ui-svc (BFF)" as Act_BFF << System >>
     actor "Backend Services\n(config, state, scheduler,\ntask-executor, spark-proxy)" as Act_Backends << System >>
     actor "Spark Applications\n(dq-app, dataset-app)" as Act_SparkApps << System >>
 }
@@ -69,7 +69,7 @@ Act_Backends --> UC_Audit
 Act_Backends --> UC_ClientCred : "For background consumers"
 
 UC_ResourceServer .> Act_Keycloak : "Validates JWKS / Issuer"
-UC_ClientCred .> Act_Keycloak : "Requests token for jarina-internal-client"
+UC_ClientCred .> Act_Keycloak : "Requests token for yarina-internal-client"
 UC_TokenRelay ..> UC_ResourceServer : <<dependency>>
 
 ' Section 3: Spark Apps Connections

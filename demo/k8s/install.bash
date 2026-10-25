@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# "Jarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
-# Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
+# "Yarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+# Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/yarina
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ set -e
 kubectl get pods -A
 
 echo build helm dependencies
-helm dependency update ./jarina-management-helm-charts/jarina-management
+helm dependency update ./yarina-management-helm-charts/yarina-management
 
 # Function to check and load images into Minikube only if they are missing
 load_image_if_missing() {
@@ -36,28 +36,28 @@ load_image_if_missing() {
 }
 
 # Load only missing images
-load_image_if_missing "jarina:1.0.0"
-load_image_if_missing "jarina-s3-check:1.0.0"
-load_image_if_missing "jarina-hms:1.0.0"
-load_image_if_missing "jarina-spark-aws:1.0.0"
+load_image_if_missing "yarina:1.0.1"
+load_image_if_missing "yarina-s3-check:1.0.1"
+load_image_if_missing "yarina-hms:1.0.1"
+load_image_if_missing "yarina-spark-aws:1.0.1"
 
-echo -e "\e[34mAll jarina images processed\e[0m"
+echo -e "\e[34mAll yarina images processed\e[0m"
 
-echo install jarina-release
-helm install jarina-release ./jarina-management-helm-charts/jarina-management --create-namespace  --namespace jarina-management
+echo install yarina-release
+helm install yarina-release ./yarina-management-helm-charts/yarina-management --create-namespace  --namespace yarina-management
 
-kubectl -n jarina-management get pods -o custom-columns="NAME:.metadata.name,STATUS:.status.phase,TASK-NAME:.metadata.annotations.jarina-management-task"
-
-bash ./bootstrap-configs.bash
-/etc/profile.d via Read/Glob.
+kubectl -n yarina-management get pods -o custom-columns="NAME:.metadata.name,STATUS:.status.phase,TASK-NAME:.metadata.annotations.yarina-management-task"
 
 
-kubectl -n jarina-management get pods -o custom-columns="NAME:.metadata.name,STATUS:.status.phase,TASK-NAME:.metadata.annotations.jarina-management-task"
+
+kubectl -n yarina-management get pods -o custom-columns="NAME:.metadata.name,STATUS:.status.phase,TASK-NAME:.metadata.annotations.yarina-management-task"
 
 bash ./tunnels.bash
 
-kubectl -n jarina-management get pods -o custom-columns="NAME:.metadata.name,STATUS:.status.phase,TASK-NAME:.metadata.annotations.jarina-management-task"
+kubectl -n yarina-management get pods -o custom-columns="NAME:.metadata.name,STATUS:.status.phase,TASK-NAME:.metadata.annotations.yarina-management-task"
 
-echo -e "\e[37;42m All services installed to namespace jarina-management \e[0m"
+bash ./bootstrap-configs.bash
+
+echo -e "\e[37;42m All services installed to namespace yarina-management \e[0m"
 
 

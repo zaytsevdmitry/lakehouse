@@ -4,9 +4,9 @@ template: sparkTemplate
 taskProcessorBody: sparkTaskProcessorDQBody
 description: Quality check
 taskProcessorArgs:
-  deploy.appResource: file:///opt/jarina-task-spark-apps/jarina-task-executor-spark-dq-app-1.0.0-jar-with-dependencies.jar
-  deploy.mainClass: org.jarina.taskexecutor.spark.dq.SparkProcessorApplicationDQ
-  jarina.taskexecutor.body.config.dq.kafka.producer.metric.status.topic: metric_status
-  jarina.taskexecutor.body.config.dq.kafka.producer.metric.value.topic: metric_value
-  jarina.taskexecutor.body.config.dq.kafka.producer.properties.bootstrap.servers: "broker:9092"
-  jarina.taskexecutor.body.config.dq.kafka.producer.testSet.status.topic: metric_test_set_status
+  deploy.appResource: file:///opt/yarina-task-spark-apps/yarina-task-executor-spark-dq-app-1.0.1-jar-with-dependencies.jar
+  deploy.mainClass: org.yarina.taskexecutor.spark.dq.SparkProcessorApplicationDQ
+  yarina.taskexecutor.body.config.dq.kafka.producer.metric.status.topic: metric_status
+  yarina.taskexecutor.body.config.dq.kafka.producer.metric.value.topic: metric_value
+  yarina.taskexecutor.body.config.dq.kafka.producer.properties.bootstrap.servers: "broker:9092"
+  yarina.taskexecutor.body.config.dq.kafka.producer.testSet.status.topic: metric_test_set_status

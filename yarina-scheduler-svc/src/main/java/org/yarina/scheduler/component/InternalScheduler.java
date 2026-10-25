@@ -1,0 +1,112 @@
+/*
+ * "Yarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+ * Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/yarina
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     https://www.apache.org/licenses/LICENSE-2.0.txt
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.yarina.scheduler.component;
+
+
+import org.yarina.scheduler.service.BuildService;
+import org.yarina.scheduler.service.ManageStateService;
+import org.yarina.scheduler.service.ScheduleTaskInstanceService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+@Component
+@EnableScheduling
+@ConditionalOnProperty(value = "scheduling.enabled", havingValue = "true", matchIfMissing = true)
+public class InternalScheduler {
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final BuildService buildService;
+    private final ManageStateService manageStateService;
+    private final ScheduleTaskInstanceService scheduleTaskInstanceService;
+
+    public InternalScheduler(BuildService buildService,
+                             ManageStateService manageStateService,
+                             ScheduleTaskInstanceService scheduleTaskInstanceService) {
+
+        this.buildService = buildService;
+        this.manageStateService = manageStateService;
+        this.scheduleTaskInstanceService = scheduleTaskInstanceService;
+    }
+
+    /**
+     * Made schedule objects with status  NEW
+     */
+    @Scheduled(
+            fixedDelayString = "${yarina.scheduler.registration.delay-ms}",
+            initialDelayString = "${yarina.scheduler.registration.initial-delay-ms}")
+    public void build() {
+        int rows;
+        rows = buildService.buildAll();
+        logger.info("Built {} schedules", rows);
+    }
+
+    /**
+     * Make schedule objects with status  NEW
+     */
+    @Scheduled(
+            fixedDelayString = "${yarina.scheduler.run.delay-ms}",
+            initialDelayString = "${yarina.scheduler.run.initial-delay-ms}")
+    public void run() {
+
+        int rows;
+
+        rows = manageStateService.runAll();
+        logger.info("Run schedules {}", rows);
+
+        rows = manageStateService.runNewScenariosActs();
+        logger.info("runNewScenariosActs {}", rows);
+
+        rows = scheduleTaskInstanceService.addTaskToQueue();
+        logger.info("queueTasks {}", rows);
+
+        rows = scheduleTaskInstanceService.produceScheduledTasks();
+        logger.info("produceScheduledTasks {}",      rows);
+
+        rows = manageStateService.successSchedules();
+        logger.info("Success schedules {}", rows);
+
+    }
+
+
+    @Scheduled(
+            fixedDelayString = "${yarina.scheduler.resolvedeps.delay-ms}",
+            initialDelayString = "${yarina.scheduler.resolvedeps.initial-delay-ms}")
+    public void resolveDependency() {
+        int rows = manageStateService.setScenariosActsStatusToSuccess();
+        logger.info("resolveScenarioActDependency {}", rows);
+
+        rows = scheduleTaskInstanceService.successResolvedDependency();
+        logger.info("resolveTaskDependency {}", rows);
+    }
+
+    @Scheduled(
+            fixedDelayString = "${yarina.scheduler.task.retry.delay-ms}",
+            initialDelayString = "${yarina.scheduler.task.retry.initial-delay-ms}")
+    public void reTryFailedTasked() {
+        int rows;
+
+        rows = scheduleTaskInstanceService.heartBeatLimitExceeded();
+        logger.info("heartBeatLimitExceeded {}", rows);
+
+        rows = scheduleTaskInstanceService.reTryFailedTasks();
+        logger.info("reTryFailedTasks {}", rows);
+    }
+}

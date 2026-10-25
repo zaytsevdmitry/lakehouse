@@ -10,10 +10,10 @@ taskProcessorArgs:
   spark.app.name: "{{ id }}-{{tryNum}}-{{name}}"
   spark.kubernetes.submission.waitAppCompletion: false
   spark.kubernetes.executor.deleteOnTermination: true
-  spark.kubernetes.driver.annotation.jarina-management-task: "{{ getTaskFullName() }}"
-  deploy.appResource: file:///opt/jarina-task-spark-apps/jarina-task-executor-spark-dataset-app-1.0.0-jar-with-dependencies.jar
-  deploy.clusterUrl: http://jarina-task-proxy4spark:8086/v1/submissions
-  deploy.mainClass: org.jarina.taskexecutor.spark.dataset.SparkProcessorApplication
+  spark.kubernetes.driver.annotation.yarina-management-task: "{{ getTaskFullName() }}"
+  deploy.appResource: file:///opt/yarina-task-spark-apps/yarina-task-executor-spark-dataset-app-1.0.1-jar-with-dependencies.jar
+  deploy.clusterUrl: http://yarina-task-proxy4spark:8086/v1/submissions
+  deploy.mainClass: org.yarina.taskexecutor.spark.dataset.SparkProcessorApplication
   spark.driver.cores: 1
   spark.driver.memory: 1g
   spark.executor.cores: 1

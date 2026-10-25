@@ -13,13 +13,13 @@ participant "task-executor-svc" as TE
 participant "task-proxy-for-spark" as PX
 participant "Spark cluster\n(Standalone/K8s/YARN)" as SC
 participant "Spark driver\n(dq-app / dataset-app)\nSpring Boot app" as DR
-participant "Keycloak\n(realm: jarina,\nclient: jarina-internal-client)" as KC
+participant "Keycloak\n(realm: yarina,\nclient: yarina-internal-client)" as KC
 participant "Backend services\n(scheduler-svc / config-svc)" as BE
 
 == Job submission ==
 
 TE -> TE : Consume task from Kafka
-TE -> KC : client_credentials\n(jarina-internal-client)
+TE -> KC : client_credentials\n(yarina-internal-client)
 KC --> TE : access_token
 TE -> PX : POST /v1/submissions\nAuthorization: Bearer <token>
 note over PX : OAuth2 resource server:\nvalidates JWT like any backend service
@@ -27,7 +27,7 @@ PX -> SC : spark-submit (queue adapter)
 
 == Driver execution inside the cluster ==
 
-SC -> DR : Start driver JVM\n(Spring Boot, @ComponentScan includes\norg.jarina.security)
+SC -> DR : Start driver JVM\n(Spring Boot, @ComponentScan includes\norg.yarina.security)
 note over DR #FFF3D6
     No user security context inside the driver ->
     all callbacks use their own

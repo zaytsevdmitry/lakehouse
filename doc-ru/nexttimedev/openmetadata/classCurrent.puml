@@ -27,7 +27,7 @@ package "Инфраструктура и Подключения" {
     }
 
     class StorageService {
-        + name: String [s3_jarina_prod]
+        + name: String [s3_yarina_prod]
         + serviceType: String [S3]
     }
 

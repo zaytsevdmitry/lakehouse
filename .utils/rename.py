@@ -1,8 +1,8 @@
 import os
 
 # Константы для переименования (добавлена вариация UPPERCASE)
-OLD_LOWER, OLD_CAMEL, OLD_UPPER = "lakehouse", "Lakehouse", "LAKEHOUSE"
-NEW_LOWER, NEW_CAMEL, NEW_UPPER = "jarina", "Jarina", "JARINA"
+OLD_LOWER, OLD_CAMEL, OLD_UPPER = "jarina", "Jarina", "JARINA"
+NEW_LOWER, NEW_CAMEL, NEW_UPPER = "yarina", "Yarina", "YARINA"
 
 # Расширения для текстовой замены (добавлен .xml для файлов внутри .idea)
 TEXT_EXTS = {'.tpl','.jsx','.js','.html','.puml','.conf','.bash','.sh','.xml', '.iml', '.pom', '.yaml', '.yml', '.md', '.java', '.properties', '.gradle', '.txt', '.json'}

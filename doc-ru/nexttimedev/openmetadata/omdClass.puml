@@ -30,14 +30,14 @@ package "Services (Infrastructure)" {
 
     class StorageService {
         + id: UUID
-        + name: String [s3_jarina_prod]
+        + name: String [s3_yarina_prod]
         + serviceType: StorageServiceType [S3]
         + connection: JSON
     }
 
     class PipelineService {
         + id: UUID
-        + name: String [jarina_orchestrator]
+        + name: String [yarina_orchestrator]
         + serviceType: PipelineServiceType [Airflow|Custom]
     }
 }
@@ -63,7 +63,7 @@ package "Data Assets & Logical Topology" {
         + name: String [raw-zone]
         + prefix: String [/data/raw]
         + fullPath: String [s3://bucket/data/raw]
-        + fullyQualifiedName: String [s3_jarina_prod.raw-zone]
+        + fullyQualifiedName: String [s3_yarina_prod.raw-zone]
     }
 
     class Table {

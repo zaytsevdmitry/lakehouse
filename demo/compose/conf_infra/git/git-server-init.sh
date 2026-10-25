@@ -1,6 +1,6 @@
 #!/bin/sh
-# "Jarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
-# Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
+# "Yarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+# Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/yarina
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
 # subsequent start it re-imports the mounted configuration and commits only what
 # changed, so the repository history is preserved and stays in sync with the
 # mounted directory. Finally the built-in `git daemon` exposes all repositories
-# over the git:// protocol for jarina-config-svc (CVS subsystem) on :9418.
+# over the git:// protocol for yarina-config-svc (CVS subsystem) on :9418.
 
 set -e
 
@@ -72,16 +72,16 @@ import_config() {
   if [ "$(id -u)" = 0 ]; then
     chown -R root:root "$work"
   fi
-  git -C "$work" config user.name "jarina"
-  git -C "$work" config user.email "jarina@local"
+  git -C "$work" config user.name "yarina"
+  git -C "$work" config user.email "yarina@local"
   git -C "$work" add -A
   if git -C "$work" diff --cached --quiet; then
     echo "[git-server] Domain '$name': no configuration changes, nothing to commit"
   else
     if git -C "$work" rev-parse --verify -q "refs/heads/$BRANCH" >/dev/null; then
-      git -C "$work" commit -q -m "Update of jarina declarative configuration ($name)"
+      git -C "$work" commit -q -m "Update of yarina declarative configuration ($name)"
     else
-      git -C "$work" commit -q -m "Initial import of jarina declarative configuration ($name)"
+      git -C "$work" commit -q -m "Initial import of yarina declarative configuration ($name)"
     fi
   fi
   git -C "$work" push -q origin "HEAD:refs/heads/$BRANCH" 2>/dev/null || true

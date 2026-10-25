@@ -1,0 +1,117 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: yarina-ui-svc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: yarina-ui-svc
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: yarina-ui-svc
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      initContainers:
+        - name: wait-for-keycloak
+          image: busybox:1.37
+          command: ['sh', '-c', 'until wget -q -O /dev/null {{ .Values.keycloak.issuerUri }}; do echo waiting for keycloak; sleep 3; done']
+      containers:
+        - name: ui-svc
+          image: "{{ index .Values "ui-svc" "image" "repository" }}:{{ index .Values "ui-svc" "image" "tag" }}"
+          imagePullPolicy: {{ index .Values "ui-svc" "image" "pullPolicy" }}
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          env:
+            - name: KEYCLOAK_ISSUER_URI
+              value: {{ .Values.keycloak.issuerUri | quote }}
+            - name: KEYCLOAK_UI_CLIENT_SECRET
+              value: {{ .Values.keycloak.uiClientSecret | quote }}
+            - name: KEYCLOAK_INTERNAL_CLIENT_SECRET
+              value: {{ .Values.keycloak.internalClientSecret | quote }}
+          command: ["bash", "-c"]
+          args:
+            - "java  
+            -Dserver.port={{ .Values.java.serverPort }}
+            -Dyarina.ui.health-check-timeout-ms=3000
+            -Dyarina.ui.services[0].name=yarina-config-svc
+            -Dyarina.ui.services[0].url=http://yarina-config-svc:8082
+            -Dyarina.ui.services[0].health-check-url=http://yarina-config-svc:8082/healthz
+            -Dyarina.ui.services[1].name=yarina-scheduler-svc
+            -Dyarina.ui.services[1].url=http://yarina-scheduler-svc:8083
+            -Dyarina.ui.services[1].health-check-url=http://yarina-scheduler-svc:8083/healthz
+            -Dyarina.ui.services[2].name=yarina-state-svc
+            -Dyarina.ui.services[2].url=http://yarina-state-svc:8084
+            -Dyarina.ui.services[2].health-check-url=http://yarina-state-svc:8084/healthz
+            -Dyarina.ui.services[3].name=yarina-task-proxy-for-spark
+            -Dyarina.ui.services[3].url=http://yarina-task-proxy4spark:8086
+            -Dyarina.ui.services[3].health-check-url=http://yarina-task-proxy4spark:8086/healthz
+            -Dyarina.ui.services[4].name=yarina-task-executor-svc
+            -Dyarina.ui.services[4].url=http://yarina-task-executor-svc:8090
+            -Dyarina.ui.services[4].health-check-url=http://yarina-task-executor-svc:8090/healthz
+            -Dyarina.ui.services[5].name=yarina-trino
+            -Dyarina.ui.services[5].url=http://{{ .Release.Name }}-trino:8080
+            -Dyarina.ui.services[5].health-check-url=http://{{ .Release.Name }}-trino:8080
+            -Dyarina.ui.services[6].name=yarina-spark-history
+            -Dyarina.ui.services[6].url=http://spark-history:18080
+            -Dyarina.ui.services[6].health-check-url=http://spark-history:18080
+            -Dyarina.ui.services[7].name=yarina-minio
+            -Dyarina.ui.services[7].url=http://minio:9001  
+            -Dyarina.ui.services[7].health-check-url=http://minio:9000/minio/health/live
+            -Dyarina.ui.services[8].name=db-dev
+            -Dyarina.ui.services[8].url=http://db-dev:5432
+            -Dyarina.ui.services[8].health-check-url=db-dev:5432
+            -Dyarina.ui.services[8].check-type=tcp
+            -Dyarina.ui.services[9].name=kafka-broker
+            -Dyarina.ui.services[9].url=http://broker:9092
+            -Dyarina.ui.services[9].health-check-url=broker:9092
+            -Dyarina.ui.services[9].check-type=tcp
+            -Dyarina.ui.services[10].name=git-server
+            -Dyarina.ui.services[10].url=http://git-server:9418
+            -Dyarina.ui.services[10].health-check-url=git-server:9418
+            -Dyarina.ui.services[10].check-type=tcp
+            -Dyarina.client.rest.config.server.url=http://yarina-config-svc:8082
+            -Dyarina.client.rest.state.server.url=http://yarina-state-svc:8084
+            -Dyarina.client.rest.scheduler.server.url=http://yarina-scheduler-svc:8083
+            -Dyarina.client.rest.task-proxy-for-spark.server.url=http://yarina-task-proxy4spark:8086
+            -Dyarina.ui.vertices.yarina-config-svc=yarina-config-svc
+            -Dyarina.ui.vertices.topic-schedule-conf=kafka-broker
+            -Dyarina.ui.vertices.topic-tasks=kafka-broker
+            -Dyarina.ui.vertices.yarina-scheduler-svc=yarina-scheduler-svc
+            -Dyarina.ui.vertices.yarina-task-executor-svc=yarina-task-executor-svc
+            -Dyarina.ui.vertices.yarina-state-svc=yarina-state-svc
+            -Dyarina.ui.vertices.yarina-task-proxy-for-spark=yarina-task-proxy-for-spark
+            -Dyarina.ui.vertices.processingdb=db-dev
+            -Dyarina.ui.vertices.confdb=db-dev
+            -Dyarina.ui.vertices.schedulerdb=db-dev
+            -Dyarina.ui.vertices.sparkproxydb=db-dev
+            -Dyarina.ui.vertices.yarina-minio=yarina-minio
+            -Dyarina.ui.vertices.yarina-trino=yarina-trino
+            -Dyarina.ui.vertices.yarina-spark-history=yarina-spark-history
+            -Dyarina.ui.edges.yarina-config-svc[0]=confdb
+            -Dyarina.ui.edges.yarina-config-svc[1]=topic-schedule-conf
+            -Dyarina.ui.edges.yarina-config-svc[2]=yarina-scheduler-svc
+            -Dyarina.ui.edges.yarina-config-svc[3]=git-server
+            -Dyarina.ui.edges.topic-schedule-conf[0]=yarina-scheduler-svc
+            -Dyarina.ui.edges.yarina-scheduler-svc[0]=topic-tasks
+            -Dyarina.ui.edges.yarina-scheduler-svc[1]=schedulerdb
+            -Dyarina.ui.edges.topic-tasks[0]=yarina-task-executor-svc
+            -Dyarina.ui.edges.yarina-task-executor-svc[0]=yarina-state-svc
+            -Dyarina.ui.edges.yarina-task-executor-svc[1]=yarina-task-proxy-for-spark
+            -Dyarina.ui.edges.yarina-task-executor-svc[2]=processingdb
+            -Dyarina.ui.edges.yarina-task-executor-svc[3]=yarina-scheduler-svc
+            -Dyarina.ui.edges.yarina-task-proxy-for-spark[0]=sparkproxydb
+            -Dyarina.ui.edges.yarina-task-proxy-for-spark[1]=yarina-minio
+            -Dyarina.ui.edges.yarina-minio[0]=yarina-trino
+            -Dyarina.ui.edges.yarina-minio[1]=yarina-spark-history
+            -Dyarina.ui.edges.yarina-ui-svc[0]=git-server
+            -Dyarina.domains.platform.repository-url=git://git-server:9418/platform.git
+            -Dyarina.domains.platform.branch-main=main
+            -Dyarina.domains.analytics.repository-url=git://git-server:9418/analytics.git
+            -Dyarina.domains.analytics.branch-main=main
+            -Dyarina.domains.processing.repository-url=git://git-server:9418/processing.git
+            -Dyarina.domains.processing.branch-main=main
+            -jar /opt/yarina-ui-svc-{{ .Chart.AppVersion }}-jar-with-dependencies.jar"

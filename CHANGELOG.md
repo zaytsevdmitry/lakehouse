@@ -3,41 +3,41 @@
 ## [1.0.0] — 2026-10-21
 
 Configuration domains were **extracted into a dedicated functionality** and Git support was
-**simplified** to a single implementation shared by `jarina-config-svc` and `jarina-ui-svc`.
+**simplified** to a single implementation shared by `yarina-config-svc` and `yarina-ui-svc`.
 All domain parsing, canonicalization, ordering and validation now live in one place — the
-`jarina-domain-api` module — while the services only transport the raw properties.
+`yarina-domain-api` module — while the services only transport the raw properties.
 
 ### Added
 
-#### Domains as a standalone functionality in `jarina-domain-api`
+#### Domains as a standalone functionality in `yarina-domain-api`
 
-- **Shared domain model** (`org.jarina.domain.settings`): `DomainSettings`
-  (`@ConfigurationProperties`, namespace `jarina.domains.<name>`), `GitProperties` and
+- **Shared domain model** (`org.yarina.domain.settings`): `DomainSettings`
+  (`@ConfigurationProperties`, namespace `yarina.domains.<name>`), `GitProperties` and
   `GitCredentialsSettings`. `DomainSettings` owns the whole domain tree: `rootDomains()`,
   `nestedDomains(parent)`, `orderedDomains()` (depth-first, parents before children,
   `priority` ascending, absent priority last, ties by name), `domainSettings(name)` (searches
   the whole tree, so nested domains resolve by their leaf name), `hasRepository`, `branch` and
   `buildSpec(domain, requireClonePath)` → `DomainVcsSpec`. `afterPropertiesSet()` canonicalizes
   the domain keys and fails fast on case-insensitive collisions.
-- **New domain parameters**: the domain tree moved to the neutral `jarina.domains.<name>.*`
+- **New domain parameters**: the domain tree moved to the neutral `yarina.domains.<name>.*`
   namespace, shared by every service:
-  - `jarina.domains.<name>.priority` — apply order within one level (ascending, absent = last);
-  - `jarina.domains.<name>.git.repository-url` — repository of the domain (a domain is active
+  - `yarina.domains.<name>.priority` — apply order within one level (ascending, absent = last);
+  - `yarina.domains.<name>.git.repository-url` — repository of the domain (a domain is active
     iff this is set);
-  - `jarina.domains.<name>.git.branch` — tracked branch (default `main`);
-  - `jarina.domains.<name>.git.local-clone-path` — local clone owned by the service;
-  - `jarina.domains.<name>.git.credentials.auth-type` — `ssh` | `token` | `basic` (inferred:
+  - `yarina.domains.<name>.git.branch` — tracked branch (default `main`);
+  - `yarina.domains.<name>.git.local-clone-path` — local clone owned by the service;
+  - `yarina.domains.<name>.git.credentials.auth-type` — `ssh` | `token` | `basic` (inferred:
     `ssh` when a private key path is set, `token` when any credential is set, otherwise
     anonymous access);
-  - `jarina.domains.<name>.git.credentials.ssh-private-key-path` / `.username` / `.token` /
+  - `yarina.domains.<name>.git.credentials.ssh-private-key-path` / `.username` / `.token` /
     `.password` — **per-domain credentials, no global account and no merge**;
-  - `jarina.domains.<name>.domains` — nested sub-domains.
+  - `yarina.domains.<name>.domains` — nested sub-domains.
 - **Scheduler cadence split out of the domain model**: the VCS sync cycle in
-  `jarina-config-svc` is parameterized by the Spring scheduler, not by a domain, and moved from
-  `jarina.config.vcs.git.sync.*` to `jarina.config.vcs.sync.{enabled, interval-ms,
+  `yarina-config-svc` is parameterized by the Spring scheduler, not by a domain, and moved from
+  `yarina.config.vcs.git.sync.*` to `yarina.config.vcs.sync.{enabled, interval-ms,
   initial-delay-ms}`.
-- **Canonical documentation**: new `jarina-domain-api/doc/readme.md` (+ `doc-ru/readme.md`)
-  describing the shared domain model; the `jarina-config-svc` and `jarina-ui-svc` documents now
+- **Canonical documentation**: new `yarina-domain-api/doc/readme.md` (+ `doc-ru/readme.md`)
+  describing the shared domain model; the `yarina-config-svc` and `yarina-ui-svc` documents now
   summarize the service-specific concerns and link to it.
 
 ### Changed
@@ -56,36 +56,36 @@ All domain parsing, canonicalization, ordering and validation now live in one pl
 
 #### Service changes
 
-- **`jarina-config-svc`**: `JarinaVCSProperties` is reduced to the sync settings;
+- **`yarina-config-svc`**: `YarinaVCSProperties` is reduced to the sync settings;
   `GitVcsClientFactory.create(domainName)` and `GitOpsScheduler` resolve domains through the
   shared `DomainSettings`; `@EnableConfigurationProperties(DomainSettings.class)` registers the
   bean.
-- **`jarina-ui-svc`**: `ModellerProperties` keeps only storage/auth/session/logging; the
+- **`yarina-ui-svc`**: `ModellerProperties` keeps only storage/auth/session/logging; the
   modeller resolves repositories through `DomainSettings` (`ModellerVcsCatalog`), and all
   consumers (`VcsService`, `ReviewService`, `CatalogService`, `ScheduleService`,
   `VcsLogService`, `ModellerConfiguration`) use it.
-- **Compose demo**: `demo/compose/docker-compose.yaml` migrated to `jarina.domains.*` and
-  `jarina.config.vcs.sync.*`; the removed `system-account` / provider / legacy arguments dropped.
-- **Active catch logging**: every `catch` block in the VCS paths of `jarina-config-svc` and
-  `jarina-domain-api` now logs the error message **and** the full stack trace through SLF4J.
+- **Compose demo**: `demo/compose/docker-compose.yaml` migrated to `yarina.domains.*` and
+  `yarina.config.vcs.sync.*`; the removed `system-account` / provider / legacy arguments dropped.
+- **Active catch logging**: every `catch` block in the VCS paths of `yarina-config-svc` and
+  `yarina-domain-api` now logs the error message **and** the full stack trace through SLF4J.
 - **Tests**: `GitOpsSchedulerUnitTest`, `GitVcsClientFactoryTest` and
-  `JarinaVCSPropertiesCredentialsTest` retargeted to `DomainSettings`; ui-svc tests
+  `YarinaVCSPropertiesCredentialsTest` retargeted to `DomainSettings`; ui-svc tests
   (`ModellerVcsCatalogTest`, `CatalogServiceTest`, `ScheduleServiceTest`, `ReviewServiceTest`,
   `RbacEnforcementTest`, `ModellerPropertiesBindingTest`) updated; the legacy
-  `JarinaVCSPropertiesLegacyTest` removed. Backend totals remain 20 / 101 / 107 for
-  `jarina-domain-api` / `jarina-config-svc` / `jarina-ui-svc`.
+  `YarinaVCSPropertiesLegacyTest` removed. Backend totals remain 20 / 101 / 107 for
+  `yarina-domain-api` / `yarina-config-svc` / `yarina-ui-svc`.
 
 ### Removed
 
-- **Global `system-account` credentials** (`jarina.config.vcs.system-account` and
-  `jarina.modeller.vcs-system-account`): credentials are declared per domain under
-  `jarina.domains.<name>.git.credentials.*`; an empty credential block means anonymous access.
-- **Legacy single-repository fallback**: the pre-domains `jarina.config.vcs.git.repository-url`
-  / `jarina.modeller.domains.*` / `jarina.modeller.git.remote-url` single-repository mode (and
+- **Global `system-account` credentials** (`yarina.config.vcs.system-account` and
+  `yarina.modeller.vcs-system-account`): credentials are declared per domain under
+  `yarina.domains.<name>.git.credentials.*`; an empty credential block means anonymous access.
+- **Legacy single-repository fallback**: the pre-domains `yarina.config.vcs.git.repository-url`
+  / `yarina.modeller.domains.*` / `yarina.modeller.git.remote-url` single-repository mode (and
   the synthetic `default` domain) is gone — a domain exists only when declared with
-  `jarina.domains.<name>.git.repository-url`.
-- The `provider` selection property (`jarina.config.vcs.provider`,
-  `JARINA_VCS_PROVIDER`) and the obsolete `git.sync.*` / `domains.*` config-svc aliases.
+  `yarina.domains.<name>.git.repository-url`.
+- The `provider` selection property (`yarina.config.vcs.provider`,
+  `YARINA_VCS_PROVIDER`) and the obsolete `git.sync.*` / `domains.*` config-svc aliases.
 
 ## [0.12.0] — 2026-10-13
 
@@ -95,9 +95,9 @@ a single global, non-domain `WORKSPACE_ADMIN` role.
 
 ### Changed
 
-#### Domain-driven RBAC in `jarina-ui-svc`
+#### Domain-driven RBAC in `yarina-ui-svc`
 
-- **Role model** (`org.jarina.ui.modeller.auth`): `ModellerRole` replaced by `DomainRole`
+- **Role model** (`org.yarina.ui.modeller.auth`): `ModellerRole` replaced by `DomainRole`
   (`VIEWER`/`EDITOR`/`CONTROL`; `VIEWER` implied by the other two, `EDITOR`/`CONTROL`
   orthogonal — `EDITOR` edits configs/repos but cannot stop tasks, `CONTROL` stops Spark tasks
   but cannot edit) and `ModellerRoleSupport` (parses `<domain>:<ROLE>`; the global
@@ -120,13 +120,13 @@ a single global, non-domain `WORKSPACE_ADMIN` role.
   sees the backend `403` as a banner); `WorkspacePicker` disables **New branch** without an
   `EDITOR` role; `EditorView` derives `readOnly` per domain from `domains` (no longer from
   `effectiveRole` or `workspace.own`); the `effectiveRole`/`isAdmin`/`canEdit` helpers are gone.
-- **Demo Keycloak realm** (`demo/compose/conf_infra/security/realms/jarina-realm.json` and the
+- **Demo Keycloak realm** (`demo/compose/conf_infra/security/realms/yarina-realm.json` and the
   K8s configmap): realm roles are now domain roles for the configured domains
   (`platform`/`analytics`/`processing`) plus `WORKSPACE_ADMIN`; demo users `de_view` (viewer),
   `de_editor` (editor + control) and `de_admin` (workspace admin) updated accordingly. Colons in
   role names are supported by Keycloak.
-- **Docs**: `jarina-ui-svc/doc/arch/architecture.md` (§9 rewritten, + `doc-ru` mirror),
-  `jarina-ui-svc/doc/readme.md` (+ RU), `doc/security/security.md` (+ RU) and
+- **Docs**: `yarina-ui-svc/doc/arch/architecture.md` (§9 rewritten, + `doc-ru` mirror),
+  `yarina-ui-svc/doc/readme.md` (+ RU), `doc/security/security.md` (+ RU) and
   `SUMMARY_FEATURES.md` describe the domain model; the audit section states that
   user-initiated mutations are logged under the real Keycloak `username` and that writing them
   as `system` is forbidden.
@@ -146,18 +146,18 @@ workbench** — a Git-backed metadata editor with workspaces, branches and revie
 
 #### Domains and per-domain repositories
 
-- **Domain = Git repository** (`jarina-config-svc`): `JarinaVCSProperties` binds
-  `jarina.config.vcs.domains.<name>` — a tree of domains, each with its own
+- **Domain = Git repository** (`yarina-config-svc`): `YarinaVCSProperties` binds
+  `yarina.config.vcs.domains.<name>` — a tree of domains, each with its own
   `git.repository-url` / `branch` / `local-clone-path` / `private-key-path`, a `priority` and
   nested `domains`. Each domain is fetched and applied on its own; the apply order is
   depth-first with parents before children (`orderedDomains()`), `priority` ascending inside one
   level, `Integer.MAX_VALUE` and last otherwise, ties broken by domain name. A domain without
   `repository-url` is skipped entirely; a failing domain skips its whole sub-tree until the
-  parent succeeds. Per-domain env vars: `JARINA_CONFIG_GIT_<NAME>_URL|_BRANCH|_CLONE_PATH|_PRIVATE_KEY_PATH`.
+  parent succeeds. Per-domain env vars: `YARINA_CONFIG_GIT_<NAME>_URL|_BRANCH|_CLONE_PATH|_PRIVATE_KEY_PATH`.
 - **Legacy single-repository mode kept**: when `domains` is empty and `git.repository-url` is
   set, that repository is exposed as one domain named `default` (`rootDomains()`); as soon as
   `domains` has an entry the legacy block is ignored and does not become an extra `default`.
-  The sync cycle itself stays global: `jarina.config.vcs.git.sync.{enabled,interval-ms,initial-delay-ms}`.
+  The sync cycle itself stays global: `yarina.config.vcs.git.sync.{enabled,interval-ms,initial-delay-ms}`.
 - **`domainKeyName` stamping and identity rules**: `GitOpsSynchronizer.stampDomainOn(...)` stamps
   every managed kind except `Script`; `SQLTemplate` rows are content-only and shared between
   domains, their domain derived from the referencing `Driver`/`Task`
@@ -172,14 +172,14 @@ workbench** — a Git-backed metadata editor with workspaces, branches and revie
   `QualityMetricsConf` and `TaskExecutionServiceGroup`. `domain_key_name` was added to
   `vcs_sync_log` and `vcs_object_log`, and `domainKeyName` became an optional filter of
   `GET /v1_0/configs/vcs/logs` and `.../vcs/objectlogs`.
-- **Domain-scoped executor configuration** (`jarina-task-executor-svc`):
+- **Domain-scoped executor configuration** (`yarina-task-executor-svc`):
   `DomainDataSourceServiceProperties` binds
-  `jarina.task-executor.domains.<domainKeyName>.<dataSourceKeyName>.service-properties`
+  `yarina.task-executor.domains.<domainKeyName>.<dataSourceKeyName>.service-properties`
   (free-form map). `ExecuteService.prepareProperties(...)` looks it up per data source and merges
   it into `DataSourceDTO.getService().getProperties()` (`putAll` — the local value overrides the
   repository-declared one), so per-domain connection settings and secret-provider options reach
   `JdbcConnectionFactory` without being committed to Git.
-- **Domain check in the scheduler** (`jarina-scheduler-svc`):
+- **Domain check in the scheduler** (`yarina-scheduler-svc`):
   `ScheduleTaskInstanceService.checkDomain(...)` compares the schedule domain against
   `allowedDomains ∪ {domainKeyName}` of the task's `TaskExecutionServiceGroup` (new fields
   `domainKeyName` and `allowedDomains`, the latter in the `task_execution_service_group_domains`
@@ -187,8 +187,8 @@ workbench** — a Git-backed metadata editor with workspaces, branches and revie
   pending producer message and publishes nothing; a missing group is only a warning. Since
   executors are grouped solely by `taskExecutionServiceGroupName` (the Kafka `group.id`), this
   check is what keeps a foreign domain out of an executor group.
-- **Per-domain repositories in the UI modeller** (`jarina-ui-svc`):
-  `jarina.modeller.domains.<name>.{repository-url,branch-main}` — `GET /api/vcs/branches`
+- **Per-domain repositories in the UI modeller** (`yarina-ui-svc`):
+  `yarina.modeller.domains.<name>.{repository-url,branch-main}` — `GET /api/vcs/branches`
   returns one `DomainBranchesResponse {domain, branches[], branchMain}` per domain (the branch
   panel renders a domain tree), `POST /api/vcs/branch` creates a branch inside a named domain,
   and a workspace is a set of `(domain, branch)` pairs (`POST /api/vcs/workspace`) checked out
@@ -205,17 +205,17 @@ workbench** — a Git-backed metadata editor with workspaces, branches and revie
   `DomainDataSourceServicePropertiesTest` (dynamic-map binding through `Environment`, per-entry
   isolation, same singleton exposed by `ExecuteService`).
 
-#### Modelling workbench in `jarina-ui-svc`
+#### Modelling workbench in `yarina-ui-svc`
 
 - **Workspaces from a Git branch**: `WorkspaceStorage` SPI — `LocalFsWorkspaceStorage`
-  (`jarina.modeller.storage.root-directory`) and `S3WorkspaceStorage` (S3 with a minimal
+  (`yarina.modeller.storage.root-directory`) and `S3WorkspaceStorage` (S3 with a minimal
   built-in AWS SigV4 signer); `WorkspaceManager`, `WorkspaceSeeder`, background
   `WorkspaceCleanupTask` (inactivity TTL, default 4 h) and
-  `jarina.modeller.session.inactivity-minutes`.
+  `yarina.modeller.session.inactivity-minutes`.
 - **VCS provider SPI**: `LocalGitVcsProvider` (JGit), `GitLabApiVcsProvider`,
   `GitHubAppVcsProvider`, `DisabledVcsProvider` plus a factory; system technical account
-  (`jarina.modeller.vcs-system-account`, auth type `ssh`/`token`/`basic`, GitHub App options);
-  declarative matrix in `jarina.modeller.*` (`vcs-provider`, `auth-strategy`
+  (`yarina.modeller.vcs-system-account`, auth type `ssh`/`token`/`basic`, GitHub App options);
+  declarative matrix in `yarina.modeller.*` (`vcs-provider`, `auth-strategy`
   `jwt-rbac`/`token-exchange`).
 - **File CRUD and editors**: `EditorController` (tree/dirs, create by `kind`+`keyName`+`directory`,
   read, save via `YamlEditorService`, rename/move/delete of files and directories, restore from
@@ -228,7 +228,7 @@ workbench** — a Git-backed metadata editor with workspaces, branches and revie
   (`ReviewService`), restore, modeller roles `VIEWER < EDITOR < ADMIN` with
   ownership-based edit rights and `readOnly` from `effectiveRole`, admin surface
   (`AdminController`: all workspaces, force-delete, cleanup TTL, sync-log tail), sync-log
-  capacity (`jarina.modeller.logging.sync-log-capacity`).
+  capacity (`yarina.modeller.logging.sync-log-capacity`).
 - **New shared kinds** `ER_DIAGRAM` (order 11) and `DATA_LINEAGE_DIAGRAM` (order 13) in
   `YamlMetadataKind`, with directories `erdiagrams` / `datalineagediagrams`.
 - **Frontend test suite**: Vitest 3 + React Testing Library (jsdom), configured in
@@ -238,15 +238,15 @@ workbench** — a Git-backed metadata editor with workspaces, branches and revie
 
 #### Documentation and repository housekeeping
 
-- New `jarina-config-svc/doc/content_configuration/domains.md` (+ `doc-ru` mirror): the tree
+- New `yarina-config-svc/doc/content_configuration/domains.md` (+ `doc-ru` mirror): the tree
   and apply order, ownership and identity rules, isolation rules, the full property table, the
   legacy single-repository block, observability and object fields.
-- New `jarina-ui-svc/doc/arch/architecture.md` (frontend architecture review with PlantUML
-  sources under `doc/arch/diagrams/`) and `jarina-ui-svc/doc/doc_requirements.md`.
+- New `yarina-ui-svc/doc/arch/architecture.md` (frontend architecture review with PlantUML
+  sources under `doc/arch/diagrams/`) and `yarina-ui-svc/doc/doc_requirements.md`.
 - Domain chapters and configuration references added to
-  `jarina-ui-svc/doc/readme.md` (+ RU), `jarina-scheduler-svc/doc/readme.md` (+ RU),
-  `jarina-task-executor-svc/doc/readme.md` and `properties.md` (+ RU mirrors) and
-  `jarina-config-svc/doc/readme.md` (+ RU).
+  `yarina-ui-svc/doc/readme.md` (+ RU), `yarina-scheduler-svc/doc/readme.md` (+ RU),
+  `yarina-task-executor-svc/doc/readme.md` and `properties.md` (+ RU mirrors) and
+  `yarina-config-svc/doc/readme.md` (+ RU).
 - `taskexecutionservicegroups.md` (EN/RU) documents `domainKeyName` and `allowedDomains`.
 - **License headers**: the Apache-2.0 notice from `NOTICE` was added to every `.java`, `.bash`
   and `.sh` file that did not carry a copyright notice (via `.utils/autonotice.bash`).
@@ -258,19 +258,19 @@ workbench** — a Git-backed metadata editor with workspaces, branches and revie
 ### Changed
 
 - **`ConfigurationProduceResolver` SPI replaces the `ConfigKind` enum**
-  (`jarina-config-svc`): one `@Component` per kind (`Driver`, `DataSource`, `Task`,
+  (`yarina-config-svc`): one `@Component` per kind (`Driver`, `DataSource`, `Task`,
   `TaskExecutionServiceGroup`, `DataSet`, `Schedule`, `ScenarioActTemplate`, `Script`,
   `QualityMetricsConf`) each declaring `getKind()` and `resolve(keyName)`, collected by
   `ConfigurationProduceResolverRegistry.findByKind(...)` (duplicate kinds fail fast). Kinds are
   resolved through services instead of a hard-coded DTO/order table, which is what the
   `NameSpace` kind removal and the new domain stamp needed.
-- `GitVcsConfigurationProperties` replaced by `JarinaVCSProperties`; the client factory moved
+- `GitVcsConfigurationProperties` replaced by `YarinaVCSProperties`; the client factory moved
   to `GitVcsClientFactory`; `GitOpsChangeSetBuilder`, `GitOpsSynchronizer`,
   `GitOpsFailureRecorder`, `GitOpsScheduler`, `VcsClient`, `GitVcsClient` and the log
   services/repositories became domain-aware.
-- `CurrentDomainContext` (`org.jarina.config.vcs`) carries the domain being applied through
+- `CurrentDomainContext` (`org.yarina.config.vcs`) carries the domain being applied through
   the stamping and validation path.
-- **`jarina-scheduler-svc`**: `ScheduleConfigConsumerService` → `ConfigurationChangeConsumerService`
+- **`yarina-scheduler-svc`**: `ScheduleConfigConsumerService` → `ConfigurationChangeConsumerService`
   with `ConfigurationChangeKafkaConfiguration` /
   `ConfigurationChangeConsumerKafkaConfigurationProperties`, consuming the
   `configuration_changes` topic; added `TaskExecutionServiceGroupConfigService` as an in-memory
@@ -286,20 +286,20 @@ workbench** — a Git-backed metadata editor with workspaces, branches and revie
 None. All libraries required by the Modelling workbench (`org.eclipse.jgit`,
 `org.eclipse.jgit.ssh.apache`, `tools.jackson.dataformat:jackson-dataformat-yaml`,
 `spring-boot-starter-oauth2-resource-server`) were already declared by the project at tag
-`0.10.0` — `jarina-ui-svc` only started consuming them — so `THIRD-PARTY-NOTICES` is
+`0.10.0` — `yarina-ui-svc` only started consuming them — so `THIRD-PARTY-NOTICES` is
 unchanged.
 
 ## [0.10.0] — 2026-09-01
 
 ### Added
 
-#### VCS — Configuration Versioning System (GitOps) in `jarina-config-svc`
+#### VCS — Configuration Versioning System (GitOps) in `yarina-config-svc`
 
 Git repository as the **source of truth** for configuration metadata — the same
 configuration DTOs as the REST API can be written as Kubernetes-style YAML/JSON files and
 are periodically synchronized into the configuration database.
 
-- **`VcsClient` abstraction** (`org.jarina.config.vcs`): `init` / `pull` /
+- **`VcsClient` abstraction** (`org.yarina.config.vcs`): `init` / `pull` /
   `getCurrentCommitId` / `getDiff` / `readFileContent`; supporting value types
   `VcsDiffEntry`, `VcsChangeType`, `VcsClientException` (infrastructure failures are
   retried, not marked FAILED).
@@ -307,7 +307,7 @@ are periodically synchronized into the configuration database.
   hard reset, `DiffFormatter` with rename detection (rename reported as delete+create),
   SSH `publickey` auth via `org.eclipse.jgit.ssh.apache`.
 - **`GitOpsScheduler`** — `@Scheduled` orchestrator (guarded by
-  `jarina.config.vcs.git.sync.enabled=true`); `sync()` is `synchronized` and
+  `yarina.config.vcs.git.sync.enabled=true`); `sync()` is `synchronized` and
   idempotent; skips already-applied commits, records config errors as `FAILED`, retries
   infrastructure errors.
 - **`GitOpsChangeSetBuilder` + `GitOpsYamlParser` + `ConfigKind`**: only config files
@@ -324,15 +324,15 @@ are periodically synchronized into the configuration database.
   `save(...)` / `saveVcs(...)` / `unmanage(...)`.
 - **Read-only REST endpoints for the UI**: `GET /v1_0/configs/vcs/logs` (sync history
   with status/error/commitId) and `GET /v1_0/configs/vcs/objectlogs` (per-object log).
-- **Configuration properties** `jarina.config.vcs.git.*`: `repository-url`, `branch`,
+- **Configuration properties** `yarina.config.vcs.git.*`: `repository-url`, `branch`,
   `local-clone-path`, `private-key-path`, `sync.enabled` / `sync.interval-ms` /
-  `sync.initial-delay-ms` (mapped to `JARINA_CONFIG_GIT_*` env vars).
+  `sync.initial-delay-ms` (mapped to `YARINA_CONFIG_GIT_*` env vars).
 - **Tests**: `GitOpsIntegrationTest`, `GitVcsClientTest`, `GitOpsChangeSetBuilderTest`,
   `GitOpsSchedulerUnitTest`, `GitOpsYamlParserTest`, `TestGitRepository` helper.
 
 #### UI — VCSLog panel
 
-- **`jarina-ui-svc`**: new "VCS" panel (`VCSLog` / objects search as tabs) showing the
+- **`yarina-ui-svc`**: new "VCS" panel (`VCSLog` / objects search as tabs) showing the
   sync history (`SUCCESS` rows with applied commit id, `FAILED` rows with error message)
   and the per-object log; backed by `VcsLogService` / `VcsLogController`, VCS added to the
   frontend routing and API client.
@@ -351,12 +351,12 @@ are periodically synchronized into the configuration database.
 
 #### Documentation
 
-- `jarina-config-svc/doc/vcs/vcs_for_developers.md` + `doc-ru/vcs/vcs_for_developers.md`
+- `yarina-config-svc/doc/vcs/vcs_for_developers.md` + `doc-ru/vcs/vcs_for_developers.md`
   — VCS architecture, sync pipeline, `VcsClient` abstraction, YAML parsing, `isVcsManaged`
   contract, developer parameters, extension guide.
-- `jarina-config-svc/doc/vcs/git_extension_user_guide.md` + `doc-ru/vcs/git_extension_user_guide.md`
+- `yarina-config-svc/doc/vcs/git_extension_user_guide.md` + `doc-ru/vcs/git_extension_user_guide.md`
   — repository layout, YAML format, enablement, sync semantics, error messages.
-- `jarina-config-svc/doc/readme.md`, `doc-ru/readme.md`, `service_configuration.md`
+- `yarina-config-svc/doc/readme.md`, `doc-ru/readme.md`, `service_configuration.md`
   (EN/RU) — VCS section and links to the new docs.
 - `demo/compose/git-server-config-repo.md` — demo VCS config repo layout.
 
@@ -370,7 +370,7 @@ are periodically synchronized into the configuration database.
 ### Changed
 
 - **Version 0.9.0 → 0.10.0** for all modules, Docker images and Helm chart image tags.
-- **`jarina-ui-svc`** `VcsSection.jsx` — redesigned to tabbed layout (VCSLog / object
+- **`yarina-ui-svc`** `VcsSection.jsx` — redesigned to tabbed layout (VCSLog / object
   logs), vertical splitter and error column.
 
 ---
@@ -381,43 +381,43 @@ are periodically synchronized into the configuration database.
 
 #### New modules — credential providers
 
-- **`jarina-credential-providers-jdbc`** — shared, Spark-independent secret resolution library (no Spring dependency; Spring Boot artifacts are declared `provided`):
+- **`yarina-credential-providers-jdbc`** — shared, Spark-independent secret resolution library (no Spring dependency; Spring Boot artifacts are declared `provided`):
   - `SecretProvider` SPI and the `SecretResolver` helper (`hasProvider`, `resolvePassword`, `sanitize`, `resolveAndSanitize`)
   - HTTP clients `VaultHttp` (OpenBao/Vault; token via `VAULT_TOKEN` env or Kubernetes Service Account auth) and `LockboxHttp` (Yandex Cloud Lockbox; IAM token via Instance Metadata or authorized key file `YC_AUTH_KEY_PATH`)
   - `SecretCache` — in-memory cache, 5-minute TTL per JVM
   - JDBC providers `BaoJdbcSecretProvider` (KV v2) and `YcLockboxJdbcSecretProvider`
-  - `JarinaSecurityContext` for resolving secrets inside Spark closures on Executors
-- **`jarina-credential-providers-spark`** — Spark-specific credentials, resolved on Driver and Executors:
-  - `JarinaSecureJDBCTableCatalog` — secure replacement for Spark's `JDBCTableCatalog`: resolves the DB password via `SecretResolver` at Driver + Executors and masks the original exception
+  - `YarinaSecurityContext` for resolving secrets inside Spark closures on Executors
+- **`yarina-credential-providers-spark`** — Spark-specific credentials, resolved on Driver and Executors:
+  - `YarinaSecureJDBCTableCatalog` — secure replacement for Spark's `JDBCTableCatalog`: resolves the DB password via `SecretResolver` at Driver + Executors and masks the original exception
   - S3 providers `BaoS3CredentialsProvider` / `YcLockboxS3CredentialsProvider` for Spark S3A
-- **`jarina-spark-credential-providers`** split into the two modules above; the resulting jars (`jarina-credential-providers-jdbc-0.9.0.jar`, `jarina-credential-providers-spark-0.9.0.jar`) are copied into the Spark image
+- **`yarina-spark-credential-providers`** split into the two modules above; the resulting jars (`yarina-credential-providers-jdbc-0.9.0.jar`, `yarina-credential-providers-spark-0.9.0.jar`) are copied into the Spark image
 
 #### Runtime secret resolution
 
-- **`JdbcConnectionFactory`** (`jarina-task-executor-api`) — resolves the DB password through `SecretResolver` when the datasource `service.properties` contains `secretProvider`; the security options are stripped before the map reaches the JDBC driver; unchanged when no provider is configured (backward compatible)
-- **`jarina-task-executor-api`** now depends on `jarina-credential-providers-jdbc`
+- **`JdbcConnectionFactory`** (`yarina-task-executor-api`) — resolves the DB password through `SecretResolver` when the datasource `service.properties` contains `secretProvider`; the security options are stripped before the map reaches the JDBC driver; unchanged when no provider is configured (backward compatible)
+- **`yarina-task-executor-api`** now depends on `yarina-credential-providers-jdbc`
 
 #### OpenBao / Vault integration in the demo
 
 - **Docker Compose**: `openbao` service (`quay.io/openbao/openbao:2.0`) with the init script `demo/compose/conf_infra/openbao/init.sh`:
-  - dev server, KV v2 secrets engine, seeding `kv/jarina/database` and `kv/infrastructure/minio`
-  - read-only policy `jarina-spark-readonly`, scoped token `jarina-spark-token`
+  - dev server, KV v2 secrets engine, seeding `kv/yarina/database` and `kv/infrastructure/minio`
+  - read-only policy `yarina-spark-readonly`, scoped token `yarina-spark-token`
   - `VAULT_TOKEN` env added to `spark-master`, `spark-worker-1`, `spark-history`, `task-executor-svc-database`; healthcheck + `depends_on` wiring
 - **`demo/compose/conf_infra/spark-defaults.conf`**:
-  - `processingdb` catalog switched to `JarinaSecureJDBCTableCatalog` + `BaoJdbcSecretProvider` (`secret-key: kv/data/jarina/database:password`) — plaintext PostgreSQL password removed
+  - `processingdb` catalog switched to `YarinaSecureJDBCTableCatalog` + `BaoJdbcSecretProvider` (`secret-key: kv/data/yarina/database:password`) — plaintext PostgreSQL password removed
   - S3 credentials moved from hardcoded `spark_user`/`spark_pwd` to `BaoS3CredentialsProvider` reading `kv/data/infrastructure/minio` from OpenBao
 - **Datasource configs** (`demo/compose/conf/datasources/processingdb.json`, `demo/k8s/conf/datasources/processingdb.json`) — `password` replaced by provider options (`secretProvider`, `secret-key`, `vault-url`)
-- **Kubernetes umbrella chart** `jarina-management`:
-  - `openbao:` section in `values.yaml` (image, env with `JARINA_DB_PASSWORD`, `MINIO_ROOT_PASSWORD`, `BAO_DEV_ROOT_TOKEN_ID`, `BAO_TOKEN`; optional `valueFrom.secretKeyRef` support)
+- **Kubernetes umbrella chart** `yarina-management`:
+  - `openbao:` section in `values.yaml` (image, env with `YARINA_DB_PASSWORD`, `MINIO_ROOT_PASSWORD`, `BAO_DEV_ROOT_TOKEN_ID`, `BAO_TOKEN`; optional `valueFrom.secretKeyRef` support)
   - new templates: `openbao-configmap` (init script placeholder for `init.sh`), `openbao-deployment` (`BAO_ADDR` → `http://<release>-openbao:8200`, exec `bao status` probes), `openbao-service` (ClusterIP:8200)
-- **Spark image** `docker/jarina-spark-aws` — provider jars added to `/opt/spark/jars`, version 0.9.0
-- **jarina-ui-svc** — OpenBao added to the services topology (health-check `/v1/sys/health`, vertex, edge)
+- **Spark image** `docker/yarina-spark-aws` — provider jars added to `/opt/spark/jars`, version 0.9.0
+- **yarina-ui-svc** — OpenBao added to the services topology (health-check `/v1/sys/health`, vertex, edge)
 
 #### Documentation
 
 - `doc/security/security.md` + `doc-ru/security/security.md` — new section "Secrets for data connections (credential providers)": option contract (`secretProvider`, `secret-key`, `vault-url`, `vault-role`, `vault-k8s-auth-path`, `secret-id`, `secret-version`), where to configure (`spark-defaults.conf` / datasource `service.properties`), OpenBao/Vault and Yandex Cloud Lockbox setup, security guarantees (secrets are never logged, masked errors, 5-minute cache); overview and configuration reference updated
-- `jarina-credential-providers-spark` README (EN/RU) — configuration, deploying to Spark (`--jars`), caching / timeouts / troubleshooting
-- `jarina-task-executor-svc` docs (EN/RU):
+- `yarina-credential-providers-spark` README (EN/RU) — configuration, deploying to Spark (`--jars`), caching / timeouts / troubleshooting
+- `yarina-task-executor-svc` docs (EN/RU):
   - `processors.md` — Spark processor architecture updated to the actual code (deploy logic inlined, `deploy.clusterUrl` / `deploy.mainClass` / `deploy.appResource`), new "Secrets in Spark tasks" section
   - `properties.md` — spark processor properties (`maxWaitToRunningStateTimeoutMs`, `sparkJobStatusCheckIntervalMs`) and datasource provider options
   - `readme.md` — processor parameters, JDBC secret resolution, `VAULT_TOKEN` / `YC_AUTH_KEY_PATH` required settings
@@ -459,23 +459,23 @@ are periodically synchronized into the configuration database.
 #### Keycloak security — OAuth2 Resource Server / Client
 All backend services now authenticate via Keycloak (OAuth2 Bearer token validation):
 
-- **`jarina-common-health`** — shared security infrastructure:
+- **`yarina-common-health`** — shared security infrastructure:
   - `AuditLoggingFilter` — logs incoming request details
   - `BearerTokenClientHttpRequestInterceptor` — attaches OAuth2 access token to outbound REST calls
   - `KeycloakRoleConverter` — maps Keycloak realm roles to Spring Security authorities
   - `RestClientSecurityConfiguration` — configures `RestClient` with token relay
   - `TestSecurityConfiguration` — test-only security config for health controller tests
   - `KeycloakRoleConverterTest`
-- **`SecurityConfig`** added to: `jarina-config-svc`, `jarina-scheduler-svc`, `jarina-state-svc`, `jarina-task-executor-svc`, `jarina-task-proxy-for-spark`, `jarina-ui-svc`
-- **`SecurityConfigTest`** added to: `jarina-config-svc`, `jarina-scheduler-svc`
+- **`SecurityConfig`** added to: `yarina-config-svc`, `yarina-scheduler-svc`, `yarina-state-svc`, `yarina-task-executor-svc`, `yarina-task-proxy-for-spark`, `yarina-ui-svc`
+- **`SecurityConfigTest`** added to: `yarina-config-svc`, `yarina-scheduler-svc`
 
 #### OpenAPI
-- **`OpenApiConfig`** — Swagger UI endpoints added to `jarina-config-svc`, `jarina-scheduler-svc`
+- **`OpenApiConfig`** — Swagger UI endpoints added to `yarina-config-svc`, `yarina-scheduler-svc`
 
-#### jarina-ui-svc
+#### yarina-ui-svc
 - **`UserController`** — `/api/user` endpoint returning authenticated user info (name, email, roles)
 
-#### jarina-config-svc
+#### yarina-config-svc
 - **`SparkRestClientConfiguration`** — REST client config for Spark Proxy communication
 
 #### Logging
@@ -488,7 +488,7 @@ All backend services now authenticate via Keycloak (OAuth2 Bearer token validati
 
 #### Demo & infrastructure
 - **Docker Compose** — Keycloak service added (image `quay.io/keycloak/keycloak:26.0`, import realm, healthcheck)
-- **Keycloak realm** — `demo/compose/conf_infra/security/realms/jarina-realm.json` (clients: `jarina-ui-client`, `jarina-internal-client`; roles: `USER`, `ADMIN`; demo users: `de_view`, `de_editor`)
+- **Keycloak realm** — `demo/compose/conf_infra/security/realms/yarina-realm.json` (clients: `yarina-ui-client`, `yarina-internal-client`; roles: `USER`, `ADMIN`; demo users: `de_view`, `de_editor`)
 - **Keycloak schema init** — `demo/compose/conf_infra/security/init_keycloak_schema.sql`
 - **K8s Helm charts** for Keycloak:
   - `keycloak-deployment` — Keycloak pod with `start-dev --import-realm`
@@ -503,7 +503,7 @@ All backend services now authenticate via Keycloak (OAuth2 Bearer token validati
 - **`README-SCENARIO.md`** — updated with screenshot references
 - **`.utils/kafka/topic-get-messages.bash`** — utility for reading Kafka topic messages
 
-#### jarina-task-executor-svc
+#### yarina-task-executor-svc
 - **`SparkStandAloneClusterTaskProcessor`** rewritten — expanded submission handling with improved error recovery and status synchronization
 
 ### Fixed
@@ -516,15 +516,15 @@ All backend services now authenticate via Keycloak (OAuth2 Bearer token validati
 ### Added
 
 #### New modules
-- **`jarina-ui-svc`** — web UI service
+- **`yarina-ui-svc`** — web UI service
   - Spring Boot backend (`/api/catalog`, `/api/schedules`, `/api/services`, `/api/spark-proxy`, `/api/states`) aggregating config-svc, scheduler-svc, state-svc and task-proxy-for-spark
   - React frontend served from static resources (Vite build): Catalog tree, dataset lineage, model/DDL scripts, relations (ER) view, schedules + pipeline DAG, services topology, spark submissions, dataset state control
-  - Configurable service graph via `jarina.ui.services/edges/vertices` (`UiServiceProperties`)
+  - Configurable service graph via `yarina.ui.services/edges/vertices` (`UiServiceProperties`)
   - `HealthChecker` for services availability, `GlobalExceptionHandler`
-- **`jarina-common-health`** — shared liveness/readiness endpoints `/healthz` `/readyz` (paths configurable via `jarina.health.liveness-path` / `readiness-path`), applied to all services
-- **`jarina-task-proxy-for-spark-rest-client`** — REST client for the spark proxy submission query API
+- **`yarina-common-health`** — shared liveness/readiness endpoints `/healthz` `/readyz` (paths configurable via `yarina.health.liveness-path` / `readiness-path`), applied to all services
+- **`yarina-task-proxy-for-spark-rest-client`** — REST client for the spark proxy submission query API
 
-#### jarina-task-proxy-for-spark — submission querying
+#### yarina-task-proxy-for-spark — submission querying
 - **`SparkSubmissionQueryController`** `/api/v1/spark-proxy-submissions` — list submissions filtered by `status`, `dateFrom`/`dateTo`, cursor pagination via `lastId` + `limit` (max 100), plus per-submission spark-properties endpoint
 - **`SparkProxyService`** — `getSubmissions`, `getStatus`, `getSparkProperties`, `kill`, `killAll`, `clear` (locks all rows, kills running, deletes DB records)
 - **DTOs** — `SparkProxySubmissionDTO`, `SparkProxySubmissionPropertiesDTO`, `SparkProxySubmissionsRequest`, `SparkProxySubmissionsMeta`, `SparkProxySubmissionsResponse`
@@ -536,7 +536,7 @@ All backend services now authenticate via Keycloak (OAuth2 Bearer token validati
 - **Task templates** — `TaskTemplateController` CRUD (`/v1_0/configs/tasks`), `TaskTemplate` entity rework
 - **`DatabaseProtocol`** enum added to `DataSourceDTO`/datasource configuration
 - **Schedule headers** — `ScheduleHeaderDTO` support in `ScheduleService`
-- **`TaskDTOValidator`** in `jarina-validators`
+- **`TaskDTOValidator`** in `yarina-validators`
 - Docs: `lineage.md`, `metadata_relationships.puml` diagram, updated content_configuration docs
 
 #### Scheduler service
@@ -554,20 +554,20 @@ All backend services now authenticate via Keycloak (OAuth2 Bearer token validati
 - **`DtoMergeUtils`** — field-level merge for config DTOs
 - `DriverDTO` moved to `configs.schedule` package
 - `DataSetStateResponseDTO` renamed to `DataSetWrongStateResponseDTO`
-- `SQLTemplateFactory` moved from `jarina-common` to `jarina-task-executor-api`
+- `SQLTemplateFactory` moved from `yarina-common` to `yarina-task-executor-api`
 - `Endpoint` constants for lineage, task templates, schedule DAG
 
 #### Demo & infrastructure
-- New Helm chart `jarina-management-ui-svc`
+- New Helm chart `yarina-management-ui-svc`
 - Demo task templates: `begin.json` (`lockedStateTaskProcessor`), `check.json` (`dependencyCheckStateTaskProcessor`), `prepare-jdbc.json` (`jdbcTaskProcessor` + `createTableSQLProcessorBody`)
 - Demo configs updated (datasources with `databaseProtocol`, schedules, scenario-act-templates) for compose and k8s
 - Docker: images bumped to 0.7.0, `build.bash` version checks, updated spark-aws image
 - `doc/nexttimedev/openmetadata` — OpenMetadata integration diagrams (classCurrent, omdClass, sendtoomd)
 
 ### Changed
-- `jarina-config-svc` — task storage refactored: `TaskAbstract`/`ScenarioActTask` replaced by `Task` + `TaskProcessorArg` entities (`TaskRepository`, `TaskService`, `TaskProcessorArgRepository`, `TaskNotFoundException`); `Driver` entity removed in favor of DTO/driver service
-- `jarina-scheduler-svc` — `ScheduleTaskInstanceService` retry semantics driven by `maxRetries`; `ScheduleInstanceController` interval queries
-- All services — health check configuration (`jarina.health.*`)
+- `yarina-config-svc` — task storage refactored: `TaskAbstract`/`ScenarioActTask` replaced by `Task` + `TaskProcessorArg` entities (`TaskRepository`, `TaskService`, `TaskProcessorArgRepository`, `TaskNotFoundException`); `Driver` entity removed in favor of DTO/driver service
+- `yarina-scheduler-svc` — `ScheduleTaskInstanceService` retry semantics driven by `maxRetries`; `ScheduleInstanceController` interval queries
+- All services — health check configuration (`yarina.health.*`)
 
 ### Fixed
 - Proxy `getStatus` returns `NOT_FOUND` for missing submissions
@@ -578,7 +578,7 @@ All backend services now authenticate via Keycloak (OAuth2 Bearer token validati
 
 ## [0.6.0] 2026-07-30
 
-### jarina-task-proxy-for-spark — major refactoring & new schedulers
+### yarina-task-proxy-for-spark — major refactoring & new schedulers
 
 - **`/clear` endpoint redesigned**: now `claimAllTasks(10000)` locks all non-locked rows, kills running tasks (SUBMITTED/RUNNING), calls `clearCompleted()` for terminal tasks, deletes all from DB, then calls `adapter.postClear()`
 - **Three independent schedulers** added (all `ScheduledExecutorService`-based):
@@ -601,23 +601,23 @@ All backend services now authenticate via Keycloak (OAuth2 Bearer token validati
 - **`SubmissionResponse`** — renamed from `CreateSubmissionResponse`, added `success()` field
 - **`ExternalStatus`** — added `fromInternal()` for cluster status mapping
 - **`GlobalExceptionHandler`** — unified error handling for `CreateErrorException`
-- **Helm chart** `demo/k8s/jarina-management-helm-charts/jarina-task-proxy4spark/` — new chart for the proxy service
-- **Dockerfile** `docker/jarina-task-proxy4spark/` — multi-stage build with `jar-with-dependencies`
+- **Helm chart** `demo/k8s/yarina-management-helm-charts/yarina-task-proxy4spark/` — new chart for the proxy service
+- **Dockerfile** `docker/yarina-task-proxy4spark/` — multi-stage build with `jar-with-dependencies`
 - **README** (EN/RU) — rewritten with scheduler descriptions, architecture updates
 - **PlantUML diagrams** — `sequence-cleanup.puml`, `activity-inspectStatus.puml` added; existing diagrams updated
 
-### jarina-task-executor-svc — cleanup & fixes
+### yarina-task-executor-svc — cleanup & fixes
 
 - **Removed `K8sSparkNativeTaskProcessor`** and all k8s-native classes (`K8sClientService`, `K8sConfigService`, `K8sPodStatusWatcher`, `PodPhase`, `PodUtilService`) — not used
-- **Removed `SourceConfUtil`** from jarina-jinjava
+- **Removed `SourceConfUtil`** from yarina-jinjava
 - **`ExecuteService`** — fixed NPE on uninitialized `JinJavaUtils`
 - **`processors.md`** — updated to reflect current architecture (removed references to non-existent processors, added `AbstractSparkDeployTaskProcessor` and `SparkRestDeployFactory` descriptions)
 
 ### Demo & infrastructure
 
-- **Helm charts**: all services updated to 0.5.0; `jarina-task-proxy4spark` chart added
+- **Helm charts**: all services updated to 0.5.0; `yarina-task-proxy4spark` chart added
 - **Docker Compose**: updated Spark templates, proxy port mappings
-- **Dockerfiles**: `build.bash` for all images; fixed `jarina-spark-aws` base image to `spark:3.5.8-scala2.12-java17-ubuntu`
+- **Dockerfiles**: `build.bash` for all images; fixed `yarina-spark-aws` base image to `spark:3.5.8-scala2.12-java17-ubuntu`
 - **K8s scripts**: `install.bash`, `setup-default.bash`, `tunnels.bash`, `remove_images.bash` updated
 
 ---
@@ -625,7 +625,7 @@ All backend services now authenticate via Keycloak (OAuth2 Bearer token validati
 ## [0.5.0] — 2026-06-23
 
 ### Added
-- **`jarina-task-proxy-for-spark`** — new module: REST API proxy for Spark Submit with PostgreSQL-backed task queue
+- **`yarina-task-proxy-for-spark`** — new module: REST API proxy for Spark Submit with PostgreSQL-backed task queue
   - Four adapters: Standalone, Kubernetes, YARN, MESOS
   - `SubmissionScheduler` with `ScheduledExecutorService`, `FOR UPDATE SKIP LOCKED`
   - `SparkLauncher`-based spark-submit execution
@@ -642,8 +642,8 @@ All backend services now authenticate via Keycloak (OAuth2 Bearer token validati
 ## [0.4.0] — 2026-06-20
 
 ### Added
-- **Spark DQ module** (`jarina-task-executor-spark-dq-app`) — data quality validation as Spark job
-- **Spark Dataset module** (`jarina-task-executor-spark-dataset-app`) — dataset processing as Spark job
+- **Spark DQ module** (`yarina-task-executor-spark-dq-app`) — data quality validation as Spark job
+- **Spark Dataset module** (`yarina-task-executor-spark-dataset-app`) — dataset processing as Spark job
 - **`ScenarioActTemplate`** configuration in config-svc
 
 ### Changed
@@ -656,7 +656,7 @@ All backend services now authenticate via Keycloak (OAuth2 Bearer token validati
 
 ### Added
 - **Spark K8s native task processor** — initial (later removed)
-- **Spark REST client** (`jarina-spark-rest-client`) — client for Spark Standalone REST API
+- **Spark REST client** (`yarina-spark-rest-client`) — client for Spark Standalone REST API
 - **Demo helm charts** for all services
 
 ### Fixed
@@ -667,9 +667,9 @@ All backend services now authenticate via Keycloak (OAuth2 Bearer token validati
 ## [0.2.0] — 2025-07-13
 
 ### Added
-- **State service** (`jarina-state-svc`) — manages dataset increment states (LOCKED, SUCCESS, etc.)
+- **State service** (`yarina-state-svc`) — manages dataset increment states (LOCKED, SUCCESS, etc.)
 - **State processors**: `LockedStateTaskProcessor`, `SuccessStateTaskProcessor`, `DependencyCheckStateTaskProcessor`
-- **State REST client** (`jarina-state-rest-client`)
+- **State REST client** (`yarina-state-rest-client`)
 
 ### Changed
 - `AbstractSparkDeployTaskProcessor.deploy()` — waits for RUNNING state with 2-minute timeout, then for final status
@@ -688,16 +688,16 @@ All backend services now authenticate via Keycloak (OAuth2 Bearer token validati
 ### Added
 - Initial project structure
 - **Core modules**:
-  - `jarina-common` — shared DTOs, utils (`SparkConfUtil`, `Coalesce`, etc.)
-  - `jarina-jinjava` — Jinja template engine integration
-  - `jarina-common-rest-client`, `jarina-config-rest-client`, `jarina-scheduler-rest-client`, `jarina-task-executor-rest-client`
-- **Configuration service** (`jarina-config-svc`) — manages datasources, datasets, drivers, scenario templates
-- **Scheduler service** (`jarina-scheduler-svc`) — manages schedules and task delivery via Kafka
-- **Task executor service** (`jarina-task-executor-svc`) — executes tasks with JDBC and Spark processors
-- **Spark API** (`jarina-task-executor-spark-api`) — shared Spark session configuration
-- **CLI** (`jarina-cli`) — command-line interface for configuration management
-- **UI** (`jarina-ui-svc`) — web UI placeholder
-- **Validators** (`jarina-validators`) — validation utilities
+  - `yarina-common` — shared DTOs, utils (`SparkConfUtil`, `Coalesce`, etc.)
+  - `yarina-jinjava` — Jinja template engine integration
+  - `yarina-common-rest-client`, `yarina-config-rest-client`, `yarina-scheduler-rest-client`, `yarina-task-executor-rest-client`
+- **Configuration service** (`yarina-config-svc`) — manages datasources, datasets, drivers, scenario templates
+- **Scheduler service** (`yarina-scheduler-svc`) — manages schedules and task delivery via Kafka
+- **Task executor service** (`yarina-task-executor-svc`) — executes tasks with JDBC and Spark processors
+- **Spark API** (`yarina-task-executor-spark-api`) — shared Spark session configuration
+- **CLI** (`yarina-cli`) — command-line interface for configuration management
+- **UI** (`yarina-ui-svc`) — web UI placeholder
+- **Validators** (`yarina-validators`) — validation utilities
 - **Docker Compose** (`demo/compose/`) — development environment with PostgreSQL, MinIO, Hive Metastore
-- **K8s helm charts** (`demo/k8s/jarina-management-helm-charts/`) — deployment charts for all services
+- **K8s helm charts** (`demo/k8s/yarina-management-helm-charts/`) — deployment charts for all services
 - **PlantUML diagrams** in each module

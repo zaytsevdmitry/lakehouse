@@ -1,0 +1,50 @@
+proxy4spark:
+  image:
+    repository: yarina-spark-aws
+    tag: "1.0.1"
+    pullPolicy: IfNotPresent
+
+  service:
+    type: NodePort
+    port: 8086
+
+  replicaCount: 1
+
+  # Spark adapter type: standalone | k8s | kubernetes | yarn | mesos
+  adapter: k8s
+
+  # Spark master URL
+  sparkMaster: "k8s://https://kubernetes.default.svc"
+
+  # Standalone adapter
+  standalone:
+    restUrl: "http://localhost:6066"
+
+  # YARN adapter
+  yarn:
+    restUrl: "http://localhost:8088"
+
+  # Kubernetes adapter
+  k8s:
+    namespace: "yarina-management"
+    restUrl: "https://kubernetes.default.svc"
+    submissionIdPattern: "submission ID [a-zA-Z0-9-]+:([a-zA-Z0-9\\-]+-driver)"
+
+  # Scheduler
+  scheduler:
+    pollIntervalMs: 5000
+    poolSize: 2
+
+  # Cleanup
+  cleanup:
+    retentionSeconds: 300
+
+  # Metrics / submission timeout
+  metrics:
+    submissionTimeoutSeconds: 30
+
+keycloak:
+  issuerUri: "http://keycloak:8085/realms/yarina"
+  internalClientSecret: "super-secret-internal-key-987654321"
+java:
+  serverPort: 8086

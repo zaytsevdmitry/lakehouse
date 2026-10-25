@@ -1,5 +1,5 @@
 [EN](README.md)
-#  Jarina dataset self service
+#  Yarina dataset self service
 Реализация подхода, основанного на метаданных (Metadata-Driven Approach), позволяет динамически управлять и автоматизировать ETL/ELT конвейеры и интеграцию данных. Отказ от жесткой, зашитой в код логики в пользу внешних конфигураций (SQL/JSON) превращает обработку данных в масштабируемую, гибкую и полностью автоматизированную экосистему.
 
 # Для чего:
@@ -29,7 +29,7 @@ Scheduling
 Custom code
 SQL
 Data engineer tool
-Jarina dataset self service
+Yarina dataset self service
 United namespace
 
 
@@ -39,26 +39,26 @@ United namespace
 
 | Компонент                                                                                | Статус   | Документация                                           |
 |------------------------------------------------------------------------------------------|----------|--------------------------------------------------------|
-| [jarina-cli](jarina-cli)                                                           | Прототип | [doc](jarina-cli/doc-ru/commandline.MD)             |
-| [jarina-common-rest-client](jarina-common-rest-client)                             | Кандидат |                                                        |
-| [jarina-common-test](jarina-common-test)                                           | Кандидат |                                                        |
-| [jarina-config-rest-client](jarina-config-rest-client)                             | Кандидат |                                                        |
-| [jarina-config-svc](jarina-config-svc)                                             | Кандидат | [doc](jarina-config-svc/doc-ru/readme.md)           |
-| [jarina-domain-api](jarina-domain-api)                                             | Кандидат | [doc](jarina-domain-api/doc-ru/readme.md)          |
-| [jarina-scheduler-rest-client](jarina-scheduler-rest-client)                       | Кандидат |                                                        |
-| [jarina-scheduler-svc](jarina-scheduler-svc)                                       | Кандидат | [doc](jarina-scheduler-svc/doc-ru/readme.md)        |
-| [jarina-state-rest-client](jarina-state-rest-client)                               | Кандидат |                                                        |
-| [jarina-state-svc](jarina-state-svc)                                               | Кандидат | [doc](jarina-state-svc/doc-ru/readme.md)            |
-| [jarina-task-executor-api](jarina-task-executor-api)                               | Кандидат |                                                        |
-| [jarina-task-executor-rest-client](jarina-task-executor-rest-client)               | Кандидат |                                                        |
-| [jarina-task-executor-svc](jarina-task-executor-svc)                               | Кандидат | [doc](jarina-task-executor-svc/README_ru.md)        |
-| [jarina-task-executor-spark-api](jarina-task-executor-spark-api)                   | Кандидат | [doc](jarina-task-executor-spark-api/doc/readme.md) |
-| [jarina-task-executor-spark-dataset-app](jarina-task-executor-spark-dataset-app)   | Кандидат |                                                        |
-| [jarina-task-executor-spark-dq-app](jarina-task-executor-spark-dq-app)             | Прототип |                                                        |
-| [jarina-validators](jarina-validators)                                             | Прототип |                                                        |
-| [jarina-ui-svc](jarina-ui-svc)                                                     | Прототип | [doc](jarina-ui-svc/doc-ru/readme.md)               |
-| [jarina-task-proxy-for-spark](jarina-task-proxy-for-spark)                         | Кандидат | [doc](jarina-task-proxy-for-spark/README_ru.md)     |
-| [jarina-task-proxy-for-spark-api](jarina-task-proxy-for-spark-api)                 | Кандидат |                                                        |
+| [yarina-cli](yarina-cli)                                                           | Прототип | [doc](yarina-cli/doc-ru/commandline.MD)             |
+| [yarina-common-rest-client](yarina-common-rest-client)                             | Кандидат |                                                        |
+| [yarina-common-test](yarina-common-test)                                           | Кандидат |                                                        |
+| [yarina-config-rest-client](yarina-config-rest-client)                             | Кандидат |                                                        |
+| [yarina-config-svc](yarina-config-svc)                                             | Кандидат | [doc](yarina-config-svc/doc-ru/readme.md)           |
+| [yarina-domain-api](yarina-domain-api)                                             | Кандидат | [doc](yarina-domain-api/doc-ru/readme.md)          |
+| [yarina-scheduler-rest-client](yarina-scheduler-rest-client)                       | Кандидат |                                                        |
+| [yarina-scheduler-svc](yarina-scheduler-svc)                                       | Кандидат | [doc](yarina-scheduler-svc/doc-ru/readme.md)        |
+| [yarina-state-rest-client](yarina-state-rest-client)                               | Кандидат |                                                        |
+| [yarina-state-svc](yarina-state-svc)                                               | Кандидат | [doc](yarina-state-svc/doc-ru/readme.md)            |
+| [yarina-task-executor-api](yarina-task-executor-api)                               | Кандидат |                                                        |
+| [yarina-task-executor-rest-client](yarina-task-executor-rest-client)               | Кандидат |                                                        |
+| [yarina-task-executor-svc](yarina-task-executor-svc)                               | Кандидат | [doc](yarina-task-executor-svc/README_ru.md)        |
+| [yarina-task-executor-spark-api](yarina-task-executor-spark-api)                   | Кандидат | [doc](yarina-task-executor-spark-api/doc/readme.md) |
+| [yarina-task-executor-spark-dataset-app](yarina-task-executor-spark-dataset-app)   | Кандидат |                                                        |
+| [yarina-task-executor-spark-dq-app](yarina-task-executor-spark-dq-app)             | Прототип |                                                        |
+| [yarina-validators](yarina-validators)                                             | Прототип |                                                        |
+| [yarina-ui-svc](yarina-ui-svc)                                                     | Прототип | [doc](yarina-ui-svc/doc-ru/readme.md)               |
+| [yarina-task-proxy-for-spark](yarina-task-proxy-for-spark)                         | Кандидат | [doc](yarina-task-proxy-for-spark/README_ru.md)     |
+| [yarina-task-proxy-for-spark-api](yarina-task-proxy-for-spark-api)                 | Кандидат |                                                        |
 | Авторизация и безопасность                                                               | Кандидат | [doc](doc-ru/security/security.md)                     |
 | [Docker](docker)                                                                         | Кандидат | [doc](docker/readme.md)                                |
 
@@ -70,17 +70,17 @@ United namespace
 
 [Дизайн сущностей](./doc-ru/entities_design/entities_design.md)
 
-[Планирование](jarina-scheduler-svc/doc-ru/scheduling/Scheduling.md)
+[Планирование](yarina-scheduler-svc/doc-ru/scheduling/Scheduling.md)
 
-[Состояния](jarina-state-svc/doc-ru/state_model/state-models.MD)
+[Состояния](yarina-state-svc/doc-ru/state_model/state-models.MD)
 
-[Командная строка](./jarina-cli/doc-ru/commandline.MD)
+[Командная строка](./yarina-cli/doc-ru/commandline.MD)
 
 
 
 # Авторские права
-"Jarina dataset self service" - набор сервисов для управления изменениями данных на основе подхода, управляемого метаданными
-    Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
+"Yarina dataset self service" - набор сервисов для управления изменениями данных на основе подхода, управляемого метаданными
+    Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/yarina
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.

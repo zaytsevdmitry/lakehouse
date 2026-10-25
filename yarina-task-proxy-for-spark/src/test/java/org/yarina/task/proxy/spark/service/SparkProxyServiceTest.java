@@ -1,0 +1,494 @@
+/*
+ * "Yarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+ * Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/yarina
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0.txt
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.yarina.task.proxy.spark.service;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.hibernate.query.TypedParameterValue;
+import org.yarina.task.proxy.spark.adapter.SparkAdapter;
+import org.yarina.task.proxy.spark.config.ProxyConfig;
+import org.yarina.task.proxy.spark.dto.CreateSubmissionRequest;
+import org.yarina.task.proxy.spark.dto.SparkProxySubmissionPropertiesDTO;
+import org.yarina.task.proxy.spark.dto.SparkProxySubmissionsRequest;
+import org.yarina.task.proxy.spark.dto.SparkProxySubmissionsResponse;
+import org.yarina.task.proxy.spark.dto.SubmissionResponse;
+import org.yarina.task.proxy.spark.dto.ExternalStatus;
+import org.yarina.task.proxy.spark.dto.SubmissionStatusResponse;
+import org.yarina.task.proxy.spark.entity.SparkSubmission;
+import org.yarina.task.proxy.spark.repository.SparkSubmissionRepository;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+
+@ExtendWith(MockitoExtension.class)
+class SparkProxyServiceTest {
+
+    @Mock
+    private SparkSubmissionRepository repository;
+
+    @Mock
+    private SparkAdapter adapter;
+
+    @Mock
+    private TransactionTemplate transactionTemplate;
+
+    private SparkProxyService service;
+
+    @BeforeEach
+    void setUp() {
+        ProxyConfig config = new ProxyConfig();
+        config.setAdapter("standalone");
+        service = new SparkProxyService(repository, adapter, transactionTemplate);
+        lenient().when(transactionTemplate.execute(any())).thenAnswer(inv -> {
+            @SuppressWarnings("unchecked")
+            TransactionCallback<Object> callback = inv.getArgument(0);
+            return callback.doInTransaction(mock(TransactionStatus.class));
+        });
+    }
+
+    // --- create ---
+
+    @Test
+    void create_savesSubmissionAndReturnsWaiting() {
+        when(repository.save(any(SparkSubmission.class))).thenAnswer(inv -> {
+            SparkSubmission s = inv.getArgument(0);
+            s.setId(42L);
+            return s;
+        });
+
+        CreateSubmissionRequest request = new CreateSubmissionRequest(
+                null, "app.jar", null, "com.Main", Map.of(), null
+        );
+
+        SubmissionResponse response = service.create(request);
+
+        assertEquals("42", response.submissionId());
+        assertEquals(ExternalStatus.WAITING.name(), response.message());
+        assertTrue(response.success());
+        verify(repository).save(any(SparkSubmission.class));
+    }
+
+    // --- getStatus ---
+
+    @Test
+    void getStatus_notFound_returnsNotFound() {
+        when(repository.findById(99L)).thenReturn(Optional.empty());
+
+        SubmissionStatusResponse response = service.getStatus(99L);
+        assertEquals("NOT_FOUND", response.message());
+        assertFalse(response.success());
+        assertEquals("UNKNOWN", response.driverState());
+    }
+
+    @Test
+    void getStatus_queued_returnsWaiting() {
+        SparkSubmission sub = new SparkSubmission();
+        sub.setId(1L);
+        sub.setStatus(SparkSubmission.Status.WAITING);
+        when(repository.findById(1L)).thenReturn(Optional.of(sub));
+
+        SubmissionStatusResponse response = service.getStatus(1L);
+        assertEquals(ExternalStatus.WAITING.name(), response.driverState());
+        assertTrue(response.success());
+    }
+
+    @Test
+    void getStatus_submitted_returnsSubmittedFromDb() {
+        SparkSubmission sub = new SparkSubmission();
+        sub.setId(1L);
+        sub.setStatus(SparkSubmission.Status.SUBMITTED);
+        sub.setSubmissionId("driver-abc-123");
+        when(repository.findById(1L)).thenReturn(Optional.of(sub));
+
+        SubmissionStatusResponse response = service.getStatus(1L);
+        assertEquals(ExternalStatus.SUBMITTED.name(), response.driverState());
+        assertEquals("1", response.submissionId());
+        assertTrue(response.success());
+        verifyNoInteractions(adapter);
+    }
+
+    @Test
+    void getStatus_running_returnsRunning() {
+        SparkSubmission sub = new SparkSubmission();
+        sub.setId(1L);
+        sub.setStatus(SparkSubmission.Status.RUNNING);
+        sub.setSubmissionId("driver-abc-123");
+        when(repository.findById(1L)).thenReturn(Optional.of(sub));
+
+        SubmissionStatusResponse response = service.getStatus(1L);
+        assertEquals(ExternalStatus.RUNNING.name(), response.driverState());
+        assertTrue(response.success());
+        verifyNoInteractions(adapter);
+    }
+
+    @Test
+    void getStatus_finished_returnsFinished() {
+        SparkSubmission sub = new SparkSubmission();
+        sub.setId(1L);
+        sub.setStatus(SparkSubmission.Status.FINISHED);
+        sub.setSubmissionId("driver-abc-123");
+        when(repository.findById(1L)).thenReturn(Optional.of(sub));
+
+        SubmissionStatusResponse response = service.getStatus(1L);
+        assertEquals(ExternalStatus.FINISHED.name(), response.driverState());
+        assertTrue(response.success());
+    }
+
+    @Test
+    void getStatus_killed_returnsKilled() {
+        SparkSubmission sub = new SparkSubmission();
+        sub.setId(1L);
+        sub.setStatus(SparkSubmission.Status.KILLED);
+        sub.setSubmissionId("driver-abc-123");
+        when(repository.findById(1L)).thenReturn(Optional.of(sub));
+
+        SubmissionStatusResponse response = service.getStatus(1L);
+        assertEquals(ExternalStatus.KILLED.name(), response.driverState());
+        assertTrue(response.success());
+    }
+
+    @Test
+    void getStatus_unknown_returnsUnknown() {
+        SparkSubmission sub = new SparkSubmission();
+        sub.setId(1L);
+        sub.setStatus(SparkSubmission.Status.UNKNOWN);
+        sub.setSubmissionId("driver-abc-123");
+        when(repository.findById(1L)).thenReturn(Optional.of(sub));
+
+        SubmissionStatusResponse response = service.getStatus(1L);
+        assertEquals(ExternalStatus.UNKNOWN.name(), response.driverState());
+        assertTrue(response.success());
+    }
+
+    // --- getSubmissions ---
+
+    private SparkSubmission submission(Long id, SparkSubmission.Status status, long order) {
+        SparkSubmission s = new SparkSubmission();
+        s.setId(id);
+        s.setStatus(status);
+        s.setSubmissionId("driver-" + order);
+        s.setAppResource("app-" + order);
+        s.setAppArgs("[\"--input\"]");
+        s.setSparkProperties("{\"spark.cores\": \"2\"}");
+        return s;
+    }
+
+    @Test
+    void getSubmissions_returnsPageWithNextCursor() {
+        List<SparkSubmission> rows = new ArrayList<>();
+        for (int i = 1; i <= 21; i++) {
+            rows.add(submission((long) i, SparkSubmission.Status.RUNNING, i));
+        }
+        when(repository.findSubmissions(isNull(), any(TypedParameterValue.class), any(TypedParameterValue.class), any(TypedParameterValue.class), any(PageRequest.class)))
+                .thenReturn(rows);
+
+        SparkProxySubmissionsResponse response = service.getSubmissions(
+                new SparkProxySubmissionsRequest(20, null, null, null, null, null));
+
+        assertThat(response.items()).hasSize(20);
+        assertThat(response.meta().hasMore()).isTrue();
+        assertThat(response.meta().nextCursor()).isEqualTo(20L);
+        assertThat(response.meta().limit()).isEqualTo(20);
+        assertThat(response.items().get(0).appArgs()).isEqualTo(List.of("--input"));
+    }
+
+    @Test
+    void getSubmissions_noMorePages_returnsNullCursor() {
+        List<SparkSubmission> rows = new ArrayList<>();
+        for (int i = 1; i <= 15; i++) {
+            rows.add(submission((long) i, SparkSubmission.Status.RUNNING, i));
+        }
+        when(repository.findSubmissions(isNull(), any(TypedParameterValue.class), any(TypedParameterValue.class), any(TypedParameterValue.class), any(PageRequest.class)))
+                .thenReturn(rows);
+
+        SparkProxySubmissionsResponse response = service.getSubmissions(
+                new SparkProxySubmissionsRequest(20, null, null, null, null, null));
+
+        assertThat(response.items()).hasSize(15);
+        assertThat(response.meta().hasMore()).isFalse();
+        assertThat(response.meta().nextCursor()).isNull();
+    }
+
+    @Test
+    void getSubmissions_returnsEmptyWhenNothingMatches() {
+        when(repository.findSubmissions(isNull(), any(TypedParameterValue.class), any(TypedParameterValue.class), any(TypedParameterValue.class), any(PageRequest.class)))
+                .thenReturn(List.of());
+
+        SparkProxySubmissionsResponse response = service.getSubmissions(
+                new SparkProxySubmissionsRequest(null, null, null, null, null, null));
+
+        assertThat(response.items()).isEmpty();
+        assertThat(response.meta().hasMore()).isFalse();
+        assertThat(response.meta().nextCursor()).isNull();
+        assertThat(response.meta().limit()).isEqualTo(20);
+    }
+
+    @Test
+    void getSubmissions_byId_ignoresPaginationAndFilters() {
+        SparkSubmission s = submission(7L, SparkSubmission.Status.FINISHED, 7);
+        when(repository.findById(7L)).thenReturn(Optional.of(s));
+
+        SparkProxySubmissionsResponse response = service.getSubmissions(
+                new SparkProxySubmissionsRequest(5, 3L, 7L, "RUNNING", "2026-01-01T00:00:00Z", "2026-02-01T00:00:00Z"));
+
+        assertThat(response.items()).hasSize(1);
+        assertThat(response.items().get(0).id()).isEqualTo(7L);
+        assertThat(response.meta().hasMore()).isFalse();
+        assertThat(response.meta().nextCursor()).isNull();
+        verify(repository, never()).findSubmissions(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void getSubmissions_byId_notFound_returnsEmpty() {
+        when(repository.findById(99L)).thenReturn(Optional.empty());
+
+        SparkProxySubmissionsResponse response = service.getSubmissions(
+                new SparkProxySubmissionsRequest(null, null, 99L, null, null, null));
+
+        assertThat(response.items()).isEmpty();
+        assertThat(response.meta().hasMore()).isFalse();
+        assertThat(response.meta().nextCursor()).isNull();
+    }
+
+    @Test
+    void getSubmissions_clampsLimitToMax() {
+        when(repository.findSubmissions(isNull(), any(TypedParameterValue.class), any(TypedParameterValue.class), any(TypedParameterValue.class), any(PageRequest.class)))
+                .thenReturn(List.of());
+
+        SparkProxySubmissionsResponse response = service.getSubmissions(
+                new SparkProxySubmissionsRequest(1000, null, null, null, null, null));
+
+        assertThat(response.meta().limit()).isEqualTo(100);
+        verify(repository).findSubmissions(isNull(), any(TypedParameterValue.class), any(TypedParameterValue.class), any(TypedParameterValue.class),
+                argThat(p -> p.getPageSize() == 101));
+    }
+
+    @Test
+    void getSubmissions_clampsLimitToMin() {
+        when(repository.findSubmissions(isNull(), any(TypedParameterValue.class), any(TypedParameterValue.class), any(TypedParameterValue.class), any(PageRequest.class)))
+                .thenReturn(List.of());
+
+        SparkProxySubmissionsResponse response = service.getSubmissions(
+                new SparkProxySubmissionsRequest(0, null, null, null, null, null));
+
+        assertThat(response.meta().limit()).isEqualTo(1);
+    }
+
+    @Test
+    void getSubmissions_invalidStatus_throws() {
+        assertThrows(IllegalArgumentException.class,
+                () -> service.getSubmissions(new SparkProxySubmissionsRequest(null, null, null, "BOGUS", null, null)));
+    }
+
+    // --- kill ---
+
+    @Test
+    void kill_notFound_returnsNotFound() {
+        when(repository.findById(99L)).thenReturn(Optional.empty());
+
+        SubmissionResponse response = service.kill(99L);
+        assertEquals("NOT_FOUND", response.message());
+        assertFalse(response.success());
+    }
+
+    @Test
+    void kill_queuedTask_deletesFromDb() {
+        SparkSubmission sub = new SparkSubmission();
+        sub.setId(1L);
+        sub.setStatus(SparkSubmission.Status.WAITING);
+        when(repository.findById(1L)).thenReturn(Optional.of(sub));
+
+        SubmissionResponse response = service.kill(1L);
+        assertEquals(ExternalStatus.KILLED.name(), response.message());
+        assertTrue(response.success());
+        verify(repository).delete(sub);
+    }
+
+    @Test
+    void kill_submittedTask_callsAdapter() {
+        SparkSubmission sub = new SparkSubmission();
+        sub.setId(1L);
+        sub.setStatus(SparkSubmission.Status.SUBMITTED);
+        sub.setSubmissionId("driver-abc-123");
+        when(repository.findById(1L)).thenReturn(Optional.of(sub));
+
+        when(adapter.killSubmission(eq("driver-abc-123")))
+                .thenReturn(new SubmissionResponse("KillResponse", ExternalStatus.KILLED.name(), null, "driver-abc-123", true));
+
+        SubmissionResponse response = service.kill(1L);
+        assertEquals(ExternalStatus.KILLED.name(), response.message());
+        verify(adapter).killSubmission(eq("driver-abc-123"));
+        verify(repository).delete(sub);
+    }
+
+    @Test
+    void kill_adapterFails_doesNotDelete() {
+        SparkSubmission sub = new SparkSubmission();
+        sub.setId(1L);
+        sub.setStatus(SparkSubmission.Status.SUBMITTED);
+        sub.setSubmissionId("driver-abc-123");
+        when(repository.findById(1L)).thenReturn(Optional.of(sub));
+
+        when(adapter.killSubmission(eq("driver-abc-123")))
+                .thenReturn(new SubmissionResponse("KillResponse", ExternalStatus.FAILED.name(), null, "driver-abc-123", false));
+
+        service.kill(1L);
+        verify(repository, never()).delete(any());
+    }
+
+    // --- killAll ---
+
+    @Test
+    void killAll_deletesQueued() {
+        SparkSubmission q1 = new SparkSubmission();
+        q1.setId(1L);
+        SparkSubmission q2 = new SparkSubmission();
+        q2.setId(2L);
+
+        when(repository.findByStatus(SparkSubmission.Status.WAITING)).thenReturn(List.of(q1, q2));
+
+        SubmissionResponse response = service.killAll();
+        assertTrue(response.success());
+        assertTrue(response.message().contains("2"));
+        verify(repository).delete(q1);
+        verify(repository).delete(q2);
+    }
+
+    @Test
+    void killAll_noTasks() {
+        when(repository.findByStatus(SparkSubmission.Status.WAITING)).thenReturn(List.of());
+
+        SubmissionResponse response = service.killAll();
+        assertTrue(response.success());
+        assertTrue(response.message().contains("0"));
+    }
+
+    // --- clear ---
+
+    @Test
+    void clear_deletesCompletedSubmissions() {
+        when(repository.claimAllTasks(10000))
+                .thenReturn(List.<Object[]>of(
+                        new Object[]{1L, "driver-abc-123", "FINISHED"}));
+        when(adapter.clearCompleted(eq("driver-abc-123")))
+                .thenReturn(new SubmissionResponse("ClearResponse", ExternalStatus.FINISHED.name(), null, "driver-abc-123", true));
+
+        SubmissionResponse response = service.clear();
+        assertTrue(response.success());
+        assertTrue(response.message().contains("1"));
+        assertTrue(response.message().contains("0"));
+        verify(adapter).clearCompleted(eq("driver-abc-123"));
+        verify(repository).deleteById(1L);
+        verify(adapter).postClear();
+    }
+
+    @Test
+    void clear_killsRunningSubmissions() {
+        when(repository.claimAllTasks(10000))
+                .thenReturn(List.<Object[]>of(
+                        new Object[]{2L, "driver-xyz-789", "RUNNING"}));
+        when(adapter.killSubmission(eq("driver-xyz-789")))
+                .thenReturn(new SubmissionResponse("KillResponse", ExternalStatus.KILLED.name(), null, "driver-xyz-789", true));
+
+        SubmissionResponse response = service.clear();
+        assertTrue(response.success());
+        assertTrue(response.message().contains("1"));
+        assertTrue(response.message().contains("1"));
+        verify(adapter).killSubmission(eq("driver-xyz-789"));
+        verify(repository).deleteById(2L);
+        verify(adapter).postClear();
+    }
+
+    @Test
+    void clear_noRows() {
+        when(repository.claimAllTasks(10000)).thenReturn(List.<Object[]>of());
+
+        SubmissionResponse response = service.clear();
+        assertTrue(response.success());
+        assertTrue(response.message().contains("0"));
+        verify(adapter).postClear();
+    }
+
+    @Test
+    void clear_submissionWithNullSubmissionId_skipsAdapter() {
+        when(repository.claimAllTasks(10000))
+                .thenReturn(List.<Object[]>of(
+                        new Object[]{3L, null, "WAITING"}));
+
+        SubmissionResponse response = service.clear();
+        assertTrue(response.success());
+        assertTrue(response.message().contains("1"));
+        verify(adapter, never()).clearCompleted(any());
+        verify(adapter, never()).killSubmission(any());
+        verify(repository).deleteById(3L);
+        verify(adapter).postClear();
+    }
+
+    @Test
+    void clear_adapterFails_stillDeletes() {
+        when(repository.claimAllTasks(10000))
+                .thenReturn(List.<Object[]>of(
+                        new Object[]{4L, "driver-fail-456", "FINISHED"}));
+        when(adapter.clearCompleted(eq("driver-fail-456")))
+                .thenReturn(new SubmissionResponse("ClearResponse", ExternalStatus.FAILED.name(), null, "driver-fail-456", false));
+
+        SubmissionResponse response = service.clear();
+        assertTrue(response.success());
+        assertTrue(response.message().contains("1"));
+        verify(adapter).clearCompleted(eq("driver-fail-456"));
+        verify(repository).deleteById(4L);
+        verify(adapter).postClear();
+    }
+
+    @Test
+    void getSparkProperties_returnsParsedProperties() {
+        SparkSubmission s = new SparkSubmission();
+        s.setId(7L);
+        s.setSubmissionId("driver-7");
+        s.setSparkProperties("{\"spark.cores\": \"2\", \"spark.memory\": \"1g\"}");
+
+        when(repository.findById(7L)).thenReturn(Optional.of(s));
+
+        SparkProxySubmissionPropertiesDTO dto = service.getSparkProperties(7L);
+
+        assertThat(dto).isNotNull();
+        assertThat(dto.id()).isEqualTo(7L);
+        assertThat(dto.submissionId()).isEqualTo("driver-7");
+        assertThat(dto.sparkProperties()).isEqualTo(Map.of("spark.cores", "2", "spark.memory", "1g"));
+    }
+
+    @Test
+    void getSparkProperties_missingReturnsNull() {
+        when(repository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThat(service.getSparkProperties(99L)).isNull();
+    }
+}

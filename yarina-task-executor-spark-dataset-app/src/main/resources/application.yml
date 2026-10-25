@@ -1,0 +1,26 @@
+server:
+  port: 0
+
+spring:
+  main:
+    web-application-type: none
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak-internal:
+            provider: keycloak
+            client-id: yarina-internal-client
+            client-secret: ${KEYCLOAK_INTERNAL_CLIENT_SECRET:super-secret-internal-key-987654321}
+            authorization-grant-type: client_credentials
+            scope: openid
+        provider:
+          keycloak:
+            token-uri: ${KEYCLOAK_ISSUER_URI:http://keycloak.yarina:8085/realms/yarina}/protocol/openid-connect/token
+logging:
+  structured:
+    format: none
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n"
+  level:
+    root: info
