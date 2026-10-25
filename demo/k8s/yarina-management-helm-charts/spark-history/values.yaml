@@ -1,0 +1,27 @@
+replicaCount: 1
+
+image:
+  repository: yarina-spark-aws
+  tag: 1.0.1
+  pullPolicy: IfNotPresent
+
+# Секреты и окружение выносим в values для гибкости
+env:
+  awsAccessKeyId: "spark_user"
+  awsSecretAccessKey: "spark_pwd"
+  s3Endpoint: "http://minio:9000"
+  s3TestUrl: "http://minio:9001"
+  sparkMode: "history"
+  # Scoped OpenBao token for the S3 credentials provider (BaoS3CredentialsProvider):
+  # spark-history reads event logs from s3a://sparklogs backed by kv/infrastructure/minio
+  vaultToken: "yarina-spark-token"
+
+resources:
+  limits:
+    cpu: "2"
+    memory: 4Gi
+  requests:
+    cpu: "500m"
+    memory: 1Gi
+
+

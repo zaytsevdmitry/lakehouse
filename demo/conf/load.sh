@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# "Jarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
-# Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
+# "Yarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+# Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/yarina
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,13 +40,13 @@ check_config_svc_ready() {
 
 
 get_access_token() {
-  token_url="http://${KEYCLOAK_URN}/realms/jarina/protocol/openid-connect/token"
+  token_url="http://${KEYCLOAK_URN}/realms/yarina/protocol/openid-connect/token"
   echo "Fetching access token from: $token_url"
 
   response=$(curl -s -X POST "$token_url" \
     -H "Content-Type: application/x-www-form-urlencoded" \
     -d "grant_type=client_credentials" \
-    -d "client_id=jarina-internal-client" \
+    -d "client_id=yarina-internal-client" \
     -d "client_secret=super-secret-internal-key-987654321")
 
 

@@ -1,16 +1,16 @@
 # System design
 
-The overall system design of jarina: a set of services managing data changes based on a metadata-driven approach.
+The overall system design of yarina: a set of services managing data changes based on a metadata-driven approach.
 
 ## Services
 
 | Service | Port | Purpose | Documentation |
 |:--------|:----:|:--------|:--------------|
-| jarina-config-svc | 8080 | Stores configurations (metadata): data sources, datasets, schedules, scenarios, drivers. REST API for reading/writing configurations, publishing schedule changes to Kafka | [doc](../../jarina-config-svc/doc/readme.md) |
-| jarina-scheduler-svc | 8081 | Scheduler: consumes schedule changes from Kafka, builds schedule/task instances, resolves dependencies, enqueues tasks and passes them to executors, manages locks (lock/heartbeat/release) | [doc](../../jarina-scheduler-svc/doc/readme.md) |
-| jarina-state-svc | 8082 | Stores dataset interval states (LOCKED/SUCCESS), finds "gaps" (intervals without SUCCESS) | [doc](../../jarina-state-svc/doc/readme.md) |
-| jarina-task-executor-svc | 8089 | Task executor: consumes tasks from Kafka, locks them in scheduler-svc, runs TaskProcessors (JDBC, state, spark), sends heartbeats and releases the lock with the result | [doc](../../jarina-task-executor-svc/readme.md) |
-| jarina-task-proxy-for-spark | 8090 | Spark proxy: accepts spark-submit over REST `/v1/submissions`, keeps a queue in PostgreSQL, submits tasks to clusters (Standalone/K8s/YARN) via adapters | [doc](../../jarina-task-proxy-for-spark/README.md) |
+| yarina-config-svc | 8080 | Stores configurations (metadata): data sources, datasets, schedules, scenarios, drivers. REST API for reading/writing configurations, publishing schedule changes to Kafka | [doc](../../yarina-config-svc/doc/readme.md) |
+| yarina-scheduler-svc | 8081 | Scheduler: consumes schedule changes from Kafka, builds schedule/task instances, resolves dependencies, enqueues tasks and passes them to executors, manages locks (lock/heartbeat/release) | [doc](../../yarina-scheduler-svc/doc/readme.md) |
+| yarina-state-svc | 8082 | Stores dataset interval states (LOCKED/SUCCESS), finds "gaps" (intervals without SUCCESS) | [doc](../../yarina-state-svc/doc/readme.md) |
+| yarina-task-executor-svc | 8089 | Task executor: consumes tasks from Kafka, locks them in scheduler-svc, runs TaskProcessors (JDBC, state, spark), sends heartbeats and releases the lock with the result | [doc](../../yarina-task-executor-svc/readme.md) |
+| yarina-task-proxy-for-spark | 8090 | Spark proxy: accepts spark-submit over REST `/v1/submissions`, keeps a queue in PostgreSQL, submits tasks to clusters (Standalone/K8s/YARN) via adapters | [doc](../../yarina-task-proxy-for-spark/README.md) |
 
 
 ## Inter-services communication
@@ -46,8 +46,8 @@ task-executor-svc works with state-svc over REST:
 
 For more details about the services and their internal structure, see the links in the "Services" table, as well as:
 
-- configurations (metadata): [content_configuration](../../jarina-config-svc/doc/content_configuration/content_configuration.md);
-- scheduling and state models: [scheduling](../../jarina-scheduler-svc/doc/scheduling/Scheduling.md);
-- task processors: [processors](../../jarina-task-executor-svc/doc/processors.md);
-- interval state model: [state model](../../jarina-state-svc/doc/state_model/state-models.MD);
-- spark proxy: [README](../../jarina-task-proxy-for-spark/README.md).
+- configurations (metadata): [content_configuration](../../yarina-config-svc/doc/content_configuration/content_configuration.md);
+- scheduling and state models: [scheduling](../../yarina-scheduler-svc/doc/scheduling/Scheduling.md);
+- task processors: [processors](../../yarina-task-executor-svc/doc/processors.md);
+- interval state model: [state model](../../yarina-state-svc/doc/state_model/state-models.MD);
+- spark proxy: [README](../../yarina-task-proxy-for-spark/README.md).

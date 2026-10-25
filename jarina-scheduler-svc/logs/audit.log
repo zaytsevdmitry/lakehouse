@@ -1,5 +1,0 @@
-2026-08-23 10:27:33.313 - User ID: -, Username: -, Method: GET, URI: /swagger-ui/index.html, HTTP status: 404
-2026-08-23 10:27:33.328 - User ID: -, Username: -, Method: GET, URI: /protected, HTTP status: 401
-2026-08-23 10:27:33.360 - User ID: -, Username: -, Method: GET, URI: /healthz, HTTP status: 200
-2026-08-23 10:27:33.371 - User ID: -, Username: -, Method: GET, URI: /protected, HTTP status: 401
-2026-08-23 10:27:33.395 - User ID: -, Username: -, Method: GET, URI: /protected, HTTP status: 200

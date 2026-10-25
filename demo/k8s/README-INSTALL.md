@@ -32,11 +32,11 @@ minikube start --cpus 4 --memory 10192 --registry-mirror=https://dh-mirror.gitve
 sh install.bash
 ```
 В результате выполнения команды: 
-- образы jarina* перегрузятся из локального репозитория в minikube  ~ 3-5 минут в зависимости от локальной системы
+- образы yarina* перегрузятся из локального репозитория в minikube  ~ 3-5 минут в зависимости от локальной системы
 - соберется helm chart
-- создано пространство имен jarina-management
+- создано пространство имен yarina-management
 - учетные записи 
-  - jarina-app-sa - используется jarina-task-proxy4spark для отправки задачи посредством submit
+  - yarina-app-sa - используется yarina-task-proxy4spark для отправки задачи посредством submit
   - spark-driver-sa  - используется spark-driver , создаются экзекуторы
 - запустятся все сервисы
 
@@ -59,7 +59,7 @@ sh tunnels.bash
 > В примере команда kubectl запускается через xterm. Это нужно, чтобы иметь возможность закрыть проброс порта кликом мыши в интерфейсе рабочего стола, а не искать номера процессов чтобы их завершить.
 > xterm это стандартная утилита linux. В своей операционной системе можно найти аналог.
 
-jarina-management-config-service 8080 нужен для загрузки конфигурации метаданных.
+yarina-management-config-service 8080 нужен для загрузки конфигурации метаданных.
 
 ## Загрузка демонстрационной конфигурации метаданных
 
@@ -81,7 +81,7 @@ sh load.sh
 Если сервис конфигураций еще не доступен, скрипт "подождет" готовности сервиса
 ```
 server is 127.0.0.1:8080/v1_0/configs
-pwd is /home/dm2/IdeaProjects/jarina/demo/conf
+pwd is /home/dm2/IdeaProjects/yarina/demo/conf
 Waiting Config-SVC: The request failed. Sleeping...zzZ
 Retry Config-SVC
 Waiting Config-SVC: The request failed. Sleeping...zzZ
@@ -109,32 +109,32 @@ bash ./bootstrap-configs.bash
 Просмотр списка подов
 
 ```shell
-kubectl -n jarina-management get pods -o custom-columns="NAME:.metadata.name,STATUS:.status.phase,TASK-NAME:.metadata.annotations.jarina-management-task"
+kubectl -n yarina-management get pods -o custom-columns="NAME:.metadata.name,STATUS:.status.phase,TASK-NAME:.metadata.annotations.yarina-management-task"
 
 ```
 Просмотр лога task-executor
 ```shell
-kubectl -n jarina-management logs deployment/jarina-management-task-executor-service
+kubectl -n yarina-management logs deployment/yarina-management-task-executor-service
 ```
 Просмотр task-proxy4spark
 ```shell
-kubectl -n jarina-management logs deployment/jarina-task-proxy4spark
+kubectl -n yarina-management logs deployment/yarina-task-proxy4spark
 ```
 
 Просмотр лога драйвера, который упал с ошибкой
 ```shell
-kubectl -n jarina-management get pods|grep task| grep Error|awk '{print $1}'|xargs -r kubectl -n jarina-management logs
+kubectl -n yarina-management get pods|grep task| grep Error|awk '{print $1}'|xargs -r kubectl -n yarina-management logs
 ```
 
 Удалить контейнеры с ошибкой.
 ```shell
-kubectl -n jarina-management get pods | grep task | grep Error | awk '{print $1}' | xargs kubectl -n jarina-management delete pod
+kubectl -n yarina-management get pods | grep task | grep Error | awk '{print $1}' | xargs kubectl -n yarina-management delete pod
 
 ```
 Ускоряем работу. 
 >Следите за ресурсами выполняя следующую команду.
 ```shell
-kubectl -n jarina-management scale deployment jarina-management-task-executor-service --replicas=4
+kubectl -n yarina-management scale deployment yarina-management-task-executor-service --replicas=4
 ````
 ## Keycloak
 Сборка использует Keycloak для аутентификации. Необходимо добавить запись в `/etc/hosts` (или `%SystemRoot%\System32\drivers\etc\hosts` в Windows):
@@ -143,13 +143,13 @@ kubectl -n jarina-management scale deployment jarina-management-task-executor-se
 127.0.0.1 keycloak
 ```
 
-> Без этой записи браузер не сможет перейти на страницу входа Keycloak (issuer URI = `http://keycloak:8085/realms/jarina`).
+> Без этой записи браузер не сможет перейти на страницу входа Keycloak (issuer URI = `http://keycloak:8085/realms/yarina`).
 
 После проброса портов Keycloak доступен по адресам:
 - Админ-консоль: http://keycloak:8085 (учетные данные: `admin` / `admin_local_password`)
-- OIDC endpoint: http://keycloak:8085/realms/jarina
+- OIDC endpoint: http://keycloak:8085/realms/yarina
 
-Вход в Jarina UI: http://localhost:8080 — перенаправит на Keycloak.
+Вход в Yarina UI: http://localhost:8080 — перенаправит на Keycloak.
 
 > В production используйте переменные окружения `KEYCLOAK_INTERNAL_CLIENT_SECRET` и `KEYCLOAK_UI_CLIENT_SECRET`.
 

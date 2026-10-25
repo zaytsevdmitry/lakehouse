@@ -14,7 +14,7 @@ docker compose up -d
 ### Настройка хост машины
 Требуется строка в файле /etc/hosts хоста 
 ```
-127.0.0.1 keycloak.jarina
+127.0.0.1 keycloak.yarina
 
 ```
 ### Совпадения имен
@@ -41,7 +41,7 @@ docker container rm state-svc
 docker container rm task-executor-svc-database
 docker container rm task-executor-svc-spark
 docker container rm task-executor-svc-state
-docker container rm jarina-task-proxy4spark
+docker container rm yarina-task-proxy4spark
 
 ```
 #### Сеть
@@ -49,7 +49,7 @@ docker container rm jarina-task-proxy4spark
 На пример брокер или spark-master/worker ui.   
 ```yaml
 networks:
-  jarina_net:
+  yarina_net:
     driver: bridge
     ipam:
       config:

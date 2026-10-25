@@ -1,0 +1,71 @@
+/*
+ * "Yarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+ * Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/yarina
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     https://www.apache.org/licenses/LICENSE-2.0.txt
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.yarina.client.api.dto.configs.schedule;
+
+import org.yarina.client.api.dto.configs.NameDescriptionAbstract;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+public class TaskExecutionServiceGroupDTO extends NameDescriptionAbstract {
+
+    private static final long serialVersionUID = 4350312904681179326L;
+
+    private String domainKeyName;
+    private List<String> allowedDomains = new ArrayList<>();
+
+    public String getDomainKeyName() {
+        return domainKeyName;
+    }
+
+    public void setDomainKeyName(String domainKeyName) {
+        this.domainKeyName = domainKeyName;
+    }
+
+
+    public List<String> getAllowedDomains() {
+        return allowedDomains;
+    }
+
+    public void setAllowedDomains(List<String> allowedDomains) {
+        this.allowedDomains = allowedDomains;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        TaskExecutionServiceGroupDTO that = (TaskExecutionServiceGroupDTO) o;
+        return Objects.equals(getDomainKeyName(), that.getDomainKeyName()) && Objects.equals(getAllowedDomains(), that.getAllowedDomains());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), getDomainKeyName(), getAllowedDomains());
+    }
+
+    @Override
+    public String toString() {
+        return "TaskExecutionServiceGroupDTO{" +
+                "keyNamw" + getName() + '\'' +
+                "domainKeyName='" + domainKeyName + '\'' +
+                ", allowedDomains=" + allowedDomains +
+                '}';
+    }
+}

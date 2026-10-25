@@ -1,0 +1,144 @@
+/*
+ * "Yarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+ * Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/yarina
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     https://www.apache.org/licenses/LICENSE-2.0.txt
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.yarina.client.rest.config.test;
+
+import tools.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Test;
+import org.yarina.client.api.constant.Endpoint;
+import org.yarina.client.api.dto.configs.schedule.DriverDTO;
+import org.yarina.client.api.dto.configs.schedule.ScenarioActTemplateDTO;
+import org.yarina.client.api.dto.configs.schedule.ScheduleDTO;
+import org.yarina.client.api.dto.configs.schedule.ScheduleEffectiveDTO;
+import org.yarina.client.api.dto.configs.schedule.TaskDTO;
+import org.yarina.client.rest.config.ConfigRestClientApi;
+import org.yarina.client.rest.config.configuration.ConfigRestClientConfiguration;
+import org.yarina.test.config.util.FileLoader;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.restclient.test.autoconfigure.RestClientTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.web.client.ExpectedCount;
+import org.springframework.test.web.client.MockRestServiceServer;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
+
+@ContextConfiguration(classes = {ConfigRestClientConfiguration.class})
+@RestClientTest(properties = {
+        "yarina.client.rest.config.server.url=",
+})
+public class ConfigRestClientHelperTest {
+
+    @Autowired
+    ConfigRestClientApi client;
+
+    @Autowired
+    MockRestServiceServer server;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+
+    private final FileLoader fileLoader = new FileLoader();
+
+    @Test
+    public void MakesCorrectCallDriverDTO() throws Exception {
+        DriverDTO expectDriverDTO = fileLoader.loadDriverDTO("postgres");
+        server.expect(ExpectedCount.manyTimes(),
+                        requestTo(String.format("%s/%s", Endpoint.DRIVERS, expectDriverDTO.getKeyName())))
+                .andRespond(withSuccess(objectMapper.writeValueAsString(expectDriverDTO), MediaType.APPLICATION_JSON));
+        System.out.println("Driver is loaded");
+
+
+        DriverDTO driverDTO = this.client.getDriverDTO(expectDriverDTO.getKeyName());
+        assert (expectDriverDTO.equals(driverDTO));
+    }
+
+    @Test
+    public void MakesCorrectCallScheduleDTO() throws Exception {
+
+        ScheduleDTO expectScheduleDTO = fileLoader.loadScheduleDTO("initial");
+        server.expect(ExpectedCount.manyTimes(),
+                        requestTo(String.format("%s/%s", Endpoint.SCHEDULES, expectScheduleDTO.getKeyName())))
+                .andRespond(withSuccess(objectMapper.writeValueAsString(expectScheduleDTO), MediaType.APPLICATION_JSON));
+        System.out.println("schedule is loaded");
+
+        ScheduleDTO scheduleDTO = this.client.getScheduleDTO(expectScheduleDTO.getKeyName());
+        assert (expectScheduleDTO.equals(scheduleDTO));
+    }
+
+    @Test
+    public void MakesCorrectCallScenarioActTemplateDTO() throws Exception {
+        ScenarioActTemplateDTO scenarioActTemplateDTO = fileLoader.loadScenarioActTemplateDTO("default");
+        server.expect(ExpectedCount.manyTimes(),
+                        requestTo(String.format("%s/%s", Endpoint.SCENARIOS, scenarioActTemplateDTO.getKeyName())))
+                .andRespond(withSuccess(objectMapper.writeValueAsString(scenarioActTemplateDTO), MediaType.APPLICATION_JSON));
+        System.out.println("scenario is loaded");
+
+        ScenarioActTemplateDTO expect = fileLoader.loadScenarioActTemplateDTO("default");
+        ScenarioActTemplateDTO result = client.getScenarioActTemplateDTO(expect.getKeyName());
+        assert (expect.equals(result));
+    }
+
+    @Test
+    public void MakesCorrectCallScheduleEffectiveDTO() throws Exception {
+        ScheduleEffectiveDTO sef = fileLoader.loadScheduleEffectiveDTO();
+        server.expect(ExpectedCount.manyTimes(),
+                        requestTo(Endpoint.EFFECTIVE_SCHEDULES_NAME
+                                .replaceAll("\\{keyName}", sef.getKeyName())))
+                .andRespond(withSuccess(objectMapper.writeValueAsString(sef), MediaType.APPLICATION_JSON));
+        System.out.println("Schedule effective is loaded");
+
+        ScheduleEffectiveDTO expect = fileLoader.loadScheduleEffectiveDTO();
+        ScheduleEffectiveDTO result = client.getScheduleEffectiveDTO(expect.getKeyName());
+        assert (expect.equals(result));
+    }
+
+    @Test
+    public void MakesCorrectCallScheduleEffectiveTaskDTO() throws Exception {
+        TaskDTO mergeTaskDTOExpected = new TaskDTO();
+        Map<String, String> mergeTaskDTOExpectedArgs = new HashMap<>();
+        mergeTaskDTOExpectedArgs.put("spark.executor.memory", "5g");
+        mergeTaskDTOExpectedArgs.put("spark.driver.memory", "2g");
+        mergeTaskDTOExpectedArgs.put("spark.driver.cores", "3");
+        mergeTaskDTOExpected.setTaskProcessorArgs(mergeTaskDTOExpectedArgs);
+        mergeTaskDTOExpected.setName("merge");
+        mergeTaskDTOExpected.setTaskExecutionServiceGroupName("default");
+        mergeTaskDTOExpected.setTaskProcessor("org.yarina.taskexecutor.executionmodule.datamanipulation.MergeProcessor");
+        mergeTaskDTOExpected.setImportance("critical");
+        mergeTaskDTOExpected.setDescription("load from remote datastore");
+
+        server.expect(ExpectedCount.manyTimes(),
+                        requestTo(Endpoint.EFFECTIVE_SCHEDULE_SCENARIOACT_TASK
+                                .replaceAll("\\{scheduleKeyName}", "initial")
+                                .replaceAll("\\{scenarioActName}", "transaction_dds")
+                                .replaceAll("\\{taskName}", "merge")
+
+                        ))
+                .andRespond(withSuccess(objectMapper.writeValueAsString(mergeTaskDTOExpected), MediaType.APPLICATION_JSON));
+        System.out.println("Schedule effective is loaded");
+
+        TaskDTO result = client.getEffectiveTaskDTO("initial",
+                "transaction_dds",
+                "merge");
+        assert (mergeTaskDTOExpected.equals(result));
+    }
+}

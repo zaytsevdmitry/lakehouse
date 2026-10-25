@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: yarina-config-svc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: yarina-config-svc
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: yarina-config-svc
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      initContainers:
+        - name: wait-for-keycloak
+          image: busybox:1.37
+          command: ['sh', '-c', 'until wget -q -O /dev/null {{ .Values.keycloak.issuerUri }}; do echo waiting for keycloak; sleep 3; done']
+        - name: wait-for-git-server
+          image: {{ .Values.git.image | default "alpine/git:latest" | quote }}
+          command: ['sh', '-c', 'until git ls-remote {{ .Values.git.repositoryUrl }} >/dev/null 2>&1; do echo "waiting for git-server"; sleep 3; done']
+      containers:
+        - name: conf-svc
+          image: "{{ index .Values "conf-svc" "image" "repository" }}:{{ index .Values "conf-svc" "image" "tag" }}"
+          imagePullPolicy: {{ index .Values "conf-svc" "image" "pullPolicy" }}
+          ports:
+            - containerPort: 8082
+              protocol: TCP
+          env:
+            - name: KEYCLOAK_ISSUER_URI
+              value: {{ .Values.keycloak.issuerUri | quote }}
+            - name: KEYCLOAK_INTERNAL_CLIENT_SECRET
+              value: {{ .Values.keycloak.internalClientSecret | quote }}
+          command: ["bash", "-c"]
+          args:
+            - "java
+            -Dyarina.config.vcs.sync.enabled=true
+            -Dyarina.config.vcs.sync.interval-ms=30000
+            -Dyarina.config.vcs.sync.initial-delay-ms=10000
+            -Dyarina.domains.platform.priority=0
+            -Dyarina.domains.platform.git.repository-url=git://git-server:9418/platform.git
+            -Dyarina.domains.platform.git.branch=main
+            -Dyarina.domains.platform.git.local-clone-path=/tmp/platform
+            -Dyarina.domains.platform.domains.processing.priority=0
+            -Dyarina.domains.platform.domains.processing.git.repository-url=git://git-server:9418/processing.git
+            -Dyarina.domains.platform.domains.processing.git.branch=main
+            -Dyarina.domains.platform.domains.processing.git.local-clone-path=/tmp/processing
+            -Dyarina.domains.platform.domains.processing.domains.analytics.priority=0
+            -Dyarina.domains.platform.domains.processing.domains.analytics.git.repository-url=git://git-server:9418/analytics.git
+            -Dyarina.domains.platform.domains.processing.domains.analytics.git.branch=main
+            -Dyarina.domains.platform.domains.processing.domains.analytics.git.local-clone-path=/tmp/analytics
+            -Dserver.port={{ .Values.java.serverPort }}
+            -Dspring.datasource.url=jdbc:postgresql://db-dev:5432/postgresDB?ApplicationName=ConfigSVC
+            -Dyarina.config.produce.kafka.producer.properties.bootstrap.servers=broker:9092
+            -jar /opt/yarina-config-svc-{{ .Chart.AppVersion }}-jar-with-dependencies.jar"

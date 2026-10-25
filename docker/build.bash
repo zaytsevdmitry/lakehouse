@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# "Jarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
-# Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
+# "Yarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+# Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/yarina
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@ set -v
 cd  ../
 pwd
 mvn clean package install
-cd ./docker/jarina
+cd ./docker/yarina
 bash ./build.bash
-cd ../jarina-spark-aws
+cd ../yarina-spark-aws
 bash ./build.bash
 cd ../hms
 bash ./build.bash
@@ -31,4 +31,4 @@ cd ../checkcontainer
 bash ./build.bash
 
 
-docker images | grep jarina | grep '1.0.0'
+docker images | grep yarina | grep '1.0.1'

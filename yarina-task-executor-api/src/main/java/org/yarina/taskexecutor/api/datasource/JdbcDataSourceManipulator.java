@@ -1,0 +1,212 @@
+/*
+ * "Yarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+ * Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/yarina
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     https://www.apache.org/licenses/LICENSE-2.0.txt
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.yarina.taskexecutor.api.datasource;
+
+import tools.jackson.core.JacksonException;
+import org.yarina.client.api.constant.SystemVarKeys;
+import org.yarina.client.api.constant.Types;
+import org.yarina.client.api.dto.configs.dataset.DataSetConstraintDTO;
+import org.yarina.client.api.dto.configs.dataset.DataSetDTO;
+import org.yarina.client.api.utils.Coalesce;
+import org.yarina.taskexecutor.api.datasource.exception.*;
+import org.yarina.taskexecutor.api.datasource.execute.ExecuteUtils;
+import org.yarina.taskexecutor.api.facade.SQLTemplateResolver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class JdbcDataSourceManipulator implements DataSourceManipulator {
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final ExecuteUtils executeUtils;
+    private final SQLTemplateResolver sqlTemplateResolver;
+    private final DataSetDTO dataSetDTO;
+    public JdbcDataSourceManipulator(
+            DataSourceManipulatorParameter dataSourceManipulatorParameter) {
+        this.executeUtils = dataSourceManipulatorParameter.executeUtils();
+        this.sqlTemplateResolver = dataSourceManipulatorParameter.sqlTemplateResolver();
+        this.dataSetDTO = dataSourceManipulatorParameter.dataSetDTO();
+    }
+
+    @Override
+    public ExecuteUtils executeUtils() {
+        return executeUtils;
+    }
+
+    @Override
+    public SQLTemplateResolver sqlTemplateResolver() {
+        return sqlTemplateResolver;
+    }
+
+
+
+    @Override
+    public void createTableIfNotExists() throws CreateException {
+
+        try {
+            executeUtils().executeIfFalse(
+                    sqlTemplateResolver().getDatabaseSchemaExistsSQL(),
+                    sqlTemplateResolver().getDatabaseSchemaDDLCreate(),
+                    new HashMap<>());
+
+            executeUtils().executeIfFalse(
+                    sqlTemplateResolver().getTableSQLExists(),
+                    sqlTemplateResolver().getTableDDLCreate(),
+                    new HashMap<>());
+
+        } catch (ExecuteException e) {
+            throw new CreateException(e.fillInStackTrace());
+        }
+    }
+
+    @Override
+    public void drop() throws DropException {
+        try {
+            executeUtils.executeIfTrue(
+                    sqlTemplateResolver().getTableSQLExists(),
+                    sqlTemplateResolver().getTableDDLDrop(),
+                    new HashMap<>());
+
+        } catch ( ExecuteException  e) {
+            throw new DropException(e);
+        }
+    }
+
+    @Override
+    public void truncate() throws TruncateException {
+        try {
+            executeUtils.execute(sqlTemplateResolver().getTableDDLTruncate(),new HashMap<>());
+        } catch (ExecuteException e) {
+            throw new TruncateException(e);
+        }
+    }
+    private void executePartitions(
+            String template,
+            List<String> partitions) throws  ExecuteException {
+        Map<String,Object> localContext = new HashMap<>();
+        for(String partition:partitions){
+            localContext.put(SystemVarKeys.PARTITION_NAME, partition);
+            executeUtils.execute(template,localContext);
+        }
+
+    }
+
+    @Override
+    public void dropPartitions( List<String> partitions) throws DropException {
+        try {
+            executePartitions(
+                sqlTemplateResolver().getPartitionDDLDrop(),
+                partitions);
+        } catch (ExecuteException  e) {
+                throw new DropException(e);
+        }
+    }
+
+    @Override
+    public void truncatePartitions( List<String> partitions) throws TruncateException {
+        try {
+            executePartitions(sqlTemplateResolver().getPartitionDDLTruncate(), partitions);
+        } catch (ExecuteException e) {
+            throw new TruncateException(e);
+        }
+    }
+
+    private void executeConstraint(
+            String constraintName,
+            String template) throws JacksonException,ExecuteException {
+        executeUtils().execute(template,Map.of(SystemVarKeys.CONSTRAINT_NAME, constraintName));
+    }
+    @Override
+    public void removeConstraints(Map<String,DataSetConstraintDTO> constraints) throws ConstraintException {
+        for (String constraintName: constraints
+                .entrySet()
+                .stream()
+                .filter(e -> e.getValue().getConstraintLevelCheck().equals(Types.ConstraintLevelCheck.CONSTRUCT))
+                .map(Map.Entry::getKey)
+                .toList()){
+            try {
+                executeConstraint(constraintName, sqlTemplateResolver().getConstraintDDLDrop());
+            } catch (JacksonException | ExecuteException e) {
+                throw new ConstraintException(e);
+            }
+        }
+    }
+
+    @Override
+    public void removeConstraintByName( String constraintName) throws ConstraintException {
+        try {
+            executeConstraint(constraintName, sqlTemplateResolver().getConstraintDDLDrop());
+        } catch (JacksonException | ExecuteException e) {
+            throw new ConstraintException(e);
+        }
+    }
+
+    private String getConstraintTemplate(Map.Entry<String,DataSetConstraintDTO> constraint) throws ConstraintException {
+        String template = null;
+        if ( constraint.getValue().getType().equals(Types.ConstraintType.PRIMARY))
+            template = sqlTemplateResolver().getPrimaryKeyDDLAdd();
+        else if (constraint.getValue().getType().equals(Types.ConstraintType.UNIQUE))
+            template = sqlTemplateResolver().getUniqueKeyDDLAdd();
+        else if (constraint.getValue().getType().equals(Types.ConstraintType.FOREIGN))
+            template = sqlTemplateResolver().getForeignKeyDDLAdd();
+        else if (constraint.getValue().getType().equals(Types.ConstraintType.CHECK))
+            template = sqlTemplateResolver().getCheckConstraintDDLAdd();
+        else throw new
+                    ConstraintException(
+                    String.format(
+                            "Unknown type of constraint %s",
+                            constraint.getValue().getType().label));
+        return Coalesce.apply(
+                constraint.getValue().getTableConstraintDDLAddOverride(),
+                template);
+    }
+
+    @Override
+    public void addConstraints(Map<String,DataSetConstraintDTO> constraints) throws ConstraintException {
+
+        for (Map.Entry<String,DataSetConstraintDTO> constraint:constraints
+                .entrySet()
+                .stream()
+                .filter(e ->
+                        e.getValue().getConstraintLevelCheck().equals(Types.ConstraintLevelCheck.CONSTRUCT))
+                .toList()){
+            try {
+                String template = getConstraintTemplate(constraint);
+                executeConstraint(constraint.getKey(),template);
+            } catch (JacksonException | ExecuteException e) {
+                throw new ConstraintException(e);
+            }
+        }
+    }
+
+    @Override
+    public void compact() throws CompactException {
+
+    }
+
+    @Override
+    public void compactPartitions(List<String> partitions) throws CompactException {
+
+    }
+    @Override
+    public DataSetDTO dataSetDTO() {
+        return dataSetDTO;
+    }
+}

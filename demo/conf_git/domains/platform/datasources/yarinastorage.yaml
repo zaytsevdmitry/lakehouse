@@ -1,0 +1,10 @@
+kind: DataSource
+keyName: yarinastorage
+service:
+  host: hive-metastore
+  port: "9083"
+  urn: yarinastorage
+  properties: {}
+description: Local datastore
+dataSourceType: iceberg
+databaseProtocol: s3

@@ -1,7 +1,6 @@
-# Stop tunnels
-
-# "Jarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
-# Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
+#!/usr/bin/env bash
+# "Yarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+# Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/yarina
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,18 +15,18 @@
 # limitations under the License.
 
 
-ps aux |grep kubectl |grep port-forward| grep  ' -n jarina-management'| awk '{print $2}'| xargs -r kill -9
+ps aux |grep kubectl |grep port-forward| grep  ' -n yarina-management'| awk '{print $2}'| xargs -r kill -9
 # Stop sending tasks
-kubectl scale deployment/jarina-management-task-executor-service --replicas=0 -n jarina-management
-kubectl get pods -n jarina-management
-kubectl get pod -n jarina-management -o name | grep 'exec-' |xargs -r kubectl -n jarina-management delete
-kubectl get pod -n jarina-management -o name | grep '/task' | xargs -r kubectl delete -n jarina-management
-helm uninstall jarina-release -n jarina-management
-kubectl get pv|grep jarina-management |awk '{print $1}'| xargs kubectl delete pv
-kubectl get pv | grep -E 'postgres|minio|jarina-management' | awk '{print $1}' | xargs -r kubectl delete pv
+kubectl scale deployment/yarina-management-task-executor-service --replicas=0 -n yarina-management
+kubectl get pods -n yarina-management
+kubectl get pod -n yarina-management -o name | grep 'exec-' |xargs -r kubectl -n yarina-management delete
+kubectl get pod -n yarina-management -o name | grep '/task' | xargs -r kubectl delete -n yarina-management
+helm uninstall yarina-release -n yarina-management
+kubectl get pv|grep yarina-management |awk '{print $1}'| xargs kubectl delete pv
+kubectl get pv | grep -E 'postgres|minio|yarina-management' | awk '{print $1}' | xargs -r kubectl delete pv
 kubectl get crd | grep -E 'postgres|minio|acid'
-kubectl delete namespace jarina-management
+kubectl delete namespace yarina-management
 kubectl get pods -A
 #остатки
-minikube ssh "ls -la /tmp/hostpath-provisioner/ && sudo rm -rf /tmp/hostpath-provisioner/jarina-management && ls -la /tmp/hostpath-provisioner/"
+minikube ssh "ls -la /tmp/hostpath-provisioner/ && sudo rm -rf /tmp/hostpath-provisioner/yarina-management && ls -la /tmp/hostpath-provisioner/"
 

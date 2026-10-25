@@ -4,19 +4,19 @@
   - aws 
   - postgres
 
-- [jarina](jarina) - Образ с сервисами управления данными 
+- [yarina](yarina) - Образ с сервисами управления данными 
  
-  - jarina-scheduler-svc
-  - jarina-cli
-  - jarina-config-svc
-  - jarina-task-executor-svc
-  - jarina-state-svc 
+  - yarina-scheduler-svc
+  - yarina-cli
+  - yarina-config-svc
+  - yarina-task-executor-svc
+  - yarina-state-svc 
 
-- [jarina-spark-aws](jarina-spark-aws) - Образ основанный на официальном apache/spark. В образ добавлены библиотеки 
+- [yarina-spark-aws](yarina-spark-aws) - Образ основанный на официальном apache/spark. В образ добавлены библиотеки 
   - aws
   - postgres
-  - [jarina-task-executor-spark-dataset-app](../jarina-task-executor-spark-dataset-app) с кодом обработки данных на spark
-  - [jarina-task-executor-spark-dq-app](../jarina-task-executor-spark-dq-app) с кодом операций Data Quality на Spark
-  - [jarina-task-proxy4spark](jarina-task-proxy4spark) -  прокси сервис для запуска spark-job
+  - [yarina-task-executor-spark-dataset-app](../yarina-task-executor-spark-dataset-app) с кодом обработки данных на spark
+  - [yarina-task-executor-spark-dq-app](../yarina-task-executor-spark-dq-app) с кодом операций Data Quality на Spark
+  - [yarina-task-proxy4spark](yarina-task-proxy4spark) -  прокси сервис для запуска spark-job
     - jdk 23
   

@@ -1,0 +1,102 @@
+/*
+ * "Yarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+ * Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/yarina
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0.txt
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.yarina.ui.modeller.auth;
+
+import org.junit.jupiter.api.Test;
+
+import java.util.Map;
+import java.util.Set;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class ModellerRoleSupportTest {
+
+    @Test
+    void noRolesMeansNoDomains() {
+        assertThat(ModellerRoleSupport.domains(null)).isEmpty();
+        assertThat(ModellerRoleSupport.domains(Set.of())).isEmpty();
+        assertThat(ModellerRoleSupport.domains(Set.of("SOME_OTHER_ROLE", "WORKSPACE_ADMIN"))).isEmpty();
+    }
+
+    @Test
+    void domainRoleIsParsedFromTheColonSeparatedRole() {
+        assertThat(ModellerRoleSupport.domains(Set.of("finance:VIEWER")))
+                .isEqualTo(Map.of("finance", Set.of(DomainRole.VIEWER)));
+        assertThat(ModellerRoleSupport.domains(Set.of("finance:EDITOR")))
+                .isEqualTo(Map.of("finance", Set.of(DomainRole.EDITOR)));
+        assertThat(ModellerRoleSupport.domains(Set.of("finance:CONTROL")))
+                .isEqualTo(Map.of("finance", Set.of(DomainRole.CONTROL)));
+    }
+
+    @Test
+    void domainIsCanonicalizedToLowerCaseAndRolesMatchCaseInsensitively() {
+        assertThat(ModellerRoleSupport.domains(Set.of("FINANCE:editor")))
+                .isEqualTo(Map.of("finance", Set.of(DomainRole.EDITOR)));
+        assertThat(ModellerRoleSupport.domains(Set.of("  Finance :  Control  ")))
+                .containsEntry("finance", Set.of(DomainRole.CONTROL));
+    }
+
+    @Test
+    void differentCasingOfTheSameDomainIsMerged() {
+        assertThat(ModellerRoleSupport.domains(Set.of("Analytics:CONTROL", "analytics:EDITOR")))
+                .isEqualTo(Map.of("analytics", Set.of(DomainRole.EDITOR, DomainRole.CONTROL)));
+    }
+
+    @Test
+    void canonicalDomainTrimsAndLowerCases() {
+        assertThat(ModellerRoleSupport.canonicalDomain("  Finance  ")).isEqualTo("finance");
+        assertThat(ModellerRoleSupport.canonicalDomain("")).isNull();
+        assertThat(ModellerRoleSupport.canonicalDomain("   ")).isNull();
+        assertThat(ModellerRoleSupport.canonicalDomain(null)).isNull();
+    }
+
+    @Test
+    void multipleRolesForTheSameDomainAreKeptSeparately() {
+        assertThat(ModellerRoleSupport.domains(Set.of("finance:EDITOR", "finance:CONTROL")))
+                .isEqualTo(Map.of("finance", Set.of(DomainRole.EDITOR, DomainRole.CONTROL)));
+    }
+
+    @Test
+    void rolesWithoutTheDomainPrefixAreIgnored() {
+        Map<String, Set<DomainRole>> domains = ModellerRoleSupport.domains(
+                Set.of("EDITOR", "CONTROL", "WORKSPACE_ADMIN", "yarina_modeller_admin", "finance:viewer"));
+        assertThat(domains).containsOnlyKeys("finance");
+        assertThat(domains.get("finance")).containsExactly(DomainRole.VIEWER);
+    }
+
+    @Test
+    void malformedDomainRolesAreIgnored() {
+        assertThat(ModellerRoleSupport.domains(Set.of("", "   ", ":EDITOR", "finance:", "finance:BOSS")))
+                .isEmpty();
+    }
+
+    @Test
+    void domainRoleSemanticsMatchTheMatrix() {
+        assertThat(DomainRole.VIEWER.canView()).isTrue();
+        assertThat(DomainRole.VIEWER.canEdit()).isFalse();
+        assertThat(DomainRole.VIEWER.canControl()).isFalse();
+
+        assertThat(DomainRole.EDITOR.canView()).isTrue();
+        assertThat(DomainRole.EDITOR.canEdit()).isTrue();
+        assertThat(DomainRole.EDITOR.canControl()).isFalse();
+
+        assertThat(DomainRole.CONTROL.canView()).isTrue();
+        assertThat(DomainRole.CONTROL.canEdit()).isFalse();
+        assertThat(DomainRole.CONTROL.canControl()).isTrue();
+    }
+}

@@ -1,0 +1,33 @@
+dependencies:
+- name: yarina-config-svc
+  repository: file://../yarina-config-svc
+  version: 0.1.0
+- name: yarina-scheduler-svc
+  repository: file://../yarina-scheduler-svc
+  version: 0.1.0
+- name: yarina-state-svc
+  repository: file://../yarina-state-svc
+  version: 0.1.0
+- name: yarina-task-executor-service
+  repository: file://../yarina-task-executor-svc
+  version: 0.1.0
+- name: hive-metastore
+  repository: file://../hive-metastore
+  version: 0.1.0
+- name: trino
+  repository: file://../trino
+  version: 1.0.0
+- name: spark-history
+  repository: file://../spark-history
+  version: 0.1.0
+- name: yarina-task-proxy4spark
+  repository: file://../yarina-task-proxy4spark
+  version: 0.1.0
+- name: yarina-ui-svc
+  repository: file://../yarina-ui-svc
+  version: 0.1.0
+- name: git-server
+  repository: file://../git-server
+  version: 0.1.0
+digest: sha256:2eb88d2030750d1f1f8479d5a4a87d99eb4a284f9cf16e0ca0071a0021ce174c
+generated: "2026-10-25T00:37:36.621870842+03:00"

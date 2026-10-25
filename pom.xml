@@ -8,8 +8,8 @@
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>4.1.1</version>
     </parent>
-    <groupId>jarina</groupId>
-    <artifactId>jarina-parent</artifactId>
+    <groupId>yarina</groupId>
+    <artifactId>yarina-parent</artifactId>
     <version>${revision}</version>
     <packaging>pom</packaging>
     <licenses>
@@ -21,33 +21,33 @@
     </licenses>
 
     <modules>
-        <module>jarina-common</module>
-        <module>jarina-config-svc</module>
-        <module>jarina-config-rest-client</module>
-        <module>jarina-scheduler-rest-client</module>
-        <module>jarina-scheduler-svc</module>
-        <module>jarina-state-rest-client</module>
-        <module>jarina-task-executor-svc</module>
-        <module>jarina-ui-svc</module>
-        <module>jarina-cli</module>
-        <module>jarina-common-test</module>
-        <module>jarina-common-rest-client</module>
-        <module>jarina-common-health</module>
-        <module>jarina-domain-api</module>
-        <module>jarina-state-svc</module>
-        <module>jarina-jinjava</module>
-        <module>jarina-task-executor-rest-client</module>
-        <module>jarina-spark-rest-client</module>
-        <module>jarina-task-executor-api</module>
-        <module>jarina-validators</module>
-        <module>jarina-task-executor-spark-api</module>
-        <module>jarina-task-executor-spark-dataset-app</module>
-        <module>jarina-task-executor-spark-dq-app</module>
-        <module>jarina-task-proxy-for-spark</module>
-        <module>jarina-task-proxy-for-spark-api</module>
-        <module>jarina-task-proxy-for-spark-rest-client</module>
-        <module>jarina-credential-providers-jdbc</module>
-        <module>jarina-credential-providers-spark</module>
+        <module>yarina-common</module>
+        <module>yarina-config-svc</module>
+        <module>yarina-config-rest-client</module>
+        <module>yarina-scheduler-rest-client</module>
+        <module>yarina-scheduler-svc</module>
+        <module>yarina-state-rest-client</module>
+        <module>yarina-task-executor-svc</module>
+        <module>yarina-ui-svc</module>
+        <module>yarina-cli</module>
+        <module>yarina-common-test</module>
+        <module>yarina-common-rest-client</module>
+        <module>yarina-common-health</module>
+        <module>yarina-domain-api</module>
+        <module>yarina-state-svc</module>
+        <module>yarina-jinjava</module>
+        <module>yarina-task-executor-rest-client</module>
+        <module>yarina-spark-rest-client</module>
+        <module>yarina-task-executor-api</module>
+        <module>yarina-validators</module>
+        <module>yarina-task-executor-spark-api</module>
+        <module>yarina-task-executor-spark-dataset-app</module>
+        <module>yarina-task-executor-spark-dq-app</module>
+        <module>yarina-task-proxy-for-spark</module>
+        <module>yarina-task-proxy-for-spark-api</module>
+        <module>yarina-task-proxy-for-spark-rest-client</module>
+        <module>yarina-credential-providers-jdbc</module>
+        <module>yarina-credential-providers-spark</module>
     </modules>
     <dependencyManagement>
         <dependencies>
@@ -61,7 +61,7 @@
         </dependencies>
     </dependencyManagement>
     <properties>
-        <revision>1.0.0</revision>
+        <revision>1.0.1</revision>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.release>17</maven.compiler.release>

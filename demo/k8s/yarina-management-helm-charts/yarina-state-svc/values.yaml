@@ -1,0 +1,11 @@
+conf-svc:
+  image:
+    repository: yarina
+    tag: "1.0.1"
+    pullPolicy: IfNotPresent
+
+keycloak:
+  issuerUri: "http://keycloak:8085/realms/yarina"
+  internalClientSecret: "super-secret-internal-key-987654321"
+java:
+  serverPort: 8084

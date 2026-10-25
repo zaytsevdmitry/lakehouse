@@ -9,7 +9,7 @@
 Перед сборкой нужно убедится что установлены java 23 по умолчанию и mvn
 
 > \[ERROR\]  Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.13.0:compile (default-compile) on
-> project jarina-common: Fatal error compiling: error: release version 17 not supported -> [Help 1]
+> project yarina-common: Fatal error compiling: error: release version 17 not supported -> [Help 1]
 
 ```shell
  java -version
@@ -66,11 +66,11 @@ sh build.bash
 Сборку можно считать успешной если все 4 образа можно найти в локальном репозитории
 
 ```shell
-docker images | grep jarina | grep '0.11.0'
+docker images | grep yarina | grep '0.11.0'
 ```
 ```
-jarina-s3-check                       0.11.0                           70a21c6fc79c   3 minutes ago    119MB
-jarina-hms                            0.11.0                           f81700fd2891   3 minutes ago    893MB
-jarina-spark-aws                      0.11.0                           42e9f3a122aa   4 minutes ago    1.54GB
-jarina                                0.11.0                           c8f6f2da61dc   5 minutes ago    1.36GB
+yarina-s3-check                       0.11.0                           70a21c6fc79c   3 minutes ago    119MB
+yarina-hms                            0.11.0                           f81700fd2891   3 minutes ago    893MB
+yarina-spark-aws                      0.11.0                           42e9f3a122aa   4 minutes ago    1.54GB
+yarina                                0.11.0                           c8f6f2da61dc   5 minutes ago    1.36GB
 ```

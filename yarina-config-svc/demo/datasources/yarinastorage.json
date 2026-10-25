@@ -1,0 +1,19 @@
+{
+  "keyName": "yarinastorage",
+  "domainKeyName": "DEMO",
+  "service":
+    {
+      "host": "localhost",
+      "port": "6066",
+      "urn": "",
+      "properties": {
+        "spark.sql.extensions": "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
+        "spark.sql.catalog.yarinastorage": "org.apache.iceberg.spark.SparkCatalog",
+        "spark.sql.catalog.yarinastorage.type": "hadoop",
+        "spark.sql.catalog.yarinastorage.warehouse": "$PWD/warehouse"
+      }
+    },
+  "description": "Local datastore",
+  "dataSourceType" : "iceberg",
+  "databaseProtocol": "s3"
+}

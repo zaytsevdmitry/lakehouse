@@ -1,6 +1,6 @@
 # Безопасность
 
-Как организована безопасность в экосистеме jarina. Все сервисы используют [Keycloak](https://www.keycloak.org/) в качестве единого провайдера идентификации (OAuth 2.0 / OpenID Connect, JWT-токены).
+Как организована безопасность в экосистеме yarina. Все сервисы используют [Keycloak](https://www.keycloak.org/) в качестве единого провайдера идентификации (OAuth 2.0 / OpenID Connect, JWT-токены).
 
 ## Обзор
 
@@ -8,12 +8,12 @@
 
 | Модель | Компоненты | Механизм |
 |:-------|:-----------|:---------|
-| Между сервисами | jarina-config-svc, jarina-state-svc, jarina-task-executor-svc, jarina-task-proxy-for-spark, jarina-scheduler-svc | OAuth2 Resource Server (проверка JWT) + `client_credentials` / ретрансляция токена для исходящих вызовов |
-| Для пользователей | jarina-ui-svc (BFF) | OAuth2 Login (authorization code flow) + HTTP-сессия + CSRF |
-| Spark-приложения | jarina-task-executor-spark-dq-app, jarina-task-executor-spark-dataset-app | OAuth2 Client (`client_credentials`) для обратных вызовов в бэкенд-сервисы |
-| Учётные данные источников данных | jarina-task-executor-svc (JDBC-путь), Spark-драйверы/исполнители | Динамическое разрешение секретов из OpenBao/Vault или Yandex Cloud Lockbox (credential providers) — нет паролей в открытом виде в конфигурации |
+| Между сервисами | yarina-config-svc, yarina-state-svc, yarina-task-executor-svc, yarina-task-proxy-for-spark, yarina-scheduler-svc | OAuth2 Resource Server (проверка JWT) + `client_credentials` / ретрансляция токена для исходящих вызовов |
+| Для пользователей | yarina-ui-svc (BFF) | OAuth2 Login (authorization code flow) + HTTP-сессия + CSRF |
+| Spark-приложения | yarina-task-executor-spark-dq-app, yarina-task-executor-spark-dataset-app | OAuth2 Client (`client_credentials`) для обратных вызовов в бэкенд-сервисы |
+| Учётные данные источников данных | yarina-task-executor-svc (JDBC-путь), Spark-драйверы/исполнители | Динамическое разрешение секретов из OpenBao/Vault или Yandex Cloud Lockbox (credential providers) — нет паролей в открытом виде в конфигурации |
 
-Realm Keycloak: **`jarina`** (файл импорта realm: `demo/compose/conf_infra/security/realms/jarina-realm.json`).
+Realm Keycloak: **`yarina`** (файл импорта realm: `demo/compose/conf_infra/security/realms/yarina-realm.json`).
 
 Секретный материал (пароли БД, ключи S3) вообще не хранится в конфигурационных файлах — он резолвится в рантайме
 из хранилищ секретов (OpenBao/Vault или Yandex Cloud Lockbox), см. [раздел 4](#4-секреты-подключения-к-источникам-данных-credential-providers).
@@ -26,11 +26,11 @@ Realm Keycloak: **`jarina`** (файл импорта realm: `demo/compose/conf_
 
 Пять бэкенд-сервисов настроены одинаково как **OAuth2 Resource Server**:
 
-- jarina-config-svc
-- jarina-state-svc
-- jarina-task-executor-svc
-- jarina-task-proxy-for-spark
-- jarina-scheduler-svc
+- yarina-config-svc
+- yarina-state-svc
+- yarina-task-executor-svc
+- yarina-task-proxy-for-spark
+- yarina-scheduler-svc
 
 В каждом сервисе есть свой `SecurityConfig` (`@EnableWebSecurity`, `@EnableMethodSecurity`) с одинаковой логикой цепочки фильтров.
 
@@ -40,10 +40,10 @@ Realm Keycloak: **`jarina`** (файл импорта realm: `demo/compose/conf_
 2. Подпись токена проверяется по JWKS-эндпоинту Keycloak; издатель (issuer) берётся из свойства
    `spring.security.oauth2.resourceserver.jwt.issuer-uri`.
 3. Роли извлекаются из клейма JWT `realm_access.roles` конвертером `KeycloakRoleConverter`
-   (модуль `jarina-common-health`, пакет `org.jarina.security`): каждая роль становится Spring-авторитетом
+   (модуль `yarina-common-health`, пакет `org.yarina.security`): каждая роль становится Spring-авторитетом
    `ROLE_<ИМЯ>` (например, `ADMIN` -> `ROLE_ADMIN`). Стандартные scope отображаются в авторитеты `SCOPE_*`.
 4. CSRF отключён — сервисы являются stateless resource server'ами.
-5. Безопасность можно полностью отключить свойством `jarina.security.enabled=false`
+5. Безопасность можно полностью отключить свойством `yarina.security.enabled=false`
    (все запросы становятся анонимными). По умолчанию: `true`.
 
 Пути из белого списка (токен не требуется):
@@ -59,7 +59,7 @@ Realm Keycloak: **`jarina`** (файл импорта realm: `demo/compose/conf_
 ### Исходящие вызовы
 
 Каждый бэкенд-сервис одновременно выступает и OAuth2-**клиентом**, когда обращается к другим сервисам.
-Общая конфигурация `RestClientSecurityConfiguration` из модуля `jarina-common-health` регистрирует
+Общая конфигурация `RestClientSecurityConfiguration` из модуля `yarina-common-health` регистрирует
 перехватчик `BearerTokenClientHttpRequestInterceptor` на автоконфигурируемом Spring `RestClient.Builder`,
 поэтому все REST-клиенты проекта (модули config/state/scheduler/spark-proxy rest-client) защищены прозрачным образом.
 
@@ -68,20 +68,20 @@ Realm Keycloak: **`jarina`** (файл импорта realm: `demo/compose/conf_
 | Ситуация | Используемый токен |
 |:---------|:-------------------|
 | Текущий поток обрабатывает пользовательский запрос, аутентифицированный JWT (`JwtAuthenticationToken` в `SecurityContextHolder`) | JWT пользователя ретранслируется «как есть» (**token relay**) |
-| Фоновая обработка без пользовательского контекста (Kafka-консьюмеры, планировщики, обработчики задач) | Свежий токен **`client_credentials`** получается у Keycloak для сервисного аккаунта клиента `jarina-internal-client`; токены кэшируются и обновляются автоматически через `OAuth2AuthorizedClientManager` |
+| Фоновая обработка без пользовательского контекста (Kafka-консьюмеры, планировщики, обработчики задач) | Свежий токен **`client_credentials`** получается у Keycloak для сервисного аккаунта клиента `yarina-internal-client`; токены кэшируются и обновляются автоматически через `OAuth2AuthorizedClientManager` |
 
-ID регистрации внутреннего клиента настраивается свойством `jarina.security.oauth2.client-registration-id`
+ID регистрации внутреннего клиента настраивается свойством `yarina.security.oauth2.client-registration-id`
 (по умолчанию `keycloak-internal`).
 
 ### Роль Keycloak
 
-Keycloak выпускает и проверяет все идентичности в едином realm `jarina`:
+Keycloak выпускает и проверяет все идентичности в едином realm `yarina`:
 
 | Объект | Значение | Примечания |
 |:-------|:---------|:-----------|
-| Realm | `jarina` | Импортируется при старте в demo-compose |
-| Клиент | `jarina-ui-client` | Конфиденциальный клиент для UI BFF, только standard flow |
-| Клиент | `jarina-internal-client` | Конфиденциальный клиент с включёнными **сервисными аккаунтами**, используется всеми сервисами и Spark-драйверами для `client_credentials` |
+| Realm | `yarina` | Импортируется при старте в demo-compose |
+| Клиент | `yarina-ui-client` | Конфиденциальный клиент для UI BFF, только standard flow |
+| Клиент | `yarina-internal-client` | Конфиденциальный клиент с включёнными **сервисными аккаунтами**, используется всеми сервисами и Spark-драйверами для `client_credentials` |
 | Realm-роли | `<domain>:VIEWER`, `<domain>:EDITOR`, `<domain>:CONTROL`, `WORKSPACE_ADMIN` | Доменные; `VIEWER` неявно входит в `EDITOR`/`CONTROL`, `EDITOR`/`CONTROL` ортогональны; `WORKSPACE_ADMIN` — глобальная (без домена) |
 
 Демо-пользователи (только для локальной среды — в реальных развёртываниях меняйте пароли/секреты через переменные окружения):
@@ -99,7 +99,7 @@ Keycloak выпускает и проверяет все идентичност�
 ### Аудит
 
 Аудит реализован общим сервлетным фильтром `AuditLoggingFilter`
-(`jarina-common-health`, `org.jarina.security`). Он регистрируется в каждом бэкенд-сервисе
+(`yarina-common-health`, `org.yarina.security`). Он регистрируется в каждом бэкенд-сервисе
 после фильтра авторизации (`http.addFilterAfter(auditLoggingFilter, AuthorizationFilter.class)`),
 поэтому видит итоговый статус ответа.
 
@@ -114,7 +114,7 @@ User ID: <jwt.sub>, Username: <jwt.preferred_username>, Method: <HTTP-метод
 - `User ID` — клейм JWT `sub`; `Username` — клейм `preferred_username`.
 - Если токен является **сервисным аккаунтом** (клейм `preferred_username` начинается с `service-account-`
   или клейм `azp` совпадает с настроенным id внутреннего клиента), имя пользователя заменяется на настроенное
-  имя системного аккаунта (`jarina.security.audit.service-account-name`, по умолчанию `system`).
+  имя системного аккаунта (`yarina.security.audit.service-account-name`, по умолчанию `system`).
 - Анонимные запросы и запросы из белого списка логируются с прочерками `-`.
 - Конфигурация logback каждого сервиса направляет логгер `AUDIT_LOG` в JSON-консольный аппендер
   (logstash encoder) с дополнительными полями `log_type=audit` и `service=<имя сервиса>`:
@@ -122,7 +122,7 @@ User ID: <jwt.sub>, Username: <jwt.preferred_username>, Method: <HTTP-метод
 ```xml
 <appender name="AUDIT_CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
     <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-        <customFields>{"log_type":"audit", "service":"jarina-config-svc"}</customFields>
+        <customFields>{"log_type":"audit", "service":"yarina-config-svc"}</customFields>
     </encoder>
 </appender>
 <logger name="AUDIT_LOG" level="INFO" additivity="false">
@@ -139,7 +139,7 @@ User ID: <jwt.sub>, Username: <jwt.preferred_username>, Method: <HTTP-метод
 
 ---
 
-## 2. Безопасность для пользователей (jarina-ui-svc)
+## 2. Безопасность для пользователей (yarina-ui-svc)
 
 UI-сервис — это **Backend-for-Frontend (BFF)**. Сам он не проверяет входящие JWT — вместо этого
 он аутентифицирует пользователей интерактивно через Keycloak.
@@ -155,9 +155,9 @@ UI-сервис — это **Backend-for-Frontend (BFF)**. Сам он не пр
    браузер получает cookie HTTP-сессии **`JSESSIONID`** (`HttpOnly`; `Secure` в профиле `prod`).
 5. После входа пользователь попадает на default success URL `/`.
 
-Регистрация клиента: `jarina-ui-client` со scope `openid, profile, email`;
+Регистрация клиента: `yarina-ui-client` со scope `openid, profile, email`;
 шаблон redirect URI `{baseUrl}/login/oauth2/code/{registrationId}`
-(переопределяется переменной `JARINA_UI_REDIRECT_URI` за прокси/балансировщиком).
+(переопределяется переменной `YARINA_UI_REDIRECT_URI` за прокси/балансировщиком).
 
 ### Сессия и CSRF
 
@@ -174,12 +174,12 @@ UI-сервис — это **Backend-for-Frontend (BFF)**. Сам он не пр
 BFF обращается к REST API config/state/scheduler/task-proxy через тот же защищённый `RestClient.Builder`.
 Поскольку в сессии пользователя хранится `OAuth2AuthenticationToken` (а не `JwtAuthenticationToken`),
 `BearerTokenClientHttpRequestInterceptor` всегда переключается на токен **сервисного аккаунта**
-`client_credentials` клиента `jarina-internal-client`. Поэтому бэкенд-сервисы авторизуют эти вызовы
+`client_credentials` клиента `yarina-internal-client`. Поэтому бэкенд-сервисы авторизуют эти вызовы
 как внутренний технический клиент, а не от имени конкретного человека.
 
 ### Роль Keycloak
 
-- Единая точка интерактивного входа (standard flow конфиденциального клиента `jarina-ui-client`);
+- Единая точка интерактивного входа (standard flow конфиденциального клиента `yarina-ui-client`);
 - Выпускает ID/access/refresh токены в ходе authorization code flow;
 - Хранит пользователей и их атрибуты; доступ строится **по доменам** — роли realm имеют вид
   `<domain>:<ROLE>`, где `ROLE` ∈ `VIEWER`/`EDITOR`/`CONTROL`; глобальная роль `WORKSPACE_ADMIN`
@@ -194,7 +194,7 @@ BFF обращается к REST API config/state/scheduler/task-proxy чере�
 работают доменные проверки и проверки владения.
 
 Вызовы, доходящие до бэкенд-сервисов через токен `client_credentials` клиента
-`jarina-internal-client`, видны фильтру `AuditLoggingFilter` бэкенда (раздел 1) как внутренний
+`yarina-internal-client`, видны фильтру `AuditLoggingFilter` бэкенда (раздел 1) как внутренний
 технический клиент, поэтому такие записи не могут быть отнесены к человеку. **Записывать
 инициированные пользователем действия в аудит под техническим именем `system` запрещено**: каждая
 операция вошедшего пользователя должна нести его реальный `username` из Keycloak. Запросы,
@@ -210,15 +210,15 @@ BFF обращается к REST API config/state/scheduler/task-proxy чере�
 
 Относится к приложениям-драйверам:
 
-- jarina-task-executor-spark-dq-app
-- jarina-task-executor-spark-dataset-app
+- yarina-task-executor-spark-dq-app
+- yarina-task-executor-spark-dataset-app
 
 ### Отправка задач
 
-1. `jarina-task-executor-svc` получает задачи из Kafka и отправляет Spark-задачи через Spark REST API
+1. `yarina-task-executor-svc` получает задачи из Kafka и отправляет Spark-задачи через Spark REST API
    (`POST /v1/submissions`) — напрямую в кластер или через **task-proxy-for-spark**.
 2. При отправке через task-proxy-for-spark вызов содержит bearer-токен, полученный стандартным перехватчиком
-   (`client_credentials` клиента `jarina-internal-client`); прокси проверяет его так же, как любой другой бэкенд-сервис.
+   (`client_credentials` клиента `yarina-internal-client`); прокси проверяет его так же, как любой другой бэкенд-сервис.
 3. Spark-драйвер запускается как обычное Spring Boot-приложение внутри кластера.
 
 > Ограничение: vanilla REST-эндпоинт мастера Apache Spark Standalone не поддерживает OAuth. При отправке задач
@@ -227,7 +227,7 @@ BFF обращается к REST API config/state/scheduler/task-proxy чере�
 
 ### Обратные вызовы драйвера
 
-Оба приложения-драйвера включают `org.jarina.security` в сканирование компонентов, поэтому получают ту же
+Оба приложения-драйвера включают `org.yarina.security` в сканирование компонентов, поэтому получают ту же
 связку `RestClientSecurityConfiguration` + `BearerTokenClientHttpRequestInterceptor`. Внутри JVM драйвера нет
 пользовательского контекста безопасности, поэтому все обратные вызовы получают собственные токены
 **`client_credentials`**:
@@ -244,7 +244,7 @@ BFF обращается к REST API config/state/scheduler/task-proxy чере�
 
 ### Маскирование секретов
 
-`SparkSessionConfiguration` (модуль `jarina-task-executor-spark-api`) задаёт regex-выражения маскирования
+`SparkSessionConfiguration` (модуль `yarina-task-executor-spark-api`) задаёт regex-выражения маскирования
 логов Spark `spark.redaction.regex` и `spark.sql.redaction.string.regex` (по умолчанию:
 `(?i)secret|password|token|access[.]key|credentials|private`), чтобы учётные данные не попадали
 в логи драйверов/исполнителей и Spark UI.
@@ -262,22 +262,22 @@ BFF обращается к REST API config/state/scheduler/task-proxy чере�
 
 | Модуль | Содержимое |
 |:-------|:-----------|
-| `jarina-credential-providers-jdbc` | Независимая от Spark библиотека: SPI `SecretProvider`, хелпер `SecretResolver`, HTTP-клиенты `VaultHttp` / `LockboxHttp`, in-memory кэш `SecretCache` (TTL 5 минут на JVM), JDBC-провайдеры `BaoJdbcSecretProvider` (OpenBao/Vault KV v2) и `YcLockboxJdbcSecretProvider` (Yandex Cloud Lockbox) |
-| `jarina-credential-providers-spark` | Специфичное для Spark: `JarinaSecureJDBCTableCatalog` — безопасная замена Spark `JDBCTableCatalog` (разрешение пароля на Driver и Executors) и S3-провайдеры для Spark S3A |
+| `yarina-credential-providers-jdbc` | Независимая от Spark библиотека: SPI `SecretProvider`, хелпер `SecretResolver`, HTTP-клиенты `VaultHttp` / `LockboxHttp`, in-memory кэш `SecretCache` (TTL 5 минут на JVM), JDBC-провайдеры `BaoJdbcSecretProvider` (OpenBao/Vault KV v2) и `YcLockboxJdbcSecretProvider` (Yandex Cloud Lockbox) |
+| `yarina-credential-providers-spark` | Специфичное для Spark: `YarinaSecureJDBCTableCatalog` — безопасная замена Spark `JDBCTableCatalog` (разрешение пароля на Driver и Executors) и S3-провайдеры для Spark S3A |
 
 Обе точки, открывающие JDBC-подключение, теперь проходят через `SecretResolver`:
 
-- сервисы jarina — `JdbcConnectionFactory.getConnection(...)` (`jarina-task-executor-api`);
-- Spark-драйверы — `JarinaSecureJDBCTableCatalog.initialize(...)`.
+- сервисы yarina — `JdbcConnectionFactory.getConnection(...)` (`yarina-task-executor-api`);
+- Spark-драйверы — `YarinaSecureJDBCTableCatalog.initialize(...)`.
 
 ### Контракт опций провайдера
 
 | Опция | Провайдер | Обязательно | Описание |
 |:------|:----------|:------------|:---------|
 | `secretProvider` | оба | да | Полное имя класса реализации `SecretProvider` |
-| `secret-key` | оба | да | Комбинированная координата `path:key`: OpenBao — `secretPath:key` (например `kv/data/jarina/database:password`); Lockbox — `secretId:key` (например `e4ta...:password`) |
+| `secret-key` | оба | да | Комбинированная координата `path:key`: OpenBao — `secretPath:key` (например `kv/data/yarina/database:password`); Lockbox — `secretId:key` (например `e4ta...:password`) |
 | `vault-url` | OpenBao/Vault | да | Базовый URL HTTP API Vault, например `http://openbao:8200` |
-| `vault-role` | OpenBao/Vault | нет | Kubernetes auth role (по умолчанию `jarina`) |
+| `vault-role` | OpenBao/Vault | нет | Kubernetes auth role (по умолчанию `yarina`) |
 | `vault-k8s-auth-path` | OpenBao/Vault | нет | Путь точки монтирования Kubernetes auth (по умолчанию `kubernetes`) |
 | `secret-id` | Lockbox | да | Идентификатор секрета Yandex Cloud Lockbox |
 | `secret-version` | Lockbox | нет | Конкретная версия секрета (по умолчанию `latest`) |
@@ -291,12 +291,12 @@ BFF обращается к REST API config/state/scheduler/task-proxy чере�
 - **Spark (глобальные значения по умолчанию, `spark-defaults.conf`)** — опции каталога с префиксом; пароль запрашивается на драйвере:
 
   ```
-  spark.sql.catalog.processingdb                org.jarina.security.catalog.JarinaSecureJDBCTableCatalog
+  spark.sql.catalog.processingdb                org.yarina.security.catalog.YarinaSecureJDBCTableCatalog
   spark.sql.catalog.processingdb.url            jdbc:postgresql://db-host:5432/db
   spark.sql.catalog.processingdb.user           app_user
-  spark.sql.catalog.processingdb.secretProvider org.jarina.security.jdbc.BaoJdbcSecretProvider
+  spark.sql.catalog.processingdb.secretProvider org.yarina.security.jdbc.BaoJdbcSecretProvider
   spark.sql.catalog.processingdb.vault-url      http://openbao:8200
-  spark.sql.catalog.processingdb.secret-key     kv/data/jarina/database:password
+  spark.sql.catalog.processingdb.secret-key     kv/data/yarina/database:password
   ```
 
   Реальный пример: `demo/compose/conf_infra/spark-defaults.conf`.
@@ -305,14 +305,14 @@ BFF обращается к REST API config/state/scheduler/task-proxy чере�
   `service.properties` datasource. `SparkStandAloneClusterTaskProcessor` передаёт все ключи `spark.*` драйверу;
   если `spark.sql.catalog.<name>.url` отсутствует, он строится из `host`/`port`/`urn` datasource.
 
-- **Сервисы jarina (JDBC-задачи)** — `service.properties` datasource (`ServiceDTO.properties`); URL строится
+- **Сервисы yarina (JDBC-задачи)** — `service.properties` datasource (`ServiceDTO.properties`); URL строится
   из `host`/`port`/`urn`, если явный `url` не задан:
 
   ```json
   "properties": {
     "user": "app_user",
-    "secretProvider": "org.jarina.security.jdbc.BaoJdbcSecretProvider",
-    "secret-key": "kv/data/jarina/database:password",
+    "secretProvider": "org.yarina.security.jdbc.BaoJdbcSecretProvider",
+    "secret-key": "kv/data/yarina/database:password",
     "vault-url": "http://openbao:8200"
   }
   ```
@@ -321,13 +321,13 @@ BFF обращается к REST API config/state/scheduler/task-proxy чере�
 
 ### Настройка OpenBao / Vault
 
-1. Включите движок секретов KV v2 и запишите секрет, например `bao kv put kv/jarina/database password=<value>`.
-2. Создайте read-only политику для путей, которые читают сервисы (`kv/data/jarina/database`, `kv/data/infrastructure/minio`),
+1. Включите движок секретов KV v2 и запишите секрет, например `bao kv put kv/yarina/database password=<value>`.
+2. Создайте read-only политику для путей, которые читают сервисы (`kv/data/yarina/database`, `kv/data/infrastructure/minio`),
    и выпустите scoped-токен для потребляющих компонентов. Эталонный скрипт: `demo/compose/conf_infra/openbao/init.sh`.
 3. Токен передаётся процессу переменной окружения `VAULT_TOKEN` или — внутри Kubernetes — через Service Account
    (опции `vault-role` / `vault-k8s-auth-path`). Переменные docker-compose демо-стенда:
-   `BAO_DEV_ROOT_TOKEN_ID`, `BAO_TOKEN`, `JARINA_DB_PASSWORD` (сидирование) и `VAULT_TOKEN` (потребители).
-4. В Kubernetes сервис OpenBao доступен как `http://<release>-openbao:8200` (зонтичный чарт `jarina-management`).
+   `BAO_DEV_ROOT_TOKEN_ID`, `BAO_TOKEN`, `YARINA_DB_PASSWORD` (сидирование) и `VAULT_TOKEN` (потребители).
+4. В Kubernetes сервис OpenBao доступен как `http://<release>-openbao:8200` (зонтичный чарт `yarina-management`).
 
 ### Настройка Yandex Cloud Lockbox
 
@@ -352,25 +352,25 @@ BFF обращается к REST API config/state/scheduler/task-proxy чере�
 
 | Переменная | Кто использует | Значение |
 |:-----------|:---------------|:---------|
-| `KEYCLOAK_ISSUER_URI` | все модули | Issuer URI realm'а, например `http://keycloak.jarina:8085/realms/jarina` |
-| `KEYCLOAK_UI_CLIENT_SECRET` | jarina-ui-svc | Секрет клиента `jarina-ui-client` |
-| `KEYCLOAK_INTERNAL_CLIENT_SECRET` | все бэкенд-сервисы, Spark-приложения | Секрет клиента `jarina-internal-client` |
-| `JARINA_UI_REDIRECT_URI` | jarina-ui-svc | Шаблон redirect URI для колбэка authorization code |
-| `VAULT_TOKEN` | jarina-task-executor-svc, Spark-драйверы/исполнители | Токен OpenBao/Vault для `BaoJdbcSecretProvider` и S3-провайдеров (раздел 4) |
-| `YC_AUTH_KEY_PATH` | jarina-task-executor-svc, Spark-драйверы/исполнители | Путь к файлу авторизованного ключа для IAM-токена Lockbox (альтернатива Instance Metadata, раздел 4) |
+| `KEYCLOAK_ISSUER_URI` | все модули | Issuer URI realm'а, например `http://keycloak.yarina:8085/realms/yarina` |
+| `KEYCLOAK_UI_CLIENT_SECRET` | yarina-ui-svc | Секрет клиента `yarina-ui-client` |
+| `KEYCLOAK_INTERNAL_CLIENT_SECRET` | все бэкенд-сервисы, Spark-приложения | Секрет клиента `yarina-internal-client` |
+| `YARINA_UI_REDIRECT_URI` | yarina-ui-svc | Шаблон redirect URI для колбэка authorization code |
+| `VAULT_TOKEN` | yarina-task-executor-svc, Spark-драйверы/исполнители | Токен OpenBao/Vault для `BaoJdbcSecretProvider` и S3-провайдеров (раздел 4) |
+| `YC_AUTH_KEY_PATH` | yarina-task-executor-svc, Spark-драйверы/исполнители | Путь к файлу авторизованного ключа для IAM-токена Lockbox (альтернатива Instance Metadata, раздел 4) |
 
 Свойства приложения:
 
 | Свойство | По умолчанию | Значение |
 |:---------|:-------------|:---------|
-| `jarina.security.enabled` | `true` | Главный выключатель цепочек фильтров бэкенда (`false` = разрешить всё) |
-| `jarina.security.audit.service-account-name` | `system` | Имя пользователя в строках аудита для токенов сервисных аккаунтов |
-| `jarina.security.oauth2.internal-client-id` | `jarina-internal-client` | Значение `azp`, которое фильтр аудита считает «сервисным аккаунтом» |
-| `jarina.security.oauth2.client-registration-id` | `keycloak-internal` | Регистрация клиента, используемая перехватчиком исходящих вызовов |
+| `yarina.security.enabled` | `true` | Главный выключатель цепочек фильтров бэкенда (`false` = разрешить всё) |
+| `yarina.security.audit.service-account-name` | `system` | Имя пользователя в строках аудита для токенов сервисных аккаунтов |
+| `yarina.security.oauth2.internal-client-id` | `yarina-internal-client` | Значение `azp`, которое фильтр аудита считает «сервисным аккаунтом» |
+| `yarina.security.oauth2.client-registration-id` | `keycloak-internal` | Регистрация клиента, используемая перехватчиком исходящих вызовов |
 
-Документация смежных модулей: [config-svc](../../jarina-config-svc/doc-ru/readme.md),
-[state-svc](../../jarina-state-svc/doc-ru/readme.md),
-[scheduler-svc](../../jarina-scheduler-svc/doc-ru/readme.md),
-[task-executor-svc](../../jarina-task-executor-svc/doc-ru/readme.md),
-[task-proxy-for-spark](../../jarina-task-proxy-for-spark/doc-ru/readme.md),
-[ui-svc](../../jarina-ui-svc/doc-ru/readme.md).
+Документация смежных модулей: [config-svc](../../yarina-config-svc/doc-ru/readme.md),
+[state-svc](../../yarina-state-svc/doc-ru/readme.md),
+[scheduler-svc](../../yarina-scheduler-svc/doc-ru/readme.md),
+[task-executor-svc](../../yarina-task-executor-svc/doc-ru/readme.md),
+[task-proxy-for-spark](../../yarina-task-proxy-for-spark/doc-ru/readme.md),
+[ui-svc](../../yarina-ui-svc/doc-ru/readme.md).

@@ -1,6 +1,6 @@
 #!/bin/bash
-# "Jarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
-# Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
+# "Yarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+# Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/yarina
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,15 +36,15 @@
 set -e
 
 # Configuration
-VERSION="1.0.0"
-TMP_DIR="/tmp/jarina_k8s_conf_${VERSION}"
+VERSION="1.0.1"
+TMP_DIR="/tmp/yarina_k8s_conf_${VERSION}"
 # Resolved from the script location, so it can be run from any working directory.
 # The configuration tree is shared with demo/compose and therefore lives next to
 # the k8s directory; set CONF_GIT_SRC to read it from somewhere else.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOCAL_CONF_SRC="${CONF_GIT_SRC:-${SCRIPT_DIR}/../conf_git}"
 DOMAINS_SRC="${LOCAL_CONF_SRC}/domains"
-NAMESPACE="jarina-management"
+NAMESPACE="yarina-management"
 GIT_POD_LABEL="app=git-server"
 # Repository root inside the git-server container, the export root of `git daemon`.
 GIT_REPO_ROOT="/srv/git"
@@ -59,7 +59,7 @@ BRANCH="main"
 APP_RESOURCE_FILES="sparkTemplate.yaml sparkDQTemplate.yaml"
 # Legacy single-repository import: the whole conf_git tree, domains/ prefix included.
 # Kept so that a configuration service still pointed at
-# jarina.config.vcs.git.repository-url=.../config-repo.git keeps working; clear it
+# yarina.config.vcs.git.repository-url=.../config-repo.git keeps working; clear it
 # once the chart declares one repository per domain, like demo/compose does.
 LEGACY_REPO="config-repo.git"
 
@@ -147,7 +147,7 @@ import_repo() {
     rm -rf "$work"
     git init -q -b "$BRANCH" "$work"
     # Set the local repository identity to prevent overriding global git configs
-    git -C "$work" config user.email "bootstrap@jarina.local"
+    git -C "$work" config user.email "bootstrap@yarina.local"
     git -C "$work" config user.name "Bootstrap Agent v${VERSION}"
     git -C "$work" remote add origin "$remote"
 

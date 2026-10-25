@@ -1,0 +1,68 @@
+server:
+  port: 8089
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://yarina-auth-svc:8080/realms/yarina}
+      client:
+        registration:
+          keycloak-internal:
+            provider: keycloak
+            client-id: yarina-internal-client
+            client-secret: ${KEYCLOAK_INTERNAL_CLIENT_SECRET:super-secret-internal-key-987654321}
+            authorization-grant-type: client_credentials
+            scope: openid
+        provider:
+          keycloak:
+            authorization-uri: ${KEYCLOAK_ISSUER_URI:http://yarina-auth-svc:8080/realms/yarina}/protocol/openid-connect/auth
+            token-uri: ${KEYCLOAK_ISSUER_URI:http://yarina-auth-svc:8080/realms/yarina}/protocol/openid-connect/token
+
+yarina:
+  client:
+    rest:
+      state:
+        server:
+          url: http://127.0.0.1:8082
+      config:
+        server:
+          url: http://127.0.0.1:8080
+      scheduler:
+        server:
+          url: http://127.0.0.1:8081
+  task-executor:
+    processor:
+      sparkStandAloneClusterTaskProcessor:
+        maxWaitToRunningStateTimeoutMs: 120000
+        sparkJobStatusCheckIntervalMs: 3000
+    domains:
+      platform:
+        yarinastorage:
+          service-properties: # keys are domain/data-source specific, hence a free-form map
+            secretProvider: org.yarina.security.jdbc.BaoJdbcSecretProvider
+            secret-key: "kv/data/yarina/database:password"
+            vault-url: "http://openbao:8200"
+            user: postgresUser
+            fetchSize: "10000"
+    service:
+      heart-beat-initial-delaY-ms: 5000
+      heart-beat-interval-ms: 5000 # must be lower than yarina.scheduler.task.retry.delay-ms
+      max-lock-retries: 5
+      max-lock-retries-duration-ms: 5
+      id: first1
+    scheduled:
+      task:
+        kafka:
+          consumer:
+            concurrency: 1
+            properties:
+              bootstrap.servers: 192.1.193.20:9092
+              group.id: default
+              auto.offset.reset: earliest
+              max.poll.interval.ms: 3600000
+            topics: scheduled_task_msg
+
+  health:
+    liveness-path: /healthz
+    readiness-path: /readyz

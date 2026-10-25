@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# "Jarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
-# Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
+# "Yarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+# Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/yarina
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 
 
 set -e
-export LH_VERSION=1.0.0
+export LH_VERSION=1.0.1
 
-docker build -t jarina-hms:$LH_VERSION ./
+docker build -t yarina-hms:$LH_VERSION ./
 docker images

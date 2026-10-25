@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# "Jarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
-# Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/jarina
+# "Yarina dataset self service" - the services set for managing data changes based on a metadata-driven approach
+# Copyright (C) 2026  Dmitry Zaytsev https://github.com/zaytsevdmitry/yarina
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 # limitations under the License.
 
 
-minikube image rm jarina:1.0.0
-minikube image rm jarina-s3-check:1.0.0
-minikube image rm jarina-hms:1.0.0
-minikube image rm jarina-spark-aws:1.0.0
+minikube image rm yarina:1.0.1
+minikube image rm yarina-s3-check:1.0.1
+minikube image rm yarina-hms:1.0.1
+minikube image rm yarina-spark-aws:1.0.1

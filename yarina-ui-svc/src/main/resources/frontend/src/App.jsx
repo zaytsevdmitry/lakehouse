@@ -1,0 +1,160 @@
+import React, { useCallback, useEffect, useState } from 'react';
+import { fetchCatalogTree, fetchServices, fetchCurrentUser, logout } from './api.js';
+import CatalogsSection from './components/CatalogsSection.jsx';
+import SchedulesSection from './components/SchedulesSection.jsx';
+import ServicesSection from './components/ServicesSection.jsx';
+import SparkJobsSection from './components/SparkJobsSection.jsx';
+import VcsSection from './components/VcsSection.jsx';
+import ModellerSection from './components/ModellerSection.jsx';
+
+const THEME_KEY = 'yarina-theme';
+
+const initialParams = new URLSearchParams(window.location.search);
+const INITIAL_SECTION = initialParams.get('section');
+const INITIAL_WORKSPACE_ID = initialParams.get('workspace');
+
+function getInitialTheme() {
+  try {
+    return localStorage.getItem(THEME_KEY) || 'light';
+  } catch {
+    return 'light';
+  }
+}
+
+export default function App() {
+  const [catalogTree, setCatalogTree] = useState([]);
+  const [services, setServices] = useState([]);
+  const [catalogError, setCatalogError] = useState('');
+  const [servicesError, setServicesError] = useState('');
+  const [theme, setTheme] = useState(getInitialTheme);
+  const [userProfile, setUserProfile] = useState(null);
+  const [activeSection, setActiveSection] = useState(INITIAL_SECTION || 'services');
+  const [createdSections, setCreatedSections] = useState(
+    () => new Set([INITIAL_SECTION || 'services'])
+  );
+
+  const activateSection = (section) => {
+    setActiveSection(section);
+    setCreatedSections((current) =>
+      current.has(section) ? current : new Set([...current, section])
+    );
+  };
+
+  const reloadServices = useCallback(() => {
+    fetchServices()
+      .then(setServices)
+      .catch((e) => setServicesError(e.message));
+  }, []);
+
+  useEffect(() => {
+    fetchCatalogTree()
+      .then(setCatalogTree)
+      .catch((e) => setCatalogError(e.message));
+    reloadServices();
+    fetchCurrentUser()
+      .then(setUserProfile)
+      .catch(() => setUserProfile(null));
+  }, [reloadServices]);
+
+  const username = userProfile?.username || '';
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    try {
+      localStorage.setItem(THEME_KEY, theme);
+    } catch {
+      // ignore
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((current) => (current === 'dark' ? 'light' : 'dark'));
+  };
+
+  return (
+    <div className="app">
+      <header className="app-header">
+        <h1>Yarina</h1>
+        <div className="header-actions">
+          {username && <span className="user-label">{username}</span>}
+          <button className="theme-toggle" onClick={() => logout()}>
+            Switch user
+          </button>
+          <button className="theme-toggle" onClick={toggleTheme}>
+            {theme === 'dark' ? 'Day mode' : 'Night mode'}
+          </button>
+        </div>
+      </header>
+      <nav className="section-switcher">
+        <button
+          className={`section-switcher-button ${activeSection === 'services' ? 'section-switcher-button--active' : ''}`}
+          onClick={() => activateSection('services')}
+        >
+          Services
+        </button>
+        <button
+          className={`section-switcher-button ${activeSection === 'catalog' ? 'section-switcher-button--active' : ''}`}
+          onClick={() => activateSection('catalog')}
+        >
+          Catalog
+        </button>
+        <button
+          className={`section-switcher-button ${activeSection === 'schedules' ? 'section-switcher-button--active' : ''}`}
+          onClick={() => activateSection('schedules')}
+        >
+          Schedules
+        </button>
+        <button
+          className={`section-switcher-button ${activeSection === 'sparkjobs' ? 'section-switcher-button--active' : ''}`}
+          onClick={() => activateSection('sparkjobs')}
+        >
+          SparkJobs
+        </button>
+        <button
+          className={`section-switcher-button ${activeSection === 'vcs' ? 'section-switcher-button--active' : ''}`}
+          onClick={() => activateSection('vcs')}
+        >
+          VCS
+        </button>
+        <button
+          className={`section-switcher-button ${activeSection === 'modeller' ? 'section-switcher-button--active' : ''}`}
+          onClick={() => activateSection('modeller')}
+        >
+          Modelling
+        </button>
+      </nav>
+      <main className="app-main">
+        {createdSections.has('catalog') && (
+          <div className="section-pane" hidden={activeSection !== 'catalog'}>
+            <CatalogsSection catalogs={catalogTree} error={catalogError} />
+          </div>
+        )}
+        {createdSections.has('schedules') && (
+          <div className="section-pane" hidden={activeSection !== 'schedules'}>
+            <SchedulesSection />
+          </div>
+        )}
+        {createdSections.has('sparkjobs') && (
+          <div className="section-pane" hidden={activeSection !== 'sparkjobs'}>
+            <SparkJobsSection />
+          </div>
+        )}
+        {createdSections.has('services') && (
+          <div className="section-pane" hidden={activeSection !== 'services'}>
+            <ServicesSection services={services} error={servicesError} />
+          </div>
+        )}
+        {createdSections.has('vcs') && (
+          <div className="section-pane" hidden={activeSection !== 'vcs'}>
+            <VcsSection />
+          </div>
+        )}
+        {createdSections.has('modeller') && (
+          <div className="section-pane" hidden={activeSection !== 'modeller'}>
+            <ModellerSection initialWorkspaceId={INITIAL_WORKSPACE_ID} />
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
