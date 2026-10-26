@@ -36,6 +36,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -56,6 +57,20 @@ public class EditorController {
     @GetMapping("/tree")
     public List<TreeResponse> tree(@PathVariable String workspaceId, Authentication authentication) {
         return editor.tree(workspaceId, authentication);
+    }
+
+    @GetMapping("/lineage/sources")
+    public List<FileContentResponse> lineageSources(@PathVariable String workspaceId,
+                                                    @RequestParam("keyName") String keyName,
+                                                    Authentication authentication) {
+        return editor.lineageSources(workspaceId, keyName, authentication);
+    }
+
+    @GetMapping("/lineage/receivers")
+    public List<FileContentResponse> lineageReceivers(@PathVariable String workspaceId,
+                                                      @RequestParam("keyName") String keyName,
+                                                      Authentication authentication) {
+        return editor.lineageReceivers(workspaceId, keyName, authentication);
     }
 
     @PostMapping("/files")

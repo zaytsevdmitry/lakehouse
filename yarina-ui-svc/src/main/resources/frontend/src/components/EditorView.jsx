@@ -566,47 +566,49 @@ export default function EditorView({ profile, workspace, onBack, onNotice }) {
             else if (src) moveFile(src, '');
           }}
         >
-          {filter.trim().length > 0 && filter.trim().length < 3 && (
-            <p className="muted empty-hint">Type at least 3 characters to filter.</p>
-          )}
-          {filter.trim().length >= 3 && tree.length > 0 && (folderNames.length === 0 && rootFiles.length === 0) && (
-            <p className="muted empty-hint">No files matching "{filter.trim()}".</p>
-          )}
-          <RootFolder
-            selectedFolder={selectedFolder}
-            onSelectFolder={setSelectedFolder}
-            onMove={moveFile}
-            onMoveDir={moveDirectory}
-          />
-          {folderNames.map((name) => (
-            <Folder
-              key={name}
-              node={folderTree.children[name]}
-              dirPath={name}
-              selectedPath={selected?.path}
+          <div className="tree-inner">
+            {filter.trim().length > 0 && filter.trim().length < 3 && (
+              <p className="muted empty-hint">Type at least 3 characters to filter.</p>
+            )}
+            {filter.trim().length >= 3 && tree.length > 0 && (folderNames.length === 0 && rootFiles.length === 0) && (
+              <p className="muted empty-hint">No files matching "{filter.trim()}".</p>
+            )}
+            <RootFolder
               selectedFolder={selectedFolder}
-              onOpen={openFile}
               onSelectFolder={setSelectedFolder}
               onMove={moveFile}
               onMoveDir={moveDirectory}
             />
-          ))}
-          {rootFiles.map((entry) => (
-            <button
-              key={entry.path}
-              className={`tree-item${selected && selected.path === entry.path ? ' active' : ''}`}
-              onClick={() => openFile(entry)}
-              draggable={!readOnly}
-              onDragStart={(e) => {
-                e.dataTransfer.setData(DND_MIME, entry.path);
-                e.dataTransfer.effectAllowed = 'move';
-              }}
-            >
-              <span className="file-name">{entry.label}</span>
-              {entry.modified && <span className="dirty-dot" title="modified" />}
-            </button>
-          ))}
-          {tree.length === 0 && <p className="muted empty-hint">No files in this workspace yet.</p>}
+            {folderNames.map((name) => (
+              <Folder
+                key={name}
+                node={folderTree.children[name]}
+                dirPath={name}
+                selectedPath={selected?.path}
+                selectedFolder={selectedFolder}
+                onOpen={openFile}
+                onSelectFolder={setSelectedFolder}
+                onMove={moveFile}
+                onMoveDir={moveDirectory}
+              />
+            ))}
+            {rootFiles.map((entry) => (
+              <button
+                key={entry.path}
+                className={`tree-item${selected && selected.path === entry.path ? ' active' : ''}`}
+                onClick={() => openFile(entry)}
+                draggable={!readOnly}
+                onDragStart={(e) => {
+                  e.dataTransfer.setData(DND_MIME, entry.path);
+                  e.dataTransfer.effectAllowed = 'move';
+                }}
+              >
+                <span className="file-name">{entry.label}</span>
+                {entry.modified && <span className="dirty-dot" title="modified" />}
+              </button>
+            ))}
+            {tree.length === 0 && <p className="muted empty-hint">No files in this workspace yet.</p>}
+          </div>
         </div>
         {!readOnly && (
           <div className="sidebar-foot">

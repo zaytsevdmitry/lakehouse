@@ -38,30 +38,30 @@ United namespace
 
 # Project status
 
-| Component                                                                              | Status       | Documentation                                                                                   |   
-|----------------------------------------------------------------------------------------|--------------|-------------------------------------------------------------------------------------------------|
-| [yarina-cli](yarina-cli)                                                         | Prototype    | [doc](yarina-cli/doc/commandline.MD)                                                         |
-| [yarina-common-rest-client](yarina-common-rest-client)                           | Candidate    |                                                                                                 |
-| [yarina-common-test](yarina-common-test)                                         | Candidate    |                                                                                                 |
-| [yarina-config-rest-client](yarina-config-rest-client)                           | Candidate    |                                                                                                 |
-| [yarina-config-svc](yarina-config-svc)                                           | Candidate    | [doc](yarina-config-svc/doc/readme.md)                                                       |
-| [yarina-domain-api](yarina-domain-api)                                           | Candidate    | [doc](yarina-domain-api/doc/readme.md)                                                         |
-| [yarina-scheduler-rest-client](yarina-scheduler-rest-client)                     | Candidate    |                                                                                                 |
-| [yarina-scheduler-svc](yarina-scheduler-svc)                                     | Candidate    | [doc](yarina-scheduler-svc/doc/readme.md)                                                    |
-| [yarina-state-rest-client](yarina-state-rest-client)                             | Candidate    |                                                                                                 |
-| [yarina-state-svc](yarina-state-svc)                                             | Candidate    | [doc](yarina-state-svc/doc/readme.md)                                                        |
-| [yarina-task-executor-api](yarina-task-executor-api)                             | Candidate    |                                                                                                 |
-| [yarina-task-executor-rest-client](yarina-task-executor-rest-client)             | Candidate    |                                                                                                 |
-| [yarina-task-executor-svc](yarina-task-executor-svc)                             | Candidate    | [doc](yarina-task-executor-svc/README.md)  |
-| [yarina-task-executor-spark-api](yarina-task-executor-spark-api)                 | Candidate    | [doc](yarina-task-executor-spark-api/doc/readme.md)                                          |
-| [yarina-task-executor-spark-dataset-app](yarina-task-executor-spark-dataset-app) | Candidate    |                                                                                                 |
-| [yarina-task-executor-spark-dq-app](yarina-task-executor-spark-dq-app)           | Prototype    |                                                                                                 |
-| [yarina-validators](yarina-validators)                                           | Prototype    |                                                                                                 |
-| [yarina-ui-svc](yarina-ui-svc)                                                   | Prototype| [doc](yarina-ui-svc/doc/readme.md)                                                           |
-| [yarina-task-proxy-for-spark](yarina-task-proxy-for-spark)                       | Candidate| [doc](yarina-task-proxy-for-spark/README.md)                                                 |
-| [yarina-task-proxy-for-spark-api](yarina-task-proxy-for-spark-api)               | Candidate|                                                                                                 |
-| Authorization & security                                                               | Candidate | [doc](doc/security/security.md)                                                                 |
-| [Docker](docker)                                                                       | Candidate | [doc](docker/readme.md)                                                                         |
+| Component                                                                        | Status    | Documentation                                                                                   |   
+|----------------------------------------------------------------------------------|-----------|-------------------------------------------------------------------------------------------------|
+| [yarina-cli](yarina-cli)                                                         | Prototype | [doc](yarina-cli/doc/commandline.MD)                                                         |
+| [yarina-common-rest-client](yarina-common-rest-client)                           | Release   |                                                                                                 |
+| [yarina-common-test](yarina-common-test)                                         | Release   |                                                                                                 |
+| [yarina-config-rest-client](yarina-config-rest-client)                           | Release   |                                                                                                 |
+| [yarina-config-svc](yarina-config-svc)                                           | Release   | [doc](yarina-config-svc/doc/readme.md)                                                       |
+| [yarina-domain-api](yarina-domain-api)                                           | Release   | [doc](yarina-domain-api/doc/readme.md)                                                         |
+| [yarina-scheduler-rest-client](yarina-scheduler-rest-client)                     | Release   |                                                                                                 |
+| [yarina-scheduler-svc](yarina-scheduler-svc)                                     | Release   | [doc](yarina-scheduler-svc/doc/readme.md)                                                    |
+| [yarina-state-rest-client](yarina-state-rest-client)                             | Release   |                                                                                                 |
+| [yarina-state-svc](yarina-state-svc)                                             | Release   | [doc](yarina-state-svc/doc/readme.md)                                                        |
+| [yarina-task-executor-api](yarina-task-executor-api)                             | Release   |                                                                                                 |
+| [yarina-task-executor-rest-client](yarina-task-executor-rest-client)             | Release   |                                                                                                 |
+| [yarina-task-executor-svc](yarina-task-executor-svc)                             | Release   | [doc](yarina-task-executor-svc/README.md)  |
+| [yarina-task-executor-spark-api](yarina-task-executor-spark-api)                 | Release   | [doc](yarina-task-executor-spark-api/doc/readme.md)                                          |
+| [yarina-task-executor-spark-dataset-app](yarina-task-executor-spark-dataset-app) | Release   |                                                                                                 |
+| [yarina-task-executor-spark-dq-app](yarina-task-executor-spark-dq-app)           | Prototype |                                                                                                 |
+| [yarina-validators](yarina-validators)                                           | Prototype |                                                                                                 |
+| [yarina-ui-svc](yarina-ui-svc)                                                   | Release   | [doc](yarina-ui-svc/doc/readme.md)                                                           |
+| [yarina-task-proxy-for-spark](yarina-task-proxy-for-spark)                       | Release   | [doc](yarina-task-proxy-for-spark/README.md)                                                 |
+| [yarina-task-proxy-for-spark-api](yarina-task-proxy-for-spark-api)               | Release   |                                                                                                 |
+| Authorization & security                                                         | Release   | [doc](doc/security/security.md)                                                                 |
+| [Docker](docker)                                                                 | Demo only | [doc](docker/readme.md)                                                                         |
 
 
 

@@ -36,11 +36,19 @@ import org.yarina.ui.modeller.workspace.Workspace;
 import org.yarina.ui.modeller.workspace.WorkspaceManager;
 import org.yarina.ui.modeller.yaml.VcsConfigParseException;
 import org.springframework.security.core.Authentication;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * File-level CRUD over the server-side workspaces. Every mutating operation re-validates
@@ -83,6 +91,134 @@ public class EditorService {
             });
         }
         return tree.stream().sorted(java.util.Comparator.comparing(TreeResponse::path)).toList();
+    }
+
+    /**
+     * Recursively resolves the upstream data sets of {@code keyName} (depth-first,
+     * pre-order), returning every discovered source document exactly once in the
+     * order the {@code sources} declarations are walked.
+     */
+    public List<FileContentResponse> lineageSources(String workspaceId, String keyName,
+                                                    Authentication authentication) {
+        UserContext user = UserContext.from(authentication);
+        Workspace workspace = requireOwnWorkspace(workspaceId, user);
+        String targetKey = requireKeyName(keyName);
+        Map<String, DatasetDocument> index = dataSetIndex(workspaceId);
+        DatasetDocument target = index.get(targetKey);
+        if (target == null)
+            throw new NotFoundException("Data set not found: " + targetKey);
+        requireViewer(user, domainOf(workspace, target.path()));
+
+        Set<String> visited = new LinkedHashSet<>();
+        visited.add(targetKey);
+        List<FileContentResponse> result = new ArrayList<>();
+        collectSources(targetKey, index, visited, result, workspace, user);
+        return result;
+    }
+
+    private void collectSources(String keyName, Map<String, DatasetDocument> index,
+                                Set<String> visited, List<FileContentResponse> result,
+                                Workspace workspace, UserContext user) {
+        DatasetDocument document = index.get(keyName);
+        if (document == null)
+            return;
+        for (String sourceKey : sourceKeys(document.doc())) {
+            if (!visited.add(sourceKey))
+                continue;
+            DatasetDocument source = index.get(sourceKey);
+            if (source == null)
+                continue;
+            if (!canView(workspace, source.path(), user))
+                continue;
+            result.add(toResponse(source));
+            collectSources(sourceKey, index, visited, result, workspace, user);
+        }
+    }
+
+    /**
+     * Recursively resolves the downstream data sets that consume {@code keyName}
+     * (breadth-first): first the direct consumers, then their consumers, etc.
+     * Every discovered receiver is returned exactly once.
+     */
+    public List<FileContentResponse> lineageReceivers(String workspaceId, String keyName,
+                                                      Authentication authentication) {
+        UserContext user = UserContext.from(authentication);
+        Workspace workspace = requireOwnWorkspace(workspaceId, user);
+        String targetKey = requireKeyName(keyName);
+        Map<String, DatasetDocument> index = dataSetIndex(workspaceId);
+        DatasetDocument target = index.get(targetKey);
+        if (target == null)
+            throw new NotFoundException("Data set not found: " + targetKey);
+        requireViewer(user, domainOf(workspace, target.path()));
+
+        Map<String, List<String>> reverse = new LinkedHashMap<>();
+        for (DatasetDocument document : index.values()) {
+            for (String sourceKey : sourceKeys(document.doc()))
+                reverse.computeIfAbsent(sourceKey, ignored -> new ArrayList<>()).add(document.keyName());
+        }
+
+        Set<String> visited = new LinkedHashSet<>();
+        visited.add(targetKey);
+        Deque<String> queue = new ArrayDeque<>();
+        queue.add(targetKey);
+        List<FileContentResponse> result = new ArrayList<>();
+        while (!queue.isEmpty()) {
+            String key = queue.removeFirst();
+            for (String receiverKey : reverse.getOrDefault(key, List.of())) {
+                if (!visited.add(receiverKey))
+                    continue;
+                DatasetDocument receiver = index.get(receiverKey);
+                if (receiver == null)
+                    continue;
+                if (canView(workspace, receiver.path(), user))
+                    result.add(toResponse(receiver));
+                queue.addLast(receiverKey);
+            }
+        }
+        return result;
+    }
+
+    private Map<String, DatasetDocument> dataSetIndex(String workspaceId) {
+        Map<String, DatasetDocument> index = new LinkedHashMap<>();
+        for (String path : storage.listFiles(workspaceId)) {
+            if (path.endsWith("_workspace.json"))
+                continue;
+            if (!path.endsWith(".yaml") && !path.endsWith(".yml"))
+                continue;
+            Optional<String> content = storage.readFile(workspaceId, path);
+            if (content.isEmpty())
+                continue;
+            try {
+                ObjectNode node = yaml.parse(content.get());
+                if (yaml.knownKindOf(node).orElse(null) != YamlMetadataKind.DATA_SET)
+                    continue;
+                String key = yaml.identifierOf(node, YamlMetadataKind.DATA_SET.identifierField());
+                if (key == null || key.isBlank())
+                    continue;
+                index.putIfAbsent(key, new DatasetDocument(path, key, node, content.get()));
+            } catch (VcsConfigParseException e) {
+                // an unreadable YAML file cannot participate in the lineage walk
+            }
+        }
+        return index;
+    }
+
+    private static List<String> sourceKeys(ObjectNode document) {
+        JsonNode sources = document.get("sources");
+        if (sources == null || !sources.isObject())
+            return List.of();
+        List<String> keys = new ArrayList<>();
+        for (Map.Entry<String, JsonNode> entry : sources.properties()) {
+            String key = entry.getKey();
+            if (key != null && !key.isBlank())
+                keys.add(key);
+        }
+        return keys;
+    }
+
+    private static FileContentResponse toResponse(DatasetDocument document) {
+        return new FileContentResponse(document.path(), document.yaml(), YamlMetadataKind.DATA_SET.yamlValue(),
+                document.keyName(), false);
     }
 
     public FileContentResponse createFile(String workspaceId, CreateFileRequest request,
@@ -331,6 +467,28 @@ public class EditorService {
         return user;
     }
 
+    /** Read-only lineage queries accept any viewer-level role of the owning domain. */
+    private static UserContext requireViewer(UserContext user, String domain) {
+        if (!user.hasDomainRole(domain, DomainRole.VIEWER, DomainRole.EDITOR, DomainRole.CONTROL))
+            throw new ForbiddenException("Access denied: VIEWER role required for domain '" + domain + "'");
+        return user;
+    }
+
+    private static boolean canView(Workspace workspace, String path, UserContext user) {
+        try {
+            requireViewer(user, domainOf(workspace, path));
+            return true;
+        } catch (ForbiddenException e) {
+            return false;
+        }
+    }
+
+    private static String requireKeyName(String keyName) {
+        if (keyName == null || keyName.isBlank())
+            throw new IllegalArgumentException("keyName must not be blank");
+        return keyName;
+    }
+
     private static String safeFilePath(String path) {
         if (path == null || path.isBlank())
             throw new IllegalArgumentException("File path must not be blank");
@@ -372,5 +530,8 @@ public class EditorService {
     private static ObjectNode ensureIdentifier(ObjectNode node, String field, String value) {
         node.put(field, value);
         return node;
+    }
+
+    private record DatasetDocument(String path, String keyName, ObjectNode doc, String yaml) {
     }
 }

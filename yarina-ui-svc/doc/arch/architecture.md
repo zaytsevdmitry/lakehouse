@@ -104,7 +104,7 @@ src/main/resources/frontend
     ├── yaml.js             # hand-rolled YAML (subset) reader/writer used by the
     │                       #       modeller editors
     ├── styles.css          # global CSS: tokens (CSS custom properties),
-    │                       #       all component styles (~3.2k lines)
+    │                       #       all component styles (~3.3k lines)
     ├── hooks
     │   └── useResizableSplit.js   # shared drag-to-resize splitter behaviour
     └── components
@@ -127,7 +127,9 @@ src/main/resources/frontend
         ├── ErDiagramEditor.jsx    # ER-diagram visual editing (React Flow)
         ├── DataLineageDiagramEditor.jsx  # data-lineage diagram editing
         │                          #   (React Flow; on-canvas Add/Edit/Remove,
-        │                          #   picker/confirm modals, full-screen toggle)
+        │                          #   Add sources/receivers, picker/confirm
+        │                          #   modals, left/right auto-layout,
+        │                          #   full-screen toggle)
         ├── DagEditor.jsx          # generic DAG visual editing (React Flow)
         ├── Pickers.jsx            # reference pickers (data set / script / DS…)
         ├── CodeEditor.jsx         # lightweight code editor w/ syntax highlight
@@ -137,8 +139,8 @@ src/main/resources/frontend
         ├── ModelTab.jsx           # model scripts w/ syntax highlighting
         ├── RelationsTab.jsx       # ER-diagram view (React Flow)
         └── __tests__/             # Vitest unit tests for the modeller
-                                   #   (DataLineageDiagramEditor 24, EditorView 5,
-                                   #   FormEditor 7, WorkspacePicker 5) — see §7
+                                   #   (DataLineageDiagramEditor 33, EditorView 8,
+                                   #   FormEditor 7, WorkspacePicker 8) — see §7
 ```
 
 Purpose of each folder/file:
@@ -207,9 +209,12 @@ Scopes and responsibilities:
 - **Diagram editors** — `ErDiagramEditor` and `DataLineageDiagramEditor`
   additionally own the loaded referenced DataSet documents and their dialog
   state: `dsByKey`/`dsByPath`, `loading`, `selectedKeyName`/`selectedNodeId`,
-  `addOpen`, remove-confirmation target, edit-modal state (`editTarget`,
-  `editYaml`, `editDoc`, `editMode` `form`|`yaml`, `editKeyNameEditable`,
-  `editBusy`) and the full-screen flag `expanded` (`<-->`/`>-<` toggle).
+  `addOpen`, `relatedBusy` (a recursive lineage expansion is in flight),
+  remove-confirmation target, edit-modal state (`editTarget`, `editYaml`,
+  `editDoc`, `editMode` `form`|`yaml`, `editKeyNameEditable`, `editBusy`) and
+  the full-screen flag `expanded` (`<-->`/`>-<` toggle). The data-lineage
+  editor also derives `selectedIsDataset` from the diagram's `spec.datasets`
+  to enable the `Add sources`/`Add receivers` actions only for placed nodes.
 - **Tool-managed** — `@xyflow/react` (React Flow) keeps its own internal
   store (viewport, node selection, drag state); nodes/edges themselves are
   owned by the section and synced into the flow via props.
@@ -296,6 +301,17 @@ sections render in `.error-box` blocks.
   via `FormEditor` or a raw-YAML textarea, and **PUTs** the document back
   (`api(path, { method: 'PUT', body: { path, yaml, keyName } })`), after which
   the node is refreshed from the server (`reloadOne`).
+- **Recursive lineage expansion** — `DataLineageDiagramEditor`'s
+  `Add sources`/`Add receivers` actions call
+  `GET /api/workspaces/{id}/lineage/sources?keyName=…` or
+  `.../lineage/receivers?keyName=…` for the selected node. The BFF walks the
+  workspace's DataSet `sources` declarations recursively (DFS for sources, BFS
+  for receivers), drops duplicates/cycles, filters documents by domain
+  visibility and returns a flat `FileContentResponse[]`. The editor parses the
+  returned YAML, merges the documents into `dsByKey`, and calls
+  `onChange(addLineageDatasets(doc, keys, distributeLineagePositions(...)))`;
+  sources are laid out in a column left of the selected node and receivers in a
+  column to its right, centered vertically.
 
 **Dev-mode proxying.** `vite.config.js` proxies `/api` → `http://localhost:8091`
 so the dev server talks to the BFF exactly like production.
@@ -315,7 +331,7 @@ Backend endpoints consumed (all relative, proxied by the BFF):
 | Spark | `fetchSparkSubmissions`, `createSparkSubmission`, `fetchSparkStatus`, `killSparkSubmission`, `killAllSparkSubmissions`, `clearSparkCompleted`, `fetchSparkProperties` | `/api/spark-proxy/*` |
 | VCS | `fetchVcsSyncLogs`, `fetchVcsObjectLogs` | `/api/vcs/logs`, `/api/vcs/objects` (both filterable by `domainKeyName`) |
 | User | `fetchCurrentUser`, `logout` | `GET /api/user`, `POST /logout` |
-| Modeller | `api()` calls in `WorkspacePicker` / `EditorView` / `AdminView` | `GET /api/vcs/workspaces`, `/api/vcs/branches`, `GET/POST/DELETE /api/vcs/workspace[/{id}]`, `POST /api/vcs/branch`, `POST /api/vcs/review/{id}`, `POST /api/vcs/workspace/{id}/restore`, `GET /api/schema[/{kind}]`, `/api/workspaces/{id}/tree|dirs|files`, `POST /api/workspaces/{id}/files(rename|move)`, `POST /api/workspaces/{id}/dirs(move)`, `/api/workspace/admin/workspaces`, `/api/workspace/admin/settings/cleanup-ttl-hours`, `/api/workspace/admin/sync-logs` |
+| Modeller | `api()` calls in `WorkspacePicker` / `EditorView` / `DataLineageDiagramEditor` / `AdminView` | `GET /api/vcs/workspaces`, `/api/vcs/branches`, `GET/POST/DELETE /api/vcs/workspace[/{id}]`, `POST /api/vcs/branch`, `POST /api/vcs/review/{id}`, `POST /api/vcs/workspace/{id}/restore`, `GET /api/schema[/{kind}]`, `/api/workspaces/{id}/tree|dirs|files`, `GET /api/workspaces/{id}/lineage/sources?keyName=…`, `GET /api/workspaces/{id}/lineage/receivers?keyName=…`, `POST /api/workspaces/{id}/files(rename|move)`, `POST /api/workspaces/{id}/dirs(move)`, `/api/workspace/admin/workspaces`, `/api/workspace/admin/settings/cleanup-ttl-hours`, `/api/workspace/admin/sync-logs` |
 
 ---
 
@@ -352,7 +368,13 @@ Modules. Reusability is a simple **component decomposition**:
     (`DataSetKeyPickerModal`), a remove **confirmation modal**, an **in-modal
     edit form** (form/YAML, reusing `FormEditor`) and a **full-screen expand
     toggle** (`<-->`/`>-<`, class `.diagram-expand` + `.diagram-fullscreen`
-    overlay on the host). `DagEditor` is a generic node/edge editor driven by
+    overlay on the host). `DataLineageDiagramEditor` extends its toolbar with
+    `Add sources`/`Add receivers`: each action loads the recursively related
+    data sets from the BFF and appends them in one left/right column around the
+    selected node, using the fixed layout metrics `NODE_WIDTH = 220`,
+    `NODE_HEIGHT = 110`, `NODE_GAP_X = 90`, `NODE_GAP_Y = 36`. Both buttons are
+    enabled only when a placed DataSet node is selected and the lineage request
+    is not already running. `DagEditor` is a generic node/edge editor driven by
     `nodeField`/`edgeField` props.
 - **Graph/diagram views** — use **React Flow (`@xyflow/react` v12)** with
   custom node types:
@@ -369,7 +391,7 @@ Modules. Reusability is a simple **component decomposition**:
     with entity/edge handles for visual editing of ER, data-lineage and DAG
     documents.
 
-**Styling approach: global `styles.css` (~3.2k lines).** Layout is driven by CSS
+**Styling approach: global `styles.css` (~3.3k lines).** Layout is driven by CSS
 flex/grid utility classes and a consistent set of component classes; the
 modeller styles are namespaced by `.modeller`, `.editor`, `.picker`, `.tabs`,
 `.banner`, `.lineage-*`, `.er-*`, `.diagram-expand` etc. Theming is done
@@ -450,7 +472,13 @@ Composition rules:
   resize panels via the `%` width/height; the `PipelineSection` in Schedules
   is rendered *below* the layout, not in a tab. The modeller `EditorView`
   uses an `aside.sidebar` (file tree) + `section.main` (editor) split; the
-  pane divider is handled by `hooks/useResizableSplit`.
+  pane divider is handled by `hooks/useResizableSplit`. The sidebar is
+  `min-height: 0; overflow: hidden`, while `.modeller .tree` is the scrolling
+  flex child (`flex: 1 1 auto; min-height: 0; overflow: auto`). Its
+  `.tree-inner` wrapper is sized `width: max-content; min-width: 100%`, and
+  folder/file names no longer ellipsize, so deep or long paths scroll
+  horizontally while the tree scrolls vertically without widening the editor
+  pane.
 
 ![Component placement](diagrams/placement.png)
 
@@ -496,10 +524,11 @@ with `props`/state instead of `hidden`:
   `activeTab` to `'dataset'`.
 - **ModelTab** — vertical tab rail toggles Scripts / Complete.
 - **VcsSection** — VCSLog / VCSObjectsSearch tabs.
-- **ModellerSection** — a `tabbed` header always offers My workspaces /
-  Admin; they render `WorkspacePicker` and `AdminView` respectively. The Admin
-  tab opens for everyone and surfaces the backend `403` as a banner for users
-  without the global `WORKSPACE_ADMIN` role.
+- **ModellerSection** — the `tabbed` header with My workspaces / Admin is
+  rendered only when `profile.roles` contains the global `WORKSPACE_ADMIN`
+  role; they render `WorkspacePicker` and `AdminView` respectively. Users
+  without that role go straight to `WorkspacePicker`, so the client never
+  offers an admin surface the BFF would reject.
 - **WorkspacePicker → EditorView** — the modifier flow is *state driven*
   (`openWorkspace` in `ModellerSection`): the workspace picker "Open" action
   navigates into the editor for the selected `(domain, branch)` set (either in the same tab via
@@ -512,13 +541,21 @@ with `props`/state instead of `hidden`:
 There are no client-side guards. Access protection is entirely **server-side
 in the BFF** (Spring Security): unauthenticated requests are redirected to
 the Keycloak login and the session cookie gates every `/api` call. The
-frontend just renders the auth state it sees (username label, `logout` →
-`POST /logout` + reload). The BFF enforces domain-driven RBAC: mutations
-require `EDITOR` (config/repo changes) or `CONTROL` (task stop) for the domain
-of the entity, and `/api/workspace/admin/**` requires the global
-`WORKSPACE_ADMIN` role; the modeller additionally enforces per-user workspace
-ownership (`workspace.own`). The editor's `readOnly` hint is driven by the
-domain of the selected file, not by a global role.
+frontend just renders the auth state it sees (username label, `logout`).
+Logout is a full-page `POST /logout`: Spring Security invalidates the local
+BFF session and redirects the browser through `SecurityConfig`'s
+`LogoutSuccessHandler` to Keycloak's `end_session_endpoint` with
+`id_token_hint` and the registered `post_logout_redirect_uri`; the endpoint is
+configured by `yarina.security.keycloak.end-session-uri` (derived from
+`KEYCLOAK_ISSUER_URI` by default) and falls back to a local logout when empty
+(e.g. in tests). The BFF enforces domain-driven RBAC: mutations require
+`EDITOR` (config/repo changes) or `CONTROL` (task stop) for the domain of the
+entity, `/api/workspace/admin/**` requires the global `WORKSPACE_ADMIN` role,
+and the recursive lineage reads require `VIEWER`/`EDITOR`/`CONTROL` for the
+target domain while filtering discovered documents by domain visibility; the
+modeller additionally enforces per-user workspace ownership (`workspace.own`).
+The editor's `readOnly` hint is driven by the domain of the selected file, not
+by a global role.
 
 ---
 
@@ -534,7 +571,7 @@ domain of the selected file, not by a global role.
 | Module format / target | ESM (`"type": "module"`), Vite default targets |
 | Language | **JavaScript (JSX)** — no TypeScript |
 | Linting / formatting | **None configured** (no ESLint, no Prettier, no `lint` script) |
-| Tests | **Vitest 3 + React Testing Library** (jsdom): `npm test` runs `vitest run`; configured in the `test` block of `vite.config.js` (`globals`, `environment: 'jsdom'`, `setupFiles: ['./test/setup.js']`, `include: src/**/*.test.{js,jsx}`). The current suite (46 tests) covers `DataLineageDiagramEditor` (24 tests: graph translation, position persistence, drag, Add/Edit/Remove + modal flows, full-screen toggle), `FormEditor` (7 tests: source-map key selection across document switches, stale-key guards, remove/edit enablement, per-instance tab reset), `EditorView` (7 tests, incl. folder creation at the domain root, file move-to-domain-root, the multi-domain leave-on-review flow, the per-domain `readOnly` switch and dual `CONTROL`+`EDITOR` staying editable) and `WorkspacePicker` (8 tests, incl. per-domain branch preselection and the `New branch` enable/disable by the `editor` capability, including dual `CONTROL`+`EDITOR`). `test/setup.js` polyfills the browser APIs React Flow needs in jsdom (ResizeObserver, `DOMMatrixReadOnly`, pointer capture, `getBoundingClientRect`, `offsetWidth/Height`). |
+| Tests | **Vitest 3 + React Testing Library** (jsdom): `npm test` runs `vitest run`; configured in the `test` block of `vite.config.js` (`globals`, `environment: 'jsdom'`, `setupFiles: ['./test/setup.js']`, `include: src/**/*.test.{js,jsx}`). The current suite (56 tests) covers `DataLineageDiagramEditor` (33 tests: graph translation, position persistence, drag, Add/Edit/Remove + modal flows, full-screen toggle, Add sources/Add receivers enablement, recursive lineage loading and left/right auto-layout), `FormEditor` (7 tests: source-map key selection across document switches, stale-key guards, remove/edit enablement, per-instance tab reset), `EditorView` (8 tests, incl. folder creation at the domain root, file move-to-domain-root, the multi-domain leave-on-review flow, the per-domain `readOnly` switch, dual `CONTROL`+`EDITOR` staying editable, and resetting a stale source-map key when another data set is opened) and `WorkspacePicker` (8 tests, incl. per-domain branch preselection and the `New branch` enable/disable by the `editor` capability, including dual `CONTROL`+`EDITOR`). `test/setup.js` polyfills the browser APIs React Flow needs in jsdom (ResizeObserver, `DOMMatrixReadOnly`, pointer capture, `getBoundingClientRect`, `offsetWidth/Height`). |
 | Package manager | npm (`package.json` + `package-lock.json`) |
 
 Scripts: `dev` (`vite`), `build` (`vite build`), `preview` (`vite preview`),
@@ -571,21 +608,22 @@ Priorities for refactoring before the application scales:
    would make the editor lossless and future-proof.
 2. **Automated verification is concentrated in the modeller.** A Vitest + React
    Testing Library suite guards `DataLineageDiagramEditor` (graph↔doc
-   translation, drag persistence, Add/Edit/Remove modal flows), `FormEditor`
-   (source-map key selection and stale-key guards) and `WorkspacePicker`
-   (per-domain branch preselection), plus initial coverage of `EditorView`, which
-   is where the multi-domain workspace logic lives. The rest of the app —
-   `ErDiagramEditor`, `DagEditor`, the section switcher, the review flow — still
-   has no lint, no type check and no tests; the regression net for those surfaces
-   is a manual browser session. Minimum viable step: add ESLint + extend the RTL
-   suite to the remaining modeller editors and save/restore flow; later a
-   Playwright suite for the section switcher and the full editor workflow.
+   translation, drag persistence, Add/Edit/Remove modal flows, recursive
+   Add sources/Add receivers and auto-layout), `FormEditor` (source-map key
+   selection and stale-key guards), `WorkspacePicker` (per-domain branch
+   preselection), plus initial coverage of `EditorView`, which is where the
+   multi-domain workspace logic lives. The rest of the app — `ErDiagramEditor`,
+   `DagEditor`, the section switcher, the review flow — still has no lint, no
+   type check and no tests; the regression net for those surfaces is a manual
+   browser session. Minimum viable step: add ESLint + extend the RTL suite to
+   the remaining modeller editors and save/restore flow; later a Playwright
+   suite for the section switcher and the full editor workflow.
 3. **No TypeScript.** All state flows through dynamic JS objects and props
    (`doc` from `parseYaml`, `KindSchema.fields`, `profile`, `WorkspaceResponse`)
    whose shapes are only documented implicitly. Typing `api.js` responses,
    the modeller DTOs and section props would prevent a whole class of
    "undefined is not a function" regressions.
-4. **Single monolithic `styles.css` (~3.2k lines).** Global className coupling
+4. **Single monolithic `styles.css` (~3.3k lines).** Global className coupling
    makes isolated feature work risky: shared tokens are good, but section
    styles should be co-located (CSS Modules or scoped files) so a change in
    one feature cannot silently break another — with four canvas surfaces in
@@ -604,8 +642,9 @@ Priorities for refactoring before the application scales:
    `SchedulesSection`, `SparkJobsSection` and `PipelineSection` still
    re-implement the splitter inline. Likewise the layered-graph layout
    algorithm exists in `ServicesSection`, `PipelineSection` (`computeLayers`)
-   and the modeller `DagEditor`/`ErDiagramEditor`/`DataLineageDiagramEditor` —
-   unify into a single graph-layout utility.
+   and the modeller `DagEditor`/`ErDiagramEditor`/`DataLineageDiagramEditor`
+   (the latter also owns the dedicated `distributeLineagePositions` column
+   layout) — unify into a single graph-layout utility.
 7. **Mixed imperatives inside components.** `FormEditor` (~1.3k lines) and
    `EditorView` (~1k lines) mix data fetching, complex forms, graph building
    and dialogs in one file. Splitting each into *container/hook + view +
@@ -614,8 +653,13 @@ Priorities for refactoring before the application scales:
 8. **No caching of heavy catalog/graph data.** Every dataset selection
    re-fetches the dataset and (in `RelationsTab`) its neighbors;
    schedules/pipeline re-fetch per run selection; `EditorView` builds its
-   picker providers by re-reading workspace documents per open. A small keyed
-   cache in the API layer would cut repeated network chatter.
+   picker providers by re-reading workspace documents per open. Each
+   `Add sources`/`Add receivers` click also invokes a backend lineage endpoint
+   that re-scans and re-parses every YAML file in the workspace before the
+   frontend re-fetches the discovered documents, so expansion cost grows with
+   workspace size. A small keyed cache in the API layer (and an index/cache
+   inside `EditorService` for lineage scans) would cut repeated network and
+   parse chatter.
 9. **Error handling is per-component and duplicated.** `api()` normalizes the
    modeller errors, but the other sections repeat `response.ok` checks +
    `.error-box` rendering. Centralize error mapping in `api.js` and render via
@@ -683,7 +727,7 @@ Roles are per **domain** (`<domain>:<ROLE>`), plus the global `WORKSPACE_ADMIN`.
 | Role | Backend (enforced) | Frontend (reflected) |
 |---|---|---|
 | No role / anonymous | `/api/**` (except the whitelist) → `401`, browser navigation → Keycloak login | No SPA access; `api()` redirects to `/oauth2/authorization/keycloak` on `401` |
-| `VIEWER` on a domain | Read that domain's datasets/schedules/VCS logs (BFF filters by domain); open a workspace for reading; delete own workspace | Monitoring tabs show only the allowed domains (empty list otherwise); Modeller editor is read-only for that domain |
+| `VIEWER` on a domain | Read that domain's datasets/schedules/VCS logs (BFF filters by domain); open a workspace for reading; recursively resolve lineage inside a workspace (results still filtered by visible domains); delete own workspace | Monitoring tabs show only the allowed domains (empty list otherwise); Modeller editor is read-only for that domain |
 | `EDITOR` on a domain | + create/edit/rename/move/delete files & dirs, create branch, submit review, restore — for that domain | + "New branch", file/folder CRUD, drag-and-drop, **Submit review** (editor is editable for that domain) |
 | `CONTROL` on a domain | + stop/kill Spark submissions | Stop/kill buttons are always shown; a missing `CONTROL` surfaces the backend `403` as an error |
 | `WORKSPACE_ADMIN` (global, non-domain) | + everything under `/api/workspace/admin/**` | Admin tab content (`AdminView`): all workspaces, force-delete, cleanup TTL, sync logs |
@@ -712,6 +756,9 @@ rendering.
   the services and throw `ForbiddenException` (mapped to `403` by the global
   exception handler):
   - `EditorService.requireEditor(...)` on every file/dir mutation;
+  - `EditorService.requireViewer(...)` on `lineageSources`/`lineageReceivers`
+    for the selected data set's domain; each discovered document is then
+    checked with `canView(...)` and omitted when its domain is not visible;
   - `VcsService.requireDomainRole(...)` on `openWorkspace` (`VIEWER`/`EDITOR`/
     `CONTROL`), `restore` and `createBranch` (`EDITOR`);
   - `ReviewService.submit(...)` requires `EDITOR` for **every** selected domain;
@@ -729,9 +776,10 @@ rendering.
   "guard"-like redirect in the SPA.
 - **Conditional rendering (reflection only).** The profile drives a few
   *hints*, never access:
-  - `ModellerSection` always renders the `My workspaces / Admin` tab header; a
-    non-`WORKSPACE_ADMIN` user opening **Admin** gets the backend `403` as a
-    banner (`ModellerSection.jsx`).
+  - `ModellerSection` renders the `My workspaces / Admin` tab header only when
+    `profile.roles` contains `WORKSPACE_ADMIN`; other users see
+    `WorkspacePicker` directly and never open an admin surface
+    (`ModellerSection.jsx`).
   - `WorkspacePicker` disables the **New branch** button unless the user has the
     `editor` capability in at least one domain (`WorkspacePicker.jsx`).
   - `EditorView` derives `readOnly` from the domain of the currently selected

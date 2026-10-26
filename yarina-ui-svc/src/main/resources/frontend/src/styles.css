@@ -1852,9 +1852,11 @@ a {
   .modeller .sidebar {
   width: 280px;
   min-width: 280px;
+  min-height: 0;
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   background: var(--panel-2);
 }
 
@@ -1884,9 +1886,29 @@ a {
 }
 
   .modeller .tree {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
   overflow: auto;
   padding: 8px;
+}
+
+  .modeller .tree-inner {
+  width: max-content;
+  min-width: 100%;
+  box-sizing: border-box;
+}
+
+  .modeller .tree .tree-folder-name,
+  .modeller .tree .tree-item {
+  width: max-content;
+  min-width: 100%;
+}
+
+  .modeller .tree .key-name,
+  .modeller .tree .file-name {
+  overflow: visible;
+  text-overflow: clip;
 }
 
   .modeller .dir-toolbar {

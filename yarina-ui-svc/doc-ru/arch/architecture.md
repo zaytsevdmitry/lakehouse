@@ -109,7 +109,7 @@ src/main/resources/frontend
     ├── yaml.js             # самописный читатель/писатель YAML (подмножество),
     │                       #       используемый редакторами модделирования
     ├── styles.css          # глобальный CSS: токены (CSS custom properties),
-    │                       #       все стили компонентов (~3.2k строк)
+    │                       #       все стили компонентов (~3.3k строк)
     ├── hooks
     │   └── useResizableSplit.js   # общее поведение перетаскивания разделителя
     └── components
@@ -132,7 +132,9 @@ src/main/resources/frontend
         ├── ErDiagramEditor.jsx    # визуальное редактирование ER-диаграмм (React Flow)
         ├── DataLineageDiagramEditor.jsx  # редактирование диаграмм линковки данных
         │                          #   (React Flow; Add/Edit/Remove на холсте,
-        │                          #   модалки выбора/подтверждения, полный экран)
+        │                          #   Add sources/receivers, модалки
+        │                          #   выбора/подтверждения, авто-раскладка
+        │                          #   влево/вправо, полный экран)
         ├── DagEditor.jsx          # универсальное визуальное редактирование DAG
         ├── Pickers.jsx            # справочные пикеры (датасет / скрипт / DS…)
         ├── CodeEditor.jsx         # лёгкий редактор кода с подсветкой синтаксиса
@@ -142,7 +144,7 @@ src/main/resources/frontend
         ├── ModelTab.jsx           # скрипты моделей с подсветкой синтаксиса
         ├── RelationsTab.jsx       # представление ER-диаграммы (React Flow)
         └── __tests__/             # unit-тесты Vitest для модделирования
-                                   #   (DataLineageDiagramEditor 24, EditorView 7,
+                                   #   (DataLineageDiagramEditor 33, EditorView 8,
                                    #   FormEditor 7, WorkspacePicker 8) — см. §7
 ```
 
@@ -215,10 +217,13 @@ Toolkit, Zustand, MobX или React Context. Всё состояние лока�
 - **Редакторы диаграмм** — `ErDiagramEditor` и `DataLineageDiagramEditor`
   дополнительно владеют загруженными документами указанных DataSet и
   состоянием своих диалогов: `dsByKey`/`dsByPath`, `loading`,
-  `selectedKeyName`/`selectedNodeId`, `addOpen`, цель подтверждения удаления,
-  состояние модалки редактирования (`editTarget`, `editYaml`, `editDoc`,
-  `editMode` `form`|`yaml`, `editKeyNameEditable`, `editBusy`) и флаг
-  полноэкранного режима `expanded` (переключатель `<-->`/`>-<`).
+  `selectedKeyName`/`selectedNodeId`, `addOpen`, `relatedBusy` (выполняется
+  рекурсивная загрузка линковки), цель подтверждения удаления, состояние
+  модалки редактирования (`editTarget`, `editYaml`, `editDoc`, `editMode`
+  `form`|`yaml`, `editKeyNameEditable`, `editBusy`) и флаг полноэкранного
+  режима `expanded` (переключатель `<-->`/`>-<`). Редактор линковки также
+  выводит `selectedIsDataset` из `spec.datasets`, чтобы включать
+  `Add sources`/`Add receivers` только для размещённых узлов DataSet.
 - **Управляется инструментом** — `@xyflow/react` (React Flow) держит
   собственное внутреннее хранилище (viewport, выделение узлов, состояние
   перетаскивания); сами узлы/рёбра принадлежат разделу и синхронизируются в
@@ -311,6 +316,17 @@ Query). Все вызовы централизованы в `src/api.js`, кот
   поле «сырого» YAML и **PUT**-ит документ обратно
   (`api(path, { method: 'PUT', body: { path, yaml, keyName } })`), после чего
   узел обновляется с сервера (`reloadOne`).
+- **Рекурсивное расширение линковки** — действия `Add sources`/`Add receivers`
+  в `DataLineageDiagramEditor` вызывают
+  `GET /api/workspaces/{id}/lineage/sources?keyName=…` или
+  `.../lineage/receivers?keyName=…` для выбранного узла. BFF рекурсивно
+  обходит объявления `sources` DataSet в пространстве (DFS для источников,
+  BFS для получателей), отбрасывает дубликаты/циклы, фильтрует документы по
+  видимости доменов и возвращает плоский `FileContentResponse[]`. Редактор
+  разбирает полученный YAML, добавляет документы в `dsByKey` и вызывает
+  `onChange(addLineageDatasets(doc, keys, distributeLineagePositions(...)))`:
+  источники размещаются колонкой слева от выбранного узла, получатели — справа,
+  с вертикальным центрированием.
 
 **Проксирование в dev-режиме.** `vite.config.js` проксирует `/api` →
 `http://localhost:8091`, так что dev-сервер общается с BFF точно так же, как в
@@ -331,7 +347,7 @@ production.
 | Spark | `fetchSparkSubmissions`, `createSparkSubmission`, `fetchSparkStatus`, `killSparkSubmission`, `killAllSparkSubmissions`, `clearSparkCompleted`, `fetchSparkProperties` | `/api/spark-proxy/*` |
 | VCS | `fetchVcsSyncLogs`, `fetchVcsObjectLogs` | `/api/vcs/logs`, `/api/vcs/objects` (оба фильтруются по `domainKeyName`) |
 | Пользователь | `fetchCurrentUser`, `logout` | `GET /api/user`, `POST /logout` (полностраничная форма → `end_session` Keycloak) |
-| Модделирование | вызовы `api()` в `WorkspacePicker` / `EditorView` / `AdminView` | `GET /api/vcs/workspaces`, `/api/vcs/branches`, `GET/POST/DELETE /api/vcs/workspace[/{id}]`, `POST /api/vcs/branch`, `POST /api/vcs/review/{id}`, `POST /api/vcs/workspace/{id}/restore`, `GET /api/schema[/{kind}]`, `/api/workspaces/{id}/tree|dirs|files`, `POST /api/workspaces/{id}/files(rename|move)`, `POST /api/workspaces/{id}/dirs(move)`, `/api/workspace/admin/workspaces`, `/api/workspace/admin/settings/cleanup-ttl-hours`, `/api/workspace/admin/sync-logs` |
+| Модделирование | вызовы `api()` в `WorkspacePicker` / `EditorView` / `DataLineageDiagramEditor` / `AdminView` | `GET /api/vcs/workspaces`, `/api/vcs/branches`, `GET/POST/DELETE /api/vcs/workspace[/{id}]`, `POST /api/vcs/branch`, `POST /api/vcs/review/{id}`, `POST /api/vcs/workspace/{id}/restore`, `GET /api/schema[/{kind}]`, `/api/workspaces/{id}/tree|dirs|files`, `GET /api/workspaces/{id}/lineage/sources?keyName=…`, `GET /api/workspaces/{id}/lineage/receivers?keyName=…`, `POST /api/workspaces/{id}/files(rename|move)`, `POST /api/workspaces/{id}/dirs(move)`, `/api/workspace/admin/workspaces`, `/api/workspace/admin/settings/cleanup-ttl-hours`, `/api/workspace/admin/sync-logs` |
 
 ---
 
@@ -369,9 +385,15 @@ styled-components / CSS Modules. Переиспользование — прос
     (`DataSetKeyPickerModal`), модалку **подтверждения** удаления, **форму
     редактирования внутри модалки** (form/YAML, переиспользует `FormEditor`) и
     **переключатель полноэкранного режима** (`<-->`/`>-<`, классы
-    `.diagram-expand` + `.diagram-fullscreen` как оверлей на хосте). `DagEditor`
-    — универсальный редактор узлов/рёбер, управляемый props
-    `nodeField`/`edgeField`.
+    `.diagram-expand` + `.diagram-fullscreen` как оверлей на хосте).
+    `DataLineageDiagramEditor` расширяет панель кнопками
+    `Add sources`/`Add receivers`: каждая загружает рекурсивно связанные
+    датасеты из BFF и добавляет их одной колонкой слева/справа от выбранного
+    узла с фиксированными метриками раскладки `NODE_WIDTH = 220`,
+    `NODE_HEIGHT = 110`, `NODE_GAP_X = 90`, `NODE_GAP_Y = 36`. Обе кнопки
+    доступны только при выбранном размещённом DataSet-узле и при отсутствии
+    уже выполняющегося запроса линковки. `DagEditor` — универсальный редактор
+    узлов/рёбер, управляемый props `nodeField`/`edgeField`.
 - **Графовые/диаграммные представления** — используют **React Flow
   (`@xyflow/react` v12)** с пользовательскими типами узлов:
   - `ServiceNode` (ServicesSection) — узел `UP`/`DOWN` с цветом статуса;
@@ -387,7 +409,7 @@ styled-components / CSS Modules. Переиспользование — прос
     узлы потока с хэндлами сущностей/рёбер для визуального редактирования
     документов ER, линковки данных и DAG.
 
-**Подход к стилизации: глобальный `styles.css` (~3.2k строк).** Раскладка
+**Подход к стилизации: глобальный `styles.css` (~3.3k строк).** Раскладка
 управляется утилитарными классами CSS flex/grid и согласованным набором
 классов компонентов; стили модделирования пространственно ограничены
 `.modeller`, `.editor`, `.picker`, `.tabs`, `.banner`, `.lineage-*`, `.er-*`,
@@ -471,7 +493,13 @@ custom properties** (токены): `--bg`, `--panel`, `--border`, `--text`,
   `PipelineSection` в Schedules рендерится *под* раскладкой, а не во вкладке.
   `EditorView` модделирования использует разделение `aside.sidebar` (дерево
   файлов) + `section.main` (редактор); разделитель панелей обрабатывается
-  `hooks/useResizableSplit`.
+  `hooks/useResizableSplit`. Боковая панель имеет
+  `min-height: 0; overflow: hidden`, а `.modeller .tree` — это прокручиваемый
+  flex-элемент (`flex: 1 1 auto; min-height: 0; overflow: auto`). Его обёртка
+  `.tree-inner` имеет размеры `width: max-content; min-width: 100%`, а имена
+  папок/файлов больше не обрезаются многоточием, поэтому длинные и глубокие
+  пути прокручиваются по горизонтали, а дерево — по вертикали, не расширяя
+  панель редактора.
 
 ![Размещение компонентов](diagrams/placement.png)
 
@@ -567,7 +595,7 @@ domain-driven RBAC: мутации требуют `EDITOR` (правка кон�
 | Формат модулей / цель | ESM (`"type": "module"`), цели Vite по умолчанию |
 | Язык | **JavaScript (JSX)** — без TypeScript |
 | Линтинг / форматирование | **Ничего не настроено** (нет ESLint, нет Prettier, нет скрипта `lint`) |
-| Тесты | **Vitest 3 + React Testing Library** (jsdom): `npm test` запускает `vitest run`; настраивается в блоке `test` файла `vite.config.js` (`globals`, `environment: 'jsdom'`, `setupFiles: ['./test/setup.js']`, `include: src/**/*.test.{js,jsx}`). Текущий набор (46 тестов) покрывает `DataLineageDiagramEditor` (24 теста: трансляция графа, сохранение позиций, перетаскивание, потоки Add/Edit/Remove + модалки, полноэкранный режим), `FormEditor` (7 тестов: выбор ключа source-map при переключении документов, защита от устаревших ключей, доступность remove/edit, сброс вкладки на экземпляр), `EditorView` (7 тестов, вкл. создание папки в корне домена, перемещение файла в корень домена, сценарий выхода из мультидоменного пространства после ревью, переключение `readOnly` по домену и сохранение редактируемости при одновременных `CONTROL`+`EDITOR`) и `WorkspacePicker` (8 тестов, вкл. предвыбор ветки по домену и включение/выключение `New branch` по возможности `editor`, в том числе при одновременных `CONTROL`+`EDITOR`). `test/setup.js` добавляет полифиллы для браузерных API, нужных React Flow в jsdom (ResizeObserver, `DOMMatrixReadOnly`, pointer capture, `getBoundingClientRect`, `offsetWidth/Height`). |
+| Тесты | **Vitest 3 + React Testing Library** (jsdom): `npm test` запускает `vitest run`; настраивается в блоке `test` файла `vite.config.js` (`globals`, `environment: 'jsdom'`, `setupFiles: ['./test/setup.js']`, `include: src/**/*.test.{js,jsx}`). Текущий набор (56 тестов) покрывает `DataLineageDiagramEditor` (33 теста: трансляция графа, сохранение позиций, перетаскивание, потоки Add/Edit/Remove + модалки, полноэкранный режим, доступность Add sources/Add receivers, рекурсивная загрузка линковки и авто-раскладка влево/вправо), `FormEditor` (7 тестов: выбор ключа source-map при переключении документов, защита от устаревших ключей, доступность remove/edit, сброс вкладки на экземпляр), `EditorView` (8 тестов, вкл. создание папки в корне домена, перемещение файла в корень домена, сценарий выхода из мультидоменного пространства после ревью, переключение `readOnly` по домену, сохранение редактируемости при одновременных `CONTROL`+`EDITOR` и сброс устаревшего ключа source-map при открытии другого датасета) и `WorkspacePicker` (8 тестов, вкл. предвыбор ветки по домену и включение/выключение `New branch` по возможности `editor`, в том числе при одновременных `CONTROL`+`EDITOR`). `test/setup.js` добавляет полифиллы для браузерных API, нужных React Flow в jsdom (ResizeObserver, `DOMMatrixReadOnly`, pointer capture, `getBoundingClientRect`, `offsetWidth/Height`). |
 | Менеджер пакетов | npm (`package.json` + `package-lock.json`) |
 
 Скрипты: `dev` (`vite`), `build` (`vite build`), `preview` (`vite preview`),
@@ -604,22 +632,23 @@ TypeScript или линтеры отсутствуют.
    бы редактор lossless и перспективным.
 2. **Автоматическая проверка сосредоточена в модделировании.** Набор Vitest +
    React Testing Library охраняет `DataLineageDiagramEditor` (трансляция
-   graph↔doc, сохранение перетаскивания, модальные потоки Add/Edit/Remove),
-   `FormEditor` (выбор ключа source-map и защита от устаревших ключей) и
-   `WorkspacePicker` (предвыбор ветки по домену), плюс начальное покрытие
-   `EditorView`, где живёт логика мультидоменных пространств. Остальное
-   приложение — `ErDiagramEditor`, `DagEditor`, переключатель разделов, поток
-   ревью — всё ещё без линта, без проверки типов и без тестов; сетью
-   безопасности для этих поверхностей служит ручная сессия в браузере.
-   Минимальный жизнеспособный шаг: добавить ESLint + расширить RTL-набор на
-   остальные редакторы модделирования и поток save/restore; позже — набор
-   Playwright для переключателя разделов и полного workflow редактора.
+   graph↔doc, сохранение перетаскивания, модальные потоки Add/Edit/Remove,
+   рекурсивные Add sources/Add receivers и авто-раскладку), `FormEditor` (выбор
+   ключа source-map и защита от устаревших ключей), `WorkspacePicker`
+   (предвыбор ветки по домену), плюс начальное покрытие `EditorView`, где
+   живёт логика мультидоменных пространств. Остальное приложение —
+   `ErDiagramEditor`, `DagEditor`, переключатель разделов, поток ревью — всё
+   ещё без линта, без проверки типов и без тестов; сетью безопасности для этих
+   поверхностей служит ручная сессия в браузере. Минимальный жизнеспособный
+   шаг: добавить ESLint + расширить RTL-набор на остальные редакторы
+   модделирования и поток save/restore; позже — набор Playwright для
+   переключателя разделов и полного workflow редактора.
 3. **Нет TypeScript.** Всё состояние проходит через динамические JS-объекты и
    props (`doc` из `parseYaml`, `KindSchema.fields`, `profile`,
    `WorkspaceResponse`), формы которых описаны лишь неявно. Типизация ответов
    `api.js`, DTO модделирования и props разделов предотвратила бы целый класс
    регрессий «undefined is not a function».
-4. **Единый монолитный `styles.css` (~3.2k строк).** Глобальная связность по
+4. **Единый монолитный `styles.css` (~3.3k строк).** Глобальная связность по
    className делает изолированную работу над функцией рискованной: общие токены
    — это хорошо, но стили разделов должны быть co-located (CSS Modules или
    scoped-файлы), чтобы изменение в одной функции не ломало молча другую — с
@@ -641,8 +670,9 @@ TypeScript или линтеры отсутствуют.
    `PipelineSection` по-прежнему реализуют разделитель inline. Аналогично
    алгоритм слоистой раскладки графа существует в `ServicesSection`,
    `PipelineSection` (`computeLayers`) и модделировании
-   `DagEditor`/`ErDiagramEditor`/`DataLineageDiagramEditor` — объединить в
-   единую утилиту раскладки графов.
+   `DagEditor`/`ErDiagramEditor`/`DataLineageDiagramEditor` (последний также
+   содержит отдельную раскладку колонок `distributeLineagePositions`) —
+   объединить в единую утилиту раскладки графов.
 7. **Смешанные императивы внутри компонентов.** `FormEditor` (~1.3k строк) и
    `EditorView` (~1k строк) смешивают загрузку данных, сложные формы, построение
    графов и диалоги в одном файле. Разделение каждого на модули
@@ -651,8 +681,13 @@ TypeScript или линтеры отсутствуют.
 8. **Нет кеширования тяжёлых данных каталога/графов.** Каждый выбор датасета
    заново грузит датасет и (в `RelationsTab`) его соседей; schedules/pipeline
    заново грузятся при выборе запуска; `EditorView` строит провайдеров пикеров,
-   перечитывая документы пространства при каждом открытии. Небольшой
-   keyed-кеш в слое API сократил бы повторный сетевой трафик.
+   перечитывая документы пространства при каждом открытии. Каждое нажатие
+   `Add sources`/`Add receivers` также вызывает lineage-эндпоинт бэкенда,
+   который заново сканирует и разбирает все YAML-файлы пространства, после чего
+   фронтенд повторно загружает найденные документы, поэтому стоимость
+   расширения растёт с размером пространства. Небольшой keyed-кеш в слое API
+   (и индекс/кеш в `EditorService` для lineage-сканов) сократил бы повторный
+   сетевой трафик и повторный парсинг.
 9. **Обработка ошибок покомпонентна и дублируется.** `api()` нормализует
    ошибки модделирования, но остальные разделы повторяют проверки
    `response.ok` + рендер `.error-box`. Централизовать маппинг ошибок в `api.js`
@@ -724,7 +759,7 @@ TypeScript или линтеры отсутствуют.
 | Роль | Бэкенд (принудительно) | Фронтенд (отражение) |
 |---|---|---|
 | Нет роли / аноним | `/api/**` (кроме белого списка) → `401`, навигация браузера → логин Keycloak | Доступа к SPA нет; `api()` перенаправляет на `/oauth2/authorization/keycloak` при `401` |
-| `VIEWER` в домене | Чтение датасетов/расписаний/VCS-логов этого домена (BFF фильтрует по домену); открыть пространство для чтения; удалить своё пространство | Вкладки мониторинга показывают только разрешённые домены (иначе пусто); редактор Modelling доступен только для чтения по этому домену |
+| `VIEWER` в домене | Чтение датасетов/расписаний/VCS-логов этого домена (BFF фильтрует по домену); открыть пространство для чтения; рекурсивно разрешать линковку внутри пространства (результаты всё равно фильтруются по видимым доменам); удалить своё пространство | Вкладки мониторинга показывают только разрешённые домены (иначе пусто); редактор Modelling доступен только для чтения по этому домену |
 | `EDITOR` в домене | + создание/правка/переименование/перемещение/удаление файлов и каталогов, создание ветки, отправка на ревью, restore — для этого домена | + «New branch», CRUD файлов/папок, drag-and-drop, **Submit review** (редактор редактируемый для этого домена) |
 | `CONTROL` в домене | + остановка/убийство Spark-submissions | Кнопки Stop/kill показываются всегда; отсутствие `CONTROL` всплывает как ошибка `403` от бэкенда |
 | `WORKSPACE_ADMIN` (глобальная, не доменная) | + всё под `/api/workspace/admin/**` | Содержимое вкладки Admin (`AdminView`): все пространства, принудительное удаление, TTL очистки, журналы синхронизации |
@@ -755,6 +790,9 @@ TypeScript или линтеры отсутствуют.
   сервисах и бросают `ForbiddenException` (маппится в `403` глобальным
   обработчиком исключений):
   - `EditorService.requireEditor(...)` на каждой мутации файла/каталога;
+  - `EditorService.requireViewer(...)` в `lineageSources`/`lineageReceivers`
+    для домена выбранного датасета; каждый найденный документ затем проверяется
+    через `canView(...)` и пропускается, если его домен не виден;
   - `VcsService.requireDomainRole(...)` на `openWorkspace`
     (`VIEWER`/`EDITOR`/`CONTROL`), `restore` и `createBranch` (`EDITOR`);
   - `ReviewService.submit(...)` требует `EDITOR` для **каждого** выбранного

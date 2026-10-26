@@ -6,6 +6,8 @@ import DataLineageDiagramEditor, {
   buildLineageGraph,
   setNodePosition,
   addLineageDataset,
+  addLineageDatasets,
+  distributeLineagePositions,
   removeLineageDataset,
   EDGE_TYPE,
 } from '../DataLineageDiagramEditor';
@@ -179,6 +181,56 @@ describe('removeLineageDataset', () => {
   });
 });
 
+describe('distributeLineagePositions', () => {
+  it('places a source batch in one column left of the anchor and spreads it on Y', () => {
+    const positions = distributeLineagePositions({ x: 1000, y: 500 }, ['A', 'B', 'C'], 'left');
+    expect(Object.keys(positions)).toEqual(['A', 'B', 'C']);
+    expect(Object.values(positions).every((position) => position.x === 690)).toBe(true);
+    expect(positions.A.y).toBeLessThan(positions.B.y);
+    expect(positions.B.y).toBeLessThan(positions.C.y);
+    expect(positions.B.y).toBe(500);
+    expect(positions.A.y).toBe(500 - (positions.B.y - positions.A.y));
+    expect(positions.C.y).toBe(500 + (positions.B.y - positions.A.y));
+  });
+
+  it('places a receiver batch in one column right of the anchor', () => {
+    const positions = distributeLineagePositions({ x: 10, y: 0 }, ['X', 'Y'], 'right');
+    expect(Object.values(positions).every((position) => position.x === 320)).toBe(true);
+    expect(positions.X.y).toBe(-73);
+    expect(positions.Y.y).toBe(73);
+  });
+
+  it('keeps a single node at the anchor height and handles an empty batch', () => {
+    expect(distributeLineagePositions({ x: 300, y: 120 }, ['Only'], 'left')).toEqual({
+      Only: { x: -10, y: 120 },
+    });
+    expect(distributeLineagePositions({ x: 300, y: 120 }, [], 'right')).toEqual({});
+  });
+});
+
+describe('addLineageDatasets', () => {
+  it('appends a batch once and registers all supplied positions', () => {
+    const positions = { C: { x: 1.6, y: 2.4 }, D: { x: -30, y: 40 } };
+    const next = addLineageDatasets(makeDoc({ DataSet_A: { x: 5, y: 6 } }), ['C', 'D'], positions);
+    expect(next.spec.datasets).toEqual(['DataSet_A', 'DataSet_B', 'C', 'D']);
+    expect(next.spec.layout.positions.DataSet_A).toEqual({ x: 5, y: 6 });
+    expect(next.spec.layout.positions.C).toEqual({ x: 2, y: 2 });
+    expect(next.spec.layout.positions.D).toEqual({ x: -30, y: 40 });
+  });
+
+  it('ignores data sets already on the canvas and returns the same document', () => {
+    const doc = makeDoc();
+    expect(addLineageDatasets(doc, ['DataSet_A', 'DataSet_B'], {})).toBe(doc);
+  });
+
+  it('creates the layout when the diagram has none', () => {
+    const doc = { kind: 'DataLineageDiagram', spec: { datasets: ['A'] } };
+    const next = addLineageDatasets(doc, ['B'], { B: { x: 10, y: 20 } });
+    expect(next.spec.datasets).toEqual(['A', 'B']);
+    expect(next.spec.layout.positions).toEqual({ B: { x: 10, y: 20 } });
+  });
+});
+
 describe('DataLineageDiagramEditor', () => {
   it('mounts and resolves workspace data set documents', async () => {
     render(<DataLineageDiagramEditor doc={makeDoc()} onChange={vi.fn()} tree={tree} wsId={wsId} />);
@@ -323,6 +375,82 @@ describe('DataLineageDiagramEditor', () => {
     await waitFor(() => expect(host).toHaveClass('diagram-fullscreen'));
     fireEvent.click(screen.getByRole('button', { name: '>-<' }));
     await waitFor(() => expect(host).not.toHaveClass('diagram-fullscreen'));
+  });
+
+  it('enables Add sources / Add receivers only for a selected data set node', async () => {
+    render(<DataLineageDiagramEditor doc={makeDoc()} onChange={vi.fn()} tree={tree} wsId={wsId} />);
+    await screen.findByText('DataSet_A');
+    const addSources = screen.getByRole('button', { name: 'Add sources' });
+    const addReceivers = screen.getByRole('button', { name: 'Add receivers' });
+    expect(addSources).toBeDisabled();
+    expect(addReceivers).toBeDisabled();
+
+    fireEvent.click((await screen.findByText('DataSet_B')).closest('.react-flow__node'));
+    await waitFor(() => expect(addSources).not.toBeDisabled());
+    expect(addReceivers).not.toBeDisabled();
+  });
+
+  it('adds the recursively discovered sources left of the selected node', async () => {
+    api.mockImplementation(async (path) => {
+      const target = String(path);
+      if (target.includes('/lineage/sources')) {
+        return [
+          { path: 'datasets/DataSet_Src1.yaml', kind: 'DataSet', keyName: 'DataSet_Src1', yaml: 'kind: DataSet\nkeyName: DataSet_Src1\nsources: {}\n' },
+          { path: 'datasets/DataSet_Src2.yaml', kind: 'DataSet', keyName: 'DataSet_Src2', yaml: 'kind: DataSet\nkeyName: DataSet_Src2\nsources: {}\n' },
+        ];
+      }
+      if (target.includes('DataSet_A')) return { yaml: DATASET_A_YAML };
+      if (target.includes('DataSet_B')) return { yaml: DATASET_B_YAML };
+      throw new Error('unexpected ' + target);
+    });
+    const onChange = vi.fn();
+    render(<DataLineageDiagramEditor doc={makeDoc({ DataSet_A: { x: 0, y: 0 }, DataSet_B: { x: 310, y: 0 } })} onChange={onChange} tree={tree} wsId={wsId} />);
+    fireEvent.click((await screen.findByText('DataSet_B')).closest('.react-flow__node'));
+    const button = screen.getByRole('button', { name: 'Add sources' });
+    await waitFor(() => expect(button).not.toBeDisabled());
+    fireEvent.click(button);
+
+    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+    const next = onChange.mock.calls[0][0];
+    expect(next.spec.datasets).toEqual(['DataSet_A', 'DataSet_B', 'DataSet_Src1', 'DataSet_Src2']);
+    const sourceX = next.spec.layout.positions.DataSet_Src1.x;
+    expect(sourceX).toBeLessThan(next.spec.layout.positions.DataSet_B.x);
+    expect(next.spec.layout.positions.DataSet_Src2.x).toBe(sourceX);
+    expect(next.spec.layout.positions.DataSet_Src1.y)
+      .not.toBe(next.spec.layout.positions.DataSet_Src2.y);
+    const lineageCall = api.mock.calls.find(([path]) => String(path).includes('/lineage/sources'));
+    expect(lineageCall).toBeTruthy();
+    expect(lineageCall[0]).toContain('keyName=DataSet_B');
+  });
+
+  it('adds the recursively discovered receivers right of the selected node', async () => {
+    api.mockImplementation(async (path) => {
+      const target = String(path);
+      if (target.includes('/lineage/receivers')) {
+        return [
+          { path: 'datasets/DataSet_Recv1.yaml', kind: 'DataSet', keyName: 'DataSet_Recv1', yaml: 'kind: DataSet\nkeyName: DataSet_Recv1\nsources: { DataSet_A: {} }\n' },
+          { path: 'datasets/DataSet_Recv2.yaml', kind: 'DataSet', keyName: 'DataSet_Recv2', yaml: 'kind: DataSet\nkeyName: DataSet_Recv2\nsources: { DataSet_A: {} }\n' },
+        ];
+      }
+      if (target.includes('DataSet_A')) return { yaml: DATASET_A_YAML };
+      if (target.includes('DataSet_B')) return { yaml: DATASET_B_YAML };
+      throw new Error('unexpected ' + target);
+    });
+    const onChange = vi.fn();
+    render(<DataLineageDiagramEditor doc={makeDoc({ DataSet_A: { x: 0, y: 0 }, DataSet_B: { x: 310, y: 0 } })} onChange={onChange} tree={tree} wsId={wsId} />);
+    fireEvent.click((await screen.findByText('DataSet_A')).closest('.react-flow__node'));
+    const button = screen.getByRole('button', { name: 'Add receivers' });
+    await waitFor(() => expect(button).not.toBeDisabled());
+    fireEvent.click(button);
+
+    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+    const next = onChange.mock.calls[0][0];
+    expect(next.spec.datasets).toEqual(['DataSet_A', 'DataSet_B', 'DataSet_Recv1', 'DataSet_Recv2']);
+    const receiverX = next.spec.layout.positions.DataSet_Recv1.x;
+    expect(receiverX).toBeGreaterThan(next.spec.layout.positions.DataSet_A.x);
+    expect(next.spec.layout.positions.DataSet_Recv2.x).toBe(receiverX);
+    expect(next.spec.layout.positions.DataSet_Recv1.y)
+      .not.toBe(next.spec.layout.positions.DataSet_Recv2.y);
   });
 
   it('edits the selected data set in an in-canvas modal like ERDiagram', async () => {

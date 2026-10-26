@@ -17,7 +17,7 @@
 
 
 set -e
-export LH_VERSION=1.0.1
+export LH_VERSION=1.1.0
 cp -f ../../yarina-task-executor-spark-dataset-app/target/yarina-task-executor-spark-dataset-app-${LH_VERSION}-jar-with-dependencies.jar ./
 cp -f ../../yarina-task-executor-spark-dq-app/target/yarina-task-executor-spark-dq-app-${LH_VERSION}-jar-with-dependencies.jar ./
 cp -f ../../yarina-task-proxy-for-spark/target/yarina-task-proxy-for-spark-${LH_VERSION}-jar-with-dependencies.jar ./

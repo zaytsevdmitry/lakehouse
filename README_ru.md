@@ -37,30 +37,30 @@ United namespace
 
 # Статус проекта
 
-| Компонент                                                                                | Статус   | Документация                                           |
-|------------------------------------------------------------------------------------------|----------|--------------------------------------------------------|
-| [yarina-cli](yarina-cli)                                                           | Прототип | [doc](yarina-cli/doc-ru/commandline.MD)             |
-| [yarina-common-rest-client](yarina-common-rest-client)                             | Кандидат |                                                        |
-| [yarina-common-test](yarina-common-test)                                           | Кандидат |                                                        |
-| [yarina-config-rest-client](yarina-config-rest-client)                             | Кандидат |                                                        |
-| [yarina-config-svc](yarina-config-svc)                                             | Кандидат | [doc](yarina-config-svc/doc-ru/readme.md)           |
-| [yarina-domain-api](yarina-domain-api)                                             | Кандидат | [doc](yarina-domain-api/doc-ru/readme.md)          |
-| [yarina-scheduler-rest-client](yarina-scheduler-rest-client)                       | Кандидат |                                                        |
-| [yarina-scheduler-svc](yarina-scheduler-svc)                                       | Кандидат | [doc](yarina-scheduler-svc/doc-ru/readme.md)        |
-| [yarina-state-rest-client](yarina-state-rest-client)                               | Кандидат |                                                        |
-| [yarina-state-svc](yarina-state-svc)                                               | Кандидат | [doc](yarina-state-svc/doc-ru/readme.md)            |
-| [yarina-task-executor-api](yarina-task-executor-api)                               | Кандидат |                                                        |
-| [yarina-task-executor-rest-client](yarina-task-executor-rest-client)               | Кандидат |                                                        |
-| [yarina-task-executor-svc](yarina-task-executor-svc)                               | Кандидат | [doc](yarina-task-executor-svc/README_ru.md)        |
-| [yarina-task-executor-spark-api](yarina-task-executor-spark-api)                   | Кандидат | [doc](yarina-task-executor-spark-api/doc/readme.md) |
-| [yarina-task-executor-spark-dataset-app](yarina-task-executor-spark-dataset-app)   | Кандидат |                                                        |
-| [yarina-task-executor-spark-dq-app](yarina-task-executor-spark-dq-app)             | Прототип |                                                        |
-| [yarina-validators](yarina-validators)                                             | Прототип |                                                        |
-| [yarina-ui-svc](yarina-ui-svc)                                                     | Прототип | [doc](yarina-ui-svc/doc-ru/readme.md)               |
-| [yarina-task-proxy-for-spark](yarina-task-proxy-for-spark)                         | Кандидат | [doc](yarina-task-proxy-for-spark/README_ru.md)     |
-| [yarina-task-proxy-for-spark-api](yarina-task-proxy-for-spark-api)                 | Кандидат |                                                        |
-| Авторизация и безопасность                                                               | Кандидат | [doc](doc-ru/security/security.md)                     |
-| [Docker](docker)                                                                         | Кандидат | [doc](docker/readme.md)                                |
+| Компонент                                                                                | Статус    | Документация                                           |
+|------------------------------------------------------------------------------------------|-----------|--------------------------------------------------------|
+| [yarina-cli](yarina-cli)                                                           | Прототип  | [doc](yarina-cli/doc-ru/commandline.MD)             |
+| [yarina-common-rest-client](yarina-common-rest-client)                             | Релиз     |                                                        |
+| [yarina-common-test](yarina-common-test)                                           | Релиз     |                                                        |
+| [yarina-config-rest-client](yarina-config-rest-client)                             | Релиз     |                                                        |
+| [yarina-config-svc](yarina-config-svc)                                             | Релиз     | [doc](yarina-config-svc/doc-ru/readme.md)           |
+| [yarina-domain-api](yarina-domain-api)                                             | Релиз     | [doc](yarina-domain-api/doc-ru/readme.md)          |
+| [yarina-scheduler-rest-client](yarina-scheduler-rest-client)                       | Релиз     |                                                        |
+| [yarina-scheduler-svc](yarina-scheduler-svc)                                       | Релиз     | [doc](yarina-scheduler-svc/doc-ru/readme.md)        |
+| [yarina-state-rest-client](yarina-state-rest-client)                               | Релиз     |                                                        |
+| [yarina-state-svc](yarina-state-svc)                                               | Релиз     | [doc](yarina-state-svc/doc-ru/readme.md)            |
+| [yarina-task-executor-api](yarina-task-executor-api)                               | Релиз     |                                                        |
+| [yarina-task-executor-rest-client](yarina-task-executor-rest-client)               | Релиз     |                                                        |
+| [yarina-task-executor-svc](yarina-task-executor-svc)                               | Релиз     | [doc](yarina-task-executor-svc/README_ru.md)        |
+| [yarina-task-executor-spark-api](yarina-task-executor-spark-api)                   | Релиз     | [doc](yarina-task-executor-spark-api/doc/readme.md) |
+| [yarina-task-executor-spark-dataset-app](yarina-task-executor-spark-dataset-app)   | Релиз     |                                                        |
+| [yarina-task-executor-spark-dq-app](yarina-task-executor-spark-dq-app)             | Прототип  |                                                        |
+| [yarina-validators](yarina-validators)                                             | Прототип  |                                                        |
+| [yarina-ui-svc](yarina-ui-svc)                                                     | Релиз     | [doc](yarina-ui-svc/doc-ru/readme.md)               |
+| [yarina-task-proxy-for-spark](yarina-task-proxy-for-spark)                         | Релиз     | [doc](yarina-task-proxy-for-spark/README_ru.md)     |
+| [yarina-task-proxy-for-spark-api](yarina-task-proxy-for-spark-api)                 | Релиз     |                                                        |
+| Авторизация и безопасность                                                               | Релиз     | [doc](doc-ru/security/security.md)                     |
+| [Docker](docker)                                                                         | Demo-only | [doc](docker/readme.md)                                |
 
 
 

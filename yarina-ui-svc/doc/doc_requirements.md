@@ -23,9 +23,16 @@ Please analyze your source code in the specified directory and provide a detaile
 - How is authentication handled, and how are tokens passed?
 - Describe the backend integration layer (where API clients reside and how components fetch data).
 
-### 5. Component Layer & Styling
-- Which component library or design system is used as the foundation (Ant Design, Material UI, Tailwind CSS, Styled Components, CSS Modules)?
-- How is UI component reusability structured (Atomic design, Molecule approach, or something else)?
+### 5. Component Layer & Component Registry (UI Elements)
+- **Component Inventory & UI Elements:**
+    Provide a comprehensive inventory of all custom UI controls, forms, inputs, and canvas/graph elements developed within the application. For each notable control (e.g., FormEditor, CodeEditor, Diagram Editors, Pickers, TreeNodes), detail its internal structure, configurable properties (props), and state requirements.
+- **Storage & Location:**
+    Explicitly define where these elements are stored in the codebase. Clarify the file-organization boundaries: how generic components are separated from domain-specific or feature-bound views (e.g., why all views reside directly in `src/components/` and whether any modular sub-folders or component namespaces are planned for cleaner scaling).
+- **State & Prop Flows within Components:**
+    Detail how these elements receive data and bubble up user interactions (the concrete implementation of the props-down, state-up pattern for visual components).
+- **Design System & Styling Foundation:**
+    Which component library or design system is used as the foundation (Ant Design, Material UI, Tailwind CSS, Styled Components, CSS Modules)? How is UI component reusability structured (Atomic design, Molecule approach, or custom decomposition)?
+    Используйте код с осторожностью.
 
 ### 6. Routing & Navigation
 - How is routing configured (e.g., React Router v6, link management, Protected Routes)?

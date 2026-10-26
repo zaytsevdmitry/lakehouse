@@ -23,6 +23,7 @@ const DEFAULT_COLOR = '#2563eb';
 const NODE_WIDTH = 220;
 const NODE_GAP_X = 90;
 const NODE_GAP_Y = 36;
+const NODE_HEIGHT = 110;
 const FALLBACK_COLOR = '#6b7280';
 
 /** Corner radius of the lineage connectors, in pixels. */
@@ -171,6 +172,76 @@ export function addLineageDataset(doc, keyName) {
 }
 
 /**
+ * Computes canvas positions for a batch of newly added data sets. The whole
+ * batch is placed in a single column on the requested side of the anchor node
+ * (left for sources, right for receivers) and spread evenly around the anchor's
+ * vertical centre so the nodes never overlap.
+ *
+ * @param {{x: number, y: number}} anchor the selected node's current position
+ * @param {string[]} keyNames data set keys in traversal order
+ * @param {'left'|'right'} side column side relative to the anchor
+ * @returns {Record<string, {x: number, y: number}>}
+ */
+export function distributeLineagePositions(anchor, keyNames, side) {
+  const keys = Array.isArray(keyNames) ? keyNames.filter(Boolean) : [];
+  if (keys.length === 0) return {};
+  const origin = anchor && Number.isFinite(Number(anchor.x)) && Number.isFinite(Number(anchor.y))
+    ? { x: Number(anchor.x), y: Number(anchor.y) }
+    : { x: 0, y: 0 };
+  const offsetX = NODE_WIDTH + NODE_GAP_X;
+  const x = side === 'left' ? origin.x - offsetX : origin.x + offsetX;
+  const step = NODE_HEIGHT + NODE_GAP_Y;
+  const startY = origin.y - ((keys.length - 1) * step) / 2;
+  const positions = {};
+  keys.forEach((keyName, index) => {
+    positions[keyName] = {
+      x: Math.round(x),
+      y: Math.round(startY + index * step),
+    };
+  });
+  return positions;
+}
+
+/**
+ * Appends several data sets to `spec.datasets` in one update, registering the
+ * supplied positions for the ones that were not already on the canvas. Existing
+ * data sets and their positions are left untouched.
+ */
+export function addLineageDatasets(doc, keyNames, positions = {}) {
+  const spec = doc && typeof doc.spec === 'object' && doc.spec ? doc.spec : {};
+  const datasets = Array.isArray(spec.datasets)
+    ? spec.datasets.map((key) => (key == null ? '' : String(key))).filter(Boolean)
+    : [];
+  const known = new Set(datasets);
+  const added = [];
+  for (const rawKey of Array.isArray(keyNames) ? keyNames : []) {
+    const keyName = rawKey == null ? '' : String(rawKey);
+    if (!keyName || known.has(keyName)) continue;
+    known.add(keyName);
+    added.push(keyName);
+  }
+  if (added.length === 0) return doc;
+  const layout = spec.layout && typeof spec.layout === 'object' ? spec.layout : {};
+  const nextPositions = { ...asPositions(layout) };
+  for (const keyName of added) {
+    const position = positions && positions[keyName];
+    if (!position) continue;
+    const x = asNumber(position.x);
+    const y = asNumber(position.y);
+    if (x == null || y == null) continue;
+    nextPositions[keyName] = { x: Math.round(x), y: Math.round(y) };
+  }
+  return {
+    ...doc,
+    spec: {
+      ...spec,
+      datasets: [...datasets, ...added],
+      layout: { ...layout, positions: nextPositions },
+    },
+  };
+}
+
+/**
  * Returns a copy of the diagram document with the given data set removed from
  * `spec.datasets` together with its stored canvas position.
  */
@@ -259,6 +330,7 @@ function LineageCanvas({
   const [loading, setLoading] = useState(true);
   const [selectedKeyName, setSelectedKeyName] = useState(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [relatedBusy, setRelatedBusy] = useState(false);
   const [removeTarget, setRemoveTarget] = useState(null);
   const [expanded, setExpanded] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
@@ -342,6 +414,7 @@ function LineageCanvas({
 
   const dataSetChoices = useMemo(() => Object.keys(dsByKey).sort(), [dsByKey]);
   const selectedResolved = selectedKeyName && dsByKey[selectedKeyName] ? selectedKeyName : null;
+  const selectedIsDataset = Boolean(selectedKeyName && placedKeys.has(String(selectedKeyName)));
 
   const computeCenter = useCallback(() => {
     const el = hostRef.current;
@@ -362,6 +435,62 @@ function LineageCanvas({
       y: Math.round(center.y),
     }));
   }, [readOnly, onChange, placedKeys, computeCenter, doc]);
+
+  /**
+   * Loads the recursively related data sets of the selected node from the
+   * workspace lineage endpoints and places them on the canvas: sources to the
+   * left, receivers to the right, with the batch spread evenly on Y.
+   */
+  const addRelatedDatasets = useCallback(async (side) => {
+    if (readOnly || !onChange || !selectedKeyName) return;
+    const endpoint = side === 'sources' ? 'sources' : 'receivers';
+    setRelatedBusy(true);
+    try {
+      const response = await api(
+        `/api/workspaces/${encodePath(wsId)}/lineage/${endpoint}?keyName=${encodeURIComponent(selectedKeyName)}`,
+      );
+      const entries = Array.isArray(response) ? response : [];
+      const discovered = {};
+      const newKeys = [];
+      for (const entry of entries) {
+        if (entry == null) continue;
+        let parsed = null;
+        try {
+          if (typeof entry === 'string') parsed = parseYaml(entry);
+          else if (entry.doc && typeof entry.doc === 'object') parsed = entry.doc;
+          else if (typeof entry.yaml === 'string') parsed = parseYaml(entry.yaml);
+          else if (entry.kind) parsed = entry;
+        } catch (e) {
+          parsed = null;
+        }
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) continue;
+        const keyName = String(parsed.keyName || entry.keyName || '');
+        if (!keyName || keyName === String(selectedKeyName)) continue;
+        if (placedKeys.has(keyName) || discovered[keyName]) continue;
+        discovered[keyName] = {
+          path: entry.path || '',
+          keyName,
+          doc: parsed,
+          yaml: typeof entry.yaml === 'string' ? entry.yaml : stringifyYaml(parsed),
+        };
+        newKeys.push(keyName);
+      }
+      if (newKeys.length === 0) {
+        if (onNotice) onNotice('success', `No ${endpoint} found for ${selectedKeyName}.`);
+        return;
+      }
+      setDsByKey((prev) => ({ ...prev, ...discovered }));
+      const selectedNode = flowNodes.find((node) => node.id === selectedKeyName);
+      const anchor = selectedNode && selectedNode.position ? selectedNode.position : computeCenter();
+      const positions = distributeLineagePositions(anchor, newKeys, endpoint === 'sources' ? 'left' : 'right');
+      onChange(addLineageDatasets(doc, newKeys, positions));
+      if (onNotice) onNotice('success', `Added ${newKeys.length} ${endpoint} to the diagram.`);
+    } catch (e) {
+      if (onNotice) onNotice('error', e.message);
+    } finally {
+      setRelatedBusy(false);
+    }
+  }, [readOnly, onChange, selectedKeyName, wsId, placedKeys, flowNodes, computeCenter, doc, onNotice]);
 
   const confirmRemove = useCallback(() => {
     if (readOnly || !onChange || !removeTarget) return;
@@ -473,6 +602,16 @@ function LineageCanvas({
               onClick={() => setRemoveTarget(selectedResolved)}
               disabled={!selectedResolved}
             >Remove</button>
+            <button
+              type="button"
+              onClick={() => addRelatedDatasets('sources')}
+              disabled={!selectedIsDataset || relatedBusy}
+            >Add sources</button>
+            <button
+              type="button"
+              onClick={() => addRelatedDatasets('receivers')}
+              disabled={!selectedIsDataset || relatedBusy}
+            >Add receivers</button>
           </div>
         )}
         <button
