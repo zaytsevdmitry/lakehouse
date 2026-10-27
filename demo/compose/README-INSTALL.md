@@ -11,6 +11,52 @@
 docker compose up -d
 ```
 
+## Airflow 2.7.3
+
+В демо добавлен Apache Airflow **2.7.3** с установленной интеграцией
+`yarina-airflow-integration/2.x`.
+
+| Параметр | Значение |
+|:---------|:---------|
+| UI | http://localhost:8088 |
+| Логин / пароль | `admin` / `admin` |
+| Плагины | `/opt/airflow/plugins` (образ `yarina-airflow:2.7.3`) |
+| DAG-шаблоны | `yarina-airflow-integration/examples/2.x` (монтируются в `/opt/airflow/dags`) |
+| Metadata DB | PostgreSQL `db-dev`, база `airflow` |
+
+База `airflow` создаётся скриптом `conf_infra/airflow/init_airflow_db.sql` при
+первой инициализации тома `db-dev`. Если том уже существует и базы нет,
+создайте её вручную:
+
+```shell
+docker exec db-dev psql -U postgresUser -d postgresDB -c 'CREATE DATABASE airflow;'
+```
+
+Подключения уже заданы в `docker-compose.yaml` через `AIRFLOW_CONN_*`:
+
+| Connection id | Сервис |
+|:--------------|:-------|
+| `yarina_state_default` | `http://yarina-state-svc:8084` |
+| `yarina_config_default` | `http://yarina-config-svc:8082` |
+| `yarina_spark_proxy_default` | `http://yarina-task-proxy4spark:8086` |
+
+`extra.auth_url` указывает на **токен-эндпоинт** Keycloak
+(`http://keycloak.yarina:8085/realms/yarina/protocol/openid-connect/token`),
+login/password - на `yarina-internal-client`.
+
+Образ собирается из каталога `yarina-airflow-integration` (см.
+`conf_infra/airflow/Dockerfile`). После изменения кода интеграции пересоберите
+только Airflow:
+
+```shell
+docker compose build airflow
+docker compose up -d airflow
+```
+
+После старта доступны DAG-шаблоны `yarina_split_lock_lifecycle` и
+`yarina_spark_submit_example`. Перед запуском Spark-шаблона замените
+`app_resource` на существующий артефакт.
+
 ### Настройка хост машины
 Требуется строка в файле /etc/hosts хоста 
 ```
@@ -42,6 +88,7 @@ docker container rm task-executor-svc-database
 docker container rm task-executor-svc-spark
 docker container rm task-executor-svc-state
 docker container rm yarina-task-proxy4spark
+docker container rm airflow
 
 ```
 #### Сеть
@@ -79,6 +126,8 @@ networks:
 [spark-worker](http://192.1.193.50:8401/)
 
 [spark-history](http://localhost:18080/)
+
+[Airflow](http://localhost:8088/)
 
 [UI](http://localhost:8084/)
 

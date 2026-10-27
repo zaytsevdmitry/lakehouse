@@ -58,6 +58,7 @@ United namespace
 | [yarina-task-executor-spark-dq-app](yarina-task-executor-spark-dq-app)           | Prototype |                                                                                                 |
 | [yarina-validators](yarina-validators)                                           | Prototype |                                                                                                 |
 | [yarina-ui-svc](yarina-ui-svc)                                                   | Release   | [doc](yarina-ui-svc/doc/readme.md)                                                           |
+| [yarina-airflow-integration](yarina-airflow-integration)                         | Release   | [doc](yarina-airflow-integration/README.md)                                                  |
 | [yarina-task-proxy-for-spark](yarina-task-proxy-for-spark)                       | Release   | [doc](yarina-task-proxy-for-spark/README.md)                                                 |
 | [yarina-task-proxy-for-spark-api](yarina-task-proxy-for-spark-api)               | Release   |                                                                                                 |
 | Authorization & security                                                         | Release   | [doc](doc/security/security.md)                                                                 |

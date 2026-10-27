@@ -7,6 +7,9 @@
 #   3. yarina-config-svc (Swagger) опубликован на http://localhost:18081,
 #      хост-порт 8080 занят yarina-ui-svc (redirect_uri в realm = localhost:8080),
 #      порт 8081 занят yarina-ui-modeller-svc, 18080 занят spark-history.
+#   4. Airflow 2.7.3: http://localhost:8088 (admin / admin). Образ собирается
+#      из yarina-airflow-integration/2.x, подключения к yarina-state-svc,
+#      yarina-config-svc и yarina-task-proxy4spark заданы в этом файле.
 version: '3.9'
 services:
   minio-dev:
@@ -60,6 +63,7 @@ services:
         ipv4_address: 172.20.193.10
     volumes:
       - ./conf_infra/security/init_keycloak_schema.sql:/docker-entrypoint-initdb.d/init_keycloak_schema.sql
+      - ./conf_infra/airflow/init_airflow_db.sql:/docker-entrypoint-initdb.d/02_init_airflow_db.sql
 
 
   keycloak:
@@ -561,6 +565,66 @@ services:
       openbao:
         condition: service_healthy
 
+  # Apache Airflow 2.7.3 with yarina-airflow-integration/2.x installed.
+  # The image is built from the integration root; see
+  # conf_infra/airflow/Dockerfile. The DAG templates are mounted from the
+  # repository so they can be edited without rebuilding the image.
+  airflow:
+    build:
+      context: ../../yarina-airflow-integration
+      dockerfile: ../demo/compose/conf_infra/airflow/Dockerfile
+    image: yarina-airflow:2.7.3
+    container_name: airflow
+    hostname: airflow
+    ports:
+      - "8088:8080"
+    networks:
+      yarina_net:
+        ipv4_address: 172.20.193.190
+    environment:
+      # Metadata database: a separate database in the existing PostgreSQL.
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgresUser:postgresPW@db-dev:5432/airflow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__WEBSERVER__WEB_SERVER_PORT: "8080"
+      AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "true"
+      # The Spark DAG template resolves AWS_ACCESS_KEY_ID from this Variable.
+      AIRFLOW_VAR_AWS_KEY: spark_user
+      # yarina-airflow-integration Connections. The extra.auth_url must be the
+      # Keycloak *token endpoint*, not the issuer.
+      AIRFLOW_CONN_YARINA_STATE_DEFAULT: '{"conn_type":"http","host":"http://yarina-state-svc:8084","login":"yarina-internal-client","password":"super-secret-internal-key-987654321","extra":{"auth_url":"http://keycloak.yarina:8085/realms/yarina/protocol/openid-connect/token","security_enabled":true}}'
+      AIRFLOW_CONN_YARINA_CONFIG_DEFAULT: '{"conn_type":"http","host":"http://yarina-config-svc:8082","login":"yarina-internal-client","password":"super-secret-internal-key-987654321","extra":{"auth_url":"http://keycloak.yarina:8085/realms/yarina/protocol/openid-connect/token","security_enabled":true}}'
+      AIRFLOW_CONN_YARINA_SPARK_PROXY_DEFAULT: '{"conn_type":"http","host":"http://yarina-task-proxy4spark:8086","login":"yarina-internal-client","password":"super-secret-internal-key-987654321","extra":{"auth_url":"http://keycloak.yarina:8085/realms/yarina/protocol/openid-connect/token","security_enabled":true}}'
+    volumes:
+      - ../../yarina-airflow-integration/examples/2.x:/opt/airflow/dags:ro
+      - airflow_logs:/opt/airflow/logs
+    # `airflow standalone` creates a random admin password. Pre-create the user
+    # and the password file so the demo always has admin / admin.
+    command: >
+      bash -c "
+      set -e;
+      airflow db migrate;
+      airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com || true;
+      echo admin > /opt/airflow/standalone_admin_password.txt;
+      exec airflow standalone"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 120s
+    depends_on:
+      db-dev:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      yarina-config-svc:
+        condition: service_started
+      yarina-state-svc:
+        condition: service_started
+      yarina-task-proxy4spark:
+        condition: service_started
+
   yarina-ui-svc:
     image: yarina:1.0.1
     container_name: yarina-ui-svc
@@ -712,6 +776,7 @@ volumes:
       o: bind
       device: "./storages/minio_storage"
   git_server_storage:
+  airflow_logs:
 
 networks:
   yarina_net:
