@@ -163,37 +163,31 @@ class YarinaSparkSubmitOperator(BaseOperator):
 
         return self._poll_until_terminal(hook, submission_id)
 
-    def _poll_until_terminal(
-        self, hook: YarinaSparkProxyHook, submission_id: str
-    ) -> Dict[str, str]:
+    def _poll_until_terminal(self, hook, submission_id: str) -> Dict[str, str]:
         deadline = time.monotonic() + self.timeout_seconds
         unknown_streak = 0
+        approaching_logged = False
 
         while True:
-            now = time.monotonic()
-            if now >= deadline:
-                raise AirflowException(self._timeout_message(submission_id))
-
             response = hook.get_status(submission_id)
-            raw_status = response.get("message")
-            status = str(raw_status if raw_status is not None else "").strip().upper()
+            raw_state = response.get("driverState")
+            status = str(raw_state if raw_state is not None else "").strip().upper()
+            message = response.get("message")
             logger.info(
-                "Poll Spark submission %s: message=%s", submission_id, raw_status
+                "Poll Spark submission %s: driverState=%s message=%s",
+                submission_id, raw_state, message,
             )
 
             if status == SparkDriverState.FINISHED:
-                logger.info("Spark submission %s FINISHED", submission_id)
-                return {
-                    "submissionId": submission_id,
-                    "message": SparkDriverState.FINISHED,
-                }
+                return {"submissionId": submission_id,
+                        "driverState": SparkDriverState.FINISHED}
 
             if status in self.terminal_fail_states:
                 raise AirflowException(
-                    "Spark submission {} finished with status {}. "
-                    "The proxy submissionId can be inspected manually: "
+                    "Spark submission {} finished with driverState={} "
+                    "(message={!r}). Inspect manually: "
                     "GET /v1/submissions/status/{}".format(
-                        submission_id, status, submission_id
+                        submission_id, status, message, submission_id
                     )
                 )
 
@@ -202,33 +196,35 @@ class YarinaSparkSubmitOperator(BaseOperator):
             else:
                 unknown_streak += 1
                 logger.warning(
-                    "Spark submission %s returned unknown status %r "
-                    "(%d consecutive)",
-                    submission_id,
-                    raw_status,
-                    unknown_streak,
+                    "Spark submission %s returned unexpected driverState %r "
+                    "(%d consecutive); message=%r",
+                    submission_id, raw_state, unknown_streak, message,
                 )
                 if unknown_streak >= self.max_consecutive_unknown:
                     raise AirflowException(
-                        "Spark submission {} returned unknown status {!r} {} "
-                        "times in a row; giving up.".format(
-                            submission_id, raw_status, unknown_streak
+                        "Spark submission {} returned unexpected driverState "
+                        "{!r} {} times in a row (last message={!r}); giving up.".format(
+                            submission_id, raw_state, unknown_streak, message
                         )
                     )
 
+            now = time.monotonic()
+            if now >= deadline:
+                raise AirflowException(self._timeout_message(submission_id))
+
             remaining = deadline - now
-            if remaining <= max(self.poll_interval_seconds, 60):
+            if not approaching_logged and remaining <= max(self.poll_interval_seconds, 60):
                 logger.warning(
                     "Approaching timeout for Spark submission %s: %d seconds left",
-                    submission_id,
-                    remaining,
+                    submission_id, remaining,
                 )
+                approaching_logged = True
 
             time.sleep(self.poll_interval_seconds)
 
     def _timeout_message(self, submission_id: str) -> str:
         return (
-            "Таймаут {}s ожидания submission {}. Задача в кластере может "
-            "продолжать выполняться; проверьте статус вручную: "
+            "Timeout of {}s reached while waiting for submission {}. "
+            "The task may still be running in the cluster; please check the status manually: "
             "GET /v1/submissions/status/{}"
         ).format(self.timeout_seconds, submission_id, submission_id)
