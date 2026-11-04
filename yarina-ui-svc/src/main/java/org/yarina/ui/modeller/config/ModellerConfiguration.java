@@ -17,6 +17,8 @@
 
 package org.yarina.ui.modeller.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yarina.domain.layout.DomainLayout;
 import org.yarina.domain.settings.DomainSettings;
 import org.yarina.ui.modeller.service.AdminWorkspaceService;
@@ -32,10 +34,13 @@ import org.yarina.ui.modeller.storage.s3.S3ObjectStorageClient;
 import org.yarina.ui.modeller.storage.s3.S3WorkspaceStorage;
 import org.yarina.ui.modeller.workspace.WorkspaceCleanupTask;
 import org.yarina.ui.modeller.workspace.WorkspaceManager;
+import org.yarina.ui.modeller.workspace.WorkspaceSeeder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Explicit wiring of the application-level strategies, all driven by the
@@ -43,6 +48,8 @@ import java.util.Locale;
  */
 @Configuration
 public class ModellerConfiguration {
+
+    private static final Logger logger = LoggerFactory.getLogger(ModellerConfiguration.class);
 
     // ------------------------------------------------------------------
     // storage
@@ -54,11 +61,17 @@ public class ModellerConfiguration {
         return switch (type == null ? "" : type.toLowerCase(Locale.ROOT)) {
             case "s3", "minio" -> {
                 ModellerProperties.S3 s3 = properties.getStorage().getS3();
+                logger.info("Workspace storage: S3/MinIO bucket '{}' at {}", s3.getBucket(), s3.getEndpoint());
                 S3ObjectStorageClient client = new S3ObjectStorageClient(
                         s3.getEndpoint(), s3.getBucket(), s3.getAccessKey(), s3.getSecretKey(), s3.getRegion());
                 yield new S3WorkspaceStorage(client);
             }
-            case "local", "filesystem", "" -> new LocalFsWorkspaceStorage(properties.getStorage().getRootDirectory());
+            case "local", "filesystem", "" -> {
+                LocalFsWorkspaceStorage storage =
+                        new LocalFsWorkspaceStorage(properties.getStorage().getRootDirectory());
+                logger.info("Workspace storage: local filesystem at {}", storage.root());
+                yield storage;
+            }
             default -> throw new IllegalArgumentException(
                     "Unsupported yarina.modeller.storage.type: " + type);
         };
@@ -79,14 +92,45 @@ public class ModellerConfiguration {
 
     @Bean
     public WorkspaceManager workspaceManager(WorkspaceStorage storage, ModellerVcsCatalog vcs,
-                                             ModellerProperties properties) {
+                                             DomainSettings domainSettings, ModellerProperties properties) {
         int ttlHours = (int) Math.min(Integer.MAX_VALUE,
                 Math.max(1, properties.getStorage().getCleanupTtlHours()));
         WorkspaceManager manager = new WorkspaceManager(storage,
-                (domain, branch) -> DomainLayout.scopeDomain(domain,
-                        vcs.clientFor(domain).readBranchFiles(branch)),
-                ttlHours);
+                workspaceSeeder(vcs, domainSettings), ttlHours);
         return manager;
+    }
+
+    /**
+     * Reads a branch and scopes it to the requested domain, logging the raw and the scoped
+     * file counts. Without this an accidentally over-eager scoping is indistinguishable
+     * from an empty repository: both leave the workspace folder empty.
+     */
+    private static WorkspaceSeeder workspaceSeeder(ModellerVcsCatalog vcs, DomainSettings domainSettings) {
+        return (domain, branch) -> {
+            long started = System.nanoTime();
+            try {
+                Map<String, String> raw = vcs.clientFor(domain).readBranchFiles(branch);
+                boolean domainLayout = DomainLayout.usesDomainLayout(domain, raw, domainSettings.allDomainNames());
+                Map<String, String> scoped = DomainLayout.scopeDomain(domain, raw,
+                        domainSettings.allDomainNames());
+                long millis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started);
+                if (!raw.isEmpty() && scoped.isEmpty()) {
+                    logger.warn("Domain {} ({}): read {} file(s) from the repository but none remain after "
+                                    + "domain scoping (domainLayout={}, knownDomains={}); first paths: {}",
+                            domain, branch, raw.size(), domainLayout, domainSettings.allDomainNames(),
+                            raw.keySet().stream().limit(10).toList());
+                } else {
+                    logger.info("Domain {} ({}): read {} file(s) from the repository, {} after domain scoping "
+                                    + "(domainLayout={}) in {} ms",
+                            domain, branch, raw.size(), scoped.size(), domainLayout, millis);
+                }
+                return scoped;
+            } catch (RuntimeException e) {
+                logger.error("Domain {} ({}): cannot read the branch from the VCS repository: {}",
+                        domain, branch, e.getMessage(), e);
+                throw e;
+            }
+        };
     }
 
     @Bean

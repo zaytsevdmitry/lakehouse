@@ -20,6 +20,9 @@ package org.yarina.domain.vcs;
 import org.yarina.domain.vcs.client.GitVcsClient;
 import org.springframework.util.StringUtils;
 
+import java.util.Collection;
+import java.util.Set;
+
 /**
  * Builds the Git client of a {@link DomainVcsSpec}: {@link #clientFor} for the read
  * pipeline of configuration-as-code (a persistent local clone), and
@@ -55,8 +58,19 @@ public final class DomainVcsFactory {
      * @throws IllegalStateException when the spec is incomplete
      */
     public static VcsClient repositoryFor(DomainVcsSpec spec) {
+        return repositoryFor(spec, Set.of());
+    }
+
+    /**
+     * @param knownDomains names of all configured domains, used to recognize a
+     *                     multi-domain repository whose reviewed domain is still new
+     * @return a {@link VcsClient} over the spec's repository serving branch reads,
+     *         branch creation and review pushes
+     * @throws IllegalStateException when the spec is incomplete
+     */
+    public static VcsClient repositoryFor(DomainVcsSpec spec, Collection<String> knownDomains) {
         validateRepository(spec);
-        return new GitVcsClient(spec.repositoryUrl(), spec.branch(), spec.credentials());
+        return new GitVcsClient(spec.repositoryUrl(), spec.branch(), spec.credentials(), knownDomains);
     }
 
     private static void validateRepository(DomainVcsSpec spec) {

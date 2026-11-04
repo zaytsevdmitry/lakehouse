@@ -28,10 +28,14 @@ const profile = {
 
 const ORDERS = 'platform (main)/orders.yaml';
 const REPORT = 'analytics (dev)/report.yaml';
+const METRICS = 'platform (main)/quality/metrics/metrics_file.yaml';
+const NOTES = 'platform (main)/notes/readme.txt';
 
 const TREE = [
   { path: ORDERS, kind: 'DataSet', keyName: 'orders' },
   { path: REPORT, kind: 'DataSet', keyName: 'report' },
+  { path: METRICS, kind: 'DataSet', keyName: 'metrics_file' },
+  { path: NOTES, kind: 'unknown', keyName: NOTES },
 ];
 
 const DATA_SET_SCHEMA = {
@@ -74,9 +78,20 @@ const REPORT_YAML = [
   '',
 ].join('\n');
 
+const METRICS_YAML = [
+  'kind: DataSet',
+  'keyName: metrics_file',
+  'sources:',
+  '  jdbc:',
+  '    properties:',
+  '      url: jdbc:postgresql://metrics',
+  '',
+].join('\n');
+
 let reviewResult;
 let moved;
 let createdDir;
+let createdFile;
 
 function mockApi() {
   api.mockImplementation(async (path, options = {}) => {
@@ -97,7 +112,22 @@ function mockApi() {
       createdDir = options.body;
       return null;
     }
+    if (path.endsWith('/files') && options.method === 'POST') {
+      createdFile = options.body;
+      return {
+        path: `${options.body.directory}/${options.body.keyName}.yaml`,
+        kind: options.body.kind,
+        keyName: options.body.keyName,
+        yaml: `kind: ${options.body.kind}\nkeyName: ${options.body.keyName}\n`,
+      };
+    }
     if (String(path).includes('/review/')) return reviewResult;
+    if (String(path).endsWith('metrics_file.yaml') && String(path).includes('/files/')) {
+      return { path: METRICS, kind: 'DataSet', keyName: 'metrics_file', yaml: METRICS_YAML };
+    }
+    if (String(path).endsWith('readme.txt') && String(path).includes('/files/')) {
+      return { path: NOTES, kind: 'unknown', keyName: null, yaml: 'hello\n' };
+    }
     if (String(path).endsWith('orders.yaml') && String(path).includes('/files/')) {
       return { path: ORDERS, kind: 'DataSet', keyName: 'orders', yaml: ORDERS_YAML };
     }
@@ -126,6 +156,7 @@ beforeEach(() => {
   api.mockReset();
   moved = null;
   createdDir = null;
+  createdFile = null;
   reviewResult = { status: 'OK', url: 'https://git/merge/1' };
   mockApi();
 });
@@ -140,6 +171,47 @@ describe('EditorView multi-domain workspace', () => {
 
     await waitFor(() => expect(createdDir).not.toBeNull());
     expect(createdDir.path).toBe('platform (main)/archive');
+  });
+
+  it('creates a new file in the selected folder instead of a kind-derived folder', async () => {
+    await renderEditor();
+
+    fireEvent.click(await screen.findByRole('button', { name: /platform/ }));
+    fireEvent.click(screen.getByTitle('New file'));
+
+    fireEvent.change(await screen.findByPlaceholderText('e.g. my_config'), { target: { value: 'new_orders' } });
+    const folder = screen.getByPlaceholderText('e.g. platform (main)/quality/metrics');
+    expect(folder).toHaveValue('platform (main)');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }));
+
+    await waitFor(() => expect(createdFile).not.toBeNull());
+    expect(createdFile).toEqual({ kind: 'DataSet', keyName: 'new_orders', directory: 'platform (main)' });
+  });
+
+  it('picks the editor from the kind field of a file in an arbitrary directory', async () => {
+    await renderEditor();
+
+    fireEvent.click(await screen.findByRole('button', { name: /platform/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /quality/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /metrics/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /metrics_file/ }));
+
+    // DataSet form editor, even though the file lives in quality/metrics.
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Sources' })).toBeInTheDocument());
+    expect(screen.queryByText(/No schema available/)).not.toBeInTheDocument();
+  });
+
+  it('opens a file without a metadata kind as a plain text file', async () => {
+    await renderEditor();
+
+    fireEvent.click(await screen.findByRole('button', { name: /platform/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /notes/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /readme/ }));
+
+    await waitFor(() => expect(screen.getByDisplayValue('hello')).toBeInTheDocument());
+    expect(screen.queryByRole('button', { name: 'Form view' })).not.toBeInTheDocument();
+    expect(screen.getByText(/plain file/)).toBeInTheDocument();
   });
 
   it('moves a file dropped on the root to the root of its own domain', async () => {

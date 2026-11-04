@@ -1,13 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import { Background, Controls, Handle, MarkerType, Position, ReactFlow } from '@xyflow/react';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  applyNodeChanges,
+  Background,
+  BackgroundVariant,
+  Controls,
+  Handle,
+  MarkerType,
+  Position,
+  ReactFlow,
+} from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { fetchDataSet } from '../api.js';
 
-const NODE_W = 240;
-const NODE_H = 200;
-const CENTER_X = 0;
-const CENTER_Y = 0;
-const RADIUS = 360;
+const COLUMN_WIDTH = 320;
+const ROW_GAP = 60;
 
 function compositeName(dataSet) {
   return [dataSet.dataSourceKeyName, dataSet.databaseSchemaName, dataSet.tableName]
@@ -59,30 +65,11 @@ function EntityNode({ data }) {
 
 const NODE_TYPES = { erNode: EntityNode };
 
-function connectionSides(sourceNode, targetNode) {
-  const sourceCenter = {
-    x: sourceNode.position.x + NODE_W / 2,
-    y: sourceNode.position.y + NODE_H / 2,
-  };
-  const targetCenter = {
-    x: targetNode.position.x + NODE_W / 2,
-    y: targetNode.position.y + NODE_H / 2,
-  };
-  const dx = targetCenter.x - sourceCenter.x;
-  const dy = targetCenter.y - sourceCenter.y;
-  if (Math.abs(dx) >= Math.abs(dy)) {
-    const horizontal = dx >= 0 ? 'right' : 'left';
-    return { source: horizontal, target: horizontal === 'right' ? 'left' : 'right' };
-  }
-  const vertical = dy >= 0 ? 'bottom' : 'top';
-  return { source: vertical, target: vertical === 'bottom' ? 'top' : 'bottom' };
-}
-
-function toNode(dataSet) {
+function toNode(dataSet, position) {
   return {
     id: `node:${dataSet.keyName}`,
     type: 'erNode',
-    position: { x: CENTER_X - NODE_W / 2, y: CENTER_Y - NODE_H / 2 },
+    position,
     data: {
       label: dataSet.keyName,
       composite: compositeName(dataSet),
@@ -91,11 +78,30 @@ function toNode(dataSet) {
   };
 }
 
+/**
+ * Lays the relations out left-to-right. The selected data set is the source of
+ * every FOREIGN reference, so the referenced (outgoing) data sets are stacked in
+ * a column on the right; the layout is not clamped to the viewport, so a long
+ * list simply extends beyond the edges and can be panned/dragged.
+ */
+export function buildRelationsLayout(center, neighbors) {
+  const nodes = [toNode(center, { x: 0, y: 0 })];
+  const sorted = [...(neighbors || [])].sort((a, b) => String(a.keyName).localeCompare(String(b.keyName)));
+  sorted.forEach((neighbor, i) => {
+    nodes.push(toNode(neighbor, {
+      x: COLUMN_WIDTH,
+      y: (i - (sorted.length - 1) / 2) * ROW_GAP,
+    }));
+  });
+  return nodes;
+}
+
 export default function RelationsTab({ dataSet }) {
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     if (!dataSet) {
@@ -124,39 +130,19 @@ export default function RelationsTab({ dataSet }) {
           if (neighbors[i]) neighborByKey.set(key, neighbors[i]);
         });
 
-        const neighborNodes = [...neighborByKey.values()];
-        const centerNode = toNode(dataSet);
-
-        const resultNodes = [
-          centerNode,
-          ...neighborNodes.map((neighbor, i) => {
-            const angle = neighborNodes.length === 1 ? -Math.PI / 2 : (i / neighborNodes.length) * 2 * Math.PI;
-            return {
-              ...toNode(neighbor),
-              position: {
-                x: CENTER_X + RADIUS * Math.cos(angle) - NODE_W / 2,
-                y: CENTER_Y + RADIUS * Math.sin(angle) - NODE_H / 2,
-              },
-            };
-          }),
-        ];
+        const resultNodes = buildRelationsLayout(dataSet, [...neighborByKey.values()]);
 
         const resultEdges = foreignRefs
           .filter((ref) => neighborByKey.has(ref.dataSetKeyName))
-          .map((ref) => {
-            const sourceNode = resultNodes.find((n) => n.id === `node:${dataSet.keyName}`);
-            const targetNode = resultNodes.find((n) => n.id === `node:${ref.dataSetKeyName}`);
-            const sides = sourceNode && targetNode ? connectionSides(sourceNode, targetNode) : null;
-            return {
-              id: `edge:${dataSet.keyName}:${ref.dataSetKeyName}:${ref.name}`,
-              source: `node:${dataSet.keyName}`,
-              target: `node:${ref.dataSetKeyName}`,
-              label: ref.name,
-              sourceHandle: sides ? `source-${sides.source}` : undefined,
-              targetHandle: sides ? `target-${sides.target}` : undefined,
-              markerEnd: { type: MarkerType.ArrowClosed },
-            };
-          });
+          .map((ref) => ({
+            id: `edge:${dataSet.keyName}:${ref.dataSetKeyName}:${ref.name}`,
+            source: `node:${dataSet.keyName}`,
+            target: `node:${ref.dataSetKeyName}`,
+            label: ref.name,
+            sourceHandle: 'source-right',
+            targetHandle: 'target-left',
+            markerEnd: { type: MarkerType.ArrowClosed },
+          }));
 
         setNodes(resultNodes);
         setEdges(resultEdges);
@@ -164,6 +150,11 @@ export default function RelationsTab({ dataSet }) {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [dataSet]);
+
+  // Relations are movable: drag/selection changes are applied to the local nodes.
+  const onNodesChange = useCallback((changes) => {
+    setNodes((nds) => applyNodeChanges(changes, nds));
+  }, []);
 
   if (!dataSet) {
     return <div className="empty-box">Select a table in the tree.</div>;
@@ -174,18 +165,31 @@ export default function RelationsTab({ dataSet }) {
       {error && <div className="error-box">Error: {error}</div>}
       {loading && <div className="empty-box">Loading...</div>}
       {!error && !loading && (
-        <div className="relations-flow">
+        <div className={`relations-host${expanded ? ' diagram-fullscreen' : ''}`}>
           <ReactFlow
+            key={dataSet.keyName}
+            className="relations-flow"
             nodes={nodes}
             edges={edges}
             nodeTypes={NODE_TYPES}
+            onNodesChange={onNodesChange}
             fitView
-            fitViewOptions={{ padding: 0.2 }}
+            fitViewOptions={{ padding: 0.2, minZoom: 0.8, maxZoom: 1 }}
+            minZoom={0.1}
+            nodesConnectable={false}
+            elementsSelectable
+            deleteKeyCode={null}
             proOptions={{ hideAttribution: true }}
           >
-            <Background />
+            <Background variant={BackgroundVariant.Dots} gap={18} size={1.2} />
             <Controls />
           </ReactFlow>
+          <button
+            type="button"
+            className={`diagram-expand${expanded ? ' diagram-expand--on' : ''}`}
+            title={expanded ? 'Restore diagram size' : 'Expand diagram to full screen'}
+            onClick={() => setExpanded((v) => !v)}
+          >{expanded ? '>-<' : '<-->'}</button>
         </div>
       )}
     </div>

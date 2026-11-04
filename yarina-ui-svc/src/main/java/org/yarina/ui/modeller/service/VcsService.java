@@ -17,6 +17,8 @@
 
 package org.yarina.ui.modeller.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yarina.domain.layout.DomainLayout;
 import org.yarina.domain.settings.DomainSettings;
 import org.yarina.domain.vcs.VcsException;
@@ -48,6 +50,8 @@ import java.util.Map;
  */
 public class VcsService {
 
+    private static final Logger logger = LoggerFactory.getLogger(VcsService.class);
+
     private final WorkspaceManager manager;
     private final ModellerVcsCatalog vcs;
     private final WorkspaceStorage storage;
@@ -77,24 +81,38 @@ public class VcsService {
         BranchSelection selection = selectionFor(workspace, base);
         requireDomainRole(user, selection.domain(), "EDITOR");
         Map<String, String> scoped = DomainLayout.scopeDomain(selection.domain(),
-                vcs.clientFor(selection.domain()).readBranchFiles(selection.branch()));
+                vcs.clientFor(selection.domain()).readBranchFiles(selection.branch()),
+                domainSettings.allDomainNames());
         boolean isFile = base.endsWith(".yaml") || base.endsWith(".yml");
         String relative = base.startsWith(selection.folder() + "/")
                 ? base.substring(selection.folder().length() + 1) : base;
         String prefix = relative.isEmpty() ? "" : relative + "/";
         return manager.synchronizedOn(workspaceId, () -> {
             int count = 0;
+            logger.info("Workspace {}: restoring '{}' from {} ({}) to disk ({} file(s) in the snapshot)",
+                    workspaceId, base, selection.domain(), selection.branch(), scoped.size());
             for (Map.Entry<String, String> entry : scoped.entrySet()) {
                 String key = entry.getKey();
                 boolean match = isFile ? key.equals(relative)
                         : (key.equals(relative) || key.startsWith(prefix));
                 if (!match)
                     continue;
-                storage.writeFile(workspaceId, selection.folder() + "/" + key, entry.getValue());
+                String target = selection.folder() + "/" + key;
+                logger.info("Workspace {}: restoring '{}' from {} ({})", workspaceId, target,
+                        selection.domain(), selection.branch());
+                try {
+                    storage.writeFile(workspaceId, target, entry.getValue());
+                } catch (RuntimeException e) {
+                    logger.error("Workspace {}: cannot restore '{}' from {} ({}) to disk: {}",
+                            workspaceId, target, selection.domain(), selection.branch(), e.getMessage(), e);
+                    throw e;
+                }
                 count++;
             }
             if (isFile && count == 0)
                 throw new IllegalArgumentException("File not found in VCS: " + base);
+            logger.info("Workspace {}: restored {} file(s) of '{}' from {} ({}) to disk",
+                    workspaceId, count, base, selection.domain(), selection.branch());
             logs.log("INFO", user.username(), isFile ? "RESTORE_FILE" : "RESTORE_DIR", base, workspaceId);
             return count;
         });
@@ -174,6 +192,8 @@ public class VcsService {
             try {
                 result.add(new DomainBranchesResponse(domain, vcs.clientFor(domain).listBranches(), branchMain));
             } catch (VcsException e) {
+                logger.warn("Domain {}: cannot list branches of the repository: {}",
+                        domain, e.getMessage(), e);
                 result.add(new DomainBranchesResponse(domain, java.util.List.of(), branchMain));
             }
         }

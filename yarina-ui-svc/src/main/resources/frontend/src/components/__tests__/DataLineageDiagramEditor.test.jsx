@@ -117,6 +117,19 @@ describe('buildLineageGraph', () => {
     });
     expect(edges).toHaveLength(0);
   });
+
+  it('accepts a sources list as well as the sources map', () => {
+    const { edges } = buildLineageGraph(makeDoc(), {
+      DataSet_A: { keyName: 'DataSet_A', doc: { kind: 'DataSet', keyName: 'DataSet_A', sources: [] } },
+      DataSet_B: {
+        keyName: 'DataSet_B',
+        doc: { kind: 'DataSet', keyName: 'DataSet_B', sources: [{ keyName: 'DataSet_A' }] },
+      },
+    });
+    expect(edges).toHaveLength(1);
+    expect(edges[0].source).toBe('DataSet_A');
+    expect(edges[0].target).toBe('DataSet_B');
+  });
 });
 
 describe('setNodePosition', () => {
@@ -236,6 +249,30 @@ describe('DataLineageDiagramEditor', () => {
     render(<DataLineageDiagramEditor doc={makeDoc()} onChange={vi.fn()} tree={tree} wsId={wsId} />);
     expect(await screen.findByText('DataSet_A')).toBeInTheDocument();
     expect(screen.getByText('DataSet_B')).toBeInTheDocument();
+  });
+
+  it('loads the data sets on the canvas before the rest of the workspace', async () => {
+    const unrelated = Array.from({ length: 30 }, (_, i) => ({
+      path: `datasets/unrelated_${i}.yaml`, kind: 'DataSet', keyName: `Unrelated_${i}`,
+    }));
+    const requested = [];
+    api.mockImplementation(async (path) => {
+      requested.push(String(path));
+      if (String(path).includes('DataSet_A.yaml')) return { yaml: DATASET_A_YAML };
+      if (String(path).includes('DataSet_B.yaml')) return { yaml: DATASET_B_YAML };
+      return new Promise(() => {}); // the rest of the workspace keeps loading
+    });
+    const { container } = render(
+      <DataLineageDiagramEditor doc={makeDoc()} onChange={vi.fn()} tree={[...unrelated, ...tree]} wsId={wsId} />,
+    );
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('.react-flow__edge')).toHaveLength(1);
+    });
+    expect(requested.slice(0, 2)).toEqual([
+      expect.stringContaining('DataSet_A.yaml'),
+      expect.stringContaining('DataSet_B.yaml'),
+    ]);
   });
 
   it('hands exactly 2 nodes and 1 directional edge over to the flow canvas', async () => {

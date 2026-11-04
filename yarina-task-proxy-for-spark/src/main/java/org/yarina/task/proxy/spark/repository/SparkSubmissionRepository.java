@@ -80,6 +80,7 @@ public interface SparkSubmissionRepository extends JpaRepository<SparkSubmission
     @Query(value = """
             UPDATE {h-schema}spark_submissions
             SET status = :status,
+                updated_at = now(),
                 message = :message
             WHERE id = :id
             """, nativeQuery = true)
@@ -93,6 +94,7 @@ public interface SparkSubmissionRepository extends JpaRepository<SparkSubmission
             UPDATE {h-schema}spark_submissions
             SET submission_id = :submissionId,
                 status = :status,
+                updated_at = now(),
                 message = :message
             WHERE id = :id
             """, nativeQuery = true)

@@ -31,6 +31,9 @@ import org.yarina.taskexecutor.api.datasource.DataSourceManipulator;
 import org.yarina.taskexecutor.api.datasource.DataSourceManipulatorFactory;
 import org.yarina.taskexecutor.api.processor.body.ProcessorBody;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public abstract class SQLProcessorBodyAbstract implements ProcessorBody{
     private final ConfigRestClientApi configRestClientApi;
     private final DataSourceManipulatorFactory dataSourceManipulatorFactory;
@@ -47,11 +50,12 @@ public abstract class SQLProcessorBodyAbstract implements ProcessorBody{
             ScheduledTaskDTO scheduledTaskDTO)
             throws TaskConfigurationException {
         SourceConfDTO sourceConfDTO = configRestClientApi.getSourceConfDTO(scheduledTaskDTO.getDataSetKeyName());
-
+        Map<String,Object> globalVars = new HashMap<>(configRestClientApi.getGlobalVars());
         SQLTemplateDTO sqlTemplateDTO = sqlTemplateFactory.mergeSqlTemplate(scheduledTaskDTO);
 
         JinJavaUtils jinJavaUtils = JinJavaFactory.getJinJavaUtils();
         try {
+            jinJavaUtils.injectGlobalContext(globalVars);
             jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(sourceConfDTO));
             jinJavaUtils.injectGlobalContext(ObjectMapping.asMap(scheduledTaskDTO));
 

@@ -64,7 +64,8 @@ public class ModellerVcsCatalog {
             throw new IllegalStateException("Domain is required");
         String canonical = DomainSettings.canonicalDomain(domain);
         return clients.computeIfAbsent(canonical,
-                key -> DomainVcsFactory.repositoryFor(domainSettings.buildSpec(key, false)));
+                key -> DomainVcsFactory.repositoryFor(domainSettings.buildSpec(key, false),
+                        domainSettings.allDomainNames()));
     }
 
     /**

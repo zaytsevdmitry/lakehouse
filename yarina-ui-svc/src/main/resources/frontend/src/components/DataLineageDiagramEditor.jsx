@@ -26,6 +26,11 @@ const NODE_GAP_Y = 36;
 const NODE_HEIGHT = 110;
 const FALLBACK_COLOR = '#6b7280';
 
+/** How many DataSet files the diagram editor fetches concurrently. */
+export const DATASET_LOAD_CONCURRENCY = 8;
+/** How many fetched DataSet files are collected before the diagram is updated with them. */
+export const DATASET_LOAD_FLUSH_EVERY = 25;
+
 /** Corner radius of the lineage connectors, in pixels. */
 export const EDGE_CORNER_RADIUS = 16;
 /** Distance of the connector step from the source/target handle. */
@@ -40,6 +45,23 @@ function asNumber(value) {
 
 function asPositions(layout) {
   return layout && typeof layout.positions === 'object' && layout.positions ? layout.positions : {};
+}
+
+/**
+ * Key names of the datasets a DataSet document reads from. The configuration stores them
+ * as a map (`sources: {key: {}}`), but a hand-written document may use a list; both forms
+ * are accepted, matching what the editor and the lineage endpoint understand.
+ */
+export function lineageSourceKeys(dsDoc) {
+  const sources = dsDoc && dsDoc.sources;
+  if (Array.isArray(sources)) {
+    return sources
+      .map((source) => (typeof source === 'string'
+        ? source
+        : source && (source.keyName || source.key || source.name)))
+      .filter(Boolean);
+  }
+  return sources && typeof sources === 'object' ? Object.keys(sources) : [];
 }
 
 /**
@@ -89,8 +111,7 @@ export function buildLineageGraph(doc, dsByKey) {
     const info = dsByKey[keyName];
     const dsDoc = info ? info.doc : null;
     if (!dsDoc) continue;
-    const sources = dsDoc.sources && typeof dsDoc.sources === 'object' ? dsDoc.sources : {};
-    for (const sourceKey of Object.keys(sources)) {
+    for (const sourceKey of lineageSourceKeys(dsDoc)) {
       if (sourceKey === keyName) continue;
       if (!nodeIds.has(sourceKey)) continue;
       edges.push({
@@ -352,26 +373,67 @@ function LineageCanvas({
 
   useEffect(() => {
     let alive = true;
-    (async () => {
-      const map = {};
-      for (const entry of dataSetFiles) {
+    const loaded = {};
+    let completed = 0;
+    const placed = new Set(
+      Array.isArray(doc && doc.spec && doc.spec.datasets) ? doc.spec.datasets.map(String) : [],
+    );
+    // The datasets on the canvas are the only ones an edge can connect, so they are
+    // fetched first: connectors appear as soon as those files are parsed instead of after
+    // the thousands of workspace DataSets. The rest fills the "Add data set" picker.
+    const entries = dataSetFiles
+      .map((entry, index) => ({ entry, index }))
+      .sort((a, b) => {
+        const aPlaced = placed.has(String(a.entry.keyName)) ? 0 : 1;
+        const bPlaced = placed.has(String(b.entry.keyName)) ? 0 : 1;
+        return aPlaced - bPlaced || a.index - b.index;
+      })
+      .map((item) => item.entry);
+
+    let cursor = 0;
+    let placedCompleted = 0;
+    const placedTotal = entries.filter((entry) => placed.has(String(entry.keyName))).length;
+    if (placedTotal === 0) setLoading(false);
+    const publish = () => {
+      if (alive) setDsByKey({ ...loaded });
+    };
+    const worker = async () => {
+      while (alive && cursor < entries.length) {
+        const entry = entries[cursor];
+        cursor += 1;
         try {
           const resp = await api(`/api/workspaces/${encodePath(wsId)}/files/${encodePath(entry.path)}`);
           const parsed = parseYaml(resp.yaml || '');
-          if (!parsed || typeof parsed !== 'object' || !parsed.keyName) continue;
-          map[parsed.keyName] = { path: entry.path, keyName: parsed.keyName, doc: parsed, yaml: resp.yaml };
+          if (parsed && typeof parsed === 'object' && parsed.keyName)
+            loaded[parsed.keyName] = { path: entry.path, keyName: parsed.keyName, doc: parsed, yaml: resp.yaml };
         } catch (e) {
           // unreadable data set file — referenced datasets render as missing nodes
         }
+        completed += 1;
+        if (placed.has(String(entry.keyName))) {
+          // publish each canvas data set immediately so its connectors appear right away
+          placedCompleted += 1;
+          publish();
+          if (placedCompleted >= placedTotal) setLoading(false);
+        } else if (completed % DATASET_LOAD_FLUSH_EVERY === 0) {
+          publish();
+        }
       }
+    };
+    Promise.all(Array.from(
+      { length: Math.min(DATASET_LOAD_CONCURRENCY, entries.length) },
+      () => worker(),
+    )).then(() => {
       if (!alive) return;
-      setDsByKey(map);
+      publish();
       setLoading(false);
-    })();
+    });
     return () => {
       alive = false;
     };
-  }, [dataSetFiles, wsId]);
+    // The placement order is a snapshot taken when the workspace tree changes: re-sorting on
+    // every diagram edit would restart the whole loading.
+  }, [dataSetFiles, wsId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { nodes, edges } = useMemo(() => buildLineageGraph(doc, dsByKey), [doc, dsByKey]);
   const nodesSig = JSON.stringify(nodes);

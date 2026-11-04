@@ -58,6 +58,7 @@ public class GitOpsChangeSetBuilder {
         List<GitSyncItem> toDelete = new ArrayList<>();
 
         for (VcsDiffEntry entry : diff) {
+            logger.info("Process file {}", entry.path());
             if (!isConfigFile(entry.path())) {
                 logger.debug("Skipping non-configuration file {}", entry.path());
                 continue;

@@ -188,9 +188,11 @@ public class S3ObjectStorageClient {
         try {
             return httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
         } catch (IOException e) {
+            logger.error("S3 request {} {} failed: {}", request.method(), request.uri(), e.getMessage(), e);
             throw new WorkspaceStorageException("S3 request failed: " + e.getMessage(), e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            logger.error("S3 request {} {} interrupted: {}", request.method(), request.uri(), e.getMessage(), e);
             throw new WorkspaceStorageException("S3 request interrupted", e);
         }
     }
@@ -199,9 +201,11 @@ public class S3ObjectStorageClient {
         try {
             return httpClient.send(request, HttpResponse.BodyHandlers.discarding());
         } catch (IOException e) {
+            logger.error("S3 request {} {} failed: {}", request.method(), request.uri(), e.getMessage(), e);
             throw new WorkspaceStorageException("S3 request failed: " + e.getMessage(), e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            logger.error("S3 request {} {} interrupted: {}", request.method(), request.uri(), e.getMessage(), e);
             throw new WorkspaceStorageException("S3 request interrupted", e);
         }
     }
