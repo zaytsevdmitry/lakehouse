@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.yarina.ui.modeller.dto.CreateFileRequest;
 import org.yarina.ui.modeller.dto.DirectoryRequest;
+import org.yarina.ui.modeller.dto.FileContentResponse;
 import org.yarina.ui.modeller.dto.MoveDirectoryRequest;
 import org.yarina.ui.modeller.dto.MoveFileRequest;
 import org.yarina.ui.modeller.dto.RenameFileRequest;
@@ -99,6 +100,58 @@ class EditorServiceSelectionScopeTest {
         givenWorkspaceWithTwoDomains();
         editor.createDirectory(workspace.id(), new DirectoryRequest(""), authentication);
         assertThat(storage.listDirectories(workspace.id())).contains("platform (main)");
+    }
+
+    @Test
+    void createFileWithoutDirectoryGoesToTheSelectionRootNotToAKindFolder() {
+        givenWorkspaceWithTwoDomains();
+        FileContentResponse created = editor.createFile(workspace.id(),
+                new CreateFileRequest("DataSet", "orders"), authentication);
+        assertThat(created.path()).isEqualTo("platform (main)/orders.yaml");
+        assertThat(storage.listFiles(workspace.id()))
+                .contains("platform (main)/orders.yaml")
+                .doesNotContain("platform (main)/datasets/orders.yaml");
+    }
+
+    @Test
+    void createFileUsesTheRequestedArbitraryDirectoryForAnyKind() {
+        givenWorkspaceWithTwoDomains();
+        FileContentResponse created = editor.createFile(workspace.id(),
+                new CreateFileRequest("DataSet", "orders", "platform (main)/quality/metrics"), authentication);
+        assertThat(created.path()).isEqualTo("platform (main)/quality/metrics/orders.yaml");
+    }
+
+    @Test
+    void fileKindIsResolvedFromTheContentAndNotFromTheDirectory() {
+        givenWorkspaceWithTwoDomains();
+        storage.writeFile(workspace.id(), "platform (main)/some/odd/folder/item.yaml",
+                "kind: Schedule\nkeyName: nightly\n");
+        FileContentResponse file = editor.readFile(workspace.id(),
+                "platform (main)/some/odd/folder/item.yaml", authentication);
+        assertThat(file.kind()).isEqualTo("Schedule");
+        assertThat(file.keyName()).isEqualTo("nightly");
+    }
+
+    @Test
+    void plainTextFilesOfAnyTypeAreListedAndEditable() {
+        givenWorkspaceWithTwoDomains();
+        storage.writeFile(workspace.id(), "platform (main)/notes/readme.txt", "hello\n");
+
+        assertThat(editor.tree(workspace.id(), authentication))
+                .anySatisfy(entry -> {
+                    assertThat(entry.path()).isEqualTo("platform (main)/notes/readme.txt");
+                    assertThat(entry.kind()).isEqualTo("unknown");
+                });
+
+        FileContentResponse file = editor.readFile(workspace.id(),
+                "platform (main)/notes/readme.txt", authentication);
+        assertThat(file.kind()).isEqualTo("unknown");
+        assertThat(file.yaml()).isEqualTo("hello\n");
+
+        editor.saveFile(workspace.id(), "platform (main)/notes/readme.txt",
+                new SaveFileRequest("platform (main)/notes/readme.txt", "hello again\n", null), authentication);
+        assertThat(storage.readFile(workspace.id(), "platform (main)/notes/readme.txt"))
+                .contains("hello again\n");
     }
 
     @Test

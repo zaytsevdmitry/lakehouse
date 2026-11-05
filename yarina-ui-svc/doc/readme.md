@@ -18,7 +18,7 @@ UI sections:
 - **Schedules** — schedule instance runs for an interval, the schedule instance DAG.
 - **SparkJobs** — Spark submissions through `yarina-task-proxy-for-spark`: create, status, kill, kill all, clear.
 - **VCS** — the configuration GitOps synchronization log (commits) and object log of `yarina-config-svc`.
-- **Modelling** — the metadata-modelling workbench: create a workspace from one or more domain branches, create configuration documents of any supported kind (form view driven by a per-kind schema, raw YAML, or the visual editors — **ER Diagram**, **Data Lineage Diagram**, generic **DAG**), create branches, submit changes for review. Workspaces open in a new browser tab via deep links (`?section=modeller&workspace=<id>`).
+- **Modelling** — the metadata-modelling workbench: create a workspace from one or more domain branches, create configuration documents of any supported kind (form view driven by a per-kind schema, raw YAML, or the visual editors — **ER Diagram**, **Data Lineage Diagram** with automatic source/receiver discovery, generic **DAG**), create branches, submit changes for review. Workspaces open in a new browser tab via deep links (`?section=modeller&workspace=<id>`).
 
 ## Architecture
 
@@ -132,9 +132,14 @@ repository.
 Inside the workspace, `domainKeyName` is **not editable**. It is excluded from every form
 schema (`SchemaService.DERIVED_PROPERTIES`) because the domain is derived from the repository
 a construct is submitted to, not from the file content — the same YAML is valid in every
-domain. A repository may also be shared: if it hosts several domains under `domains/<name>/`,
-the workspace keeps only the subtree of the selected domain and strips the prefix, so a
-workspace folder never contains a `domains/` level.
+domain. A repository may also host several domains: when it is a genuine multi-domain
+container (`domains/<name>/`), the workspace keeps only the subtree of the selected domain and
+strips the prefix. The container is recognized **positively** — the selected domain's own
+`domains/<domain>/` subtree must exist, or every YAML file must live under `domains/<name>/`
+and all those first-level names must be configured domains. A flat repository that merely
+keeps its business folders under a folder called `domains/` (for example
+`domains/aaaa/datasets/...`) is kept whole, so a workspace folder does not necessarily lose a
+`domains/` level.
 
 ### Review is submitted per domain
 
@@ -151,6 +156,58 @@ derived server-side:
 - **the workspace is deleted only on success** — a failed submission leaves it open;
 - a user must own the workspace, hold `EDITOR` for every selected domain, and the whole
   submission runs under a per-workspace lock.
+
+### The repository layout is arbitrary
+
+The modeller does not impose the conventional `<kind-directory>/<keyName>.yaml` layout.
+Metadata documents are recognized by their `kind` field, never by the folder they live in, and
+the file tree lists everything the repository (or the scoped domain subtree) contains:
+
+- YAML documents with a known `kind` open in the matching editor; a YAML file that does not
+  parse is still listed as an unknown file and does not break the tree;
+- any other text file (SQL, JSON, Markdown, ...) is listed, read and saved as plain text;
+- a new metadata document is created in the `directory` explicitly passed to
+  `POST /api/workspaces/{workspaceId}/files` (or at the root of the first selected domain
+  folder when it is omitted) — the `kind` only selects the template and the editor, never the
+  folder;
+- rename preserves the original extension (`script.sql` stays a `.sql` file); `.tmp` files and
+  `_workspace.json` are rejected as non-editable.
+
+### Lineage automation in the diagram editors
+
+Two read-only workspace endpoints expose the data-set graph derived from the `DataSet`
+documents currently present in the workspace:
+
+| Endpoint | Meaning |
+|---|---|
+| `GET /api/workspaces/{workspaceId}/lineage/sources?keyName=<dataSet>` | All transitive **upstream** data sets (everything that feeds the selected data set) |
+| `GET /api/workspaces/{workspaceId}/lineage/receivers?keyName=<dataSet>` | All transitive **downstream** data sets (everything the selected data set feeds) |
+
+Both walks are cycle-safe (each visited key is processed once), accept the `sources` field as
+either a map or a list, and check the viewer-level role of the domain that owns every returned
+vertex. The **Data Lineage Diagram** editor uses them for its **Add sources** / **Add
+receivers** actions: the missing nodes are added and spread in columns on the left (sources) or
+right (receivers) of the selected data set. The catalog's lineage and relations diagrams use
+the same left-to-right layered layout (upstream on the left, downstream on the right) and let
+the user drag the nodes.
+
+### Workspace export diagnostics
+
+Creating a workspace exports the selected branches to the workspace storage. The whole path is
+logged, so an empty workspace is distinguishable from a layout/scoping problem:
+
+- at startup the storage backend is logged (`Workspace storage: local filesystem at ...` or the
+  S3/MinIO bucket and endpoint);
+- `WorkspaceManager` logs the selected `(domain, branch)` pairs and the per-selection export
+  counts, then reads the storage back and verifies the number of exported files;
+- `WorkspaceSeeder` logs the raw branch file count, the count after domain scoping and the
+  `domainLayout` decision; when scoping removes every file it logs a warning with the first
+  paths — this usually means the repository was misdetected as a multi-domain container;
+- a selection that returns no files leaves its folder empty with a warning; an exception aborts
+  creation and the partially seeded workspace is removed, so reopening it seeds it again.
+
+`yarina-config-svc` logs every file processed by `GitOpsChangeSetBuilder` (`Process file ...`),
+which helps to correlate a UI workspace with the GitOps sync of the same commit.
 
 ### Domain as a filter of the VCS logs
 
@@ -248,14 +305,16 @@ Depends on: `yarina-domain-api` (shared VCS library: `VcsClient`, its JGit imple
 | GET | `/api/schema` | Form schemas of all configuration kinds |
 | GET | `/api/schema/{kind}` | Form schema of one configuration kind |
 | GET | `/api/workspaces/{workspaceId}/tree` | File tree of the workspace |
+| GET | `/api/workspaces/{workspaceId}/lineage/sources` | Transitive upstream data sets of `keyName` inside the workspace |
+| GET | `/api/workspaces/{workspaceId}/lineage/receivers` | Transitive downstream data sets of `keyName` inside the workspace |
 | GET | `/api/workspaces/{workspaceId}/dirs` | Directory list |
 | POST | `/api/workspaces/{workspaceId}/dirs` | Create a directory |
 | POST | `/api/workspaces/{workspaceId}/dirs/move` | Move a directory |
 | DELETE | `/api/workspaces/{workspaceId}/dirs/{path}` | Delete a directory (recursive) |
-| POST | `/api/workspaces/{workspaceId}/files` | Create a metadata file (`kind`, `keyName`, `directory`) |
-| GET | `/api/workspaces/{workspaceId}/files/{path}` | Read a file (YAML + kind + editability flag) |
-| PUT | `/api/workspaces/{workspaceId}/files/{path}` | Save a file (`yaml`, `keyName`) |
-| POST | `/api/workspaces/{workspaceId}/files/rename` | Rename a file |
+| POST | `/api/workspaces/{workspaceId}/files` | Create a metadata file (`kind`, `keyName`, `directory` — the exact target folder) |
+| GET | `/api/workspaces/{workspaceId}/files/{path}` | Read a file (YAML metadata or plain text + kind + editability flag) |
+| PUT | `/api/workspaces/{workspaceId}/files/{path}` | Save a file (`yaml`, `keyName`); non-YAML files are saved verbatim |
+| POST | `/api/workspaces/{workspaceId}/files/rename` | Rename a file (keeps the original extension) |
 | POST | `/api/workspaces/{workspaceId}/files/move` | Move a file |
 | DELETE | `/api/workspaces/{workspaceId}/files/{path}` | Delete a file |
 | GET | `/api/workspace/admin/workspaces` | All workspaces (WORKSPACE_ADMIN) |

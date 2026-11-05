@@ -25,9 +25,11 @@ import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Hierarchy of configuration domains ({@code yarina.domains.*}). This is the single point
@@ -130,6 +132,18 @@ public class DomainSettings implements InitializingBean {
         if (domains == null)
             return List.of();
         return domains.keySet().stream().sorted().toList();
+    }
+
+    /**
+     * Names of all configured domains including the nested sub-domains, in dependency
+     * order. Used to tell the folders of a multi-domain configuration repository
+     * ({@code domains/<domain>/}) from the business folders of a flat repository.
+     */
+    public Set<String> allDomainNames() {
+        Set<String> names = new LinkedHashSet<>();
+        for (DomainRef ref : orderedDomains())
+            names.add(ref.name());
+        return names;
     }
 
     /** Top-level domains sorted by {@code priority} ascending. */

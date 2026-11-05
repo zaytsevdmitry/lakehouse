@@ -33,6 +33,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -80,7 +81,8 @@ class GitVcsClientCentralLayoutTest {
         account.setAuthType("token");
         account.setToken("dummy");
         return new GitVcsClient(bareDir.getAbsolutePath(), "main",
-                GitCredentials.forDomain(account));
+                GitCredentials.forDomain(account),
+                Set.of("platform", "analytics", "processing"));
     }
 
     @Test
@@ -127,5 +129,24 @@ class GitVcsClientCentralLayoutTest {
                 .containsKey("domains/analytics/config/dataset/extra.yaml")
                 .doesNotContainKey(ANALYTICS_FILE)
                 .containsKey(PLATFORM_FILE);
+    }
+
+    @Test
+    void writesTheFilesOfANewDomainIntoTheCentralLayout() {
+        GitVcsClient provider = provider();
+        provider.createBranch("new-domain", "main");
+
+        provider.submitReview(
+                new VcsReviewSubmission("processing", "new-domain", "main", "Add processing", null,
+                        Map.of("config/dataset/new.yaml", "kind: DataSet\nkeyName: new\n")),
+                "Alice", "alice@yarina.local");
+
+        Map<String, String> branch = provider.readBranchFiles("new-domain");
+        assertThat(branch)
+                .containsKey("domains/processing/config/dataset/new.yaml")
+                .containsKey(PLATFORM_FILE)
+                .containsKey(ANALYTICS_FILE);
+        assertThat(DomainLayout.scopeDomain("processing", branch))
+                .containsOnlyKeys("config/dataset/new.yaml");
     }
 }

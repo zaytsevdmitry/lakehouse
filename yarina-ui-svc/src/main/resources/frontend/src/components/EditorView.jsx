@@ -192,8 +192,13 @@ export default function EditorView({ profile, workspace, onBack, onNotice }) {
     if (entry) doOpen(entry);
   };
 
-  const createFile = async ({ kind, keyName }) => {
-    const targetDir = selectedFolder || (selected ? parentDir(selected.path) : '');
+  const createFile = async ({ kind, keyName, directory }) => {
+    // Files can live in any folder of the repository: the target is the folder the
+    // user selected (or typed in the dialog), never a folder derived from the kind.
+    const targetDir = directory != null
+      ? directory
+      : selectedFolder || (selected ? parentDir(selected.path) : '')
+        || (selections[0] ? folderOf(selections[0]) : '');
     setBusy(true);
     try {
       const resp = await api(`/api/workspaces/${encodePath(wsId)}/files`, {
@@ -306,6 +311,13 @@ export default function EditorView({ profile, workspace, onBack, onNotice }) {
   const rootFiles = folderTree.files.sort((a, b) => a.path.localeCompare(b.path));
 
   const activeSchema = selected ? schemaMap[selected.kind] : null;
+
+  // Default folder for a new file: the folder selected in the tree, the folder of
+  // the open file, or the root of the first selected domain folder. The kind of the
+  // created document never influences the location.
+  const newFileDirectory = selectedFolder != null
+    ? selectedFolder
+    : (selected ? parentDir(selected.path) : '') || (selections[0] ? folderOf(selections[0]) : '');
 
   const uniqueByField = useMemo(() => {
     if (!selected || selected.kind !== 'Script') return {};
@@ -566,47 +578,52 @@ export default function EditorView({ profile, workspace, onBack, onNotice }) {
             else if (src) moveFile(src, '');
           }}
         >
-          {filter.trim().length > 0 && filter.trim().length < 3 && (
-            <p className="muted empty-hint">Type at least 3 characters to filter.</p>
-          )}
-          {filter.trim().length >= 3 && tree.length > 0 && (folderNames.length === 0 && rootFiles.length === 0) && (
-            <p className="muted empty-hint">No files matching "{filter.trim()}".</p>
-          )}
-          <RootFolder
-            selectedFolder={selectedFolder}
-            onSelectFolder={setSelectedFolder}
-            onMove={moveFile}
-            onMoveDir={moveDirectory}
-          />
-          {folderNames.map((name) => (
-            <Folder
-              key={name}
-              node={folderTree.children[name]}
-              dirPath={name}
-              selectedPath={selected?.path}
+          <div className="tree-inner">
+            {filter.trim().length > 0 && filter.trim().length < 3 && (
+              <p className="muted empty-hint">Type at least 3 characters to filter.</p>
+            )}
+            {filter.trim().length >= 3 && tree.length > 0 && (folderNames.length === 0 && rootFiles.length === 0) && (
+              <p className="muted empty-hint">No files matching "{filter.trim()}".</p>
+            )}
+            <RootFolder
               selectedFolder={selectedFolder}
-              onOpen={openFile}
               onSelectFolder={setSelectedFolder}
               onMove={moveFile}
               onMoveDir={moveDirectory}
             />
-          ))}
-          {rootFiles.map((entry) => (
-            <button
-              key={entry.path}
-              className={`tree-item${selected && selected.path === entry.path ? ' active' : ''}`}
-              onClick={() => openFile(entry)}
-              draggable={!readOnly}
-              onDragStart={(e) => {
-                e.dataTransfer.setData(DND_MIME, entry.path);
-                e.dataTransfer.effectAllowed = 'move';
-              }}
-            >
-              <span className="file-name">{entry.label}</span>
-              {entry.modified && <span className="dirty-dot" title="modified" />}
-            </button>
-          ))}
-          {tree.length === 0 && <p className="muted empty-hint">No files in this workspace yet.</p>}
+            {folderNames.map((name) => (
+              <Folder
+                key={name}
+                node={folderTree.children[name]}
+                dirPath={name}
+                selectedPath={selected?.path}
+                selectedFolder={selectedFolder}
+                onOpen={openFile}
+                onSelectFolder={setSelectedFolder}
+                onMove={moveFile}
+                onMoveDir={moveDirectory}
+              />
+            ))}
+            {rootFiles.map((entry) => (
+              <button
+                key={entry.path}
+                className={`tree-item${selected && selected.path === entry.path ? ' active' : ''}`}
+                onClick={() => openFile(entry)}
+                draggable={!readOnly}
+                onDragStart={(e) => {
+                  e.dataTransfer.setData(DND_MIME, entry.path);
+                  e.dataTransfer.effectAllowed = 'move';
+                }}
+              >
+                <span className="file-name">{entry.label}</span>
+                {entry.kind && (
+                  <span className="tree-kind" title={`kind: ${entry.kind}`}>{entry.kind}</span>
+                )}
+                {entry.modified && <span className="dirty-dot" title="modified" />}
+              </button>
+            ))}
+            {tree.length === 0 && <p className="muted empty-hint">No files in this workspace yet.</p>}
+          </div>
         </div>
         {!readOnly && (
           <div className="sidebar-foot">
@@ -640,10 +657,12 @@ export default function EditorView({ profile, workspace, onBack, onNotice }) {
             <div className="main-head">
               <div>
                 <div className="main-title">{selected.keyName}</div>
-                <div className="muted small">{selected.path} · {selected.kind}</div>
+                <div className="muted small">
+                  {selected.path} · {selected.kind === 'unknown' ? 'plain file' : selected.kind}
+                </div>
               </div>
               <div className="btn-row head-actions">
-                {!readOnly && !dirty && (
+                {!readOnly && !dirty && activeSchema && (
                   <button onClick={() => { setMode(mode === 'form' ? 'yaml' : 'form'); }}>
                     {mode === 'form' ? 'Raw YAML' : 'Form view'}
                   </button>
@@ -729,7 +748,7 @@ export default function EditorView({ profile, workspace, onBack, onNotice }) {
       {newModal && (
         <NewFileModal
           schemas={schemas}
-          directory={selectedFolder || (selected ? parentDir(selected.path) : null)}
+          directory={newFileDirectory}
           onClose={() => setNewModal(false)}
           onSubmit={createFile}
           busy={busy}
@@ -963,6 +982,9 @@ function Folder({ node, dirPath, selectedPath, selectedFolder, onOpen, onSelectF
               }}
             >
               <span className="file-name">{entry.label}</span>
+              {entry.kind && (
+                <span className="tree-kind" title={`kind: ${entry.kind}`}>{entry.kind}</span>
+              )}
               {entry.modified && <span className="dirty-dot" title="modified" />}
             </button>
           ))}
@@ -975,9 +997,10 @@ function Folder({ node, dirPath, selectedPath, selectedFolder, onOpen, onSelectF
 function NewFileModal({ schemas, directory, onClose, onSubmit, busy }) {
   const [kind, setKind] = useState(schemas.length ? schemas[0].kind : 'schedule');
   const [keyName, setKeyName] = useState('');
+  const [folder, setFolder] = useState(directory || '');
   const submit = (e) => {
     e.preventDefault();
-    if (keyName.trim()) onSubmit({ kind, keyName: keyName.trim() });
+    if (keyName.trim()) onSubmit({ kind, keyName: keyName.trim(), directory: folder.trim() });
   };
   return (
     <Modal title="New metadata file" onClose={onClose}>
@@ -987,6 +1010,10 @@ function NewFileModal({ schemas, directory, onClose, onSubmit, busy }) {
           <select value={kind} onChange={(e) => setKind(e.target.value)}>
             {schemas.map((s) => <option key={s.kind} value={s.kind}>{s.kind}</option>)}
           </select>
+          <div className="muted small">
+            The kind is written into the YAML file and selects the editor — it does not
+            select or create a folder.
+          </div>
         </div>
         <div className="field">
           <span className="label">Key name</span>
@@ -994,7 +1021,16 @@ function NewFileModal({ schemas, directory, onClose, onSubmit, busy }) {
         </div>
         <div className="field">
           <span className="label">Folder</span>
-          <div className="muted small">{directory ? `Will be created in "${directory}/"` : 'Kind default folder'}</div>
+          <input
+            value={folder}
+            onChange={(e) => setFolder(e.target.value)}
+            placeholder="e.g. platform (main)/quality/metrics"
+          />
+          <div className="muted small">
+            {folder.trim()
+              ? <>The file will be created in <span className="mono">{folder.trim()}/</span></>
+              : 'Empty — the file will be created in the first selected domain folder.'}
+          </div>
         </div>
         <div className="btn-row">
           <button type="submit" className="primary" disabled={busy || !keyName.trim()}>Create</button>

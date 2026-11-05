@@ -27,11 +27,11 @@ public class ScheduledTaskDTOValidator {
                 result.getDescriptions().add(String.format("%s can't be null", ScheduledTaskDTO.class.getName()));
             else {
                 if (scheduledTaskDTO.getTargetDateTime() == null)
-                    result.getDescriptions().add(String.format("%s.getScheduledTaskEffectiveDTO can't be null", ScheduledTaskDTO.class.getSimpleName()));
+                    result.getDescriptions().add(String.format("%s.getTargetDateTime can't be null", ScheduledTaskDTO.class.getSimpleName()));
                 if (scheduledTaskDTO.getIntervalStartDateTime() == null)
-                    result.getDescriptions().add(String.format("%s.getScheduledTaskEffectiveDTO.getIntervalStartDateTime can't be null", ScheduledTaskDTO.class.getSimpleName()));
+                    result.getDescriptions().add(String.format("%s.getIntervalStartDateTime can't be null", ScheduledTaskDTO.class.getSimpleName()));
                 if (scheduledTaskDTO.getIntervalEndDateTime() == null)
-                    result.getDescriptions().add(String.format("%s.getScheduledTaskEffectiveDTO.getIntervalEndDateTime can't be null", ScheduledTaskDTO.class.getSimpleName()));
+                    result.getDescriptions().add(String.format("%s.getIntervalEndDateTime can't be null", ScheduledTaskDTO.class.getSimpleName()));
             }
             return result;
     }

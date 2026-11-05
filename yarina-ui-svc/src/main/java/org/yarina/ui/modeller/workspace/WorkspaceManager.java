@@ -103,14 +103,7 @@ public class WorkspaceManager {
             boolean created = false;
             if (!storage.exists(id)) {
                 storage.create(id);
-                Map<String, String> seeded = new LinkedHashMap<>();
-                for (BranchSelection selection : selections) {
-                    Map<String, String> snapshot = seeder.snapshot(selection.domain(), selection.branch());
-                    for (Map.Entry<String, String> entry : snapshot.entrySet())
-                        seeded.put(selection.folder() + "/" + entry.getKey(), entry.getValue());
-                }
-                if (!seeded.isEmpty())
-                    storage.writeAll(id, seeded);
+                seedWorkspace(id, selections);
                 created = true;
             }
             Optional<WorkspaceMetadata> meta = readMetadata(id);
@@ -206,6 +199,8 @@ public class WorkspaceManager {
             acquired = lock.tryLock(50, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            logger.warn("Interrupted while waiting for the lock of workspace {}: {}",
+                    workspaceId, e.getMessage(), e);
         }
         if (!acquired)
             throw new WorkspaceLockedException(
@@ -227,6 +222,101 @@ public class WorkspaceManager {
     // ------------------------------------------------------------------
     // internals
     // ------------------------------------------------------------------
+
+    /**
+     * Exports the selected branches of a newly created workspace to disk. Every selection
+     * is seeded and logged separately, so a domain that contributes no files (or fails to
+     * be read) is visible in the log instead of silently producing an empty workspace folder.
+     * An empty domain only leaves its folder empty; a failed read aborts the creation and
+     * removes the half-seeded directory, otherwise a later open would see it as existing and
+     * never try to seed it again.
+     */
+    private void seedWorkspace(String id, List<BranchSelection> selections) {
+        long started = System.nanoTime();
+        logger.info("Workspace {}: starting export of {} selection(s) to disk: {}",
+                id, selections.size(), display(selections));
+        try {
+            Map<String, String> seeded = new LinkedHashMap<>();
+            int empty = 0;
+            for (BranchSelection selection : selections) {
+                long selectionStarted = System.nanoTime();
+                Map<String, String> snapshot;
+                try {
+                    snapshot = seeder.snapshot(selection.domain(), selection.branch());
+                } catch (RuntimeException e) {
+                    logger.error("Workspace {}: cannot export {} ({}) to disk: {}",
+                            id, selection.domain(), selection.branch(), e.getMessage(), e);
+                    throw e;
+                }
+                long millis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - selectionStarted);
+                int count = snapshot == null ? 0 : snapshot.size();
+                if (count == 0) {
+                    empty++;
+                    logger.warn("Workspace {}: {} ({}) returned no files in {} ms, folder '{}' stays empty",
+                            id, selection.domain(), selection.branch(), millis, selection.folder());
+                } else {
+                    logger.info("Workspace {}: exported {} file(s) of {} ({}) to '{}' in {} ms",
+                            id, count, selection.domain(), selection.branch(), selection.folder(), millis);
+                    for (Map.Entry<String, String> entry : snapshot.entrySet())
+                        seeded.put(selection.folder() + "/" + entry.getKey(), entry.getValue());
+                }
+            }
+            if (!seeded.isEmpty()) {
+                logger.info("Workspace {}: writing {} file(s) to the workspace storage", id, seeded.size());
+                try {
+                    storage.writeAll(id, seeded);
+                } catch (RuntimeException e) {
+                    logger.error("Workspace {}: cannot write {} file(s) to disk: {}",
+                            id, seeded.size(), e.getMessage(), e);
+                    throw e;
+                }
+                verifyExport(id, seeded.size());
+            } else {
+                logger.warn("Workspace {}: no files to write, every selection was empty", id);
+            }
+            long millis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started);
+            if (empty > 0) {
+                logger.warn("Workspace {}: exported {} file(s) from {} of {} selection(s) in {} ms; {} selection(s) were empty",
+                        id, seeded.size(), selections.size() - empty, selections.size(), millis, empty);
+            } else {
+                logger.info("Workspace {}: exported {} file(s) from {} selection(s) in {} ms",
+                        id, seeded.size(), selections.size(), millis);
+            }
+        } catch (RuntimeException e) {
+            logger.error("Workspace {}: export to disk failed, removing the partially seeded workspace: {}",
+                    id, e.getMessage(), e);
+            try {
+                storage.deleteWorkspace(id);
+                logger.info("Workspace {}: removed the partially seeded directory after a failure", id);
+            } catch (RuntimeException cleanup) {
+                logger.error("Workspace {}: cannot remove the partially seeded directory: {}",
+                        id, cleanup.getMessage(), cleanup);
+            }
+            throw e;
+        }
+    }
+
+    /**
+     * Reads the workspace content back from the storage after seeding, so a backend that
+     * silently drops files is visible in the log.
+     */
+    private void verifyExport(String id, int expected) {
+        try {
+            List<String> actual = storage.listFiles(id);
+            long exported = actual.stream()
+                    .filter(path -> !METADATA_FILE.equals(path))
+                    .count();
+            if (exported != expected) {
+                logger.warn("Workspace {}: export verification failed, expected {} file(s) but found {}: {}",
+                        id, expected, exported, actual);
+            } else {
+                logger.info("Workspace {}: export verified, {} file(s) are present in the workspace storage",
+                        id, exported);
+            }
+        } catch (RuntimeException e) {
+            logger.error("Workspace {}: cannot verify the exported files: {}", id, e.getMessage(), e);
+        }
+    }
 
     public static String workspaceId(String username, List<BranchSelection> selections) {
         String payload = username + "|" + selections.stream()
@@ -252,21 +342,29 @@ public class WorkspaceManager {
     }
 
     private Optional<WorkspaceMetadata> readMetadata(String workspaceId) {
-        return storage.readFile(workspaceId, METADATA_FILE).map(json -> {
-            try {
-                return mapper.readValue(json, WorkspaceMetadata.class);
-            } catch (Exception e) {
-                logger.warn("Cannot parse metadata of workspace {}, treating as unknown: {}",
-                        workspaceId, e.getMessage());
-                return new WorkspaceMetadata(workspaceId, List.of(), "unknown", clock.instant(), clock.instant());
-            }
-        });
+        try {
+            return storage.readFile(workspaceId, METADATA_FILE).map(json -> {
+                try {
+                    return mapper.readValue(json, WorkspaceMetadata.class);
+                } catch (Exception e) {
+                    logger.warn("Cannot parse metadata of workspace {}, treating as unknown: {}",
+                            workspaceId, e.getMessage(), e);
+                    return new WorkspaceMetadata(workspaceId, List.of(), "unknown", clock.instant(), clock.instant());
+                }
+            });
+        } catch (RuntimeException e) {
+            logger.error("Cannot read metadata of workspace {}: {}", workspaceId, e.getMessage(), e);
+            throw e;
+        }
     }
 
     private void writeMetadata(String workspaceId, WorkspaceMetadata metadata) {
         try {
-            storage.writeFile(workspaceId, METADATA_FILE, mapper.writeValueAsString(metadata));
+            String json = mapper.writeValueAsString(metadata);
+            storage.writeFile(workspaceId, METADATA_FILE, json);
+            logger.debug("Workspace {}: metadata written ({} byte(s))", workspaceId, json.length());
         } catch (Exception e) {
+            logger.error("Cannot persist metadata of workspace {}: {}", workspaceId, e.getMessage(), e);
             throw new IllegalStateException("Cannot persist workspace metadata", e);
         }
     }

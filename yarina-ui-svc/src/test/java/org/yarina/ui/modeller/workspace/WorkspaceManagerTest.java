@@ -113,6 +113,44 @@ class WorkspaceManagerTest {
     }
 
     @Test
+    void failedSeedingDoesNotLeaveAnEmptyWorkspaceBehind() {
+        AtomicInteger calls = new AtomicInteger();
+        WorkspaceSeeder flaky = (domain, branch) -> {
+            if (calls.getAndIncrement() == 0)
+                throw new IllegalStateException("repository is unavailable");
+            return Map.of("datasets/report.yaml", "kind: DataSet\nkeyName: report\n");
+        };
+        LocalFsWorkspaceStorage storage = new LocalFsWorkspaceStorage(temp.toString());
+        WorkspaceManager manager = new WorkspaceManager(storage, flaky, 4, Clock.fixed(T0, ZoneOffset.UTC));
+
+        assertThatThrownBy(() -> manager.openWorkspace("alice", selections("flocktory", "main")))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(manager.allWorkspaces()).isEmpty();
+
+        // the retry must seed the workspace instead of reusing the half-created directory
+        Workspace workspace = manager.openWorkspace("alice", selections("flocktory", "main"));
+        assertThat(storage.listFiles(workspace.id()))
+                .contains("flocktory (main)/datasets/report.yaml");
+    }
+
+    @Test
+    void everySelectionIsExportedAndLoggedIndependently() {
+        WorkspaceSeeder seeder = (domain, branch) -> "platform".equals(domain)
+                ? Map.of("datasets/a.yaml", "kind: DataSet\n")
+                : Map.of();
+        LocalFsWorkspaceStorage storage = new LocalFsWorkspaceStorage(temp.toString());
+        WorkspaceManager manager = new WorkspaceManager(storage, seeder, 4, Clock.fixed(T0, ZoneOffset.UTC));
+
+        Workspace workspace = manager.openWorkspace("alice",
+                selections("platform", "main", "flocktory", "main"));
+
+        // an empty domain must not prevent the other selections from being written to disk
+        assertThat(storage.listFiles(workspace.id()))
+                .contains("platform (main)/datasets/a.yaml")
+                .doesNotContain("flocktory (main)/datasets/a.yaml");
+    }
+
+    @Test
     void editorAcceptsGeneratedBranchFolderNames() {
         LocalFsWorkspaceStorage storage = new LocalFsWorkspaceStorage(temp.toString());
         WorkspaceManager manager = new WorkspaceManager(storage, (domain, branch) -> Map.of(),

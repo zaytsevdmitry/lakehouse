@@ -36,18 +36,30 @@ import org.yarina.ui.modeller.workspace.Workspace;
 import org.yarina.ui.modeller.workspace.WorkspaceManager;
 import org.yarina.ui.modeller.yaml.VcsConfigParseException;
 import org.springframework.security.core.Authentication;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * File-level CRUD over the server-side workspaces. Every mutating operation re-validates
- * the file path (no traversal, YAML extension, never {@code _workspace.json}) and the
- * parent workspace ownership; viewers are blocked from mutations.
+ * the file path (no traversal, never {@code _workspace.json}) and the
+ * parent workspace ownership; viewers are blocked from mutations. The repository layout
+ * is arbitrary: metadata documents are recognized by their {@code kind} field, not by
+ * the directory they live in, and any other text file is edited as a plain file.
  */
 public class EditorService {
+
+    private static final String UNKNOWN_KIND = "unknown";
 
     private final WorkspaceManager manager;
     private final WorkspaceStorage storage;
@@ -69,20 +81,163 @@ public class EditorService {
         for (String path : storage.listFiles(workspaceId)) {
             if (path.endsWith("_workspace.json"))
                 continue;
-            storage.readFile(workspaceId, path).ifPresent(content -> {
+            // The repository layout and its file types are arbitrary: only YAML
+            // metadata documents are parsed for their kind, everything else is
+            // still listed and opened as plain text.
+            if (!isYaml(path)) {
+                tree.add(new TreeResponse(path, UNKNOWN_KIND, path));
+                continue;
+            }
+            Optional<String> content;
+            try {
+                content = storage.readFile(workspaceId, path);
+            } catch (RuntimeException e) {
+                // an unreadable/binary file must not break the whole tree
+                tree.add(new TreeResponse(path, UNKNOWN_KIND, path));
+                continue;
+            }
+            content.ifPresent(text -> {
                 try {
-                    ObjectNode node = yaml.parse(content);
+                    ObjectNode node = yaml.parse(text);
                     YamlMetadataKind kind = yaml.knownKindOf(node).orElse(null);
-                    String kindValue = kind == null ? "unknown" : kind.yamlValue();
+                    String kindValue = kind == null ? UNKNOWN_KIND : kind.yamlValue();
                     String identifierField = kind == null ? "keyName" : kind.identifierField();
                     String identifier = yaml.identifierOf(node, identifierField);
                     tree.add(new TreeResponse(path, kindValue, identifier == null ? path : identifier));
                 } catch (VcsConfigParseException e) {
-                    tree.add(new TreeResponse(path, "unknown", path));
+                    tree.add(new TreeResponse(path, UNKNOWN_KIND, path));
                 }
             });
         }
         return tree.stream().sorted(java.util.Comparator.comparing(TreeResponse::path)).toList();
+    }
+
+    /**
+     * Recursively resolves the upstream data sets of {@code keyName} (depth-first,
+     * pre-order), returning every discovered source document exactly once in the
+     * order the {@code sources} declarations are walked.
+     */
+    public List<FileContentResponse> lineageSources(String workspaceId, String keyName,
+                                                    Authentication authentication) {
+        UserContext user = UserContext.from(authentication);
+        Workspace workspace = requireOwnWorkspace(workspaceId, user);
+        String targetKey = requireKeyName(keyName);
+        Map<String, DatasetDocument> index = dataSetIndex(workspaceId);
+        DatasetDocument target = index.get(targetKey);
+        if (target == null)
+            throw new NotFoundException("Data set not found: " + targetKey);
+        requireViewer(user, domainOf(workspace, target.path()));
+
+        Set<String> visited = new LinkedHashSet<>();
+        visited.add(targetKey);
+        List<FileContentResponse> result = new ArrayList<>();
+        collectSources(targetKey, index, visited, result, workspace, user);
+        return result;
+    }
+
+    private void collectSources(String keyName, Map<String, DatasetDocument> index,
+                                Set<String> visited, List<FileContentResponse> result,
+                                Workspace workspace, UserContext user) {
+        DatasetDocument document = index.get(keyName);
+        if (document == null)
+            return;
+        for (String sourceKey : sourceKeys(document.doc())) {
+            if (!visited.add(sourceKey))
+                continue;
+            DatasetDocument source = index.get(sourceKey);
+            if (source == null)
+                continue;
+            if (!canView(workspace, source.path(), user))
+                continue;
+            result.add(toResponse(source));
+            collectSources(sourceKey, index, visited, result, workspace, user);
+        }
+    }
+
+    /**
+     * Recursively resolves the downstream data sets that consume {@code keyName}
+     * (breadth-first): first the direct consumers, then their consumers, etc.
+     * Every discovered receiver is returned exactly once.
+     */
+    public List<FileContentResponse> lineageReceivers(String workspaceId, String keyName,
+                                                      Authentication authentication) {
+        UserContext user = UserContext.from(authentication);
+        Workspace workspace = requireOwnWorkspace(workspaceId, user);
+        String targetKey = requireKeyName(keyName);
+        Map<String, DatasetDocument> index = dataSetIndex(workspaceId);
+        DatasetDocument target = index.get(targetKey);
+        if (target == null)
+            throw new NotFoundException("Data set not found: " + targetKey);
+        requireViewer(user, domainOf(workspace, target.path()));
+
+        Map<String, List<String>> reverse = new LinkedHashMap<>();
+        for (DatasetDocument document : index.values()) {
+            for (String sourceKey : sourceKeys(document.doc()))
+                reverse.computeIfAbsent(sourceKey, ignored -> new ArrayList<>()).add(document.keyName());
+        }
+
+        Set<String> visited = new LinkedHashSet<>();
+        visited.add(targetKey);
+        Deque<String> queue = new ArrayDeque<>();
+        queue.add(targetKey);
+        List<FileContentResponse> result = new ArrayList<>();
+        while (!queue.isEmpty()) {
+            String key = queue.removeFirst();
+            for (String receiverKey : reverse.getOrDefault(key, List.of())) {
+                if (!visited.add(receiverKey))
+                    continue;
+                DatasetDocument receiver = index.get(receiverKey);
+                if (receiver == null)
+                    continue;
+                if (canView(workspace, receiver.path(), user))
+                    result.add(toResponse(receiver));
+                queue.addLast(receiverKey);
+            }
+        }
+        return result;
+    }
+
+    private Map<String, DatasetDocument> dataSetIndex(String workspaceId) {
+        Map<String, DatasetDocument> index = new LinkedHashMap<>();
+        for (String path : storage.listFiles(workspaceId)) {
+            if (path.endsWith("_workspace.json"))
+                continue;
+            if (!path.endsWith(".yaml") && !path.endsWith(".yml"))
+                continue;
+            Optional<String> content = storage.readFile(workspaceId, path);
+            if (content.isEmpty())
+                continue;
+            try {
+                ObjectNode node = yaml.parse(content.get());
+                if (yaml.knownKindOf(node).orElse(null) != YamlMetadataKind.DATA_SET)
+                    continue;
+                String key = yaml.identifierOf(node, YamlMetadataKind.DATA_SET.identifierField());
+                if (key == null || key.isBlank())
+                    continue;
+                index.putIfAbsent(key, new DatasetDocument(path, key, node, content.get()));
+            } catch (VcsConfigParseException e) {
+                // an unreadable YAML file cannot participate in the lineage walk
+            }
+        }
+        return index;
+    }
+
+    private static List<String> sourceKeys(ObjectNode document) {
+        JsonNode sources = document.get("sources");
+        if (sources == null || !sources.isObject())
+            return List.of();
+        List<String> keys = new ArrayList<>();
+        for (Map.Entry<String, JsonNode> entry : sources.properties()) {
+            String key = entry.getKey();
+            if (key != null && !key.isBlank())
+                keys.add(key);
+        }
+        return keys;
+    }
+
+    private static FileContentResponse toResponse(DatasetDocument document) {
+        return new FileContentResponse(document.path(), document.yaml(), YamlMetadataKind.DATA_SET.yamlValue(),
+                document.keyName(), false);
     }
 
     public FileContentResponse createFile(String workspaceId, CreateFileRequest request,
@@ -93,10 +248,14 @@ public class EditorService {
             throw new IllegalArgumentException("kind and keyName are required to create a file");
         YamlMetadataKind kind = YamlMetadataKind.fromYamlValue(request.kind());
         String fileName = safeFileName(request.keyName());
+        // The repository layout is arbitrary: a new file goes exactly where the
+        // caller asks for it (the selected folder), never into a directory
+        // derived from the document kind. Without an explicit directory the file
+        // is placed at the root of the first selected domain folder.
         String dir = safeDirectory(request.directory());
-        if (dir.isEmpty())
-            dir = defaultDirectory(workspace, kind);
-        String path = (dir.isEmpty() ? kind.directory() : dir) + "/" + fileName + ".yaml";
+        if (dir.isEmpty() && !workspace.selections().isEmpty())
+            dir = workspace.selections().get(0).folder();
+        String path = dir.isEmpty() ? fileName + ".yaml" : dir + "/" + fileName + ".yaml";
         requireSelectionPath(workspace, path);
         requireEditor(user, domainOf(workspace, path));
         String content = yaml.defaultYaml(kind, request.keyName());
@@ -105,32 +264,13 @@ public class EditorService {
         return new FileContentResponse(path, content, kind.yamlValue(), request.keyName(), true);
     }
 
-    /**
-     * The default creation folder sits inside the first selected branch checkout
-     * ({@code <domain> (<branch>)/<kind-dir>/}) so new files always belong to a domain.
-     */
-    private static String defaultDirectory(Workspace workspace, YamlMetadataKind kind) {
-        if (workspace.selections().isEmpty())
-            return kind.directory();
-        return workspace.selections().get(0).folder() + "/" + kind.directory();
-    }
-
     public FileContentResponse readFile(String workspaceId, String path, Authentication authentication) {
         UserContext user = UserContext.from(authentication);
         Workspace workspace = requireOwnWorkspace(workspaceId, user);
         String safePath = requireSelectionPath(workspace, safeFilePath(path));
         String content = storage.readFile(workspaceId, safePath)
                 .orElseThrow(() -> new IllegalArgumentException("File not found: " + path));
-        try {
-            ObjectNode node = yaml.parse(content);
-            YamlMetadataKind kind = yaml.knownKindOf(node).orElse(null);
-            String kindValue = kind == null ? "unknown" : kind.yamlValue();
-            String identifierField = kind == null ? "keyName" : kind.identifierField();
-            return new FileContentResponse(safePath, content, kindValue,
-                    yaml.identifierOf(node, identifierField), keyEditable(kind));
-        } catch (VcsConfigParseException e) {
-            return new FileContentResponse(safePath, content, "unknown", null, false);
-        }
+        return contentResponse(safePath, content);
     }
 
     public FileContentResponse saveFile(String workspaceId, String path, SaveFileRequest request,
@@ -139,6 +279,12 @@ public class EditorService {
         Workspace workspace = requireOwnWorkspace(workspaceId, user);
         String safePath = requireSelectionPath(workspace, safeFilePath(path));
         requireEditor(user, selectionForPath(workspace, safePath).domain());
+        if (!isYaml(safePath)) {
+            String raw = request.yaml() == null ? "" : request.yaml();
+            storage.writeFile(workspaceId, safePath, raw);
+            logs.log("INFO", user.username(), "SAVE_FILE", safePath, workspaceId);
+            return new FileContentResponse(safePath, raw, UNKNOWN_KIND, null, false);
+        }
         ObjectNode node = yaml.parse(request.yaml());
         YamlMetadataKind kind = yaml.knownKindOf(node).orElse(null);
         String identifierField = kind == null ? "keyName" : kind.identifierField();
@@ -149,7 +295,7 @@ public class EditorService {
         String content = yaml.serialize(node);
         storage.writeFile(workspaceId, safePath, content);
         logs.log("INFO", user.username(), "SAVE_FILE", safePath, workspaceId);
-        String kindValue = kind == null ? "unknown" : kind.yamlValue();
+        String kindValue = kind == null ? UNKNOWN_KIND : kind.yamlValue();
         return new FileContentResponse(safePath, content, kindValue, identifier, keyEditable(kind));
     }
 
@@ -160,8 +306,13 @@ public class EditorService {
         String safePath = requireSelectionPath(workspace, safeFilePath(request.path()));
         requireEditor(user, selectionForPath(workspace, safePath).domain());
         String name = request.newName() == null ? "" : request.newName().trim();
-        if (!name.toLowerCase(Locale.ROOT).endsWith(".yaml"))
-            name = name + ".yaml";
+        String originalName = safePath.substring(safePath.lastIndexOf('/') + 1);
+        String extension = originalName.contains(".")
+                ? originalName.substring(originalName.lastIndexOf('.')) : ".yaml";
+        // Keep the file type of an arbitrary file when only its base name changes;
+        // metadata documents keep the historic .yaml suffix.
+        if (!name.contains(".") || name.startsWith("."))
+            name = name + extension;
         if (!name.matches("[A-Za-z0-9._-]+"))
             throw new IllegalArgumentException("Invalid file name: " + request.newName());
         String parent = safePath.contains("/") ? safePath.substring(0, safePath.lastIndexOf('/')) : "";
@@ -176,11 +327,7 @@ public class EditorService {
         storage.writeFile(workspaceId, newPath, content);
         storage.deleteFile(workspaceId, safePath);
         logs.log("INFO", user.username(), "RENAME_FILE", safePath + " -> " + newPath, workspaceId);
-        ObjectNode node = yaml.parse(content);
-        YamlMetadataKind kind = yaml.knownKindOf(node).orElse(null);
-        String kindValue = kind == null ? "unknown" : kind.yamlValue();
-        String identifierField = kind == null ? "keyName" : kind.identifierField();
-        return new FileContentResponse(newPath, content, kindValue, yaml.identifierOf(node, identifierField), keyEditable(kind));
+        return contentResponse(newPath, content);
     }
 
     public void deleteFile(String workspaceId, String path, Authentication authentication) {
@@ -215,11 +362,7 @@ public class EditorService {
         storage.writeFile(workspaceId, newPath, content);
         storage.deleteFile(workspaceId, source);
         logs.log("INFO", user.username(), "MOVE_FILE", source + " -> " + newPath, workspaceId);
-        ObjectNode node = yaml.parse(content);
-        YamlMetadataKind kind = yaml.knownKindOf(node).orElse(null);
-        String kindValue = kind == null ? "unknown" : kind.yamlValue();
-        String identifierField = kind == null ? "keyName" : kind.identifierField();
-        return new FileContentResponse(newPath, content, kindValue, yaml.identifierOf(node, identifierField), keyEditable(kind));
+        return contentResponse(newPath, content);
     }
 
     public List<String> listDirectories(String workspaceId, Authentication authentication) {
@@ -331,17 +474,60 @@ public class EditorService {
         return user;
     }
 
+    /** Read-only lineage queries accept any viewer-level role of the owning domain. */
+    private static UserContext requireViewer(UserContext user, String domain) {
+        if (!user.hasDomainRole(domain, DomainRole.VIEWER, DomainRole.EDITOR, DomainRole.CONTROL))
+            throw new ForbiddenException("Access denied: VIEWER role required for domain '" + domain + "'");
+        return user;
+    }
+
+    private static boolean canView(Workspace workspace, String path, UserContext user) {
+        try {
+            requireViewer(user, domainOf(workspace, path));
+            return true;
+        } catch (ForbiddenException e) {
+            return false;
+        }
+    }
+
+    private static String requireKeyName(String keyName) {
+        if (keyName == null || keyName.isBlank())
+            throw new IllegalArgumentException("keyName must not be blank");
+        return keyName;
+    }
+
     private static String safeFilePath(String path) {
         if (path == null || path.isBlank())
             throw new IllegalArgumentException("File path must not be blank");
         String normalized = path.startsWith("/") ? path.substring(1) : path;
         if (normalized.contains("..") || normalized.contains("\\"))
             throw new IllegalArgumentException("Illegal file path: " + path);
-        if (!normalized.endsWith(".yaml") && !normalized.endsWith(".yml"))
-            throw new IllegalArgumentException("Only .yaml metadata files are editable: " + path);
         if (normalized.endsWith("_workspace.json"))
             throw new IllegalArgumentException("_workspace.json is a system file");
+        if (normalized.endsWith(".tmp"))
+            throw new IllegalArgumentException("Temporary files are not editable: " + path);
         return normalized;
+    }
+
+    private static boolean isYaml(String path) {
+        String lower = path.toLowerCase(Locale.ROOT);
+        return lower.endsWith(".yaml") || lower.endsWith(".yml");
+    }
+
+    /** Builds the response for a file: YAML metadata documents by their kind, all other files as plain text. */
+    private FileContentResponse contentResponse(String path, String content) {
+        if (!isYaml(path))
+            return new FileContentResponse(path, content, UNKNOWN_KIND, null, false);
+        try {
+            ObjectNode node = yaml.parse(content);
+            YamlMetadataKind kind = yaml.knownKindOf(node).orElse(null);
+            String kindValue = kind == null ? UNKNOWN_KIND : kind.yamlValue();
+            String identifierField = kind == null ? "keyName" : kind.identifierField();
+            return new FileContentResponse(path, content, kindValue,
+                    yaml.identifierOf(node, identifierField), keyEditable(kind));
+        } catch (VcsConfigParseException e) {
+            return new FileContentResponse(path, content, UNKNOWN_KIND, null, false);
+        }
     }
 
     private static String safeFileName(String keyName) {
@@ -372,5 +558,8 @@ public class EditorService {
     private static ObjectNode ensureIdentifier(ObjectNode node, String field, String value) {
         node.put(field, value);
         return node;
+    }
+
+    private record DatasetDocument(String path, String keyName, ObjectNode doc, String yaml) {
     }
 }

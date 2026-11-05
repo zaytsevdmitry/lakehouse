@@ -18,6 +18,8 @@
 package org.yarina.task.executor.spark.api.body;
 
 import org.apache.spark.sql.SparkSession;
+import org.springframework.util.NumberUtils;
+import org.springframework.util.StringUtils;
 import org.yarina.client.api.dto.scheduler.tasks.ScheduledTaskDTO;
 import org.yarina.client.api.exception.TaskConfigurationException;
 import org.yarina.client.api.exception.TaskFailedException;
@@ -126,16 +128,47 @@ public class ApplicationBodyStarter {
         }
     }
     private ScheduledTaskDTO getAndValidateScheduledTaskDTO (ConfigurableApplicationContext applicationContext) throws TaskConfigurationException {
+        ScheduledTaskDTO result;
         String scheduledTaskId = applicationContext.getEnvironment().getProperty("scheduledTaskId");
-        logger.info("Received scheduledTaskId = {}. Requesting full body" , scheduledTaskId);
-        SchedulerRestClientApi schedulerRestClientApi = applicationContext.getBean(SchedulerRestClientApi.class);
-        ScheduledTaskDTO result = schedulerRestClientApi.getScheduledTaskDTO(scheduledTaskId);
+        logger.info("Received scheduledTaskId = {}", scheduledTaskId);
+        if (StringUtils.hasText(scheduledTaskId)) { // standard ran way
+            logger.info("Requesting full body for scheduledTaskId = {}. All other scheduledTask parameters are ignored.", scheduledTaskId);
+            SchedulerRestClientApi schedulerRestClientApi = applicationContext.getBean(SchedulerRestClientApi.class);
+            result = schedulerRestClientApi.getScheduledTaskDTO(scheduledTaskId);
+        }
+        else { // custom or free way
+
+            logger.info("Applying scheduledTask parameters (scheduledTaskId is not provided).");
+            result = new ScheduledTaskDTO();
+            result.setId(-1L);
+            // todo how to set result.setSqlTemplate() from commandline?;
+            result.setDriverKeyName(applicationContext.getEnvironment().getProperty("scheduledTaskDriverKeyName"));
+            result.setTaskProcessorBody(applicationContext.getEnvironment().getProperty("scheduledTaskTaskProcessorBody"));
+            result.setDataSetKeyName(applicationContext.getEnvironment().getProperty("scheduledTaskDataSetKeyName"));
+            result.setIntervalStartDateTime(applicationContext.getEnvironment().getProperty("scheduledTaskIntervalStartDateTime"));
+            result.setIntervalEndDateTime(applicationContext.getEnvironment().getProperty("scheduledTaskIntervalEndDateTime"));
+            result.setTargetDateTime(applicationContext.getEnvironment().getProperty("scheduledTaskTargetDateTime"));
+            String  scheduledTaskTryNum = applicationContext.getEnvironment().getProperty("scheduledTaskTryNum");
+            Integer tryNum = -1;
+            if (StringUtils.hasText(scheduledTaskTryNum)) {
+                try {
+                    tryNum = NumberUtils.parseNumber(scheduledTaskTryNum, Integer.class);
+                } catch (IllegalArgumentException e) {
+                    logger.warn("Error when parce 'scheduledTaskTryNum'. TryNum sets as  -1");
+                }
+            }
+            result.setTryNum(tryNum);
+        }
+
         logger.info("Validating task configuration");
         ValidationResult validationResult = ScheduledTaskDTOValidator.validate(result);
         if (!validationResult.isValid())
             throw new TaskConfigurationException(validationResult.getDescriptions().stream().collect(Collectors.joining("\n")));
-        if(result.getTaskProcessorBody() ==null ||result.getTaskProcessorBody().isBlank())
-            throw new TaskConfigurationException("Value of taskProcessorBody must not be null");
+        if (result.getTaskProcessorBody() == null || result.getTaskProcessorBody().isBlank())
+            throw new TaskConfigurationException("Missing required parameter: taskProcessorBody cannot be null");
+
+        if(!StringUtils.hasText(result.getDriverKeyName())  && result.getSqlTemplate() == null)
+            throw new TaskConfigurationException("Missing required parameter: driverKeyName or sqlTemplate must be present");
 
         return result;
     }

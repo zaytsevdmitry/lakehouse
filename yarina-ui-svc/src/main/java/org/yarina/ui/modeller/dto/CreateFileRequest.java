@@ -18,8 +18,10 @@
 package org.yarina.ui.modeller.dto;
 
 /**
- * Request to create a new metadata file inside a workspace. When {@code directory}
- * is provided the file is placed there (instead of the kind's default directory).
+ * Request to create a new metadata file inside a workspace. The repository layout is
+ * arbitrary, so the file is created in {@code directory} exactly as specified (or at the
+ * root of the first selected domain folder when it is omitted); the {@code kind} only
+ * selects the document template and the editor, never the folder.
  */
 public record CreateFileRequest(
         String kind,

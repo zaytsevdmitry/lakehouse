@@ -17,6 +17,8 @@
 
 package org.yarina.ui.modeller.storage.s3;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yarina.ui.modeller.storage.WorkspaceStorage;
 
 import java.nio.charset.StandardCharsets;
@@ -26,6 +28,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 /**
  * S3/MinIO backed {@link WorkspaceStorage}: a workspace is a {@code workspaces/<id>/}
@@ -33,6 +36,8 @@ import java.util.Optional;
  * prefix, streamed object-by-object.
  */
 public class S3WorkspaceStorage implements WorkspaceStorage {
+
+    private static final Logger logger = LoggerFactory.getLogger(S3WorkspaceStorage.class);
 
     private static final String WORKSPACES_PREFIX = "workspaces/";
 
@@ -68,7 +73,16 @@ public class S3WorkspaceStorage implements WorkspaceStorage {
 
     @Override
     public void writeFile(String workspaceId, String path, String content) {
-        client.putObject(objectKey(workspaceId, path), content.getBytes(StandardCharsets.UTF_8));
+        String key = objectKey(workspaceId, path);
+        byte[] bytes = content == null ? new byte[0] : content.getBytes(StandardCharsets.UTF_8);
+        try {
+            client.putObject(key, bytes);
+            logger.debug("Wrote object '{}' ({} byte(s)) of workspace {}", key, bytes.length, workspaceId);
+        } catch (RuntimeException e) {
+            logger.error("Cannot write object '{}' ({} byte(s)) of workspace {}: {}",
+                    key, bytes.length, workspaceId, e.getMessage(), e);
+            throw e;
+        }
     }
 
     @Override
@@ -89,9 +103,35 @@ public class S3WorkspaceStorage implements WorkspaceStorage {
 
     @Override
     public void writeAll(String workspaceId, Map<String, String> files) {
-        for (String key : listObjects(workspaceId))
-            client.deleteObject(key);
-        files.forEach((path, content) -> writeFile(workspaceId, path, content));
+        long started = System.nanoTime();
+        logger.info("Exporting {} object(s) of workspace {} to prefix '{}'", files.size(), workspaceId, prefix(workspaceId));
+        int written = 0;
+        try {
+            for (String key : listObjects(workspaceId)) {
+                logger.info("Workspace {}: removing previous object '{}' before export", workspaceId, key);
+                client.deleteObject(key);
+            }
+            for (Map.Entry<String, String> entry : files.entrySet()) {
+                logger.info("Workspace {}: writing object '{}' ({} byte(s))",
+                        workspaceId, entry.getKey(),
+                        entry.getValue() == null ? 0 : entry.getValue().getBytes(StandardCharsets.UTF_8).length);
+                try {
+                    writeFile(workspaceId, entry.getKey(), entry.getValue());
+                    written++;
+                } catch (RuntimeException e) {
+                    logger.error("Workspace {}: failed to export object '{}' after {} of {} object(s): {}",
+                            workspaceId, entry.getKey(), written, files.size(), e.getMessage(), e);
+                    throw e;
+                }
+            }
+            logger.info("Exported {} object(s) of workspace {} to prefix '{}' in {} ms",
+                    written, workspaceId, prefix(workspaceId),
+                    TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started));
+        } catch (RuntimeException e) {
+            logger.error("Cannot replace content of workspace {} under prefix '{}' after {} of {} object(s): {}",
+                    workspaceId, prefix(workspaceId), written, files.size(), e.getMessage(), e);
+            throw e;
+        }
     }
 
     @Override

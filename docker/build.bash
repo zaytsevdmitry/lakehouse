@@ -31,4 +31,4 @@ cd ../checkcontainer
 bash ./build.bash
 
 
-docker images | grep yarina | grep '1.0.1'
+docker images | grep yarina | grep '1.1.0'

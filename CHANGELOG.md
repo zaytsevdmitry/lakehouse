@@ -1,5 +1,118 @@
 # Changelog
 
+## [1.1.0] — 2026-11-03
+
+The project is renamed from **Jarina** to **Yarina**, the modeller gets **lineage automation**
+for its diagram editors, and the ecosystem gains an **Apache Airflow integration**. Workspace
+creation and repository handling were hardened for repositories whose layout is arbitrary
+(flat repositories, business folders called `domains/`, multi-domain containers).
+
+### Changed
+
+#### Project rename: `Jarina` → `Yarina`
+
+- **All module directories, Maven artifacts and Java packages** are renamed: `jarina-*` →
+  `yarina-*`, `org.jarina.*` → `org.yarina.*`. This is a **breaking** change for every
+  external build, import, script or dependency that refers to the old coordinates.
+- **Deployment identifiers** follow: Docker images, Helm charts and values
+  (`demo/k8s/yarina-management-helm-charts`), the Keycloak realm (`yarina-realm.json`), the
+  Trino catalog (`yarina.properties`), the demo data source (`yarinastorage`) and the CI
+  workflows.
+- **Configuration prefixes** move from `JARINA_*` to `YARINA_*` and from `-Djarina.*` to
+  `-Dyarina.*` (including `yarina.domains.*` system properties in `demo/compose`). Deployments
+  that still export `JARINA_*` variables or pass `-Djarina.*` properties must migrate.
+- `README`, `README_ru`, the `doc/`/`doc-ru/` trees, `SUMMARY_FEATURES.md` and the demo
+  scenarios are updated to the new name; the product is "Yarina dataset self service".
+
+### Added
+
+#### Lineage automation in the modeller (`yarina-ui-svc`)
+
+- **Workspace lineage endpoints**:
+  - `GET /api/workspaces/{workspaceId}/lineage/sources?keyName=<dataSet>` — all transitive
+    upstream data sets of a data set;
+  - `GET /api/workspaces/{workspaceId}/lineage/receivers?keyName=<dataSet>` — all transitive
+    downstream data sets.
+  The graph is built from the `DataSet` documents of the workspace (the `sources` map/list is
+  accepted in both forms), is cycle-safe, and is filtered per vertex by the viewer-level role
+  of the owning domain.
+- **`DataLineageDiagramEditor`** gained **Add sources** and **Add receivers** actions: the
+  editor queries the new endpoints, adds the missing nodes and distributes them on the left
+  (sources) or right (receivers) of the selected data set instead of requiring every node to
+  be added manually.
+- **Catalog diagrams** (`LineageTab`, `RelationsTab`) were rewritten to a layered layout:
+  everything that feeds the selected data set is placed in columns on the left, everything it
+  feeds in columns on the right, and the nodes can be dragged without the layout being
+  recomputed on every render.
+
+#### Apache Airflow integration (`yarina-airflow-integration`)
+
+- New standalone module with **separate `2.x/` and `3.x/` plugin trees** (the code is duplicated
+  on purpose, so a user copies exactly one folder into `$AIRFLOW_HOME/plugins`). Only
+  `apache-airflow-providers-http` is required.
+- **Hooks**: `YarinaBaseHook` (OAuth2 `client_credentials`, JSON headers, timeouts, sanitised
+  connection extras, unified error handling), `YarinaStateHook` (`put_state`, `get_states`,
+  `post_wrong`, lock-source resolution), `YarinaConfigHook` (dataset and resolved sources) and
+  `YarinaSparkProxyHook` (`create_submission`, `get_status`).
+- **Operators**: `YarinaStateCheckOperator` (1:1 with the task-executor's
+  `DependencyCheckStateTaskProcessor`), `YarinaStateLockOperator` / `YarinaStateUnlockOperator`
+  (including emergency `force_unlock`) and `YarinaSparkSubmitOperator` (builds the submission,
+  pushes `spark_submission_id` to XCom and polls until `FINISHED`, failing on
+  `FAILED`/`KILLED`/timeout).
+- **Two reference workflows**: interval-state lifecycle
+  (`check dependencies → LOCK → ETL → SUCCESS/unlock`) and Spark submission through
+  `yarina-task-proxy-for-spark`.
+- **Configuration, security and examples documentation** in `doc/` and `doc-ru/`, DAG templates
+  for both Airflow majors, a CI workflow and an Airflow service in the demo compose stack.
+
+### Fixed
+
+#### Flat repositories vs multi-domain containers (`yarina-domain-api`)
+
+- `DomainLayout` now recognizes a multi-domain repository **positively** instead of treating
+  every file under `domains/` as a container:
+  - the selected domain's own `domains/<domain>/` subtree must exist, **or**
+  - every YAML file must live under `domains/<name>/` and **all** first-level names must be
+    configured domains.
+  A flat, per-domain repository that merely keeps its business folders under a folder called
+  `domains/` (e.g. `domains/aaaa/datasets/...`) is kept whole; previously such a repository
+  could be scoped to a non-existent subtree and the workspace appeared empty.
+- `DomainSettings.allDomainNames()` exposes all configured domains (including nested ones) for
+  that detection; `DomainVcsFactory.repositoryFor(spec, knownDomains)` and `GitVcsClient` pass
+  the names through to the review side, so the commit path uses the same layout rule as the
+  snapshot path. Without the names a brand-new domain (no subtree yet) cannot be recognized.
+- Workspace export is now diagnosable: creation logs the selected `(domain, branch)` pairs, the
+  raw and post-scoping file counts with the `domainLayout` decision, the per-selection export
+  counts and a read-back verification; a warning is emitted when scoping removes every file, a
+  failed selection aborts creation and the partially seeded workspace is deleted. Local FS and
+  S3 storage also log export/delete operations and S3 request failures.
+- `GitOpsChangeSetBuilder` logs every file it processes in `yarina-config-svc`.
+
+#### Arbitrary repository layout in the modeller (`yarina-ui-svc`)
+
+- `EditorService` no longer requires `.yaml` files or a directory derived from the document
+  `kind`:
+  - metadata documents are recognized by their `kind` field, wherever they live; a YAML file
+    that fails to parse is still listed as an unknown file instead of breaking the tree;
+  - non-YAML text files (SQL, JSON, Markdown, ...) are listed, read and saved as plain text;
+    binary/unreadable files are listed without failing the tree;
+  - a new document is created in the explicitly requested `directory` (or at the root of the
+    first selected domain folder when it is omitted) — never in a folder guessed from `kind`;
+  - rename preserves the original extension, so `script.sql` stays a `.sql` file; `.tmp` files
+    and `_workspace.json` remain non-editable.
+- These rules keep workspaces usable for repositories that do not follow the conventional
+  `<kind-directory>/<keyName>.yaml` layout.
+
+#### Task execution and Spark submissions
+
+- `SQLProcessorBodyAbstract` injects the configuration **global variables**
+  (`yarina.config.gvars.*`) into the Jinjava context before the source configuration and the
+  scheduled task, so SQL templates can reference them with `{{ <name> }}`. The later contexts
+  still override a variable on a name clash.
+- `SparkSubmissionRepository.updateStatus` / `completeTask` now set `updated_at = now()`, so the
+  timestamp tracks the last status transition and the retrieval-based cleanup
+  (`claimForCleanup`, which filters by `updated_at`) sees the real age of a finished submission.
+
 ## [1.0.0] — 2026-10-21
 
 Configuration domains were **extracted into a dedicated functionality** and Git support was

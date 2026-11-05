@@ -57,10 +57,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Git based implementation of {@link VcsClient} built on top of JGit.
@@ -87,6 +89,7 @@ public class GitVcsClient implements VcsClient {
     private final String privateKeyPath;
     private final CredentialsProvider credentials;
     private final GitCredentials gitCredentials;
+    private final Collection<String> knownDomains;
 
     private Git git;
     private Repository repository;
@@ -109,6 +112,7 @@ public class GitVcsClient implements VcsClient {
         this.privateKeyPath = privateKeyPath;
         this.credentials = null;
         this.gitCredentials = null;
+        this.knownDomains = Set.of();
     }
 
     /**
@@ -118,6 +122,18 @@ public class GitVcsClient implements VcsClient {
      * through transient clones.
      */
     public GitVcsClient(String repositoryUrl, String branch, GitCredentials credentials) {
+        this(repositoryUrl, branch, credentials, Set.of());
+    }
+
+    /**
+     * Review-side client that additionally knows the names of the configured domains: they
+     * let {@link DomainLayout#usesDomainLayout(String, Map, Collection)} recognize a
+     * multi-domain repository even when the reviewed domain is still new (no
+     * {@code domains/<domain>/} subtree in the branch). Without them the client falls back
+     * to the presence of the domain subtree.
+     */
+    public GitVcsClient(String repositoryUrl, String branch, GitCredentials credentials,
+                        Collection<String> knownDomains) {
         if (!StringUtils.hasText(repositoryUrl))
             throw new IllegalArgumentException("Git repository URL must be configured");
         this.repositoryUrl = repositoryUrl;
@@ -126,6 +142,7 @@ public class GitVcsClient implements VcsClient {
         this.privateKeyPath = null;
         this.credentials = credentials == null ? null : credentials.provider();
         this.gitCredentials = credentials;
+        this.knownDomains = knownDomains == null ? Set.of() : Set.copyOf(knownDomains);
     }
 
     // ------------------------------------------------------------------
@@ -387,7 +404,8 @@ public class GitVcsClient implements VcsClient {
      */
     boolean commitAndPush(VcsReviewSubmission submission, PersonIdent author) {
         return engineCommitAndPush(repositoryUrl, submission.domain(), submission.branch(),
-                submission.effectiveCommitMessage(), author, submission.files(), credentials);
+                submission.effectiveCommitMessage(), author, submission.files(), credentials,
+                knownDomains);
     }
 
     static String effectiveAuthorName(String name) {
@@ -480,14 +498,15 @@ public class GitVcsClient implements VcsClient {
      */
     private static boolean engineCommitAndPush(String remoteUrl, String domain, String branch, String commitMessage,
                                                PersonIdent author, Map<String, String> files,
-                                               CredentialsProvider credentials) {
+                                               CredentialsProvider credentials,
+                                               Collection<String> knownDomains) {
         Path dir = tempClone(remoteUrl, credentials);
         try {
             try (Git git = openClone(dir)) {
                 Repository repo = git.getRepository();
                 fetchIfRepositoriesLinked(repo, credentials);
                 checkoutReviewBranch(git, branch);
-                boolean domainLayout = usesDomainLayout(dir);
+                boolean domainLayout = usesDomainLayout(dir, domain, knownDomains);
                 Map<String, String> repositoryFiles = DomainLayout.expandDomain(domain, files, domainLayout);
                 removeManagedYamlFiles(dir, domain, domainLayout);
                 writeFiles(dir, repositoryFiles);
@@ -680,13 +699,26 @@ public class GitVcsClient implements VcsClient {
         throw new VcsException("Branch " + branch + " not found in the repository");
     }
 
-    private static boolean usesDomainLayout(Path dir) throws IOException {
-        Path domains = dir.resolve("domains");
-        if (!Files.isDirectory(domains))
-            return false;
-        try (var children = Files.list(domains)) {
-            return children.anyMatch(Files::isDirectory);
+    /**
+     * Whether the repository keeps the configuration of each domain under
+     * {@code domains/<domain>/}. A flat, per-domain repository may contain a business
+     * folder named {@code domains/} as well, therefore the decision uses exactly the same
+     * rule as the snapshot scoping ({@link DomainLayout#usesDomainLayout(String, Map,
+     * Collection)}) over the files of the working tree. Otherwise a review could commit
+     * the files into a wrong subtree.
+     */
+    private static boolean usesDomainLayout(Path dir, String domain,
+                                            Collection<String> knownDomains) throws IOException {
+        Path root = dir.toAbsolutePath().normalize();
+        Path gitDir = root.resolve(".git");
+        Map<String, String> files = new LinkedHashMap<>();
+        try (var paths = Files.walk(root)) {
+            paths.filter(Files::isRegularFile)
+                    .filter(path -> !path.startsWith(gitDir))
+                    .forEach(path -> files.put(
+                            root.relativize(path).toString().replace('\\', '/'), ""));
         }
+        return DomainLayout.usesDomainLayout(domain, files, knownDomains);
     }
 
     private static void removeManagedYamlFiles(Path dir, String domain, boolean domainLayout) throws IOException {

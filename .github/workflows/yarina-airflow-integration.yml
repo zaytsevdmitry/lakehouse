@@ -1,0 +1,49 @@
+name: yarina-airflow-integration
+
+on:
+  push:
+    paths:
+      - "yarina-airflow-integration/**"
+      - ".github/workflows/yarina-airflow-integration.yml"
+  pull_request:
+    paths:
+      - "yarina-airflow-integration/**"
+      - ".github/workflows/yarina-airflow-integration.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - airflow: "2.7.3"
+            python: "3.11"
+            folder: "2.x"
+          - airflow: "3.1.*"
+            python: "3.12"
+            folder: "3.x"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install Airflow
+        run: |
+          python -m pip install --upgrade pip
+          pip install "apache-airflow==${{ matrix.airflow }}" \
+            apache-airflow-providers-http \
+            pytest pytest-mock requests
+
+      - name: Run tests
+        working-directory: yarina-airflow-integration/${{ matrix.folder }}
+        env:
+          AIRFLOW_HOME: ${{ runner.temp }}/airflow
+          PYTHONPATH: .
+        run: python -m pytest plugins/tests -q
+
+      - name: Compile DAG templates
+        working-directory: yarina-airflow-integration
+        run: python -m py_compile examples/${{ matrix.folder }}/*.py

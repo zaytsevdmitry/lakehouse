@@ -87,7 +87,7 @@ Detailed documentation: [VCS subsystem for platform developers](vcs/vcs_for_deve
 
 ### Domains and repository layout
 
-The demo stack serves one bare repository per domain on `git://git-server:9418/<domain>.git`. A domain repository contains a flat set of YAML files, one configuration construct per file. Each file starts with a Kubernetes-style `kind` field that selects the target DTO; the rest of the file is bound to that DTO (unknown properties are an error, enum values are case-insensitive).
+The demo stack serves one bare repository per domain on `git://git-server:9418/<domain>.git`. The directory layout inside a repository is **arbitrary**: configuration files are recognized by their Kubernetes-style `kind` field, not by the folder they live in, nested folders are allowed, and each file holds one configuration construct. The rest of the file is bound to that DTO (unknown properties are an error, enum values are case-insensitive). A repository may be dedicated to a single domain (files at the root) or host several domains under `domains/<name>/`; the latter is recognized by `DomainLayout` in `yarina-domain-api`, which treats a repository as a multi-domain container only when the selected domain's own subtree exists, or when every YAML file lives under `domains/<name>/` and all those names are configured domains. A flat repository whose business folders merely happen to be called `domains/` is kept whole.
 
 Demo layout (`demo/compose/conf_git/domains/`):
 
@@ -195,7 +195,7 @@ Setup in detail: [Git extension user guide](vcs/git_extension_user_guide.md).
 | `yarina.config.vcs.sync.initial-delay-ms` | `YARINA_CONFIG_GIT_SYNC_INITIAL_DELAY_MS` | `10000` | Delay of the first cycle after startup |
 | `yarina.domains.<name>.git.repository-url` | `YARINA_DOMAINS_<NAME>_GIT_REPOSITORY_URL` | - | URL of the domain repository (any Git URL: `git://`, `ssh://`, `http(s)://` or local path); **required** for the domain to be active |
 | `yarina.domains.<name>.git.branch` | `YARINA_DOMAINS_<NAME>_GIT_BRANCH` | `main` | Branch to synchronize |
-| `yarina.domains.<name>.git.local-clone-path` | `YARINA_DOMAINS_<NAME>_GIT_LOCAL_CLONE_PATH` | - | Local path where the service keeps the domain clone (must be unique per domain) |
+| `yarina.domains.<name>.git.local-clone-path` | `YARINA_DOMAINS_<NAME>_GIT_LOCAL_CLONE_PATH` | - | Local path where the service keeps the domain clone (**required** by this service, must be unique per domain) |
 | `yarina.domains.<name>.git.credentials.auth-type` | - | inferred | `ssh` (when `ssh-private-key-path` is set), `token` (when any credential is set) or `basic`; empty credentials mean anonymous access |
 | `yarina.domains.<name>.git.credentials.ssh-private-key-path` | `YARINA_DOMAINS_<NAME>_GIT_CREDENTIALS_SSH_PRIVATE_KEY_PATH` | - | Path to an SSH private key (only for `ssh://` URLs) |
 | `yarina.domains.<name>.git.credentials.username` / `.token` / `.password` | - | - | Per-domain credentials for `basic` / `token` auth |

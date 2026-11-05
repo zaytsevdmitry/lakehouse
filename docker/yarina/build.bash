@@ -18,7 +18,7 @@
 
 set -e
 set -v
-export LH_VERSION=1.0.1
+export LH_VERSION=1.1.0
 pwd
 mkdir -p ./opt
 export CODE_ROOT="../.."

@@ -47,6 +47,12 @@
   box-sizing: border-box;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+}
+
 body {
   margin: 0;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -56,8 +62,12 @@ body {
 
 .app {
   width: 100%;
+  height: 100%;
+  min-height: 0;
   margin: 0;
   padding: 24px;
+  display: flex;
+  flex-direction: column;
 }
 
 .app-header {
@@ -102,11 +112,27 @@ body {
 }
 
 .app-main {
-  display: grid;
-  grid-template-columns: 1fr;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   gap: 24px;
   padding-left: 1%;
   padding-right: 1%;
+}
+
+/* Section wrapper: takes the remaining viewport height so embedded views
+   (e.g. the modeller editor) can stretch to the bottom of the screen. */
+.app-main > .section-pane {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.app-main > .section-pane[hidden] {
+  display: none;
 }
 
 .section-switcher {
@@ -570,6 +596,63 @@ a {
 
 .lineage-flow .react-flow__attribution {
   display: none;
+}
+
+/* Diagram hosts of the catalog tabs (auto-layout + full screen + dragging). */
+.lineage-host,
+.relations-host {
+  position: relative;
+  width: 100%;
+  height: 500px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--panel);
+}
+
+.relations-host {
+  height: 560px;
+}
+
+.lineage-host .lineage-flow,
+.relations-host .relations-flow {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 0;
+}
+
+.lineage-host .diagram-expand,
+.relations-host .diagram-expand {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 6;
+  padding: 4px 9px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.lineage-host .diagram-expand:hover,
+.relations-host .diagram-expand:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.lineage-host.diagram-fullscreen,
+.relations-host.diagram-fullscreen {
+  position: fixed;
+  inset: 0;
+  width: auto;
+  height: auto;
+  z-index: 40;
+  border: none;
+  border-radius: 0;
 }
 
 .pipeline-section {
@@ -1843,6 +1926,7 @@ a {
   .modeller .editor {
   display: flex;
   height: 100%;
+  min-height: 0;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -1852,9 +1936,11 @@ a {
   .modeller .sidebar {
   width: 280px;
   min-width: 280px;
+  min-height: 0;
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   background: var(--panel-2);
 }
 
@@ -1884,9 +1970,29 @@ a {
 }
 
   .modeller .tree {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
   overflow: auto;
   padding: 8px;
+}
+
+  .modeller .tree-inner {
+  width: max-content;
+  min-width: 100%;
+  box-sizing: border-box;
+}
+
+  .modeller .tree .tree-folder-name,
+  .modeller .tree .tree-item {
+  width: max-content;
+  min-width: 100%;
+}
+
+  .modeller .tree .key-name,
+  .modeller .tree .file-name {
+  overflow: visible;
+  text-overflow: clip;
 }
 
   .modeller .dir-toolbar {
@@ -2025,6 +2131,17 @@ a {
   color: inherit;
 }
 
+  .modeller .tree-kind {
+  flex: none;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--badge-bg);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
   .modeller .dirty-dot {
   width: 8px;
   height: 8px;
@@ -2048,6 +2165,8 @@ a {
 
   .modeller .main {
   flex: 1;
+  min-height: 0;
+  min-width: 0;
   overflow: auto;
   display: flex;
   flex-direction: column;
@@ -3321,7 +3440,9 @@ a {
 /* Modeller section root: mirrors the standalone modeller app shell layout so
    .topbar / .content (flex:1, overflow:hidden) behave as expected. */
 .modeller {
+  flex: 1 1 auto;
   height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
 }
