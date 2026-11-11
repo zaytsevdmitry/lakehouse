@@ -6,7 +6,7 @@
 
 | Модуль | Содержимое |
 |--------|------------|
-| `yarina-credential-providers-jdbc` | Общий, Spark-независимый код: SPI `SecretProvider`, HTTP-клиенты `VaultHttp` / `LockboxHttp`, `SecretCache`, JDBC-провайдеры (`BaoJdbcSecretProvider`, `YcLockboxJdbcSecretProvider`), `YarinaSecurityContext` и помощник `SecretResolver`. Переиспользуется сервисами платформы (например `yarina-task-executor-api`). |
+| `yarina-credential-providers-jdbc` | Общий, Spark-независимый код: SPI `SecretProvider`, HTTP-клиенты `VaultHttp` / `LockboxHttp`, `SecretCache`, `SecurityMetrics`, JDBC-провайдеры (`BaoJdbcSecretProvider`, `YcLockboxJdbcSecretProvider`), `YarinaSecurityContext` и помощник `SecretResolver`. Переиспользуется сервисами платформы (например `yarina-task-executor-api`). |
 | `yarina-credential-providers-spark` | Spark-специфичный код: S3-провайдеры (`BaoS3CredentialsProvider`, `YcLockboxS3CredentialsProvider`) и `YarinaSecureJDBCTableCatalog`. Зависит от общего модуля. |
 
 ---
@@ -19,7 +19,7 @@
 |----------|---------|
 | Пароли JDBC и ключи S3 захардкожены в `spark-defaults.conf` | Провайдеры подтягивают секреты при выполнении из Vault или Lockbox |
 | Секреты попадают в Spark UI, логи, дампы конфигурации | Значения никогда не логируются; при ошибках выводятся только HTTP-коды |
-| Экзекуторы обрабатывают тысячи партиций в секунду → риск DDoS на API секретов | Внутри-JVM кэш с TTL ~5 минут |
+| Экзекуторы обрабатывают тысячи партиций в секунду → риск DDoS на API секретов | JVM-wide кэш с TTL 5 минут и single-flight загрузкой: один запрос к Vault на секрет за TTL-окно, независимо от числа экземпляров провайдера и партиций |
 
 ### Поддерживаемые бэкенды
 
@@ -59,11 +59,13 @@ mvn clean package -pl yarina-credential-providers-jdbc,yarina-credential-provide
 
 ```bash
 spark-submit \
-  --jars yarina-credential-providers-jdbc-0.8.0.jar,yarina-credential-providers-spark-0.8.0.jar \
+  --jars yarina-credential-providers-jdbc-1.1.1.jar,yarina-credential-providers-spark-1.1.1.jar \
   ...
 ```
 
 Оба JAR-файла не содержат транзитивных runtime-зависимостей — все рантайм-зависимости (Spark, Hadoop, AWS SDK, Jackson) уже есть в classpath кластера. В демостенде оба JAR-а копируются в образ скриптом `docker/yarina-spark-aws/build.bash`.
+
+Актуальная версия — **1.1.1**. Описания релизов и история breaking changes ведутся в [`CHANGELOG.md`](../../CHANGELOG.md) в корне репозитория.
 
 ---
 
@@ -113,7 +115,7 @@ spark.sql.catalog.processingdb.secret-key=password
 | `vault-url` | да | Базовый URL HTTP API Vault |
 | `secret-path` | да | Путь в KV v2 (например `secret/data/myapp/db`) |
 | `secret-key` | да | Ключ внутри секрета |
-| `vault-role` | нет | Роль для Kubernetes Auth (по умолчанию `yarina`) |
+| `vault-role` | нет | Роль для Kubernetes Auth (по умолчанию `yarina` — см. [Аутентификация](#6-аутентификация)) |
 | `vault-k8s-auth-path` | нет | Путь маунта K8s auth (по умолчанию `kubernetes`) |
 
 ### 3.3 S3A / MinIO — Yandex Cloud Lockbox
@@ -123,7 +125,6 @@ spark.sql.catalog.processingdb.secret-key=password
 spark.hadoop.fs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem
 spark.hadoop.fs.s3a.endpoint=https://storage.yandexcloud.net
 spark.hadoop.fs.s3a.path.style.access=true
-spark.hadoop.fs.s3a.impl.disable.cache=true
 
 # ── Провайдер секретов ─────────────────────────────────────────
 spark.hadoop.fs.s3a.aws.credentials.provider=org.yarina.security.s3.YcLockboxS3CredentialsProvider
@@ -138,6 +139,8 @@ spark.hadoop.fs.s3a.lockbox.secret-key-secret=secret_key
 | `lockbox.access-key-secret` | нет | `access_key` | Имя ключа для AWS access key |
 | `lockbox.secret-key-secret` | нет | `secret_key` | Имя ключа для AWS secret key |
 
+> `spark.hadoop.fs.s3a.impl.disable.cache=true` — **необязательная** опция, см. примечание в [3.4](#34-s3a--minio--openbao--vault).
+
 ### 3.4 S3A / MinIO — OpenBao / Vault
 
 ```properties
@@ -145,7 +148,6 @@ spark.hadoop.fs.s3a.lockbox.secret-key-secret=secret_key
 spark.hadoop.fs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem
 spark.hadoop.fs.s3a.endpoint=http://minio:9000
 spark.hadoop.fs.s3a.path.style.access=true
-spark.hadoop.fs.s3a.impl.disable.cache=true
 
 # ── Провайдер секретов ─────────────────────────────────────────
 spark.hadoop.fs.s3a.aws.credentials.provider=org.yarina.security.s3.BaoS3CredentialsProvider
@@ -161,6 +163,44 @@ spark.hadoop.fs.s3a.bao.secret-key-secret=secret_key
 | `bao.secret-path` | да | — | Путь в KV для S3-credentials |
 | `bao.access-key-secret` | нет | `access_key` | Имя ключа для AWS access key |
 | `bao.secret-key-secret` | нет | `secret_key` | Имя ключа для AWS secret key |
+| `bao.vault-role` | нет | `yarina` | Роль Kubernetes Auth (см. [Аутентификация](#6-аутентификация)) |
+| `bao.vault-k8s-auth-path` | нет | `kubernetes` | Путь маунта Kubernetes Auth в Vault |
+| `bao.vault-k8s-token-path` | нет | `/var/run/secrets/kubernetes.io/serviceaccount/token` | Путь к JWT ServiceAccount |
+
+Примечания:
+
+- Оба ключа пары credentials (`access_key` + `secret_key`) читаются **одним** HTTP-запросом к Vault (batch-чтение всего payload секрета).
+- Провайдер падает быстро (fail-fast в конструкторе), если не заданы `fs.s3a.bao.vault-url` или `fs.s3a.bao.secret-path`.
+- **Про `spark.hadoop.fs.s3a.impl.disable.cache=true`:** эта опция **не обязательна** для работы провайдеров. Если она включена, каждый `FileSystem.get` создаёт новый `S3AFileSystem` **и новый экземпляр провайдера** — с версии 1.1.1 все экземпляры в одной JVM делят общий кэш credentials и Vault-клиент, поэтому опция больше не множит запросы к OpenBao (см. [5.1 Область действия кэша](#51-область-действия-кэша)); она по-прежнему множит объекты S3A-клиентов, поэтому оставляйте её только если платформа полагается на изоляцию файловых систем между задачами.
+
+### 3.5 Мульти-бакетность и мульти-облако
+
+Каждый бакет может переопределить опции провайдера через стандартный для S3A бакет-скоуп префикс `fs.s3a.bucket.<name>.*` — S3A копирует эти ключи поверх глобальных `fs.s3a.*` для файловой системы этого бакета:
+
+```properties
+# ── Общие настройки ─────────────────────────────────────────────
+spark.hadoop.fs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem
+spark.hadoop.fs.s3a.path.style.access=true
+spark.hadoop.fs.s3a.aws.credentials.provider=org.yarina.security.s3.BaoS3CredentialsProvider
+spark.hadoop.fs.s3a.bao.vault-url=http://vault:8200
+
+# ── Бакет "data": свой secret-path ──────────────────────────────
+spark.hadoop.fs.s3a.bucket.data.endpoint=http://minio-prod:9000
+spark.hadoop.fs.s3a.bucket.data.bao.secret-path=secret/data/s3-prod
+
+# ── Бакет "archive": другой секрет, другая роль, другой Vault ────
+spark.hadoop.fs.s3a.bucket.archive.endpoint=http://minio-archive:9000
+spark.hadoop.fs.s3a.bucket.archive.bao.vault-url=http://vault-archive:8200
+spark.hadoop.fs.s3a.bucket.archive.bao.secret-path=secret/data/s3-archive
+spark.hadoop.fs.s3a.bucket.archive.bao.vault-role=archive-reader
+```
+
+| Сценарий | Поддержка с 1.1.1 |
+|----------|-------------------|
+| Один OpenBao, несколько бакетов с разными `secret-path` | Да — каждая пара `(vault-url, secret-path)` является независимой записью кэша; `refresh()` одного бакета не затрагивает остальные |
+| Несколько инстансов OpenBao (`bao.vault-url` различается по бакетам) | Да — отдельный Vault-клиент на каждую комбинацию `(vault-url, vault-role, auth-path)` |
+| Kubernetes Auth с разными ролями по бакетам (`bao.vault-role`) | Да — роль входит в ключ клиента |
+| Разные статические `VAULT_TOKEN` для разных OpenBao | **Нет** — переменная окружения общая на всю JVM, статические токены не обновляются. Перегрузка `VaultHttp` с явным токеном существует только для программного использования и не выставлена как S3A/JDBC-опция; используйте Kubernetes Auth с разными ролями |
 
 ---
 
@@ -236,9 +276,136 @@ vault-url      http://openbao:8200
 
 ---
 
-## 5. Безопасность и отладка
+## 5. Кэширование и нагрузка на OpenBao
 
-### 5.1 Защита секретов в Spark UI
+### 5.1 Область действия кэша
+
+Секреты кэшируются **на уровне JVM** (процесс Spark Driver или Экзекутора), а не на уровне экземпляра провайдера:
+
+- Кэш credentials и Vault-клиенты `BaoS3CredentialsProvider` живут в `static`-полях и
+  разделяются **всеми** экземплярами провайдера в JVM. Hadoop S3A может создавать множество
+  экземпляров (по одному на `FileSystem`; при `fs.s3a.impl.disable.cache=true` — по одному
+  на каждый `FileSystem.get`), но все они используют общий кэш, поэтому нагрузка на OpenBao
+  пропорциональна TTL, а не количеству экземпляров.
+- **TTL: 5 минут.** Просроченная запись удаляется из кэша при следующем обращении; следующий
+  вызов читает свежие credentials. Ошибки **никогда** не кэшируются — неудачное чтение не
+  «залипает», следующая попытка снова идёт в Vault.
+- **Ключ кэша:** `bao:s3:<vault-url>:<secret-path>` — разные бакеты (разные secret-path)
+  и разные Vault-серверы никогда не делят запись.
+- **Single-flight:** при одновременном промахе многих потоков (например 50 конкурентных
+  партиций) выполняется ровно **один** HTTP-запрос; остальные потоки ждут его результата.
+  Один JVM-wide `HttpClient` разделяется на весь Vault-трафик — соединения переиспользуются,
+  а не множатся.
+- **Batch-чтение:** пара access/secret key читается **одним** HTTP-запросом
+  (`GET /v1/<secret-path>`) вместо запроса на каждый ключ.
+- `refresh()` инвалидирует только свою запись `(vault-url, secret-path)` — credentials
+  соседних бакетов в той же JVM остаются в кэше.
+
+### 5.2 Ротация секретов
+
+- **S3-путь:** Hadoop S3A вызывает `refresh()` на провайдере при обнаружении истёкших
+  credentials — это сбрасывает запись кэша только этого провайдера, и следующий запрос
+  перечитывает секрет из Vault. Независимо от `refresh()`, любой ротированный секрет
+  подхватывается не позднее чем через TTL (5 минут).
+- **JDBC-путь:** пароль резолвится при создании соединения; ротированный секрет подхватывается
+  при следующем промахе кэша (не позднее 5 минут). Уже открытые соединения продолжают работать
+  со старым паролем — перезапустите приложение или дождитесь ротации соединений в пуле.
+- **Ротация токена Vault** обрабатывается отдельно — см. ниже.
+
+### 5.3 Обновление токена Vault при HTTP 403
+
+- Токен, полученный через **Kubernetes Auth**, обновляемый: когда Vault отклоняет чтение
+  HTTP 403, клиент переаутентифицируется (один Kubernetes login, даже при конкурентных
+  вызовах) и повторяет запрос **ровно один раз** — шторма ретраев нет.
+- Токен из `VAULT_TOKEN` (или переданный программно) — **статический**: при 403 запрос
+  сразу падает без переаутентификации. Почему Kubernetes Auth рекомендован в production —
+  см. [Аутентификация](#6-аутентификация).
+
+---
+
+## 6. Аутентификация
+
+Приоритет разрешения токена в `VaultHttp`:
+
+1. Явный токен, переданный программно в конструктор `VaultHttp` (не выставлен как
+   Spark/Hadoop-опция);
+2. Переменная окружения `VAULT_TOKEN`;
+3. Kubernetes Auth (JWT ServiceAccount из
+   `/var/run/secrets/kubernetes.io/serviceaccount/token` по умолчанию, настраивается через
+   `fs.s3a.bao.vault-k8s-token-path`).
+
+Рекомендации:
+
+- **В production используйте Kubernetes Auth.** Токен ServiceAccount монтируется в Pod
+  средствами kubelet, короткоживущий, привязан к Vault-роли и никогда не попадает в файлы
+  конфигурации. Отклонённый токен самолечится переаутентификацией.
+- **`VAULT_TOKEN` виден** любому процессу и пользователю узла через `/proc/<pid>/environ`,
+  общий для всех задач на узле и никогда не обновляется — истёкший токен роняет все задачи
+  с `HTTP 403` до ручной замены переменной.
+- **`vault-role` по умолчанию — `yarina`.** Если роль, привязанная в OpenBao для метода
+  `kubernetes`, называется иначе, её **обязательно** задать явно (`vault-role` для JDBC,
+  `fs.s3a.bao.vault-role` для S3A) — несовпадение даёт
+  `Vault k8s auth failed, HTTP 403` на каждом login.
+
+---
+
+## 7. TLS / безопасность транспорта
+
+- Оба HTTP-клиента (`VaultHttp`, `LockboxHttp`) используют JDK `HttpClient` и полностью
+  поддерживают `https://` URL Vault/Lockbox: TLS согласуется стандартным стеком JSSE,
+  верификация имени хоста всегда включена.
+- **Кастомный CA:** импортируйте сертификат в JVM truststore, используемый Spark-нодами
+  (`keytool -importcert -cacerts`, либо укажите
+  `-Djavax.net.ssl.trustStore=/path/to/truststore.jks` на кастомный). Это стандартный
+  механизм для самоподписанных и корпоративных PKI-сертификатов.
+- **mTLS не поддерживается** для соединения с Vault в этой версии: клиент не предъявляет
+  клиентский сертификат. Аутентификация API Vault токен-ориентированная, поэтому это важно
+  только если корпоративный TLS-прокси требует клиентские сертификаты — в этом случае
+  терминируйте TLS в sidecar-контейнере (например `stunnel`/`envoy`) и направьте провайдер
+  на локальный plaintext-endpoint.
+
+---
+
+## 8. Метрики и диагностика
+
+Все счётчики JVM-wide и не требуют зависимостей (`SecurityMetrics` из общего модуля). Два способа экспорта доступны всегда:
+
+1. **JMX** — MBean `org.yarina.security:type=SecurityMetrics` предоставляет атрибут
+   `PrometheusText` (весь реестр в текстовом формате Prometheus). Смотрите через
+   `jconsole`/`jmxterm` или подключите Prometheus JMX exporter к Spark-процессам.
+2. **Программно** — `org.yarina.security.SecurityMetrics.scrapePrometheus()` отдаёт тот же
+   текст; сервис платформы со Spring Actuator/Micrometer (например
+   `yarina-task-proxy-for-spark`) может публиковать его периодически под своим endpoint
+   `/actuator/prometheus`.
+
+| Метрика | Источник | Смысл |
+|---------|----------|-------|
+| `cache_hits_total` | `SecretCache` | Обращения, отработанные из кэша |
+| `cache_misses_total` | `SecretCache` | Обращения, потребовавшие загрузки |
+| `cache_evictions_total` | `SecretCache` | Удалённые записи (TTL, `refresh()`) |
+| `vault_requests_total{op="read"}` | провайдеры | Инициированные чтения секретов |
+| `vault_requests_total{op="auth"}` | провайдеры | Создания Vault-клиента |
+| `provider_instances_created_total` | провайдеры | Созданные в JVM экземпляры провайдера |
+| `vault_http_requests_total{status="…"}` | `VaultHttp` | «Сырые» HTTP-чтения Vault по кодам ответа |
+| `vault_auth_total` | `VaultHttp` | Выполненные Kubernetes login |
+| `vault_token_refresh_total` | `VaultHttp` | Обновления токена по 403 |
+
+Как проверить нагрузку на OpenBao:
+
+- **`cache_hits_total` должен доминировать над `cache_misses_total`** — здоровая JVM даёт
+  один всплеск промахов на секрет за 5-минутное окно и тысячи попаданий между ними.
+- `vault_auth_total` ≈ числу уникальных комбинаций `(vault-url, vault-role, auth-path)` в
+  JVM — **не** один login на экземпляр провайдера. Шторм login-ов в access-логе OpenBao
+  (`POST /v1/auth/kubernetes/login`) означает клиентов до-1.1.1 или сломанный деплой.
+- Рост `provider_instances_created_total` (например по одному на `FileSystem.get` при
+  `fs.s3a.impl.disable.cache=true`) — ожидаем и безвреден, пока `vault_auth_total` и
+  `vault_requests_total{op="read"}` остаются пропорциональными TTL.
+
+---
+
+## 9. Безопасность и отладка
+
+### 9.1 Защита секретов в Spark UI
 
 Включите встроенную маскировку Spark, чтобы секреты не попадали в Web UI и event logs:
 
@@ -246,40 +413,87 @@ vault-url      http://openbao:8200
 spark.ui.redaction.regex=url|password|secret|token|key
 ```
 
-### 5.2 Поведение кэширования
-
-- Секреты кэшируются в памяти на JVM с **TTL 5 минут**.
-- Если сервер секретов вернул ошибку, провайдер выбрасывает `SecurityException` (задача Spark падает) — ошибки **не** кэшируются.
-- `refresh()` вызывается Hadoop S3A при истечении срока действия credentials — это очищает кэш и форсирует повторное получение.
-
-### 5.3 Таймауты
+### 9.2 Таймауты
 
 | Параметр | Значение |
 |----------|----------|
 | Connection timeout | 3 секунды |
-| Read timeout | 5 секунды |
+| Read timeout | 5 секунд |
 
-Если сервер секретов недоступен, провайдер выбрасывает `SecurityException` с сообщением `"<сервис> unreachable: <причина>"` — **никаких секретов или токенов в логах**.
+Если сервер секретов недоступен, провайдер выбрасывает `SecurityException` — **никаких секретов или токенов в логах**. Ответы не-200 (кроме 403 с обновляемым токеном, который вызывает ровно одну переаутентификацию + повтор) **не ретраятся**.
 
-### 5.4 Что проверять при падении задачи
+### 9.3 Что проверять при падении задачи
 
 | Симптом | Где смотреть |
 |---------|-------------|
-| `SecurityException: Vault access denied, HTTP 403` | Токен Vault истёк или нет прав на чтение по указанному пути |
+| `SecurityException: Vault access denied, HTTP 403` | Токен Vault истёк или нет прав на чтение по указанному пути. С `VAULT_TOKEN` это падает навсегда (статический токен не обновляется) — используйте Kubernetes Auth, который переаутентифицируется автоматически |
+| `SecurityException: Vault k8s auth failed, HTTP 403` | `vault-role` не совпадает с ролью, привязанной в OpenBao для метода `kubernetes`; по умолчанию роль `yarina` — задайте явно, если у вас другая |
+| `SecurityException: No Vault token available` | Установите `VAULT_TOKEN` env или используйте Kubernetes Auth в Pod-е с ServiceAccount |
+| `SecurityException: Secret key not found in Vault response` | Проверьте `secret-path` и `secret-key` в конфигурации |
+| `SecurityException: BaoS3CredentialsProvider: secret key 'access_key' not found in Vault payload` | В KV-секрете по `bao.secret-path` нет ключей с заданными именами (`bao.access-key-secret` / `bao.secret-key-secret`) |
+| Много записей `POST /v1/auth/kubernetes/login` в access-логе OpenBao | Признак пересоздания Vault-клиентов (поведение до 1.1.1: клиент на каждый экземпляр провайдера). С 1.1.1 JVM выполняет один login на комбинацию `(vault-url, vault-role, auth-path)`; обновите и передеплойте JAR-ы |
 | `SecurityException: Lockbox access denied, HTTP 403` | Сервисный аккаунт не имеет роли `lockbox.payloadViewer` |
 | `SecurityException: Metadata service unreachable` | Spark Worker не находится внутри Yandex Cloud или сервис метаданных заблокирован |
-| `SecurityException: No Vault token available` | Установите `VAULT_TOKEN` env или используйте Kubernetes Auth в Pod-е с ServiceAccount |
-| `IllegalArgumentExceptiSecret key not found in Vault response` | Проверьте `secret-path` и `secret-key` в конфигурации |
 | JDBC-соединение падает (пароль верный в Vault) | Проверьте `user` и `url` в конфиге каталога — **только пароль** берётся из провайдера |
 
 **Важно:** пароли и токены **никогда** не пишутся в логи ни на каком уровне (INFO, DEBUG, TRACE). При ошибках логируются только HTTP-коды ответов и типы исключений.
 
-### 5.5 Сообщения в логах
+### 9.4 Сообщения в логах
 
 | Уровень | Пример сообщения |
 |---------|-----------------|
 | `INFO` | `BaoJdbcSecretProvider initialised` |
+| `INFO` | `BaoS3CredentialsProvider initialised` |
+| `INFO` | `Creating Vault client for [redacted]` |
+| `INFO` | `Vault token was rejected (HTTP 403); re-authenticating` |
 | `ERROR` | `Vault returned HTTP 403 for path [redacted]` |
 | `ERROR` | `Metadata service request failed: Connection refused` |
 
 Путь/ID секрета всегда замаскирован как `[redacted]` в выводе логов.
+
+---
+
+## 10. Примеры payload секретов
+
+### Vault KV v2 (OpenBao)
+
+```bash
+# записать пару S3-credentials (значения для примера; реальные — не коммитить)
+bao kv put secret/data/s3 \
+    access_key='mInIo-ak-9f2e11a8b64c' \
+    secret_key='REDACTED-32-chars-secret-value'
+```
+
+Ответ `GET /v1/secret/data/s3` (значения замаскированы):
+
+```json
+{
+  "data": {
+    "data": {
+      "access_key": "mInIo-ak-9f2e11••••",
+      "secret_key": "••••••••••••••••••••••••"
+    },
+    "metadata": { "created_time": "2026-11-03T10:15:00Z", "version": 3 }
+  }
+}
+```
+
+Провайдер отображает `access_key` → AWS access key и `secret_key` → AWS secret key
+(имена ключей настраиваются через `bao.access-key-secret` / `bao.secret-key-secret`).
+JDBC-секрет (`secret/data/myapp/db`) имеет тот же формат, например с ключом `password`.
+
+### Yandex Cloud Lockbox
+
+Секрет Lockbox с ID `eirvjuabcdef12345678` содержит `entries` (значения замаскированы):
+
+```json
+{
+  "entries": [
+    { "key": "access_key", "value": "YCAJEvh7yZ•••••••••" },
+    { "key": "secret_key", "value": "••••••••••••••••••••••••••••" }
+  ]
+}
+```
+
+Провайдер отображает entries по имени ключа; `lockbox.access-key-secret` /
+`lockbox.secret-key-secret` выбирают, какие ключи содержат пару AWS-credentials.

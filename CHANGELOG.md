@@ -1,5 +1,80 @@
 # Changelog
 
+## [1.1.1] — 2026-11-11
+
+Incident fix: Spark credential providers hammered OpenBao with redundant requests. With
+`fs.s3a.impl.disable.cache=true` every `FileSystem.get` created a fresh `S3AFileSystem`,
+a fresh `BaoS3CredentialsProvider`, a fresh per-instance `SecretCache` and a fresh
+`VaultHttp` client (with its own Kubernetes login) — and every cache miss fetched the
+S3 key pair with **two** HTTP reads instead of one. The load on OpenBao scaled with the
+number of filesystem instances instead of the TTL. All caches and clients are now
+**JVM-wide**, so the OpenBao load is proportional to the TTL window again.
+
+### Changed
+
+#### JVM-wide caching in `BaoS3CredentialsProvider`
+
+- The credential cache and the Vault clients moved to `static` fields shared by **all**
+  provider instances in the JVM: two instances with the same `(vaultUrl, secretPath)`
+  perform a single Vault read; 100 `FileSystem.get` calls with
+  `fs.s3a.impl.disable.cache=true` cause at most two Vault reads and one login
+  (integration-tested).
+- Composite cache key `bao:s3:<vaultUrl>:<secretPath>` — different buckets (different
+  secret paths) and different Vault servers never share an entry.
+- Composite client key `<vaultUrl>|<vaultRole>|<k8sAuthPath>` — different auth roles
+  get different clients.
+- `refresh()` now invalidates only the caller's own `(vaultUrl, secretPath)` entry
+  instead of clearing the whole cache, so neighbouring buckets stay cached.
+- `vault-url` / `secret-path` are validated in the constructor (fail-fast) with the
+  same error messages.
+
+#### Batch reads and a shared HTTP client in `VaultHttp`
+
+- New `getSecretPayload(secretPath)` returns the whole KV v2 payload in **one** HTTP
+  request — an access/secret key pair is fetched with a single call instead of two.
+- A single JVM-wide `HttpClient` backs every `VaultHttp` instance and the Kubernetes
+  login (connections are reused instead of multiplied).
+- New constructor overload `VaultHttp(vaultUrl, options, explicitToken)` for
+  multi-cloud setups; explicit tokens are used as-is and are never refreshed.
+- 403 with a Kubernetes-auth token triggers a single-flight re-authentication
+  (one login) and exactly one retry; static `VAULT_TOKEN`/explicit tokens still fail
+  fast on 403.
+
+#### Single-flight loading and TTL eviction in `SecretCache`
+
+- `computeIfAbsent(key, loader)` guarantees one concurrent load per key: 50
+  simultaneous misses cause one HTTP request, the rest wait for its result. The
+  `ConcurrentHashMap` bucket lock is never held for the duration of the loader.
+- Expired entries are now removed from the cache on access instead of lingering in
+  memory.
+- Errors are still never cached.
+
+### Added
+
+- New option `fs.s3a.bao.vault-k8s-token-path` (S3A) / `vault-k8s-token-path` (client
+  options) for the Kubernetes ServiceAccount JWT location.
+- **Metrics** (`org.yarina.security.SecurityMetrics`, dependency-free, exported via JMX
+  MBean `org.yarina.security:type=SecurityMetrics` and `scrapePrometheus()`):
+  `cache_hits_total`, `cache_misses_total`, `cache_evictions_total`,
+  `vault_requests_total{op}`, `provider_instances_created_total`,
+  `vault_http_requests_total{status}`, `vault_auth_total`, `vault_token_refresh_total`.
+- **Tests** (both modules, JDK-only stubs of OpenBao and S3): `cacheIsSharedAcrossProviderInstances`,
+  `differentSecretPathsDoNotShareCacheEntry`, `differentVaultUrlsUseDifferentClients`,
+  `refreshInvalidatesOnlyOwnKey`, `concurrentMissDoesNotCauseThunderingHerd`,
+  `vaultRoleIsPassedToHttpClient`, `vaultUrlComesFromHadoopConfNotEnv`,
+  `batchFetchMakesSingleHttpCall`, `s3aFileSystemReuseDoesNotMultiplyVaultCalls`
+  (integration with real `S3AFileSystem`), `tokenRefreshOn403`, `failedFetchIsNotCached`.
+- README (en/ru): cache scope, secret rotation, TLS/transport security, multi-bucket and
+  multi-cloud configuration, authentication priorities, metrics and diagnostics,
+  payload examples, troubleshooting for login storms and 403 tokens.
+
+### Compatibility
+
+- The JDBC path (`YarinaSecurityContext`, `BaoJdbcSecretProvider`, `SecretResolver`) is
+  unchanged; configurations without `secretProvider` behave exactly as before.
+- Timeouts (3 s connect / 5 s read), log redaction (`[redacted]` paths) and the
+  no-retry-on-non-200 policy are preserved.
+
 ## [1.1.0] — 2026-11-03
 
 The project is renamed from **Jarina** to **Yarina**, the modeller gets **lineage automation**
