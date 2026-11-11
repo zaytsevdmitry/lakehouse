@@ -57,22 +57,31 @@ RUN curl -Z -sSLfO https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/$
          -O https://repo1.maven.org/maven2/com/google/guava/guava/${GUAVA_VERSION}/guava-${GUAVA_VERSION}.jar \
          -O https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-annotations/${JACKSON_ANNOTATIONS_VERSION}/jackson-annotations-${JACKSON_ANNOTATIONS_VERSION}.jar
 
-ADD yarina-credential-providers-jdbc-1.1.0.jar ./
-ADD yarina-credential-providers-spark-1.1.0.jar ./
+ADD yarina-credential-providers-jdbc-1.1.1.jar ./
+ADD yarina-credential-providers-spark-1.1.1.jar ./
 
 WORKDIR /tmp
 
 ADD log4j2.properties /opt/spark/conf/
 
+# Prometheus JMX exporter javaagent: exposes the SecurityMetrics of the Spark
+# driver/executor JVMs for scraping. The rule config /opt/spark/jmx/security-metrics.yaml
+# is mounted from demo/compose/conf_infra/security-metrics.yaml; the -javaagent
+# options live in demo/compose/conf_infra/spark-defaults.conf (section 7).
+ENV JMX_EXPORTER_VERSION=1.7.0
+RUN mkdir -p /opt/spark/jmx && \
+    curl -Z -sSLf -o /opt/spark/jmx/jmx_prometheus_javaagent-${JMX_EXPORTER_VERSION}.jar \
+        https://github.com/prometheus/jmx_exporter/releases/download/${JMX_EXPORTER_VERSION}/jmx_prometheus_javaagent-${JMX_EXPORTER_VERSION}.jar
+
 LABEL type="yarina=spark" \
-      version="yarina-1.1.0_spark-3.5.8" \
+      version="yarina-1.1.1_spark-3.5.8" \
       features="spark, aws-s3a, postgres-jdbc, aws-cli"
 
 
 # Add application
-ADD yarina-task-executor-spark-dataset-app-1.1.0-jar-with-dependencies.jar ${APP_HOME}/
-ADD yarina-task-executor-spark-dq-app-1.1.0-jar-with-dependencies.jar ${APP_HOME}/
-ADD yarina-task-proxy-for-spark-1.1.0-jar-with-dependencies.jar ${APP_HOME}/
+ADD yarina-task-executor-spark-dataset-app-1.1.1-jar-with-dependencies.jar ${APP_HOME}/
+ADD yarina-task-executor-spark-dq-app-1.1.1-jar-with-dependencies.jar ${APP_HOME}/
+ADD yarina-task-proxy-for-spark-1.1.1-jar-with-dependencies.jar ${APP_HOME}/
 
 EXPOSE 4040 9083
 

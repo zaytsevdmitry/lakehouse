@@ -1,0 +1,20 @@
+# Prometheus JMX exporter rule config of the demo stand (demo/compose).
+#
+# Exposes the counters of the yarina credential providers (MBean
+# org.yarina.security:type=SecurityMetrics, attribute Counters) from every Spark
+# driver/executor JVM. Every row of the Counters table arrives at the rule engine as
+#   org.yarina.security<type=SecurityMetrics, key=<metric-id>><>Counters: <value>
+# and is exported as yarina_security_counters_total{metric="<metric-id>"}.
+#
+# Wired into the JVMs via the -javaagent options in demo/compose/conf_infra/
+# spark-defaults.conf (section 7); the agent jar is baked into the yarina-spark-aws
+# image under /opt/spark/jmx/. Metric ids: see the yarina-credential-providers-spark
+# README, section "Metrics and diagnostics" (cache_hits_total, vault_auth_total, ...).
+rules:
+  - pattern: 'org.yarina.security<type=SecurityMetrics, key=([^>]+)><>Counters: (\d+)'
+    name: yarina_security_counters
+    value: '$2'
+    labels:
+      metric: '$1'
+    type: COUNTER
+    help: 'SecurityMetrics counters of the yarina credential providers (see the README section "Metrics and diagnostics")'

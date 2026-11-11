@@ -57,6 +57,42 @@ docker compose up -d airflow
 `yarina_spark_submit_example`. Перед запуском Spark-шаблона замените
 `app_resource` на существующий артефакт.
 
+## Метрики: Prometheus и Grafana
+
+В демо добавлены Prometheus и Grafana для наблюдения за метриками сервисов.
+
+| Параметр | Значение |
+|:---------|:---------|
+| Prometheus UI | http://localhost:19090 (хост-порт 9090 занят Trino) |
+| Grafana | http://localhost:13000 (`admin` / `admin`) |
+| Datasource Grafana | `Prometheus` (преднастроен, `conf_infra/grafana/provisioning`) |
+| Конфигурация scrape | `conf_infra/prometheus/prometheus.yml` |
+
+Что собирается:
+
+- **`yarina-task-proxy4spark`** — endpoint `/actuator/prometheus` (порт `8086` внутри
+  сети compose): собственные метрики `yarina_task_proxy4spark_*` (счётчики и таймеры
+  отправок spark-submit) плюс стандартные метрики Spring Boot / JVM.
+- **Spark-задачи** — `SecurityMetrics` провайдеров секретов (`cache_hits_total`,
+  `vault_auth_total` и т.д.) из JVM driver/executor, экспортируемые javaagent'ом
+  Prometheus JMX exporter: jar запечён в образ `yarina-spark-aws`
+  (`/opt/spark/jmx/`), правила — `conf_infra/security-metrics.yaml`, опции
+  `-javaagent` — раздел 7 `conf_infra/spark-defaults.conf` (driver `:9091`,
+  executor `:9092`).
+- **Prometheus** — self-monitoring.
+
+Таргеты Spark-задач (`spark-security-driver`, `spark-security-executors`) «живые»
+только пока идёт Spark-задача — JVM driver/executor транзиентны (в cluster-режиме
+обе живут в контейнере `spark-worker-1`). Запустите задачу через
+`yarina-task-proxy4spark` или Airflow DAG и проверьте:
+
+```shell
+docker exec spark-worker-1 curl -s http://localhost:9091/metrics | grep yarina_security
+```
+
+Подробности — README `yarina-credential-providers-spark`, раздел «Настройка передачи
+метрик в Prometheus».
+
 ### Настройка хост машины
 Требуется строка в файле /etc/hosts хоста 
 ```
@@ -89,6 +125,8 @@ docker container rm task-executor-svc-spark
 docker container rm task-executor-svc-state
 docker container rm yarina-task-proxy4spark
 docker container rm airflow
+docker container rm prometheus
+docker container rm grafana
 
 ```
 #### Сеть
@@ -130,6 +168,10 @@ networks:
 [Airflow](http://localhost:8088/)
 
 [UI](http://localhost:8084/)
+
+[Prometheus](http://localhost:19090/)
+
+[Grafana](http://localhost:13000/)
 
 ## Поток управления
 

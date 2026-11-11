@@ -26,7 +26,7 @@ DATASET = "aggregation_pay_per_client_daily_mart"
 LOCK_SOURCE = "airflow-run-{{ run_id }}"
 
 # Spark application
-SPARK_APP_RESOURCE = "file:///opt/yarina-task-spark-apps/yarina-task-executor-spark-dataset-app-1.1.0-jar-with-dependencies.jar"
+SPARK_APP_RESOURCE = "file:///opt/yarina-task-spark-apps/yarina-task-executor-spark-dataset-app-1.1.1-jar-with-dependencies.jar"
 SPARK_MAIN_CLASS = "org.yarina.taskexecutor.spark.dataset.SparkProcessorApplication"
 
 # spark proxy conf

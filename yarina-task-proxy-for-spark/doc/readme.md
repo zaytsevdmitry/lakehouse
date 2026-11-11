@@ -336,6 +336,55 @@ management:
 1. **`MeterRegistryCustomizer`** — global naming convention that replaces dots with underscores for OpenMetrics compatibility
 2. **`sparkLauncherExecutor`** — virtual thread executor for spark-submit work
 
+## Prometheus setup
+
+### Scraping the service
+
+The service is scrape-ready out of the box: the Prometheus endpoint is enabled in
+`application.yml` (`management.endpoint.prometheus.enabled=true`), it is served on the
+application port (`server.port`, `8090` by default, `8086` on the demo stand) at
+`GET /actuator/prometheus`, and `/actuator/**` is whitelisted in the security chain —
+no token required.
+
+Add a scrape job to `prometheus.yml`:
+
+```yaml
+scrape_configs:
+  - job_name: yarina-task-proxy4spark
+    metrics_path: /actuator/prometheus
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['yarina-task-proxy4spark:8090']
+```
+
+Verify:
+
+```bash
+curl -s http://yarina-task-proxy4spark:8090/actuator/prometheus | grep yarina_task_proxy4spark
+```
+
+Notes:
+
+- Every metric carries the common tag `application="yarina-task-proxy4spark"`
+  (`management.metrics.tags.application`) — a convenient series selector when one
+  Prometheus scrapes several Yarina services.
+- Besides the custom `yarina_task_proxy4spark_*` counters and timers (see
+  [Metrics](#metrics)), the endpoint exposes the standard Spring Boot / JVM metrics
+  (`jvm_*`, `http_server_requests_seconds`, `process_*`, `system_*`, `hikaricp_*`).
+- The demo stand ships this configuration ready to use:
+  `demo/compose/conf_infra/prometheus/prometheus.yml`, plus Grafana with the Prometheus
+  datasource pre-provisioned (`demo/compose/conf_infra/grafana/`). Prometheus UI:
+  `http://localhost:19090`, Grafana: `http://localhost:13000` (admin / admin).
+
+### Spark job metrics are exported separately
+
+The proxy only reports its own queue and adapter activity. The Spark applications it
+launches run in separate JVMs and do **not** show up in `/actuator/prometheus`: the
+`SecurityMetrics` of the credential providers (`org.yarina.security` — counters such as
+`cache_hits_total` or `vault_auth_total`) are exported from the driver/executor JVMs
+via the Prometheus JMX exporter javaagent. See the `yarina-credential-providers-spark`
+README, section *Setting up metrics export to Prometheus*.
+
 ## Configuration
 
 `application.yml`:
