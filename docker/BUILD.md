@@ -66,11 +66,11 @@ sh build.bash
 Сборку можно считать успешной если все 4 образа можно найти в локальном репозитории
 
 ```shell
-docker images | grep yarina | grep '0.11.0'
+docker images | grep yarina | grep '1.1.1'
 ```
 ```
-yarina-s3-check                       0.11.0                           70a21c6fc79c   3 minutes ago    119MB
-yarina-hms                            0.11.0                           f81700fd2891   3 minutes ago    893MB
-yarina-spark-aws                      0.11.0                           42e9f3a122aa   4 minutes ago    1.54GB
-yarina                                0.11.0                           c8f6f2da61dc   5 minutes ago    1.36GB
+yarina-s3-check                       1.1.1                           70a21c6fc79c   3 minutes ago    119MB
+yarina-hms                            1.1.1                           f81700fd2891   3 minutes ago    893MB
+yarina-spark-aws                      1.1.1                           42e9f3a122aa   4 minutes ago    1.54GB
+yarina                                1.1.1                           c8f6f2da61dc   5 minutes ago    1.36GB
 ```

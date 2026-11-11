@@ -476,6 +476,12 @@ yarina_security_counters_total{metric="vault_auth_total"} 3
 yarina_security_counters_total{metric="vault_requests_total{op=\"read\"}"} 29
 ```
 
+The demo stand ships this setup ready-made: the agent is baked into the
+`yarina-spark-aws` image (`/opt/spark/jmx/`), the rule config lives in
+`demo/compose/conf_infra/security-metrics.yaml`, and the `-javaagent` options are
+already wired into `demo/compose/conf_infra/spark-defaults.conf` (section 7) together
+with the matching Prometheus scrape jobs.
+
 ### 9.2 Scrape configuration in Prometheus
 
 `prometheus.yml` (host names follow the `demo/compose` stand — replace them with the

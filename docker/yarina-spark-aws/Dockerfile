@@ -64,6 +64,15 @@ WORKDIR /tmp
 
 ADD log4j2.properties /opt/spark/conf/
 
+# Prometheus JMX exporter javaagent: exposes the SecurityMetrics of the Spark
+# driver/executor JVMs for scraping. The rule config /opt/spark/jmx/security-metrics.yaml
+# is mounted from demo/compose/conf_infra/security-metrics.yaml; the -javaagent
+# options live in demo/compose/conf_infra/spark-defaults.conf (section 7).
+ENV JMX_EXPORTER_VERSION=1.7.0
+RUN mkdir -p /opt/spark/jmx && \
+    curl -Z -sSLf -o /opt/spark/jmx/jmx_prometheus_javaagent-${JMX_EXPORTER_VERSION}.jar \
+        https://github.com/prometheus/jmx_exporter/releases/download/${JMX_EXPORTER_VERSION}/jmx_prometheus_javaagent-${JMX_EXPORTER_VERSION}.jar
+
 LABEL type="yarina=spark" \
       version="yarina-1.1.1_spark-3.5.8" \
       features="spark, aws-s3a, postgres-jdbc, aws-cli"

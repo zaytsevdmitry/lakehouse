@@ -73,14 +73,25 @@ docker compose up -d airflow
 - **`yarina-task-proxy4spark`** — endpoint `/actuator/prometheus` (порт `8086` внутри
   сети compose): собственные метрики `yarina_task_proxy4spark_*` (счётчики и таймеры
   отправок spark-submit) плюс стандартные метрики Spring Boot / JVM.
+- **Spark-задачи** — `SecurityMetrics` провайдеров секретов (`cache_hits_total`,
+  `vault_auth_total` и т.д.) из JVM driver/executor, экспортируемые javaagent'ом
+  Prometheus JMX exporter: jar запечён в образ `yarina-spark-aws`
+  (`/opt/spark/jmx/`), правила — `conf_infra/security-metrics.yaml`, опции
+  `-javaagent` — раздел 7 `conf_infra/spark-defaults.conf` (driver `:9091`,
+  executor `:9092`).
 - **Prometheus** — self-monitoring.
 
-Метрики провайдеров секретов в JVM Spark-задач (`SecurityMetrics`: `cache_hits_total`,
-`vault_auth_total` и т.д.) экспортируются отдельно через javaagent Prometheus JMX
-exporter — соответствующие scrape-задачи (`spark-security-driver`,
-`spark-security-executors`) закомментированы в `conf_infra/prometheus/prometheus.yml`
-и включаются по инструкции из README `yarina-credential-providers-spark` (раздел
-«Настройка передачи метрик в Prometheus»).
+Таргеты Spark-задач (`spark-security-driver`, `spark-security-executors`) «живые»
+только пока идёт Spark-задача — JVM driver/executor транзиентны (в cluster-режиме
+обе живут в контейнере `spark-worker-1`). Запустите задачу через
+`yarina-task-proxy4spark` или Airflow DAG и проверьте:
+
+```shell
+docker exec spark-worker-1 curl -s http://localhost:9091/metrics | grep yarina_security
+```
+
+Подробности — README `yarina-credential-providers-spark`, раздел «Настройка передачи
+метрик в Prometheus».
 
 ### Настройка хост машины
 Требуется строка в файле /etc/hosts хоста 

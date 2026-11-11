@@ -4,16 +4,19 @@
 #   * yarina-task-proxy4spark — the Spring Boot Actuator endpoint with the proxy's
 #     own metrics (yarina_task_proxy4spark_*) and the standard Spring/JVM metrics.
 #     Inside the compose network the proxy listens on 8086 (server.port).
+#   * The SecurityMetrics of the Spark driver/executor JVMs (yarina credential
+#     providers: cache_hits_total, vault_auth_total, ...) via the Prometheus JMX
+#     exporter javaagent enabled in conf_infra/spark-defaults.conf (section 7);
+#     they arrive as yarina_security_counters_total{metric="<metric id>"}.
 #   * Prometheus itself (self-monitoring).
 #
-# The SecurityMetrics of the Spark driver/executor JVMs (yarina credential providers:
-# cache_hits_total, vault_auth_total, ...) are exported separately through the
-# Prometheus JMX exporter javaagent — see the yarina-credential-providers-spark README,
-# section "Setting up metrics export to Prometheus". Enable the two jobs below after
-# attaching the javaagent via spark.driver.extraJavaOptions / spark.executor.extraJavaOptions.
 # The proxy submits in cluster deploy mode, so on this stand (one worker) both the
-# driver and the executors run in the spark-worker-1 container; give every JVM of the
-# same kind its own port if there can be more than one per node.
+# driver and the executors run in the spark-worker-1 container — the driver on
+# :9091, the executors on :9092. These JVMs are transient: the targets are up only
+# while a Spark application is running (launch one through yarina-task-proxy4spark
+# or the Airflow DAG). Several JVMs of the same kind on one node would need a
+# distinct port each; the stand keeps one executor per node
+# (spark.executor.instances=1 in spark-defaults.conf).
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
@@ -28,17 +31,13 @@ scrape_configs:
     static_configs:
       - targets: ['yarina-task-proxy4spark:8086']
 
-  # Enable after the JMX exporter javaagent is attached to the Spark JVMs
-  # (yarina-credential-providers-spark README, "Setting up metrics export
-  # to Prometheus"): the SecurityMetrics of the jobs appear as
-  # yarina_security_counters_total{metric="<metric id>"}.
-  # - job_name: spark-security-driver
-  #   static_configs:
-  #     - targets: ['spark-worker-1:9091']
-  #       labels:
-  #         role: driver
-  # - job_name: spark-security-executors
-  #   static_configs:
-  #     - targets: ['spark-worker-1:9092']
-  #       labels:
-  #         role: executor
+  - job_name: spark-security-driver
+    static_configs:
+      - targets: ['spark-worker-1:9091']
+        labels:
+          role: driver
+  - job_name: spark-security-executors
+    static_configs:
+      - targets: ['spark-worker-1:9092']
+        labels:
+          role: executor

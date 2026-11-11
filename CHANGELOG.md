@@ -77,8 +77,10 @@ number of filesystem instances instead of the TTL. All caches and clients are no
 - **Demo stand**: Prometheus (`prom/prometheus:v3.16.0`, UI on host port 19090 — 9090
   is taken by Trino) and Grafana (`grafana/grafana:13.3.1`, host port 13000,
   admin/admin, pre-provisioned Prometheus datasource) in `demo/compose`; scrape
-  configuration `demo/compose/conf_infra/prometheus/prometheus.yml` (proxy job active,
-  Spark SecurityMetrics jobs commented until the javaagent is attached).
+  configuration `demo/compose/conf_infra/prometheus/prometheus.yml` (proxy job plus
+  the Spark SecurityMetrics jobs: the JMX exporter javaagent is baked into the
+  `yarina-spark-aws` image and wired in via `demo/compose/conf_infra/spark-defaults.conf`
+  and `demo/compose/conf_infra/security-metrics.yaml`).
 
 ### Compatibility
 
