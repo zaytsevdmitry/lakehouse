@@ -58,6 +58,10 @@ number of filesystem instances instead of the TTL. All caches and clients are no
   `cache_hits_total`, `cache_misses_total`, `cache_evictions_total`,
   `vault_requests_total{op}`, `provider_instances_created_total`,
   `vault_http_requests_total{status}`, `vault_auth_total`, `vault_token_refresh_total`.
+  The `Counters` MBean attribute is now a JMX open type (`TabularData`, one row per
+  counter) so the Prometheus JMX exporter javaagent can scrape it; the counters arrive
+  as `yarina_security_counters_total{metric="<metric id>"}` (verified with
+  jmx_prometheus_javaagent 1.7.0).
 - **Tests** (both modules, JDK-only stubs of OpenBao and S3): `cacheIsSharedAcrossProviderInstances`,
   `differentSecretPathsDoNotShareCacheEntry`, `differentVaultUrlsUseDifferentClients`,
   `refreshInvalidatesOnlyOwnKey`, `concurrentMissDoesNotCauseThunderingHerd`,
@@ -66,7 +70,15 @@ number of filesystem instances instead of the TTL. All caches and clients are no
   (integration with real `S3AFileSystem`), `tokenRefreshOn403`, `failedFetchIsNotCached`.
 - README (en/ru): cache scope, secret rotation, TLS/transport security, multi-bucket and
   multi-cloud configuration, authentication priorities, metrics and diagnostics,
-  payload examples, troubleshooting for login storms and 403 tokens.
+  payload examples, troubleshooting for login storms and 403 tokens, a new section
+  "Setting up metrics export to Prometheus" (JMX exporter javaagent on
+  driver/executors, Prometheus scrape jobs, PromQL examples); the proxy README gained
+  a "Prometheus setup" section.
+- **Demo stand**: Prometheus (`prom/prometheus:v3.16.0`, UI on host port 19090 — 9090
+  is taken by Trino) and Grafana (`grafana/grafana:13.3.1`, host port 13000,
+  admin/admin, pre-provisioned Prometheus datasource) in `demo/compose`; scrape
+  configuration `demo/compose/conf_infra/prometheus/prometheus.yml` (proxy job active,
+  Spark SecurityMetrics jobs commented until the javaagent is attached).
 
 ### Compatibility
 

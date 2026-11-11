@@ -336,6 +336,55 @@ management:
 1. **`MeterRegistryCustomizer`** — глобальная конвенция именования, заменяющая точки на подчёркивания для совместимости с OpenMetrics
 2. **`sparkLauncherExecutor`** — virtual thread executor для работы spark-submit
 
+## Настройка Prometheus
+
+### Сбор метрик сервиса
+
+Сервис готов к scrape «из коробки»: Prometheus-endpoint включён в `application.yml`
+(`management.endpoint.prometheus.enabled=true`), отдаётся на порту приложения
+(`server.port`, по умолчанию `8090`, на демо-стенде `8086`) по пути
+`GET /actuator/prometheus`, а `/actuator/**` находится в белом списке security-цепочки —
+токен не нужен.
+
+Добавьте scrape-задачу в `prometheus.yml`:
+
+```yaml
+scrape_configs:
+  - job_name: yarina-task-proxy4spark
+    metrics_path: /actuator/prometheus
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['yarina-task-proxy4spark:8090']
+```
+
+Проверка:
+
+```bash
+curl -s http://yarina-task-proxy4spark:8090/actuator/prometheus | grep yarina_task_proxy4spark
+```
+
+Замечания:
+
+- Каждая метрика несёт общий тег `application="yarina-task-proxy4spark"`
+  (`management.metrics.tags.application`) — удобный селектор серий, когда один
+  Prometheus собирает метрики сразу с нескольких сервисов Yarina.
+- Помимо собственных counter/timer `yarina_task_proxy4spark_*` (см. [Метрики](#метрики)),
+  endpoint отдаёт стандартные метрики Spring Boot / JVM (`jvm_*`,
+  `http_server_requests_seconds`, `process_*`, `system_*`, `hikaricp_*`).
+- Демо-стенд содержит эту конфигурацию в готовом виде:
+  `demo/compose/conf_infra/prometheus/prometheus.yml`, плюс Grafana с преднастроенным
+  источником данных Prometheus (`demo/compose/conf_infra/grafana/`). UI Prometheus:
+  `http://localhost:19090`, Grafana: `http://localhost:13000` (admin / admin).
+
+### Метрики Spark-задач экспортируются отдельно
+
+Прокси отчитывается только о собственной очереди и адаптерах. Запускаемые им
+Spark-приложения живут в отдельных JVM и в `/actuator/prometheus` **не** попадают:
+`SecurityMetrics` провайдеров секретов (`org.yarina.security` — счётчики вида
+`cache_hits_total`, `vault_auth_total`) экспортируются из JVM driver/executor через
+javaagent Prometheus JMX exporter — см. README `yarina-credential-providers-spark`,
+раздел «Настройка передачи метрик в Prometheus».
+
 ## Конфигурация
 
 `application.yml`:

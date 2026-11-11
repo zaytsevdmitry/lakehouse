@@ -57,6 +57,31 @@ docker compose up -d airflow
 `yarina_spark_submit_example`. Перед запуском Spark-шаблона замените
 `app_resource` на существующий артефакт.
 
+## Метрики: Prometheus и Grafana
+
+В демо добавлены Prometheus и Grafana для наблюдения за метриками сервисов.
+
+| Параметр | Значение |
+|:---------|:---------|
+| Prometheus UI | http://localhost:19090 (хост-порт 9090 занят Trino) |
+| Grafana | http://localhost:13000 (`admin` / `admin`) |
+| Datasource Grafana | `Prometheus` (преднастроен, `conf_infra/grafana/provisioning`) |
+| Конфигурация scrape | `conf_infra/prometheus/prometheus.yml` |
+
+Что собирается:
+
+- **`yarina-task-proxy4spark`** — endpoint `/actuator/prometheus` (порт `8086` внутри
+  сети compose): собственные метрики `yarina_task_proxy4spark_*` (счётчики и таймеры
+  отправок spark-submit) плюс стандартные метрики Spring Boot / JVM.
+- **Prometheus** — self-monitoring.
+
+Метрики провайдеров секретов в JVM Spark-задач (`SecurityMetrics`: `cache_hits_total`,
+`vault_auth_total` и т.д.) экспортируются отдельно через javaagent Prometheus JMX
+exporter — соответствующие scrape-задачи (`spark-security-driver`,
+`spark-security-executors`) закомментированы в `conf_infra/prometheus/prometheus.yml`
+и включаются по инструкции из README `yarina-credential-providers-spark` (раздел
+«Настройка передачи метрик в Prometheus»).
+
 ### Настройка хост машины
 Требуется строка в файле /etc/hosts хоста 
 ```
@@ -89,6 +114,8 @@ docker container rm task-executor-svc-spark
 docker container rm task-executor-svc-state
 docker container rm yarina-task-proxy4spark
 docker container rm airflow
+docker container rm prometheus
+docker container rm grafana
 
 ```
 #### Сеть
@@ -130,6 +157,10 @@ networks:
 [Airflow](http://localhost:8088/)
 
 [UI](http://localhost:8084/)
+
+[Prometheus](http://localhost:19090/)
+
+[Grafana](http://localhost:13000/)
 
 ## Поток управления
 

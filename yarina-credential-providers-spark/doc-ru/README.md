@@ -371,8 +371,9 @@ vault-url      http://openbao:8200
 Все счётчики JVM-wide и не требуют зависимостей (`SecurityMetrics` из общего модуля). Два способа экспорта доступны всегда:
 
 1. **JMX** — MBean `org.yarina.security:type=SecurityMetrics` предоставляет атрибут
-   `PrometheusText` (весь реестр в текстовом формате Prometheus). Смотрите через
-   `jconsole`/`jmxterm` или подключите Prometheus JMX exporter к Spark-процессам.
+   `PrometheusText` (весь реестр в текстовом формате Prometheus) и таблицу `Counters`
+   (одна строка на счётчик). Смотрите через `jconsole`/`jmxterm`; раздел 9 показывает,
+   как доставить это в Prometheus через javaagent JMX exporter.
 2. **Программно** — `org.yarina.security.SecurityMetrics.scrapePrometheus()` отдаёт тот же
    текст; сервис платформы со Spring Actuator/Micrometer (например
    `yarina-task-proxy-for-spark`) может публиковать его периодически под своим endpoint
@@ -403,9 +404,127 @@ vault-url      http://openbao:8200
 
 ---
 
-## 9. Безопасность и отладка
+## 9. Настройка передачи метрик в Prometheus
 
-### 9.1 Защита секретов в Spark UI
+В Spark-деплое с этими провайдерами существуют два независимых потока метрик, и каждый
+подключается к Prometheus отдельно:
+
+| Поток | Счётчики | Где живут | Экспорт |
+|-------|----------|-----------|---------|
+| Здоровье провайдеров секретов (раздел 8) | `cache_hits_total`, `vault_auth_total`, … | JVM каждого driver/executor Spark | javaagent JMX exporter → HTTP scrape (этот раздел) |
+| Здоровье сервиса-прокси | `yarina_task_proxy4spark_*` | JVM `yarina-task-proxy-for-spark` | Spring Boot Actuator `/actuator/prometheus` — см. README прокси, раздел «Настройка Prometheus» |
+
+Провайдеры — библиотека внутри JVM Spark и не тянут рантайм-зависимостей, поэтому сами
+никуда ничего не пушат: экспорт — чисто инфраструктурная настройка. `SecurityMetrics`
+публикует JMX MBean `org.yarina.security:type=SecurityMetrics`, атрибут `Counters`
+которого содержит одну строку на счётчик; [Prometheus JMX exporter](https://github.com/prometheus/jmx_exporter)
+в режиме javaagent превращает эти строки в HTTP-endpoint для scrape. Изменений в коде
+приложений не требуется.
+
+### 9.1 Подключение javaagent JMX exporter к JVM Spark
+
+1. Скачайте javaagent (`jmx_prometheus_javaagent-<version>.jar`, например 1.7.0) из
+   [releases JMX exporter](https://github.com/prometheus/jmx_exporter/releases) и
+   разместите на всех узлах Spark — для `docker/yarina-spark-aws` добавьте его в сборку
+   образа, например в `/opt/spark/jmx/`.
+
+2. Создайте конфиг экспортёра `/opt/spark/jmx/security-metrics.yaml`. Каждая строка
+   атрибута `Counters` приходит в движок правил в виде
+   `org.yarina.security<type=SecurityMetrics, key=<идентификатор-метрики>><>Counters: <значение>`:
+
+   ```yaml
+   rules:
+     - pattern: 'org.yarina.security<type=SecurityMetrics, key=([^>]+)><>Counters: (\d+)'
+       name: yarina_security_counters
+       value: '$2'
+       labels:
+         metric: '$1'
+       type: COUNTER
+       help: 'SecurityMetrics counters of the yarina credential providers (see the README section "Metrics and diagnostics")'
+   ```
+
+3. Включите javaagent на driver и executor в `spark-defaults.conf`
+   (порты разные — каждая JVM обслуживает свой endpoint):
+
+   ```properties
+   # ── Экспорт метрик в Prometheus (javaagent JMX exporter) ─────────
+   spark.driver.extraJavaOptions   -javaagent:/opt/spark/jmx/jmx_prometheus_javaagent-1.7.0.jar=9091:/opt/spark/jmx/security-metrics.yaml
+   spark.executor.extraJavaOptions -javaagent:/opt/spark/jmx/jmx_prometheus_javaagent-1.7.0.jar=9092:/opt/spark/jmx/security-metrics.yaml
+   ```
+
+Порт driver должен быть свободен на узле driver, порт executor — на каждом узле worker.
+Нескольким JVM одного типа на одном узле (например нескольким executor-ам воркера) нужен
+свой порт каждой — иначе держите один executor на узел. В deploy-режиме `cluster` (так
+отправляет приложения `yarina-task-proxy-for-spark`) driver тоже запускается на узле
+worker.
+
+Быстрая проверка во время работы задачи:
+
+```bash
+curl -s http://<узел-driver>:9091/metrics | grep yarina_security
+```
+
+Каждый счётчик из раздела 8 экспортируется как один семпл единого семейства метрик
+(экспортёр автоматически добавляет суффикс `_total` к именам counter):
+
+```
+yarina_security_counters_total{metric="cache_hits_total"} 18234
+yarina_security_counters_total{metric="vault_auth_total"} 3
+yarina_security_counters_total{metric="vault_requests_total{op=\"read\"}"} 29
+```
+
+### 9.2 Конфигурация scrape в Prometheus
+
+`prometheus.yml` (имена хостов соответствуют демо-стенду `demo/compose` — замените на
+реальные; эталонная конфигурация лежит в
+`demo/compose/conf_infra/prometheus/prometheus.yml`):
+
+```yaml
+scrape_configs:
+  - job_name: spark-security-driver
+    static_configs:
+      - targets: ['spark-worker-1:9091']
+        labels:
+          role: driver
+  - job_name: spark-security-executors
+    static_configs:
+      - targets: ['spark-worker-1:9092']
+        labels:
+          role: executor
+```
+
+### 9.3 Чтение метрик в PromQL / Grafana
+
+Идентификатор метрики из раздела 8 передаётся в label `metric`:
+
+| Что контролировать (раздел 8) | PromQL |
+|------------------------------|--------|
+| Доля попаданий в кэш | `rate(yarina_security_counters_total{metric="cache_hits_total"}[5m]) / (rate(yarina_security_counters_total{metric="cache_hits_total"}[5m]) + rate(yarina_security_counters_total{metric="cache_misses_total"}[5m]))` |
+| Чтения Vault | `sum by (instance) (rate(yarina_security_counters_total{metric=~"vault_requests_total.*"}[5m]))` |
+| Kubernetes login | `rate(yarina_security_counters_total{metric="vault_auth_total"}[5m])` |
+| Обновления токена по 403 | `rate(yarina_security_counters_total{metric="vault_token_refresh_total"}[5m])` |
+| HTTP к Vault по кодам ответа | `rate(yarina_security_counters_total{metric=~"vault_http_requests_total.*"}[5m])` |
+
+Рост `vault_auth_total` / `vault_requests_total{op="read"}` в расчёте на `instance` —
+сигнатура «login-шторма» из раздела 8; `vault_http_requests_total{status="5.."}` указывает
+на проблемы на стороне OpenBao. На демо-стенде доступен Grafana с преднастроенным
+источником данных Prometheus — см. `demo/compose/README-INSTALL.md`.
+
+### 9.4 Проверка без Prometheus
+
+- `curl http://<узел-driver>:9091/metrics` — вывод javaagent, показанный выше.
+- `jconsole` / `jmxterm` — MBean `org.yarina.security:type=SecurityMetrics`: атрибут
+  `PrometheusText` (весь реестр текстом) и таблица `Counters`. Javaagent не нужен,
+  работает в любой JVM с провайдерами в classpath.
+- `SecurityMetrics.scrapePrometheus()` — тот же текст программно; сервис платформы,
+  встраивающий провайдеры (например `yarina-task-executor-api`), может публиковать его
+  под собственным actuator-endpoint.
+
+---
+
+## 10. Безопасность и отладка
+
+### 10.1 Защита секретов в Spark UI
 
 Включите встроенную маскировку Spark, чтобы секреты не попадали в Web UI и event logs:
 
@@ -413,7 +532,7 @@ vault-url      http://openbao:8200
 spark.ui.redaction.regex=url|password|secret|token|key
 ```
 
-### 9.2 Таймауты
+### 10.2 Таймауты
 
 | Параметр | Значение |
 |----------|----------|
@@ -422,7 +541,7 @@ spark.ui.redaction.regex=url|password|secret|token|key
 
 Если сервер секретов недоступен, провайдер выбрасывает `SecurityException` — **никаких секретов или токенов в логах**. Ответы не-200 (кроме 403 с обновляемым токеном, который вызывает ровно одну переаутентификацию + повтор) **не ретраятся**.
 
-### 9.3 Что проверять при падении задачи
+### 10.3 Что проверять при падении задачи
 
 | Симптом | Где смотреть |
 |---------|-------------|
@@ -438,7 +557,7 @@ spark.ui.redaction.regex=url|password|secret|token|key
 
 **Важно:** пароли и токены **никогда** не пишутся в логи ни на каком уровне (INFO, DEBUG, TRACE). При ошибках логируются только HTTP-коды ответов и типы исключений.
 
-### 9.4 Сообщения в логах
+### 10.4 Сообщения в логах
 
 | Уровень | Пример сообщения |
 |---------|-----------------|
@@ -453,7 +572,7 @@ spark.ui.redaction.regex=url|password|secret|token|key
 
 ---
 
-## 10. Примеры payload секретов
+## 11. Примеры payload секретов
 
 ### Vault KV v2 (OpenBao)
 

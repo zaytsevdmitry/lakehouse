@@ -19,6 +19,12 @@ package org.yarina.security;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import javax.management.openmbean.CompositeData;
+import javax.management.openmbean.TabularData;
+import java.lang.management.ManagementFactory;
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -88,5 +94,27 @@ class SecurityMetricsTest {
                 SecurityMetrics.LABEL_OP, "read");
         Map<String, Long> snapshot = SecurityMetrics.snapshot();
         assertEquals(1L, snapshot.get("vault_requests_total{op=\"read\"}"));
+    }
+
+    @Test
+    void jmxCountersAreTabularDataReadableByJmxExporter() throws Exception {
+        SecurityMetrics.increment(SecurityMetrics.CACHE_HITS_TOTAL, 41);
+        SecurityMetrics.increment(SecurityMetrics.VAULT_HTTP_REQUESTS_TOTAL,
+                SecurityMetrics.LABEL_STATUS, "403");
+
+        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+        ObjectName name = new ObjectName("org.yarina.security:type=SecurityMetrics");
+        TabularData counters = (TabularData) server.getAttribute(name, "Counters");
+
+        // One row per counter: key = rendered metric id, value = counter value.
+        // The Prometheus JMX exporter javaagent exports exactly these rows.
+        Map<String, Long> rows = new HashMap<>();
+        for (Object row : counters.values()) {
+            CompositeData composite = (CompositeData) row;
+            rows.put((String) composite.get("key"), (Long) composite.get("value"));
+        }
+        assertEquals(Map.of(
+                SecurityMetrics.CACHE_HITS_TOTAL, 41L,
+                "vault_http_requests_total{status=\"403\"}", 1L), rows);
     }
 }

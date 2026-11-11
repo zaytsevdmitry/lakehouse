@@ -10,6 +10,10 @@
 #   4. Airflow 2.7.3: http://localhost:8088 (admin / admin). Образ собирается
 #      из yarina-airflow-integration/2.x, подключения к yarina-state-svc,
 #      yarina-config-svc и yarina-task-proxy4spark заданы в этом файле.
+#   5. Метрики: Prometheus http://localhost:19090 и Grafana http://localhost:13000
+#      (admin / admin; хост-порт 9090 занят Trino). Конфигурация scrape —
+#      conf_infra/prometheus/prometheus.yml, datasource Grafana —
+#      conf_infra/grafana/provisioning.
 version: '3.9'
 services:
   minio-dev:
@@ -565,6 +569,46 @@ services:
         condition: service_started
       openbao:
         condition: service_healthy
+
+  # Prometheus collects the metrics of the yarina services: the Spark task proxy
+  # (Spring Boot Actuator, job "yarina-task-proxy4spark") and optionally the
+  # SecurityMetrics of the Spark driver/executor JVMs — the scrape configuration
+  # with the commented-out Spark jobs lives in conf_infra/prometheus/prometheus.yml.
+  # Host port 19090 is used because 9090 is already taken by Trino.
+  prometheus:
+    image: prom/prometheus:v3.16.0
+    container_name: prometheus
+    ports:
+      - "19090:9090"
+    networks:
+      yarina_net:
+        ipv4_address: 172.20.193.210
+    volumes:
+      - ./conf_infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512m
+
+  # Grafana with the pre-provisioned Prometheus datasource
+  # (conf_infra/grafana/provisioning/datasources/prometheus.yml).
+  grafana:
+    image: grafana/grafana:13.3.1
+    container_name: grafana
+    ports:
+      - "13000:3000"
+    networks:
+      yarina_net:
+        ipv4_address: 172.20.193.220
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - ./conf_infra/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      prometheus:
+        condition: service_started
 
   # Apache Airflow 2.7.3 with yarina-airflow-integration/2.x installed.
   # The image is built from the integration root; see

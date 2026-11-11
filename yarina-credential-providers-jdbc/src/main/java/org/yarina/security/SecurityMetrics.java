@@ -22,8 +22,15 @@ import org.slf4j.LoggerFactory;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.management.StandardMBean;
+import javax.management.openmbean.CompositeDataSupport;
+import javax.management.openmbean.CompositeType;
+import javax.management.openmbean.OpenDataException;
+import javax.management.openmbean.OpenType;
+import javax.management.openmbean.SimpleType;
+import javax.management.openmbean.TabularData;
+import javax.management.openmbean.TabularDataSupport;
+import javax.management.openmbean.TabularType;
 import java.lang.management.ManagementFactory;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -46,8 +53,13 @@ import java.util.concurrent.atomic.LongAdder;
  *       {@code /actuator/prometheus} endpoint, or wrap the counters with
  *       {@code MeterRegistry} gauges.</li>
  *   <li><b>JMX</b> — the {@code org.yarina.security:type=SecurityMetrics} MBean exposes
- *       the same text as the {@code PrometheusText} attribute; it is always available
- *       inside a plain Spark Driver/Executor JVM (jconsole / jmx_exporter).</li>
+ *       the same text as the {@code PrometheusText} attribute and the counters as the
+ *       {@code Counters} attribute (a JMX {@code TabularData}: one row per counter,
+ *       {@code key} = rendered metric id, {@code value} = counter value). It is always
+ *       available inside a plain Spark Driver/Executor JVM: {@code jconsole} renders
+ *       the table, and the Prometheus JMX exporter javaagent converts each row into a
+ *       scrapeable sample (plain {@code java.util.Map} attributes are ignored by the
+ *       exporter, hence the open type).</li>
  *   <li><b>Programmatic</b> — {@link #value(String)} / {@link #snapshot()} for tests and
  *       custom tooling.</li>
  * </ol>
@@ -248,8 +260,12 @@ public final class SecurityMetrics {
         /** All counters in the Prometheus text exposition format. */
         String getPrometheusText();
 
-        /** All counters keyed by rendered metric id. */
-        Map<String, Long> getCounters();
+        /**
+         * All counters as a JMX open type: one row per counter with {@code key} =
+         * rendered metric id and {@code value} = counter value. The open type is what
+         * the Prometheus JMX exporter javaagent understands (plain maps are skipped).
+         */
+        TabularData getCounters();
     }
 
     private static final class SecurityMetricsJmxView implements SecurityMetricsMBean {
@@ -259,8 +275,28 @@ public final class SecurityMetrics {
         }
 
         @Override
-        public Map<String, Long> getCounters() {
-            return new LinkedHashMap<>(SecurityMetrics.snapshot());
+        public TabularData getCounters() {
+            try {
+                CompositeType rowType = new CompositeType(
+                        "SecurityMetrics", "Yarina SecurityMetrics counter",
+                        new String[] {"key", "value"},
+                        new String[] {"rendered metric id", "counter value"},
+                        new OpenType<?>[] {SimpleType.STRING, SimpleType.LONG});
+                TabularType tableType = new TabularType(
+                        "SecurityMetrics", "Yarina SecurityMetrics counters keyed by metric id",
+                        rowType, new String[] {"key"});
+                TabularDataSupport table = new TabularDataSupport(tableType);
+                for (Map.Entry<String, Long> entry : SecurityMetrics.snapshot().entrySet()) {
+                    table.put(new CompositeDataSupport(
+                            rowType,
+                            new String[] {"key", "value"},
+                            new Object[] {entry.getKey(), entry.getValue()}));
+                }
+                return table;
+            } catch (OpenDataException e) {
+                // The row layout above is fixed, so this cannot happen in practice.
+                throw new IllegalStateException("SecurityMetrics JMX open type is invalid", e);
+            }
         }
     }
 

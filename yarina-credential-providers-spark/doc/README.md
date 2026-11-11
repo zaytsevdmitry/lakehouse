@@ -373,8 +373,9 @@ Recommendations:
 All counters are JVM-wide, dependency-free (`SecurityMetrics` in the shared module). Two export paths are always available:
 
 1. **JMX** — the MBean `org.yarina.security:type=SecurityMetrics` exposes the attribute
-   `PrometheusText` (the whole registry in the Prometheus text format). Inspect it with
-   `jconsole`/`jmxterm` or the Prometheus JMX exporter attached to the Spark JVMs.
+   `PrometheusText` (the whole registry in the Prometheus text format) and the `Counters`
+   table (one row per counter). Inspect it with `jconsole`/`jmxterm`; section 9 shows
+   how to deliver it to Prometheus via the JMX exporter javaagent.
 2. **Programmatic** — `org.yarina.security.SecurityMetrics.scrapePrometheus()` renders the
    same text; a platform service that already runs Spring Actuator/Micrometer (e.g.
    `yarina-task-proxy-for-spark`) can publish it periodically under its own
@@ -405,9 +406,128 @@ How to sanity-check the OpenBao load:
 
 ---
 
-## 9. Security & Troubleshooting
+## 9. Setting up metrics export to Prometheus
 
-### 9.1 Protect secrets in Spark UI
+A Spark deployment with these providers produces two independent metric streams, and
+each of them is wired to Prometheus separately:
+
+| Stream | Counters | Where they live | Export |
+|--------|----------|-----------------|--------|
+| Credential-provider health (Section 8) | `cache_hits_total`, `vault_auth_total`, … | JVM of every Spark driver/executor | JMX exporter javaagent → HTTP scrape (this section) |
+| Proxy service health | `yarina_task_proxy4spark_*` | JVM of `yarina-task-proxy-for-spark` | Spring Boot Actuator `/actuator/prometheus` — see the proxy README, section *Prometheus setup* |
+
+The providers are a library inside the Spark JVMs and ship with zero runtime
+dependencies, so they never push metrics anywhere by themselves — the export is pure
+infrastructure configuration. `SecurityMetrics` publishes the JMX MBean
+`org.yarina.security:type=SecurityMetrics` whose `Counters` attribute holds one row per
+counter; the [Prometheus JMX exporter](https://github.com/prometheus/jmx_exporter)
+javaagent turns those rows into an HTTP scrape endpoint. No application code changes
+are required.
+
+### 9.1 Attach the JMX exporter javaagent to the Spark JVMs
+
+1. Download the javaagent (`jmx_prometheus_javaagent-<version>.jar`, e.g. 1.7.0) from
+   the [JMX exporter releases](https://github.com/prometheus/jmx_exporter/releases) and
+   place it on every Spark node — for `docker/yarina-spark-aws`, bake it into the image,
+   e.g. under `/opt/spark/jmx/`.
+
+2. Create the exporter config `/opt/spark/jmx/security-metrics.yaml`. Every row of the
+   `Counters` attribute arrives at the rule engine as
+   `org.yarina.security<type=SecurityMetrics, key=<metric-id>><>Counters: <value>`:
+
+   ```yaml
+   rules:
+     - pattern: 'org.yarina.security<type=SecurityMetrics, key=([^>]+)><>Counters: (\d+)'
+       name: yarina_security_counters
+       value: '$2'
+       labels:
+         metric: '$1'
+       type: COUNTER
+       help: 'SecurityMetrics counters of the yarina credential providers (see the README section "Metrics and diagnostics")'
+   ```
+
+3. Enable the agent on the driver and the executors in `spark-defaults.conf`
+   (distinct ports — every JVM serves its own endpoint):
+
+   ```properties
+   # ── Metrics export to Prometheus (JMX exporter javaagent) ─────────
+   spark.driver.extraJavaOptions   -javaagent:/opt/spark/jmx/jmx_prometheus_javaagent-1.7.0.jar=9091:/opt/spark/jmx/security-metrics.yaml
+   spark.executor.extraJavaOptions -javaagent:/opt/spark/jmx/jmx_prometheus_javaagent-1.7.0.jar=9092:/opt/spark/jmx/security-metrics.yaml
+   ```
+
+The driver port must be free on the driver node and the executor port on every worker
+node. Several JVMs of the same kind on one node (e.g. several executors per worker) need
+a distinct port each — otherwise keep one executor per node. In `cluster` deploy mode
+(the way `yarina-task-proxy-for-spark` submits applications) the driver runs on a worker
+node too.
+
+Quick check while a job is running:
+
+```bash
+curl -s http://<driver-host>:9091/metrics | grep yarina_security
+```
+
+Every counter from Section 8 is exported as one sample of a single metric family
+(the exporter appends `_total` to counter names automatically):
+
+```
+yarina_security_counters_total{metric="cache_hits_total"} 18234
+yarina_security_counters_total{metric="vault_auth_total"} 3
+yarina_security_counters_total{metric="vault_requests_total{op=\"read\"}"} 29
+```
+
+### 9.2 Scrape configuration in Prometheus
+
+`prometheus.yml` (host names follow the `demo/compose` stand — replace them with the
+real ones; the reference configuration lives in
+`demo/compose/conf_infra/prometheus/prometheus.yml`):
+
+```yaml
+scrape_configs:
+  - job_name: spark-security-driver
+    static_configs:
+      - targets: ['spark-worker-1:9091']
+        labels:
+          role: driver
+  - job_name: spark-security-executors
+    static_configs:
+      - targets: ['spark-worker-1:9092']
+        labels:
+          role: executor
+```
+
+### 9.3 Reading the metrics in PromQL / Grafana
+
+The metric id from Section 8 travels in the `metric` label:
+
+| What to watch (Section 8) | PromQL |
+|---------------------------|--------|
+| Cache hit ratio | `rate(yarina_security_counters_total{metric="cache_hits_total"}[5m]) / (rate(yarina_security_counters_total{metric="cache_hits_total"}[5m]) + rate(yarina_security_counters_total{metric="cache_misses_total"}[5m]))` |
+| Vault reads | `sum by (instance) (rate(yarina_security_counters_total{metric=~"vault_requests_total.*"}[5m]))` |
+| Kubernetes logins | `rate(yarina_security_counters_total{metric="vault_auth_total"}[5m])` |
+| 403-driven token refreshes | `rate(yarina_security_counters_total{metric="vault_token_refresh_total"}[5m])` |
+| Vault HTTP by status | `rate(yarina_security_counters_total{metric=~"vault_http_requests_total.*"}[5m])` |
+
+A jump of `vault_auth_total` / `vault_requests_total{op="read"}` per `instance` is the
+"login storm" signature from Section 8; `vault_http_requests_total{status="5.."}` points
+at OpenBao-side trouble. On the demo stand Grafana is available with the Prometheus
+datasource pre-provisioned — see `demo/compose/README-INSTALL.md`.
+
+### 9.4 Verifying without Prometheus
+
+- `curl http://<driver-host>:9091/metrics` — the javaagent output shown above.
+- `jconsole` / `jmxterm` — the `org.yarina.security:type=SecurityMetrics` MBean: the
+  `PrometheusText` attribute (the whole registry as text) and the `Counters` table. No
+  agent needed, works in any JVM with the providers on the classpath.
+- `SecurityMetrics.scrapePrometheus()` — the same text programmatically; a platform
+  service embedding the providers (e.g. `yarina-task-executor-api`) can publish it
+  under its own actuator endpoint.
+
+---
+
+## 10. Security & Troubleshooting
+
+### 10.1 Protect secrets in Spark UI
 
 Enable Spark's built-in redaction to prevent secrets from appearing in the Web UI and event logs:
 
@@ -415,7 +535,7 @@ Enable Spark's built-in redaction to prevent secrets from appearing in the Web U
 spark.ui.redaction.regex=url|password|secret|token|key
 ```
 
-### 9.2 Timeouts
+### 10.2 Timeouts
 
 | Parameter | Value |
 |-----------|-------|
@@ -424,7 +544,7 @@ spark.ui.redaction.regex=url|password|secret|token|key
 
 If the secret server is unreachable, the provider throws `SecurityException` — **no secrets or tokens are included in the log output**. Non-200 responses (other than a 403 with a renewable token, which triggers exactly one re-auth + retry) are **not retried**.
 
-### 9.3 What to check when a task fails
+### 10.3 What to check when a task fails
 
 | Symptom | Where to look |
 |---------|---------------|
@@ -440,7 +560,7 @@ If the secret server is unreachable, the provider throws `SecurityException` —
 
 **Important:** passwords and tokens are **never** written to logs at any log level (INFO, DEBUG, TRACE). On errors, only HTTP status codes and exception class names are logged.
 
-### 9.4 Log messages
+### 10.4 Log messages
 
 | Log level | Example message |
 |-----------|-----------------|
@@ -455,7 +575,7 @@ The path/secret-id is always `[redacted]` in log output.
 
 ---
 
-## 10. Secret payload examples
+## 11. Secret payload examples
 
 ### Vault KV v2 (OpenBao)
 
