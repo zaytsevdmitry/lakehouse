@@ -16,6 +16,7 @@
  */
 package org.yarina.task.proxy.spark.repository;
 
+import org.yarina.task.proxy.spark.dto.ExternalStatus;
 import org.yarina.task.proxy.spark.entity.SparkSubmission;
 import org.hibernate.query.TypedParameterValue;
 import org.springframework.data.domain.Pageable;
@@ -32,7 +33,7 @@ public interface SparkSubmissionRepository extends JpaRepository<SparkSubmission
 
     Optional<SparkSubmission> findBySubmissionId(String submissionId);
 
-    List<SparkSubmission> findByStatus(SparkSubmission.Status status);
+    List<SparkSubmission> findByStatus(ExternalStatus status);
 
     @Query(value = """
             SELECT id, submission_id, app_resource, main_class, app_args, spark_properties
@@ -110,7 +111,7 @@ public interface SparkSubmissionRepository extends JpaRepository<SparkSubmission
               AND (cast(:dateTo as timestamp) IS NULL OR s.createdAt <= :dateTo)
               AND (cast(:lastId as long) IS NULL OR s.id < :lastId)
             """)
-    List<SparkSubmission> findSubmissions(@Param("status") SparkSubmission.Status status,
+    List<SparkSubmission> findSubmissions(@Param("status") ExternalStatus status,
                                           @Param("dateFrom") TypedParameterValue dateFrom,
                                           @Param("dateTo") TypedParameterValue dateTo,
                                           @Param("lastId") TypedParameterValue lastId,

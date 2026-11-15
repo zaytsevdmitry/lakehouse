@@ -36,10 +36,10 @@ load_image_if_missing() {
 }
 
 # Load only missing images
-load_image_if_missing "yarina:1.0.1"
-load_image_if_missing "yarina-s3-check:1.0.1"
-load_image_if_missing "yarina-hms:1.0.1"
-load_image_if_missing "yarina-spark-aws:1.0.1"
+load_image_if_missing "yarina:1.1.2"
+load_image_if_missing "yarina-s3-check:1.1.2"
+load_image_if_missing "yarina-hms:1.1.2"
+load_image_if_missing "yarina-spark-aws:1.1.2"
 
 echo -e "\e[34mAll yarina images processed\e[0m"
 

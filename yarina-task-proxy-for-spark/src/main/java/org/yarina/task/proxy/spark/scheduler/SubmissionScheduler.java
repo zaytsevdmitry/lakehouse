@@ -16,6 +16,8 @@
  */
 package org.yarina.task.proxy.spark.scheduler;
 
+import org.yarina.task.proxy.spark.dto.ExternalStatus;
+import org.yarina.task.proxy.spark.entity.SparkSubmission;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.Timer;
@@ -136,7 +138,7 @@ public class SubmissionScheduler {
                     String submissionId = adapter.createSubmission(request);
                     sparkMetrics.recordSuccess(clusterType);
                     sparkMetrics.recordDuration(sample, clusterType);
-                    repository.completeTask(taskId, submissionId, "SUBMITTED", "spark-submit launched successfully");
+                    repository.completeTask(taskId, submissionId, ExternalStatus.SUBMITTED.name(), "spark-submit launched successfully");
                     log.info("Task id={} submitted. submissionId={}", taskId, submissionId);
                 } catch (Exception e) {
                     String msg = e.getMessage() != null ? e.getMessage() : "Unknown error";
@@ -161,7 +163,7 @@ public class SubmissionScheduler {
         }
         try {
             String safeMessage = message.length() > 255 ? message.substring(0, 252) + "..." : message;
-                    repository.completeTask(id, null, "ERROR", safeMessage);
+                    repository.completeTask(id, null, ExternalStatus.ERROR.name(), safeMessage);
         } catch (Exception ex) {
             log.error("Failed to mark task id={} as FAILED", id, ex);
         }

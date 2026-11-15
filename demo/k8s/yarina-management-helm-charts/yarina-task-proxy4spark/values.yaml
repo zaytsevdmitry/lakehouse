@@ -1,7 +1,7 @@
 proxy4spark:
   image:
     repository: yarina-spark-aws
-    tag: "1.0.1"
+    tag: "1.1.2"
     pullPolicy: IfNotPresent
 
   service:

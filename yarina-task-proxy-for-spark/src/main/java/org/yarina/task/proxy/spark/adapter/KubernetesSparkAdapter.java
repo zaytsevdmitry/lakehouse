@@ -28,6 +28,7 @@ import org.yarina.task.proxy.spark.exception.CreateErrorException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -123,12 +124,14 @@ public class KubernetesSparkAdapter extends SparkAdapterBase {
         String namespace = resolveNamespace();
         String podName = findDriverPodName(submissionId, namespace);
         if (podName == null) {
+            log.warn("SubmissionId(pod) {} not found in namespace {}", submissionId, namespace);
             return new SubmissionStatusResponse(
                     "SparkStatusResponse",
-                    ExternalStatus.WAITING.name(),
+                    String.format("SubmissionId(pod) %s not found in namespace %s", submissionId, namespace),
                     null,
-                    submissionId, true,
-                    ExternalStatus.WAITING.name(),
+                    submissionId,
+                    true,
+                    ExternalStatus.UNKNOWN.name(),
                     null,
                     null);
         }
@@ -145,7 +148,7 @@ public class KubernetesSparkAdapter extends SparkAdapterBase {
                     submissionId,
                     success,
                     external.name(),
-                    null,
+                    Optional.ofNullable(pod.getSpec().getNodeName()).orElse("Unknown"),
                     null);
         } catch (ApiException e) {
             log.error("Failed to get status for pod {}: {}", podName, e.getResponseBody(), e);
