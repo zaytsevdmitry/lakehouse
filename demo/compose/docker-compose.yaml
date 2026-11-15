@@ -686,11 +686,6 @@ services:
     environment:
       KEYCLOAK_ISSUER_URI: http://keycloak.yarina:8085/realms/yarina
       KEYCLOAK_UI_CLIENT_SECRET: super-secret-bff-key-1234567890
-      YARINA_GIT_URL: git://git-server:9418/platform.git
-      YARINA_GIT_BRANCH: main
-      YARINA_VCS_AUTH_TYPE: token
-      YARINA_VCS_USER: modeller-bot
-      YARINA_VCS_TOKEN: dummy
     depends_on:
       keycloak:
         condition: service_healthy
