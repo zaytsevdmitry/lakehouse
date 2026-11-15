@@ -19,6 +19,7 @@ package org.yarina.task.proxy.spark.entity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import org.yarina.task.proxy.spark.dto.ExternalStatus;
 
 import java.time.Instant;
 
@@ -29,13 +30,7 @@ import java.time.Instant;
 })
 public class SparkSubmission {
 
-    public enum Status {
-        WAITING, SUBMITTED, RUNNING, FINISHED, KILLED, FAILED, ERROR, UNKNOWN
-    }
 
-    public static boolean isFinalStatus(Status status) {
-        return status == Status.FINISHED || status == Status.KILLED || status == Status.FAILED || status == Status.ERROR;
-    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -46,7 +41,7 @@ public class SparkSubmission {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    private Status status = Status.WAITING;
+    private ExternalStatus status = ExternalStatus.WAITING;
 
     @Column(name = "app_resource")
     private String appResource;
@@ -81,8 +76,8 @@ public class SparkSubmission {
     public String getSubmissionId() { return submissionId; }
     public void setSubmissionId(String submissionId) { this.submissionId = submissionId; }
 
-    public Status getStatus() { return status; }
-    public void setStatus(Status status) { this.status = status; }
+    public ExternalStatus getStatus() { return status; }
+    public void setStatus(ExternalStatus status) { this.status = status; }
 
     public String getAppResource() { return appResource; }
     public void setAppResource(String appResource) { this.appResource = appResource; }

@@ -108,10 +108,10 @@ spec:
             -Dyarina.ui.edges.yarina-minio[0]=yarina-trino
             -Dyarina.ui.edges.yarina-minio[1]=yarina-spark-history
             -Dyarina.ui.edges.yarina-ui-svc[0]=git-server
-            -Dyarina.domains.platform.repository-url=git://git-server:9418/platform.git
-            -Dyarina.domains.platform.branch-main=main
-            -Dyarina.domains.analytics.repository-url=git://git-server:9418/analytics.git
-            -Dyarina.domains.analytics.branch-main=main
-            -Dyarina.domains.processing.repository-url=git://git-server:9418/processing.git
-            -Dyarina.domains.processing.branch-main=main
+            -Dyarina.domains.platform.git.repository-url=git://git-server:9418/platform.git
+            -Dyarina.domains.platform.git.branch=main
+            -Dyarina.domains.analytics.git.repository-url=git://git-server:9418/analytics.git
+            -Dyarina.domains.analytics.git.branch=main
+            -Dyarina.domains.processing.git.repository-url=git://git-server:9418/processing.git
+            -Dyarina.domains.processing.git.branch=main            
             -jar /opt/yarina-ui-svc-{{ .Chart.AppVersion }}-jar-with-dependencies.jar"

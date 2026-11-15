@@ -16,7 +16,7 @@
 # limitations under the License.
 
 
-minikube image rm yarina:1.0.1
-minikube image rm yarina-s3-check:1.0.1
-minikube image rm yarina-hms:1.0.1
-minikube image rm yarina-spark-aws:1.0.1
+minikube image rm yarina:1.1.2
+minikube image rm yarina-s3-check:1.1.2
+minikube image rm yarina-hms:1.1.2
+minikube image rm yarina-spark-aws:1.1.2

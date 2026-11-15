@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.hibernate.query.TypedParameterValue;
 import org.hibernate.type.StandardBasicTypes;
+import org.yarina.task.proxy.spark.dto.ExternalStatus;
 import org.yarina.task.proxy.spark.entity.SparkSubmission;
 import org.yarina.task.proxy.spark.repository.SparkSubmissionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,7 +70,7 @@ class SparkSubmissionRepositoryTest {
         repository.deleteAll();
     }
 
-    private static SparkSubmission sub(SparkSubmission.Status status) {
+    private static SparkSubmission sub(ExternalStatus status) {
         SparkSubmission s = new SparkSubmission();
         s.setStatus(status);
         return s;
@@ -85,13 +86,13 @@ class SparkSubmissionRepositoryTest {
             s.setMainClass("com.example.Main");
             s.setAppArgs("[\"--input\", \"/data\"]");
             s.setSparkProperties("{\"spark.cores\": \"2\"}");
-            s.setStatus(SparkSubmission.Status.WAITING);
+            s.setStatus(ExternalStatus.WAITING);
             SparkSubmission saved = repository.save(s);
 
             Optional<SparkSubmission> found = repository.findById(saved.getId());
 
             assertThat(found).isPresent();
-            assertThat(found.get().getStatus()).isEqualTo(SparkSubmission.Status.WAITING);
+            assertThat(found.get().getStatus()).isEqualTo(ExternalStatus.WAITING);
             assertThat(found.get().getAppResource()).isEqualTo("s3://bucket/app.jar");
             assertThat(found.get().getMainClass()).isEqualTo("com.example.Main");
             assertThat(found.get().getAppArgs()).isEqualTo("[\"--input\", \"/data\"]");
@@ -102,7 +103,7 @@ class SparkSubmissionRepositoryTest {
         void findBySubmissionId() {
             SparkSubmission s = new SparkSubmission();
             s.setSubmissionId("driver-20260730-0001");
-            s.setStatus(SparkSubmission.Status.RUNNING);
+            s.setStatus(ExternalStatus.RUNNING);
             repository.save(s);
 
             Optional<SparkSubmission> found = repository.findBySubmissionId("driver-20260730-0001");
@@ -120,24 +121,24 @@ class SparkSubmissionRepositoryTest {
 
         @Test
         void findByStatus() {
-            repository.save(sub(SparkSubmission.Status.WAITING));
-            repository.save(sub(SparkSubmission.Status.RUNNING));
-            repository.save(sub(SparkSubmission.Status.FINISHED));
+            repository.save(sub(ExternalStatus.WAITING));
+            repository.save(sub(ExternalStatus.RUNNING));
+            repository.save(sub(ExternalStatus.FINISHED));
 
-            assertThat(repository.findByStatus(SparkSubmission.Status.WAITING)).hasSize(1);
-            assertThat(repository.findByStatus(SparkSubmission.Status.RUNNING)).hasSize(1);
-            assertThat(repository.findByStatus(SparkSubmission.Status.FINISHED)).hasSize(1);
+            assertThat(repository.findByStatus(ExternalStatus.WAITING)).hasSize(1);
+            assertThat(repository.findByStatus(ExternalStatus.RUNNING)).hasSize(1);
+            assertThat(repository.findByStatus(ExternalStatus.FINISHED)).hasSize(1);
         }
 
         @Test
         void findByIdAndSubmissionIdIsNotNull() {
             SparkSubmission withId = new SparkSubmission();
             withId.setSubmissionId("driver-001");
-            withId.setStatus(SparkSubmission.Status.RUNNING);
+            withId.setStatus(ExternalStatus.RUNNING);
             SparkSubmission savedWith = repository.save(withId);
 
             SparkSubmission withoutId = new SparkSubmission();
-            withoutId.setStatus(SparkSubmission.Status.WAITING);
+            withoutId.setStatus(ExternalStatus.WAITING);
             repository.save(withoutId);
 
             Optional<SparkSubmission> found = repository.findByIdAndSubmissionIdIsNotNull(savedWith.getId());
@@ -153,8 +154,8 @@ class SparkSubmissionRepositoryTest {
 
         @Test
         void returnsEarliestWaiting() {
-            repository.save(sub(SparkSubmission.Status.WAITING));
-            repository.save(sub(SparkSubmission.Status.WAITING));
+            repository.save(sub(ExternalStatus.WAITING));
+            repository.save(sub(ExternalStatus.WAITING));
 
             Object[] claimed = extractFlatColumns(repository.claimNextTask());
 
@@ -164,7 +165,7 @@ class SparkSubmissionRepositoryTest {
 
         @Test
         void returnsNullWhenNoWaiting() {
-            repository.save(sub(SparkSubmission.Status.RUNNING));
+            repository.save(sub(ExternalStatus.RUNNING));
 
             Object r = repository.claimNextTask();
 
@@ -180,11 +181,11 @@ class SparkSubmissionRepositoryTest {
 
         @Test
         void returnsNonTerminalRows() {
-            repository.save(sub(SparkSubmission.Status.WAITING));
-            repository.save(sub(SparkSubmission.Status.SUBMITTED));
-            repository.save(sub(SparkSubmission.Status.RUNNING));
-            repository.save(sub(SparkSubmission.Status.FINISHED));
-            repository.save(sub(SparkSubmission.Status.KILLED));
+            repository.save(sub(ExternalStatus.WAITING));
+            repository.save(sub(ExternalStatus.SUBMITTED));
+            repository.save(sub(ExternalStatus.RUNNING));
+            repository.save(sub(ExternalStatus.FINISHED));
+            repository.save(sub(ExternalStatus.KILLED));
 
             List<Object[]> rows = repository.claimIncompleteTasks(10);
 
@@ -195,7 +196,7 @@ class SparkSubmissionRepositoryTest {
         @Test
         void respectsBatchSize() {
             for (int i = 0; i < 5; i++) {
-                repository.save(sub(SparkSubmission.Status.WAITING));
+                repository.save(sub(ExternalStatus.WAITING));
             }
 
             List<Object[]> rows = repository.claimIncompleteTasks(2);
@@ -205,8 +206,8 @@ class SparkSubmissionRepositoryTest {
 
         @Test
         void returnsEmptyWhenAllTerminal() {
-            repository.save(sub(SparkSubmission.Status.FINISHED));
-            repository.save(sub(SparkSubmission.Status.FAILED));
+            repository.save(sub(ExternalStatus.FINISHED));
+            repository.save(sub(ExternalStatus.FAILED));
 
             List<Object[]> rows = repository.claimIncompleteTasks(10);
 
@@ -219,11 +220,11 @@ class SparkSubmissionRepositoryTest {
 
         @Test
         void returnsOldTerminalRows() {
-            SparkSubmission s1 = sub(SparkSubmission.Status.FINISHED);
+            SparkSubmission s1 = sub(ExternalStatus.FINISHED);
             s1.setUpdatedAt(Instant.now().minusSeconds(600));
             repository.save(s1);
 
-            SparkSubmission s2 = sub(SparkSubmission.Status.KILLED);
+            SparkSubmission s2 = sub(ExternalStatus.KILLED);
             s2.setUpdatedAt(Instant.now().minusSeconds(600));
             repository.save(s2);
 
@@ -234,7 +235,7 @@ class SparkSubmissionRepositoryTest {
 
         @Test
         void excludesRecentTerminalRows() {
-            SparkSubmission s = sub(SparkSubmission.Status.FINISHED);
+            SparkSubmission s = sub(ExternalStatus.FINISHED);
             s.setUpdatedAt(Instant.now());
             repository.save(s);
 
@@ -245,7 +246,7 @@ class SparkSubmissionRepositoryTest {
 
         @Test
         void excludesNonTerminalRows() {
-            SparkSubmission s = sub(SparkSubmission.Status.RUNNING);
+            SparkSubmission s = sub(ExternalStatus.RUNNING);
             s.setUpdatedAt(Instant.now().minusSeconds(600));
             repository.save(s);
 
@@ -260,9 +261,9 @@ class SparkSubmissionRepositoryTest {
 
         @Test
         void returnsAllRows() {
-            repository.save(sub(SparkSubmission.Status.WAITING));
-            repository.save(sub(SparkSubmission.Status.RUNNING));
-            repository.save(sub(SparkSubmission.Status.FINISHED));
+            repository.save(sub(ExternalStatus.WAITING));
+            repository.save(sub(ExternalStatus.RUNNING));
+            repository.save(sub(ExternalStatus.FINISHED));
 
             List<Object[]> rows = repository.claimAllTasks(10);
 
@@ -273,7 +274,7 @@ class SparkSubmissionRepositoryTest {
         @Test
         void respectsBatchSize() {
             for (int i = 0; i < 7; i++) {
-                repository.save(sub(SparkSubmission.Status.WAITING));
+                repository.save(sub(ExternalStatus.WAITING));
             }
 
             List<Object[]> rows = repository.claimAllTasks(3);
@@ -293,7 +294,7 @@ class SparkSubmissionRepositoryTest {
             return new TypedParameterValue(StandardBasicTypes.LONG, value);
         }
 
-        private SparkSubmission subWith(SparkSubmission.Status status, Instant createdAt, long order) {
+        private SparkSubmission subWith(ExternalStatus status, Instant createdAt, long order) {
             SparkSubmission s = sub(status);
             s.setCreatedAt(createdAt);
             s.setSubmissionId("driver-" + order);
@@ -304,7 +305,7 @@ class SparkSubmissionRepositoryTest {
         @Test
         void returnsAllWithoutFiltersOrderedByIdDesc() {
             for (int i = 1; i <= 5; i++) {
-                repository.save(sub(SparkSubmission.Status.RUNNING));
+                repository.save(sub(ExternalStatus.RUNNING));
             }
 
             List<SparkSubmission> rows = repository.findSubmissions(
@@ -319,24 +320,24 @@ class SparkSubmissionRepositoryTest {
 
         @Test
         void filtersByStatus() {
-            repository.save(sub(SparkSubmission.Status.WAITING));
-            repository.save(sub(SparkSubmission.Status.RUNNING));
-            repository.save(sub(SparkSubmission.Status.FINISHED));
+            repository.save(sub(ExternalStatus.WAITING));
+            repository.save(sub(ExternalStatus.RUNNING));
+            repository.save(sub(ExternalStatus.FINISHED));
 
             List<SparkSubmission> rows = repository.findSubmissions(
-                    SparkSubmission.Status.RUNNING, typed(null), typed(null), typedLong(null),
+                    ExternalStatus.RUNNING, typed(null), typed(null), typedLong(null),
                     PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "id")));
 
             assertThat(rows).hasSize(1);
-            assertThat(rows.get(0).getStatus()).isEqualTo(SparkSubmission.Status.RUNNING);
+            assertThat(rows.get(0).getStatus()).isEqualTo(ExternalStatus.RUNNING);
         }
 
         @Test
         void filtersByCreatedAtRange() {
             Instant base = Instant.now();
-            repository.save(subWith(SparkSubmission.Status.RUNNING, base.minusSeconds(100), 1));
-            repository.save(subWith(SparkSubmission.Status.RUNNING, base.minusSeconds(50), 2));
-            repository.save(subWith(SparkSubmission.Status.RUNNING, base.plusSeconds(50), 3));
+            repository.save(subWith(ExternalStatus.RUNNING, base.minusSeconds(100), 1));
+            repository.save(subWith(ExternalStatus.RUNNING, base.minusSeconds(50), 2));
+            repository.save(subWith(ExternalStatus.RUNNING, base.plusSeconds(50), 3));
 
             List<SparkSubmission> rows = repository.findSubmissions(
                     null, typed(base.minusSeconds(60)), typed(base), typedLong(null),
@@ -348,8 +349,8 @@ class SparkSubmissionRepositoryTest {
 
         @Test
         void filtersByLastIdCursor() {
-            SparkSubmission s1 = repository.save(sub(SparkSubmission.Status.RUNNING));
-            SparkSubmission s2 = repository.save(sub(SparkSubmission.Status.RUNNING));
+            SparkSubmission s1 = repository.save(sub(ExternalStatus.RUNNING));
+            SparkSubmission s2 = repository.save(sub(ExternalStatus.RUNNING));
 
             List<SparkSubmission> rows = repository.findSubmissions(
                     null, typed(null), typed(null), typedLong(s2.getId()),
@@ -362,13 +363,13 @@ class SparkSubmissionRepositoryTest {
         @Test
         void combinesFilters() {
             Instant base = Instant.now();
-            SparkSubmission waiting = subWith(SparkSubmission.Status.WAITING, base.minusSeconds(50), 1);
+            SparkSubmission waiting = subWith(ExternalStatus.WAITING, base.minusSeconds(50), 1);
             repository.save(waiting);
-            SparkSubmission running = subWith(SparkSubmission.Status.RUNNING, base.minusSeconds(100), 2);
+            SparkSubmission running = subWith(ExternalStatus.RUNNING, base.minusSeconds(100), 2);
             repository.save(running);
 
             List<SparkSubmission> rows = repository.findSubmissions(
-                    SparkSubmission.Status.WAITING, typed(base.minusSeconds(60)), typed(null), typedLong(null),
+                    ExternalStatus.WAITING, typed(base.minusSeconds(60)), typed(null), typedLong(null),
                     PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "id")));
 
             assertThat(rows).hasSize(1);
@@ -378,7 +379,7 @@ class SparkSubmissionRepositoryTest {
         @Test
         void appliesPageLimit() {
             for (int i = 0; i < 5; i++) {
-                repository.save(sub(SparkSubmission.Status.RUNNING));
+                repository.save(sub(ExternalStatus.RUNNING));
             }
 
             List<SparkSubmission> rows = repository.findSubmissions(
@@ -390,10 +391,10 @@ class SparkSubmissionRepositoryTest {
 
         @Test
         void returnsEmptyWhenNothingMatches() {
-            repository.save(sub(SparkSubmission.Status.RUNNING));
+            repository.save(sub(ExternalStatus.RUNNING));
 
             List<SparkSubmission> rows = repository.findSubmissions(
-                    SparkSubmission.Status.FINISHED, typed(null), typed(null), typedLong(null),
+                    ExternalStatus.FINISHED, typed(null), typed(null), typedLong(null),
                     PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "id")));
 
             assertThat(rows).isEmpty();
@@ -405,26 +406,26 @@ class SparkSubmissionRepositoryTest {
 
         @Test
         void updateStatus() {
-            SparkSubmission s = repository.save(sub(SparkSubmission.Status.WAITING));
+            SparkSubmission s = repository.save(sub(ExternalStatus.WAITING));
 
             repository.updateStatus(s.getId(), "RUNNING", "Job started");
             em.clear();
 
             SparkSubmission updated = repository.findById(s.getId()).orElseThrow();
-            assertThat(updated.getStatus()).isEqualTo(SparkSubmission.Status.RUNNING);
+            assertThat(updated.getStatus()).isEqualTo(ExternalStatus.RUNNING);
             assertThat(updated.getMessage()).isEqualTo("Job started");
         }
 
         @Test
         void completeTask() {
-            SparkSubmission s = repository.save(sub(SparkSubmission.Status.WAITING));
+            SparkSubmission s = repository.save(sub(ExternalStatus.WAITING));
 
-            repository.completeTask(s.getId(), "driver-20260730-9999", "FINISHED", "Completed successfully");
+            repository.completeTask(s.getId(), "driver-20260730-9999", ExternalStatus.FINISHED.name(), "Completed successfully");
             em.clear();
 
             SparkSubmission updated = repository.findById(s.getId()).orElseThrow();
             assertThat(updated.getSubmissionId()).isEqualTo("driver-20260730-9999");
-            assertThat(updated.getStatus()).isEqualTo(SparkSubmission.Status.FINISHED);
+            assertThat(updated.getStatus()).isEqualTo(ExternalStatus.FINISHED);
             assertThat(updated.getMessage()).isEqualTo("Completed successfully");
         }
     }
@@ -434,9 +435,9 @@ class SparkSubmissionRepositoryTest {
 
         @Test
         void deleteAllIds() {
-            SparkSubmission s1 = repository.save(sub(SparkSubmission.Status.FINISHED));
-            SparkSubmission s2 = repository.save(sub(SparkSubmission.Status.FINISHED));
-            SparkSubmission s3 = repository.save(sub(SparkSubmission.Status.FINISHED));
+            SparkSubmission s1 = repository.save(sub(ExternalStatus.FINISHED));
+            SparkSubmission s2 = repository.save(sub(ExternalStatus.FINISHED));
+            SparkSubmission s3 = repository.save(sub(ExternalStatus.FINISHED));
 
             repository.deleteAllIds(List.of(s1.getId(), s3.getId()));
             em.clear();
@@ -448,7 +449,7 @@ class SparkSubmissionRepositoryTest {
 
         @Test
         void deleteAllIds_emptyListDoesNothing() {
-            SparkSubmission s = repository.save(sub(SparkSubmission.Status.FINISHED));
+            SparkSubmission s = repository.save(sub(ExternalStatus.FINISHED));
 
             repository.deleteAllIds(List.of());
             em.clear();

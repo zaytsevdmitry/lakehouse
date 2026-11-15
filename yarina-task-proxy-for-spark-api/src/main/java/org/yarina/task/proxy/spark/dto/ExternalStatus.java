@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 package org.yarina.task.proxy.spark.dto;
-
 public enum ExternalStatus {
 
     WAITING,
@@ -26,6 +25,13 @@ public enum ExternalStatus {
     ERROR,
     KILLED,
     UNKNOWN;
+
+    public static boolean isFinalStatus(ExternalStatus status) {
+        return status == ExternalStatus.FINISHED ||
+                status == ExternalStatus.KILLED ||
+                status == ExternalStatus.FAILED ||
+                status == ExternalStatus.ERROR;
+    }
 
     public static ExternalStatus fromInternal(String internalStatus) {
         if (internalStatus == null) return UNKNOWN;

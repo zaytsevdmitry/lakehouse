@@ -112,7 +112,7 @@ class SparkProxyServiceTest {
     void getStatus_queued_returnsWaiting() {
         SparkSubmission sub = new SparkSubmission();
         sub.setId(1L);
-        sub.setStatus(SparkSubmission.Status.WAITING);
+        sub.setStatus(ExternalStatus.WAITING);
         when(repository.findById(1L)).thenReturn(Optional.of(sub));
 
         SubmissionStatusResponse response = service.getStatus(1L);
@@ -124,7 +124,7 @@ class SparkProxyServiceTest {
     void getStatus_submitted_returnsSubmittedFromDb() {
         SparkSubmission sub = new SparkSubmission();
         sub.setId(1L);
-        sub.setStatus(SparkSubmission.Status.SUBMITTED);
+        sub.setStatus(ExternalStatus.SUBMITTED);
         sub.setSubmissionId("driver-abc-123");
         when(repository.findById(1L)).thenReturn(Optional.of(sub));
 
@@ -139,7 +139,7 @@ class SparkProxyServiceTest {
     void getStatus_running_returnsRunning() {
         SparkSubmission sub = new SparkSubmission();
         sub.setId(1L);
-        sub.setStatus(SparkSubmission.Status.RUNNING);
+        sub.setStatus(ExternalStatus.RUNNING);
         sub.setSubmissionId("driver-abc-123");
         when(repository.findById(1L)).thenReturn(Optional.of(sub));
 
@@ -153,7 +153,7 @@ class SparkProxyServiceTest {
     void getStatus_finished_returnsFinished() {
         SparkSubmission sub = new SparkSubmission();
         sub.setId(1L);
-        sub.setStatus(SparkSubmission.Status.FINISHED);
+        sub.setStatus(ExternalStatus.FINISHED);
         sub.setSubmissionId("driver-abc-123");
         when(repository.findById(1L)).thenReturn(Optional.of(sub));
 
@@ -166,7 +166,7 @@ class SparkProxyServiceTest {
     void getStatus_killed_returnsKilled() {
         SparkSubmission sub = new SparkSubmission();
         sub.setId(1L);
-        sub.setStatus(SparkSubmission.Status.KILLED);
+        sub.setStatus(ExternalStatus.KILLED);
         sub.setSubmissionId("driver-abc-123");
         when(repository.findById(1L)).thenReturn(Optional.of(sub));
 
@@ -179,7 +179,7 @@ class SparkProxyServiceTest {
     void getStatus_unknown_returnsUnknown() {
         SparkSubmission sub = new SparkSubmission();
         sub.setId(1L);
-        sub.setStatus(SparkSubmission.Status.UNKNOWN);
+        sub.setStatus(ExternalStatus.UNKNOWN);
         sub.setSubmissionId("driver-abc-123");
         when(repository.findById(1L)).thenReturn(Optional.of(sub));
 
@@ -190,7 +190,7 @@ class SparkProxyServiceTest {
 
     // --- getSubmissions ---
 
-    private SparkSubmission submission(Long id, SparkSubmission.Status status, long order) {
+    private SparkSubmission submission(Long id, ExternalStatus status, long order) {
         SparkSubmission s = new SparkSubmission();
         s.setId(id);
         s.setStatus(status);
@@ -205,7 +205,7 @@ class SparkProxyServiceTest {
     void getSubmissions_returnsPageWithNextCursor() {
         List<SparkSubmission> rows = new ArrayList<>();
         for (int i = 1; i <= 21; i++) {
-            rows.add(submission((long) i, SparkSubmission.Status.RUNNING, i));
+            rows.add(submission((long) i, ExternalStatus.RUNNING, i));
         }
         when(repository.findSubmissions(isNull(), any(TypedParameterValue.class), any(TypedParameterValue.class), any(TypedParameterValue.class), any(PageRequest.class)))
                 .thenReturn(rows);
@@ -224,7 +224,7 @@ class SparkProxyServiceTest {
     void getSubmissions_noMorePages_returnsNullCursor() {
         List<SparkSubmission> rows = new ArrayList<>();
         for (int i = 1; i <= 15; i++) {
-            rows.add(submission((long) i, SparkSubmission.Status.RUNNING, i));
+            rows.add(submission((long) i, ExternalStatus.RUNNING, i));
         }
         when(repository.findSubmissions(isNull(), any(TypedParameterValue.class), any(TypedParameterValue.class), any(TypedParameterValue.class), any(PageRequest.class)))
                 .thenReturn(rows);
@@ -253,7 +253,7 @@ class SparkProxyServiceTest {
 
     @Test
     void getSubmissions_byId_ignoresPaginationAndFilters() {
-        SparkSubmission s = submission(7L, SparkSubmission.Status.FINISHED, 7);
+        SparkSubmission s = submission(7L, ExternalStatus.FINISHED, 7);
         when(repository.findById(7L)).thenReturn(Optional.of(s));
 
         SparkProxySubmissionsResponse response = service.getSubmissions(
@@ -323,7 +323,7 @@ class SparkProxyServiceTest {
     void kill_queuedTask_deletesFromDb() {
         SparkSubmission sub = new SparkSubmission();
         sub.setId(1L);
-        sub.setStatus(SparkSubmission.Status.WAITING);
+        sub.setStatus(ExternalStatus.WAITING);
         when(repository.findById(1L)).thenReturn(Optional.of(sub));
 
         SubmissionResponse response = service.kill(1L);
@@ -336,7 +336,7 @@ class SparkProxyServiceTest {
     void kill_submittedTask_callsAdapter() {
         SparkSubmission sub = new SparkSubmission();
         sub.setId(1L);
-        sub.setStatus(SparkSubmission.Status.SUBMITTED);
+        sub.setStatus(ExternalStatus.SUBMITTED);
         sub.setSubmissionId("driver-abc-123");
         when(repository.findById(1L)).thenReturn(Optional.of(sub));
 
@@ -353,7 +353,7 @@ class SparkProxyServiceTest {
     void kill_adapterFails_doesNotDelete() {
         SparkSubmission sub = new SparkSubmission();
         sub.setId(1L);
-        sub.setStatus(SparkSubmission.Status.SUBMITTED);
+        sub.setStatus(ExternalStatus.SUBMITTED);
         sub.setSubmissionId("driver-abc-123");
         when(repository.findById(1L)).thenReturn(Optional.of(sub));
 
@@ -373,7 +373,7 @@ class SparkProxyServiceTest {
         SparkSubmission q2 = new SparkSubmission();
         q2.setId(2L);
 
-        when(repository.findByStatus(SparkSubmission.Status.WAITING)).thenReturn(List.of(q1, q2));
+        when(repository.findByStatus(ExternalStatus.WAITING)).thenReturn(List.of(q1, q2));
 
         SubmissionResponse response = service.killAll();
         assertTrue(response.success());
@@ -384,7 +384,7 @@ class SparkProxyServiceTest {
 
     @Test
     void killAll_noTasks() {
-        when(repository.findByStatus(SparkSubmission.Status.WAITING)).thenReturn(List.of());
+        when(repository.findByStatus(ExternalStatus.WAITING)).thenReturn(List.of());
 
         SubmissionResponse response = service.killAll();
         assertTrue(response.success());

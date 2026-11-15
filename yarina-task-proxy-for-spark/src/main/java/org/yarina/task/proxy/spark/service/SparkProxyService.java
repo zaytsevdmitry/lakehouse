@@ -79,7 +79,7 @@ public class SparkProxyService {
         } catch (Exception e) {
             submission.setSparkProperties("{}");
         }
-        submission.setStatus(SparkSubmission.Status.WAITING);
+        submission.setStatus(ExternalStatus.WAITING);
 
         repository.save(submission);
         log.info("Created submission task id={}", submission.getId());
@@ -106,13 +106,12 @@ public class SparkProxyService {
             return new SparkProxySubmissionsResponse(items, new SparkProxySubmissionsMeta(limit, false, null));
         }
 
-        SparkSubmission.Status status = null;
+        ExternalStatus status = null;
         if (request.status() != null && !request.status().isBlank()) {
-            status = SparkSubmission.Status.valueOf(request.status());
+            status = ExternalStatus.valueOf(request.status());
         }
         Instant dateFrom = parseDate(request.dateFrom());
         Instant dateTo = parseDate(request.dateTo());
-
         List<SparkSubmission> rows = repository.findSubmissions(
                 status, typed(dateFrom), typed(dateTo), typedLong(request.lastId()),
                 PageRequest.of(0, limit + 1, Sort.by(Sort.Direction.DESC, "id")));
@@ -234,7 +233,7 @@ public class SparkProxyService {
     public SubmissionResponse killAll() {
         int deletedQueued = 0;
 
-        for (SparkSubmission sub : repository.findByStatus(SparkSubmission.Status.WAITING)) {
+        for (SparkSubmission sub : repository.findByStatus(ExternalStatus.WAITING)) {
             repository.delete(sub);
             deletedQueued++;
         }
@@ -264,8 +263,8 @@ public class SparkProxyService {
                     continue;
                 }
 
-                boolean isTerminal = statusStr != null && SparkSubmission.isFinalStatus(
-                        SparkSubmission.Status.valueOf(statusStr));
+                boolean isTerminal = statusStr != null && ExternalStatus.isFinalStatus(
+                        ExternalStatus.valueOf(statusStr));
                 if (isTerminal) {
                     try {
                         SubmissionResponse r = adapter.clearCompleted(submissionId);

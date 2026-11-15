@@ -17,7 +17,7 @@
 
 
 set -e
-export LH_VERSION=1.1.1
+export LH_VERSION=1.1.2
 
 docker build -t yarina-hms:$LH_VERSION ./
 docker images
