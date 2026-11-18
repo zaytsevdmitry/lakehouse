@@ -1,0 +1,6 @@
+kind: Script
+key: dq.integrity_violations_th.sql
+value: |
+  select *
+  from {{ qualityMetricsConfKeyName }}
+  where value > 0

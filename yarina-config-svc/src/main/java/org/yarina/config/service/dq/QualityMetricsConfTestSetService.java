@@ -18,7 +18,9 @@
 package org.yarina.config.service.dq;
 
 import jakarta.transaction.Transactional;
+import org.yarina.client.api.dto.configs.dq.QualityMetricsConfExpectationDTO;
 import org.yarina.client.api.dto.configs.dq.QualityMetricsConfTestSetDTO;
+import org.yarina.client.api.dto.configs.dq.QualityMetricsThresholdDTO;
 import org.yarina.config.entities.dq.ElementType;
 import org.yarina.config.entities.dq.QualityMetricsConf;
 import org.yarina.config.entities.dq.QualityMetricsConfTestSet;
@@ -52,6 +54,25 @@ public class QualityMetricsConfTestSetService {
         result.setDqMetricsType(dto.getValue().getType());
         result.setKeyName(dto.getKey());
         result.setElementType(elementType);
+        result.setExpectationValueColumn(null);
+        result.setExpectationOperator(null);
+        result.setExpectationThresholdValue(null);
+        result.setExpectationRelativeTo(null);
+        result.setExpectationFactor(null);
+        result.setExpectationSeverity(null);
+
+        QualityMetricsConfExpectationDTO expectation = dto.getValue().getExpectation();
+        if (expectation != null) {
+            result.setExpectationValueColumn(expectation.getValueColumn());
+            result.setExpectationOperator(expectation.getOperator());
+            result.setExpectationSeverity(expectation.getSeverity());
+            QualityMetricsThresholdDTO threshold = expectation.getThreshold();
+            if (threshold != null) {
+                result.setExpectationThresholdValue(threshold.getValue());
+                result.setExpectationRelativeTo(threshold.getRelativeTo());
+                result.setExpectationFactor(threshold.getFactor());
+            }
+        }
         return result;
     }
 
@@ -83,6 +104,26 @@ public class QualityMetricsConfTestSetService {
         result.setType(entity.getDqMetricsType());
         result.setDescription(entity.getDescription());
         result.setScripts( scriptReferenceService.findByQualityMetricsConfTestSetIdOrderByScriptOrder(entity.getId()));
+        if (entity.getExpectationOperator() != null
+                || entity.getExpectationThresholdValue() != null
+                || entity.getExpectationRelativeTo() != null
+                || entity.getExpectationFactor() != null
+                || entity.getExpectationSeverity() != null) {
+            QualityMetricsConfExpectationDTO expectation = new QualityMetricsConfExpectationDTO();
+            expectation.setValueColumn(entity.getExpectationValueColumn());
+            expectation.setOperator(entity.getExpectationOperator());
+            expectation.setSeverity(entity.getExpectationSeverity());
+            if (entity.getExpectationThresholdValue() != null
+                    || entity.getExpectationRelativeTo() != null
+                    || entity.getExpectationFactor() != null) {
+                QualityMetricsThresholdDTO threshold = new QualityMetricsThresholdDTO();
+                threshold.setValue(entity.getExpectationThresholdValue());
+                threshold.setRelativeTo(entity.getExpectationRelativeTo());
+                threshold.setFactor(entity.getExpectationFactor());
+                expectation.setThreshold(threshold);
+            }
+            result.setExpectation(expectation);
+        }
         return Map.entry(entity.getKeyName(),result);
     }
 }

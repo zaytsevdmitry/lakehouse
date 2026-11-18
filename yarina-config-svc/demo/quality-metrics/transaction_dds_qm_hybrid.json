@@ -1,0 +1,121 @@
+{
+  "dataSetKeyName": "transaction_dds",
+  "domainKeyName": "DEMO",
+  "keyName": "transaction_dds_qm_hybrid",
+  "description": "Reference hybrid thresholds: absolute validity checks, denormalization consistency and a relative volume threshold",
+  "enabled": true,
+  "save": true,
+  "dqThresholdViolationLevel": "error",
+  "sources": {
+    "client_processing": {
+      "properties": {
+        "fetchSize": "10000"
+      }
+    },
+    "transaction_processing": {
+      "properties": {
+        "fetchSize": "10000"
+      }
+    }
+  },
+  "testSets": {
+    "non_zero_count": {
+      "description": "count rows of every increment",
+      "type": "sparkSQL",
+      "scripts": [
+        {
+          "key": "dq.non_zero_count.sql"
+        }
+      ]
+    }
+  },
+  "metric": {
+    "description": "count rows of every increment",
+    "type": "sparkSQL",
+    "scripts": [
+      {
+        "key": "dq.non_zero_count.sql"
+      }
+    ]
+  },
+  "thresholds": {
+    "volume_anomaly_th": {
+      "description": "today's volume must be at least 50% of the volume measured in the same run",
+      "type": "sparkSQL",
+      "scripts": [
+        {
+          "key": "dq.non_zero_count.sql"
+        }
+      ],
+      "expectation": {
+        "valueColumn": "value",
+        "operator": ">=",
+        "threshold": {
+          "relativeTo": "non_zero_count",
+          "factor": 0.5
+        },
+        "severity": "warn"
+      }
+    },
+    "commission_numeric_th": {
+      "description": "commission must be numeric",
+      "type": "sparkSQL",
+      "scripts": [
+        {
+          "key": "dq.commission_is_numeric.sql"
+        }
+      ],
+      "expectation": {
+        "valueColumn": "value",
+        "operator": "=",
+        "threshold": 0,
+        "severity": "error"
+      }
+    },
+    "provider_id_format_th": {
+      "description": "provider_id must contain digits only",
+      "type": "sparkSQL",
+      "scripts": [
+        {
+          "key": "dq.provider_id_format.sql"
+        }
+      ],
+      "expectation": {
+        "valueColumn": "value",
+        "operator": "=",
+        "threshold": 0,
+        "severity": "error"
+      }
+    },
+    "reg_date_time_range_th": {
+      "description": "registration time must be in the allowed date range",
+      "type": "sparkSQL",
+      "scripts": [
+        {
+          "key": "dq.reg_date_time_range.sql"
+        }
+      ],
+      "expectation": {
+        "valueColumn": "value",
+        "operator": "=",
+        "threshold": 0,
+        "severity": "error"
+      }
+    },
+    "client_name_consistency_th": {
+      "description": "denormalized client_name must match client_processing.name",
+      "type": "sparkSQL",
+      "scripts": [
+        {
+          "key": "dq.client_name_consistency.sql"
+        }
+      ],
+      "expectation": {
+        "valueColumn": "value",
+        "operator": "=",
+        "threshold": 0,
+        "severity": "warn"
+      }
+    }
+  }
+}

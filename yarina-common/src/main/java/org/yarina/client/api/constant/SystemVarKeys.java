@@ -25,7 +25,10 @@ public class SystemVarKeys {
     public static String TARGET_DATE_TIME_TZ_KEY = "targetDateTime";
     public static String TARGET_INTERVAL_START_TZ_KEY = "intervalStartDateTime";
     public static String TARGET_INTERVAL_END_TZ_KEY = "intervalEndDateTime";
+    public static String TARGET_INTERVAL_START_DATE_KEY = "intervalStartDate";
+    public static String TARGET_INTERVAL_END_DATE_KEY = "intervalEndDate";
     public static String TARGET_DATASET_KEY_NAME = "targetDataSetKeyName"; //
+    public static String QUALITY_METRICS_CONF_KEY_NAME = "qualityMetricsConfKeyName";
 
 
     /**
@@ -34,6 +37,8 @@ public class SystemVarKeys {
     public static String CURRENT_DATASET_KEY_NAME = "currentDataSetKeyName";
     public static String CONSTRAINT_NAME = "constraintName";
     public static String CONSTRAINT = "constraint";
+    public static String CONSTRAINT_COLUMNS = "constraintColumns";
+    public static String CONSTRAINT_SEVERITY = "constraintSeverity";
     public static String PARTITION_NAME = "partitionName";
     public static String SCRIPT = "script";
     public static String SERVICE_KEY = "service";
@@ -41,6 +46,16 @@ public class SystemVarKeys {
     public static String DATASOURCE_KEY = "dataSource";
     public static String DATASET_KEY = "dataSet";
     public static String COLUMN = "column";
+
+    public static String FOREIGN_REFERENCE_DATA_SET_KEY_NAME = "referenceDataSetKeyName";
+    public static String FOREIGN_REFERENCE_CONSTRAINT_NAME = "referenceConstraintName";
+    public static String FOREIGN_SOURCE_COLUMNS = "sourceColumns";
+    public static String FOREIGN_REFERENCE_COLUMNS = "referenceColumns";
+    public static String FOREIGN_SOURCE_COLUMN_TYPES = "sourceColumnTypes";
+    public static String FOREIGN_REFERENCE_COLUMN_TYPES = "referenceColumnTypes";
+    public static String FOREIGN_SOURCE_CAST_TYPES = "sourceCastTypes";
+    public static String FOREIGN_TYPE_MISMATCH = "foreignTypeMismatch";
+    public static String FOREIGN_TYPE_MISMATCH_MESSAGE = "foreignTypeMismatchMessage";
 
 
     /**

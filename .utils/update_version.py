@@ -41,7 +41,7 @@ for directory, mask in FILES_TO_UPDATE:
                 new_content = re.sub(pattern, rf'\g<1>{new_v}\g<2>', content)
 
             elif filepath.endswith('.xml'):
-                pattern = rf'(<version>){re.escape(old_v)}(</version>)'
+                pattern = rf'(<revision>){re.escape(old_v)}(</revision>)'
                 new_content = re.sub(pattern, rf'\g<1>{new_v}\g<2>', content)
 
             else:

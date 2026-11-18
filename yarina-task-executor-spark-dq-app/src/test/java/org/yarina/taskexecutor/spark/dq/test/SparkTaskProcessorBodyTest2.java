@@ -59,6 +59,9 @@ import org.testcontainers.utility.DockerImageName;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
 import java.util.Map;
 
 @SpringBootTest(properties = {
@@ -145,8 +148,22 @@ public class SparkTaskProcessorBodyTest2 {
     static void configureProperties(DynamicPropertyRegistry registry) {
         registry.add("yarina.taskexecutor.body.config.dq.kafka.producer.properties.bootstrap.servers",kafka::getBootstrapServers);
     }
+    private void createClientTable() throws Exception {
+        try (Connection connection = DriverManager.getConnection(
+                postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
+             Statement statement = connection.createStatement()) {
+            statement.execute("create schema if not exists proc");
+            statement.execute("drop table if exists proc.client");
+            statement.execute("create table proc.client (" +
+                    "id integer primary key, name varchar(255), reg_date_time timestamp)");
+            statement.execute("insert into proc.client (id, name, reg_date_time) " +
+                    "values (1, 'myTestClient', timestamp '2025-01-01 00:00:00')");
+        }
+    }
+
     @Test
-    void end2end() throws IOException, TaskFailedException, TaskConfigurationException, URISyntaxException, CreateException, DropException {
+    void end2end() throws Exception {
+        createClientTable();
         ScheduledTaskDTO scheduledTaskDTO = ObjectMapping
                 .fileToObject(
                         new File(getClass().getClassLoader().getResource("en2end.json").toURI()),
@@ -163,6 +180,7 @@ public class SparkTaskProcessorBodyTest2 {
                         );
 
         dsm.createTableIfNotExists();
+        sparkSession.sql("delete from `yarinastorage`.`default`.`transaction_dds`");
         String sql = "insert into `yarinastorage`.`default`.`transaction_dds` (" +
                 " id ,amount ,client_id, client_name,commission ,provider_id, reg_date_time  )" +
                 "values(" +

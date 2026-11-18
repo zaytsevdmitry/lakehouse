@@ -17,6 +17,7 @@
 
 package org.yarina.client.api.constant;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public class Types {
@@ -134,12 +135,31 @@ public class Types {
 
     public enum DQThresholdViolationLevel {
         ERROR("error"),
+        WARN("warn"),
         INFO("info");
 
         public final String label;
 
         DQThresholdViolationLevel(String label) {
             this.label = label;
+        }
+
+        /**
+         * Accepts both the enum name ({@code ERROR}) and the JSON label ({@code error}),
+         * case-insensitively, so that configs written in either style keep working.
+         */
+        @JsonCreator
+        public static DQThresholdViolationLevel fromValue(String value) {
+            if (value == null) {
+                return null;
+            }
+            String normalized = value.trim();
+            for (DQThresholdViolationLevel level : values()) {
+                if (level.name().equalsIgnoreCase(normalized) || level.label.equalsIgnoreCase(normalized)) {
+                    return level;
+                }
+            }
+            throw new IllegalArgumentException("Unknown DQThresholdViolationLevel '" + value + "'");
         }
 
         @Override

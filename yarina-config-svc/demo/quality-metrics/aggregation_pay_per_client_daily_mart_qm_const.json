@@ -1,0 +1,24 @@
+{
+  "dataSetKeyName": "aggregation_pay_per_client_daily_mart",
+  "domainKeyName": "DEMO",
+  "keyName": "aggregation_pay_per_client_daily_mart_qm_const",
+  "description": "Physical constraints and schema drift for the daily mart",
+  "enabled": true,
+  "dqThresholdViolationLevel": "error",
+  "save": true,
+  "metric": {
+    "description": "integrity checks: PK, nullable columns and schema drift",
+    "type": "integrity"
+  },
+  "thresholds": {
+    "integrity_violations_th": {
+      "description": "any violation is reported with the severity of the failing check",
+      "type": "sparkSQL",
+      "scripts": [
+        {
+          "key": "dq.integrity_violations_th.sql"
+        }
+      ]
+    }
+  }
+}

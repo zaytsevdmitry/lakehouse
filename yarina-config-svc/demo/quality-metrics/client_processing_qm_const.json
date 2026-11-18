@@ -1,0 +1,24 @@
+{
+  "dataSetKeyName": "client_processing",
+  "domainKeyName": "DEMO",
+  "keyName": "client_processing_qm_const",
+  "description": "Physical constraints and schema drift for client_processing",
+  "enabled": true,
+  "dqThresholdViolationLevel": "error",
+  "save": true,
+  "metric": {
+    "description": "integrity checks: PK, UK, nullable columns and schema drift",
+    "type": "integrity"
+  },
+  "thresholds": {
+    "integrity_violations_th": {
+      "description": "any violation is reported with the severity of the failing check",
+      "type": "sparkSQL",
+      "scripts": [
+        {
+          "key": "dq.integrity_violations_th.sql"
+        }
+      ]
+    }
+  }
+}

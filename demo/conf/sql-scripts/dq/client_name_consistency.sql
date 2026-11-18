@@ -1,0 +1,8 @@
+select 'client_name_mismatch' as subMetricName
+     , count(1) as value
+from {{ refCat('transaction_dds') }} t
+join {{ refCat('client_processing') }} c
+  on cast(t.client_id as integer) = c.id
+where t.reg_date_time >= timestamp '{{ intervalStartDateTime }}'
+  and t.reg_date_time <  timestamp '{{ intervalEndDateTime }}'
+  and t.client_name <> c.name

@@ -1,4 +1,8 @@
 kind: Script
 key: sql-template-spark_iceberg.checkConstraintCheckIntegrity.sql
 value: |
-  fix me
+  select '{{ constraintName }}' as subMetricName
+       , count(1) as value
+       , '{{ constraintSeverity }}' as severity
+  from {{ refCat(targetDataSetKeyName) }}
+  where not ({{ constraint.checkExpr }})

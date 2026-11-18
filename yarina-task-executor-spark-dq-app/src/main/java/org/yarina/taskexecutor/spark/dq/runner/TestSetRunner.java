@@ -33,5 +33,6 @@ public interface TestSetRunner {
             Map.Entry<String, QualityMetricsConfTestSetDTO> qualityMetricsConfTestSetDTO,
             SourceConfDTO sourceConfDTO,
             ScheduledTaskDTO scheduledTaskDTO,
+            String qualityMetricsConfKeyName,
             JinJavaUtils jinJavaUtils) throws TaskConfigurationException, JacksonException;
 }

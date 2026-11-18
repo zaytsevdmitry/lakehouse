@@ -1,0 +1,17 @@
+kind: Script
+key: dq.schema_drift.sql
+value: |
+  {# Illustrative SQL alternative for schema drift.
+     The default DQ engine performs schema drift as an integrity check (CheckImpl.schemaDrift).
+     This script is kept as an example for databases where the engine-side check is not available.
+     Replace the "describe table" source with information_schema for non-Spark databases. #}
+  select 'column_missing' as subMetricName
+       , count(1) as value
+  from (
+    select explode(array(
+      {% for column in dataSets[targetDataSetKeyName].columnSchema %}'{{ column.name }}'{% if not loop.last %}, {% endif %}{% endfor %}
+    )) as col_name
+  ) expected
+  left join (describe table {{ refCat(targetDataSetKeyName) }}) actual
+    on lower(actual.col_name) = lower(expected.col_name)
+  where actual.col_name is null

@@ -1,0 +1,6 @@
+select 'provider_id_invalid' as subMetricName
+     , count(1) as value
+from {{ refCat(targetDataSetKeyName) }}
+where reg_date_time >= timestamp '{{ intervalStartDateTime }}'
+  and reg_date_time <  timestamp '{{ intervalEndDateTime }}'
+  and (provider_id is null or not (cast(provider_id as string) rlike '^[0-9]+$'))

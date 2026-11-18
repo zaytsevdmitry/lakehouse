@@ -859,13 +859,21 @@ public class TestWithPostgres {
         //DQ
         loadScript("dq/non_zero_count", "sql");
         loadScript("dq/non_zero_count_th","sql");
+        loadScript("dq/integrity_violations_th", "sql");
+        loadScript("dq/commission_is_numeric", "sql");
+        loadScript("dq/provider_id_format", "sql");
+        loadScript("dq/reg_date_time_range", "sql");
+        loadScript("dq/client_name_consistency", "sql");
 
         QualityMetricsConfDTO expected = fileLoader.loadQualityMetricsConfDTO("transaction_dds_qm");
         QualityMetricsConfDTO expectedOtherDataSetDQConf = fileLoader.loadQualityMetricsConfDTO("transaction_dds_qm");
         expectedOtherDataSetDQConf.setDataSetKeyName(transactionProcessingDTO.getKeyName());
         qualityMetricsConfService.save(expectedOtherDataSetDQConf);
         QualityMetricsConfDTO result = qualityMetricsConfService.save(expected);
-        QualityMetricsConfDTO expected_const = qualityMetricsConfService.save(fileLoader.loadQualityMetricsConfDTO("transaction_dds_qm_const"));
+        QualityMetricsConfDTO expected_const = fileLoader.loadQualityMetricsConfDTO("transaction_dds_qm_const");
+        QualityMetricsConfDTO result_const = qualityMetricsConfService.save(expected_const);
+        QualityMetricsConfDTO expected_hybrid = fileLoader.loadQualityMetricsConfDTO("transaction_dds_qm_hybrid");
+        QualityMetricsConfDTO result_hybrid = qualityMetricsConfService.save(expected_hybrid);
         QualityMetricsConfDTO result2 = qualityMetricsConfService
                 .findByDataSetKeyName(resultTransactionddsDTO.getKeyName())
                 .stream()
@@ -875,6 +883,7 @@ public class TestWithPostgres {
         // delete
         restManipulator.deleteDTO(expected.getKeyName(), Endpoint.QUALITY_METRICS_NAME);
         restManipulator.deleteDTO(expected_const.getKeyName(), Endpoint.QUALITY_METRICS_NAME);
+        restManipulator.deleteDTO(expected_hybrid.getKeyName(), Endpoint.QUALITY_METRICS_NAME);
         restManipulator.deleteDTO(resultAggdaily.getKeyName(), Endpoint.DATA_SETS_NAME);
         restManipulator.deleteDTO(resultAggTotal.getKeyName(), Endpoint.DATA_SETS_NAME);
         restManipulator.deleteDTO(resultTransactionddsDTO.getKeyName(), Endpoint.DATA_SETS_NAME);
@@ -889,6 +898,8 @@ public class TestWithPostgres {
         System.out.println("result ->> \n" +ObjectMapping.asJsonStringPretty(result));
         assert(expected.equals(result));
         assert(expected.equals(result2));
+        assert(expected_const.equals(result_const));
+        assert(expected_hybrid.equals(result_hybrid));
 
     }
 

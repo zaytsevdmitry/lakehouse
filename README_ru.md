@@ -75,6 +75,8 @@ United namespace
 
 [Состояния](yarina-state-svc/doc-ru/state_model/state-models.MD)
 
+[DQ: как писать тестсеты](./doc-ru/dq/README.md)
+
 [Командная строка](./yarina-cli/doc-ru/commandline.MD)
 
 

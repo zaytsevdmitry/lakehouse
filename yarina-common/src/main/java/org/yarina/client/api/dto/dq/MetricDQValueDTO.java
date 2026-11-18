@@ -19,15 +19,22 @@ package org.yarina.client.api.dto.dq;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 public final class MetricDQValueDTO implements Serializable {
     @Serial
     private static final long serialVersionUID = -8715383864728411678L;
     private Long metricId;
     private String subMetricName;
-    private Long value;
+    private BigDecimal value;
 
     public MetricDQValueDTO() {
+    }
+
+    public MetricDQValueDTO(Long metricId, String subMetricName, BigDecimal value) {
+        this.metricId = metricId;
+        this.subMetricName = subMetricName;
+        this.value = value;
     }
 
     public Long getMetricId() {
@@ -46,11 +53,11 @@ public final class MetricDQValueDTO implements Serializable {
         this.subMetricName = subMetricName;
     }
 
-    public Long getValue() {
+    public BigDecimal getValue() {
         return value;
     }
 
-    public void setValue(Long value) {
+    public void setValue(BigDecimal value) {
         this.value = value;
     }
 };

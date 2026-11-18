@@ -28,6 +28,7 @@ public class QualityMetricsConfTestSetDTO {
     private String description;
     private Types.DQMetricTestSetType type;
     private List<ScriptReferenceDTO> scripts = new ArrayList<>();
+    private QualityMetricsConfExpectationDTO expectation;
 
     public QualityMetricsConfTestSetDTO() {
     }
@@ -48,12 +49,21 @@ public class QualityMetricsConfTestSetDTO {
         this.scripts = scripts;
     }
 
+    public QualityMetricsConfExpectationDTO getExpectation() {
+        return expectation;
+    }
+
+    public void setExpectation(QualityMetricsConfExpectationDTO expectation) {
+        this.expectation = expectation;
+    }
+
     @Override
     public String toString() {
         return "QualityMetricsConfTestSetDTO{" +
                 ", description='" + description + '\'' +
                 ", type=" + type +
                 ", scripts=" + scripts +
+                ", expectation=" + expectation +
                 '}';
     }
 
@@ -61,12 +71,12 @@ public class QualityMetricsConfTestSetDTO {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         QualityMetricsConfTestSetDTO that = (QualityMetricsConfTestSetDTO) o;
-        return Objects.equals(getDescription(), that.getDescription()) && getType() == that.getType() && Objects.equals(getScripts(), that.getScripts());
+        return Objects.equals(getDescription(), that.getDescription()) && getType() == that.getType() && Objects.equals(getScripts(), that.getScripts()) && Objects.equals(getExpectation(), that.getExpectation());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getDescription(), getType(),  getScripts());
+        return Objects.hash(getDescription(), getType(),  getScripts(), getExpectation());
     }
 
     public String getDescription() {

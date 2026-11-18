@@ -1,0 +1,6 @@
+select 'commission_not_numeric' as subMetricName
+     , count(1) as value
+from {{ refCat(targetDataSetKeyName) }}
+where reg_date_time >= timestamp '{{ intervalStartDateTime }}'
+  and reg_date_time <  timestamp '{{ intervalEndDateTime }}'
+  and (commission is null or not (cast(commission as string) rlike '^-?[0-9]+([.][0-9]+)?$'))

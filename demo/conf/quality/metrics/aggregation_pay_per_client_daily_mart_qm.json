@@ -1,0 +1,49 @@
+{
+  "dataSetKeyName": "aggregation_pay_per_client_daily_mart",
+  "keyName": "aggregation_pay_per_client_daily_mart_qm",
+  "description": "Reconciliation of mart aggregates against transaction_dds facts",
+  "enabled": true,
+  "save": true,
+  "dqThresholdViolationLevel": "error",
+  "metric": {
+    "description": "count mart rows of the increment",
+    "type": "sparkSQL",
+    "scripts": [
+      {
+        "key": "dq.mart_non_zero_count.sql"
+      }
+    ]
+  },
+  "thresholds": {
+    "sum_amount_reconciliation_th": {
+      "description": "mart sum_amount must equal the fact sum_amount",
+      "type": "sparkSQL",
+      "scripts": [
+        {
+          "key": "dq.mart_sum_amount_reconciliation.sql"
+        }
+      ],
+      "expectation": {
+        "valueColumn": "value",
+        "operator": "=",
+        "threshold": 0,
+        "severity": "error"
+      }
+    },
+    "sum_commission_reconciliation_th": {
+      "description": "mart sum_commission must equal the fact sum_commission",
+      "type": "sparkSQL",
+      "scripts": [
+        {
+          "key": "dq.mart_sum_commission_reconciliation.sql"
+        }
+      ],
+      "expectation": {
+        "valueColumn": "value",
+        "operator": "=",
+        "threshold": 0,
+        "severity": "error"
+      }
+    }
+  }
+}

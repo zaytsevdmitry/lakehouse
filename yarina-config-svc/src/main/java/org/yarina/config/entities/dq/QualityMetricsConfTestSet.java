@@ -22,6 +22,7 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.yarina.client.api.constant.Types;
 
+import java.math.BigDecimal;
 import java.util.Objects;
 
 @Entity
@@ -43,6 +44,14 @@ public class QualityMetricsConfTestSet {
     @Column(nullable = false) private Types.DQMetricTestSetType dqMetricTestSetType;
 
     @Column(nullable = false) @Enumerated(EnumType.ORDINAL) private ElementType elementType;
+
+    @Column(nullable = true) private String expectationValueColumn;
+    @Column(nullable = true) private String expectationOperator;
+    @Column(nullable = true, precision = 38, scale = 18) private BigDecimal expectationThresholdValue;
+    @Column(nullable = true) private String expectationRelativeTo;
+    @Column(nullable = true, precision = 38, scale = 18) private BigDecimal expectationFactor;
+    @Column(nullable = true) @Enumerated(EnumType.STRING) private Types.DQThresholdViolationLevel expectationSeverity;
+
     public QualityMetricsConfTestSet() {
     }
 
@@ -112,15 +121,63 @@ public class QualityMetricsConfTestSet {
         this.elementType = elementType;
     }
 
+    public String getExpectationValueColumn() {
+        return expectationValueColumn;
+    }
+
+    public void setExpectationValueColumn(String expectationValueColumn) {
+        this.expectationValueColumn = expectationValueColumn;
+    }
+
+    public String getExpectationOperator() {
+        return expectationOperator;
+    }
+
+    public void setExpectationOperator(String expectationOperator) {
+        this.expectationOperator = expectationOperator;
+    }
+
+    public BigDecimal getExpectationThresholdValue() {
+        return expectationThresholdValue;
+    }
+
+    public void setExpectationThresholdValue(BigDecimal expectationThresholdValue) {
+        this.expectationThresholdValue = expectationThresholdValue;
+    }
+
+    public String getExpectationRelativeTo() {
+        return expectationRelativeTo;
+    }
+
+    public void setExpectationRelativeTo(String expectationRelativeTo) {
+        this.expectationRelativeTo = expectationRelativeTo;
+    }
+
+    public BigDecimal getExpectationFactor() {
+        return expectationFactor;
+    }
+
+    public void setExpectationFactor(BigDecimal expectationFactor) {
+        this.expectationFactor = expectationFactor;
+    }
+
+    public Types.DQThresholdViolationLevel getExpectationSeverity() {
+        return expectationSeverity;
+    }
+
+    public void setExpectationSeverity(Types.DQThresholdViolationLevel expectationSeverity) {
+        this.expectationSeverity = expectationSeverity;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         QualityMetricsConfTestSet testSet = (QualityMetricsConfTestSet) o;
-        return  Objects.equals(getId(), testSet.getId()) && Objects.equals(getQualityMetricsConf(), testSet.getQualityMetricsConf()) && Objects.equals(getKeyName(), testSet.getKeyName()) && Objects.equals(getDescription(), testSet.getDescription()) && getDqMetricTestSetType() == testSet.getDqMetricTestSetType() && getElementType() == testSet.getElementType();
+        return  Objects.equals(getId(), testSet.getId()) && Objects.equals(getQualityMetricsConf(), testSet.getQualityMetricsConf()) && Objects.equals(getKeyName(), testSet.getKeyName()) && Objects.equals(getDescription(), testSet.getDescription()) && getDqMetricTestSetType() == testSet.getDqMetricTestSetType() && getElementType() == testSet.getElementType() && Objects.equals(getExpectationValueColumn(), testSet.getExpectationValueColumn()) && Objects.equals(getExpectationOperator(), testSet.getExpectationOperator()) && Objects.equals(getExpectationThresholdValue(), testSet.getExpectationThresholdValue()) && Objects.equals(getExpectationRelativeTo(), testSet.getExpectationRelativeTo()) && Objects.equals(getExpectationFactor(), testSet.getExpectationFactor()) && getExpectationSeverity() == testSet.getExpectationSeverity();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getQualityMetricsConf(), getKeyName(), getDescription(), getDqMetricTestSetType(), getElementType());
+        return Objects.hash(getId(), getQualityMetricsConf(), getKeyName(), getDescription(), getDqMetricTestSetType(), getElementType(), getExpectationValueColumn(), getExpectationOperator(), getExpectationThresholdValue(), getExpectationRelativeTo(), getExpectationFactor(), getExpectationSeverity());
     }
 }
