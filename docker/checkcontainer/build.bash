@@ -17,7 +17,7 @@
 
 
 set -e
-export LH_VERSION=1.1.2
+export LH_VERSION=1.1.3
 
 docker build -t yarina-s3-check:$LH_VERSION ./
 docker images
